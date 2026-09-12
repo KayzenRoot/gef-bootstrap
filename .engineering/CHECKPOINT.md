@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M01_S03`
+Status: `READY_FOR_GBS_M01_S04`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
@@ -10,19 +10,20 @@ Status: `READY_FOR_GBS_M01_S03`
 - Functional implementation: `AUTHORIZED_NOT_STARTED`
 - Completed modules: `GBS-M00 — Bootstrap Constitution`
 - Active construction module: `GBS-M01 — Deterministic Work Plane Kernel`
-- Completed construction sessions: `GBS-M01-S01`, `GBS-M01-S02`
+- Completed construction sessions: `GBS-M01-S01`, `GBS-M01-S02`, `GBS-M01-S03`
 - M01-S01 runtime contract: `FROZEN`
 - M01-S02 command router contract: `FROZEN`
-- M01-S02 PR: `#39`
-- M01-S02 reviewed head: `42e0c600caaeb60f43ce46cb8be0f877c98afbcb`
-- Main after M01-S02 merge: `7ee617dfbb8b8ff017e4f98752951d0c6edbbe93`
-- Canonical command IDs: `gef.<domain>.<action>`
-- Core registry: `STATIC TYPESCRIPT COMPOSITION`
-- Adapter registrations: `VALIDATED M42 CAPABILITY MANIFESTS`
-- Routing ambiguity: `FAIL_CLOSED`
-- Recursive router dispatch: `PROHIBITED; EXPLICIT ORCHESTRATORS ONLY`
-- Version compatibility: `EXPLICIT REGISTERED VERSION ADAPTERS ONLY`
-- Introspection: `NON_SECRET CONTRACT/CAPABILITY METADATA ONLY`
+- M01-S03 lifecycle contract: `FROZEN`
+- M01-S03 PR: `#41`
+- M01-S03 reviewed head: `82868f28c33cbf67a0adb4ee07206df7765151d0`
+- Main after M01-S03 merge: `118e99456e747eea1dd3afa1fffd2ab1f760666b`
+- Lifecycle model: `RECEIVED -> VALIDATING -> PREFLIGHTING -> READY -> EXECUTING -> VERIFYING -> RECEIPTING -> SUCCEEDED`
+- Mechanical success: `NOT_SEMANTIC_APPROVAL`
+- Blocked state: `TERMINAL_FAMILY_WITH_TYPED_REASON_CODES`
+- Read-only phase optimization: `PHYSICAL_COLLAPSE_ALLOWED_LOGICAL_PROOF_REQUIRED`
+- Recovery identity: `IMMEDIATE_COMPENSATION_SAME_RUN; LATER_RECOVERY_LINKED_NEW_RUN`
+- Retry baseline: `MUTATION_RETRY_OPT_IN; NO_CROSS_PROCESS_AUTORETRY`
+- Terminal receipts: `APPEND_ONLY_IMMUTABLE`
 - Constitution version: `GBS-CONSTITUTION-v1.1`
 - Product model: `HYBRID`
 - Product release target: `ONE COMPLETE PRODUCTION VERSION`
@@ -38,11 +39,11 @@ Status: `READY_FOR_GBS_M01_S03`
 - Denominator change: `NONE`
 - ETA: `NOT_YET_RELIABLE`
 - Current canonical branch: `main`
-- Next legal stage: `GBS-M01-S03 — Lifecycle`
-- Stop state: `READY_FOR_GBS_M01_S03`
+- Next legal stage: `GBS-M01-S04 — Exit Codes`
+- Stop state: `READY_FOR_GBS_M01_S04`
 
-## M01-S02 outcome
-The deterministic command router is frozen. Requests resolve through stable namespaced command IDs, validated contracts, capability/policy checks and target/state binding to exactly one primary use-case. Core registration is static and explicit, adapter registrations are manifest-governed, ambiguous or unsupported requests fail closed, direct recursive routing is prohibited, and version migration requires explicit deterministic adapters.
+## M01-S03 outcome
+The deterministic invocation lifecycle is frozen. Every invocation has explicit logical phases, exactly one immutable terminal classification for the original run, fail-closed mutation preflight, truthful cancellation/timeout handling, bounded retry rules, explicit recovery linkage and receipt completion before mutation success. Physical phase collapsing is allowed only when logical gate completion remains provable, preserving speed without sacrificing auditability.
 
 ## Official progress truth
 No production weight is awarded for an individual planning session. The denominator remains 1088 and earned weight remains 16 until a weighted production item satisfies its applicable DoD and evidence promotion. Official completion remains `16 / 1088 = 1.47%`.
@@ -51,7 +52,7 @@ No production weight is awarded for an individual planning session. The denomina
 Every material milestone, review, merge, baseline recalibration or chat-transition point must leave both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
 
 ## Do not redo
-Do not reopen M01-S01/S02 without governed change control. Do not add fuzzy command matching, repository-scanning handler discovery, implicit version coercion, recursive hidden routing or semantic-governance decisions inside the router.
+Do not reopen M01-S01/S02/S03 without governed change control. Do not treat mechanical SUCCEEDED as semantic acceptance. Do not rewrite terminal receipts, blindly retry semantic/policy/state failures, cross process boundaries with implicit retries, or hide partial external effects.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Planning Protocol, Master Module Index, M01-S01 and M01-S02. Resume at `GBS-M01-S03 — Lifecycle`. Report `1.47% complete`, `16/1088 earned`, `1072/1088 remaining` unless a newer audited checkpoint changes it.
+In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Planning Protocol, Master Module Index and frozen M01-S01/S02/S03 session files. Resume at `GBS-M01-S04 — Exit Codes`. Report `1.47% complete`, `16/1088 earned`, `1072/1088 remaining` unless a newer audited checkpoint changes it.
