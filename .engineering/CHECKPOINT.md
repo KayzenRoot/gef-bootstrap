@@ -1,44 +1,45 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_WO_M02_001`
+Status: `READY_FOR_GBS_M03_S01`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00`, `GBS-M01`
-- Active module: `GBS-M02 — Configuration & Schema`
-- M02-S01 Global Configuration: `FROZEN`
-- M02-S02 Project Configuration: `FROZEN`
-- M02-S03 Schemas: `FROZEN`
-- M02-S04 Defaults: `FROZEN`
-- M02-S05 Versioning & Migration: `FROZEN`
-- M02-S05 PR: `#57`
-- M02-S05 reviewed head: `39ce77984ec82ec01dc5ab8e263faf030653ffb9`
-- Main after M02-S05 merge: `97160b7fa8a3c5246f18a3e3e25086f4a02406f7`
-- M02 module gate: `PLANNED_READY_FOR_IMPLEMENTATION`
-- Active Work Order: `GBS-WO-M02-001`
-- Work Order status: `ADMITTED`
-- Next legal stage: `IMPLEMENT_GBS_WO_M02_001`
+- Completed modules: `GBS-M00`, `GBS-M01`, `GBS-M02`
+- Last completed module: `GBS-M02 — Configuration & Schema`
+- M02 module gate: `MODULE_DONE`
+- M02 Work Order: `GBS-WO-M02-001`
+- M02 Work Order status: `APPROVED_COMPLETE`
+- M02 implementation PR: `#59`
+- M02 exact reviewed head: `140522e270675832b1983a88be38ef8930d6a0f4`
+- M02 hosted run: `34723311969`
+- Main after M02 implementation merge: `ff6eece799939da4068ab8c1771edc997ba5ca5c`
+- M02 tests: `56/56 PASS`, `0 skipped`
+- M02 HEDS verdict: `APPROVED`
+- M02 open HIGH/CRITICAL findings: `NONE`
+- Next module/session: `GBS-M03-S01`
 - Main production denominator: `1088 WEIGHT POINTS`
-- Earned production weight: `36 WEIGHT POINTS`
-- Remaining production weight: `1052 WEIGHT POINTS`
-- Official audited overall completion: `3.31%`
-- Official audited remaining: `96.69%`
+- Earned production weight: `53 WEIGHT POINTS`
+- Remaining production weight: `1035 WEIGHT POINTS`
+- Official audited overall completion: `4.87%`
+- Official audited remaining: `95.13%`
 - M02 frozen weight: `17`
-- M02 earned weight: `0`
-- Potential completion after evidence-backed M02 MODULE_DONE: `53 / 1088 = 4.87%`
+- M02 earned weight: `17`
 - Denominator change: `NONE`
-- ETA: `NOT_YET_RELIABLE`
+- ETA: `NOT_YET_RELIABLE — insufficient completed implementation-module velocity sample`
+- Current canonical branch: `main`
+- Next legal stage: `GBS-M03-S01`
+- Stop state: `READY_FOR_GBS_M03_S01`
 
-## M02 planning outcome
-M02 S01-S05 are frozen. Configuration architecture now covers optional global config, tracked project config, private-state separation, deterministic precedence/provenance, JSON Schema 2020-12, strict/inert extension behavior, generated defaults with independent fingerprint, MAJOR.MINOR compatibility, explicit migration preview/apply, deterministic migration graph and assurance acknowledgement gates.
-
-## Gate result
-Planning completeness is PASS. Implementation is NOT_STARTED. Under the frozen Backlog credit rules M02 receives no production points until implementation + tests + exact-head evidence + semantic audit satisfy the admitted Work Order.
+## M02 outcome
+The production Configuration & Schema foundation is implemented and evidence-backed: known-path global/project configuration, `.gef/project.json` and `.gef/private/` boundaries, precedence/provenance, canonical JSON Schema 2020-12 artifacts, bounded diagnostics, defaults and `NO_DEFAULT`, independent fingerprints, compatibility classification, deterministic migration planning, mutation-free preview, explicit apply, stale-state protection, receipts and assurance/default-behavior acknowledgement gates.
 
 ## Continuity contract
-Chat history is never the sole continuation authority. Resume from this checkpoint, `.engineering/M02-MODULE-GATE.md`, `GBS-WO-M02-001`, frozen M02 sessions and canonical Source Pack.
+Every material milestone/review/merge or chat transition leaves both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
+
+## Do not redo
+Do not reopen M00-M02 without governed change control or invalidated evidence. Do not use Codex to implement this repository. Do not alter the frozen denominator without a governed recalibration.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means implement `GBS-WO-M02-001`. Report `3.31% complete`, `36/1088 earned`, `1052/1088 remaining` until newer audited evidence changes it.
+In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack, M02 gate/Work Order/evidence receipt and Master Module Index. Resume at `GBS-M03-S01`. Report `4.87% complete`, `53/1088 earned`, `1035/1088 remaining` unless a newer audited checkpoint changes it.
 
-STOP CONDITION: `READY_FOR_GBS_WO_M02_001`.
+STOP CONDITION: `READY_FOR_GBS_M03_S01`.
