@@ -1,6 +1,6 @@
 # GBS-M03-S03 — Repository Identity
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN`
 
 ## Purpose
 Define the normalized provider-neutral repository identity projection consumed by `REPOSITORY_BOUND` project fingerprints without treating mutable local paths, remote aliases or credential-bearing URLs as canonical identity.
@@ -26,7 +26,7 @@ S03 DOES NOT OWN:
 - project ID generation/rekey (S01/S04);
 - content integrity hashes (M37).
 
-## Candidate contract
+## Frozen contract
 
 ### RI-01 — Repository identity is distinct from project identity
 A governed project may have zero, one or multiple repository bindings over its lifetime. Repository identity describes the repository substrate/binding; it does not replace `projectId`.
@@ -55,7 +55,7 @@ Examples of transport differences that must not create distinct identity by them
 - `git@github.com:owner/repo.git`
 - `https://github.com/owner/repo.git`
 
-Provider-specific numeric IDs may later strengthen identity when available, but the generic core cannot require GitHub.
+Provider-specific stable repository IDs may strengthen identity when available, but the generic core cannot require GitHub.
 
 ### RI-06 — Repository root fact is local evidence, not global identity
 The fact that an invocation is inside one Git work tree/root is required to bind operations safely, but the absolute root path remains operational evidence rather than canonical repository identity.
@@ -70,18 +70,37 @@ Repository resolution yields one of:
 
 Consumers may not silently collapse conflict/invalid states into a resolved binding.
 
-### RI-08 — Local-only repositories are first-class
-A Git repository with no remote may still be governed. Its repository identity state is `RESOLVED_LOCAL_ONLY` and uses a local repository lineage descriptor that does not depend on absolute path, machine identity or clock time.
+### RI-08 — Local-only repositories are first-class and use explicit persisted binding
+A Git repository with no remote may still be governed. Its repository identity state is `RESOLVED_LOCAL_ONLY`, but durable repository-bound identity requires an explicit persisted `repositoryBindingId` in governed project metadata.
 
-Candidate local lineage source is an explicit GEF repository-binding identifier stored as governed project metadata when repository-bound assurance is required. S03 does not silently derive a durable cross-machine identity from Git object history because unrelated repositories can share roots/history and history can be rewritten legitimately.
+That identifier:
+- is generated only during explicit adoption/binding;
+- is opaque and non-semantic;
+- does not depend on absolute path, machine identity, clock time, branch, HEAD or Git object history;
+- is preserved across normal clone/backup of the same governed lineage;
+- changes only through an explicit rebinding/rekey-class operation.
+
+Git structural facts alone are insufficient as durable local-only identity because histories may legitimately rewrite or collide across independently created repositories.
 
 ### RI-09 — Multiple remotes require policy, not guessing
 If multiple remotes normalize to different repository candidates, GEF must not assume `origin` is canonical merely because of its name. Selection requires an explicit governed binding or a single unambiguous candidate under frozen policy.
 
-### RI-10 — Repository rename/move may preserve or change binding depending on proof
-Provider repository renames/transfers can change normalized locator while representing the same hosted repository. A provider-stable repository identifier, when available and trusted, may preserve repository identity across locator rename. Without such evidence, locator change is reported as `REPOSITORY_BINDING_CHANGED` rather than guessed equivalent.
+### RI-10 — Formal adoption persists the selected repository binding
+Even when exactly one safe remote candidate exists, formal adoption records the selected repository binding explicitly in governed project metadata. Automatic single-candidate discovery may propose the binding, but canonicalization requires explicit materialization under the adoption transaction.
 
-### RI-11 — Repository projection is structured and minimal
+This avoids future reinterpretation if additional remotes appear or aliases change.
+
+### RI-11 — Stable provider ID has precedence for equality when trusted
+When both a normalized locator and a trusted stable provider repository ID are available, the provider-stable ID is the stronger equality anchor for the remote-bound repository identity. The normalized locator remains descriptive/audit metadata and supports provider-neutral fallback.
+
+A locator rename/transfer therefore does not imply a repository-identity change when the same trusted stable provider ID proves continuity. If the stable ID is absent or cannot be trusted, locator change is reported as `REPOSITORY_BINDING_CHANGED` rather than guessed equivalent.
+
+### RI-12 — Path case remains opaque in the provider-neutral core
+The generic core does not globally lowercase or otherwise normalize repository-path case. Case equivalence is delegated to provider/profile-specific rules where semantics are known and testable.
+
+This prevents cross-provider collisions and silent identity corruption on case-sensitive hosts.
+
+### RI-13 — Repository projection is structured and minimal
 The S02 projection conceptually carries:
 ```text
 RepositoryIdentityProjection
@@ -90,13 +109,13 @@ RepositoryIdentityProjection
   bindingKind            # REMOTE | LOCAL
   normalizedLocator?     # credential-free, transport-normalized
   stableProviderId?      # optional provider-neutral slot
-  localBindingId?        # only for explicit local-only governed binding
+  localBindingId?        # explicit persisted local-only governed binding
   normalizationVersion
 ```
 
 Remote names, absolute paths, branch, HEAD SHA, dirty status and timestamps are excluded. Those belong to operational/exact-state binding, not repository identity.
 
-### RI-12 — Token economy
+### RI-14 — Token economy
 Once repository identity is resolved, downstream contexts carry the compact normalized projection/fingerprint rather than every configured remote. Raw remote data is expanded only for mismatch, ambiguity or audit.
 
 ## Security and privacy invariants
@@ -104,6 +123,7 @@ Once repository identity is resolved, downstream contexts carry the compact norm
 - spoofed/untrusted remote text is validated before use;
 - host/path normalization is deterministic and versioned;
 - case normalization is provider/filesystem-policy aware, never guessed globally;
+- stable provider IDs are trusted only through the owning provider contract;
 - identity equality grants no authorization;
 - ambiguous remotes fail closed for `REPOSITORY_BOUND`.
 
@@ -113,20 +133,22 @@ Implementation must eventually prove:
 2. credentials/query/fragment never enter projection;
 3. changing remote alias only does not change identity;
 4. changing local checkout path only does not change identity;
-5. no-remote repositories can enter an explicit local-only governed binding;
+5. no-remote repositories require and can use an explicit persisted local binding ID;
 6. multiple conflicting candidates fail closed;
-7. provider-stable ID can preserve identity across rename where available;
-8. branch/HEAD/dirty state do not contaminate repository identity;
-9. unresolved/conflicted state cannot satisfy `REPOSITORY_BOUND`;
-10. normalized projection is compact and versioned.
+7. trusted provider-stable ID preserves identity across locator rename where available;
+8. adoption persists the selected binding even for a single remote candidate;
+9. provider-neutral core preserves path case and delegates equivalence correctly;
+10. branch/HEAD/dirty state do not contaminate repository identity;
+11. unresolved/conflicted state cannot satisfy `REPOSITORY_BOUND`;
+12. normalized projection is compact and versioned.
 
-## Open decisions before freeze
-1. Should `RESOLVED_LOCAL_ONLY` require an explicit persisted `repositoryBindingId`, or can Git repository structural facts safely supply local-only identity without persistence?
-2. For remote-bound identity, should a stable provider repository ID take precedence over normalized host/path when both exist?
-3. When exactly one remote candidate exists, may it become canonical without explicit user binding, or should formal adoption always persist the selected binding?
-4. Should normalization treat repository path case as opaque by default and delegate case-equivalence to provider-specific profiles?
+## Resolved freeze decisions
+1. `RESOLVED_LOCAL_ONLY` requires explicit persisted `repositoryBindingId`: **RESOLVED YES**.
+2. Trusted stable provider repository ID takes precedence for equality over normalized host/path when both exist: **RESOLVED YES**.
+3. Formal adoption persists the selected repository binding even when one safe remote candidate exists: **RESOLVED YES**.
+4. Repository path case is opaque in the generic core and delegated to provider/profile-specific semantics: **RESOLVED YES**.
 
 ## Session completion rule
-S03 becomes `FROZEN` after these four decisions are resolved and exact-head semantic review confirms ownership boundaries with M04/M29/M30 and S04.
+Planning content is frozen. Exact-head semantic review must confirm no ownership conflict with M04/M29/M30 and S04, then checkpoint advances to `GBS-M03-S04`.
 
-STOP CONDITION: `REPOSITORY_IDENTITY_DECISIONS_REQUIRED`.
+STOP CONDITION: `M03_S03_EXACT_HEAD_REVIEW_REQUIRED`.
