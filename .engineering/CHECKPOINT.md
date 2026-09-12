@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_SOURCE_PACK_DOD`
+Status: `READY_FOR_BACKLOG_BASELINE`
 
 - Project: GEF Bootstrap
 - Phase: Post-Constitution Source Pack Planning
@@ -21,35 +21,36 @@ Status: `READY_FOR_SOURCE_PACK_DOD`
 - Architecture: `FROZEN`
 - Security: `FROZEN`
 - Test & Benchmark Plan: `FROZEN`
-- Test & Benchmark PR: #27
-- Test & Benchmark reviewed head: `b377cbfe04d57e33ad2e9177b4615c89f43c4334`
-- Main after Test & Benchmark merge: `c885a0ccbafe523012b3bfce3551419131dc1f39`
-- Proof ladder: `T0_STATIC → T1_UNIT → T2_FOCUSED_INTEGRATION → T3_IMPACTED_SYSTEM → T4_E2E_PROFILE → T5_SECURITY → T6_PERFORMANCE → T7_RELEASE_MATRIX`
-- Selective validation: `RISK/UNCERTAINTY/IMPACT BOUNDED WITH MANDATORY EXPANSION TRIGGERS`
-- Shadow Assurance: `REQUIRED BEFORE AUTHORITATIVE AGGRESSIVE SKIPPING/PROOF CARRY`
-- Provider testing: `DETERMINISTIC SIMULATION + GOVERNED LIVE RELEASE EVIDENCE WHEN CLAIMED`
-- Benchmark fixtures: `6 INITIAL REPRESENTATIVE FAMILIES`
-- Performance regression guardrails: `10% ADVISORY / 20% BLOCKING FOR REPEATABLE DETERMINISTIC METRICS, SUBJECT TO RISK-SPECIFIC TIGHTENING`
-- Flake policy: `FLAKE IS DEFECT; RETRY CANNOT MANUFACTURE PASS`
-- Production release evidence: `11 EXACT-HEAD CONDITIONS REQUIRED`
+- Definition of Done: `FROZEN`
+- Definition of Done PR: #29
+- Definition of Done reviewed head: `6730ce6d1e90f3ec134944ea20a2ebfc67898427`
+- Main after DoD merge: `030e1376b3b581d3cc73111bcda5739a0010bd6e`
+- Completion levels: `ITEM_DONE / SESSION_DONE / MODULE_DONE / PROFILE_DONE / PRODUCTION_CANDIDATE / PRODUCTION_RELEASE_DONE`
+- Release blockers: `CORE_REQUIRED + PRODUCT_INCLUDED`
+- Optional adapters: `INDEPENDENT TRACK UNLESS EXPLICITLY CLAIMED`
+- Evidence freshness: `DEPENDENCY/VALIDITY BASED`
+- Production candidate rule: `ALL PRODUCTION-INCLUDED MODULES MODULE_DONE`
+- Construction readiness: `NOT AUTHORIZED BY DOD ALONE`
 - Scope module classification: `47 CORE_REQUIRED / 14 PRODUCT_INCLUDED / 3 OPTIONAL_ADAPTER`
 - Progress weighting model: `RAW_WEIGHT = E + R + I + P`, each dimension 1–5 with evidence/rationale
 - Current canonical branch: `main`
 - Overall project completion: `NOT_YET_BASELINED`
 - ETA: `NOT_YET_RELIABLE`
-- Next legal planning stage: `.engineering/DEFINITION-OF-DONE.md`
-- Stop state: `READY_FOR_SOURCE_PACK_DOD`
+- Next legal planning stage: `BACKLOG BASELINE + E/R/I/P WEIGHTS + HISTORICAL EVIDENCE RECONCILIATION`
+- Stop state: `READY_FOR_BACKLOG_BASELINE`
 
-## Frozen Test & Benchmark outcome
-GEF Bootstrap now has a complete proof ladder, selective validation rules, explicit full-validation triggers, Shadow Assurance promotion/demotion rules, deterministic-versus-live provider evidence, representative benchmark fixtures, flake policy, critical path/contract evidence rules and a complete cross-platform release matrix.
+## Frozen DoD outcome
+GEF Bootstrap now has a strict complete-product completion contract. Both CORE_REQUIRED and PRODUCT_INCLUDED are blocking for the independent production release. Completion is evidence-bound, exact-state aware, validity-bound and selectively reopenable.
 
-Production acceptance cannot rely on selective-test savings alone. `PRODUCTION_RELEASE_DONE` requires exact-head current evidence across admitted obligations, security, recovery/migration, provider profile, supported OS/Node matrix, performance baseline and proof validity.
+`PRODUCTION_RELEASE_DONE` requires complete product obligations, deterministic-plane conformance, Security T1–T12, applicable T0–T7 release evidence, cross-platform support, NEW_PROJECT and brownfield E2E, checkpoint/resume, migration/recovery, GitHub profile proof, documentation/runbooks and exact accepted release-state binding.
+
+DoD freeze does not authorize implementation. Functional construction becomes legal only after the complete admitted backlog is mapped, E/R/I/P weights are frozen, historical work is evidence-reconciled, required remaining Source Pack governance is closed and a checkpoint explicitly declares `READY_FOR_PRODUCTION_CONSTRUCTION`.
 
 ## Baseline truth
-A global percentage or ETA remains invalid until the production Definition of Done is frozen and an admitted backlog maps work to requirements/modules with reviewed E/R/I/P weights. Historical work will be credited only where current evidence satisfies the frozen DoD.
+A global completion percentage and ETA are still invalid. They become legal only after backlog baseline, requirement/module mapping, reviewed E/R/I/P weights and historical evidence reconciliation.
 
 ## Do not redo
-Do not reopen Constitution, Project Overview, Requirements, Scope, Architecture, Security or Test & Benchmark without governed supersession/change control. Do not equate line coverage or retry-success with proof. Do not promote aggressive test skipping without Shadow Assurance. Do not begin functional implementation before remaining ordered Source Pack stages permit construction. Do not use Codex to implement this repository.
+Do not reopen Constitution, Project Overview, Requirements, Scope, Architecture, Security, Test & Benchmark or DoD without governed change control. Do not treat DoD freeze as permission to start code. Do not credit historical planning automatically without backlog mapping/evidence reconciliation. Do not use Codex to implement this repository.
 
 ## Resume instruction
-Read this checkpoint plus all frozen Source Pack documents, ADR-0001, Decisions/Technology Ledgers, Planning Protocol and Master Module Index. Continue with canonical project-level Definition of Done. Functional implementation remains NOT_STARTED.
+Read this checkpoint plus all frozen Source Pack documents, ADR-0001, Decisions/Technology Ledgers, Planning Protocol and Master Module Index. Continue with the admitted Backlog Baseline and weighting model. Functional implementation remains NOT_STARTED.
