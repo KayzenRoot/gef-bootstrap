@@ -122,8 +122,8 @@ These modules may share harness infrastructure in Architecture to reduce duplica
 - `GBS-M63 Executor Performance Engine` — `CORE_REQUIRED` because token/time/executor efficiency is a foundational product objective.
 
 ## Classification summary
-- `CORE_REQUIRED`: 48 modules.
-- `PRODUCT_INCLUDED`: 12 modules.
+- `CORE_REQUIRED`: 47 modules.
+- `PRODUCT_INCLUDED`: 14 modules.
 - `OPTIONAL_ADAPTER`: 3 modules (`M39`, `M40`, `M41`).
 - `EXPERIMENTAL_GATED`: currently handled primarily at technology/capability level rather than whole-module exclusion.
 - `OUT_OF_SCOPE`: 0 existing inventory modules at this stage; out-of-scope product identities remain listed below.
