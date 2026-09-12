@@ -133,3 +133,31 @@ Status: `ACTIVE`
 ## D-0033 — Legacy runtime/CLI names are refactor-required, not silently canonical
 - Decision: Scaffold IDs remain stable while legacy runtime/CLI-oriented names/responsibilities such as M01, M47, M49 and runtime-assuming quality modules are marked REFACTOR_REQUIRED. Detailed rename/reframing occurs in Scope/Architecture planning without renumbering or destructive history rewrite.
 - Status: APPROVED
+
+## D-0034 — DONE is evidence-bound and layered
+- Decision: No agent claim, percentage, file presence, open PR or historical green test is sufficient for completion. DONE requires satisfied admitted obligations, current applicable evidence, blocker disposition permitted by policy and promoted governed state. Completion is evaluated at item, module, bootstrap-application and V1 levels without conflating them.
+- Status: APPROVED
+
+## D-0035 — Planning session completion has a minimum evidence contract
+- Decision: A FROZEN planning session must have a stable ID/final status, self-contained documented decision, routed/closed open questions, synchronized Decisions/Technology Ledgers where applicable, recorded scope/dependency impact, repository binding when applicable, audit verdict and promoted checkpoint identifying the next legal continuation point.
+- Status: APPROVED
+
+## D-0036 — Completion evidence binds to exact subject state
+- Decision: Where proof depends on repository/configuration state, exact-head or equivalent exact-state binding is mandatory. For external/non-repository subjects, evidence binds to an equivalent immutable/versioned identity. Later relevant change invalidates only dependent proofs where the dependency graph permits.
+- Status: APPROVED
+
+## D-0037 — DONE_WITH_ACCEPTED_GAPS is policy-gated
+- Decision: DONE_WITH_ACCEPTED_GAPS is not a universal terminal state. It is allowed only where an owning policy/profile explicitly permits it and the gap is identified, classified, owned/dispositioned, non-blocking and does not violate a NECESSARY security/assurance/completion obligation. Blocking defects, invalid evidence and unresolved source conflicts cannot be hidden as accepted gaps.
+- Status: APPROVED
+
+## D-0038 — READY_FOR_PLANNING requires a usable governed planning surface
+- Decision: A Bootstrap application may report READY_FOR_PLANNING only when project identity, applicable governance/source skeleton or brownfield mappings, authority/gap representation, planning/checkpoint/resume protocol, adoption mode, applicable Git/GitHub governance or truthful permission gaps, absence of planning blockers and a bound conformance receipt are all present. Otherwise use a truthful gap/block state.
+- Status: APPROVED
+
+## D-0039 — V1 must be measurable without fabricating optimization gains
+- Decision: V1 final acceptance requires telemetry and a reproducible baseline/benchmark path for token/time/engineering-cost outcomes. Universal percentage improvement is not a release prerequisite before representative baseline data exists. When comparable baseline data is available, results and regressions must be reported truthfully with confidence; optimization targets remain targets until proven.
+- Status: APPROVED
+
+## D-0040 — Optional integrations never silently block independent core completion
+- Decision: UADS, Hive, UGAS and other ecosystem integrations remain optional unless explicitly admitted into a target profile or future core scope. Their absence/failure may block the corresponding adapter/profile but cannot block independent GEF Bootstrap core completion under the current product boundary.
+- Status: APPROVED
