@@ -1,6 +1,6 @@
 # Source Pack Closure Audit
 
-Status: `BLOCKED_CORRECTIONS_REQUIRED`
+Status: `PASSED`
 
 ## Purpose
 Audit the frozen Source Pack and supporting governance surfaces before functional production construction is authorized.
@@ -27,52 +27,66 @@ Audit the frozen Source Pack and supporting governance surfaces before functiona
 - Definition of Done
 - Backlog Baseline
 - Deployment & Distribution
+- Source Hierarchy
+- Decisions Supersession Map
 
-## Closure findings
+## Prior blockers and dispositions
 
-### F-001 — Source Hierarchy is stale and conflicts with frozen domain-authority model
-Severity: `BLOCKING`
+### F-001 — Source Hierarchy stale linear scaffold
+Status: `RESOLVED`
 
-`.engineering/SOURCE-HIERARCHY.md` remains `INITIAL_SCAFFOLD` and describes a simple linear source priority. Frozen decision D-0021 requires domain-specific authority, with explicit domains including repository state, project state, decision, scope, requirement, architecture, security, completion, execution, validation, planning, future work, innovation and conversation.
+Disposition:
+- `.engineering/SOURCE-HIERARCHY.md` is now FROZEN;
+- authority is domain-specific rather than newest-wins or linear priority;
+- descriptive vs normative truth, exact-state validity, conflict behavior, UNKNOWN/fail-closed behavior and chat non-authority are explicit.
 
-Required correction:
-- replace the scaffold with a frozen domain-specific authority contract;
-- define conflict behavior, UNKNOWN behavior, validity/fingerprint behavior and chat-memory non-authority;
-- preserve exact-state evidence semantics and brownfield descriptive-vs-normative truth.
+### F-002 — Historical Decisions Ledger ambiguity
+Status: `RESOLVED`
 
-### F-002 — Historical Decisions Ledger contains superseded product-model statements without a closure supersession map
-Severity: `BLOCKING`
+Disposition:
+- `.engineering/DECISIONS-SUPERSESSION-MAP.md` is FROZEN;
+- historical D-* records remain preserved;
+- legacy instruction-first/V1/Codex-era mechanics are explicitly mapped to the later hybrid complete-production controlling sources;
+- deterministic work plane remains required without becoming semantic authority.
 
-Historical decisions including D-0004, D-0006, D-0008, D-0027/D-0029 and D-0047 reflect earlier instruction-first/V1/Codex-era assumptions. They are legitimate history but later constitutional amendment, complete-production Scope, frozen Architecture and current checkpoint supersede those mechanics.
+### F-003 — Master Module Index closure synchronization
+Status: `RESOLVED`
 
-Required correction:
-- create an explicit canonical supersession map that preserves history while identifying the current controlling sources;
-- no destructive rewriting of historical decisions is required;
-- new agents must be able to determine the active interpretation without rediscovery.
+Disposition:
+- Master Module Index is closure-synchronized with the complete-production model;
+- counts remain 16 areas / 64 modules / 282 sessions;
+- stable reframes M01/M47/M49/M62 remain canonical by name while IDs remain stable.
 
-### F-003 — Master Module Index status is `SCOPE_FROZEN`, not yet closure-synchronized
-Severity: `NON_BLOCKING_UNTIL_FINAL_PROMOTION`
-
-The inventory is correct at 16 areas / 64 modules / 282 sessions, but final Source Pack closure should record that the index has been reconciled with the complete-production model and current stable module names.
-
-## Passed closure checks
-- Constitution/Scope agree on hybrid complete-production direction: PASS
+## Final closure checks
+- Constitution/Scope hybrid complete-production alignment: PASS
+- Project Overview/Requirements/Scope consistency: PASS
+- Architecture/Security/Test/DoD/Deployment compatibility: PASS
+- Source Hierarchy domain authority consistency: PASS
+- historical decision supersession resolvable without destructive rewrite: PASS
 - 64 modules reconcile to 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED + 3 OPTIONAL_ADAPTER: PASS
 - weighted denominator remains 1088: PASS
 - earned weight remains evidence-bound at 16: PASS
 - optional adapters remain outside independent-product denominator: PASS
-- Architecture supports deterministic work plane without granting it semantic authority: PASS
-- Security/DoD/Test/Deployment are mutually compatible: PASS
-- checkpoint dual human/machine continuity contract exists: PASS
-- Codex is prohibited for implementing this repository: PASS
-- no functional implementation has started: PASS
+- construction executor for this repository remains ChatGPT + connected project tools: PASS
+- Codex remains prohibited for implementing this repository: PASS
+- dual human/machine checkpoint continuity contract exists: PASS
+- official audited progress reporting contract exists: PASS
+- no unresolved Source Pack blocker remains: PASS
 
 ## Construction-readiness verdict
-`BLOCKED`
+`APPROVED`
 
-The project MUST NOT enter `READY_FOR_PRODUCTION_CONSTRUCTION` until F-001 and F-002 are corrected, the closure audit is rerun against the exact corrected head, and Checkpoint is promoted.
+The Source Pack is sufficiently closed to authorize production construction planning/execution under the frozen contracts.
+
+Promotion requirement:
+- exact-head review of this closure synchronization;
+- merge to `main`;
+- promote Checkpoint to `READY_FOR_PRODUCTION_CONSTRUCTION`.
+
+## First legal construction target
+Begin with `GBS-M01 — Deterministic Work Plane Kernel` according to the Master Module Index and frozen Architecture, unless a dependency analysis proves that a narrower prerequisite slice in M02/M03/M04 must be constructed first. Any such dependency movement must remain within the admitted backlog and be checkpointed.
 
 ## Progress effect
-This audit earns no production weight by itself. Official completion remains `16 / 1088 = 1.47%`.
+Source Pack closure governance does not itself earn additional production weight. Official completion remains `16 / 1088 = 1.47%` until an admitted production backlog item or module earns valid evidence credit.
 
-STOP CONDITION: `SOURCE_PACK_CLOSURE_CORRECTIONS_REQUIRED`.
+STOP CONDITION: `READY_FOR_PRODUCTION_CONSTRUCTION_PROMOTION`.
