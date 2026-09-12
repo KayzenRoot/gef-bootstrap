@@ -3,7 +3,7 @@
 Status: `IN_DISCUSSION`
 
 ## Purpose
-GEF Bootstrap exists to prepare a newly created or existing GitHub repository to be developed under a governed, instruction-first engineering system optimized for **construction speed, low executor token consumption, narrow repository exploration, selective validation, strong review quality, and safe continuation across chats**.
+GEF Bootstrap exists to prepare a newly created or existing GitHub repository to be developed under a governed, instruction-first engineering system optimized for **maximum safe token economy, construction speed, minimal executor cognition, narrow repository exploration, selective validation, strong review quality, and safe continuation across chats**.
 
 GEF Bootstrap is **not** a product-runtime CLI and is **not** an application that ships functional source code of its own. Its repository is a versioned body of engineering instructions, protocols, templates, schemas, decision rules, planning structures, review contracts, prompt contracts and reusable project-bootstrap artifacts that ChatGPT and Codex can follow.
 
@@ -29,13 +29,43 @@ The system is designed around a deliberate division of labor:
    - returns compact machine-oriented evidence;
    - stops when scope, source or evidence assumptions become invalid.
 
-The product therefore optimizes not merely prompt length, but **total engineering cost per safe change**.
+The product therefore optimizes not merely prompt length, but **total engineering cost per safe change**, with paid executor-token consumption treated as a first-class architectural constraint.
+
+## Token-economy doctrine
+Token economy is not a cosmetic optimization phase. It is a cross-cutting design invariant.
+
+Every applicable module/session must ask:
+
+1. Can this reasoning be performed once and frozen instead of repeated by the executor?
+2. Can this source be represented by a smaller authoritative capsule, index, fingerprint or delta?
+3. Can the executor receive exact files/symbols/contracts instead of searching the repository?
+4. Can a deterministic mechanism answer this question without an LLM?
+5. Can valid prior proof/context be carried forward instead of regenerated?
+6. Can review inspect semantic delta and invalidated proof instead of rereading accepted material?
+7. Can executor output be machine-compact while preserving all evidence needed for audit?
+8. Can retries be prevented through better preflight, source matching and prescribed algorithms?
+9. Can a cheaper sufficient model or deterministic tool safely perform this bounded task?
+10. Does the optimization merely move token cost elsewhere, or reduce the complete end-to-end token path?
+
+The project is explicitly allowed to become larger in planning depth, schemas, maps, indexes and deterministic metadata when that one-time complexity materially reduces recurring model-token consumption across future projects and changes.
+
+### Token safety floor
+The system must never save tokens by silently dropping required source truth, weakening security, suppressing relevant uncertainty, skipping required assurance, hiding evidence, or forcing a smaller context radius after a genuine dependency expansion is discovered.
+
+When economy and correctness conflict, correctness wins. The engineering challenge is to redesign the information path so the same assurance can be achieved with less repeated cognition.
 
 ## Core success dimensions
 The GEF Bootstrap must explicitly optimize and later measure:
 
 - executor input tokens;
 - executor output tokens;
+- estimated reasoning/token overhead when observable;
+- context tokens assembled but never needed;
+- duplicated source tokens;
+- repeated reasoning tokens avoided;
+- review reread tokens avoided;
+- correction/retry token cost;
+- total model-token cost per accepted change;
 - executor active time;
 - repository searches;
 - files opened;
@@ -199,53 +229,62 @@ ChatGPT should perform the expensive architectural/root-cause reasoning before e
 ### P4 — Optimize total engineering cost, not prompt length alone
 Success is measured across tokens, executor time, searches, files read, tests, correction rounds, review effort and defect prevention.
 
-### P5 — Source truth over conversation memory
+### P5 — Token economy is a first-class architectural invariant
+Every applicable design decision must seek the lowest safe recurring token cost. Redundant context, repeated reasoning, unnecessary search, verbose executor output, avoidable retries and duplicate review are engineering waste to be designed out, not accepted as normal LLM behavior.
+
+### P6 — Minimize executor cognition
+Codex should implement and prove a pre-resolved bounded recipe whenever safely possible. Open-ended discovery is an escalation state, not the default execution mode.
+
+### P7 — Source truth over conversation memory
 Checkpoint, approved decisions, scope, DoD, architecture, requirements, Git state and evidence outrank conversational recollection.
 
-### P6 — Resume must be a product capability
+### P8 — Resume must be a product capability
 Cross-chat continuation is not an informal convenience. The bootstrap must create enough governed state to reconstruct where the project is, what is frozen and what must happen next.
 
-### P7 — Review quality is non-negotiable
+### P9 — Review quality is non-negotiable
 Optimization may reduce rereading and duplicated validation, but must not weaken semantic review, regression detection, security review or exact-head assurance.
 
-### P8 — Test only what is safely necessary first
+### P10 — Test only what is safely necessary first
 During bounded implementation, begin with focused/impacted tests and expand based on dependency impact, risk, uncertainty or policy. Full suites are not the default local reflex.
 
-### P9 — Proof reuse requires validity
+### P11 — Proof reuse requires validity
 A prior proof/test/review may carry forward only when all relevant inputs and its validity fingerprint remain compatible.
 
-### P10 — Shadow assurance before aggressive test skipping
+### P12 — Shadow assurance before aggressive test skipping
 Any mechanism that skips tests or reuses proofs must first demonstrate, through shadow comparison against fuller validation, that assurance is not materially degraded.
 
-### P11 — No fabricated progress or evidence
+### P13 — No fabricated progress or evidence
 Percentages, ETA, tests, gates, proof status and success states must be measured or explicitly marked unavailable/estimated with confidence.
 
-### P12 — Preserve existing projects
+### P14 — Preserve existing projects
 Adoption into an existing repository must not silently overwrite decisions, active work, governance or product architecture.
 
-### P13 — Minimal manual and redundant work
+### P15 — Minimal manual and redundant work
 If an authorized tool or deterministic repository command can safely produce a result, the process should not spend LLM reasoning or require user repetition unnecessarily.
 
-### P14 — Explicit gaps beat fake success
+### P16 — Explicit gaps beat fake success
 Missing permissions, unsupported capabilities, absent checks or unresolved source conflicts produce an explicit gap/block state, never a false `SUCCESS`.
 
-### P15 — Instruction-first, tool-agnostic core
+### P17 — Instruction-first, tool-agnostic core
 GEF Bootstrap is a versioned engineering instruction system. It may guide ChatGPT, Codex and future executors, but its canonical knowledge must not depend on one specific executor product.
 
-### P16 — Independent core, optional ecosystem
+### P18 — Independent core, optional ecosystem
 The bootstrap may cooperate with UADS, Hive, UGAS and future systems, but the core remains independent.
 
-### P17 — Versioned evolution
+### P19 — Versioned evolution
 Protocols, templates, schemas, GEF compatibility and migration instructions are versioned. Behavioral changes must be explicit.
 
-### P18 — Immediately resumable and auditable
+### P20 — Immediately resumable and auditable
 After bootstrap or any approved increment, another authorized agent should be able to determine from repository sources what the project is, what is frozen, what remains open, what evidence exists and what must happen next.
 
-### P19 — Master prompt is a final delivery artifact, not an early design driver
+### P21 — Master prompt is a final delivery artifact, not an early design driver
 The project will eventually publish a canonical master bootstrap prompt that orchestrates application of this repository's instructions into a target project. However, its exact invocation model, preferred executor, packaging, UX and operational usage are deliberately deferred until the Bootstrap's protocols, templates, schemas, profiles and validation rules are complete enough to compile that prompt from stable sources.
 
-### P20 — Bootstrap intelligence stays repository-driven
+### P22 — Bootstrap intelligence stays repository-driven
 The future master prompt must reference and orchestrate the versioned intelligence in `gef-bootstrap`; it must not duplicate the entire body of bootstrap knowledge into a permanently bloated prompt. The repository remains the canonical source, and the master prompt is an entry/orchestration artifact.
+
+### P23 — Measure the complete token path
+A shorter prompt is not automatically cheaper. Optimization must account for context assembly, executor input/output, reasoning, searches, retries, review and correction rounds so token cost is not merely displaced to another stage.
 
 ## Product-level optimization technologies to develop in later sessions
 The following concepts are candidates for dedicated design, not yet frozen implementations:
@@ -265,14 +304,28 @@ The following concepts are candidates for dedicated design, not yet frozen imple
 - **Architecture Question Cache**: preserve resolved architectural questions.
 - **Shadow Assurance**: measure proposed skipped tests/proofs against full validation before granting authority.
 - **Exact-Head Gate Receipts**: bind hosted evidence to the exact candidate without source-only evidence commits.
+- **Token Ledger**: attribute token spend to source loading, prompt, execution, retry, review and correction stages.
+- **Context Dedup Graph**: identify semantically repeated canonical material and inject references/capsules instead of duplicate prose.
+- **Semantic Source Router**: select only authoritative source fragments needed for the current task class/context radius.
+- **Executor Cognition Budget**: cap open-ended reasoning/discovery and force escalation when the recipe cannot be followed safely.
+- **Prompt Entropy Reducer**: remove ambiguity, alternative paths and unnecessary prose from execution packs while retaining constraints and proof obligations.
+- **Delta Context Capsule**: provide prior accepted state plus only changed/invalidated facts for subsequent correction rounds.
+- **Token ROI Governor**: require expensive context expansion, model escalation or broad validation to have a stated engineering reason and expected assurance benefit.
+- **Knowledge Distillation Layer**: maintain compact, versioned machine-oriented summaries of stable project contracts without replacing canonical human sources.
+- **Hot Context Cache**: reuse validated high-frequency project facts while fingerprints remain compatible.
+- **Cold Source Pointer Model**: keep rarely needed detail addressable but outside normal executor context until explicitly required.
+- **Output Minimality Contract**: executor returns evidence-rich structured output without narrating reasoning already encoded in the recipe.
 
 ## Current decision state
 The user has explicitly established that:
 
 - GEF Bootstrap is an **instruction/governance project**, not an application/code product;
+- **maximum safe token economy is one of the project's highest priorities and must influence the architecture across modules rather than exist as one isolated optimization feature**;
+- the project may take longer to design and may become larger if that produces materially lower recurring token cost in future software construction;
 - its primary business value is faster safe software construction with lower Codex token/time consumption;
 - ChatGPT should do the higher-level reasoning and provide Codex with a highly prescribed implementation recipe;
-- reviews must remain rigorous and focused on preventing bugs/regressions;
+- Codex should not spend expensive tokens rediscovering decisions that can be resolved and frozen beforehand;
+- reviews must remain rigorous and focused on preventing bugs/regressions while minimizing repeated rereading;
 - test execution must become impact-aware so coding does not repeatedly run thousands of irrelevant tests;
 - test/review optimization must preserve assurance and expand when risk/uncertainty requires;
 - project initialization must configure planning, canonical sources, checkpoint/chat continuation, prompt/review standards, GitHub workflow, progress and evidence conventions;
