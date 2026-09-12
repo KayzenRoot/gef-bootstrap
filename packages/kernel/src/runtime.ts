@@ -20,23 +20,19 @@ class AsyncLimiter {
     if(this.#active>=this.#limit)await new Promise<void>(resolve=>this.#queue.push(resolve));
     this.#active+=1;
     try{return await task();}
-    finally{
-      this.#active-=1;
-      this.#queue.shift()?.();
-    }
+    finally{this.#active-=1;this.#queue.shift()?.();}
   }
 }
 
 class AsyncMutex {
   #tail:Promise<void>=Promise.resolve();
-  async run<T>(task:()=>Promise<T>):Promise<T>{
+  async acquire():Promise<() => void>{
     let release!:()=>void;
     const next=new Promise<void>(resolve=>{release=resolve;});
     const previous=this.#tail;
     this.#tail=next;
     await previous;
-    try{return await task();}
-    finally{release();}
+    return release;
   }
 }
 
@@ -73,41 +69,38 @@ export class KernelRuntime {
       if(!registration.ok)return fail(registration.error);
       const validated=registration.value.validateInput(request.input);
       if(!validated.ok)return fail(createGefError({id:this.#ports.ids.nextId("err"),category:"INPUT",reason:"invalid_request",severity:"ERROR",summary:"Command input failed validation",retryability:"NEVER",recoverability:"NONE_REQUIRED",lifecyclePhase:lifecycle.currentPhase,terminal:"BLOCKED",commandId:request.commandId,runId,metadata:validated.metadata??{reason:validated.reason}}));
-
       lifecycle.enter("PREFLIGHTING");
       const preflight=await this.#preflight(registration.value,request,runId,lifecycle.currentPhase);
       if(!preflight.ok)return fail(preflight.error);
-
       lifecycle.enter("READY");
       const interruption=this.#interruption(request,runId,lifecycle.currentPhase);
       if(interruption)return fail(interruption);
       lifecycle.enter("EXECUTING");
-
       const context:ExecutionContext=Object.freeze({runId,...(request.parentRunId===undefined?{}:{parentRunId:request.parentRunId}),commandId:request.commandId,contractVersion:request.contractVersion,capabilities:this.#capabilities,...(preflight.target===undefined?{}:{target:preflight.target}),...(request.signal===undefined?{}:{signal:request.signal}),...(request.deadlineMs===undefined?{}:{deadlineMs:request.deadlineMs}),identity:this.#identity,ports:this.#ports});
       const invoke=async()=>await registration.value.handler(validated.value,context) as HandlerOutcome<T>;
-      const outcome=registration.value.mutation?await this.#mutationMutex.run(invoke):await this.#readLimiter.run(invoke);
-      if(!outcome.ok)return fail(outcome.error,outcome.terminal,outcome.effectStatus);
-
-      const effectStatus=outcome.effectStatus??(registration.value.mutation?"CONFIRMED":"NONE");
-      let receiptRef:string|undefined;
-      if(registration.value.mutation){
-        lifecycle.enter("VERIFYING");
-        const verifyInterruption=this.#interruption(request,runId,lifecycle.currentPhase);
-        if(verifyInterruption)return fail(verifyInterruption,undefined,effectStatus);
-        if(!this.#ports.verification)return fail(this.#missingPort("verification",request.commandId,runId,lifecycle.currentPhase),"BLOCKED",effectStatus);
-        const verified=await this.#ports.verification.verify({runId,commandId:request.commandId,...(preflight.target===undefined?{}:{target:preflight.target}),value:outcome.value,effectStatus,...(request.signal===undefined?{}:{signal:request.signal}),...(request.deadlineMs===undefined?{}:{deadlineMs:request.deadlineMs})});
-        if(!verified.ok)return fail(verified.error,undefined,effectStatus);
-
-        lifecycle.enter("RECEIPTING");
-        const receiptInterruption=this.#interruption(request,runId,lifecycle.currentPhase);
-        if(receiptInterruption)return fail(receiptInterruption,undefined,effectStatus);
-        if(!this.#ports.receipts)return fail(this.#missingPort("receipt",request.commandId,runId,lifecycle.currentPhase),"RECOVERY_REQUIRED",effectStatus);
-        const receipt=await this.#ports.receipts.write({runId,commandId:request.commandId,...(preflight.target===undefined?{}:{target:preflight.target}),value:outcome.value,effectStatus,lifecyclePhases:lifecycle.phases,...(request.signal===undefined?{}:{signal:request.signal}),...(request.deadlineMs===undefined?{}:{deadlineMs:request.deadlineMs})});
-        if(!receipt.ok)return fail(receipt.error,"RECOVERY_REQUIRED",effectStatus);
-        receiptRef=receipt.receiptRef;
-      }
-      const success:SuccessResult<T>={ok:true,value:outcome.value,lifecycle:lifecycle.finish({terminal:"SUCCEEDED",effectStatus,...(receiptRef===undefined?{}:{receiptRef})})};
-      return success;
+      const releaseMutation=registration.value.mutation?await this.#mutationMutex.acquire():undefined;
+      try{
+        const outcome=registration.value.mutation?await invoke():await this.#readLimiter.run(invoke);
+        if(!outcome.ok)return fail(outcome.error,outcome.terminal,outcome.effectStatus);
+        const effectStatus=outcome.effectStatus??(registration.value.mutation?"CONFIRMED":"NONE");
+        let receiptRef:string|undefined;
+        if(registration.value.mutation){
+          lifecycle.enter("VERIFYING");
+          const verifyInterruption=this.#interruption(request,runId,lifecycle.currentPhase);
+          if(verifyInterruption)return fail(verifyInterruption,"RECOVERY_REQUIRED",effectStatus);
+          if(!this.#ports.verification)return fail(this.#missingPort("verification",request.commandId,runId,lifecycle.currentPhase),"BLOCKED",effectStatus);
+          const verified=await this.#ports.verification.verify({runId,commandId:request.commandId,...(preflight.target===undefined?{}:{target:preflight.target}),value:outcome.value,effectStatus,...(request.signal===undefined?{}:{signal:request.signal}),...(request.deadlineMs===undefined?{}:{deadlineMs:request.deadlineMs})});
+          if(!verified.ok)return fail(verified.error,undefined,effectStatus);
+          lifecycle.enter("RECEIPTING");
+          const receiptInterruption=this.#interruption(request,runId,lifecycle.currentPhase);
+          if(receiptInterruption)return fail(receiptInterruption,"RECOVERY_REQUIRED",effectStatus);
+          if(!this.#ports.receipts)return fail(this.#missingPort("receipt",request.commandId,runId,lifecycle.currentPhase),"RECOVERY_REQUIRED",effectStatus);
+          const receipt=await this.#ports.receipts.write({runId,commandId:request.commandId,...(preflight.target===undefined?{}:{target:preflight.target}),value:outcome.value,effectStatus,lifecyclePhases:lifecycle.phases,...(request.signal===undefined?{}:{signal:request.signal}),...(request.deadlineMs===undefined?{}:{deadlineMs:request.deadlineMs})});
+          if(!receipt.ok)return fail(receipt.error,"RECOVERY_REQUIRED",effectStatus);
+          receiptRef=receipt.receiptRef;
+        }
+        return {ok:true,value:outcome.value,lifecycle:lifecycle.finish({terminal:"SUCCEEDED",effectStatus,...(receiptRef===undefined?{}:{receiptRef})})};
+      }finally{releaseMutation?.();}
     }catch(_cause:unknown){return fail(internalError({id:this.#ports.ids.nextId("err"),runId,commandId:request.commandId,phase:lifecycle.currentPhase}));}
   }
 
