@@ -1,0 +1,2 @@
+import type { ProcessSpec } from "@gef-bootstrap/contracts";
+export function createProcessSpec(params:{executable:string;argv?:readonly string[];cwd?:string;env?:Readonly<Record<string,string>>}):ProcessSpec{if(params.executable.trim().length===0)throw new TypeError("Process executable is required");return Object.freeze({executable:params.executable,argv:Object.freeze([...(params.argv??[])]),...(params.cwd===undefined?{}:{cwd:params.cwd}),...(params.env===undefined?{}:{env:Object.freeze({...params.env})})});}

@@ -1,0 +1,16 @@
+{
+  "name": "@gef-bootstrap/workspace",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "build": "tsc -b packages/contracts packages/kernel packages/cli --pretty false",
+    "typecheck": "tsc -b packages/contracts packages/kernel packages/cli --pretty false",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "validate": "npm run typecheck && node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3"
+  }
+}
