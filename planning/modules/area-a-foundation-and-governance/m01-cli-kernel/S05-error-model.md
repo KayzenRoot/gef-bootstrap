@@ -1,6 +1,6 @@
 # GBS-M01-S05 — Error Model
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Objective
 Freeze the shared typed error/result model for the Deterministic Work Plane Kernel so routing, lifecycle, CLI, evidence, recovery, CI and future modules can exchange compact machine-readable failures without prose guessing, while preserving cause, remediation and safety truth.
@@ -169,9 +169,9 @@ The model is designed to eliminate repeated diagnosis:
 5. Remediation uses structured action IDs/parameters, not self-authorizing executable command strings: **RESOLVED YES**.
 
 ## Module handoff
-With S01-S05 frozen-candidate, M01 now has complete planning contracts for runtime, command routing, lifecycle, exit-code projection and shared error semantics. This does **not** by itself satisfy `GBS-M01 MODULE_DONE`; implementation, tests, evidence and the applicable module DoD are still required. The next legal step must be determined by the frozen Planning Protocol and Backlog rather than assumed from session count.
+S01-S05 are frozen. M01 has complete planning contracts for runtime, command routing, lifecycle, exit-code projection and shared error semantics. This does **not** satisfy `GBS-M01 MODULE_DONE`; implementation, tests, evidence and the module DoD are still required.
 
-## Session completion gate
-S05 becomes final `FROZEN` only after exact-head review and merge. Immediately afterward, perform the M01 module-level gate against Planning Protocol/Backlog/DoD to determine whether implementation starts now or another planned stage is legally next. No functional implementation is introduced by this planning session.
+## Freeze record
+Final exact-head review passed on PR `#45`, reviewed head `8ac761cc0a98f7aacee711feaea1db97cd9dd1e5`, then merged to main at `02b8ffe98dc7e5fafa2a7b0e30dd5e0a6fae21ee` before the module-level implementation gate.
 
-STOP CONDITION: `M01_S05_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M01_S05_FROZEN`.
