@@ -1,6 +1,6 @@
 # GBS-M01-S01 — Deterministic Work Plane Runtime
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN_CANDIDATE`
 
 ## Session identity
 - Module: `GBS-M01 — Deterministic Work Plane Kernel`
@@ -10,76 +10,35 @@ Status: `IN_DISCUSSION`
 - Current implementation state: `AUTHORIZED_NOT_STARTED`
 
 ## Binding sources
-This session is constrained by:
-- `GBS-CONSTITUTION-v1.1`;
-- frozen Scope;
-- frozen Architecture;
-- frozen Security;
-- frozen Test & Benchmark Plan;
-- frozen Definition of Done;
-- frozen Backlog Baseline;
-- frozen Deployment & Distribution;
-- frozen Source Hierarchy;
-- frozen Decisions Supersession Map;
-- Source Pack Closure Audit `PASSED`;
-- current Checkpoint `READY_FOR_PRODUCTION_CONSTRUCTION`.
+This session is constrained by `GBS-CONSTITUTION-v1.1`, frozen Scope, Architecture, Security, Test & Benchmark Plan, Definition of Done, Backlog Baseline, Deployment & Distribution, Source Hierarchy, Decisions Supersession Map, passed Source Pack Closure Audit and checkpoint `READY_FOR_PRODUCTION_CONSTRUCTION`.
 
 ## Objective
-Freeze the runtime/foundation contract for the deterministic work plane so later kernel, routing, lifecycle, error, Git/filesystem, evidence and operator modules can share one stable execution substrate without granting deterministic code semantic authority.
+Freeze the runtime/foundation contract for the deterministic work plane so later kernel, routing, lifecycle, error, Git/filesystem, evidence and operator modules share one stable execution substrate without granting deterministic code semantic authority.
 
-## Runtime decision
-The deterministic work plane uses **TypeScript on a supported Node.js LTS line** as the canonical production runtime.
-
-Why:
-- first-class TypeScript/JSON/schema ecosystem;
-- strong cross-platform filesystem/process support for Windows, Linux and macOS;
-- package-first distribution matches frozen Deployment;
-- one-language core reduces maintenance and recurring model context;
-- adequate performance for repository/governance workloads without polyglot complexity;
-- library + thin CLI packaging is natural;
-- GitHub/provider integrations remain straightforward;
-- native extensions remain unnecessary until measured evidence proves otherwise.
-
-A second implementation language is prohibited by default. Introducing Rust/Go/native components requires a governed Architecture change supported by measured performance/security/packaging ROI.
+## Frozen runtime contract
+1. **Runtime:** TypeScript on a supported Node.js LTS line. The exact supported Node line is owned by M51 Compatibility Matrix and release evidence, not hard-coded in M01.
+2. **Surface:** library-first typed application API; the official CLI is a thin adapter and core use-cases never depend on CLI text parsing.
+3. **Process model:** request-scoped single-process execution by default. A daemon/service is not baseline architecture.
+4. **Concurrency:** opt-in and bounded. Independent reads/checks may run concurrently; mutations sharing a target/recovery surface are serialized or governed by an explicit coordination contract.
+5. **Cancellation:** abort, operator cancellation and timeout propagate through owned asynchronous work and remain distinguishable from dependency, policy, integrity and internal failures.
+6. **Process safety:** child processes use `executable + argv` with shell disabled by default. Shell execution requires explicit use-case ownership and security classification.
+7. **Network:** core deterministic repository operations are network-optional. Provider/package/update access is an explicit capability and failure degrades or blocks truthfully without corrupting local state.
+8. **State:** `CANONICAL_STATE`, `DERIVED_STATE` and `OPERATIONAL_STATE` remain separate. Derived/operational state can never silently become canonical truth.
+9. **Persistence:** persistence is behind a port. Filesystem-backed derived state is the mandatory baseline. SQLite is an interchangeable optional backend only when benchmark/stability/ROI evidence justifies it. No unique project truth may exist only in cache/database.
+10. **Deterministic inputs:** clock, ID generation, environment, filesystem, process execution, Git, provider/network and derived persistence are injectable where they affect persisted behavior, evidence or tests.
+11. **Startup:** importing/starting the library performs no repository mutation, network access or broad repository scan. Expensive discovery is an explicit use-case/preflight concern.
+12. **Configuration:** kernel receives validated typed configuration. Raw JSON/YAML/environment parsing belongs outside kernel business logic; invalid/unknown configuration fails before mutation.
+13. **Telemetry:** runtime emits structured sanitized event hooks with correlation/run identity, operation, phase, duration, result/error and budget/cancellation metadata. M43 owns telemetry schema/storage.
+14. **Semantic boundary:** deterministic runtime cannot invent requirements/scope/architecture, accept product risk, reinterpret source authority, fabricate evidence or broaden scope silently.
+15. **Language boundary:** no Rust/Go/native/polyglot core component without governed architecture change and measured performance/security/packaging ROI.
+16. **Worker threads:** not baseline runtime. They may be introduced only when M63 benchmark evidence demonstrates a CPU-bound benefit that outweighs determinism, complexity and maintenance cost.
+17. **Adapter isolation:** official trusted adapters may execute in-process only through validated capability-constrained contracts. Untrusted/future third-party plugin isolation is owned by M42 and requires a stronger boundary.
+18. **Canonicalization:** logical-result canonicalization used for hashing/signing is delegated to M37 and versioned machine-contract schemas; M01 does not invent a competing format.
 
 ## Runtime identity
-Every deterministic invocation must be able to expose a compact runtime identity sufficient for evidence and compatibility decisions:
-- GEF product/package version;
-- machine-contract/schema version(s) where applicable;
-- Node runtime version;
-- operating system/platform and architecture;
-- package/build identity;
-- repository/project identity when a target is bound;
-- capability/profile set;
-- execution mode;
-- relevant tool versions only when they affect semantics/proof.
+Every invocation must be able to expose compact evidence metadata: product/package version, applicable schema versions, Node version, OS/platform/architecture, build identity, bound project identity, enabled capability/profile set, execution mode and only tool versions that affect semantics/proof. Runtime identity is evidence metadata, never semantic authority.
 
-Runtime identity is evidence metadata, not semantic authority.
-
-## Kernel boundary
-The M01 runtime owns deterministic orchestration primitives only. It MAY:
-- load validated machine configuration;
-- resolve registered deterministic commands/use-cases;
-- establish execution context;
-- invoke bounded filesystem/process/Git/provider abstractions;
-- enforce lifecycle/abort/timeout/resource policies delegated by frozen contracts;
-- emit typed results/errors/receipts;
-- collect deterministic telemetry hooks;
-- expose library entry points consumed by CLI or future operator surfaces.
-
-It MUST NOT:
-- invent requirements, scope or architecture;
-- accept risk on behalf of the Product Owner;
-- reinterpret semantic source authority;
-- fabricate evidence;
-- silently broaden context/scope;
-- execute S4 actions without the frozen authorization path;
-- make GitHub semantics part of core domain contracts.
-
-## Library-first contract
-The runtime is **library-first**. The official CLI is a thin adapter over application/domain APIs.
-
-Required layering:
+## Layering
 ```text
 operator surface / CLI
         ↓
@@ -89,252 +48,58 @@ domain contracts + policy ports
         ↓
 deterministic primitives / adapters
 ```
+Provider-specific semantics, including GitHub semantics, cannot leak into core domain contracts.
 
-No core use-case may require parsing CLI text to function. Programmatic use and tests must be able to invoke the same typed application API directly.
+## Resource and portability obligations
+Runtime supports governed bounds for wall-clock duration, child-process duration, concurrency, captured output, discovery/search work, large-file behavior and admitted network operations. Budget exhaustion fails truthfully and never converts incomplete work into success.
 
-## Process model
-Default execution is single-process and request-scoped.
+Cross-platform behavior must use platform path APIs, preserve case-sensitivity uncertainty, expose symlink/reparse semantics to safety layers, use explicit environment maps, normalize governed text to UTF-8 while detecting unsupported/binary inputs, and preserve Git-relevant executable-bit/line-ending behavior where applicable.
 
-Rationale:
-- avoids daemon/service complexity where no product requirement exists;
-- simplifies deterministic state, recovery and testing;
-- lowers installation and idle-resource cost;
-- keeps local-first behavior transparent.
+## Determinism definition
+Same authoritative inputs, validated configuration, compatible toolchain and controlled external responses must produce the same logical operation plan/result classification, excluding explicitly recorded nondeterministic external facts. Byte-identical timestamps, provider IDs and scheduler ordering are not promised. Nondeterministic facts are injected, captured in receipts, excluded from semantic equality or classified as external evidence.
 
-Long-lived service/daemon mode is OUT_OF_SCOPE unless a later admitted requirement demonstrates material recurring value that cannot be achieved safely with request-scoped execution.
-
-## Concurrency model
-Concurrency is opt-in and bounded.
-
-Rules:
-- deterministic independent reads/checks may run concurrently when ordering does not affect semantics;
-- mutations sharing a target/recovery surface require serialization or an explicit coordination contract;
-- concurrency limits are configuration/policy driven, never unbounded;
-- cancellation/abort propagates through owned async work;
-- final receipts preserve deterministic logical ordering even if independent checks executed in parallel;
-- optimization never bypasses assurance ordering constraints.
-
-## Async/cancellation contract
-All potentially blocking external operations should support an abort/cancellation signal where the underlying API permits it.
-
-The runtime must distinguish:
-- operator cancellation;
-- timeout/budget expiry;
-- dependency/provider failure;
-- policy block;
-- integrity/state conflict;
-- unexpected internal fault.
-
-S05 owns the complete error taxonomy; S01 freezes only the runtime requirement that these outcomes remain distinguishable.
-
-## Resource budgets
-Runtime supports bounded resource policies for:
-- wall-clock operation timeout;
-- child-process timeout;
-- maximum concurrent work units;
-- maximum output capture before truncation/spooling policy;
-- bounded repository discovery/search operations;
-- memory-sensitive large-file behavior;
-- optional network-operation budget when provider interaction is admitted.
-
-Budgets must fail truthfully. A budget limit may yield `BLOCKED_BUDGET`/equivalent typed outcome but may not convert incomplete work into success.
-
-## Filesystem/process portability
-Runtime contracts must normalize platform differences without pretending they do not exist.
-
-Requirements:
-- use path APIs, not hard-coded separators;
-- preserve case-sensitivity uncertainty where platform/filesystem behavior differs;
-- surface symlink/reparse-point semantics to filesystem safety layers;
-- invoke child processes without shell interpolation by default;
-- represent environment variables as explicit input maps;
-- normalize text encoding to UTF-8 for governed text artifacts while detecting unsupported/binary input;
-- preserve executable-bit/line-ending semantics where relevant to Git/release behavior.
-
-## Child-process rule
-Default process invocation is argument-vector based (`executable + argv`) with shell execution disabled.
-
-Shell mode requires an explicit owning use-case and security classification. Untrusted repository/configuration values must never be concatenated into shell command strings.
-
-## Environment contract
-The runtime reads environment state through an abstraction that permits:
-- allowlisting relevant variables;
-- secret redaction;
-- deterministic test substitution;
-- explicit inheritance policy for child processes;
-- evidence of which non-secret environment dimensions affected behavior.
-
-Environment is operational input, not hidden canonical truth.
-
-## Network contract
-Core deterministic runtime is network-optional.
-
-Local repository operations must remain usable without network when their required dependencies are local. Provider/package/update operations may use network only through explicit capability/adapters and policy.
-
-Network unavailability must produce a truthful degraded/block state, not corrupt local state.
-
-## State model
-S01 adopts the frozen Architecture distinction:
-- `CANONICAL_STATE` — governed source truth;
-- `DERIVED_STATE` — rebuildable indexes/cache/fingerprints;
-- `OPERATIONAL_STATE` — current invocation/transaction/receipt state.
-
-The runtime may manage derived/operational state but cannot silently promote it into canonical state.
-
-## Derived-state persistence
-The runtime foundation must support a persistence port rather than binding core logic directly to SQLite or ad-hoc files.
-
-Initial supported implementation direction:
-- ordinary governed canonical artifacts: repository files;
-- compact immutable receipts: JSON/JSONL where appropriate;
-- derived indexes/cache: filesystem-backed implementation first;
-- SQLite remains an allowed interchangeable derived-state backend only behind the persistence contract and only when stability/ROI evidence justifies its use.
-
-No unique project truth may exist only in a cache/database.
-
-## Determinism contract
-“Deterministic” means same authoritative inputs, applicable configuration, compatible toolchain and controlled external responses produce the same logical operation plan/result classification, subject to explicitly recorded nondeterministic external facts.
-
-It does NOT promise byte-identical timestamps, provider request IDs or OS scheduling.
-
-Sources of nondeterminism must be either:
-- injected behind ports for tests;
-- captured in receipts;
-- excluded from semantic equality;
-- or classified as external evidence.
-
-Clock, random ID generation and external provider calls therefore require injectable interfaces where they affect test/proof semantics.
-
-## Clock and identity primitives
-Core application logic must not call ambient wall-clock/random UUID facilities directly when those values affect persisted state or evidence.
-
-Provide ports for:
-- clock/time source;
-- ID generation;
-- environment;
-- filesystem;
-- process execution;
-- Git;
-- provider/network capabilities;
-- derived-state persistence.
-
-This keeps tests deterministic and minimizes hidden inputs.
-
-## Startup/preflight principle
-Kernel startup performs only cheap deterministic initialization. Expensive repository/provider discovery belongs to explicit use-cases/preflight stages and should not happen merely because the library is imported or CLI starts.
-
-No network request, repository mutation or broad repository scan occurs as import-time side effect.
-
-## Configuration precedence
-Detailed schema/config mechanics belong to M02, but M01 requires runtime configuration to arrive as a validated typed object. Kernel business logic must not repeatedly parse raw JSON/YAML/environment input.
-
-Unknown or invalid configuration fails before mutation.
-
-## Logging/telemetry hook
-The runtime exposes structured event hooks, not hard-coded console logging as the domain mechanism.
-
-Events must support:
-- correlation/run ID;
-- operation/use-case ID;
-- phase;
-- duration where measurable;
-- sanitized metadata;
-- result/error classification;
-- budget/cancellation information.
-
-M43 owns telemetry schema and storage. M01 only guarantees the hook boundary.
-
-## Error boundary
-Unexpected exceptions must be caught at application/operator boundaries and converted into the governed error model without losing the original diagnostic chain for secure debug evidence.
-
-Secrets and sensitive paths/content must be redacted according to Security policy before operator-facing output or persistent telemetry.
-
-## Runtime package boundaries
-S01 does not freeze exact npm package names, but requires logical boundaries compatible with Architecture:
-- contracts/types;
-- core/domain;
-- application/kernel;
-- infrastructure adapters;
-- operator/CLI;
-- testkit.
-
-Package count should remain small and justified. One package per GBS module is prohibited unless later evidence proves a real boundary need.
-
-## Testability obligations
-Runtime foundation must be testable without GitHub or real network access.
-
-S01 acceptance requires future implementation tests for at least:
+## Testability obligations for future implementation
+At minimum prove:
 - library import has no mutation/network side effects;
-- typed invocation works without CLI parsing;
-- cancellation/timeout classification;
-- bounded concurrency;
+- typed invocation requires no CLI parsing;
+- cancellation and timeout classification;
+- bounded concurrency and mutation coordination;
 - child-process argv safety;
-- environment injection/redaction boundary;
+- environment injection/redaction;
 - deterministic clock/ID substitution;
-- local/offline operation path;
-- unsupported Node/runtime fail-fast integration with compatibility policy;
-- Windows/Linux/macOS path/process contract fixtures.
+- local/offline operation;
+- unsupported runtime fail-fast through compatibility policy;
+- Windows/Linux/macOS path/process contract fixtures;
+- optional SQLite backend cannot become unique canonical truth;
+- trusted adapter capability boundary cannot bypass kernel policy.
 
 ## Security obligations
-- shell disabled by default;
-- no ambient secret logging;
-- no implicit privilege escalation;
-- runtime identity cannot include secret values;
-- S4 operations cannot bypass authorization because they originate inside the kernel;
-- untrusted adapter/provider data remains untrusted until validated;
-- cancellation/failure cannot leave mutation work falsely reported as complete.
+Shell is disabled by default; secrets are never ambiently logged; privilege escalation is never implicit; runtime identity contains no secret values; S4 operations cannot bypass authorization from inside the kernel; untrusted adapter/provider data remains untrusted until validated; cancellation/failure cannot leave mutation work falsely reported complete.
 
 ## Token/time economy obligations
-Runtime architecture must reduce recurring model/executor cost by making mechanical facts deterministic and compact:
-- typed machine results instead of prose parsing;
-- stable command/use-case contracts;
-- deterministic receipts;
-- cheap startup;
-- bounded discovery;
-- reusable validated config/state;
-- structured failure classification that prevents repeated diagnostic exploration.
+Mechanical facts use typed machine results rather than prose parsing. Stable use-case contracts, deterministic receipts, cheap startup, bounded discovery, reusable validated configuration/state and structured failure classification must reduce repeated model exploration. Optimizations never weaken assurance or source truth.
 
-## Decisions frozen by this session candidate
-1. TypeScript + supported Node LTS is the canonical runtime.
-2. Library-first application API; CLI is a thin adapter.
-3. Request-scoped single-process runtime by default; no daemon requirement.
-4. Bounded opt-in concurrency with mutation serialization/coordination.
-5. Abort/cancellation propagation is a runtime requirement.
-6. Shell-free child-process invocation is the default.
-7. Core runtime is network-optional; provider/network operations are explicit capabilities.
-8. Canonical/derived/operational state separation is enforced at runtime boundaries.
-9. Persistence is behind a port; no cache/database may become unique canonical truth.
-10. Clock/ID/environment/filesystem/process/Git/provider persistence effects use injectable ports where they affect deterministic behavior/testing.
-11. Import/startup has no mutation, network or broad-scan side effects.
-12. Runtime emits structured hooks; telemetry ownership remains M43.
-13. Runtime cannot make semantic governance decisions.
-14. No polyglot/native core component without governed measured ROI.
+## Delegated ownership
+- M02 config/schema representation and validation
+- M03 project identity
+- M04 repository/provider preflight/discovery
+- M05/M06 mutation transaction and filesystem safety
+- M24/M25 evidence/proof contracts
+- M29 Git implementation
+- M34–M37 detailed security/recovery/integrity and canonicalization
+- M42 generic adapter/plugin isolation
+- M43 telemetry schema/storage
+- M49–M51 packaging/runtime compatibility
+- M63 performance budgets/benchmarks and worker-thread promotion evidence
 
-## Dependencies delegated
-- M02: config/schema representation and validation;
-- M03: project identity details;
-- M04: repository/provider preflight/discovery;
-- M05/M06: mutation transaction and filesystem safety mechanics;
-- M24/M25: evidence/proof contracts;
-- M29: Git implementation;
-- M34–M37: detailed security/recovery/integrity mechanisms;
-- M43: telemetry contract;
-- M49–M51: packaging/runtime compatibility matrix;
-- M63: performance budgets/benchmarks.
-
-## Open questions before freeze
-1. Minimum supported Node LTS line should be fixed by M51/Deployment evidence rather than hard-coded in M01. Current direction: yes.
-2. Filesystem-backed derived state should be the mandatory baseline, with SQLite optional behind a port until benchmark evidence. Current direction: yes.
-3. Official adapters may run in-process if trusted/capability-constrained; untrusted future plugins require stronger isolation owned by M42. Current direction: yes.
-4. Worker threads should not be part of the baseline runtime unless benchmark evidence shows CPU-bound need. Current direction: yes.
-5. Runtime logical-result canonicalization format for hashing/signing is delegated to M37/contract schemas. Current direction: yes.
+## Resolved freeze questions
+1. Exact Node LTS support belongs to M51: **RESOLVED YES**.
+2. Filesystem-backed derived state is mandatory baseline; SQLite optional behind a port: **RESOLVED YES**.
+3. Trusted official adapters may be in-process under capability constraints; untrusted plugins require stronger M42 isolation: **RESOLVED YES**.
+4. Worker Threads require measured M63 CPU-bound ROI and are not baseline: **RESOLVED YES**.
+5. Hash/signature canonicalization belongs to M37/versioned contracts: **RESOLVED YES**.
 
 ## Session completion gate
-This session may become `FROZEN` only when:
-- the five open questions are resolved/routed;
-- no conflict exists with frozen Architecture/Security/Deployment;
-- exact-head review passes;
-- Checkpoint advances to `GBS-M01-S02`;
-- no functional code is introduced by the planning session itself.
+Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M01-S02`. No functional code is introduced by this planning session.
 
-STOP CONDITION: `M01_S01_REVIEW_REQUIRED`.
+STOP CONDITION: `M01_S01_EXACT_HEAD_REVIEW_REQUIRED`.
