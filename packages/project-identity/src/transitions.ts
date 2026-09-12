@@ -17,6 +17,8 @@ import type {
 
 const SAFE_REASON_CODE = /^[A-Za-z0-9._:-]{1,128}$/;
 const SAFE_EXTERNAL_EFFECT_ID = /^[A-Za-z0-9._:-]{1,128}$/;
+const SAFE_RECOVERY_REF = /^[A-Za-z0-9._:-]{1,128}$/;
+const VALID_INVALIDATIONS = new Set<IdentityInvalidationClass>(["PROJECT_BOUND", "REPOSITORY_BOUND"]);
 
 function assuranceRank(value: AssuranceLevel): number {
   return value === "STANDARD" ? 1 : value === "ELEVATED" ? 2 : 3;
@@ -28,6 +30,12 @@ function projectionDigest(projection: RepositoryIdentityProjection | undefined, 
 
 function defaultInvalidation(operation: IdentityTransitionOperation): readonly IdentityInvalidationClass[] {
   return operation === "REBIND_REPOSITORY" ? ["REPOSITORY_BOUND"] : ["PROJECT_BOUND", "REPOSITORY_BOUND"];
+}
+
+function requiredInvalidation(operation: IdentityTransitionOperation, requested: readonly IdentityInvalidationClass[] | undefined): readonly IdentityInvalidationClass[] {
+  if (requested?.some((item) => !VALID_INVALIDATIONS.has(item))) throw new Error("gef.identity.invalidation_class_invalid");
+  const all = new Set<IdentityInvalidationClass>([...defaultInvalidation(operation), ...(requested ?? [])]);
+  return ["PROJECT_BOUND", "REPOSITORY_BOUND"].filter((item): item is IdentityInvalidationClass => all.has(item as IdentityInvalidationClass));
 }
 
 function isMaterialRepositoryProjection(projection: RepositoryIdentityProjection): boolean {
@@ -52,6 +60,7 @@ export function createIdentityTransitionPlan(
   if (input.operation === "REBIND_REPOSITORY" && input.newRepositoryProjection === undefined) throw new Error("gef.identity.rebind_target_required");
   if (input.newRepositoryProjection !== undefined && !isMaterialRepositoryProjection(input.newRepositoryProjection)) throw new Error("gef.identity.repository_transition_target_not_materialized");
   if (input.operation !== "IMPORT_RECOVERY" && input.importRecoveryProjectId !== undefined) throw new Error("gef.identity.caller_supplied_project_id_forbidden");
+  if (input.operation !== "IMPORT_RECOVERY" && input.importRecoveryEvidence !== undefined) throw new Error("gef.identity.import_recovery_evidence_forbidden");
 
   let newProjectId: string | undefined;
   if (input.operation === "REKEY_PROJECT" || input.operation === "FORK_ADOPTION") newProjectId = generateProjectId(uuidGenerator);
@@ -59,11 +68,17 @@ export function createIdentityTransitionPlan(
     if (!isCanonicalProjectId(input.importRecoveryProjectId) || input.importRecoveryProjectId === input.current.projectId) {
       throw new Error("gef.identity.import_recovery_project_id_invalid");
     }
+    if (!input.importRecoveryEvidence || input.importRecoveryEvidence.collisionCheck !== "NO_AUTHORITATIVE_CONFLICT") {
+      throw new Error("gef.identity.import_recovery_evidence_required");
+    }
+    if (!SAFE_RECOVERY_REF.test(input.importRecoveryEvidence.sourceRef) || !SAFE_RECOVERY_REF.test(input.importRecoveryEvidence.authorityRef)) {
+      throw new Error("gef.identity.import_recovery_reference_invalid");
+    }
     newProjectId = input.importRecoveryProjectId;
   }
 
-  const externalEffects = [...(input.externalEffects ?? [])];
-  if (externalEffects.some((effect) => !SAFE_EXTERNAL_EFFECT_ID.test(effect))) throw new Error("gef.identity.external_effect_id_invalid");
+  const externalEffects = [...new Set(input.externalEffects ?? [])].sort();
+  if (externalEffects.length > 32 || externalEffects.some((effect) => !SAFE_EXTERNAL_EFFECT_ID.test(effect))) throw new Error("gef.identity.external_effect_id_invalid");
   const acknowledgementRequired = input.operation === "FORK_ADOPTION" || input.operation === "REKEY_PROJECT" || input.operation === "IMPORT_RECOVERY" || assuranceRank(input.assurance) >= assuranceRank("ELEVATED");
   const newRepositoryProjection = input.newRepositoryProjection ? canonicalRepositoryProjection(input.newRepositoryProjection) : undefined;
   const body = {
@@ -78,7 +93,8 @@ export function createIdentityTransitionPlan(
     oldIdentityFingerprint: input.current.identityFingerprint,
     ...(newProjectId ? { newProjectId } : {}),
     ...(newRepositoryProjection ? { newRepositoryProjection } : {}),
-    invalidationClasses: [...(input.invalidationClasses ?? defaultInvalidation(input.operation))],
+    ...(input.operation === "IMPORT_RECOVERY" && input.importRecoveryEvidence ? { importRecoveryEvidence: input.importRecoveryEvidence } : {}),
+    invalidationClasses: requiredInvalidation(input.operation, input.invalidationClasses),
     acknowledgementRequired,
     externalEffects,
   };
@@ -141,6 +157,7 @@ export function applyIdentityTransitionPlan(
     oldIdentityFingerprint: input.current.identityFingerprint,
     newIdentityFingerprint: identityFingerprint,
     invalidationClasses: plan.invalidationClasses,
+    ...(plan.importRecoveryEvidence ? { recoveryReference: plan.importRecoveryEvidence.authorityRef } : {}),
     externalEffects: plan.externalEffects,
     planAlgorithm: plan.planAlgorithm,
     planDigest: plan.planDigest,
