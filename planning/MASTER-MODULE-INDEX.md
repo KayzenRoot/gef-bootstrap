@@ -1,20 +1,19 @@
-# GEF Bootstrap V1 — Master Module Index
+# GEF Bootstrap — Master Module Index
 
-Status: `INITIAL_PLANNING_SCAFFOLD`
+Status: `SCOPE_FROZEN`
 
-Inventory only. V1 release scope is not frozen. During GBS-M00, every module will be classified as `NECESSARY`, `IMPORTANT`, `FUTURE`, or `OUT_OF_SCOPE`.
+Inventory and planning map for the single complete production target. Canonical module classification lives in `.engineering/SCOPE.md`; this index does not duplicate Scope authority.
 
 All session files currently exist as intentionally empty placeholders unless a session is already active. Empty means **PLANNED**, never approved or complete.
 
 ## Counts
-
 - Areas: 16 (A–P)
 - Modules: 64 (GBS-M00–GBS-M63)
 - Sessions: 282
 
 ## Area A — Foundation & Governance
 - **GBS-M00 — Bootstrap Constitution** — 5 sessions
-- **GBS-M01 — CLI Kernel** — 5 sessions
+- **GBS-M01 — Deterministic Work Plane Kernel** — 5 sessions
 - **GBS-M02 — Configuration & Schema** — 5 sessions
 - **GBS-M03 — Project Identity** — 4 sessions
 - **GBS-M04 — Preflight & Discovery** — 5 sessions
@@ -31,7 +30,7 @@ All session files currently exist as intentionally empty placeholders unless a s
 - **GBS-M11 — Decision System** — 5 sessions
 - **GBS-M12 — Scope & DoD Engine** — 4 sessions
 
-## Area D — GEF V1
+## Area D — GEF Engineering Model
 - **GBS-M13 — GEF Adoption Engine** — 5 sessions
   - S01 adoption policy and modes
   - S02 new-project adoption
@@ -42,7 +41,7 @@ All session files currently exist as intentionally empty placeholders unless a s
 - **GBS-M15 — Execution Pack Compiler** — 5 sessions
 - **GBS-M16 — Policy & Guardrail Engine** — 4 sessions
 
-## Area E — Chat Continuity
+## Area E — Continuity
 - **GBS-M17 — Checkpoint Engine** — 5 sessions
 - **GBS-M18 — Resume Engine** — 4 sessions
 - **GBS-M19 — Project Registry** — 4 sessions
@@ -87,11 +86,11 @@ All session files currently exist as intentionally empty placeholders unless a s
 
 ## Area L — Artifacts & UX
 - **GBS-M46 — Artifact Engine** — 4 sessions
-- **GBS-M47 — CLI UX** — 5 sessions
+- **GBS-M47 — Interaction & Operator UX** — 5 sessions
 - **GBS-M48 — Help System** — 4 sessions
 
 ## Area M — Distribution & Maintenance
-- **GBS-M49 — Installation** — 4 sessions
+- **GBS-M49 — Distribution & Setup** — 4 sessions
 - **GBS-M50 — Upgrade Engine** — 4 sessions
 - **GBS-M51 — Compatibility Matrix** — 4 sessions
 - **GBS-M52 — Self Doctor** — 5 sessions
@@ -108,7 +107,7 @@ All session files currently exist as intentionally empty placeholders unless a s
 - **GBS-M59 — User Documentation** — 4 sessions
 - **GBS-M60 — Engineering Documentation** — 4 sessions
 - **GBS-M61 — Operational Runbooks** — 4 sessions
-- **GBS-M62 — V1 Final Acceptance** — 5 sessions
+- **GBS-M62 — Production Acceptance** — 5 sessions
 
 ## Area P — Engineering Efficiency
 - **GBS-M63 — Executor Performance Engine** — 5 sessions
@@ -119,7 +118,10 @@ All session files currently exist as intentionally empty placeholders unless a s
   - S05 performance benchmark, regression gates and optimization receipt
 
 ### M63 objective
-Make each governed Codex interaction finish as quickly as safely possible while preserving correctness and assurance. This module owns executor wall-clock performance as a first-class objective and coordinates with M14 Context Compiler, M15 Execution Pack Compiler, M28 Test Impact, M43 Telemetry, M45 Baseline & Benchmark and M57 Performance Benchmarks.
+Make each governed executor interaction finish as quickly as safely possible while preserving correctness and assurance. This module owns executor wall-clock performance as a first-class objective and coordinates with M14 Context Compiler, M15 Execution Pack Compiler, M28 Test Impact, M43 Telemetry, M45 Baseline & Benchmark and M57 Performance Benchmarks.
 
 ### Brownfield adoption policy note
-Existing-project adoption is not a secondary compatibility feature. It is a first-class path owned by GBS-M13 and must be exercised by later E2E/quality sessions. The bootstrap should deliver early token/time/review benefits incrementally without requiring a destructive rewrite or complete historical cleanup first.
+Existing-project adoption is first-class, owned by GBS-M13 and exercised by later E2E/quality sessions. The bootstrap should deliver early token/time/review benefits incrementally without destructive rewrite or complete historical cleanup first.
+
+### Stable-name migration note
+Legacy names for M01, M47, M49 and M62 remain valid historical references by stable ID. Canonical display names above follow the complete hybrid production model. Physical folder/file renames are deferred to governed repository migration when Architecture selects the safest path.
