@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS-M00-S04`
+Status: `READY_FOR_GBS-M00-S05`
 
 - Project: GEF Bootstrap
 - Phase: Constitution Planning
@@ -8,17 +8,17 @@ Status: `READY_FOR_GBS-M00-S04`
 - Modules registered: 64
 - Sessions registered: 282
 - Functional implementation: NOT_STARTED
-- Last approved planning session: `GBS-M00-S03 — Scope Rules`
-- Last approved planning PR: #8
-- Last approved planning head: `b38bcd9a935bfab1bd9eee9954d375e53cea4c49`
-- Main after S03 merge: `f9ed37ab2b8ebe49c0260ae2b5d5b6cdff6fa05a`
+- Last approved planning session: `GBS-M00-S04 — Definition of Done`
+- Last approved planning PR: #10
+- Last approved planning head: `fa3ab49ab8b00a07753818212bccf4ad16212cb3`
+- Main after S04 merge: `233913b63cba3b48a48ea7b55e2a3786cab15b31`
 - Current module: `GBS-M00 — Bootstrap Constitution`
-- Completed/frozen sessions: `GBS-M00-S01`, `GBS-M00-S02`, `GBS-M00-S03`
-- Next necessary session: `GBS-M00-S04 — Definition of Done`
+- Completed/frozen sessions: `GBS-M00-S01`, `GBS-M00-S02`, `GBS-M00-S03`, `GBS-M00-S04`
+- Next necessary session: `GBS-M00-S05 — Frozen Decisions`
 - Current canonical branch: `main`
 - Overall project completion: `NOT_YET_BASELINED`
 - ETA: `NOT_YET_RELIABLE`
-- Stop state: `READY_FOR_GBS-M00-S04`
+- Stop state: `READY_FOR_GBS-M00-S05`
 
 ## Frozen constitutional baseline
 ### S01 — Purpose & Principles
@@ -30,8 +30,11 @@ Domain-specific authority; descriptive/normative truth separation; canonical fac
 ### S03 — Scope Rules
 Inventory is not commitment; NECESSARY requires one primary admission basis; IMPORTANT never auto-enters V1; FUTURE stays outside V1 denominator/hot context; executors cannot authorize product-scope expansion; Scope Carrying Cost is qualitative in V1; module is normal classification unit; legacy runtime/CLI names are REFACTOR_REQUIRED with stable IDs preserved; no denominator gaming.
 
+### S04 — Definition of Done
+DONE is evidence-bound and layered; planning completion has a minimum evidence contract; exact-state binding is required where evidence depends on repository/configuration state; accepted gaps are policy-gated; targeted reopen/invalidation replaces global reset; READY_FOR_PLANNING requires a usable governed planning surface; V1 must be measurable/benchmarkable without fabricating optimization gains; optional integrations cannot silently block core completion.
+
 ## Do not redo
-Do not reopen S01–S03 without governed supersession/source drift. Do not classify all 282 sessions individually by default. Do not treat REFACTOR_REQUIRED legacy names as frozen architecture. Do not change V1 scope simply to improve progress or ETA.
+Do not reopen S01–S04 without governed supersession/source drift. Do not materialize project-level Scope/DoD conclusions before their owning planning is approved. Do not treat optional integrations as core requirements. Do not claim DONE from percentages, stale evidence or agent assertion.
 
 ## Resume instruction
-Read this checkpoint, Decisions Ledger, Technology & Innovation Ledger, S01–S03, Definition of Done, Planning Protocol and Master Module Index. Continue from `GBS-M00-S04 — Definition of Done`. Overall percentage and days remaining remain unavailable until Scope + DoD + backlog/weights establish a valid baseline.
+Read this checkpoint, Decisions Ledger, Technology & Innovation Ledger, S01–S04, Planning Protocol and Master Module Index. Continue from `GBS-M00-S05 — Frozen Decisions`. Overall percentage and days remaining remain unavailable until Scope + DoD + backlog/weights establish a valid baseline.
