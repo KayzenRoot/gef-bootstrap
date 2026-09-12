@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_SOURCE_PACK_SECURITY`
+Status: `READY_FOR_SOURCE_PACK_TEST_PLAN`
 
 - Project: GEF Bootstrap
 - Phase: Post-Constitution Source Pack Planning
@@ -22,38 +22,40 @@ Status: `READY_FOR_SOURCE_PACK_SECURITY`
 - Requirements: `FROZEN`
 - Scope: `FROZEN`
 - Architecture: `FROZEN`
-- Architecture PR: #23
-- Architecture reviewed head: `c7b416a83d274b8770741bcccb3aa1af98c0b73a`
-- Main after Architecture merge: `53467955326789e2ca984227c4745b13c81ab288`
+- Security: `FROZEN`
+- Security PR: #25
+- Security reviewed head: `bc0ef06224bfbce9e4ffdb1768309af55d4e7415`
+- Main after Security merge: `7befdc55b5ce7c4d4cf5fb8de0e5e80687f13971`
+- Security classes: `S0_READ_ONLY / S1_MANAGED_WRITE / S2_REPOSITORY_CHANGE / S3_PROVIDER_CHANGE / S4_ELEVATED_DESTRUCTIVE`
+- S4 policy: `SPECIFIC EXPLICIT PRODUCT OWNER AUTHORIZATION REQUIRED`
+- Secret policy: `NO INTENTIONAL SECRET PERSISTENCE + REDACTION + PUBLICATION GATES`
+- Process policy: `DIRECT ARGUMENT ARRAYS + MINIMAL ENV + SHELL DISABLED BY DEFAULT + BOUNDS`
+- Supply chain: `LOCKFILE + INVENTORY + LICENSE/VULNERABILITY/INTEGRITY/PROVENANCE GATES`
+- Provider security: `LEAST PRIVILEGE + CAPABILITY DISCOVERY + TRUTHFUL GAP STATES`
+- Adapter security: `VERSIONED CAPABILITY-SCOPED ISOLATION; OUT-OF-PROCESS DEFAULT FOR RISKY/EXTERNAL`
+- Integrity model: `FINGERPRINT/SCHEMA/EXACT-STATE TAMPER EVIDENCE WITHOUT FALSE TRUST CLAIMS`
+- Production security gate: `T1–T12 EVIDENCE REQUIRED`
 - Architecture runtime: `TypeScript + supported Node.js LTS`
-- Architecture repository model: `MODULAR MONOREPO / WORKSPACES`
-- Operator surface: `APPLICATION/LIBRARY API FIRST + THIN CLI`
-- State model: `CANONICAL FILES + JSON/JSONL + OPTIONAL DERIVED/OPERATIONAL SQLITE`
-- Mutation model: `STAGED TRANSACTION + VERIFY + RECEIPT + RECOVERY`
-- Provider model: `FILESYSTEM / LOCAL GIT / HOSTED PROVIDER SEPARATION`
-- Adapter model: `VERSIONED SDK + EXPLICIT ISOLATION; OUT-OF-PROCESS DEFAULT FOR RISKY/EXTERNAL ADAPTERS`
-- Machine contracts: `JSON SCHEMA 2020-12 + EXPLICIT VERSION/MIGRATIONS`
-- Supported local OS targets: `WINDOWS / LINUX / MACOS`
 - Scope module classification: `47 CORE_REQUIRED / 14 PRODUCT_INCLUDED / 3 OPTIONAL_ADAPTER`
 - Progress weighting model: `RAW_WEIGHT = E + R + I + P`, each dimension 1–5 with evidence/rationale
 - Current canonical branch: `main`
 - Overall project completion: `NOT_YET_BASELINED`
 - ETA: `NOT_YET_RELIABLE`
-- Next legal planning stage: `.engineering/SECURITY.md`
-- Stop state: `READY_FOR_SOURCE_PACK_SECURITY`
+- Next legal planning stage: `.engineering/TEST-PLAN.md`
+- Stop state: `READY_FOR_SOURCE_PACK_TEST_PLAN`
 
-## Frozen Architecture outcome
-GEF Bootstrap uses a local-first, contract-driven modular hybrid architecture. Semantic reasoning remains governed by canonical repository truth and the Planning Agent, while deterministic product code handles bounded mechanical work through independently testable contracts.
+## Frozen Security outcome
+GEF Bootstrap uses explicit S0–S4 security classes. Routine bounded automation can proceed under frozen policy, but S4 destructive or privileged actions always require separate action-specific Product Owner authorization and cannot be inferred from broad automation instructions.
 
-The deterministic implementation uses TypeScript on a supported Node.js LTS line, organized as modular workspaces in a single monorepo. Public mechanics are application/library API first with a thin CLI over the same operations. Core contracts are provider-neutral, GitHub is the reference hosted profile, and optional ecosystem adapters remain isolated behind a versioned adapter SDK.
+Security freezes secret minimization/redaction/publication controls, bounded direct-process execution, supply-chain gates, provider least privilege, capability-scoped adapter isolation, tamper-evident state/evidence semantics and a mandatory production security evidence gate covering threats T1–T12.
 
-Canonical state remains version-controlled files. Derived/operational state may use JSON/JSONL and optional SQLite behind storage abstractions but cannot silently become semantic authority. Filesystem mutation uses plan → stage → verify → promote/recover transactions; hosted side effects use truthful saga/compensation semantics rather than fake atomicity.
+Security optimization remains compatible with the project's token/time goals, but savings can never hide findings, weaken controls or replace evidence with model assertion.
 
 ## Baseline truth
 A global percentage or ETA remains invalid until production DoD is frozen, admitted backlog maps work to requirements/modules, E/R/I/P weights are reviewed, and historical completed work is credited only with valid current evidence.
 
 ## Do not redo
-Do not reopen Constitution, Project Overview, Requirements, Scope or Architecture without governed supersession/change control. Do not reinterpret CLI as the product brain. Do not allow GitHub/provider or optional adapter semantics into core contracts. Do not let derived databases/caches replace canonical truth. Do not begin functional implementation before the remaining ordered Source Pack stages permit it. Do not use Codex to implement this repository.
+Do not reopen Constitution, Project Overview, Requirements, Scope, Architecture or Security without governed supersession/change control. Do not interpret automation as S4 authorization. Do not permit derived state, adapters or provider capabilities to bypass canonical/security policy. Do not begin functional implementation before the remaining ordered Source Pack stages permit it. Do not use Codex to implement this repository.
 
 ## Resume instruction
-Read this checkpoint plus Constitution v1.1, Project Overview, Requirements, frozen Scope, frozen Architecture, ADR-0001, Decisions/Technology Ledgers, Planning Protocol and Master Module Index. Continue with canonical Source Pack Security. Functional implementation remains NOT_STARTED.
+Read this checkpoint plus Constitution v1.1, Project Overview, Requirements, Scope, Architecture, Security, ADR-0001, Decisions/Technology Ledgers, Planning Protocol and Master Module Index. Continue with canonical Source Pack Test Plan / Benchmark. Functional implementation remains NOT_STARTED.
