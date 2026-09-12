@@ -1,6 +1,6 @@
 # GBS-M00-S04 — Definition of Done
 
-Status: `DECIDED`
+Status: `FROZEN`
 
 ## Purpose
 Define the constitutional meaning of **DONE** for GEF Bootstrap so completion is evidence-bound, scope-aware, exact-state when applicable, and resistant to cosmetic or percentage-driven closure.
@@ -186,20 +186,22 @@ A future Completion Manifest may carry subject ID, scope binding, required/satis
 - Reopening an affected obligation does not reset unrelated proven work.
 - Optional ecosystem integrations cannot silently become core completion dependencies.
 
-## Decision summary
-S04 decides that completion is **evidence-bound, layered, scope-aware, exact-state where evidence depends on repository/configuration state, selectively reopenable, and truthful about gaps/brownfield maturity**.
+## Frozen decision summary
+S04 freezes completion as **evidence-bound, layered, scope-aware, exact-state where evidence depends on repository/configuration state, selectively reopenable, and truthful about gaps/brownfield maturity**.
 
 `DONE_WITH_ACCEPTED_GAPS` is policy-gated, not universal. Planning completion requires frozen documented decisions, synchronized ledgers, audit and checkpoint promotion. `READY_FOR_PLANNING` requires a usable governed planning surface with no blocker. V1 must be measurable and benchmarkable, but unproven percentage targets cannot masquerade as measured release facts.
 
-## Closure readiness
+## Freeze audit
 - S01 principle consistency: PASS
 - S02 source/evidence validity consistency: PASS
 - S03 admitted-scope consistency: PASS
+- Decisions Ledger synchronization: PASS
 - accepted-gap escape hatch prevented: PASS
 - exact-state rule generalized beyond Git: PASS
 - brownfield truthfulness: PASS
 - optional integration independence: PASS
 - token-aware DoD layering: PASS
-- no canonical DEFINITION-OF-DONE.md mutation before freeze: PASS
+- canonical DEFINITION-OF-DONE.md unchanged: PASS
+- accidental product implementation: NONE
 
-Next lifecycle step: `DOCUMENTED -> FROZEN` after Decisions Ledger synchronization and exact-delta audit.
+STOP CONDITION: `READY_FOR_GBS-M00-S04_REVIEW_AND_CHECKPOINT`.
