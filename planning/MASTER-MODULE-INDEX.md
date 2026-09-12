@@ -4,13 +4,13 @@ Status: `INITIAL_PLANNING_SCAFFOLD`
 
 Inventory only. V1 release scope is not frozen. During GBS-M00, every module will be classified as `NECESSARY`, `IMPORTANT`, `FUTURE`, or `OUT_OF_SCOPE`.
 
-All session files currently exist as intentionally empty placeholders. Empty means **PLANNED**, never approved or complete.
+All session files currently exist as intentionally empty placeholders unless a session is already active. Empty means **PLANNED**, never approved or complete.
 
 ## Counts
 
-- Areas: 15 (A–O)
-- Modules: 63 (GBS-M00–GBS-M62)
-- Sessions: 277
+- Areas: 16 (A–P)
+- Modules: 64 (GBS-M00–GBS-M63)
+- Sessions: 282
 
 ## Area A — Foundation & Governance
 - **GBS-M00 — Bootstrap Constitution** — 5 sessions
@@ -33,6 +33,11 @@ All session files currently exist as intentionally empty placeholders. Empty mea
 
 ## Area D — GEF V1
 - **GBS-M13 — GEF Adoption Engine** — 5 sessions
+  - S01 adoption policy and modes
+  - S02 new-project adoption
+  - S03 existing-project / brownfield adoption
+  - S04 compatibility and progressive normalization
+  - S05 adoption receipt and promotion
 - **GBS-M14 — Task & Context Compiler** — 5 sessions
 - **GBS-M15 — Execution Pack Compiler** — 5 sessions
 - **GBS-M16 — Policy & Guardrail Engine** — 4 sessions
@@ -104,3 +109,17 @@ All session files currently exist as intentionally empty placeholders. Empty mea
 - **GBS-M60 — Engineering Documentation** — 4 sessions
 - **GBS-M61 — Operational Runbooks** — 4 sessions
 - **GBS-M62 — V1 Final Acceptance** — 5 sessions
+
+## Area P — Engineering Efficiency
+- **GBS-M63 — Executor Performance Engine** — 5 sessions
+  - S01 latency objectives and per-interaction budgets
+  - S02 repository discovery / file-I/O minimization
+  - S03 pre-resolved execution and reasoning-branch suppression
+  - S04 validation concurrency, critical path and wait reduction
+  - S05 performance benchmark, regression gates and optimization receipt
+
+### M63 objective
+Make each governed Codex interaction finish as quickly as safely possible while preserving correctness and assurance. This module owns executor wall-clock performance as a first-class objective and coordinates with M14 Context Compiler, M15 Execution Pack Compiler, M28 Test Impact, M43 Telemetry, M45 Baseline & Benchmark and M57 Performance Benchmarks.
+
+### Brownfield adoption policy note
+Existing-project adoption is not a secondary compatibility feature. It is a first-class path owned by GBS-M13 and must be exercised by later E2E/quality sessions. The bootstrap should deliver early token/time/review benefits incrementally without requiring a destructive rewrite or complete historical cleanup first.
