@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_BACKLOG_BASELINE`
+Status: `READY_FOR_SOURCE_PACK_DEPLOYMENT`
 
 - Project: GEF Bootstrap
 - Phase: Post-Constitution Source Pack Planning
@@ -22,35 +22,39 @@ Status: `READY_FOR_BACKLOG_BASELINE`
 - Security: `FROZEN`
 - Test & Benchmark Plan: `FROZEN`
 - Definition of Done: `FROZEN`
-- Definition of Done PR: #29
-- Definition of Done reviewed head: `6730ce6d1e90f3ec134944ea20a2ebfc67898427`
-- Main after DoD merge: `030e1376b3b581d3cc73111bcda5739a0010bd6e`
-- Completion levels: `ITEM_DONE / SESSION_DONE / MODULE_DONE / PROFILE_DONE / PRODUCTION_CANDIDATE / PRODUCTION_RELEASE_DONE`
-- Release blockers: `CORE_REQUIRED + PRODUCT_INCLUDED`
-- Optional adapters: `INDEPENDENT TRACK UNLESS EXPLICITLY CLAIMED`
-- Evidence freshness: `DEPENDENCY/VALIDITY BASED`
-- Production candidate rule: `ALL PRODUCTION-INCLUDED MODULES MODULE_DONE`
-- Construction readiness: `NOT AUTHORIZED BY DOD ALONE`
-- Scope module classification: `47 CORE_REQUIRED / 14 PRODUCT_INCLUDED / 3 OPTIONAL_ADAPTER`
+- Backlog Baseline: `FROZEN`
+- Backlog Baseline PR: #31
+- Backlog Baseline reviewed head: `7a2f80cc736f99f3553368e59795a971b3e45020`
+- Main after Backlog Baseline merge: `b7b3f53f3250bee97d0652d5dbe86ffcc40b709a`
+- Main production denominator: `1088 WEIGHT POINTS`
+- Earned production weight: `16 WEIGHT POINTS`
+- Remaining production weight: `1072 WEIGHT POINTS`
+- Official audited overall completion: `1.47%`
+- Official audited remaining: `98.53%`
+- Main denominator modules: `61 = 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED`
+- Optional adapters: `3 SEPARATE TRACKS (M39/M40/M41)`
 - Progress weighting model: `RAW_WEIGHT = E + R + I + P`, each dimension 1–5 with evidence/rationale
+- Historical credit policy: `EVIDENCE-MAPPED; NO DOUBLE COUNTING; MODULE_DONE REQUIRED FOR FULL MODULE CREDIT`
+- Source Pack planning artifacts: `KNOWLEDGE/REQUIREMENT INPUT, NOT AUTOMATIC DUPLICATE PRODUCT CREDIT`
 - Current canonical branch: `main`
-- Overall project completion: `NOT_YET_BASELINED`
 - ETA: `NOT_YET_RELIABLE`
-- Next legal planning stage: `BACKLOG BASELINE + E/R/I/P WEIGHTS + HISTORICAL EVIDENCE RECONCILIATION`
-- Stop state: `READY_FOR_BACKLOG_BASELINE`
+- Next legal planning stage: `.engineering/DEPLOYMENT.md`
+- Stop state: `READY_FOR_SOURCE_PACK_DEPLOYMENT`
 
-## Frozen DoD outcome
-GEF Bootstrap now has a strict complete-product completion contract. Both CORE_REQUIRED and PRODUCT_INCLUDED are blocking for the independent production release. Completion is evidence-bound, exact-state aware, validity-bound and selectively reopenable.
+## Frozen Backlog Baseline outcome
+The complete independent-product denominator is now frozen at 1088 weighted points across 61 release-blocking modules. Optional adapters M39–M41 remain separate and do not dilute the independent-product denominator unless a future release claim explicitly includes them.
 
-`PRODUCTION_RELEASE_DONE` requires complete product obligations, deterministic-plane conformance, Security T1–T12, applicable T0–T7 release evidence, cross-platform support, NEW_PROJECT and brownfield E2E, checkpoint/resume, migration/recovery, GitHub profile proof, documentation/runbooks and exact accepted release-state binding.
+Only objectively reconciled evidence earns production credit. M00 currently contributes 16 points as MODULE_DONE. Existing Source Pack work remains valuable governed knowledge and will reduce future implementation/reasoning cost, but it is not double-counted as completed module implementation where the applicable module DoD is not yet satisfied.
 
-DoD freeze does not authorize implementation. Functional construction becomes legal only after the complete admitted backlog is mapped, E/R/I/P weights are frozen, historical work is evidence-reconciled, required remaining Source Pack governance is closed and a checkpoint explicitly declares `READY_FOR_PRODUCTION_CONSTRUCTION`.
+Official audited completion is therefore `16 / 1088 = 1.47%`, with `1072 / 1088 = 98.53%` remaining.
 
 ## Baseline truth
-A global completion percentage and ETA are still invalid. They become legal only after backlog baseline, requirement/module mapping, reviewed E/R/I/P weights and historical evidence reconciliation.
+The percentage is now valid under the frozen denominator and current evidence. It may change only through governed earned-weight promotion, evidence invalidation/reopening, or explicit denominator recalibration with before/after impact recorded.
+
+ETA remains `NOT_YET_RELIABLE` because no sufficient production-construction throughput history exists yet. Calendar estimates will be activated only after observable delivery velocity is available.
 
 ## Do not redo
-Do not reopen Constitution, Project Overview, Requirements, Scope, Architecture, Security, Test & Benchmark or DoD without governed change control. Do not treat DoD freeze as permission to start code. Do not credit historical planning automatically without backlog mapping/evidence reconciliation. Do not use Codex to implement this repository.
+Do not reopen Constitution, Project Overview, Requirements, Scope, Architecture, Security, Test & Benchmark, DoD or the weighted Backlog Baseline without governed change control. Do not inflate progress from planning artifact existence. Do not add optional adapters to the main denominator silently. Do not use Codex to implement this repository.
 
 ## Resume instruction
-Read this checkpoint plus all frozen Source Pack documents, ADR-0001, Decisions/Technology Ledgers, Planning Protocol and Master Module Index. Continue with the admitted Backlog Baseline and weighting model. Functional implementation remains NOT_STARTED.
+Read this checkpoint plus all frozen Source Pack documents, Backlog Baseline, ADR-0001, Decisions/Technology Ledgers, Planning Protocol and Master Module Index. Continue with canonical Deployment & Distribution planning. Functional implementation remains NOT_STARTED. Every material continuation/review should report the official audited completion percentage, earned/remaining weight, and denominator changes if any.
