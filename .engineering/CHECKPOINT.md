@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M03_MODULE_GATE`
+Status: `READY_FOR_GBS_WO_M03_001`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
@@ -10,34 +10,38 @@ Status: `READY_FOR_GBS_M03_MODULE_GATE`
 - M03-S02 Project Fingerprint: `FROZEN`
 - M03-S03 Repository Identity: `FROZEN`
 - M03-S04 Collision Prevention: `FROZEN`
-- M03-S04 PR: `#67`
-- M03-S04 reviewed head: `8636a12d282214a7519849acbc2564b40357f1e8`
-- Main after M03-S04 merge: `2491a16bf45b1d0528fc36732f3506efb4abe72d`
-- Next module/session: `GBS-M03 MODULE GATE`
+- M03 module gate: `PLANNED_READY_FOR_IMPLEMENTATION`
+- Active Work Order: `GBS-WO-M03-001`
+- Work Order status: `ADMITTED`
+- Next legal stage: `IMPLEMENT_GBS_WO_M03_001`
 - Main production denominator: `1088 WEIGHT POINTS`
 - Earned production weight: `53 WEIGHT POINTS`
 - Remaining production weight: `1035 WEIGHT POINTS`
 - Official audited overall completion: `4.87%`
 - Official audited remaining: `95.13%`
+- M03 frozen weight: `17`
+- M03 earned weight: `0`
+- Potential after evidence-backed M03 MODULE_DONE: `70 / 1088 = 6.43%`
+- Potential remaining after M03 MODULE_DONE: `1018 / 1088 = 93.57%`
 - Denominator change: `NONE`
 - ETA: `NOT_YET_RELIABLE — insufficient completed implementation-module velocity sample`
-- Current canonical branch: `main`
-- Next legal stage: `GBS-M03_MODULE_GATE`
-- Stop state: `READY_FOR_GBS_M03_MODULE_GATE`
 
-## M03 identity outcome so far
-S01 freezes `projectId` as immutable project-lineage identity. S02 freezes a compact derived `projectFingerprint` with explicit binding strengths and targeted invalidation. S03 freezes repository identity as a provider-neutral structured binding with explicit local-only binding IDs, persisted selected remote bindings and trusted provider-stable ID continuity. S04 freezes collision prevention and identity transition semantics: no silent regeneration, explicit fork-adoption, separate rekey/rebind operations, preview-bound secure UUIDv4 generation, controlled external-ID import/recovery, narrow invalidation, registry-only duplicate suspicion before authoritative collision, and non-interactive STANDARD rebind when an admitted exact-scope Work Order already provides authorization.
+## Gate result
+M03 S01-S04 are frozen and planning completeness is PASS. Implementation remains NOT_STARTED, so no M03 production weight is earned yet. `GBS-WO-M03-001` is the only admitted implementation increment.
+
+## Performance contract carried forward
+M03 implementation must preserve the GEF token/time objective: compact validated identity state should be reusable without rereading full config/remotes; STANDARD rebind may consume admitted Work Order authorization without redundant prompts; no broad filesystem/network uniqueness scans are permitted.
 
 ## Planned executor benchmark
-The user approved a future controlled benchmark comparing ChatGPT-connected-tools construction against Codex-assisted construction after M03 or M04. The current constitutional rule `codexForBootstrap = PROHIBITED` remains binding until a governed temporary benchmark exception/ADR is explicitly prepared and frozen. Do not invoke Codex before that gate. Benchmark dimensions include wall-clock execution time, model tokens, repository searches/files read, correction rounds, test/CI outcomes, escaped findings and evidence quality.
+A controlled ChatGPT-connected-tools versus Codex benchmark remains approved for after M03 or M04, but Codex remains prohibited for constructing this Bootstrap until a governed temporary benchmark exception is explicitly admitted.
 
 ## Continuity contract
-Every material milestone/review/merge or chat transition leaves both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
+Resume from `.engineering/M03-MODULE-GATE.md`, `GBS-WO-M03-001`, frozen M03 S01-S04, canonical Source Pack and this checkpoint. Chat history is not source of truth.
 
 ## Do not redo
-Do not reopen M00-M02 or M03-S01/S02/S03/S04 without governed change control or invalidated evidence. Do not use Codex for this repository until the planned benchmark exception is formally admitted. Do not alter the frozen denominator without governed recalibration.
+Do not reopen M00-M02 or M03 planning contracts without governed change control. Do not start M04 while M03 is unapproved. Do not award M03 weight before exact-head evidence and semantic audit.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack, M03 S01-S04 contracts and Master Module Index. Resume at the `GBS-M03 MODULE GATE`. Report `4.87% complete`, `53/1088 earned`, `1035/1088 remaining` unless a newer audited checkpoint changes it.
+`continue do chat anterior` means implement `GBS-WO-M03-001`. Report `4.87% complete`, `53/1088 earned`, `1035/1088 remaining` until newer audited evidence changes it.
 
-STOP CONDITION: `READY_FOR_GBS_M03_MODULE_GATE`.
+STOP CONDITION: `READY_FOR_GBS_WO_M03_001`.
