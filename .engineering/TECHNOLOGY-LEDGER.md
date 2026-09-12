@@ -307,9 +307,23 @@ Purpose: preserve optimization ideas, invented mechanisms and reusable engineeri
 - Intended owner: GBS-M25 / GBS-M21
 - Goal: reopen only completion states whose proof dependencies became invalid rather than resetting unrelated accepted work.
 
-## S04 closure audit
+### TECH-0043 — Constitutional Lock Surface
+- Status: FROZEN
+- V1 classification: NECESSARY
+- Discovered: GBS-M00-S05
+- Intended owner: GBS-M11 / GBS-M09
+- Goal: expose CONST-F1–F8 plus canonical decision/session references as a compact validity-bound surface so downstream agents do not repeatedly rediscover frozen foundations.
+
+### TECH-0044 — Constitutional Reopen Gate
+- Status: FROZEN
+- V1 classification: NECESSARY
+- Discovered: GBS-M00-S05
+- Intended owner: GBS-M11 / GBS-M37
+- Goal: allow constitutional change only through explicit governed trigger, supersession, impact analysis, audit and checkpoint promotion.
+
+## M00 closure audit
 - Material discoveries captured: PASS
-- Completion technologies routed to owning modules: PASS
-- DoD mechanisms do not replace canonical evidence: PASS
-- Token-aware narrow compilation preserved: PASS
-- No optional ecosystem integration promoted into core: PASS
+- S03/S04/S05 inventions routed: PASS
+- Candidate/proposed mechanisms remain distinct from frozen constitutional mechanisms: PASS
+- Detailed implementations remain delegated to owning modules: PASS
+- Cross-project memory remains deferred: PASS
