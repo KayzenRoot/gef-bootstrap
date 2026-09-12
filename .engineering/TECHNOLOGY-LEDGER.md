@@ -125,16 +125,16 @@ Purpose: preserve optimization ideas, invented mechanisms and reusable engineeri
 - Goal: structured pre-execution proof that the selected context is sufficient or that expansion is required.
 
 ### TECH-0018 — Prompt Completeness Certificate
-- Status: PROPOSED
+- Status: CANDIDATE
 - Discovered: GBS-M00-S02
 - Intended owner: GBS-M15
-- Goal: deterministic readiness summary before expensive executor invocation.
+- Goal: deterministic readiness summary before expensive executor invocation; expected to remain an Execution Pack output rather than a standalone subsystem unless later evidence justifies otherwise.
 
 ### TECH-0019 — Source Entropy Score
 - Status: CANDIDATE
 - Discovered: GBS-M00-S02
 - Intended owner: GBS-M09 / GBS-M14 / GBS-M43
-- Goal: detect ambiguous, conflicting or duplicate source sets before executor spend.
+- Goal: test whether ambiguity/duplication/conflict signals predict retries, wasted context or corrections before formalizing a score.
 
 ### TECH-0020 — Token-Amortized Canonicalization
 - Status: PROPOSED
@@ -182,16 +182,59 @@ Purpose: preserve optimization ideas, invented mechanisms and reusable engineeri
 - Status: PROPOSED
 - Discovered: GBS-M00-S01
 - Intended owner: GBS-M19 / GBS-M43
-- Goal: avoid repeating already-classified failed approaches under compatible conditions.
+- Goal: avoid repeating known failed diagnostics or rediscovery when the failure fingerprint remains applicable.
 
 ### TECH-0028 — Negative Capability Cache
 - Status: PROPOSED
 - Discovered: GBS-M00-S01
 - Intended owner: GBS-M19 / GBS-M14
-- Goal: remember verified absent/unsupported capabilities so executors do not repeatedly search for them.
+- Goal: remember verified absences/capability gaps with validity bindings so future agents do not repeat the same searches.
 
-### TECH-0029 — Cross-Project Engineering Memory
+### TECH-0029 — Architecture Question Cache
+- Status: PROPOSED
+- Discovered: GBS-M00-S01
+- Intended owner: GBS-M11 / GBS-M19
+- Goal: preserve resolved architecture questions and their decision/source references so executors do not reopen them.
+
+### TECH-0030 — Full-Context Safety Gate
+- Status: PROPOSED
+- Discovered: GBS-M00-S02
+- Intended owner: GBS-M14 / GBS-M27
+- Goal: force broader inspection when assurance requirements, unknown dependencies, source conflicts or high-risk domains make narrow context unsafe.
+
+### TECH-0031 — Adaptive Context Memory
 - Status: CANDIDATE
 - Discovered: GBS-M00-S02
-- Intended owner: future cross-project layer
-- Goal: reuse generic engineering knowledge without letting it override project-local canonical truth.
+- Intended owner: GBS-M14 / GBS-M19
+- Goal: candidate umbrella for cold pointers, hot/warm/cold tiers, context temperature, predictive prefetch, negative context and historical eviction to avoid proliferating independent mechanisms.
+
+### TECH-0032 — Context Quality Optimizer
+- Status: CANDIDATE
+- Discovered: GBS-M00-S02
+- Intended owner: GBS-M14 / GBS-M43
+- Goal: candidate umbrella for deduplication, ambiguity detection and source/prompt entropy signals.
+
+### TECH-0033 — Historical Context Eviction
+- Status: CANDIDATE
+- Discovered: GBS-M00-S02
+- Intended owner: GBS-M14 / GBS-M19
+- Goal: keep resolved history auditable while removing it from hot executor context after canonical active facts replace it.
+
+### TECH-0034 — Engineering ROI Governor
+- Status: PROPOSED
+- Discovered: GBS-M00-S01/S02
+- Intended owner: GBS-M45 / GBS-M63
+- Goal: evaluate optimization investment against total recurring token, executor-time, validation, review, retry, defect and maintenance cost rather than optimizing a single metric in isolation.
+
+### TECH-0035 — Cross-Project Engineering Memory
+- Status: DEFERRED
+- Discovered: GBS-M00-S02
+- Intended owner: future scope
+- Goal: reuse engineering knowledge across projects without granting it authority over project-local sources; deferred because provenance, contamination, staleness, security and privacy require dedicated design.
+
+## S01 closure audit
+- Material discoveries captured: PASS
+- Candidate ideas separated from frozen principles: PASS
+- Intended owners identified where reasonably known: PASS
+- Cross-project memory deferred rather than silently entering V1: PASS
+- Detailed S02 mechanisms remain non-canonical until S02 is formally opened and frozen: PASS
