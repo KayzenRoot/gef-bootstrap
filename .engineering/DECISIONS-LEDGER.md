@@ -105,3 +105,31 @@ Status: `ACTIVE`
 ## D-0026 — Source hierarchy application requires conformance evidence
 - Decision: A future bootstrap materialization must prove source-hierarchy application through a conformance receipt capable of showing authority mapping, source discovery, conflict/missing-source detection, fact addressability, fingerprints/dependency validity, brownfield drift preservation, MSC construction, expansion policy and fail-closed configuration. Decorative SUCCESS is insufficient.
 - Status: APPROVED
+
+## D-0027 — Inventory is not V1 commitment
+- Decision: The Master Module Index is an inventory/roadmap, not proof that every area/module/session belongs to V1. Only admitted NECESSARY scope contributes to V1 completion obligations; IMPORTANT/FUTURE/OUT_OF_SCOPE inventory remains outside the V1 denominator unless explicitly promoted.
+- Status: APPROVED
+
+## D-0028 — NECESSARY scope requires a traceable primary admission basis
+- Decision: Every NECESSARY item must have exactly one primary constitutional admission basis and may have additional supporting bases. Vague claims such as professional, enterprise, best practice or nice to have are not sufficient admission bases.
+- Status: APPROVED
+
+## D-0029 — IMPORTANT scope never auto-enters V1
+- Decision: IMPORTANT items require explicit governed promotion to NECESSARY before entering V1, even when time/token/implementation capacity remains. Promotion must identify the new admission basis and scope/DoD/baseline impact.
+- Status: APPROVED
+
+## D-0030 — Scope expansion is fail-closed for executors
+- Decision: Executors may continue only for bounded in-scope clarification, demonstrably required dependency or defect/conformance repair against an approved obligation. Product-scope expansion requires governed planning approval; executors route/stop rather than authorize it.
+- Status: APPROVED
+
+## D-0031 — Scope carrying cost is qualitative in V1
+- Decision: V1 evaluates permanent scope obligations using LOW/MEDIUM/HIGH qualitative carrying-cost dimensions for context, maintenance, validation, review and migration surfaces. Numeric scoring is deferred until telemetry/baseline evidence can support it.
+- Status: APPROVED
+
+## D-0032 — V1 scope classification is hierarchical
+- Decision: Module is the normal V1 classification unit. Area defaults/grouped classifications may reduce repetition; sessions inherit module classification unless an explicit override is necessary. The project must not create hundreds of low-value per-session classification records by default.
+- Status: APPROVED
+
+## D-0033 — Legacy runtime/CLI names are refactor-required, not silently canonical
+- Decision: Scaffold IDs remain stable while legacy runtime/CLI-oriented names/responsibilities such as M01, M47, M49 and runtime-assuming quality modules are marked REFACTOR_REQUIRED. Detailed rename/reframing occurs in Scope/Architecture planning without renumbering or destructive history rewrite.
+- Status: APPROVED
