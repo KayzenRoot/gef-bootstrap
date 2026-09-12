@@ -1,228 +1,258 @@
 # Security
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN`
 
 ## Binding
 Security derives from `GBS-CONSTITUTION-v1.1`, frozen Project Overview, Requirements, complete-production Scope and frozen Architecture.
 
-No functional implementation begins from this document until Security is reviewed/frozen and remaining ordered Source Pack stages permit construction.
+No functional implementation begins until the remaining ordered Source Pack stages permit construction.
 
 ## Security objective
-Protect canonical project truth, repository integrity, credentials, operator intent, deterministic mutation safety, provider operations, adapter isolation, evidence integrity and recovery paths without defeating the product's token/time-efficiency goals.
+Protect canonical project truth, repository integrity, credentials, operator intent, deterministic mutation safety, provider operations, adapter isolation, evidence integrity and recovery paths while preserving the product's token/time-efficiency goals.
 
-Security is fail-closed where ambiguity could cause destructive mutation, privilege misuse, secret disclosure, invalid evidence or silent corruption.
+Security fails closed where ambiguity could cause destructive mutation, privilege misuse, secret disclosure, invalid evidence or silent corruption.
 
-## Primary protected assets
+## Protected assets
 1. Canonical governance/source documents.
 2. Target repository files and Git history.
 3. Credentials/tokens/provider authorizations.
 4. Machine contracts, receipts, checkpoints and evidence.
 5. Recovery material and transaction journals.
-6. Derived indexes/caches whose integrity affects execution decisions.
+6. Derived indexes/caches used for execution decisions.
 7. Hosted-provider state such as PRs/checks/issues/releases/rulesets.
 8. Adapter capability declarations and inter-process messages.
-9. Telemetry/benchmark data that could contain repository-sensitive metadata.
+9. Telemetry/benchmark data containing repository-sensitive metadata.
 10. Operator-approved product intent and scope boundaries.
 
 ## Trust boundaries
+Anything crossing filesystem, Git/process, hosted-provider, adapter, persisted-machine-state or distribution boundaries is untrusted until validated against the applicable contract and expected state.
 
-```text
-PROJECT OWNER / PLANNER
-        │
-        ▼
-CANONICAL REPOSITORY STATE
-        │
-        ▼
-APPLICATION / CORE
-        │
-   ┌────┼───────────────┐
-   ▼    ▼               ▼
-KERNEL LOCAL GIT   PROVIDER PORTS
-   │                    │
-   ▼                    ▼
-FILESYSTEM           GITHUB/API
-                        │
-                        ▼
-                 OPTIONAL ADAPTERS
-                 isolated boundary
-```
+## Threat model
+The production model must control at least:
+- `T1` wrong-target mutation;
+- `T2` path traversal/symlink escape;
+- `T3` destructive Git/history operations;
+- `T4` secret leakage;
+- `T5` shell/process injection;
+- `T6` dependency/supply-chain compromise;
+- `T7` malicious/untrusted adapter behavior;
+- `T8` provider privilege misuse;
+- `T9` stale/tampered derived state;
+- `T10` evidence/checkpoint forgery;
+- `T11` recovery artifact exposure;
+- `T12` denial/resource exhaustion.
 
-Anything crossing filesystem, process, provider, adapter or persisted-machine-state boundaries is untrusted until validated against the applicable contract and expected state.
+# Frozen security decisions
 
-## Threat classes to close
+## SEC-01 — Security classes
+Every governed operation has exactly one minimum security class. Higher classes inherit lower-class controls.
 
-### T1 — Wrong-target mutation
-Mutation applies to the wrong repository, path, branch, worktree or project identity.
+| Class | Meaning | Representative operations |
+|---|---|---|
+| `S0_READ_ONLY` | no governed mutation or external side effect | inspect repo, compute fingerprints, read status, compile context |
+| `S1_MANAGED_WRITE` | bounded reversible GEF-managed file mutation | create/update GEF-managed artifacts, staging, local derived state |
+| `S2_REPOSITORY_CHANGE` | Git/index/branch/commit mutation | add/stage/commit, create branch, repository metadata change |
+| `S3_PROVIDER_CHANGE` | hosted-provider side effect | open/update PR, issue, check, release metadata, provider settings within granted policy |
+| `S4_ELEVATED_DESTRUCTIVE` | irreversible/high-impact or privileged change | force push, history rewrite, destructive cleanup, branch deletion, privileged governance/security change, destructive migration |
 
-Candidate controls: canonical project identity, repository-root binding, realpath normalization, expected HEAD/pre-state fingerprints, allowed-surface policy and dry-run/plan preview.
+Security class is determined by the highest-impact side effect. A workflow cannot downgrade itself by splitting one dangerous action into smaller operations.
 
-### T2 — Path traversal / symlink escape
-Malicious or malformed paths escape the governed repository or redirect writes outside allowed surfaces.
+## SEC-02 — Authorization model
+`S0` requires no mutation approval beyond source access.
 
-Candidate controls: normalized relative paths, canonical root containment, symlink policy, same-filesystem staging and post-resolution containment checks.
+`S1` may execute under frozen project policy when all of the following are true: target identity is bound, mutation surface is admitted, exact/compatible pre-state is known, recovery is available, and no higher-risk signal is present.
 
-### T3 — Destructive Git/history operations
-Force push, reset, history rewrite, branch deletion or destructive cleanup causes irreversible loss.
+`S2` may execute under frozen repository policy for routine governed branches/commits when branch, repository and expected-state constraints pass. Protected/default-branch direct mutation is never inferred merely from broad authorization.
 
-Candidate controls: deny-by-default destructive command class, explicit elevated authorization, exact target/state binding, recovery plan, protected-branch awareness and provider capability checks.
+`S3` may execute under explicit provider capability/policy grants. Provider permission and operation intent are checked independently.
 
-### T4 — Secret leakage
-Credentials enter source, logs, telemetry, receipts, prompts or recovery artifacts.
+`S4` always requires a separate explicit Product Owner/user authorization for the specific action and target, plus recovery/irreversibility disclosure before execution. Broad statements such as “do everything automatically” do not silently authorize S4.
 
-Candidate controls: no intentional secret persistence, environment/keychain/provider-token indirection, redaction, secret-pattern scanning, minimized command echo, sensitive-field schema annotations and publication gates.
+Emergency security stop/deny may occur without prior approval; resumption follows governed review.
 
-### T5 — Shell/process injection
-Untrusted repository content becomes shell syntax or unsafe process arguments.
+## SEC-03 — Private operational and recovery state
+Repository-local private product state uses a reserved ignored directory selected by Configuration/Schema planning, with the architectural placeholder `.gef/` until that module freezes the exact name.
 
-Candidate controls: spawn/execFile-style argument arrays, no untrusted shell concatenation, strict executable allowlist/path resolution, timeout/resource bounds and environment minimization.
+Security rules:
+- private operational/recovery data is excluded from normal version control by default;
+- recovery content is minimal and bounded to changed managed surfaces;
+- file permissions are restricted where the OS supports reliable controls;
+- secrets are never intentionally copied merely for convenience;
+- receipts store references/fingerprints instead of duplicating sensitive content where possible;
+- successful transaction recovery material has bounded retention and can be safely garbage-collected only after post-state verification and checkpoint/evidence promotion;
+- failed/interrupted transaction recovery material persists until resolved or explicitly abandoned with audit record;
+- publication/release scans must include accidental private-state tracking/exposure checks.
 
-### T6 — Dependency/supply-chain compromise
-A dependency, package, release artifact or update path introduces malicious or unexpected code.
+## SEC-04 — Secret detection, redaction and publication
+Secrets are capabilities/references, not canonical project data.
 
-Candidate controls: lockfile pinning, dependency review, package provenance/integrity checks, release checksums/signatures, minimal dependency surface, update preview and vulnerability gates.
+Rules:
+- never intentionally persist secret values in governed Markdown/JSON, receipts, telemetry, fixtures or logs;
+- provider credentials come from external credential mechanisms/environment/keychain/authorized connectors;
+- known sensitive schema fields are redacted before logging/receipts;
+- probable-secret detection produces a finding with location/category but avoids echoing the secret;
+- high-confidence secret exposure blocks publication/release until remediated;
+- ambiguous findings may be dispositioned as false positive only with governed rationale/evidence;
+- allowlists suppress only the specific fingerprint/pattern context and cannot globally disable scanning;
+- rotation/revocation guidance is required when exposure of a real credential is plausible;
+- a clean scanner result is evidence, never proof that no secret exists.
 
-### T7 — Malicious/untrusted adapter
-Optional adapter attempts unauthorized filesystem/provider access or corrupts core state.
+## SEC-05 — Process execution policy
+All subprocess execution is explicit and bounded.
 
-Candidate controls: explicit capability manifest, versioned protocol, least privilege, out-of-process default for risky/external adapters, bounded IPC, timeout/crash isolation and no implicit auto-load.
+Rules:
+- prefer direct executable + argument-array invocation, never untrusted shell-string interpolation;
+- shell execution is disabled by default and requires a specifically reviewed operation contract when unavoidable;
+- executables come from an approved capability set or an explicitly resolved trusted tool path;
+- repository content cannot select arbitrary executable paths without policy validation;
+- child environment starts from a minimal allowlisted inheritance set, with required variables passed deliberately;
+- secret-bearing environment variables are never copied into receipts/logs;
+- cwd is canonicalized/bound to the intended repository/work area;
+- timeout, output-size and resource/cancellation bounds apply;
+- exit code, bounded stdout/stderr metadata and tool identity/version are captured where relevant to evidence.
 
-### T8 — Provider privilege misuse
-GitHub/provider token has more privilege than needed or an operation exceeds approved intent.
+## SEC-06 — Supply-chain and release gates
+Production acceptance requires:
+- committed deterministic lockfile;
+- reproducible dependency installation path;
+- dependency inventory/SBOM-capable metadata;
+- license policy check;
+- vulnerability/advisory scan appropriate to Node/TypeScript;
+- no unresolved HIGH/CRITICAL exploitable dependency finding without explicit accepted-risk policy, and CRITICAL release blockers cannot be waived by convenience;
+- minimized production dependency graph;
+- package integrity/provenance checks where ecosystem support exists;
+- release artifacts accompanied by checksums and provenance/build metadata;
+- dependency/runtime major upgrades require compatibility + security review;
+- updates are previewed and verified, never silently self-applied by default.
 
-Candidate controls: capability discovery, least-privilege permission mapping, operation-level allowlists, explicit elevated gates, truthful permission-gap states and receipts for side effects.
+Signing is supported where reliable release infrastructure exists, but the product never fabricates a signature/provenance claim when signing infrastructure is unavailable.
 
-### T9 — Stale/tampered derived state
-Cache, SQLite index, proof graph or receipt is stale/tampered and drives unsafe execution.
+## SEC-07 — Provider permissions and degraded states
+Hosted-provider adapters follow least privilege and capability discovery.
 
-Candidate controls: canonical-input fingerprints, schema validation, integrity hashes, targeted invalidation, rebuildability and fail-closed mismatch.
+The GitHub reference profile must:
+- discover observable capabilities/permission gaps before side effects where technically possible;
+- map each requested operation to its required permission class;
+- refuse privilege escalation or unrelated use of available broad permissions;
+- separate read, routine write and administrative/elevated actions;
+- emit `READY_WITH_GAPS`, `BLOCKED_PERMISSION`, or equivalent truthful states when capabilities are missing;
+- never bypass provider governance because an API permission is unavailable;
+- bind side-effect receipts to provider/repository identity and post-state when observable.
 
-### T10 — Evidence/checkpoint forgery
-A success receipt/checkpoint claims completion without corresponding exact-state proof.
+Credentials with broad permissions are treated as capability ceilings, not blanket authorization.
 
-Candidate controls: exact-state bindings, immutable evidence identifiers where possible, proof dependencies, signed/checksummed release evidence, audit ledger and promotion rules.
+## SEC-08 — Adapter isolation and sandbox contract
+Optional adapters are untrusted extensions relative to core.
 
-### T11 — Recovery artifact exposure
-Backups/journals retain secrets or sensitive deleted content and leak through Git/publication.
+Each adapter must declare identity/version, protocol compatibility, capabilities, permissions, external endpoints/processes, filesystem/provider side-effect classes, resource bounds and maximum security class.
 
-Candidate controls: dedicated ignored/private state path, restrictive permissions where supported, bounded retention, secure cleanup and publication scanning.
+Rules:
+- no implicit auto-load/execute of repository-supplied adapters;
+- unknown/incompatible major protocol version fails closed;
+- core never imports optional adapter implementation code directly;
+- external/risky adapters execute out-of-process by default through bounded versioned IPC;
+- requests are capability-scoped and schema-validated;
+- adapter cannot directly mutate canonical core state outside governed application/kernel operations;
+- timeouts, output limits, crash isolation and cancellation are mandatory;
+- adapter requests above its declared/allowed security ceiling are rejected;
+- S4 operations cannot be delegated to an adapter without the same explicit owner authorization and core-side policy validation.
 
-### T12 — Denial/resource exhaustion
-Huge repos, malicious files, adapter loops or unbounded scans consume CPU/memory/disk/time/tokens.
+This is isolation, not a claim of OS-grade sandboxing. Stronger process/container sandboxing may be added where platform support and threat level justify it.
 
-Candidate controls: file/search/size/depth budgets, bounded subprocesses, streaming/size limits, cancellation, progressive discovery and explicit budget escalation.
+## SEC-09 — Integrity model
+GEF uses tamper-evident bindings without pretending ordinary local files are cryptographically trusted.
 
-## Frozen security architecture constraints inherited from Architecture
-- default-deny mutation surface;
-- target identity before write;
-- path traversal/symlink escape protection;
-- no arbitrary adapter auto-execution;
-- secrets redaction/no intentional persistence;
-- external command argument separation;
-- bounded subprocess execution/timeouts;
-- checksums/fingerprints for governed artifacts;
-- least-privilege provider capabilities;
-- fail-closed incompatible schema/state;
-- recovery material protected from accidental publication.
+Integrity controls include:
+- canonical and derived content fingerprints;
+- schema validation and version checks;
+- dependency/input fingerprints for caches/indexes/proofs;
+- exact-state bindings for evidence/checkpoints where applicable;
+- append/audit linkage for promoted governance events;
+- invalidation/rebuild on mismatched dependencies;
+- release checksums/provenance for distributed artifacts.
 
-## Candidate assurance classes
-Security planning should map operations to at least these assurance bands:
+A hash proves content equality to a known hash, not author identity or trustworthiness. Local filesystem compromise remains an environmental risk unless stronger signed/remote attestation exists. Security/status language must preserve that distinction.
 
-- `S0_READ_ONLY` — inspection with no governed mutation or external side effect.
-- `S1_MANAGED_WRITE` — bounded reversible GEF-managed file mutation.
-- `S2_REPOSITORY_CHANGE` — Git branch/commit/index state mutation.
-- `S3_PROVIDER_CHANGE` — hosted-provider side effects such as PR/check/issue/release actions.
-- `S4_ELEVATED_DESTRUCTIVE` — irreversible/high-impact operations including history rewrite, destructive cleanup, privileged governance changes or secret-sensitive action.
+## SEC-10 — Production security evidence gate
+`PRODUCTION_RELEASE_DONE` requires passing security evidence for all applicable supported surfaces.
 
-Higher class inherits lower controls and adds explicit authorization/evidence/recovery obligations.
+Minimum gate:
+1. threat-to-control mapping complete for T1–T12;
+2. secret scan/publication checks pass;
+3. dependency/supply-chain review passes;
+4. path traversal, root containment and symlink escape tests pass across supported OS cases;
+5. wrong-target and destructive-operation denial tests pass;
+6. transaction interruption/recovery tests pass;
+7. command/process injection and environment-minimization tests pass;
+8. malformed/incompatible schema, receipt and state tests fail closed;
+9. stale/tampered cache/proof/checkpoint tests invalidate safely;
+10. adapter incompatibility/crash/timeout/capability-ceiling/isolation tests pass;
+11. provider permission-gap and exact-target tests pass for the GitHub profile;
+12. resource-exhaustion/budget/cancellation cases have bounded behavior;
+13. release artifact integrity/provenance evidence exists;
+14. no unresolved HIGH/CRITICAL product-security defect remains for the claimed release surface.
 
-## Candidate secret policy
-- secrets are references/capabilities, not canonical project data;
-- secret values must not be written to governed Markdown/JSON/receipts/telemetry;
-- logs/receipts use redacted identifiers and provider/account metadata only where needed;
-- discovered probable secrets create a security finding and may block publication/release;
-- recovery material containing sensitive target content stays outside normal version-controlled publication surfaces;
-- no secret scanning result is silently treated as proof that a repository is secret-free.
+A security test that cannot run because an external capability is unavailable must be represented as an explicit evidence gap, not success. Production acceptance policy decides whether a given non-core external gap is allowable.
 
-## Candidate mutation authorization model
-Every state-changing operation should carry:
+# Cross-cutting safety rules
 
-```text
-operationId
-actor/initiator context
-project/repository identity
-target surface
-security class
-expected pre-state
-requested capability
-allowed operation set
-recovery/compensation model
-approval requirement
-```
+## Filesystem
+- normalize and resolve target paths;
+- require containment within approved roots after resolution;
+- define symlink/junction/reparse-point behavior explicitly;
+- never follow an unexpected link to obtain write authority;
+- use same-filesystem staging where atomic replacement semantics depend on it;
+- refuse ambiguous case-collision/path normalization states.
 
-Normal bounded operations may be pre-authorized by frozen policy. Elevated destructive actions require an explicit separate approval path and cannot be inferred from a broad bootstrap instruction.
+## Git
+- no force push/history rewrite/reset/destructive clean by default;
+- verify repository identity and current branch/HEAD binding;
+- routine branch creation/commit is S2 and policy-governed;
+- protected/default branch semantics are discovered where possible and never assumed safe;
+- worktree/index dirtiness that could be overwritten creates conflict/gap rather than silent cleanup.
 
-## Candidate provider-security model
-Provider adapters must separate:
-1. capability discovery;
-2. authorization/permission interpretation;
-3. plan generation;
-4. side-effect execution;
-5. post-state verification;
-6. receipt emission.
+## Evidence and receipts
+- machine-readable receipts bind operation ID, target identity, security class, pre/post state, changed paths/side effects, policy result and terminal status;
+- receipts must not contain plaintext secrets or unnecessary target content;
+- success without applicable post-state verification is not final success;
+- invalid/stale evidence cannot promote a checkpoint or DONE state.
 
-Missing administration permission is a truthful gap, not a reason to bypass provider governance or fabricate success.
+## Resource safety
+Repository discovery, hashing, scans, IPC and provider operations use bounded file count/size/depth, time, memory/output and retry policies. Budget escalation is explicit and assurance may override optimization limits when required.
 
-## Candidate adapter-security model
-Optional adapters declare:
-- adapter ID/version;
-- compatible protocol versions;
-- capabilities;
-- required permissions;
-- external endpoints/processes;
-- filesystem/provider side-effect classes;
-- timeout/resource needs;
-- security class ceiling.
+## Security vs token economy
+Security evidence should be compact and deterministic where possible. Token savings may come from hashes, structured findings, dependency maps and delta review, but never from hiding findings, dropping required context, weakening threat controls or replacing actual security evidence with a model assertion.
 
-Unknown/incompatible adapter major versions fail closed. Adapters cannot directly mutate core canonical state outside governed application/kernel operations.
+# Security decision summary
+| ID | Decision |
+|---|---|
+| `SEC-01` | five inherited security classes S0–S4 with anti-downgrade rule |
+| `SEC-02` | policy authorization for bounded S1–S3; separate explicit owner authorization for every S4 action |
+| `SEC-03` | private ignored repository-local operational/recovery area with bounded retention |
+| `SEC-04` | secret minimization, redaction, blocking real exposure, scoped false-positive disposition |
+| `SEC-05` | direct argument-array processes, minimal env, shell disabled by default, bounded execution |
+| `SEC-06` | lockfile/dependency/vulnerability/license/integrity/provenance production gates |
+| `SEC-07` | provider least privilege, capability discovery and truthful permission-gap states |
+| `SEC-08` | versioned capability-scoped adapter isolation, out-of-process by default for external/risky adapters |
+| `SEC-09` | fingerprint/schema/exact-state tamper evidence without false cryptographic trust claims |
+| `SEC-10` | mandatory T1–T12 security evidence gate for production acceptance |
 
-## Candidate supply-chain policy
-Production should require:
-- pinned lockfile;
-- dependency/license/security review policy;
-- minimal production dependency graph;
-- CI vulnerability/static checks appropriate to TypeScript/Node;
-- checksum/provenance verification for published release artifacts;
-- no silent update execution;
-- compatibility/security review before runtime major-version upgrades.
+## Freeze audit
+- Architecture compatibility: PASS
+- security classes closed: PASS
+- authorization boundary closed: PASS
+- S4 explicit approval invariant: PASS
+- private/recovery state policy: PASS
+- secret handling/publication: PASS
+- process execution policy: PASS
+- supply-chain gates: PASS
+- provider permission model: PASS
+- adapter isolation model: PASS
+- integrity truthfulness: PASS
+- production security evidence gate: PASS
+- Windows/Linux/macOS security concerns represented: PASS
+- token optimization cannot weaken security: PASS
+- no functional implementation introduced: PASS
+- open Security decisions: 0
 
-## Candidate security evidence
-Security-relevant release proof should cover at minimum:
-- threat-control mapping;
-- secret scanning/publication checks;
-- dependency/supply-chain checks;
-- path traversal/symlink tests;
-- destructive-operation denial tests;
-- transaction recovery tests;
-- command-injection tests;
-- malformed schema/receipt tests;
-- adapter crash/timeout/isolation tests;
-- provider permission-gap tests;
-- stale/tampered cache/evidence tests;
-- Windows/Linux/macOS path/process security cases.
-
-## Security questions to close
-1. Freeze the exact security-class model and what operations map to each class.
-2. Define which actions require explicit human/user approval versus frozen policy authorization.
-3. Define the repository-local private/recovery state placement and retention policy.
-4. Freeze secret-detection/redaction/publication behavior and false-positive handling.
-5. Define executable/process allowlisting and environment inheritance policy.
-6. Freeze dependency/supply-chain acceptance gates for production.
-7. Define provider-token permission expectations and degraded/gap behavior.
-8. Freeze adapter permission/capability sandbox rules and maximum trust assumptions.
-9. Define integrity protection for receipts/checkpoints/derived state without pretending all local files are cryptographically trusted.
-10. Define the minimum security test/evidence gates for `PRODUCTION_RELEASE_DONE`.
-
-## Current direction
-Security favors least privilege, explicit trust boundaries, exact target/state binding, safe process execution, secret minimization, isolated adapters, recoverable mutation, integrity-bound derived state and truthful gap/failure reporting.
-
-STOP CONDITION: `SECURITY_DECISIONS_REQUIRED`.
+STOP CONDITION: `READY_FOR_SECURITY_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
