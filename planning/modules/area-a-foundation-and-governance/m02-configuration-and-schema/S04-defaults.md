@@ -1,6 +1,6 @@
 # GBS-M02-S04 — Defaults
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN_CANDIDATE`
 
 ## Purpose
 Freeze how product defaults are defined, applied, exposed and changed without bloating project configuration, weakening security/assurance floors or creating hidden behavior.
@@ -31,7 +31,7 @@ M02-S04 DOES NOT OWN:
 - policy floors frozen elsewhere;
 - project identity, preflight observations or secrets.
 
-## Candidate defaults contract
+## Frozen defaults contract
 
 ### DF-01 — Product defaults are the lowest precedence layer
 Effective configuration remains:
@@ -40,23 +40,16 @@ Effective configuration remains:
 
 A product default applies only when no higher permitted layer supplies a value. The resolved snapshot records provenance as `PRODUCT_DEFAULT` so consumers can distinguish inherited behavior from explicit user/project intent.
 
-### DF-02 — Defaults are code/schema-owned, not copied into every project
+### DF-02 — Defaults are not copied into every project
 A formal GEF adoption marker may exist in `.gef/project.json`, but default-valued fields are omitted unless explicit persistence has semantic value.
 
 GEF MUST NOT materialize a full expanded config merely to show current defaults. Tooling may render an explanatory/effective view without writing it back.
 
-Rationale:
-- less repository churn;
-- fewer migration edits;
-- smaller prompts/diffs;
-- no ambiguity between inherited default and explicit project choice;
-- easier global improvement of safe defaults.
-
 ### DF-03 — A default requires an owning semantic module
-A default may enter the canonical catalogue only when:
+A default enters the canonical catalogue only when:
 1. an owning module/contract exists;
-2. the field semantics are frozen enough to be deterministic;
-3. omission has a single safe meaning;
+2. field semantics are deterministic;
+3. omission has one safe meaning;
 4. precedence/override policy is known;
 5. security/assurance implications are classified;
 6. compatibility impact of changing it can be evaluated.
@@ -64,148 +57,112 @@ A default may enter the canonical catalogue only when:
 No speculative placeholder defaults for future modules.
 
 ### DF-04 — Safety floors are constraints, not ordinary defaults
-Security minimums, authorization requirements, integrity gates and mandatory assurance floors are not represented as weakenable convenience defaults.
+Security minimums, authorization requirements, integrity gates and mandatory assurance floors are not weakenable convenience defaults.
 
-A configurable value may have a safe product default plus a non-negotiable floor/ceiling. Higher-precedence config may change the value only within the allowed policy range.
+A configurable value may have a product default plus a non-negotiable floor/ceiling. Higher-precedence config may change the value only within the allowed policy range.
 
-Example concept:
+### DF-05 — Defaults are environment-independent
+Product defaults never depend directly on current directory, repository contents, CPU/RAM, network availability, provider permissions, environment variables, wall-clock time or machine identity.
 
-`defaultConcurrency = N` is a default.
+Adaptive values belong to a separate derived-policy/capability-evaluation layer with explicit provenance. They are never labelled `PRODUCT_DEFAULT`.
 
-`concurrency >= 1` and a resource-policy maximum are constraints.
+### DF-06 — Default catalogue is a generated machine contract
+The canonical default catalogue is a deterministic build/runtime machine contract derived from product-owned source/contracts and mechanically checked against canonical schemas. It is not a separately hand-maintained persisted truth file.
 
-`S4 requires explicit authorization` is policy, never a default that config can toggle off.
+The product MAY emit a deterministic JSON representation for inspection, evidence, testing or distribution, but such output is generated/derived and cannot become a competing source of truth.
 
-### DF-05 — Defaults must be deterministic and environment-independent
-Product defaults cannot silently depend on:
-- current directory;
-- repository contents;
-- CPU/RAM count;
-- network availability;
-- provider permissions;
-- environment variables;
-- wall-clock time;
-- machine identity.
-
-Those are runtime/preflight inputs. If adaptive behavior is later justified, it must be derived explicitly from observed capabilities and its provenance must not be labelled `PRODUCT_DEFAULT`.
-
-### DF-06 — Default catalogue is machine-addressable
-The implementation must expose a compact deterministic catalogue keyed by stable configuration path/field identity, with at least:
+The catalogue exposes at least:
+- stable configuration path/field identity;
 - owning module;
-- value or explicit `NO_DEFAULT` marker;
+- value or `NO_DEFAULT`;
 - value type/schema binding;
 - override policy reference;
 - security/assurance classification where relevant;
-- introduced-in product/contract version;
-- optional deprecation/change metadata.
-
-The catalogue may be represented in generated TypeScript/JSON as implementation chooses, but it must be mechanically checked against canonical schemas/contracts.
+- introduced-in contract/product version;
+- deprecation/change metadata where applicable.
 
 ### DF-07 — `NO_DEFAULT` is first-class
-Some fields must require explicit selection rather than silently guessing. The system distinguishes:
-- field absent because product default applies;
-- field absent because owner says `NO_DEFAULT` and explicit value is required;
-- field unavailable because owning capability/profile is absent.
+The system distinguishes:
+- absent because product default applies;
+- absent because owner says `NO_DEFAULT` and explicit value is required;
+- unavailable because owning capability/profile is absent.
 
-A required explicit decision yields a typed configuration/precondition diagnostic before side effects.
+A required explicit decision yields a typed configuration/precondition diagnostic before governed side effects.
 
-### DF-08 — Effective-config rendering is non-mutating
-GEF may provide machine/human views such as:
-- effective value;
-- provenance;
-- inherited/default status;
-- overrideability;
-- policy bounds;
-- difference from product default.
+### DF-08 — Explicit values remain explicit
+A global/project field explicitly persisted by the user/project remains explicit even when its value equals the current product default. Normalization MUST NOT erase it merely as redundant.
 
-Rendering these views does not rewrite `.gef/project.json` or global config.
+Reason: equality with the current default does not erase provenance or intent. A later product-default change must not silently convert an explicit choice into inherited behavior.
 
-### DF-09 — Default changes are compatibility-relevant
-Changing a default can change behavior in repositories that omitted that field. Therefore a default change is never treated as cosmetic merely because schema shape stayed compatible.
+### DF-09 — Effective-config rendering is non-mutating
+GEF may render effective value, provenance, inherited/default status, overrideability, policy bounds and difference from product default. Rendering never rewrites global/project config.
 
-Every default change must be classified at least as:
+### DF-10 — Default changes are compatibility-relevant
+Changing a default can alter behavior in repositories that omitted that field. Every default change is classified at least as:
 - behavior-preserving/editorial metadata;
 - backward-compatible behavior adjustment;
 - behavior-changing migration/compatibility event;
 - security/assurance correction.
 
-S05 owns version/migration mechanics, but S04 requires the change signal to exist.
+S05 owns migration/version mechanics.
 
-### DF-10 — Security fixes may supersede old defaults
-A previous default does not become an eternal compatibility promise when it is unsafe. Security/assurance corrections may tighten behavior, but the release must record the behavioral change and migration/compatibility implications rather than silently pretending nothing changed.
-
-### DF-11 — Explicit values remain explicit across default evolution
-If a project/global config explicitly stores a value equal to the old default, a future product-default change does not silently rewrite that explicit intent. The configured value continues to win if still valid under policy.
-
-This is why default-valued settings should not be materialized automatically during adoption.
+### DF-11 — Security fixes may supersede old defaults
+An unsafe historical default is not an eternal compatibility promise. Security/assurance corrections may tighten behavior, but releases must record the behavior change and migration/compatibility implications.
 
 ### DF-12 — Minimal initial catalogue
-The initial M02 implementation should define only defaults required by currently owned M02 behavior and M01 runtime/config integration. Fields owned by M14/M27/M43/M49/M63 etc. join the catalogue only when those owners freeze their semantics.
+The initial M02 implementation defines only defaults required by already-owned M02 behavior and M01 runtime/config integration. Later modules add their defaults only after their own semantic contracts freeze.
 
-Candidate M02-level defaults are limited to mechanics such as:
-- absence of global config is allowed;
-- canonical known paths defined by S01/S02 are fixed conventions, not user defaults;
-- unknown core fields are rejected by schema policy, not a user default;
-- extension payloads are inactive until owner compatibility exists;
-- no generic environment override layer.
+### DF-13 — Independent catalogue version and fingerprint
+The default catalogue has its own deterministic version/fingerprint independent from the general product version.
 
-Concrete execution/assurance/telemetry numeric defaults remain with their owning modules rather than being invented here.
+The fingerprint binds the semantic default catalogue inputs, including stable field IDs, values/`NO_DEFAULT`, override-policy bindings and compatibility-significant metadata. Editorial documentation changes that do not affect default semantics must not churn the semantic fingerprint.
 
-### DF-13 — Token/latency economy
-Defaults must reduce recurring context cost by allowing the resolver to communicate only:
+This independent identity supports targeted cache/proof invalidation, changed-default delta review and compact executor context.
+
+### DF-14 — Token/latency economy
+Defaults reduce recurring context cost by allowing resolver/executor flows to communicate only:
 - non-default overrides;
 - compact effective snapshot/fingerprint;
 - default catalogue version/fingerprint;
-- changed-default delta when product versions differ.
+- changed-default delta when relevant.
 
-LLM/executor prompts should not carry the complete default catalogue unless the task actually touches default semantics.
+The full catalogue is not carried into prompts unless the task touches default semantics.
 
-### DF-14 — Brownfield neutrality
-Adopting GEF in an existing repository does not implicitly persist hundreds of defaults or change unrelated project files. Adoption applies safe product defaults in memory and writes only the minimal explicit adoption/config material required by frozen contracts.
-
-## Candidate default resolution output
-Conceptual only:
-
-```text
-ResolvedField
-  path
-  value
-  provenanceLayer
-  provenanceRef?
-  inheritedFromDefault: boolean
-  defaultCatalogVersion
-  overridePolicy
-  policyBounds?
-```
+### DF-15 — Brownfield neutrality
+Adopting GEF in an existing repository does not persist large default expansions or change unrelated project files. Safe defaults are applied in memory and only minimal explicit adoption/config material is written.
 
 ## Security and reliability invariants
 1. Defaults cannot weaken frozen policy floors.
-2. Environment/provider observations are never disguised as defaults.
+2. Machine/provider observations are never disguised as defaults.
 3. `NO_DEFAULT` cannot silently coerce to a guessed value.
-4. Explicit persisted intent wins over a later changed default when still valid.
-5. Default changes that alter behavior are compatibility-significant.
+4. Explicit persisted intent remains explicit after default evolution when still valid.
+5. Behavior-changing defaults are compatibility-significant.
 6. Sensitive values/secrets never appear in the default catalogue.
+7. Adaptive policy cannot masquerade as `PRODUCT_DEFAULT`.
+8. Catalogue fingerprint/version invalidates only when semantic catalogue inputs change.
 
 ## Future implementation proof
 Eventually prove:
 - precedence/provenance between defaults/global/project/explicit override;
 - omission does not materialize redundant fields;
 - `NO_DEFAULT` produces deterministic failure;
-- explicit old-default value remains explicit after product-default change;
-- safety floors cannot be downgraded by a changed/default value;
+- explicit value equal to default remains explicit;
+- explicit old-default value remains stable after product-default change when valid;
+- safety floors cannot be downgraded;
 - adaptive runtime observations are classified separately;
-- default catalogue/schema alignment;
-- deterministic catalogue/snapshot fingerprints;
+- generated catalogue/schema alignment;
+- deterministic catalogue version/fingerprint;
+- editorial-only changes do not churn semantic fingerprint;
 - effective-config rendering has no mutation side effect;
 - brownfield adoption does not expand config unnecessarily.
 
-## Open decisions before freeze
-1. Should the default catalogue itself be a persisted JSON artifact with a canonical schema, or remain a build-time/runtime machine contract generated from product code/contracts?
-2. Should a config field explicitly set to its current product default be preserved verbatim, or may normalization remove it as redundant?
-3. Do we freeze a product-wide rule that defaults may never depend directly on machine capability, requiring all adaptive values to live in a separate derived-policy layer?
-4. Should default catalogue changes receive their own fingerprint/version independent from general product version for targeted invalidation and delta review?
+## Resolved freeze decisions
+1. Default catalogue representation: **generated deterministic build/runtime machine contract; optional JSON is derived output only**.
+2. Explicit value equal to current default: **preserved verbatim as explicit intent; normalization does not remove it**.
+3. Machine-capability-dependent defaults: **prohibited product-wide; adaptive values use a separate derived-policy layer**.
+4. Catalogue identity: **independent semantic version/fingerprint required for targeted invalidation and delta review**.
 
 ## Session completion rule
-S04 may freeze only after these four decisions are resolved and exact-head review confirms consistency with S01-S03, Security and future S05 migration ownership.
+Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M02-S05`.
 
-STOP CONDITION: `DEFAULTS_DECISIONS_REQUIRED`.
+STOP CONDITION: `M02_S04_EXACT_HEAD_REVIEW_REQUIRED`.
