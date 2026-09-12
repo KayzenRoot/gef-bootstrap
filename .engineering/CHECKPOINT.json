@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_SOURCE_PACK_ARCHITECTURE",
+  "status": "READY_FOR_SOURCE_PACK_SECURITY",
   "phase": "POST_CONSTITUTION_SOURCE_PACK_PLANNING",
   "areasRegistered": 16,
   "modulesRegistered": 64,
@@ -20,24 +20,24 @@
   "projectOverview": "FROZEN",
   "requirements": "FROZEN",
   "scope": "FROZEN",
-  "scopePr": 21,
-  "scopeReviewedHead": "dccd2c6daad1b6d8383679f0df95a0fe3e13cbba",
-  "mainAfterScopeMerge": "f02ba61fb6f780a11022ba2cc0dc8986e3cf2989",
-  "scopeModuleClassification": {
-    "coreRequired": 47,
-    "productIncluded": 14,
-    "optionalAdapter": 3
-  },
-  "stableModuleReframes": {
-    "GBS-M01": "Deterministic Work Plane Kernel",
-    "GBS-M47": "Interaction & Operator UX",
-    "GBS-M49": "Distribution & Setup",
-    "GBS-M62": "Production Acceptance"
-  },
+  "architecture": "FROZEN",
+  "architecturePr": 23,
+  "architectureReviewedHead": "c7b416a83d274b8770741bcccb3aa1af98c0b73a",
+  "mainAfterArchitectureMerge": "53467955326789e2ca984227c4745b13c81ab288",
+  "runtimeArchitecture": "TYPESCRIPT_ON_SUPPORTED_NODE_LTS",
+  "repositoryArchitecture": "MODULAR_MONOREPO_WORKSPACES",
+  "operatorSurface": "APPLICATION_LIBRARY_API_FIRST_THIN_CLI",
+  "stateArchitecture": "CANONICAL_FILES_JSON_JSONL_OPTIONAL_SQLITE_DERIVED_OPERATIONAL",
+  "mutationArchitecture": "STAGED_TRANSACTION_VERIFY_RECEIPT_RECOVERY",
+  "providerArchitecture": "FILESYSTEM_LOCAL_GIT_HOSTED_PROVIDER_SEPARATION",
+  "adapterArchitecture": "VERSIONED_SDK_ISOLATED_OUT_OF_PROCESS_DEFAULT_FOR_RISKY_EXTERNAL",
+  "machineContractArchitecture": "JSON_SCHEMA_2020_12_EXPLICIT_VERSION_MIGRATIONS",
+  "supportedLocalOs": ["windows","linux","macos"],
+  "scopeModuleClassification": {"coreRequired":47,"productIncluded":14,"optionalAdapter":3},
   "progressWeightFormula": "E+R+I+P",
-  "nextPlanningStage": "SOURCE_PACK_ARCHITECTURE",
+  "nextPlanningStage": "SOURCE_PACK_SECURITY",
   "canonicalBranch": "main",
   "overallCompletion": "NOT_YET_BASELINED",
   "eta": "NOT_YET_RELIABLE",
-  "stopState": "READY_FOR_SOURCE_PACK_ARCHITECTURE"
+  "stopState": "READY_FOR_SOURCE_PACK_SECURITY"
 }
