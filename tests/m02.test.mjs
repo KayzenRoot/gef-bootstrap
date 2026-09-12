@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   SchemaRegistry,
@@ -14,7 +15,9 @@ import {
   MigrationGraph,
   previewMigration,
   projectConfigSchema,
+  requireDefaultBehaviorAcknowledgement,
   resolveConfiguration,
+  resolveDefault,
   resolveGlobalConfigPath,
   resolveProjectConfigPaths,
   validateGlobalConfig,
@@ -30,6 +33,7 @@ test("global config path is deterministic and platform aware", () => {
   assert.equal(resolveGlobalConfigPath({ platform: "linux", env: { HOME: "/home/alice", XDG_CONFIG_HOME: "/cfg" } }), "/cfg/gef/config.json");
   assert.equal(resolveGlobalConfigPath({ platform: "darwin", env: { HOME: "/Users/alice" } }), "/Users/alice/Library/Application Support/gef/config.json");
   assert.equal(resolveGlobalConfigPath({ platform: "win32", env: { APPDATA: "C:\\Users\\alice\\AppData\\Roaming" } }), "C:/Users/alice/AppData/Roaming/gef/config.json");
+  assert.equal(resolveGlobalConfigPath({ platform: "win32", env: { APPDATA: "\\\\server\\share\\roaming" } }), "//server/share/roaming/gef/config.json");
 });
 
 test("project paths separate canonical config from private state", () => {
@@ -50,6 +54,13 @@ test("global and project schemas expose stable local URNs", () => {
   assert.equal(globalConfigSchema.$schema, "https://json-schema.org/draft/2020-12/schema");
 });
 
+test("persisted JSON schemas are mechanically aligned with exported contracts", async () => {
+  const globalJson = JSON.parse(await readFile(new URL("../packages/config/schemas/global-config.schema.json", import.meta.url), "utf8"));
+  const projectJson = JSON.parse(await readFile(new URL("../packages/config/schemas/project-config.schema.json", import.meta.url), "utf8"));
+  assert.deepEqual(globalJson, globalConfigSchema);
+  assert.deepEqual(projectJson, projectConfigSchema);
+});
+
 test("schema registry is deterministic and rejects duplicate ids", () => {
   const registry = new SchemaRegistry();
   registry.register(projectConfigSchema);
@@ -64,9 +75,10 @@ test("core unknown fields fail closed while extensions stay inert", () => {
   assert.deepEqual(validateGlobalConfig({ schemaVersion: "1.0", configVersion: "1.0", extensions: { "adapter.future": { arbitrary: true } } }), []);
 });
 
-test("persisted secret-like values are rejected", () => {
+test("persisted secret-like values are rejected while credential references are allowed", () => {
   const diagnostics = validateGlobalConfig({ schemaVersion: "1.0", configVersion: "1.0", extensions: { provider: { apiKey: "secret-value" } } });
   assert.equal(diagnostics.some((d) => d.code === "gef.config.secret_value_forbidden"), true);
+  assert.deepEqual(validateGlobalConfig({ schemaVersion: "1.0", configVersion: "1.0", extensions: { provider: { credentialRef: "os-keychain:github" } } }), []);
 });
 
 test("project adoption marker is mandatory and minimal", () => {
@@ -105,6 +117,19 @@ test("explicit value equal to product default remains explicit", () => {
   assert.equal(snapshot.provenance.extensions.explicit, true);
 });
 
+test("NO_DEFAULT is first class", () => {
+  assert.equal(resolveDefault("adopted").status, "NO_DEFAULT");
+  assert.equal(resolveDefault("extensions").status, "VALUE");
+  assert.equal(resolveDefault("does.not.exist").status, "UNKNOWN");
+});
+
+test("elevated default behavior changes require explicit acknowledgement", () => {
+  const delta = [{ path: "future.assurance.mode", assurance: "ELEVATED", behaviorChanged: true }];
+  assert.throws(() => requireDefaultBehaviorAcknowledgement(delta, false), /default_behavior_acknowledgement_required/);
+  assert.doesNotThrow(() => requireDefaultBehaviorAcknowledgement(delta, true));
+  assert.doesNotThrow(() => requireDefaultBehaviorAcknowledgement([{ path: "x", assurance: "STANDARD", behaviorChanged: true }], false));
+});
+
 test("fingerprints are deterministic and independent of object key order", () => {
   assert.equal(fingerprint({ b: 2, a: 1 }), fingerprint({ a: 1, b: 2 }));
   assert.notEqual(defaultCatalogFingerprint, fingerprint(globalConfigSchema));
@@ -129,11 +154,12 @@ test("compatibility classification covers native, read-only future, too-new and 
   assert.equal(classifyCompatibility("invalid", policy, graph), "INVALID_OR_AMBIGUOUS");
 });
 
-test("migration graph rejects cycles and ambiguous edges", () => {
+test("migration graph rejects cycles and ambiguous edges without retaining invalid edges", () => {
   const graph = new MigrationGraph();
   graph.add({ id: "a", fromVersion: "1.0", toVersion: "1.1", affectedPaths: [], risk: "STANDARD", transform: (doc) => doc });
   assert.throws(() => graph.add({ id: "b", fromVersion: "1.0", toVersion: "1.1", affectedPaths: [], risk: "STANDARD", transform: (doc) => doc }), /ambiguous_edge/);
   assert.throws(() => graph.add({ id: "c", fromVersion: "1.1", toVersion: "1.0", affectedPaths: [], risk: "STANDARD", transform: (doc) => doc }), /migration_cycle/);
+  assert.deepEqual(graph.list().map((step) => step.id), ["a"]);
 });
 
 test("migration preview is mutation free and bound to exact source fingerprint", () => {
