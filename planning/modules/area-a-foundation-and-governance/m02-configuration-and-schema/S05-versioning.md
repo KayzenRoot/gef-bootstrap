@@ -1,6 +1,6 @@
 # GBS-M02-S05 — Versioning & Migration
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze how GEF configuration contracts evolve across product versions without silently changing project intent, corrupting brownfield repositories or forcing perpetual backward compatibility.
@@ -230,6 +230,6 @@ Eventually prove:
 5. Behavior-changing default delta affecting ELEVATED/HIGH_ASSURANCE flows: **explicit acknowledgement required**, even if config bytes do not change.
 
 ## Session completion rule
-Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and module-gate evaluation across S01-S05.
+Planning content is `FROZEN` after exact-head review and merge. The next legal step is the module-gate evaluation across S01-S05.
 
-STOP CONDITION: `M02_S05_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M02_S05_FROZEN_READY_FOR_MODULE_GATE`.
