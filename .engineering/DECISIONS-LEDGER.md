@@ -33,3 +33,15 @@ Status: `ACTIVE`
 ## D-0008 — Bootstrap materializes governance into the target repository
 - Decision: Although GEF Bootstrap has no standalone runtime/CLI, invoking its canonical project-start instruction against a target repository must create or update the governed files, directories, templates, checkpoint state, prompt/review contracts and other approved bootstrap artifacts required for that target project to follow GEF recommendations. The Bootstrap repository is the instruction source; the target repository receives the materialized project-specific artifacts.
 - Status: APPROVED
+
+## D-0009 — Token efficiency is a first-class architectural invariant
+- Decision: GEF Bootstrap must treat model-token economy, especially paid executor/Codex tokens, as a first-class design invariant across source resolution, context construction, prompt compilation, execution, validation, evidence and review. Every applicable module must actively look for safe opportunities to remove duplicated context, repeated reasoning, unnecessary repository reads/searches, verbose executor output and redundant validation. The project may grow substantially in planning depth and deterministic metadata if that reduces recurring executor cost. Token reduction never overrides correctness, security, data integrity or required assurance.
+- Status: APPROVED
+
+## D-0010 — Executor cognition minimization
+- Decision: The preferred execution contract minimizes open-ended executor reasoning. ChatGPT/planning sources should pre-resolve intent, architecture, root cause, target files/symbols, transformation recipe, invariants, forbidden shortcuts, tests and STOP conditions whenever evidence permits. Codex should spend tokens primarily on bounded implementation and proof, escalating rather than rediscovering when assumptions fail.
+- Status: APPROVED
+
+## D-0011 — Token optimization must be measured end-to-end
+- Decision: Optimization is not accepted merely because a prompt is shorter. GEF must measure or estimate with explicit confidence the total token path per governed change, including source/context loading, prompt input, executor reasoning/output, retries, review rereads and correction rounds, and compare it with quality/defect outcomes. Targets and measured gains must remain distinct.
+- Status: APPROVED
