@@ -1,6 +1,6 @@
 # GBS-M01-S04 — Exit Codes
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN_CANDIDATE`
 
 ## Objective
 Freeze the process-level exit-code contract for the Deterministic Work Plane Kernel so CLI/automation callers receive a compact, stable and script-safe summary while rich error/lifecycle detail remains in typed machine results and receipts.
@@ -13,11 +13,9 @@ Freeze the process-level exit-code contract for the Deterministic Work Plane Ker
 - Lifecycle terminal state and shared error taxonomy carry more information than a process integer.
 
 ## Core principle
-Exit codes are **coarse compatibility signals**, not the canonical error model.
+Exit codes are coarse compatibility signals, not the canonical error model. A process exit code never attempts to encode every reason, module, policy or recovery detail. Rich typed results/receipts remain authoritative for precise diagnosis and automation.
 
-A process exit code MUST NOT attempt to encode every reason, module, policy or recovery detail. Rich typed results/receipts remain authoritative for diagnosis and automation that needs precision.
-
-## Candidate code families
+## Frozen code families
 ```text
 0   SUCCESS
 10  USAGE_OR_INPUT_ERROR
@@ -31,66 +29,79 @@ A process exit code MUST NOT attempt to encode every reason, module, policy or r
 90  INTERNAL_UNEXPECTED_FAILURE
 ```
 
-Specific numeric assignments are reserved and versioned as part of the public CLI/process contract once frozen.
+These decade families are the public process-contract baseline. Additional precision belongs in typed reason codes, not additional exit integers unless a governed contract revision proves a need.
 
 ## Mapping rules
-- `SUCCEEDED` -> `0`.
-- malformed request / invalid CLI input -> usage/input family.
-- stale target, incompatible state, unsupported runtime/profile or failed precondition -> precondition/state family.
-- policy denial, explicit authorization required/denied, S4 block -> policy/authorization family.
-- missing capability, provider unavailable, required tool/dependency unavailable -> dependency/capability family.
-- handler/use-case execution fault after valid preflight -> execution family unless verification/integrity or recovery state is more specific.
-- failed verification, evidence/integrity mismatch -> verification/integrity family.
-- partial external effect or recovery required -> recovery/partial-effect family.
-- operator cancellation or timeout -> cancellation/timeout family.
-- uncaught/unexpected kernel/operator boundary fault -> internal unexpected family.
+- `SUCCEEDED` -> `0` only.
+- malformed request, invalid CLI syntax or malformed version syntax -> `10`.
+- stale target, incompatible state, unsupported runtime/profile or semantically incompatible command contract version -> `20`.
+- policy denial, authorization required/denied or S4 block -> `30`.
+- missing capability, unavailable provider, required tool/dependency unavailable -> `40`.
+- handler/use-case execution failure after valid preflight -> `50`, unless a more specific verification/integrity or recovery state applies.
+- failed verification, evidence mismatch or integrity failure -> `60`.
+- partial external effect or any state requiring recovery/repair -> `70`.
+- operator cancellation or timeout -> `80`, differentiated by typed reason code.
+- uncaught/unexpected kernel/operator-boundary fault -> `90`.
+
+## Precedence rule
+When multiple coarse conditions are present, the outermost process code reflects the condition that most directly determines safe operator response. In particular, `RECOVERY_REQUIRED_OR_PARTIAL_EFFECT` outranks generic execution failure because it signals that prior effects may exist and follow-up action is required. The detailed typed result preserves every contributing cause.
+
+This precedence is not a generic severity-ranking engine. S05 owns error taxonomy and orchestrators own aggregate semantics.
 
 ## Stability contract
-Published exit-code meanings are backward compatible within a compatible major CLI/process-contract line. A code must not silently change semantic family.
-
-New detailed reason codes should normally be added to typed results rather than consuming new process exit integers.
+Published numeric meanings remain backward compatible within a compatible major CLI/process-contract line. A code never silently changes semantic family. Contract-breaking numeric changes require governed major compatibility treatment.
 
 ## Library/API behavior
-The library API never requires callers to infer semantics from process exit codes. It returns typed result/error structures directly.
-
-The thin CLI maps typed terminal results into process exit codes at the outermost operator boundary.
+Library callers consume typed result/error structures directly and never need to infer semantics from process exit integers. The thin CLI performs the projection at the outermost operator boundary.
 
 ## Machine output behavior
-When structured output is requested, process exit code and typed result must agree. The exit integer is the coarse summary; machine JSON/receipt supplies the precise classification, reason code, run ID and evidence/recovery references.
+When structured output is requested, process exit code and typed machine result must agree. The integer is the coarse summary; structured output supplies exact category, reason code, lifecycle terminal state, run ID, evidence references and recovery references.
 
-## Shell/platform considerations
-Use only portable non-negative process exit values suitable for Node.js and common Windows/Linux/macOS automation. Do not rely on platform-specific signal encodings as stable product semantics.
+Contradiction between structured result and emitted process exit code is an integrity defect, not an acceptable presentation difference.
 
-OS/process termination by signal or host/runtime failure may be observed separately and must not be falsely normalized into a GEF success/failure classification when the application did not produce one.
+## Portability
+All product-defined codes are non-negative and portable across supported Windows/Linux/macOS Node.js execution. Platform signal/host termination is observed separately and never fabricated into an application-produced GEF classification when no application terminal result was emitted.
 
-## Composition/orchestrator rule
-For multi-step orchestrated commands, the top-level command owns the final process exit code. Child failures remain represented in child receipts and the orchestrator's typed aggregate result.
+## Orchestrator rule
+For a multi-step command, the top-level orchestrator owns the final process exit code. Child results remain available through linked receipts and aggregate typed output. Partial child success cannot downgrade a top-level block, failure, verification problem or recovery-required outcome.
 
-The CLI must not choose a lower-severity exit merely because some child work succeeded if the top-level terminal contract indicates block/failure/recovery-required.
+## Frozen decisions
+1. Exit codes are coarse process compatibility signals, not the canonical error taxonomy.
+2. Library callers consume typed results and do not parse exit codes for detailed semantics.
+3. CLI maps one top-level typed terminal result to one process exit family.
+4. `0` is reserved exclusively for successful deterministic completion.
+5. Stable decade families `10..90` are adopted for readability and reserved expansion while remaining portable.
+6. Timeout and operator cancellation share process family `80`; typed reasons distinguish them.
+7. Policy block and authorization-required/denied share process family `30`; typed reasons distinguish them.
+8. `RECOVERY_REQUIRED_OR_PARTIAL_EFFECT` (`70`) outranks generic execution failure when recovery/partial-effect truth exists.
+9. Incompatible command contract versions map to `20 PRECONDITION_OR_STATE_BLOCK`; malformed version syntax maps to `10 USAGE_OR_INPUT_ERROR`.
+10. Detailed reason expansion occurs in typed result/error schemas rather than proliferating process integers.
+11. Published meanings are stable within a compatible major process-contract line.
+12. Structured output and process exit code cannot contradict each other.
+13. Top-level orchestrator owns final process exit code; child detail remains in linked receipts.
+14. Host/signal termination is not falsified into an application-generated GEF code.
 
 ## Token/time economy
-A small stable exit-code family enables fast CI/scripts to branch without parsing prose. Detailed reason codes stay in structured machine results, avoiding an exploding integer taxonomy and reducing repeated diagnosis prompts.
+A small stable family lets CI, scripts and wrappers branch immediately without parsing prose or invoking an LLM. Detailed typed reason codes retain enough precision for delta-oriented correction while avoiding a brittle numerical taxonomy.
 
-## Candidate frozen decisions
-1. Exit codes are coarse process-level compatibility signals, not the canonical error taxonomy.
-2. Library callers consume typed results and never depend on exit-code parsing.
-3. CLI maps terminal typed results to one stable exit-code family at the outermost boundary.
-4. Exit code `0` is reserved for successful deterministic completion only.
-5. Non-zero families distinguish input, state/precondition, policy/auth, dependency/capability, execution, verification/integrity, recovery/partial-effect, cancellation/timeout and unexpected-internal failure.
-6. Detailed reason expansion happens in typed error/result schemas, not by proliferating exit integers.
-7. Published numeric meanings are stable within a compatible major contract line.
-8. Structured machine output and process exit code must never contradict each other.
-9. Top-level orchestrator owns final process exit code; child details remain in linked receipts.
-10. Host/signal termination is not fabricated into an application-produced GEF classification.
+## Delegated ownership
+- M01-S05: canonical shared error categories/reason schema and cause chains
+- M02: validation and contract-version representation
+- M03/M04: target/runtime/profile preconditions and capability discovery
+- M16/M34/M35: policy/security authorization reasons
+- M24/M25/M37: evidence and integrity classifications
+- M36: recovery semantics
+- M47/M48: operator/help presentation
+- M50/M51: upgrade and compatibility/version support
 
-## Open questions before freeze
-1. Should the numeric families use decade ranges exactly as proposed or a smaller POSIX-style compact set? Current direction: decade ranges for readability/reserved expansion while staying portable.
-2. Should timeout and operator cancellation share one process code or be separate? Current direction: shared coarse family, distinct typed reason codes.
-3. Should policy block and authorization-required use the same process family? Current direction: yes, distinct typed reasons under one coarse family.
-4. Should `RECOVERY_REQUIRED` outrank generic execution failure when both are true? Current direction: yes, because operator response and safety implications are more specific.
-5. Should deprecated/unsupported command versions map to usage/input or state/precondition? Current direction: contract incompatibility maps to precondition/state; malformed version syntax maps to usage/input.
+## Resolved freeze questions
+1. Decade-range numeric families exactly as proposed: **RESOLVED YES**.
+2. Timeout and cancellation share one coarse process family with separate typed reasons: **RESOLVED YES**.
+3. Policy block and authorization state share one coarse process family with separate typed reasons: **RESOLVED YES**.
+4. Recovery-required/partial-effect outranks generic execution failure: **RESOLVED YES**.
+5. Incompatible versions map to state/precondition; malformed syntax maps to usage/input: **RESOLVED YES**.
 
 ## Session completion gate
-S04 may become `FROZEN` only when the five open questions are resolved, exact-head review passes, no conflict exists with S01-S03/Security/Architecture, checkpoint advances to `GBS-M01-S05`, and no functional implementation is introduced by this planning session.
+Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M01-S05`. No functional implementation is introduced by this planning session.
 
-STOP CONDITION: `M01_S04_REVIEW_REQUIRED`.
+STOP CONDITION: `M01_S04_EXACT_HEAD_REVIEW_REQUIRED`.
