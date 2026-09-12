@@ -3,132 +3,211 @@
 Status: `IN_DISCUSSION`
 
 ## Binding
-These requirements derive from `GBS-CONSTITUTION-v1.0` and the frozen `.engineering/PROJECT-OVERVIEW.md`. They define what GEF Bootstrap V1 must be capable of doing. They do not yet define implementation architecture, detailed file schemas or final Scope admission.
+These requirements derive from `GBS-CONSTITUTION-v1.1`, `CONSTITUTION-AMENDMENT-0001-HYBRID` and the frozen `.engineering/PROJECT-OVERVIEW.md`.
+
+They define what GEF Bootstrap V1 must be capable of doing. They do not yet freeze implementation architecture, programming language, final schemas or final Scope admission.
+
+## Project construction constraint
+GEF Bootstrap itself is built through ChatGPT and connected project tools. Codex is not used as an implementation executor for this repository. This constraint does not prohibit target repositories from using Codex or other executors under GEF governance.
 
 ## Requirement model
-Each requirement will ultimately carry a stable ID, type, admission basis, verification method, dependencies and applicable profiles/modes where needed.
+Each requirement ultimately carries:
 
-Candidate requirement classes:
-- `FUNC` — required product capability;
+```text
+id
+class
+applicability
+primaryAdmissionBasis
+verificationMethod
+dependencies
+status
+```
+
+Optional metadata may include profile, risk/assurance notes and supersession references.
+
+Requirement classes:
+- `FUNC` — product capability;
 - `GOV` — governance/instruction behavior;
 - `ASSURE` — evidence/safety/completion behavior;
 - `PERF` — token/time/engineering-cost behavior;
 - `CONT` — checkpoint/resume/continuity behavior;
 - `BROWN` — existing-project adoption behavior;
 - `PLAT` — platform/profile behavior;
-- `OBS` — telemetry/measurement behavior.
+- `OBS` — telemetry/measurement behavior;
+- `DET` — deterministic work-plane capability;
+- `SEC` — security/recovery/integrity behavior;
+- `COMPAT` — version/upgrade/compatibility behavior.
 
 Architecture and implementation details are not requirements merely because they sound useful.
 
-## Draft V1 requirements
+## Universal V1 requirements
 
-### REQ-GOV-001 — Instruction-first source of truth
-GEF Bootstrap must operate from versioned governed repository sources rather than relying on chat history as canonical state.
+### REQ-GOV-001 — Repository-backed source truth
+GEF Bootstrap must operate from versioned governed repository sources rather than chat history as canonical state.
 
-Verification direction: a new planning/review context can reconstruct the legal next step from repository state without requiring the original conversation transcript.
+Verification: a fresh planning/review context can reconstruct the legal next step from repository state without requiring the original conversation transcript.
 
 ### REQ-GOV-002 — Governed target materialization
-The Bootstrap must define enough instructions/contracts for a compatible planning agent/executor to create, map or update the applicable governed project surface in a target repository.
+GEF Bootstrap must define and provide enough governed instructions/contracts for a compatible agent and deterministic work plane to create, map or update the applicable governed project surface in a target repository.
 
-It must support both materializing new artifacts and aliasing/mapping valid brownfield artifacts when copying would create duplicate truth.
+It must support both new artifact materialization and brownfield alias/mapping where copying would create duplicate truth.
 
-### REQ-GOV-003 — GEF V1 default workflow
-Initialized projects must be able to follow the governed Analyze → Source Check → bounded execution → evidence → semantic review → checkpoint/promotion pattern, with exact names/refinements owned by later modules.
+### REQ-GOV-003 — GEF V1 governed workflow
+Initialized projects must be able to follow a governed lifecycle equivalent to Analyze → Source Check → bounded execution → evidence → semantic review → checkpoint/promotion.
 
-### REQ-GOV-004 — Stable source authority and conflict handling
-The product must define domain-specific source authority, addressable facts/decisions, validity/supersession semantics and fail-closed handling for missing/conflicting authoritative state.
+### REQ-GOV-004 — Source authority and conflict handling
+GEF must define domain-specific authority, addressable governed facts/decisions, validity/supersession semantics and fail-closed behavior for missing/conflicting authority.
 
 ### REQ-GOV-005 — Scope admission and expansion control
-The product must distinguish inventory from admitted V1 scope and prevent executors from silently authorizing product-scope expansion.
+GEF must distinguish inventory from admitted scope and prevent executors from silently authorizing product-scope expansion.
 
 ### REQ-GOV-006 — Evidence-bound completion
-The product must prevent DONE/READY claims from being accepted solely from agent assertion, percentages or stale evidence and must bind completion to applicable obligations/proofs/state.
+DONE/READY states must be bound to applicable obligations, exact/appropriate subject state and proof. Agent assertion, percentages or stale evidence are insufficient.
 
-### REQ-CONT-001 — Checkpoint/resume without chat dependency
-A governed target project must expose sufficient current/checkpoint state to resume work in a new chat/executor without rediscovering the project from scratch.
+### REQ-GOV-007 — Logical role contract
+GEF must represent Project Owner, Planning Agent, Executor and Reviewer/Auditor responsibilities without requiring separate human accounts/models in every deployment.
+
+### REQ-GOV-008 — Innovation preservation
+Material technologies and ideas must be preservable with lifecycle/ownership metadata without becoming requirements simply because they were discussed.
+
+### REQ-CONT-001 — Resume without chat dependency
+A governed target repository must expose sufficient checkpoint/current state to resume work in a new chat/executor without reconstructing the project from scratch.
 
 ### REQ-CONT-002 — Targeted invalidation
-Changes to relevant canonical sources/dependencies must invalidate affected context/proofs/completion state without forcing unrelated accepted work to reset when dependency evidence permits narrower invalidation.
+Relevant source/dependency changes must invalidate affected context/proofs/completion without resetting unrelated accepted work when narrower invalidation is provable.
 
 ### REQ-FUNC-001 — Minimum Sufficient Context compilation
-The product must support compiling the smallest verifiably sufficient authoritative context for bounded execution while allowing governed expansion when evidence/assurance requires it.
+GEF must support selecting/compiling the smallest verifiably sufficient authoritative context for bounded execution, with governed expansion when evidence or assurance requires it.
 
 ### REQ-FUNC-002 — Pre-resolved bounded execution contract
-Where source evidence permits, planning must be able to provide an executor with resolved objective, scope, target files/symbols or discovery bounds, architecture constraints, transformation intent, validation obligations, budgets and STOP/escalation conditions.
+Planning must be able to provide resolved objective, bounded scope, targets/discovery bounds, constraints, transformation intent, validation obligations, budgets and STOP/escalation conditions where source evidence permits.
 
 ### REQ-FUNC-003 — Compact machine evidence
-Executors/materializers must be able to return compact structured evidence sufficient for exact-state review without narrating unnecessary reasoning already represented in the governed plan.
+Execution/materialization must be able to return structured evidence sufficient for exact-state review without unnecessary reasoning narration.
 
 ### REQ-FUNC-004 — Delta-oriented semantic review
-The product must support reviewing semantic delta and invalidated proof/context rather than requiring full reread/reproof of previously accepted material by default.
+GEF must support reviewing semantic delta and invalidated proof/context instead of full reread/reproof by default.
 
 ### REQ-FUNC-005 — Selective impacted validation
-The product must support selecting the smallest safe validation/test set based on change/dependency/contract/risk/uncertainty impact, with escalation to broader validation when required.
+GEF must support the smallest safe test/validation set based on change, dependency, contract, risk and uncertainty impact, with mandatory escalation when needed.
+
+## Hybrid deterministic work plane
+
+### REQ-DET-001 — Deterministic work plane is a V1 capability
+GEF Bootstrap V1 must include a tool-agnostic deterministic work-plane contract and an implemented deterministic capability set sufficient to automate admitted mechanical operations.
+
+The existence of a standalone CLI binary is not itself required. CLI, scripts, libraries or another bounded interface may satisfy the architecture when they conform to the same contracts.
+
+### REQ-DET-002 — Mechanical authority only
+The deterministic work plane may be authoritative for deterministic outputs derived from known inputs, such as file materialization, schema validation, fingerprints/hashes, repository-state extraction, deterministic indexes/diffs, conformance checks and machine receipts.
+
+It must not silently decide product intent, requirements, architecture, scope admission, risk acceptance or semantic review.
+
+### REQ-DET-003 — Idempotent and inspectable materialization
+Applicable deterministic materialization must be previewable/inspectable, idempotent where feasible, explicit about changed paths and fail safely on incompatible or ambiguous state.
+
+### REQ-DET-004 — Machine-readable receipts
+Deterministic operations that affect governed state must be able to emit machine-readable results/receipts sufficient to support evidence, audit and checkpoint promotion.
+
+### REQ-DET-005 — Tooling cannot override canonical truth
+Generated files, caches, indexes or receipts must remain validity-bound to canonical inputs and must not silently replace higher-authority governed sources.
+
+## Assurance requirements
 
 ### REQ-ASSURE-001 — Assurance overrides optimization
-Token, time, search, file and test budgets must never suppress context or proof required for correctness, security, integrity or a higher assurance obligation.
+Token, time, search, file and test budgets must never suppress context or proof required for correctness, security, integrity or higher assurance.
 
 ### REQ-ASSURE-002 — Truthful terminal states
-Materialization/review must expose truthful terminal states such as ready, ready-with-gaps, blocked, source-conflict, evidence-invalid or equivalent governed outcomes rather than decorative success.
+Materialization/review must expose truthful states such as ready, ready-with-gaps, blocked, source-conflict, evidence-invalid or equivalent governed outcomes rather than decorative success.
 
 ### REQ-ASSURE-003 — Exact-subject-state evidence
-Where evidence depends on repository/configuration state, the product must bind proofs/verdicts to the exact subject state and detect relevant staleness.
+Where proof depends on repository/configuration state, verdicts/proofs must bind to exact subject state and relevant staleness must be detectable.
 
-### REQ-BROWN-001 — Brownfield first-class adoption
-Existing projects must be adoptable without restarting planning, rewriting working architecture merely for naming conformity, discarding active work or requiring full historical normalization before receiving value.
+## Brownfield requirements
 
-### REQ-BROWN-002 — Brownfield truth mapping
-Adoption must distinguish observed/implemented truth from approved/intended truth and represent unresolved drift explicitly rather than silently choosing one.
+### REQ-BROWN-001 — First-class existing-project adoption
+Existing projects must be adoptable without restarting planning, rewriting working architecture for naming conformity, discarding active work or requiring full historical normalization before value.
 
-### REQ-BROWN-003 — Progressive governance maturity
-Brownfield governance/optimization must be applicable progressively by domain/work area, with shadow assurance before aggressive proof/test skipping or reuse becomes authoritative.
+### REQ-BROWN-002 — Descriptive/normative truth mapping
+Brownfield adoption must distinguish implemented/observed truth from approved/intended truth and represent drift explicitly.
 
-### REQ-BROWN-004 — Early brownfield value
-Before full normalization, adoption must be able to deliver baseline/identity, active-area source mapping, bounded context/search behavior, compact evidence/delta review, checkpoint continuity and safe shadow-mode optimization.
+### REQ-BROWN-003 — Progressive maturity
+Governance/optimization must be promotable progressively by domain/work area, with shadow assurance before aggressive proof/test skipping/reuse becomes authoritative.
 
-### REQ-PERF-001 — Token economy as measured requirement
-The product must be able to measure or explicitly classify unavailable/estimated model-token cost across relevant stages such as source loading, prompt/execution, retries, review and correction.
+### REQ-BROWN-004 — Early operational value
+Before full normalization, brownfield adoption must be capable of delivering baseline/identity, active-area source mapping, bounded context/search behavior, compact evidence/delta review, checkpoint continuity and safe shadow-mode optimization.
 
-### REQ-PERF-002 — Executor latency as measured requirement
-The product must be able to measure or explicitly classify unavailable/estimated executor wall-clock/active duration and identify avoidable discovery, validation and retry contributors where observable.
+## Performance and observability
+
+### REQ-PERF-001 — Token accounting
+GEF must measure or explicitly classify unavailable/estimated model-token cost across relevant source, prompt/execution, retry, review and correction stages.
+
+### REQ-PERF-002 — Executor latency accounting
+GEF must measure or classify unavailable/estimated executor wall-clock/active duration and identify observable avoidable discovery, validation and retry contributors.
 
 ### REQ-PERF-003 — Executor cognition minimization
-The product must minimize unnecessary open-ended executor discovery/reasoning by supplying pre-resolved governed context and requiring escalation rather than unrestricted rediscovery when bounded assumptions fail.
+GEF must reduce unnecessary open-ended executor discovery/reasoning by supplying pre-resolved governed context and requiring escalation when bounded assumptions fail.
 
 ### REQ-PERF-004 — Engineering ROI protection
-Optimizations must be evaluated against end-to-end engineering cost and must not be accepted merely by moving cost from tokens into excessive validation, maintenance, review or defect risk.
+Optimizations must be evaluated against total safe engineering cost and must not simply move cost into maintenance, validation, review or defect risk.
 
 ### REQ-OBS-001 — Optimization telemetry
-V1 must provide a reproducible path to capture or account for token cost, executor duration, repository discovery, validation effort, retries/corrections, review/evidence effort and proof/cache/carry-forward behavior where observable.
+V1 must provide a reproducible path to capture/account for token cost, duration, repository discovery, validation effort, retries/corrections, review/evidence and proof/cache/carry-forward behavior where observable.
 
-### REQ-OBS-002 — Targets vs measurements
-The product must distinguish benchmark targets, estimates and measured outcomes. Unproven percentage improvements must never be reported as measured facts.
+### REQ-OBS-002 — Targets versus measurements
+Benchmark targets, estimates and measured outcomes must remain distinguishable. Unproven percentage improvements must not be reported as facts.
+
+## Platform/profile requirements
 
 ### REQ-PLAT-001 — GitHub first-class profile
 V1 must define a first-class GitHub profile capable of using applicable PR/check/Actions/issues/ruleset/governance surfaces while representing unavailable permissions honestly.
 
 ### REQ-PLAT-002 — Core semantic portability
-The independent core must not require GitHub-specific semantics when an equivalent version-controlled platform can satisfy repository identity, governed change/evidence and continuity contracts.
+Core semantics must not require GitHub-specific behavior when an equivalent version-controlled platform can satisfy repository identity, governed change/evidence and continuity contracts.
 
 ### REQ-PLAT-003 — Optional ecosystem adapters
-UADS, Hive, UGAS and other integrations must remain optional adapters/profiles unless later explicitly admitted into core scope.
+UADS, Hive, UGAS and other integrations remain optional adapters/profiles unless explicitly admitted into future core scope.
 
-### REQ-FUNC-006 — Deterministic mechanical automation boundary
-The product may support a thin CLI/script/tool layer for deterministic materialization, schema validation, fingerprinting, repository inspection and conformance receipts, but V1 must not require that tooling to become the semantic authority for product reasoning, scope admission, architecture choice or review.
+## Security, recovery and compatibility baseline
 
-### REQ-GOV-007 — Project roles contract
-The product must represent the logical responsibilities of Project Owner, Planning Agent, Executor and Reviewer/Auditor without requiring those roles to be separate human accounts or separate models in every deployment.
+### REQ-SEC-001 — Fail-safe destructive operations
+Any deterministic operation capable of destructive/irreversible repository or environment change must have explicit safety policy, scope validation and recovery/rollback behavior appropriate to risk.
 
-### REQ-GOV-008 — Innovation preservation without automatic admission
-Material technologies/ideas discovered during planning must be preservable with lifecycle/ownership metadata without becoming requirements merely because they were discussed or recorded.
+### REQ-SEC-002 — Secret-safe operation
+GEF artifacts, telemetry, evidence and deterministic tooling must avoid intentionally persisting credentials/secrets in governed output and must surface detected secret-risk conditions rather than normalizing them.
 
-## Cross-cutting verification principle
-A requirement is not complete merely because a file or prompt mentions it. Each NECESSARY requirement must eventually map to:
+### REQ-SEC-003 — Integrity validation
+Governed machine representations, caches, indexes and receipts must support integrity/validity checks against the canonical sources they summarize or derive from.
+
+### REQ-COMPAT-001 — Versioned contracts
+Constitution, schemas, profiles and machine contracts must expose explicit versions and compatibility semantics sufficient for safe evolution.
+
+### REQ-COMPAT-002 — Upgrade/migration path
+GEF must define a governed path to preview, apply, verify and recover from supported Bootstrap contract/profile upgrades without silently corrupting target-project state.
+
+### REQ-COMPAT-003 — Backward compatibility truthfulness
+When compatibility cannot be preserved, GEF must state the incompatibility and required migration rather than pretending older state remains valid.
+
+## Requirement applicability model
+Requirements will be classified during Scope into:
 
 ```text
-requirement ID
+UNIVERSAL_V1
+PROFILE_CONDITIONAL
+MODE_CONDITIONAL
+FUTURE
+OUT_OF_SCOPE
+```
+
+A capability may be universally required for the GEF Bootstrap product to support while its immediate application to every brownfield target remains progressive.
+
+## Verification principle
+Each NECESSARY requirement must ultimately map to:
+
+```text
+REQ-ID
 -> admitted Scope owner
--> architecture/contract implementation path where applicable
+-> architecture/contract implementation path
 -> acceptance criterion
 -> proof/evidence source
 -> DoD obligation
@@ -136,26 +215,26 @@ requirement ID
 
 Requirements without a verification path are incomplete specification.
 
-## Explicit non-requirements at this stage
-The following are deliberately not implied by this draft:
-- a mandatory standalone CLI/runtime;
-- a mandatory always-on service;
-- a fixed programming language/framework;
+## Explicit non-requirements
+This requirements stage does not require:
+- a specific CLI framework or even a CLI interface if another deterministic interface satisfies the contracts;
+- an always-on service/daemon;
+- a fixed programming language/framework before Architecture;
 - mandatory UADS/Hive/UGAS integration;
-- mandatory GitHub semantics for all platforms;
+- GitHub semantics for all platforms;
 - cross-project memory authority;
 - universal percentage improvement guarantees;
 - full brownfield normalization before use;
-- a fixed final Source Capsule/Execution Pack JSON schema before owning modules design it.
+- final Source Capsule/Execution Pack schemas before owning modules design them.
 
-## Questions to close before freeze
-1. Which draft requirements are truly universal V1 NECESSARY versus profile/mode conditional?
-2. Do Requirements themselves need priority/severity beyond Scope classification, or would that duplicate S03?
-3. What minimum verification metadata should every REQ-* carry in V1 without making this document too heavy?
-4. Should prompt compilation, review compilation and bootstrap materialization each receive a separate top-level requirement family?
-5. Is deterministic tooling capability merely permitted, or should V1 explicitly require a tool-agnostic deterministic work-plane contract even if no CLI is shipped?
-6. What requirements are missing for security, rollback/recovery, version upgrades and compatibility without prematurely designing their architecture?
-7. At what point do we freeze the initial requirement set versus continuing to discover requirements module by module, and how should later legitimate requirements be admitted without destabilizing the baseline?
+## Remaining questions before freeze
+1. Which requirements above are `UNIVERSAL_V1` versus profile/mode conditional at Scope time?
+2. Do we need separate top-level requirement families for Prompt Compiler, Review Compiler and Bootstrap Materialization, or are the current FUNC/GOV/DET contracts sufficient and less duplicative?
+3. What minimum deterministic operation set must physically ship in V1 to qualify the hybrid work plane as real rather than architectural theater?
+4. Should local filesystem materialization be universally supported in V1, or can GitHub-repository mutation be the first concrete deterministic target with local support profile-conditional?
+5. What recovery guarantee is realistic for V1 deterministic mutations: transactional rollback, generated inverse plan, backup/restore contract, or profile-dependent combination?
+6. Which security checks are universal V1 gates versus profile-dependent?
+7. At what point do we freeze this initial requirement baseline while still permitting later legitimate REQ-* additions through governed change control?
 
 ## Current direction
-Requirements are converging on a small universal core plus explicit profile/mode-conditional obligations, with stable IDs, verification paths and no architecture-by-implication. The goal is to make every future Scope/DoD statement traceable to something objectively testable rather than to prose preference.
+The requirement baseline now reflects the frozen **hybrid** product: governed semantic intelligence in ChatGPT/repository sources plus an official deterministic work plane for mechanical execution. The next design task is to define the minimum V1 deterministic operation set and recovery/security floor without prematurely choosing language/framework or turning CLI into the product definition.
