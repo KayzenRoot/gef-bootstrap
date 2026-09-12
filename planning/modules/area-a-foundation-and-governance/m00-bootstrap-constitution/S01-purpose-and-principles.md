@@ -241,6 +241,12 @@ Protocols, templates, schemas, GEF compatibility and migration instructions are 
 ### P18 — Immediately resumable and auditable
 After bootstrap or any approved increment, another authorized agent should be able to determine from repository sources what the project is, what is frozen, what remains open, what evidence exists and what must happen next.
 
+### P19 — Master prompt is a final delivery artifact, not an early design driver
+The project will eventually publish a canonical master bootstrap prompt that orchestrates application of this repository's instructions into a target project. However, its exact invocation model, preferred executor, packaging, UX and operational usage are deliberately deferred until the Bootstrap's protocols, templates, schemas, profiles and validation rules are complete enough to compile that prompt from stable sources.
+
+### P20 — Bootstrap intelligence stays repository-driven
+The future master prompt must reference and orchestrate the versioned intelligence in `gef-bootstrap`; it must not duplicate the entire body of bootstrap knowledge into a permanently bloated prompt. The repository remains the canonical source, and the master prompt is an entry/orchestration artifact.
+
 ## Product-level optimization technologies to develop in later sessions
 The following concepts are candidates for dedicated design, not yet frozen implementations:
 
@@ -269,17 +275,19 @@ The user has explicitly established that:
 - reviews must remain rigorous and focused on preventing bugs/regressions;
 - test execution must become impact-aware so coding does not repeatedly run thousands of irrelevant tests;
 - test/review optimization must preserve assurance and expand when risk/uncertainty requires;
-- project initialization must configure planning, canonical sources, checkpoint/chat continuation, prompt/review standards, GitHub workflow, progress and evidence conventions.
+- project initialization must configure planning, canonical sources, checkpoint/chat continuation, prompt/review standards, GitHub workflow, progress and evidence conventions;
+- a canonical Master Bootstrap Prompt will be designed and finalized **after** the Bootstrap body is complete enough to support it;
+- operational questions such as exactly how the user invokes the Bootstrap and whether ChatGPT, Codex or another compatible agent is the preferred bootstrap orchestrator are intentionally deferred until final acceptance/closure.
 
 The detailed mechanics are deferred to their dedicated modules/sessions. This session defines **why the product exists, what it optimizes, and the universal principles every target project should inherit**.
 
-## Open points for this session
-Before freezing S01, decide whether any additional universal purpose/principle is required beyond:
+## Deferred until finalization
+Do not prematurely optimize the project around the final invocation UX. The following are intentionally deferred until the Bootstrap is complete enough to evaluate them against real protocols and artifacts:
 
-1. faster executor delivery;
-2. lower executor token/reasoning cost;
-3. less repository exploration;
-4. less redundant testing;
-5. stronger delta-based review;
-6. reliable evidence and checkpoint continuity;
-7. preservation of correctness/security/assurance.
+- exact Master Bootstrap Prompt wording;
+- whether ChatGPT, Codex or another agent is the preferred first executor;
+- how the user supplies the target repository;
+- whether the master artifact is Markdown, PDF, another packaging format, or multiple compatible forms;
+- final bootstrap invocation instructions and user workflow.
+
+These decisions must be made during final acceptance using the completed Bootstrap as evidence, not speculation at project start.
