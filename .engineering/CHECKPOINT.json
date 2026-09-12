@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "project": "GEF Bootstrap",
+  "status": "PLANNING",
+  "workOrder": "GBS-WO-0001",
+  "phase": "PLANNING_SCAFFOLD",
+  "areasRegistered": 15,
+  "modulesRegistered": 63,
+  "sessionsRegistered": 277,
+  "implementation": "NOT_STARTED",
+  "activeModule": "GBS-M00",
+  "nextSession": "GBS-M00-S01",
+  "branch": "gbs/wo-0001-planning-scaffold",
+  "stopState": "PLANNING_SCAFFOLD_PENDING_REVIEW"
+}
