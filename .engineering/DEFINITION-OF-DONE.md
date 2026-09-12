@@ -1,201 +1,120 @@
 # Definition of Done
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN`
 
 ## Binding
-This project-level Definition of Done derives from `GBS-CONSTITUTION-v1.1`, frozen Project Overview, Requirements, complete-production Scope, Architecture, Security and Test & Benchmark Plan.
-
-It operationalizes the constitutional completion model from `GBS-M00-S04` for the **single complete production target**. It does not weaken or replace the constitutional DoD.
+This project-level Definition of Done derives from `GBS-CONSTITUTION-v1.1`, frozen Project Overview, Requirements, complete-production Scope, Architecture, Security and Test & Benchmark Plan. It operationalizes the constitutional completion model from `GBS-M00-S04` for the single complete production target.
 
 ## Core rule
-`DONE` exists only when the admitted obligation is satisfied **and** current applicable evidence proves it against the exact governed subject state where state binding matters.
-
-No agent claim, percentage, file presence, merged PR, historical green test, documentation statement or implementation existence is sufficient by itself.
+`DONE` exists only when an admitted obligation is satisfied and current applicable evidence proves it against the exact governed subject state where state binding matters. Agent assertion, percentage, file presence, merged PR, historical green tests or documentation claims are never sufficient by themselves.
 
 ## Completion levels
-- `ITEM_DONE` — one admitted backlog/work item is complete with required proof.
-- `SESSION_DONE` — a governed planning/engineering session closes all admitted obligations for that session.
-- `MODULE_DONE` — all admitted module obligations are satisfied and integrated.
-- `PROFILE_DONE` — a profile/adapter claim is complete for its explicitly claimed surface.
-- `PRODUCTION_CANDIDATE` — complete product candidate has all required release evidence assembled at one exact head.
-- `PRODUCTION_RELEASE_DONE` — terminal state for the complete independent product release.
+- `ITEM_DONE`
+- `SESSION_DONE`
+- `MODULE_DONE`
+- `PROFILE_DONE`
+- `PRODUCTION_CANDIDATE`
+- `PRODUCTION_RELEASE_DONE`
 
-Optional UADS/Hive/UGAS adapters are tracked independently and cannot block `PRODUCTION_RELEASE_DONE` unless a release claim explicitly includes them.
+Optional UADS/Hive/UGAS adapters are tracked independently and do not block the independent product release unless a release claim explicitly includes them.
 
-## Universal item/module completion dimensions
-An admitted item/module is not DONE unless all applicable dimensions are satisfied:
-1. scope/admission and stable IDs are valid;
-2. requirements/acceptance criteria are satisfied;
-3. architecture/contracts are respected;
-4. implementation/materialization is present where required;
-5. applicable T0–T7 evidence passes according to risk/impact;
-6. security/integrity obligations pass;
-7. exact-state evidence is current;
-8. documentation/runbook/operator impact is updated where applicable;
-9. migration/recovery/compatibility obligations are satisfied where applicable;
-10. evidence/checkpoint/state is promoted through the governed workflow;
-11. no unresolved blocker exists for the claimed surface.
+## Universal completion dimensions
+An admitted item/module is DONE only when all applicable dimensions are satisfied: scope/admission and stable IDs; requirements/acceptance; architecture/contracts; implementation/materialization where required; applicable T0–T7 proof; security/integrity; current exact-state evidence; documentation/runbook/operator updates; migration/recovery/compatibility where applicable; governed evidence/checkpoint promotion; and no unresolved blocker for the claimed surface.
 
 ## Planning-session DONE
-A planning session requires at minimum:
-- stable session ID and final status;
-- self-contained frozen decision or explicitly delegated unresolved mechanics;
-- open questions closed or routed to a named owner/module;
-- Decisions Ledger synchronization where materially required;
-- Technology Ledger synchronization where materially required;
-- Scope/dependency/requirement impacts recorded;
-- exact PR/head or equivalent immutable subject binding;
-- semantic audit verdict with no blocker;
-- promoted checkpoint that identifies the next legal continuation.
+Requires stable session ID/final status; self-contained frozen decision or named delegation; open questions closed/routed; Decisions/Technology Ledgers synchronized where applicable; scope/dependency/requirement impacts recorded; exact PR/head or equivalent immutable subject binding; semantic audit with no blocker; and promoted checkpoint with the next legal continuation.
 
 ## Engineering work-item DONE
-A code/materialization work item requires at minimum:
-- admitted backlog ID mapped to REQ/module/contract owner;
-- exact base/head binding;
-- bounded intended delta matches actual delta;
-- required tests/evals/security checks executed and current;
-- failures introduced by the work resolved;
-- evidence bundle/receipt sufficient for HEDS exact-delta review;
-- no unapproved scope expansion;
-- recovery/migration evidence where mutation or compatibility semantics require it;
-- reviewer verdict `APPROVED` or equivalent governed promotion;
-- checkpoint/progress state updated after integration.
+Requires admitted backlog ID mapped to REQ/module/contract owner; exact base/head binding; intended delta matching actual delta; current required tests/evals/security checks; introduced failures resolved; evidence bundle/receipt sufficient for exact-delta review; no unauthorized scope expansion; recovery/migration proof where applicable; governed APPROVED verdict; and integrated checkpoint/progress update.
 
 ## Module DONE
-A module becomes `MODULE_DONE` only when:
-1. every production-admitted obligation owned by the module is ITEM_DONE or has a permitted explicit non-blocking disposition;
-2. module-level contracts and dependency interfaces have current evidence;
-3. no dependent proof is knowingly invalidated;
-4. module documentation/operator contracts are current;
-5. all HIGH/CRITICAL defects affecting the module's production claim are closed;
-6. evidence maps module -> REQ -> test/proof -> exact state;
-7. module completion is promoted in checkpoint/progress state.
+A module becomes `MODULE_DONE` only when every production-admitted obligation is ITEM_DONE or has a permitted explicit non-blocking disposition; module contracts/dependency interfaces have current evidence; no dependent proof is knowingly invalidated; docs/operator contracts are current; HIGH/CRITICAL production defects are closed; evidence maps module -> REQ -> test/proof -> exact state; and completion is promoted in governed state.
 
-A module cannot become DONE merely because all planned files exist or all its sessions were discussed.
-
-## DONE_WITH_ACCEPTED_GAPS
-`DONE_WITH_ACCEPTED_GAPS` is permitted only when the owning policy/profile explicitly allows it and all are true:
-- the gap is identified and classified;
-- impact and residual risk are stated;
-- owner and follow-up path exist;
-- the gap does not violate a CORE_REQUIRED/NECESSARY obligation for the claimed surface;
-- the gap is not a HIGH/CRITICAL security/integrity defect;
-- evidence is not invalid/stale;
-- source authority is not conflicted;
-- release/profile wording is narrowed so the gap is not hidden.
-
-Accepted gaps never manufacture independent product completion.
+## Accepted gaps
+`DONE_WITH_ACCEPTED_GAPS` is allowed only when an owning frozen policy/profile explicitly permits it. The gap must be identified, classified, impact/risk stated, owned, follow-up defined, evidence current and source authority non-conflicted. It cannot violate CORE_REQUIRED or PRODUCT_INCLUDED obligations for the claimed release surface, hide HIGH/CRITICAL security/integrity defects, or manufacture independent product completion. Release/profile wording must narrow the claim so the gap is visible.
 
 ## Blocking findings
-Blocking findings include at minimum:
-- HIGH/CRITICAL security or integrity defect;
-- invalid/stale evidence for a required release obligation;
-- source authority conflict affecting the claimed result;
-- failed recovery/migration proof for a required path;
-- incompatible public contract without governed migration/disposition;
-- exact-head release evidence mismatch;
-- test/evidence gap leaving an admitted requirement unproven;
-- known regression above a blocking quality/performance threshold without approved product-level disposition;
-- S4 behavior executed or required without the frozen authorization path.
+Blocking findings include HIGH/CRITICAL security/integrity defects; invalid/stale required evidence; source-authority conflict affecting the claim; failed required recovery/migration proof; incompatible public contract without governed migration/disposition; exact-head mismatch; admitted requirement left unproven; performance/engineering-cost regression above a frozen blocking budget without approved product-level disposition; or S4 behavior without the frozen authorization path.
 
 ## Reopening and invalidation
-DONE is validity-bound, not permanent history.
+DONE is validity-bound. Relevant changes to canonical source, dependencies, contracts, security policy, supported runtime/platform, proof inputs, migration semantics or discovered defects reopen only affected completion descendants when targeted invalidation is provable. Unrelated accepted work remains DONE.
 
-Relevant change to canonical source, dependency, contract, security policy, runtime/platform support, proof input, migration semantics or discovered defect reopens only the affected completion descendants when targeted invalidation is provable.
+## Production Candidate
+A head may be `PRODUCTION_CANDIDATE` only when every CORE_REQUIRED and PRODUCT_INCLUDED module is `MODULE_DONE`; every production-admitted EXPERIMENTAL_GATED capability passed Utility, Assurance, Validity/Stability and Engineering ROI; the product works independently of optional ecosystem adapters; release-required T0–T7 and Security T1–T12 evidence is current at one exact head; supported Windows/Linux/macOS + Node LTS matrix passes; setup/upgrade/compatibility/recovery pass; docs/runbooks are release-current; no blocker remains; and the release manifest explicitly states included/excluded optional claims.
 
-Unrelated accepted work remains DONE. Blanket reset is prohibited when narrower invalidation can be proven.
-
-## Production Candidate gate
-A head may be called `PRODUCTION_CANDIDATE` only when:
-- every CORE_REQUIRED and PRODUCT_INCLUDED module is at module-complete candidate state;
-- any production-admitted EXPERIMENTAL_GATED capability has passed Utility, Assurance, Validity/Stability and Engineering ROI gates;
-- independent product works without UADS/Hive/UGAS installed;
-- all release-required T0–T7 evidence is assembled for the exact candidate head;
-- Security T1–T12 proof is current;
-- supported Windows/Linux/macOS + Node LTS matrix is current;
-- installation/setup, upgrade, compatibility and recovery scenarios pass for the claimed distribution surface;
-- user docs, engineering docs and runbooks are release-current;
-- no blocker remains;
-- release manifest/checkpoint identifies all claimed surfaces and explicitly excluded optional adapter claims.
-
-## PRODUCTION_RELEASE_DONE candidate conditions
-The complete product reaches `PRODUCTION_RELEASE_DONE` only when all conditions below are satisfied on the accepted release state:
+## PRODUCTION_RELEASE_DONE
+The complete independent product reaches `PRODUCTION_RELEASE_DONE` only when all conditions below are satisfied on the accepted release state.
 
 ### Product obligations
-1. all `CORE_REQUIRED` modules are `MODULE_DONE`;
-2. all `PRODUCT_INCLUDED` modules are `MODULE_DONE`;
-3. production-admitted experimental capabilities have passed all frozen promotion gates;
-4. every frozen/admitted REQ maps to a satisfied acceptance criterion and current proof;
-5. no silent scope expansion or hidden excluded obligation exists.
+1. all CORE_REQUIRED modules are MODULE_DONE;
+2. all PRODUCT_INCLUDED modules are MODULE_DONE;
+3. production-admitted experimental capabilities passed all frozen gates;
+4. every admitted REQ maps to satisfied acceptance and current proof;
+5. no hidden excluded obligation or unauthorized scope expansion exists.
 
-### Architecture and deterministic work plane
-6. TypeScript/Node LTS modular monorepo implementation matches frozen Architecture;
-7. application/library API and thin CLI expose the admitted deterministic operations;
-8. filesystem/Git/provider boundaries and adapter isolation conform to architecture;
-9. transaction plan/stage/verify/promote/recovery semantics pass required evidence;
-10. canonical/derived/operational state authority rules are enforced.
+### Architecture / deterministic plane
+6. implementation matches frozen hybrid Architecture;
+7. application/library API plus thin CLI expose admitted deterministic operations;
+8. filesystem/Git/provider boundaries and adapter isolation conform;
+9. plan/stage/verify/promote/recovery semantics pass;
+10. canonical/derived/operational authority rules are enforced.
 
-### Security/integrity
-11. Security T1–T12 evidence passes;
+### Security / integrity
+11. Security T1–T12 passes;
 12. no unresolved HIGH/CRITICAL security/integrity defect remains;
-13. S0–S4 authorization model is enforced, including action-specific S4 authorization;
-14. secret, process, supply-chain, provider and adapter security gates pass;
+13. S0–S4 authorization, including action-specific S4 approval, is enforced;
+14. secret/process/supply-chain/provider/adapter gates pass;
 15. exact-state/tamper-evidence semantics pass.
 
-### Test/quality
-16. all eleven frozen Test & Benchmark production-release evidence conditions pass;
-17. selective validation/proof-carry mechanisms used in production are Shadow-Assurance promoted or bypassed by broader release validation;
-18. no flaky/quarantined test leaves an admitted production obligation unproven;
-19. complete claimed Windows/Linux/macOS + supported Node LTS release matrix passes;
-20. benchmark baseline is reproducible and no blocking performance/engineering-cost regression remains.
+### Test / quality / performance
+16. all frozen Test & Benchmark production-release evidence conditions pass;
+17. selective validation/proof-carry mechanisms used authoritatively are Shadow-Assurance promoted or bypassed by broader release validation;
+18. no flaky/quarantined test leaves an admitted obligation unproven;
+19. complete claimed Windows/Linux/macOS + supported Node LTS matrix passes;
+20. benchmark baseline is reproducible and no frozen blocking total-safe-engineering-cost regression remains.
 
-### Product operation and continuity
-21. NEW_PROJECT workflow passes end-to-end;
-22. EXISTING_PROJECT/BROWNFIELD workflow passes end-to-end without forced destructive normalization;
+### Product operation / continuity
+21. NEW_PROJECT workflow passes E2E;
+22. EXISTING_PROJECT/BROWNFIELD passes E2E without forced destructive normalization;
 23. checkpoint/resume works from fresh context without chat-history dependency;
-24. upgrade/migration/compatibility and recovery paths pass for claimed supported versions;
-25. GitHub reference profile passes simulation plus required live integration evidence;
+24. upgrade/migration/compatibility/recovery paths pass for claimed versions;
+25. GitHub reference profile passes simulation plus required live evidence;
 26. truthful permission-gap/degraded states are demonstrated.
 
-### Documentation/release
-27. user documentation is complete for supported workflows;
+### Documentation / release
+27. user documentation covers supported workflows;
 28. engineering documentation covers architecture/contracts/extension points;
-29. operational runbooks cover setup, diagnostics, recovery, upgrade and release;
+29. runbooks cover setup, diagnostics, recovery, upgrade and release;
 30. release artifacts/manifests/checksums/provenance required by policy are current;
 31. exact accepted release head is bound to release evidence/checkpoint;
-32. no required evidence depends on an unavailable external condition unless the release claim is narrowed accordingly.
+32. no required evidence depends on unavailable external conditions unless the release claim is narrowed accordingly.
 
-## Progress-credit rule
-Progress percentage is not the same as DONE.
+## Frozen decisions for completion governance
+1. Historical frozen planning work receives progress credit only after it is mapped to specific admitted backlog/module items and reconciled against current evidence. No immediate blanket credit.
+2. PRODUCT_INCLUDED is release-blocking exactly like CORE_REQUIRED for the single complete production target.
+3. Non-blocking dispositions are limited to explicit policy-permitted exclusions/advisories that do not leave an admitted production obligation unproven and do not hide security/integrity/source/evidence blockers.
+4. Optional adapter claims use the same item/module/profile DoD plus their additional compatibility/security gates; they remain outside independent-product completion unless explicitly included in the release claim.
+5. PRODUCTION_CANDIDATE requires every production-included module at MODULE_DONE. A broad candidate gap list is not permitted.
+6. Evidence freshness is dependency/validity based rather than a universal time-to-live. Evidence must be rerun when relevant inputs, environment, toolchain, contract, runtime/platform, security policy or proof dependency changes; owning Evidence/Compatibility modules may add stricter rules.
+7. A material performance regression is blocking when it exceeds a frozen benchmark/engineering-cost budget or invalidates an admitted optimization claim. Correctness alone does not automatically waive it. A conscious product-level supersession may change the budget only through governed decision/change control.
+8. Documentation completeness requires each admitted public behavior/contract/operator workflow to have a mapped current documentation owner/proof. Missing docs that prevent safe use, recovery, upgrade, extension or truthful operation are blocking.
+9. DoD requires exact-head binding. Clean working tree, tag, release object, artifact publication/signing and related mechanics are owned by Release Governance, but any mechanics required by that frozen policy become release blockers.
+10. Functional construction readiness occurs only after the ordered Source Pack is closed through DoD, the admitted weighted backlog/baseline is frozen, required decision/checkpoint state is promoted, and a checkpoint explicitly declares `READY_FOR_PRODUCTION_CONSTRUCTION`. DoD freeze alone does not authorize implementation.
 
-After backlog baseline creation, partial progress may be represented only by the frozen weighted model and objective item states. A module receives full completion credit only at `MODULE_DONE`. Historical work receives credit only after evidence is reconciled against this DoD.
+## Progress baseline activation
+The first trustworthy overall completion baseline becomes legal only after: this DoD is FROZEN; all complete-product modules are represented in admitted backlog; backlog items map to REQ/module/contract; E/R/I/P weights are assigned with rationale and reviewed; historical work is evidence-reconciled; and optional adapters are separately tracked unless included in the release claim.
 
-No denominator manipulation, silent reclassification or optimistic percentage may make the project appear more complete.
+Progress percentage is not DONE. Partial credit may use only the frozen weighted model and objective item states. Full module credit requires MODULE_DONE. Denominator manipulation, silent reclassification and optimistic percentage inflation are prohibited.
 
-## Candidate backlog baseline activation
-The first trustworthy overall completion baseline becomes legal only after:
-1. this project-level DoD is FROZEN;
-2. all complete-product modules are represented in admitted backlog structure;
-3. backlog items map to requirements/modules/contracts;
-4. E/R/I/P weights are assigned with rationale and reviewed;
-5. historical completed work is evidence-reconciled;
-6. optional adapter work is tracked separately unless included in a release claim.
+## Freeze audit
+- complete-product target preserved: PASS
+- CORE_REQUIRED + PRODUCT_INCLUDED release blocking: PASS
+- optional adapters isolated from independent release: PASS
+- exact-state/evidence validity preserved: PASS
+- Security and Test/Benchmark gates inherited: PASS
+- performance regression governance: PASS
+- documentation/release evidence: PASS
+- construction readiness gate explicit: PASS
+- open DoD questions: 0
 
-Only then may `overallCompletion` and ETA move from `NOT_YET_BASELINED` / `NOT_YET_RELIABLE`.
-
-## Questions to close
-1. Should Product Overview/Requirements/Scope/Architecture/Security/Test Plan frozen work receive historical progress credit immediately after backlog reconciliation, or only when mapped into specific module/item weights?
-2. Should `PRODUCT_INCLUDED` modules be just as blocking as `CORE_REQUIRED` for the single complete production release? Current direction: yes.
-3. What exact allowed dispositions, if any, can count as non-blocking for production-included work?
-4. Should optional adapter release claims use the same module/profile DoD with extra compatibility gates? Current direction: yes.
-5. Should `PRODUCTION_CANDIDATE` require every production-included module at MODULE_DONE, or allow a narrow candidate gap list? Current direction: all done, with gaps only where the owning policy explicitly permits and release claim is narrowed.
-6. What evidence freshness rules should be fixed here versus delegated to Evidence/Compatibility modules?
-7. How should a failed production benchmark be dispositioned when correctness is intact but efficiency regresses materially?
-8. What minimum documentation completeness evidence is required before module and production completion?
-9. Should release completion require a clean working tree/tag/release object, or treat those as Release Governance mechanics while exact-head binding remains mandatory here?
-10. What exact event changes overall project state from planning/pre-production to production construction readiness after Source Pack closure?
-
-## Current direction
-The product DoD is intentionally strict because this project is not targeting a disposable MVP. The single production release must be functionally complete, tested, security-cleared, recoverable, documented, benchmarked and exact-state validated before `PRODUCTION_RELEASE_DONE` can exist.
-
-STOP CONDITION: `PROJECT_DOD_DECISIONS_REQUIRED`.
+STOP CONDITION: `READY_FOR_DOD_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
