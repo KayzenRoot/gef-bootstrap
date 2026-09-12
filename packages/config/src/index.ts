@@ -73,14 +73,13 @@ const MAX_KEYS = 2048;
 const CORE_KEYS = new Set(["schemaVersion", "configVersion", "extensions"]);
 const PROJECT_KEYS = new Set(["schemaVersion", "configVersion", "extensions", "adopted"]);
 const SECRET_KEY_PATTERN = /(token|secret|password|privatekey|api[_-]?key|credential)/i;
+const REFERENCE_KEY_PATTERN = /(ref|reference)$/i;
 
 function slashJoin(...parts: readonly string[]): string {
-  return parts
-    .filter((part) => part.length > 0)
-    .join("/")
-    .replace(/\\/g, "/")
-    .replace(/\/{2,}/g, "/")
-    .replace(/:\//, ":/");
+  const raw = parts.filter((part) => part.length > 0).join("/").replace(/\\/g, "/");
+  const unc = raw.startsWith("//");
+  const normalized = raw.replace(/\/{2,}/g, "/").replace(/:\//, ":/");
+  return unc && !normalized.startsWith("//") ? `/${normalized}` : normalized;
 }
 
 export function resolveGlobalConfigPath(input: GlobalPathInput): string {
@@ -165,7 +164,8 @@ function scanSecretLikeKeys(value: unknown, path = "$", diagnostics: ConfigDiagn
   if (!isRecord(value)) return diagnostics;
   for (const [key, child] of Object.entries(value)) {
     const childPath = `${path}.${key}`;
-    if (SECRET_KEY_PATTERN.test(key) && typeof child === "string" && child.length > 0) {
+    const explicitReference = REFERENCE_KEY_PATTERN.test(key);
+    if (SECRET_KEY_PATTERN.test(key) && !explicitReference && typeof child === "string" && child.length > 0) {
       diagnostics.push({ code: "gef.config.secret_value_forbidden", path: childPath, summary: "Secret-like values must be external references, not persisted configuration values.", severity: "ERROR" });
     } else {
       scanSecretLikeKeys(child, childPath, diagnostics);
@@ -298,6 +298,29 @@ export const defaultCatalog: readonly DefaultEntry[] = Object.freeze([
 ]);
 export const defaultCatalogFingerprint = fingerprint({ version: defaultCatalogVersion, entries: defaultCatalog });
 
+export type DefaultResolution =
+  | { readonly status: "VALUE"; readonly entry: DefaultEntry; readonly value: unknown }
+  | { readonly status: "NO_DEFAULT"; readonly entry: DefaultEntry }
+  | { readonly status: "UNKNOWN" };
+
+export function resolveDefault(path: string): DefaultResolution {
+  const entry = defaultCatalog.find((item) => item.path === path);
+  if (!entry) return { status: "UNKNOWN" };
+  if (entry.noDefault) return { status: "NO_DEFAULT", entry };
+  return { status: "VALUE", entry, value: entry.value };
+}
+
+export interface DefaultBehaviorDelta {
+  readonly path: string;
+  readonly assurance: AssuranceLevel;
+  readonly behaviorChanged: boolean;
+}
+
+export function requireDefaultBehaviorAcknowledgement(deltas: readonly DefaultBehaviorDelta[], acknowledged: boolean): void {
+  const elevated = deltas.some((delta) => delta.behaviorChanged && assuranceRank(delta.assurance) >= assuranceRank("ELEVATED"));
+  if (elevated && !acknowledged) throw new Error("gef.config.default_behavior_acknowledgement_required");
+}
+
 function flattenConfig(value: Readonly<Record<string, unknown>>, prefix = ""): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const [key, child] of Object.entries(value)) {
@@ -426,7 +449,12 @@ export class MigrationGraph {
       if (existing.fromVersion === step.fromVersion && existing.toVersion === step.toVersion) throw new Error("gef.config.migration_ambiguous_edge");
     }
     this.#steps.set(step.id, step);
-    this.assertAcyclic();
+    try {
+      this.assertAcyclic();
+    } catch (error) {
+      this.#steps.delete(step.id);
+      throw error;
+    }
   }
 
   list(): readonly MigrationStep[] {
