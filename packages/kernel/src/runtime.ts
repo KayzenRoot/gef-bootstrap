@@ -37,7 +37,15 @@ class AsyncMutex {
 }
 
 function frozenCapabilities(input?:ReadonlySet<string>|readonly string[]):ReadonlySet<string>{return new Set(input instanceof Set?input:input??[]);}
-function defaultIdentity():RuntimeIdentity{return Object.freeze({productVersion:"0.0.0-dev",nodeVersion:process.version,platform:process.platform,architecture:process.arch});}
+function defaultIdentity():RuntimeIdentity{
+  const nodeProcess=(globalThis as typeof globalThis & {process?:{version?:string;platform?:string;arch?:string}}).process;
+  return Object.freeze({
+    productVersion:"0.0.0-dev",
+    ...(nodeProcess?.version===undefined?{}:{nodeVersion:nodeProcess.version}),
+    ...(nodeProcess?.platform===undefined?{}:{platform:nodeProcess.platform}),
+    ...(nodeProcess?.arch===undefined?{}:{architecture:nodeProcess.arch}),
+  });
+}
 function lifecycleTerminalFor(error:GefError,preferred?:Exclude<LifecycleTerminal,"SUCCEEDED">):Exclude<LifecycleTerminal,"SUCCEEDED">{if(preferred)return preferred;if(error.category==="CANCELLED")return"CANCELLED";if(error.category==="TIMEOUT")return"TIMED_OUT";if(["POLICY","AUTHORIZATION","PRECONDITION","CAPABILITY","DEPENDENCY","INPUT"].includes(error.category))return"BLOCKED";if(error.recoverability==="RECOVERY_REQUIRED"||error.recoverability==="MANUAL_REPAIR_REQUIRED")return"RECOVERY_REQUIRED";if(error.recoverability==="IRREVERSIBLE_EFFECT_RECORDED"||error.effectStatus==="PARTIAL"||error.effectStatus==="IRREVERSIBLE")return"PARTIAL_EXTERNAL_EFFECT";return"FAILED";}
 
 export class KernelRuntime {
