@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_POST_CONSTITUTION_SOURCE_PACK_PLANNING",
-  "phase": "POST_CONSTITUTION_PLANNING",
+  "status": "READY_FOR_SOURCE_PACK_REQUIREMENTS",
+  "phase": "POST_CONSTITUTION_SOURCE_PACK_PLANNING",
   "areasRegistered": 16,
   "modulesRegistered": 64,
   "sessionsRegistered": 282,
@@ -11,14 +11,14 @@
   "moduleVerdicts": {"GBS-M00": "MODULE_DONE"},
   "constitutionVersion": "GBS-CONSTITUTION-v1.0",
   "frozenConstitutionGroups": ["CONST-F1","CONST-F2","CONST-F3","CONST-F4","CONST-F5","CONST-F6","CONST-F7","CONST-F8"],
-  "lastApprovedPlanningSession": "GBS-M00-S05",
-  "lastApprovedPlanningPr": 12,
-  "lastApprovedPlanningHead": "f23162753269e2f7080cd3e99128ede03223e186",
-  "mainAfterMerge": "c0d0ebdf7a2f451f159d853722146a110d751f68",
-  "completedFrozenSessions": ["GBS-M00-S01","GBS-M00-S02","GBS-M00-S03","GBS-M00-S04","GBS-M00-S05"],
-  "nextPlanningStage": "POST_CONSTITUTION_SOURCE_PACK_SEQUENCE",
+  "projectOverview": "FROZEN",
+  "lastApprovedSourcePackPr": 14,
+  "lastApprovedSourcePackHead": "276a9095eecd6242458897e4a4607aa337400c4f",
+  "mainAfterProjectOverviewMerge": "5c823c06fdca8a36d1ece9653177e25ec59f577b",
+  "decisionsLedgerThrough": "D-0051",
+  "nextPlanningStage": "SOURCE_PACK_REQUIREMENTS",
   "canonicalBranch": "main",
   "overallCompletion": "NOT_YET_BASELINED",
   "eta": "NOT_YET_RELIABLE",
-  "stopState": "READY_FOR_POST_CONSTITUTION_SOURCE_PACK_PLANNING"
+  "stopState": "READY_FOR_SOURCE_PACK_REQUIREMENTS"
 }
