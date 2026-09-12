@@ -3,17 +3,63 @@
 Status: `IN_DISCUSSION`
 
 ## Purpose
-GEF Bootstrap exists to transform a newly created or existing GitHub repository into a governed project workspace that is ready for structured planning before product implementation begins.
+GEF Bootstrap exists to prepare a newly created or existing GitHub repository to be developed under a governed, instruction-first engineering system optimized for **construction speed, low executor token consumption, narrow repository exploration, selective validation, strong review quality, and safe continuation across chats**.
 
-The intended user experience is that a user can request **"iniciar projeto"** (or invoke the equivalent CLI command) and receive a complete, validated project engineering baseline instead of manually recreating planning, review, prompt, checkpoint and GitHub structures for every project.
+GEF Bootstrap is **not** a product-runtime CLI and is **not** an application that ships functional source code of its own. Its repository is a versioned body of engineering instructions, protocols, templates, schemas, decision rules, planning structures, review contracts, prompt contracts and reusable project-bootstrap artifacts that ChatGPT and Codex can follow.
+
+The intended user experience is that a user can request **"iniciar projeto"** and ChatGPT can apply the canonical bootstrap instructions to the target repository, creating the governed project baseline before functional product planning and implementation begin.
+
+## Primary optimization target
+The system is designed around a deliberate division of labor:
+
+1. **ChatGPT performs the expensive engineering reasoning once**
+   - understands the approved project sources;
+   - resolves architecture and root-cause questions when possible;
+   - decides the narrow implementation strategy;
+   - identifies exact files/symbols/tests likely to matter;
+   - freezes the conclusions needed by the executor;
+   - compiles the result into a bounded GEF execution instruction.
+
+2. **Codex executes a pre-resolved engineering recipe**
+   - reads only the smallest safe context;
+   - avoids rediscovering frozen architecture;
+   - avoids broad repository searches by default;
+   - changes only the prescribed scope;
+   - runs the smallest safe validation set first;
+   - returns compact machine-oriented evidence;
+   - stops when scope, source or evidence assumptions become invalid.
+
+The product therefore optimizes not merely prompt length, but **total engineering cost per safe change**.
+
+## Core success dimensions
+The GEF Bootstrap must explicitly optimize and later measure:
+
+- executor input tokens;
+- executor output tokens;
+- executor active time;
+- repository searches;
+- files opened;
+- files modified;
+- correction rounds;
+- local test count;
+- local test duration;
+- hosted CI duration;
+- review reread/reanalysis;
+- repeated reasoning eliminated by frozen decisions/proof carry-forward;
+- defect/regression escape rate;
+- final engineering quality and evidence confidence.
+
+Speed or token reduction never overrides correctness, security, data integrity or required assurance.
 
 ## Bootstrap boundary
-`iniciar projeto` means **initialize the project operating system**, not implement product features.
+`iniciar projeto` means **initialize the project's engineering operating model**, not implement product features.
 
-Before functional planning begins, the bootstrap must prepare the repository and project so that subsequent planning and implementation already follow the agreed engineering model.
+The bootstrap prepares the target repository so subsequent planning, prompt compilation, execution, review, testing, progress tracking and continuation already follow the agreed model.
+
+GEF Bootstrap itself remains an instruction/governance repository. Any scripts or deterministic utilities required by a target project may be specified by the bootstrap and created in that target project when justified, but they are not automatically part of the GEF Bootstrap product itself.
 
 ## Mandatory bootstrap outcomes
-The initialized project must be prepared to provide, at minimum:
+The initialized target project must be prepared to provide, at minimum:
 
 1. **Repository baseline**
    - inspect repository state and identity;
@@ -75,49 +121,69 @@ The initialized project must be prepared to provide, at minimum:
    - ETA range and confidence when evidence supports an estimate;
    - explicit `NOT_YET_BASELINED`/equivalent instead of invented percentages or dates.
 
-7. **Prompt and review structure**
-   - implementation work uses the GEF V1 Execution/Correction Pack model;
-   - reviews use the GEF V1 HEDS Delta/exact-head model;
-   - architecture/root-cause decisions are resolved before bounded execution whenever possible;
+7. **Prompt compilation contract**
+   - ChatGPT resolves as much engineering uncertainty as safely possible before execution;
+   - implementation work uses GEF V1 Execution/Correction Packs;
+   - prompts include accepted/frozen decisions, one bounded goal, resolved engineering decision, patch map, prescribed algorithm, forbidden shortcuts, required tests, budgets and STOP conditions;
    - executor prompts must not force rediscovery of already frozen architecture;
+   - outputs should be compact and structured where practical;
    - generated artifacts may include Markdown, JSON and PDF where the project workflow requires them.
 
-8. **Git/GitHub project governance baseline**
-   - branch/PR workflow;
-   - issue/PR templates when applicable;
-   - review and merge policy;
-   - CI/check placeholders or concrete workflows only when supported by real toolchain commands;
-   - security/integrity guardrails;
-   - truthful reporting of permission/configuration gaps.
+8. **Review contract**
+   - reviews use HEDS Delta/exact-head semantics;
+   - review focuses first on changed inputs and invalidated proofs rather than rereading the whole project;
+   - accepted findings and unaffected proofs may carry forward only when their validity inputs remain compatible;
+   - semantic review remains strong enough to detect regressions, unsafe shortcuts, contract violations, architecture drift and hidden defects;
+   - HIGH/CRITICAL defects block advancement.
 
-9. **Progress, telemetry and evidence baseline**
-   - progress must be derived from approved scope/DoD/backlog rather than intuition;
-   - ETA must expose confidence and be recalibrated from observed delivery data;
-   - evidence must bind to repository/project state and exact head when applicable;
-   - efficiency claims must distinguish targets from measured results.
+9. **Selective validation strategy**
+   - coding-time validation starts with the smallest safe impacted set, not the entire suite by reflex;
+   - source/module-to-test relationships should be mapped when evidence supports them;
+   - tests/evals are selected by changed behavior, dependencies, risk and uncertainty;
+   - unchanged valid proofs may carry forward;
+   - uncertainty expands the validation radius;
+   - full-suite/hosted validation remains available for release, high assurance, unknown impact or policy-mandated gates;
+   - test reduction is promoted only after shadow comparison proves no material loss of assurance.
 
-10. **Optional integrations, never hidden dependencies**
-    - UADS, Hive, UGAS and future systems may be detected and integrated through adapters;
+10. **Git/GitHub project governance baseline**
+    - branch/PR workflow;
+    - issue/PR templates when applicable;
+    - review and merge policy;
+    - CI/check policy grounded in real commands and repository capabilities;
+    - security/integrity guardrails;
+    - truthful reporting of permission/configuration gaps.
+
+11. **Progress, telemetry and evidence baseline**
+    - progress must be derived from approved scope/DoD/backlog rather than intuition;
+    - ETA must expose confidence and be recalibrated from observed delivery data;
+    - evidence must bind to repository/project state and exact head when applicable;
+    - efficiency claims must distinguish targets from measured results;
+    - the optimization system must compare before/after execution cost and quality.
+
+12. **Optional integrations, never hidden dependencies**
+    - UADS, Hive, UGAS and future systems may be detected or referenced through governed adapters/instructions;
     - GEF Bootstrap remains independently usable without them;
     - improvements developed here are not automatically pushed into those projects.
 
-## Proposed first-class entry intent
+## First-class entry intent
 Conceptually, the bootstrap exposes one primary intent:
 
 ```text
 INICIAR PROJETO
     -> identify repository/project
-    -> preflight
-    -> plan bootstrap changes
-    -> prepare canonical project baseline
-    -> activate GEF V1 governance
-    -> prepare continuity/review/prompt/progress mechanisms
-    -> validate
-    -> emit bootstrap receipt
+    -> source/preflight inspection
+    -> establish canonical project baseline
+    -> create planning/governance structure
+    -> activate GEF V1 prompt/review contracts
+    -> prepare checkpoint/chat continuation
+    -> prepare progress/telemetry/evidence contracts
+    -> prepare Git/GitHub governance instructions
+    -> validate bootstrap state
+    -> emit truthful bootstrap receipt
     -> READY_FOR_PLANNING
 ```
 
-The exact CLI command, aliases, runtime and interaction model are intentionally deferred to later sessions.
+This is an **instruction intent**, not a requirement for a local executable CLI.
 
 ## Core principles proposed for freeze
 
@@ -127,47 +193,93 @@ Bootstrap prepares the engineering environment before functional product impleme
 ### P2 — GEF V1 by default
 Every project initialized by GEF Bootstrap adopts the GEF V1 prompt/review engineering model unless an explicit, governed compatibility decision says otherwise.
 
-### P3 — Deterministic where deterministic is possible
-Repository inspection, file generation, hashes, schema validation, state calculation, evidence formatting and other mechanical work should migrate to deterministic software rather than consume LLM reasoning.
+### P3 — Reason once, compile once, execute narrowly
+ChatGPT should perform the expensive architectural/root-cause reasoning before execution whenever safely possible. Codex receives a narrow, pre-resolved engineering recipe instead of being asked to rediscover the project.
 
-### P4 — Source truth over conversation memory
+### P4 — Optimize total engineering cost, not prompt length alone
+Success is measured across tokens, executor time, searches, files read, tests, correction rounds, review effort and defect prevention.
+
+### P5 — Source truth over conversation memory
 Checkpoint, approved decisions, scope, DoD, architecture, requirements, Git state and evidence outrank conversational recollection.
 
-### P5 — Resume must be a product capability
+### P6 — Resume must be a product capability
 Cross-chat continuation is not an informal convenience. The bootstrap must create enough governed state to reconstruct where the project is, what is frozen and what must happen next.
 
-### P6 — No fabricated progress
-Percentages, ETA, tests, gates and evidence must be measured or explicitly marked as unavailable/estimated with confidence.
+### P7 — Review quality is non-negotiable
+Optimization may reduce rereading and duplicated validation, but must not weaken semantic review, regression detection, security review or exact-head assurance.
 
-### P7 — Safe, idempotent and recoverable
-Bootstrap should be designed so repeated execution does not duplicate or corrupt project state, and interrupted/failed application can be diagnosed and recovered.
+### P8 — Test only what is safely necessary first
+During bounded implementation, begin with focused/impacted tests and expand based on dependency impact, risk, uncertainty or policy. Full suites are not the default local reflex.
 
-### P8 — Preserve existing projects
+### P9 — Proof reuse requires validity
+A prior proof/test/review may carry forward only when all relevant inputs and its validity fingerprint remain compatible.
+
+### P10 — Shadow assurance before aggressive test skipping
+Any mechanism that skips tests or reuses proofs must first demonstrate, through shadow comparison against fuller validation, that assurance is not materially degraded.
+
+### P11 — No fabricated progress or evidence
+Percentages, ETA, tests, gates, proof status and success states must be measured or explicitly marked unavailable/estimated with confidence.
+
+### P12 — Preserve existing projects
 Adoption into an existing repository must not silently overwrite decisions, active work, governance or product architecture.
 
-### P9 — Minimal manual work
-When authorized tooling can perform repository/GitHub setup safely, the bootstrap should do it rather than produce avoidable manual instructions.
+### P13 — Minimal manual and redundant work
+If an authorized tool or deterministic repository command can safely produce a result, the process should not spend LLM reasoning or require user repetition unnecessarily.
 
-### P10 — Explicit gaps beat fake success
-Missing permissions, unsupported toolchains, absent checks or unresolved source conflicts produce an explicit gap/block state, never a false `SUCCESS`.
+### P14 — Explicit gaps beat fake success
+Missing permissions, unsupported capabilities, absent checks or unresolved source conflicts produce an explicit gap/block state, never a false `SUCCESS`.
 
-### P11 — Independent core, optional ecosystem
-The bootstrap may integrate with UADS, Hive, UGAS and future systems, but the core must remain independently installable and operable.
+### P15 — Instruction-first, tool-agnostic core
+GEF Bootstrap is a versioned engineering instruction system. It may guide ChatGPT, Codex and future executors, but its canonical knowledge must not depend on one specific executor product.
 
-### P12 — Versioned evolution
-Bootstrap behavior, schemas, templates, GEF compatibility and migrations are versioned. Upgrades must be explicit and reversible where feasible.
+### P16 — Independent core, optional ecosystem
+The bootstrap may cooperate with UADS, Hive, UGAS and future systems, but the core remains independent.
+
+### P17 — Versioned evolution
+Protocols, templates, schemas, GEF compatibility and migration instructions are versioned. Behavioral changes must be explicit.
+
+### P18 — Immediately resumable and auditable
+After bootstrap or any approved increment, another authorized agent should be able to determine from repository sources what the project is, what is frozen, what remains open, what evidence exists and what must happen next.
+
+## Product-level optimization technologies to develop in later sessions
+The following concepts are candidates for dedicated design, not yet frozen implementations:
+
+- **Prompt Compiler / Execution Pack Compiler**: convert approved engineering decisions into bounded executor instructions.
+- **Context Radius / Context Slice**: give Codex the smallest safe repository context.
+- **Repository Knowledge Map**: reusable map of modules, symbols, contracts and ownership to reduce repeated searching.
+- **Decision Freeze Capsule**: inject only decisions relevant to the current change.
+- **Search Budget / File Budget / Patch Budget**: prevent uncontrolled executor exploration.
+- **Test Impact Map**: map changes to likely affected tests/evals.
+- **Progressive Assurance Ladder**: focused checks first, broader checks only when required.
+- **Proof Carry-Forward Graph**: reuse valid prior evidence without blind retesting.
+- **Evidence Validity Fingerprint**: decide when a carried proof becomes invalid.
+- **HEDS Delta Review**: review changed semantics and invalidated evidence rather than reread everything.
+- **Failure Fingerprint Memory**: reuse known root causes/fixes and avoid repeating unsuccessful diagnostics.
+- **Negative Capability Cache**: remember verified absences to prevent repeated repository searches.
+- **Architecture Question Cache**: preserve resolved architectural questions.
+- **Shadow Assurance**: measure proposed skipped tests/proofs against full validation before granting authority.
+- **Exact-Head Gate Receipts**: bind hosted evidence to the exact candidate without source-only evidence commits.
 
 ## Current decision state
-The user has explicitly established that project initialization must configure, before planning begins:
-- repository/project baseline;
-- planning structure;
-- configuration files;
-- chat continuation/checkpoint files;
-- review structure;
-- prompt structure governed by GEF V1;
-- standardized project-status responses.
+The user has explicitly established that:
 
-The detailed implementation of each outcome is deferred to its dedicated module/session. This session defines **why the product exists and what every successful bootstrap must conceptually accomplish**.
+- GEF Bootstrap is an **instruction/governance project**, not an application/code product;
+- its primary business value is faster safe software construction with lower Codex token/time consumption;
+- ChatGPT should do the higher-level reasoning and provide Codex with a highly prescribed implementation recipe;
+- reviews must remain rigorous and focused on preventing bugs/regressions;
+- test execution must become impact-aware so coding does not repeatedly run thousands of irrelevant tests;
+- test/review optimization must preserve assurance and expand when risk/uncertainty requires;
+- project initialization must configure planning, canonical sources, checkpoint/chat continuation, prompt/review standards, GitHub workflow, progress and evidence conventions.
+
+The detailed mechanics are deferred to their dedicated modules/sessions. This session defines **why the product exists, what it optimizes, and the universal principles every target project should inherit**.
 
 ## Open points for this session
-Before freezing S01, discuss whether the bootstrap should also guarantee any additional universal product-level principles that must apply to every future project, regardless of technology stack.
+Before freezing S01, decide whether any additional universal purpose/principle is required beyond:
+
+1. faster executor delivery;
+2. lower executor token/reasoning cost;
+3. less repository exploration;
+4. less redundant testing;
+5. stronger delta-based review;
+6. reliable evidence and checkpoint continuity;
+7. preservation of correctness/security/assurance.
