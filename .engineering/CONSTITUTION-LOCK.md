@@ -1,6 +1,6 @@
 # GEF Bootstrap Constitution Lock
 
-Status: `PROPOSED_FOR_S05_FREEZE`
+Status: `FROZEN`
 
 Constitution version: `GBS-CONSTITUTION-v1.0`
 
