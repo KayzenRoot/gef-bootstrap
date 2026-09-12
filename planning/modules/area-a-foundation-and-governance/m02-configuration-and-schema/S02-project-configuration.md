@@ -1,6 +1,6 @@
 # GBS-M02-S02 — Project Configuration
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN_CANDIDATE`
 
 ## Purpose
 Freeze the repository-scoped GEF configuration contract for one target project while preserving canonical project truth, separating tracked configuration from private operational state, and preventing configuration from becoming a covert replacement for Requirements, Scope, Architecture, DoD, identity or accepted-risk decisions.
@@ -29,10 +29,10 @@ M02-S02 DOES NOT OWN:
 - credentials/secrets;
 - checkpoints/evidence/receipts.
 
-## Candidate project configuration model
+## Frozen project configuration contract
 
-### PC-01 — One tracked canonical project config
-Candidate canonical path: `.gef/project.json` at the repository root.
+### PC-01 — Canonical tracked project config
+Canonical path is `.gef/project.json` at the repository root.
 
 Properties:
 - repository-scoped and version-controlled by default;
@@ -40,25 +40,19 @@ Properties:
 - never discovered by recursive search;
 - no alternate hidden aliases;
 - UTF-8 JSON only;
-- absence is valid for unadopted/brownfield repositories until explicit GEF adoption materializes it.
+- materialized during formal GEF adoption as an explicit machine-readable adoption marker, even when no non-default project value is required yet.
+
+The minimal adoption document remains schema-valid, versioned and semantically sparse. It must not copy defaults merely to create noise.
 
 ### PC-02 — Private operational state is physically separate
-Candidate private root: `.gef/private/`, ignored by version control by default.
+Canonical private root is `.gef/private/`, ignored by version control by default.
 
 It may contain derived caches, transaction/recovery state, temporary runtime material and other later-owner operational artifacts, but never the sole copy of canonical project truth.
 
-Tracked `.gef/project.json` and ignored `.gef/private/` deliberately share the product namespace while remaining semantically and Git-policy distinct. Ignore rules must target the private subtree, not blanket-ignore `.gef/`.
+Tracked `.gef/project.json` and ignored `.gef/private/` deliberately share the product namespace while remaining semantically and Git-policy distinct. Ignore rules target the private subtree only. Blanket ignoring `.gef/` is prohibited because it could silently hide the tracked adoption/config contract.
 
 ### PC-03 — Project configuration is below semantic governance
-Project config may express deterministic product behavior and project-scoped preferences/capabilities, but cannot redefine or silently override:
-- Requirements;
-- Scope/Out-of-Scope;
-- Architecture decisions;
-- Security minimums;
-- DoD;
-- accepted risks/waivers;
-- checkpoint/evidence verdicts;
-- S4 authorization.
+Project config may express deterministic product behavior and project-scoped preferences/capabilities, but cannot redefine or silently override Requirements, Scope/Out-of-Scope, Architecture decisions, Security minimums, DoD, accepted risks/waivers, checkpoint/evidence verdicts or S4 authorization.
 
 Where a project config value conflicts with an authoritative governed source, the authoritative source wins and the configuration layer reports a conflict rather than silently coercing either side.
 
@@ -67,12 +61,12 @@ Effective configuration remains:
 
 `PRODUCT_DEFAULTS < GLOBAL_CONFIG < PROJECT_CONFIG < EXPLICIT_INVOCATION_OVERRIDE`
 
-But higher precedence does not imply authority to weaken a lower-layer safety floor. Precedence applies only within fields whose contract explicitly permits override.
+Higher precedence does not imply authority to weaken a lower-layer safety floor. Precedence applies only within fields whose contract explicitly permits override.
 
 Each effective value retains provenance and policy metadata sufficient to answer: `what value won?`, `from which layer?`, `why was override permitted?`.
 
 ### PC-05 — Project config domains
-Candidate project-scoped domains include only fields with deterministic ownership, for example:
+Project-scoped domains include only fields with deterministic ownership, for example:
 - project-level execution budgets/preferences;
 - assurance preferences that may tighten but not weaken minimums;
 - enabled built-in profiles/capability references;
@@ -99,12 +93,7 @@ Because `.gef/project.json` is tracked canonical machine configuration, modifyin
 A change that alters security/assurance/provider side-effect behavior inherits the highest applicable security class rather than being downgraded because it is "just config".
 
 ### PC-08 — Secrets and machine-local values are prohibited
-Project config must not contain:
-- tokens/passwords/private keys;
-- absolute user-home paths when portability is expected;
-- machine-specific caches/temp paths unless represented through a portable symbolic contract;
-- volatile runtime observations that belong to preflight/discovery;
-- locally accepted secret values.
+Project config must not contain tokens/passwords/private keys, absolute user-home paths when portability is expected, machine-specific caches/temp paths unless represented through a portable symbolic contract, volatile runtime observations that belong to preflight/discovery, or locally accepted secret values.
 
 Use external credential references, portable path tokens/roots, or runtime discovery ports instead.
 
@@ -116,13 +105,7 @@ A cloned project should preserve the same semantic project configuration without
 - platform differences are normalized through contracts rather than committed ad hoc.
 
 ### PC-10 — Deterministic snapshot and token economy
-Project config participates in the same resolved immutable snapshot as S01. The resolver must support:
-- known-path reads only;
-- field-level provenance;
-- compact fingerprint;
-- delta/invalidation by source fingerprint;
-- no LLM interpretation for mechanical merge/precedence;
-- no re-reading unchanged raw config when validated snapshot remains compatible.
+Project config participates in the same resolved immutable snapshot as S01. The resolver must support known-path reads only, field-level provenance, compact fingerprint, delta/invalidation by source fingerprint, no LLM interpretation for mechanical merge/precedence, and no re-reading unchanged raw config when validated snapshot remains compatible.
 
 ### PC-11 — Extensions remain capability-gated
 Versioned project extension namespaces follow S01 preservation rules. Unknown or unavailable owners may leave validated extension payload inactive, but inactive content cannot affect effective core behavior.
@@ -138,22 +121,34 @@ A field enters project config only when:
 
 This gate intentionally favors a smaller stable config over a large speculative one.
 
-## Candidate conceptual shape
+### PC-13 — Distribution/update persistence is owner-gated
+Project-level distribution/update settings are not part of the base project configuration merely because S01 permits a global distribution preference. They enter `.gef/project.json` only when M33/M49/M50 or an admitted release/profile owner defines a project-persistent field with clear precedence, portability, security and migration semantics.
+
+Until then, distribution/update preferences remain global/operator-scoped or explicit invocation inputs. This prevents speculative release policy from leaking into every adopted repository.
+
+## Conceptual shape
 Not yet the S03 schema:
 
 ```text
 ProjectConfigurationDocument
   schemaVersion
   configVersion
+  adoption
   execution?
   assurance?
   profiles?
   telemetry?
-  distribution?
   features?
   extensions?
   projectBinding?   # reference contract owned by M03
+  distribution?     # only after admitted owner contract exists
 ```
+
+## Resolved freeze decisions
+1. Tracked project config path: `.gef/project.json` — **FROZEN**.
+2. Private operational root: `.gef/private/`, selectively ignored without ignoring `.gef/` — **FROZEN**.
+3. Formal GEF adoption always materializes a minimal `.gef/project.json` adoption marker; defaults are not redundantly copied — **FROZEN**.
+4. Project-level distribution/update preferences are owner-gated and absent from the base schema until an admitted release/distribution owner requires them — **FROZEN**.
 
 ## Security invariants
 1. Tracked project config is never secret storage.
@@ -162,12 +157,14 @@ ProjectConfigurationDocument
 4. Existing `.gef/` collisions are detected before mutation.
 5. Unknown security-relevant behavior fails closed.
 6. A config change inherits the risk class of the behavior it enables.
+7. Adoption marker materialization never implies authorization for unrelated mutations.
 
 ## Future implementation proof
 Eventually prove:
 - exact known-path lookup;
 - tracked/ignored boundary correctness;
 - safe `.gitignore` behavior without hiding `.gef/project.json`;
+- minimal adoption marker materialization;
 - precedence + provenance against global config;
 - governed conflict reporting against higher-authority sources;
 - brownfield collision handling;
@@ -176,13 +173,7 @@ Eventually prove:
 - compact fingerprint/invalidation behavior;
 - no recursive repository scan for config.
 
-## Open decisions before freeze
-1. Freeze tracked project config path as `.gef/project.json`?
-2. Freeze private operational root as `.gef/private/`, with selective ignore rules rather than ignoring `.gef/` entirely?
-3. Should project config be created during initial adoption only when at least one non-default project-scoped value is needed, or always materialized as an explicit adoption marker?
-4. Should project config allow project-level distribution/update preferences, or should those remain global-only until a release profile owner requires project persistence?
-
 ## Session completion rule
-S02 may freeze only after these decisions are resolved and exact-head review confirms consistency with S01, Security SEC-03 and future M03/M04/M05/M06 ownership.
+Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M02-S03`.
 
-STOP CONDITION: `PROJECT_CONFIGURATION_DECISIONS_REQUIRED`.
+STOP CONDITION: `M02_S02_EXACT_HEAD_REVIEW_REQUIRED`.
