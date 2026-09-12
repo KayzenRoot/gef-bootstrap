@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_SOURCE_PACK_SCOPE",
+  "status": "READY_FOR_SOURCE_PACK_ARCHITECTURE",
   "phase": "POST_CONSTITUTION_SOURCE_PACK_PLANNING",
   "areasRegistered": 16,
   "modulesRegistered": 64,
@@ -10,19 +10,34 @@
   "completedModules": ["GBS-M00"],
   "constitutionVersion": "GBS-CONSTITUTION-v1.1",
   "productModel": "HYBRID",
+  "productReleaseTarget": "ONE_COMPLETE_PRODUCTION_VERSION",
+  "terminalProductionState": "PRODUCTION_RELEASE_DONE",
   "semanticPlane": "GOVERNED_REPOSITORY_PLUS_CHATGPT_PLANNING_AGENT",
-  "deterministicWorkPlane": "REQUIRED_V1_PRODUCT_COMPONENT",
+  "deterministicWorkPlane": "REQUIRED_PRODUCT_COMPONENT",
   "bootstrapImplementationExecutor": "CHATGPT_CONNECTED_PROJECT_TOOLS",
   "codexForBootstrap": "PROHIBITED",
   "codexForTargetRepositories": "ALLOWED_UNDER_GEF_GOVERNANCE",
   "projectOverview": "FROZEN",
   "requirements": "FROZEN",
-  "requirementsPr": 19,
-  "requirementsReviewedHead": "893c55134090d17ca123b101d2fec09d7d79eebe",
-  "mainAfterRequirementsMerge": "b9abf096b183b00b6f5b9cbe308bc36f1db52aec",
-  "nextPlanningStage": "SOURCE_PACK_SCOPE",
+  "scope": "FROZEN",
+  "scopePr": 21,
+  "scopeReviewedHead": "dccd2c6daad1b6d8383679f0df95a0fe3e13cbba",
+  "mainAfterScopeMerge": "f02ba61fb6f780a11022ba2cc0dc8986e3cf2989",
+  "scopeModuleClassification": {
+    "coreRequired": 47,
+    "productIncluded": 14,
+    "optionalAdapter": 3
+  },
+  "stableModuleReframes": {
+    "GBS-M01": "Deterministic Work Plane Kernel",
+    "GBS-M47": "Interaction & Operator UX",
+    "GBS-M49": "Distribution & Setup",
+    "GBS-M62": "Production Acceptance"
+  },
+  "progressWeightFormula": "E+R+I+P",
+  "nextPlanningStage": "SOURCE_PACK_ARCHITECTURE",
   "canonicalBranch": "main",
   "overallCompletion": "NOT_YET_BASELINED",
   "eta": "NOT_YET_RELIABLE",
-  "stopState": "READY_FOR_SOURCE_PACK_SCOPE"
+  "stopState": "READY_FOR_SOURCE_PACK_ARCHITECTURE"
 }

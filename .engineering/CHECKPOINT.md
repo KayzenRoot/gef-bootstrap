@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_SOURCE_PACK_SCOPE`
+Status: `READY_FOR_SOURCE_PACK_ARCHITECTURE`
 
 - Project: GEF Bootstrap
 - Phase: Post-Constitution Source Pack Planning
@@ -11,29 +11,42 @@ Status: `READY_FOR_SOURCE_PACK_SCOPE`
 - Completed module: `GBS-M00 — Bootstrap Constitution`
 - Constitution version: `GBS-CONSTITUTION-v1.1`
 - Product model: `HYBRID`
+- Product release target: `ONE COMPLETE PRODUCTION VERSION`
+- Terminal production state: `PRODUCTION_RELEASE_DONE`
 - Semantic plane: `GOVERNED REPOSITORY + CHATGPT / PLANNING AGENT`
-- Deterministic work plane: `REQUIRED V1 PRODUCT COMPONENT`
+- Deterministic work plane: `REQUIRED PRODUCT COMPONENT`
 - GEF Bootstrap implementation executor: `CHATGPT / CONNECTED PROJECT TOOLS`
 - Codex for building this repository: `PROHIBITED`
 - Codex for target repositories: `ALLOWED UNDER GEF GOVERNANCE`
 - Project Overview: `FROZEN`
 - Requirements: `FROZEN`
-- Requirements PR: #19
-- Requirements reviewed head: `893c55134090d17ca123b101d2fec09d7d79eebe`
-- Main after Requirements merge: `b9abf096b183b00b6f5b9cbe308bc36f1db52aec`
+- Scope: `FROZEN`
+- Scope PR: #21
+- Scope reviewed head: `dccd2c6daad1b6d8383679f0df95a0fe3e13cbba`
+- Main after Scope merge: `f02ba61fb6f780a11022ba2cc0dc8986e3cf2989`
+- Scope module classification: `47 CORE_REQUIRED / 14 PRODUCT_INCLUDED / 3 OPTIONAL_ADAPTER`
+- Stable reframes: `M01 Deterministic Work Plane Kernel`, `M47 Interaction & Operator UX`, `M49 Distribution & Setup`, `M62 Production Acceptance`
+- Progress weighting model: `RAW_WEIGHT = E + R + I + P`, each dimension 1–5 with evidence/rationale
 - Current canonical branch: `main`
 - Overall project completion: `NOT_YET_BASELINED`
 - ETA: `NOT_YET_RELIABLE`
-- Next legal planning stage: `.engineering/SCOPE.md`
-- Stop state: `READY_FOR_SOURCE_PACK_SCOPE`
+- Next legal planning stage: `.engineering/ARCHITECTURE.md`
+- Stop state: `READY_FOR_SOURCE_PACK_ARCHITECTURE`
 
-## Frozen Requirements outcome
-V1 now requires both the governed semantic plane and a physically implemented deterministic work plane. The deterministic minimum includes repository/Git inspection, mutation planning, approved artifact materialization/update, schema/contract validation, fingerprints, expected/observed state comparison, deterministic diffs/change manifests, conformance checks and machine receipts.
+## Frozen complete-production Scope
+GEF Bootstrap does not use a deliberately reduced MVP/small-V1 strategy. All useful current module families remain in the complete program. Schedule pressure alone is not a valid deferral reason.
 
-The universal physical substrate is a local checked-out version-controlled repository/filesystem. GitHub API operation is a first-class profile capability rather than the sole path. Managed mutations require safety gates and recoverability where technically possible. CLI remains an optional interface choice to be resolved by Architecture.
+The main production denominator will include CORE_REQUIRED, PRODUCT_INCLUDED and production-admitted EXPERIMENTAL_GATED capabilities. UADS/Hive/UGAS adapters remain official separately activatable adapter tracks and do not block independent production completion.
+
+Experimental heuristic/learned capabilities require Utility, Assurance, Validity/Stability and Engineering ROI gates before production promotion.
+
+GitHub is the reference hosted profile. Core contracts remain provider-neutral; a second hosted VCS implementation is not mandatory for production acceptance.
+
+## Baseline truth
+A global percentage or ETA remains invalid until production DoD is frozen, admitted backlog is mapped to requirements/modules, E/R/I/P weights are reviewed, and historical completed work is credited only with current valid evidence.
 
 ## Do not redo
-Do not reopen Constitution, Project Overview or Requirements without governed supersession/change control. Do not downgrade the deterministic work plane to optional. Do not make CLI the product definition. Do not use Codex to implement GEF Bootstrap. Do not begin Architecture or implementation before Scope is frozen.
+Do not reopen Constitution, Project Overview, Requirements or Scope without governed supersession/change control. Do not reinterpret the complete-product target as an MVP. Do not treat optional ecosystem adapters as independent-core blockers. Do not begin functional implementation before the ordered Source Pack permits it. Do not use Codex to implement this repository.
 
 ## Resume instruction
-Read this checkpoint plus Constitution v1.1, Project Overview, Requirements, Decisions/Technology Ledgers and Planning Protocol. Continue with canonical Source Pack Scope. Scope must classify the frozen requirements/inventory into admitted V1 obligations before overall completion percentage or ETA can become valid.
+Read this checkpoint plus Constitution v1.1, Project Overview, Requirements, frozen Scope, ADR-0001, Decisions/Technology Ledgers, Planning Protocol and Master Module Index. Continue with canonical Source Pack Architecture. Keep implementation NOT_STARTED until Architecture and the remaining ordered Source Pack stages permit construction.
