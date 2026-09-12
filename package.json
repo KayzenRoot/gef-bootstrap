@@ -5,8 +5,8 @@
   "type": "module",
   "workspaces": ["packages/*"],
   "scripts": {
-    "build": "tsc -b packages/contracts packages/kernel packages/cli --pretty false",
-    "typecheck": "tsc -b packages/contracts packages/kernel packages/cli --pretty false",
+    "build": "tsc -b packages/contracts packages/config packages/kernel packages/cli --pretty false",
+    "typecheck": "tsc -b packages/contracts packages/config packages/kernel packages/cli --pretty false",
     "test": "npm run build && node --test tests/*.test.mjs",
     "validate": "npm run typecheck && node --test tests/*.test.mjs"
   },
