@@ -29,3 +29,7 @@ Status: `ACTIVE`
 ## D-0007 — Selective validation with assurance protection
 - Decision: Implementation-time testing should begin with the smallest safe impacted set and expand according to dependency impact, risk and uncertainty. Aggressive test skipping/proof reuse requires shadow assurance before becoming authoritative.
 - Status: APPROVED
+
+## D-0008 — Bootstrap materializes governance into the target repository
+- Decision: Although GEF Bootstrap has no standalone runtime/CLI, invoking its canonical project-start instruction against a target repository must create or update the governed files, directories, templates, checkpoint state, prompt/review contracts and other approved bootstrap artifacts required for that target project to follow GEF recommendations. The Bootstrap repository is the instruction source; the target repository receives the materialized project-specific artifacts.
+- Status: APPROVED
