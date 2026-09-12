@@ -8,7 +8,9 @@ export type IdentityTransitionOperation = "REKEY_PROJECT" | "REBIND_REPOSITORY" 
 export type IdentityInvalidationClass = "PROJECT_BOUND" | "REPOSITORY_BOUND";
 
 export interface ProjectIdentityDocument { readonly adopted?: unknown; readonly projectId?: unknown; readonly repositoryBinding?: unknown }
+export interface ProjectIdentityAssessmentContext { readonly identityPreviouslyEstablished?: boolean; readonly expectedProjectId?: string }
 export interface ProjectIdentityAssessment { readonly state: ProjectIdentityState; readonly projectId?: string; readonly reasonCode?: string }
+export interface FormalAdoptionIdentity { readonly adopted: true; readonly projectId: string }
 export interface UuidV4Generator { (): string }
 export interface DigestPort { readonly algorithm: string; digest(canonicalInput: string): string }
 
@@ -30,6 +32,9 @@ export interface RemoteObservation { readonly alias: string; readonly url: strin
 export type PersistedRepositoryBinding =
   | { readonly bindingKind: "REMOTE"; readonly normalizedLocator: RepositoryRemoteLocator; readonly stableProviderId?: string }
   | { readonly bindingKind: "LOCAL"; readonly localBindingId: string };
+export type PersistedRepositoryBindingParseResult =
+  | { readonly ok: true; readonly value: PersistedRepositoryBinding }
+  | { readonly ok: false; readonly diagnostic: IdentityDiagnostic };
 export interface RepositoryResolutionInput { readonly repositoryPresent: boolean; readonly remotes?: readonly RemoteObservation[]; readonly persistedBinding?: PersistedRepositoryBinding }
 export interface RepositoryResolution { readonly projection: RepositoryIdentityProjection; readonly canonicalBindingPersisted: boolean; readonly candidateCount: number; readonly diagnostics: readonly IdentityDiagnostic[] }
 
@@ -77,12 +82,18 @@ export interface IdentityTransitionState {
   readonly repositoryProjectionFingerprint?: string;
   readonly identityFingerprint: string;
 }
+export interface ImportRecoveryEvidence {
+  readonly sourceRef: string;
+  readonly authorityRef: string;
+  readonly collisionCheck: "NO_AUTHORITATIVE_CONFLICT";
+}
 export interface CreateIdentityTransitionPlanInput {
   readonly operation: IdentityTransitionOperation;
   readonly reason: string;
   readonly current: IdentityTransitionState;
   readonly newRepositoryProjection?: RepositoryIdentityProjection;
   readonly importRecoveryProjectId?: string;
+  readonly importRecoveryEvidence?: ImportRecoveryEvidence;
   readonly assurance: AssuranceLevel;
   readonly collisionClass?: CollisionClass;
   readonly externalEffects?: readonly string[];
@@ -100,6 +111,7 @@ export interface IdentityTransitionPlan {
   readonly oldIdentityFingerprint: string;
   readonly newProjectId?: string;
   readonly newRepositoryProjection?: RepositoryIdentityProjection;
+  readonly importRecoveryEvidence?: ImportRecoveryEvidence;
   readonly invalidationClasses: readonly IdentityInvalidationClass[];
   readonly acknowledgementRequired: boolean;
   readonly externalEffects: readonly string[];
@@ -118,6 +130,7 @@ export interface IdentityTransitionReceipt {
   readonly oldIdentityFingerprint: string;
   readonly newIdentityFingerprint: string;
   readonly invalidationClasses: readonly IdentityInvalidationClass[];
+  readonly recoveryReference?: string;
   readonly externalEffects: readonly string[];
   readonly planAlgorithm: string;
   readonly planDigest: string;
