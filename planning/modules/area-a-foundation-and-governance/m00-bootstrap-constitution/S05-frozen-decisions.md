@@ -1,51 +1,51 @@
 # GBS-M00-S05 — Frozen Decisions
 
-Status: `IN_DISCUSSION`
+Status: `DECIDED`
 
 ## Purpose
-Close the Bootstrap Constitution by defining which decisions from S01–S04 are constitutionally frozen, how they may be referenced compactly, and the only legal mechanisms for reopening or superseding them.
+Close the Bootstrap Constitution by defining which outcomes from S01–S04 are constitutionally frozen, how they are referenced compactly, and the only legal mechanisms for reopening or superseding them.
 
-This session does **not** restate every detail from prior sessions. Its job is to create a small constitutional lockfile so future planning and executors know what is already settled and do not spend tokens reopening resolved foundations.
+This session creates a small constitutional lockfile. It does not duplicate the full prose of prior sessions or prematurely materialize later Source Pack documents.
 
 ## Core objective
 
 ```text
 FROZEN CONSTITUTION
-  -> compact decision identities
+  -> stable group identities
+  -> compact decision references
+  -> version/fingerprint
   -> explicit ownership
   -> validity/supersession rules
-  -> dependency impact
   -> reopen gate
-  -> downstream planning can proceed without rediscovery
+  -> downstream planning proceeds without rediscovery
 ```
 
-The desired effect is both governance and token economy: once a constitutional decision is frozen, later agents consume the stable reference/compact value unless a governed trigger requires expansion to the canonical source.
+## Stable constitutional groups
+F1–F8 are stable constitutional group IDs in V1. Individual `D-*` decisions remain the canonical detailed decisions; the group IDs are compact dependency/reference surfaces.
 
-## Candidate constitutional freeze groups
-
-### F1 — Product identity and boundary
+### CONST-F1 — Product identity and boundary
 - GEF Bootstrap is instruction-first governance, not a standalone CLI/runtime product.
 - It materializes governed project artifacts into target repositories through compatible agents/executors.
-- UADS, Hive, UGAS and other ecosystems remain optional integrations unless future scope explicitly changes that boundary.
+- UADS, Hive, UGAS and other ecosystems remain optional integrations unless future governed scope explicitly changes that boundary.
 
-### F2 — Default engineering model
+### CONST-F2 — Default engineering model
 - GEF V1 is the default engineering model for initialized projects.
 - ChatGPT/planning sources resolve expensive engineering reasoning as far as safely possible.
 - Executors such as Codex receive bounded, pre-resolved execution contracts and escalate instead of rediscovering frozen architecture.
 
-### F3 — Primary optimization objective
+### CONST-F3 — Primary optimization objective
 - total safe engineering cost/change is the optimization target;
 - token economy and executor wall-clock latency are first-class;
 - correctness, security, integrity and required assurance outrank optimization budgets;
-- optimization claims must be measured end-to-end and targets must not masquerade as measured facts.
+- optimization claims are measured end-to-end and targets never masquerade as measured facts.
 
-### F4 — Brownfield is first-class
+### CONST-F4 — Brownfield is first-class
 - NEW_PROJECT and EXISTING_PROJECT are first-class adoption paths;
 - brownfield adoption is progressive, preservation-first and non-destructive;
-- working projects do not restart planning or rewrite architecture just to adopt GEF naming;
+- working projects do not restart planning or rewrite architecture merely to adopt GEF naming;
 - aggressive proof/test reuse requires evidence/shadow assurance before promotion.
 
-### F5 — Source truth model
+### CONST-F5 — Source truth model
 - authority is domain-specific, not newest-wins;
 - descriptive truth and normative truth remain separate;
 - canonical facts are addressable and validity-bound;
@@ -53,7 +53,7 @@ The desired effect is both governance and token economy: once a constitutional d
 - executor context targets Minimum Sufficient Context and expands only for evidence-backed/assurance reasons;
 - source conflicts/missing authority fail closed.
 
-### F6 — Scope model
+### CONST-F6 — Scope model
 - inventory is not commitment;
 - V1 admission uses NECESSARY / IMPORTANT / FUTURE / OUT_OF_SCOPE;
 - NECESSARY requires one traceable primary admission basis;
@@ -62,7 +62,7 @@ The desired effect is both governance and token economy: once a constitutional d
 - executors cannot authorize product-scope expansion;
 - scope cannot be manipulated to fabricate progress/ETA.
 
-### F7 — Completion model
+### CONST-F7 — Completion model
 - DONE is evidence-bound, layered and exact-state where applicable;
 - 100% progress or agent assertion never creates DONE;
 - accepted gaps are policy-gated;
@@ -71,100 +71,180 @@ The desired effect is both governance and token economy: once a constitutional d
 - READY_FOR_PLANNING requires a usable governed planning surface and conformance evidence;
 - V1 must be measurable/benchmarkable without fabricated improvement percentages.
 
-### F8 — Continuity and auditability
+### CONST-F8 — Continuity and auditability
 - human Checkpoint and machine-current state are consistent governed views, not competing truth;
 - every frozen planning increment ends with review + checkpoint promotion;
-- new chats should resume from governed state rather than reconstructing from conversation history;
+- new chats resume from governed state rather than reconstructing from conversation history;
 - material innovations remain in Technology & Innovation Ledger until owned/frozen.
 
 ## Constitutional reference model
-Downstream material should normally reference frozen groups and/or decision IDs rather than duplicating long prose.
-
-Example:
+Downstream material normally references frozen groups and/or decision IDs rather than duplicating long prose.
 
 ```text
 requires:
   - CONST-F3
+  - CONST-F5
   - D-0016
   - D-0024
 ```
 
-A compact reference never supersedes the canonical session/Decision Ledger. It is an address and dependency declaration.
+A group reference is an address/dependency declaration, never a replacement for the canonical session and Decisions Ledger.
 
 ## Reopen Gate
-A frozen constitutional decision may be reopened only when at least one governed trigger exists:
+A frozen constitutional decision/group may be reopened only when at least one governed trigger exists:
 
-- `SOURCE_DRIFT`: authoritative external/source reality changed materially;
-- `CONTRADICTION_DISCOVERED`: frozen decisions are proven internally incompatible;
-- `SECURITY_OR_INTEGRITY_DEFECT`: keeping the decision creates an unacceptable material risk;
-- `DEPENDENCY_INVALIDATED`: a foundational dependency the decision relied on is no longer valid;
-- `V1_SCOPE_SUPERSESSION`: a governed later scope/version explicitly requires replacement;
-- `MEASURED_FAILURE`: benchmark/evidence shows the frozen rule defeats its stated constitutional objective;
-- `EXPLICIT_USER_PRODUCT_DECISION`: product owner intentionally changes the product boundary or objective through governed planning.
+- `SOURCE_DRIFT`
+- `CONTRADICTION_DISCOVERED`
+- `SECURITY_OR_INTEGRITY_DEFECT`
+- `DEPENDENCY_INVALIDATED`
+- `V1_SCOPE_SUPERSESSION`
+- `MEASURED_FAILURE`
+- `EXPLICIT_USER_PRODUCT_DECISION`
 
-The reopen request must identify the affected decision/group, evidence, downstream impact and proposed owner. General preference, novelty, executor convenience or a new chat are not valid reopen triggers.
+### Explicit product-owner change rule
+`EXPLICIT_USER_PRODUCT_DECISION` is sufficient to **initiate** reopening, but it is never self-applying. Before the frozen rule changes effect, a superseding planning record/decision must be created, impacts identified, audit performed and affected checkpoint/state promoted.
+
+This protects intentional product-owner authority without creating undocumented constitutional drift.
+
+General preference, novelty, executor convenience, model suggestion or a new chat are not valid reopen triggers.
 
 ## Supersession rule
 Frozen constitutional material is never edited into historical ambiguity. A superseding decision must:
 
-1. identify the old decision/group;
-2. state the new decision;
+1. identify old decision/group;
+2. state new decision;
 3. record reason/evidence;
 4. identify effective version/binding;
 5. mark affected downstream facts/modules/proofs/checkpoints;
-6. trigger targeted invalidation/replanning where needed;
+6. trigger targeted invalidation/replanning;
 7. preserve the old record as historical truth.
 
 ## Constitutional Stability Contract
-The project should optimize for **stable foundations with evolvable mechanisms**.
+The Constitution freezes outcomes and invariants, not every later schema, filename, algorithm or internal representation.
 
-The Constitution freezes outcomes and invariants, not every later schema, filename, algorithm or internal representation. For example:
-- MSC is frozen as a requirement; exact Source Capsule schema belongs to M14/M15;
+Examples:
+- MSC is frozen; exact Source Capsule schema belongs to M14/M15;
 - evidence-bound DONE is frozen; Completion Manifest schema belongs to Evidence/Progress modules;
 - brownfield progressive adoption is frozen; exact maturity schema belongs to M13;
-- instruction-first product boundary is frozen; legacy scaffold module names may still be refactored without changing IDs.
+- instruction-first product boundary is frozen; legacy scaffold names may be refactored without changing stable IDs.
 
-This prevents two opposite failures: reopening fundamentals constantly, or freezing implementation details too early.
+## Frozen Decision Capsule requirement
+A compact constitutional reference surface is required, while its exact serialization/schema is delegated to later Decision/Source Pack modules.
 
-## Candidate Frozen Decision Capsule
-A compact machine/human index may later expose:
+Minimum semantic metadata:
 
 ```text
 constitutionVersion
-frozenGroups[]
-decisionIds[]
-owners[]
-sourceRefs[]
-fingerprints[]
+constitutionFingerprint
+frozenGroupId
+status
+canonicalSourceRefs
+decisionIds
+ownerScope
+applicability
 supersessionState
-reopenTriggers[]
+validityFingerprint
+reopenTriggers
 ```
 
-Exact schema belongs to later Decision/Source Pack modules. S05 only decides whether such a compact constitutional reference is required.
+The capsule must not duplicate full Decisions Ledger prose. It stores enough information to address, validate, route and expand the canonical decision only when necessary.
+
+## Constitution version and fingerprint
+M00 closure establishes a constitutional version identity.
+
+Initial identity:
+
+```text
+constitutionVersion: GBS-CONSTITUTION-v1.0
+```
+
+A constitution fingerprint is required and must be deterministically derived later from the canonical frozen group/decision set by the owning Source Pack/Integrity mechanism. Until that deterministic mechanism exists, repository exact-state binding plus the version ID identifies the current frozen Constitution; no fabricated hash is recorded.
+
+Any superseding constitutional change requires version/fingerprint evolution according to the later versioning rules.
+
+## M00 MODULE_DONE contract
+`GBS-M00 — Bootstrap Constitution` is MODULE_DONE only when:
+
+1. S01–S05 are `FROZEN`;
+2. S01–S05 each satisfy the planning-session evidence contract from S04;
+3. material constitutional decisions are present in Decisions Ledger;
+4. material inventions are routed in Technology & Innovation Ledger;
+5. CONST-F1–F8 have no unresolved contradiction;
+6. unresolved implementation/schema matters are explicitly delegated to owning later modules;
+7. S05 exact-head review has no unresolved blocker;
+8. checkpoint is promoted to the next legal planning point;
+9. no functional product implementation was accidentally introduced during M00.
+
+M00 completion proves the constitutional planning module only. It does not imply GEF Bootstrap V1 or product Scope/Architecture is complete.
+
+## Explicit delegations at M00 closure
+M00 intentionally leaves the following to owning later modules:
+
+- final Source Pack structure/materialization details: M09 and related planning;
+- detailed decision/ADR/capsule lifecycle: M11;
+- detailed Scope and release DoD materialization: M12;
+- brownfield lifecycle/maturity schema: M13;
+- task/context compiler and Source Capsule schema: M14;
+- Execution Pack/compiler mechanics: M15;
+- guardrail mechanics: M16;
+- machine current/checkpoint/resume schema: M17–M20;
+- progress/ETA weighting/baseline formulas: M21–M23;
+- evidence/proof/review/assurance/test-impact details: M24–M28;
+- Git/GitHub/CI/release implementation policy: M29–M33;
+- security/recovery/integrity mechanics: M34–M37;
+- optional adapters/integrations: M38–M42;
+- telemetry/audit/benchmark implementation: M43–M45;
+- artifact/agent interaction/help reframing of legacy UX concepts: M46–M48;
+- consumption/version upgrade/compatibility/doctor reframing of legacy distribution concepts: M49–M52;
+- conformance/test harness reframing of runtime-oriented quality modules: M53–M58;
+- final docs/closure: M59–M62;
+- executor performance mechanics: M63.
+
+These delegations are not defects. They prevent the Constitution from swallowing implementation architecture.
+
+## Source Pack materialization timing
+S05 does **not** pre-fill `.engineering/SOURCE-HIERARCHY.md`, `.engineering/SCOPE.md` or `.engineering/DEFINITION-OF-DONE.md` with detailed product conclusions.
+
+Reason: those canonical Source Pack documents belong to the ordered Source Pack planning/materialization sequence and must be generated from the frozen Constitution plus their owning module decisions. Prematurely filling them would duplicate truth, create drift risk and blur constitutional versus product-level authority.
+
+Until then, S01–S05 + Decisions Ledger + Checkpoint are the canonical constitutional source.
 
 ## Token-economy rule
-Frozen decisions are one of the largest opportunities to eliminate repeated reasoning.
-
-Later agents should not receive the full constitutional prose by default. The preferred flow is:
+Frozen decisions eliminate repeated reasoning. The default downstream flow is:
 
 ```text
 task
- -> relevant frozen decision IDs/groups
+ -> relevant CONST-F* and D-* IDs
  -> compact values
- -> fingerprint validity
+ -> validity/fingerprint check
  -> execute
 ```
 
-Expand to the full canonical session only if validity, ambiguity, conflict or assurance requires it.
+Expand to the full canonical session only when validity, ambiguity, conflict or assurance requires it.
 
-## Questions to close before M00 freeze
-1. Should F1–F8 become stable constitutional group IDs in V1, or remain only a human summary while individual D-* IDs are canonical?
-2. Is `EXPLICIT_USER_PRODUCT_DECISION` alone sufficient to reopen a frozen rule, or must it always create a superseding planning record before effect?
-3. What minimum metadata is required for a Frozen Decision Capsule without duplicating the Decisions Ledger?
-4. Should the Constitution itself receive a version identifier/fingerprint at M00 closure?
-5. What exact condition marks `GBS-M00 — Bootstrap Constitution` as MODULE_DONE under S04?
-6. Which unresolved matters must be explicitly delegated to later modules before M00 can close?
-7. After S05, should we immediately materialize/update `.engineering/SOURCE-HIERARCHY.md`, `SCOPE.md` and `DEFINITION-OF-DONE.md`, or should those wait for their dedicated Source Pack planning sequence to avoid pre-filling conclusions?
+## Anti-reopen invariants
+- A new chat never reopens a frozen decision by itself.
+- A different model preference never reopens a frozen decision by itself.
+- Executor convenience cannot supersede product governance.
+- User-directed product change initiates governed supersession, never undocumented mutation.
+- Frozen outcome does not freeze delegated implementation details.
+- Superseded history remains auditable.
+- Targeted invalidation is preferred over broad reset when dependencies are known.
 
-## Current direction
-S05 is moving toward a **small constitutional lockfile of stable outcomes and invariants, referenced by IDs, validity-bound, reopenable only through explicit evidence-backed supersession, and deliberately separated from evolvable implementation mechanics**.
+## Decision summary
+S05 decides that GEF Bootstrap V1 uses **CONST-F1–F8 as stable constitutional group IDs**, with `D-*` decisions as detailed canonical records, a versioned/fingerprintable Constitution, a governed Reopen Gate, explicit supersession, compact decision capsules and explicit delegation of non-constitutional mechanics.
+
+The Constitution is stable enough to support downstream planning without repeated rediscovery while remaining intentionally evolvable through audited supersession.
+
+## Closure readiness
+- S01–S04 consistency: PASS
+- constitutional group boundaries: PASS
+- owner/product change authority preserved: PASS
+- undocumented drift prevented: PASS
+- version identity defined without fabricated hash: PASS
+- M00 MODULE_DONE criteria explicit: PASS
+- unresolved mechanics delegated: PASS
+- premature Source Pack materialization prevented: PASS
+- token-aware compact reference model: PASS
+
+Next lifecycle step: synchronize Decisions/Technology Ledger, exact-delta audit, then `DOCUMENTED -> FROZEN`.
