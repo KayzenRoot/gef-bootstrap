@@ -69,3 +69,15 @@ Status: `ACTIVE`
 ## D-0017 — Governed knowledge should appreciate over time
 - Decision: Approved work should enrich validity-bound reusable engineering knowledge so comparable future work requires less rediscovery, fewer reads/searches, less repeated reasoning and less review rereading. Reuse remains subordinate to current canonical sources and must be invalidated by relevant source, dependency, toolchain or policy changes.
 - Status: APPROVED
+
+## D-0018 — Innovation discoveries are governed separately from frozen decisions
+- Decision: Material technologies, optimization mechanisms and engineering ideas discovered during planning must be recorded in the Technology & Innovation Ledger with an explicit lifecycle state and owner. Candidate/proposed technologies do not become executor requirements until frozen by their owning planning scope.
+- Status: APPROVED
+
+## D-0019 — Engineering ROI governs optimization complexity
+- Decision: Permanent optimization complexity should be justified by expected end-to-end benefit across token cost, executor latency, validation time, review effort, retry avoidance, defect avoidance and maintenance burden. Optimization that merely moves cost elsewhere is not considered successful.
+- Status: APPROVED
+
+## D-0020 — S01 purpose and principles are frozen
+- Decision: GBS-M00-S01 is frozen with P1–P27 as the constitutional purpose/principle baseline. Detailed source hierarchy, context routing, assurance matrices and implementation mechanisms remain delegated to their owning later sessions/modules and are not implied as fully designed by this freeze.
+- Status: APPROVED
