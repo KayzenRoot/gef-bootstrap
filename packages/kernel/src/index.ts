@@ -1,7 +1,25 @@
 export { createGefError, internalError, normalizeCauses, redactText, redactUnknown } from "./errors.js";
 export { projectExitCode } from "./exit-codes.js";
 export { LifecycleRecorder } from "./lifecycle.js";
-export type { ClockPort,GateResult,IdGeneratorPort,PolicyCheckContext,PolicyPort,ProcessPort,ReceiptPort,RuntimePorts,TargetBindingPort,TelemetryPort,VerificationPort } from "./ports.js";
+export type {
+  ClockPort,
+  DerivedStatePort,
+  EnvironmentPort,
+  FilesystemPort,
+  GateResult,
+  GitPort,
+  IdGeneratorPort,
+  PolicyCheckContext,
+  PolicyPort,
+  ProcessPort,
+  ProviderPort,
+  ReceiptPort,
+  RuntimeIdentity,
+  RuntimePorts,
+  TargetBindingPort,
+  TelemetryPort,
+  VerificationPort
+} from "./ports.js";
 export { systemClock } from "./ports.js";
 export { createProcessSpec } from "./process-spec.js";
 export { canonicalCommandIdPattern,CommandRegistry,RegistryCompositionError } from "./registry.js";
