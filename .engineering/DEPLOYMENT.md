@@ -1,117 +1,124 @@
 # Deployment & Distribution
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN`
 
 ## Binding
 Deployment & Distribution derives from frozen Constitution v1.1, Project Overview, Requirements, complete-production Scope, Architecture, Security, Test & Benchmark Plan, Definition of Done and weighted Backlog Baseline.
 
-No functional implementation begins from this document until Deployment is reviewed/frozen and remaining Source Pack closure permits construction.
+No functional implementation begins from this document until the remaining Source Pack closure permits construction.
 
 ## Objective
 Define how GEF Bootstrap is installed, distributed, upgraded, verified, recovered and released across Windows, Linux and macOS without weakening security, reproducibility, compatibility or the project's token/time-efficiency goals.
 
-The product must remain local-first and usable from a checked-out Git repository/filesystem. Distribution mechanics may simplify operator access but may not become semantic authority.
+The product remains local-first and usable from a checked-out Git repository/filesystem. Distribution mechanics simplify operator access but never become semantic authority.
 
-## Distribution surfaces
-Candidate supported surfaces:
-1. **npm package / package-manager install** — primary distribution for the TypeScript/Node LTS implementation and official thin CLI;
-2. **direct library consumption** — versioned package exports for programmatic use;
-3. **repository checkout / development install** — supported contributor and recovery path;
-4. **portable standalone executable** — secondary distribution track only after platform/release evidence proves it sufficiently stable;
-5. **GitHub Releases** — release notes, checksums/manifests and optional platform artifacts;
-6. optional adapters as separately activatable packages/profiles.
+## Frozen distribution model
+1. **npm/package-first is the primary production channel.**
+2. **Direct library consumption** is an official supported surface.
+3. **Thin CLI/operator surface** is an official package surface over library/application contracts.
+4. **Repository checkout/development install** remains a supported contributor/recovery path.
+5. **GitHub Releases** publish release notes, exact-source manifest, checksums and optional downloadable artifacts.
+6. **Standalone executable** is separately promotable and is not required for initial independent `PRODUCTION_RELEASE_DONE` unless its own promotion gates later pass and Scope is explicitly amended.
+7. Optional UADS/Hive/UGAS adapters remain separately activatable packages/profiles and do not block independent production completion.
 
-## Primary packaging direction
-The canonical production implementation remains TypeScript on a supported Node.js LTS line. The initial production distribution contract should therefore be package-first rather than binary-first:
-
+## Primary build/distribution flow
 ```text
-source monorepo
-  -> reproducible build
+accepted source head
+  -> reproducible build inputs
   -> package artifacts
-  -> package validation
-  -> provenance/checksum evidence
-  -> registry/release publication
-  -> install verification
+  -> package-content inspection
+  -> T0–T7 applicable verification
+  -> provenance/checksum manifest
+  -> registry publication
+  -> GitHub Release binding
+  -> post-publication install/retrieval verification
+  -> release receipt
 ```
 
-A standalone executable is useful for low-friction installation, but must not become a release blocker while Node's native SEA path remains an actively developing surface. When promoted, it receives its own Windows/Linux/macOS signing, packaging and regression obligations.
+## Public package topology
+Public package count stays intentionally small. Package boundaries follow externally useful architectural contracts, not one package per module.
 
-## Package topology
-Candidate public package split follows architectural package boundaries rather than one package per product module:
-- core/contracts;
-- deterministic kernel/application API;
-- official CLI/operator surface;
-- Git/GitHub provider packages where separation is justified;
-- generic adapter SDK;
-- optional ecosystem adapters;
-- testkit only where intended for external extension/conformance use.
+Frozen public surfaces:
+- core/application library package;
+- official CLI package or CLI entrypoint from the primary package, selected during M49 implementation based on measured packaging/support cost;
+- generic adapter SDK/API package where independent external extension requires it;
+- official optional adapter packages only when individually supported and released.
 
-Internal workspaces remain private unless external consumption provides clear engineering value. Public package count should stay intentionally small to reduce versioning, publishing and support overhead.
+Provider-specific/internal workspaces stay private unless an explicit public integration contract requires otherwise. Testkit is public only if external adapter/profile conformance genuinely requires it.
+
+Package names and scopes must be collision-checked at implementation/release time and cannot be frozen here before registry availability is verified.
 
 ## Versioning
-Production packages use Semantic Versioning at the product/public-contract boundary.
+Production public packages use Semantic Versioning.
 
-Rules:
-- patch: compatible fixes with no intentional public contract break;
+- patch: backward-compatible fixes;
 - minor: backward-compatible capability additions;
 - major: incompatible public API/schema/behavior changes requiring governed migration;
-- machine contracts retain explicit schema versions independent of npm package version where required;
-- optional adapter compatibility declares supported core/protocol ranges;
-- pre-release identifiers are allowed for governed release candidates but cannot be called `PRODUCTION_RELEASE_DONE`.
+- prerelease identifiers are allowed for `rc` but cannot represent `PRODUCTION_RELEASE_DONE`;
+- machine contracts carry explicit `schemaVersion` independent of package SemVer where required;
+- schema compatibility rules determine whether a package change is patch/minor/major, never the reverse;
+- optional adapters declare supported core/protocol version ranges;
+- incompatible schema migration requires an explicit migration contract, evidence and release notes.
 
-No version bump can hide an incompatible migration requirement.
+No version bump may conceal an incompatible migration.
 
 ## Supported runtime policy
-- production support is expressed as an explicit Node.js LTS compatibility range, not "latest Node";
-- the Compatibility Matrix owns exact supported lines;
-- unsupported runtime produces a clear fail-fast diagnostic before mutation;
-- runtime support changes require compatibility evidence and governed release notes;
-- release builds pin the toolchain sufficiently for reproducibility.
+- support is declared as explicit Node.js LTS compatibility range(s), never `latest`;
+- M51 Compatibility Matrix owns exact supported lines;
+- unsupported runtime fails before governed mutation with actionable diagnostics;
+- runtime support changes require compatibility evidence and release notes;
+- release builds pin toolchain/build inputs sufficiently for reproducibility/audit;
+- no release claim may exceed the exact T7 matrix actually proven.
 
-## Installation behavior
-Install/setup must be non-destructive by default.
+## Installation/setup/uninstall boundaries
+Installation is non-destructive by default.
 
-Expected properties:
-- no silent global configuration mutation;
-- no repository mutation merely from installing the package;
-- setup/bootstrap operation is explicit and separately invoked;
-- target project identity/preflight runs before governed writes;
-- permissions/gaps are reported truthfully;
-- no automatic adapter activation;
-- uninstalling the tool does not silently remove target-project governance/history.
+Installing the package MUST NOT:
+- mutate a target repository;
+- silently modify global Git/configuration;
+- activate adapters;
+- perform provider mutations;
+- create semantic project decisions.
+
+Setup/bootstrap is a separate explicit operation that runs identity/preflight before writes and follows S0–S4 security policy.
+
+Uninstalling the tool removes only tool-owned installation artifacts. It MUST NOT silently delete target-project governance, checkpoints, receipts, history or user project data.
 
 ## Publication security
-Preferred registry publication uses short-lived OIDC/trusted publishing where supported instead of long-lived publish tokens.
+Preferred registry publication uses short-lived OIDC/trusted publishing where the registry/workflow supports it.
 
-Release security requires:
-- pinned lockfile and reproducible dependency installation;
+Production publication requires:
+- frozen lockfile/dependency graph;
 - isolated release workflow;
-- least-privilege publication identity;
-- no long-lived publish secret when OIDC is available;
-- package contents inspection before publish;
-- checksums/manifests for release artifacts;
-- provenance/attestation when supported by the publication surface;
-- exact source/tag/commit binding;
-- no publication from an unreviewed local working tree.
+- least-privilege identity;
+- no long-lived publish secret when a supported OIDC path exists;
+- package contents allowlist/inspection;
+- exact source/tag/version binding;
+- checksums for distributed artifacts;
+- provenance/attestation where supported;
+- secret scanning/publication gate;
+- no publish from unreviewed local working-tree state.
+
+If OIDC is unavailable, a fallback credential mechanism is allowed only when Security explicitly permits it, credentials are short-lived/minimally scoped where possible, and the release receipt records the deviation.
 
 ## GitHub release model
-A production release should bind:
+Every stable release binds:
 - product version;
-- exact accepted source commit/tag;
-- package version(s);
-- compatibility matrix version;
+- exact accepted source commit;
+- immutable tag;
+- published package version(s);
+- compatibility-matrix version;
 - release manifest;
-- checksums for downloadable artifacts;
+- artifact inventory/checksums;
 - provenance/attestation references where available;
 - migration/upgrade notes;
-- known accepted non-blocking limitations, if any;
-- exact production acceptance evidence receipt.
+- explicit accepted non-blocking limitations, if any;
+- production-acceptance evidence receipt;
+- post-publication verification result.
 
-Release objects and tags are release-governance mechanics; exact-head evidence remains the semantic completion authority.
+Tag/Release objects are release-governance mechanics. Exact-state evidence remains semantic completion authority.
 
 ## Upgrade model
-Upgrade follows a governed detect/plan/apply/verify/receipt flow:
-
 ```text
 DETECT CURRENT VERSION/STATE
   -> CHECK COMPATIBILITY
@@ -124,92 +131,74 @@ DETECT CURRENT VERSION/STATE
   -> CLEAN RETAINED RECOVERY BY POLICY
 ```
 
-Rules:
-- no destructive migration is automatic merely because a newer version exists;
-- major-version migration is explicit and previewable;
-- target governed files use schema/ownership-aware migration rather than blind replacement;
-- partial migration failure must leave a recoverable state or truthful blocked state;
-- downgrade is supported only where an explicit reversible migration contract exists;
-- unsupported downgrade must fail clearly rather than simulate rollback.
-
-## Update discovery
-The product may report that a newer compatible version exists, but:
-- update checks must be disableable;
+Frozen rules:
 - no silent self-update;
-- network calls are explicit/bounded under policy;
-- update metadata is untrusted until validated;
-- security-critical notices may be surfaced prominently without bypassing operator policy.
+- no destructive migration merely because a new version exists;
+- major migration is explicit and previewable;
+- governed files use ownership/schema-aware migration, never blind replacement;
+- partial failure leaves recoverable state or truthful blocked state;
+- downgrade is supported only where an explicit reversible migration contract exists and is tested;
+- unsupported downgrade fails clearly;
+- update checks are disableable, bounded and policy-controlled;
+- update metadata is untrusted until validated.
 
-## Compatibility model
-Compatibility is multi-dimensional:
-- product/core version;
-- machine-contract/schema version;
-- Node.js LTS line;
-- operating system;
-- Git version/behavior where relevant;
-- GitHub/provider API capability;
-- adapter protocol/version;
-- target-repository profile/toolchain assumptions.
+## Rollback/recovery semantics
+- local transaction: recover/restore from journal/recovery material;
+- Git: prefer governed non-destructive restoration;
+- published package/release: use deprecation, replacement or corrective release, never pretend publication history was atomically rolled back;
+- hosted provider side effects: compensating actions where supported;
+- migration rollback: only where explicitly modeled and proven.
 
-Compatibility Matrix is the canonical derived/product contract for supported combinations and is verified by T7 release evidence.
-
-## Rollback and recovery
-Rollback terminology is precise:
-- local filesystem transaction: recover/restore using transaction journal and recovery material;
-- Git history: use governed non-destructive restoration where possible;
-- published package/release: cannot be "unpublished history" conceptually; respond with deprecation, replacement or corrective release according to registry/provider rules;
-- hosted side effects: use compensation where supported, never claim atomic rollback falsely;
-- migration rollback exists only when explicitly modeled/tested.
+A partially published release is a governed incident state, never success.
 
 ## Release channels
-Candidate channels:
-- `dev/internal` — non-user-facing engineering builds;
-- `rc` — release candidate with complete candidate evidence but not final acceptance;
-- `stable` — only after `PRODUCTION_RELEASE_DONE` acceptance for the claimed release.
+Only these channels are canonical unless later governed expansion is justified:
+- `dev/internal` — engineering builds, no production claim;
+- `rc` — complete release candidate evidence, not final production acceptance;
+- `stable` — only after `PRODUCTION_RELEASE_DONE` for the claimed release state.
 
-Additional channels are prohibited unless they have clear support semantics.
+Stable publication before production acceptance is prohibited.
 
 ## Standalone executable policy
-Portable single-file executable distribution is valuable but secondary.
+Standalone/single-file executable distribution is useful but secondary.
 
-Promotion requirements:
-- Node SEA/build mechanism stable enough for our supported runtime policy;
-- deterministic/reproducible build procedure documented;
-- Windows/Linux/macOS artifact build and verification;
+It may be promoted only after evidence proves:
+- build mechanism stability adequate for the supported runtime policy;
+- reproducible/deterministic-enough build procedure;
+- Windows/Linux/macOS artifacts;
 - signing/notarization strategy where applicable;
-- native dependency/addon behavior tested if ever introduced;
-- install/startup/update behavior benchmarked against package distribution;
-- no weaker provenance/security than the package channel.
+- native dependency/addon behavior, if any;
+- install/startup/update benchmark versus package distribution;
+- equivalent or stronger provenance/security;
+- maintenance/Engineering ROI justification.
 
-Until those gates pass, npm/package distribution remains the production baseline.
+Until promotion, package distribution is the canonical production path and absence of a standalone binary does not block independent `PRODUCTION_RELEASE_DONE`.
 
 ## Cross-platform distribution
-Production release evidence must verify at least:
-- Windows install/use/remove/upgrade path;
-- Linux install/use/remove/upgrade path;
-- macOS install/use/remove/upgrade path;
-- path/permission/symlink/reparse-point behavior;
-- shell-independent command invocation semantics;
-- line ending and executable-bit behavior where relevant;
-- package cache/offline failure behavior;
-- recovery after interrupted install/upgrade scenarios where the product owns the mutation.
+Production evidence covers the exact claimed support set for:
+- Windows install/use/remove/upgrade;
+- Linux install/use/remove/upgrade;
+- macOS install/use/remove/upgrade;
+- path/permissions/symlink/reparse-point behavior;
+- shell-independent process invocation;
+- line-ending/executable-bit differences;
+- package cache/offline failure;
+- interrupted install/upgrade recovery where GEF owns mutation.
 
 ## Reproducible release principle
-Release inputs must be explicit enough that the same source/toolchain configuration can regenerate materially equivalent artifacts.
+GEF requires reproducible *release inputs and provenance*, but does not claim bit-for-bit reproducibility unless measured and proven.
 
-The project does not claim bit-for-bit reproducibility unless measured and proven. It does require:
+Required recorded inputs:
 - frozen source commit;
 - lockfile/dependency graph;
 - supported build runtime/toolchain;
-- build command/configuration;
-- generated artifact inventory;
-- checksums of distributed artifacts;
-- recorded workflow/run environment sufficient for audit.
+- build commands/configuration;
+- artifact inventory;
+- distributed-artifact checksums;
+- workflow/run environment sufficient for audit.
 
 ## Release failure policy
-Publication/release failure does not mutate product completion into success.
-
-Failures are classified:
+Failures are classified at least as:
 - build failure;
 - verification failure;
 - signing/attestation failure;
@@ -217,50 +206,51 @@ Failures are classified:
 - provider release failure;
 - post-publication verification failure.
 
-A partially published release is a governed incident state requiring explicit recovery/compensation and truthful operator communication.
+Failure cannot be converted to PASS by retry alone. Partial publication enters explicit incident/recovery state.
 
-## Token/time efficiency implications
-Distribution must minimize recurring engineering cost by:
+## Token/time efficiency requirements
+Distribution minimizes recurring engineering cost through:
 - one canonical build graph;
 - deterministic package inventory generation;
 - reusable compatibility metadata;
 - machine-readable release manifest;
 - automatic checksum/receipt generation;
-- no duplicate hand-written release evidence;
+- no duplicate handwritten evidence;
 - delta-aware upgrade checks;
-- fast preflight before expensive release matrix work;
-- parallelizable signing/testing/publication where assurance permits.
+- cheap preflight before expensive matrix work;
+- parallel validation/signing/publication where assurance permits.
 
-## Production release evidence
-Deployment/Distribution completion requires evidence for:
-1. clean reproducible package build from accepted source;
-2. package contents allowlist/inspection;
-3. install and invocation on supported OS/Node matrix;
+## Production Deployment evidence
+Before the Deployment surface can support `PRODUCTION_RELEASE_DONE`, current evidence must prove:
+1. clean package build from accepted exact source;
+2. package-content allowlist/inspection;
+3. install/invocation on supported OS/Node matrix;
 4. direct library/API consumption where claimed;
 5. upgrade from every supported predecessor compatibility class;
-6. migration failure/recovery paths;
+6. migration failure/recovery behavior;
 7. unsupported runtime/version fail-fast behavior;
-8. OIDC/least-privilege registry publication or explicitly justified fallback;
+8. OIDC/least-privilege publication, or governed documented fallback;
 9. artifact checksum/provenance binding;
-10. GitHub Release/tag/version consistency;
-11. fresh-install NEW_PROJECT flow;
-12. fresh-install brownfield adoption flow;
-13. optional adapter install/compatibility only for separately claimed adapter releases;
-14. post-publication verification of retrievable/installable published artifact.
+10. GitHub tag/release/package-version consistency;
+11. fresh-install `NEW_PROJECT` workflow;
+12. fresh-install `EXISTING_PROJECT/BROWNFIELD` workflow;
+13. optional-adapter install/compatibility only for adapters explicitly claimed;
+14. post-publication retrieval/install verification;
+15. stable channel is not published before exact-head production acceptance.
 
-## Decisions to close
-1. Freeze npm/package-first distribution as primary production channel.
-2. Decide whether a standalone SEA executable is required for initial `PRODUCTION_RELEASE_DONE` or remains separately promotable.
-3. Freeze public package/workspace split and package naming rules.
-4. Freeze supported Node LTS declaration and runtime fail-fast policy.
-5. Freeze registry publication authentication/provenance requirements.
-6. Freeze SemVer/machine-schema version interaction and migration triggers.
-7. Freeze install/setup/uninstall side-effect boundaries.
-8. Freeze upgrade/downgrade/recovery semantics.
-9. Freeze release-channel/tag/GitHub Release rules.
-10. Freeze exact Deployment evidence required before Source Pack closure and production construction readiness.
+## Frozen Deployment decisions
+1. npm/package-first is the primary production channel.
+2. Standalone executable is separately promotable, not an initial core-release blocker.
+3. Public package surface stays small and contract-driven; exact registry names are implementation-time availability decisions.
+4. Node support uses explicit LTS ranges owned by Compatibility Matrix and fail-fast before mutation.
+5. OIDC/trusted publishing is preferred; fallback requires Security-governed exception evidence.
+6. SemVer and machine-schema versions remain distinct but compatibility-coupled through migration rules.
+7. Install/setup/uninstall side effects are strictly separated and non-destructive by default.
+8. Upgrade/downgrade/recovery follows previewable, journaled, compatibility-aware semantics with no fake rollback.
+9. Canonical channels are dev/internal, rc and stable; stable requires `PRODUCTION_RELEASE_DONE`.
+10. The 15 Deployment evidence conditions above are required for the claimed release surface.
 
-## Current direction
-GEF Bootstrap should ship package-first with a small public package surface, thin CLI plus library API, explicit Node LTS compatibility, OIDC-based secure publication where supported, exact-source release manifests, non-destructive installation, governed upgrades and truthful recovery semantics. Standalone binaries are valuable but should not become a core release dependency until their platform/toolchain path is proven stable enough.
+## Progress accounting
+Freezing this Source Pack document does not by itself award production earned weight. Credit changes only when admitted backlog items/modules satisfy the frozen DoD with valid evidence. Current audited baseline remains `16 / 1088 = 1.47%` until a later audited delta earns additional weight.
 
-STOP CONDITION: `DEPLOYMENT_DECISIONS_REQUIRED`.
+STOP CONDITION: `READY_FOR_DEPLOYMENT_REVIEW_AND_CHECKPOINT`.
