@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_SOURCE_PACK_REQUIREMENTS`
+Status: `READY_FOR_SOURCE_PACK_SCOPE`
 
 - Project: GEF Bootstrap
 - Phase: Post-Constitution Source Pack Planning
@@ -9,42 +9,31 @@ Status: `READY_FOR_SOURCE_PACK_REQUIREMENTS`
 - Sessions registered: 282
 - Functional implementation: NOT_STARTED
 - Completed module: `GBS-M00 — Bootstrap Constitution`
-- Module verdict: `MODULE_DONE`
 - Constitution version: `GBS-CONSTITUTION-v1.1`
-- Constitutional amendment: `CONSTITUTION-AMENDMENT-0001-HYBRID`
-- Frozen constitutional groups: `CONST-F1` through `CONST-F8`
 - Product model: `HYBRID`
-- Product brain: `GOVERNED REPOSITORY + CHATGPT / PLANNING AGENT`
-- Deterministic work plane: `OFFICIAL PRODUCT COMPONENT`
-- CLI status: `POSSIBLE INTERFACE, NOT THE CONSTITUTIONAL CAPABILITY ITSELF`
+- Semantic plane: `GOVERNED REPOSITORY + CHATGPT / PLANNING AGENT`
+- Deterministic work plane: `REQUIRED V1 PRODUCT COMPONENT`
 - GEF Bootstrap implementation executor: `CHATGPT / CONNECTED PROJECT TOOLS`
-- Codex for building this repository: `PROHIBITED BY PROJECT OWNER DECISION`
+- Codex for building this repository: `PROHIBITED`
 - Codex for target repositories: `ALLOWED UNDER GEF GOVERNANCE`
-- Project Overview: `FROZEN — amended for hybrid model`
-- Hybrid amendment PR: #17
-- Hybrid amendment reviewed head: `ffc5057f2d46baa12a823d26f1400f3587084c91`
-- Main after hybrid amendment merge: `d9da2ee7b092c94aa928fe5c295b6983e9779078`
+- Project Overview: `FROZEN`
+- Requirements: `FROZEN`
+- Requirements PR: #19
+- Requirements reviewed head: `893c55134090d17ca123b101d2fec09d7d79eebe`
+- Main after Requirements merge: `b9abf096b183b00b6f5b9cbe308bc36f1db52aec`
 - Current canonical branch: `main`
 - Overall project completion: `NOT_YET_BASELINED`
 - ETA: `NOT_YET_RELIABLE`
-- Next legal planning stage: `.engineering/REQUIREMENTS.md`
-- Stop state: `READY_FOR_SOURCE_PACK_REQUIREMENTS`
+- Next legal planning stage: `.engineering/SCOPE.md`
+- Stop state: `READY_FOR_SOURCE_PACK_SCOPE`
 
-## Current frozen product model
-GEF Bootstrap is a hybrid engineering-governance product with two separated planes:
+## Frozen Requirements outcome
+V1 now requires both the governed semantic plane and a physically implemented deterministic work plane. The deterministic minimum includes repository/Git inspection, mutation planning, approved artifact materialization/update, schema/contract validation, fingerprints, expected/observed state comparison, deterministic diffs/change manifests, conformance checks and machine receipts.
 
-1. **Semantic plane** — canonical GitHub state plus ChatGPT/Planning Agent. Owns product reasoning, requirement interpretation, architecture intent, scope admission, assurance policy and semantic review.
-2. **Deterministic work plane** — product code for bounded mechanical operations such as materialization, schema validation, fingerprints/hashes, repository inspection, deterministic indexes/diffs, receipts and conformance checks.
-
-The deterministic work plane is part of V1 product planning, but it never silently becomes semantic authority. CLI is one possible interface to this plane, not the product definition.
-
-## Self-construction rule
-All GEF Bootstrap planning, implementation, tests, documentation, reviews, releases and production preparation are performed through ChatGPT in this project using connected tools. Do not generate Codex work orders/prompts to build GEF Bootstrap itself.
-
-This rule does not propagate to target repositories, which may use Codex or other executors under governed GEF execution contracts.
+The universal physical substrate is a local checked-out version-controlled repository/filesystem. GitHub API operation is a first-class profile capability rather than the sole path. Managed mutations require safety gates and recoverability where technically possible. CLI remains an optional interface choice to be resolved by Architecture.
 
 ## Do not redo
-Do not revert to the v1.0 interpretation that deterministic tooling is merely optional. Do not reinterpret hybrid as CLI-first. Do not give the deterministic plane authority over product reasoning. Do not use Codex to implement this repository. Do not populate Scope/Architecture/DoD before their ordered stages.
+Do not reopen Constitution, Project Overview or Requirements without governed supersession/change control. Do not downgrade the deterministic work plane to optional. Do not make CLI the product definition. Do not use Codex to implement GEF Bootstrap. Do not begin Architecture or implementation before Scope is frozen.
 
 ## Resume instruction
-Read this checkpoint, Constitution Lock v1.1, Constitution Amendment 0001, Project Overview, Decisions Ledger, Technology Ledger and Planning Protocol. Continue with Source Pack Requirements under the hybrid product model. Overall percentage and ETA remain unavailable until canonical Scope + DoD + admitted backlog/weights establish a valid baseline.
+Read this checkpoint plus Constitution v1.1, Project Overview, Requirements, Decisions/Technology Ledgers and Planning Protocol. Continue with canonical Source Pack Scope. Scope must classify the frozen requirements/inventory into admitted V1 obligations before overall completion percentage or ETA can become valid.
