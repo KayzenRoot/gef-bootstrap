@@ -246,6 +246,7 @@ Project Overview freezes a universal **instruction-first, repository-native, age
 - optimization requirements vs benchmark targets: PASS
 - CLI/tooling boundary: PASS
 - explicit non-goals: PASS
+- Decisions Ledger synchronization through D-0051: PASS
 - accidental Requirements/Architecture implementation: NONE
 
 STOP CONDITION: `READY_FOR_PROJECT_OVERVIEW_REVIEW_AND_CHECKPOINT`.
