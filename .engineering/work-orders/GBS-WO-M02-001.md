@@ -1,81 +1,55 @@
 # GBS-WO-M02-001 — Implement Configuration & Schema Foundation
 
-Status: `ADMITTED`
+Status: `APPROVED_COMPLETE`
 
 ## OBJECTIVE
 Implement the production foundation of `GBS-M02 — Configuration & Schema` from frozen S01-S05 contracts, integrating with the completed M01 kernel while preserving all M03+ ownership boundaries.
 
-## CONTEXT / SOURCE BINDING
-Base source is `main` after M02-S05 merge `97160b7fa8a3c5246f18a3e3e25086f4a02406f7` plus this module-gate admission PR once merged.
+## SOURCE BINDING
+Execution began from `main` at `2c3d044442b464fdd6546845f486305dccdf99c4` after the admitted M02 gate. Final evidence is bound to implementation PR #59 exact reviewed head `140522e270675832b1983a88be38ef8930d6a0f4`, hosted run `34723311969`, and squash merge `ff6eece799939da4068ab8c1771edc997ba5ca5c`.
 
-Read and obey: frozen Architecture, Security, Test & Benchmark Plan, DoD, Deployment, Source Hierarchy, Backlog Baseline, Planning Protocol, M01 module/evidence contracts, M02 S01-S05 and `.engineering/M02-MODULE-GATE.md`.
+Authoritative inputs remain frozen Architecture, Security, Test & Benchmark Plan, Definition of Done, Deployment, Source Hierarchy, Backlog Baseline, M01 contracts/evidence, M02 S01-S05 and `.engineering/M02-MODULE-GATE.md`.
 
-## SCOPE
-Implement only M02-owned capability:
-- global/project config discovery and loading;
-- precedence/provenance resolution;
-- global and project JSON Schema 2020-12 contracts and deterministic validator registry;
-- structured validation diagnostics;
-- defaults catalogue/resolution and independent fingerprint;
-- config compatibility classification;
-- migration graph planning/preview/apply orchestration contracts, with filesystem mutation delegated through existing/future ports rather than implementing M05/M06 internals;
-- exact-state/fingerprint checks and compact migration/config receipts required by M02 contracts;
-- focused test fixtures and CI evidence.
+## IMPLEMENTED SCOPE
+The accepted increment provides:
+1. modular `@gef-bootstrap/config` TypeScript workspace package;
+2. deterministic OS-aware global configuration known-path resolution and `.gef/project.json` / `.gef/private/` project boundaries;
+3. exact-path global/project loading without broad brownfield discovery;
+4. canonical JSON Schema 2020-12 global/project artifacts with stable GEF URNs and mechanically checked exported equivalents;
+5. deterministic schema registry, bounded validation diagnostics and fail-closed unknown core fields while extensions remain inert;
+6. persisted secret-value rejection while explicit credential references remain allowed;
+7. exact precedence `PRODUCT_DEFAULTS < GLOBAL_CONFIG < PROJECT_CONFIG < EXPLICIT_INVOCATION_OVERRIDE` with per-field provenance;
+8. generated M02 default catalogue, first-class `NO_DEFAULT`, explicit-value preservation and independent catalogue fingerprint;
+9. deterministic normalized fingerprints and M01 typed-error projection;
+10. MAJOR.MINOR compatibility parsing/classification;
+11. deterministic migration graph/path with duplicate, ambiguity and cycle rejection, including rollback of rejected graph mutations;
+12. mutation-free exact-state-bound migration preview;
+13. explicit migration apply, stale source/graph/plan guards, target validation, delegated write, receipts and idempotent NOOP behavior;
+14. migration assurance acknowledgement and separate ELEVATED/HIGH_ASSURANCE default-behavior acknowledgement gate;
+15. cross-platform path fixtures including Windows UNC behavior;
+16. brownfield neutrality and no redundant default persistence.
 
-## OUT OF SCOPE
-Do not implement M03 project identity semantics, M04 discovery engine, M05/M06 transactional/filesystem engines, generic evidence/proof graph, Git engine, provider-specific GitHub behavior, telemetry storage, full upgrade engine, release governance or generic operator UX.
+## OUT OF SCOPE PRESERVED
+M03 project identity, M04 discovery, M05/M06 generic transaction/filesystem machinery, generic evidence/proof graph, Git engine, provider-specific GitHub behavior, telemetry storage, full upgrade engine, release governance and generic operator UX remain delegated.
 
-## ARCHITECTURE RULES
-1. Library-first TypeScript/Node LTS, thin interfaces.
-2. No alternate command router/lifecycle/error model. Reuse M01 contracts.
-3. Canonical persisted config is JSON only.
-4. Remote `$ref` resolution prohibited.
-5. No secrets stored in configuration.
-6. No generic environment-variable shadow layer.
-7. Defaults are deterministic and environment-independent.
-8. Explicit values preserve provenance/intent.
-9. Persisted migrations never auto-apply.
-10. Security/assurance floors cannot be downgraded by config/defaults/migrations.
+## ACCEPTANCE RESULT
+All 23 Work Order acceptance criteria are satisfied. Exact-head semantic review found no HIGH/CRITICAL issue. Hardening findings were fixed before approval: schema-artifact alignment, credential-reference handling, invalid migration-edge rollback, UNC path normalization, explicit `NO_DEFAULT` proof and default-behavior acknowledgement.
 
-## ACCEPTANCE CRITERIA
-1. Missing global config is valid and does not trigger broad search.
-2. Platform-aware known-path resolver is abstracted/testable.
-3. `.gef/project.json` formal adoption/config behavior works without blanket ignoring `.gef/`.
-4. `.gef/private/` operational boundary is explicit and not treated as canonical project config.
-5. Precedence is exactly `PRODUCT_DEFAULTS < GLOBAL_CONFIG < PROJECT_CONFIG < EXPLICIT_INVOCATION_OVERRIDE` with provenance retained.
-6. Global/project documents validate against canonical JSON Schema 2020-12 schemas with stable URNs.
-7. Core unknown fields fail closed; admitted unknown extensions remain inert.
-8. Validation diagnostics are stable, bounded, redaction-safe and projected through M01 typed errors.
-9. Schema registry rejects duplicate/ambiguous IDs and performs no remote fetch.
-10. Default catalogue is mechanically aligned to owned fields and supports `NO_DEFAULT`.
-11. Explicit values equal to defaults remain explicit in provenance/normalization.
-12. Defaults never derive directly from machine/environment observations.
-13. Schema/default/migration-graph fingerprints are deterministic and independently invalidatable.
-14. Compatibility classifications include NATIVE, MIGRATABLE, READ_ONLY_COMPATIBLE, TOO_NEW, TOO_OLD_UNSUPPORTED and INVALID_OR_AMBIGUOUS.
-15. Migration path selection is deterministic; cycles/ambiguity fail closed.
-16. Migration preview is mutation-free and binds to exact source fingerprints.
-17. Persisted migration apply requires explicit action and target validation.
-18. Migration preserves explicit intent, supports idempotency and refuses implicit destructive downgrade.
-19. ELEVATED/HIGH_ASSURANCE default-behavior changes require acknowledgement before governed use.
-20. Brownfield adoption does not persist redundant defaults or reinterpret unrelated config files.
-21. Strict typecheck passes.
-22. Focused unit/integration/security tests pass with no skipped critical acceptance path.
-23. Hosted exact-head CI evidence exists and no HIGH/CRITICAL semantic finding remains.
+## HOSTED EVIDENCE
+- PR: `#59`
+- exact reviewed head: `140522e270675832b1983a88be38ef8930d6a0f4`
+- hosted run: `34723311969`
+- environment: `Ubuntu 24.04.5`, `Node 24.20.0`, `npm 11.19.0`
+- install: `npm ci --ignore-scripts` — PASS
+- package audit: `0 vulnerabilities`
+- strict TypeScript typecheck/build: `PASS`
+- focused tests: `56/56 PASS`, `0 failed`, `0 skipped`, `0 todo`
+- HEDS exact-head verdict: `APPROVED`
+- open HIGH/CRITICAL findings: `NONE`
+- squash merge: `ff6eece799939da4068ab8c1771edc997ba5ca5c`
 
-## TESTS
-At minimum cover: precedence/provenance, known-path behavior, missing global file, project adoption marker, schema positive/negative fixtures, unknown keys/extensions, redaction, local `$ref`, duplicate registry IDs, bounded pathological input, defaults/NO_DEFAULT, explicit-value preservation, deterministic fingerprints, version classification, migration graph/cycle detection, preview no-mutation, stale fingerprint block, explicit apply, idempotency, downgrade unsupported, acknowledgement gate and brownfield neutrality.
-
-## DELIVERABLES
-- production code in appropriate modular packages/workspaces;
-- canonical schemas/fixtures;
-- tests;
-- CI-compatible validation;
-- machine/human evidence bundle;
-- implementation PR;
-- final M02 module gate update and checkpoint only after exact-head approval.
-
-## REVIEW FORMAT
-Report exact base/head, changed files, tests/typecheck/CI, failures fixed, acceptance mapping, risks, evidence refs and HEDS verdict. Verdict must be `APPROVED`, `CORRECTION REQUIRED` or `BLOCKED`.
+## PROGRESS RESULT
+M02 frozen weight `17` is promoted through the separate canonical progress checkpoint. Earned project weight becomes `53/1088 = 4.87%`; remaining becomes `1035/1088 = 95.13%`. Denominator unchanged.
 
 ## STOP CONDITION
-`M02_IMPLEMENTATION_EXACT_HEAD_EVIDENCE_REQUIRED`.
+`M02_MODULE_DONE_READY_FOR_GBS_M03_S01`.
