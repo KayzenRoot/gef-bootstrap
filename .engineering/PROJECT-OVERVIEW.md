@@ -1,12 +1,12 @@
 # Project Overview
 
-Status: `DECIDED`
+Status: `FROZEN`
 
 ## Project
 **GEF Bootstrap**
 
 ## Constitutional binding
-This overview is derived from `GBS-CONSTITUTION-v1.0` and must remain compatible with `CONST-F1` through `CONST-F8`. It summarizes the product boundary for downstream planning; it does not supersede the Constitution or Decisions Ledger.
+This overview is derived from `GBS-CONSTITUTION-v1.0` and remains compatible with `CONST-F1` through `CONST-F8`. It summarizes the product boundary for downstream planning; it does not supersede the Constitution or Decisions Ledger.
 
 ## Mission
 **Turn repeated AI-assisted software-engineering discovery and reasoning into governed, validity-bound, reusable project knowledge so new and existing repositories can be planned, executed, reviewed and resumed with less token cost, less executor latency and stronger evidence without weakening correctness or assurance.**
@@ -18,16 +18,10 @@ GEF Bootstrap is a **versioned instruction/governance repository** used by ChatG
 
 It is not a standalone runtime application or CLI product. Its primary value is the governed knowledge, protocols, schemas, templates, planning structures, evidence contracts, review rules and reusable bootstrap instructions that compatible agents materialize into a target repository.
 
-### Tooling boundary
+## Tooling boundary
 GEF Bootstrap may later include or integrate a **thin deterministic automation layer** such as a CLI, script or compatible tool when that layer demonstrably reduces repetitive mechanical work.
 
-Such tooling may:
-- materialize approved files/templates;
-- validate schemas/contracts;
-- compute fingerprints/hashes;
-- inspect repository state;
-- run deterministic conformance checks;
-- generate machine receipts from known inputs.
+Such tooling may materialize approved files/templates, validate schemas/contracts, compute fingerprints/hashes, inspect repository state, run deterministic conformance checks and generate machine receipts from known inputs.
 
 Such tooling must **not** become the owner of product reasoning, architecture choice, scope admission or semantic review merely because it is executable code. The governed repository and its canonical sources remain the product brain; automation is an optional mechanical execution surface.
 
@@ -231,7 +225,7 @@ No universal percentage improvement is asserted by this overview. Optimization t
 - Constitution: `GBS-M00 MODULE_DONE`
 - Constitution version: `GBS-CONSTITUTION-v1.0`
 - Source Pack: `IN_PLANNING`
-- Project Overview: `DECIDED`
+- Project Overview: `FROZEN`
 - Requirements: `UNPLANNED`
 - Scope: `UNPLANNED`
 - Architecture: `UNPLANNED`
@@ -239,7 +233,19 @@ No universal percentage improvement is asserted by this overview. Optimization t
 - Overall completion: `NOT_YET_BASELINED`
 - ETA: `NOT_YET_RELIABLE`
 
-## Decision summary
-Project Overview decides a universal **instruction-first, repository-native, agent-consumed engineering bootstrap** with explicit Project Owner / Planning Agent / Executor / Reviewer roles, a small universal target contract, profile-conditional platform artifacts, GitHub as the primary first-class platform profile rather than a core semantic dependency, immediate safe brownfield value, measurable optimization requirements, evidence-only benchmark claims and explicit non-goals preventing a future CLI/tool layer from replacing governed reasoning.
+## Frozen decision summary
+Project Overview freezes a universal **instruction-first, repository-native, agent-consumed engineering bootstrap** with explicit Project Owner / Planning Agent / Executor / Reviewer roles, a small universal target contract, profile-conditional platform artifacts, GitHub as the primary first-class platform profile rather than a core semantic dependency, immediate safe brownfield value, measurable optimization requirements, evidence-only benchmark claims and explicit non-goals preventing a future CLI/tool layer from replacing governed reasoning.
 
-Next lifecycle step: exact-delta audit, Decisions Ledger synchronization and `FROZEN` promotion before Requirements planning.
+## Freeze audit
+- Constitution compatibility: PASS
+- mission clarity: PASS
+- role separation: PASS
+- universal/profile boundary: PASS
+- GitHub platform boundary: PASS
+- brownfield minimum value: PASS
+- optimization requirements vs benchmark targets: PASS
+- CLI/tooling boundary: PASS
+- explicit non-goals: PASS
+- accidental Requirements/Architecture implementation: NONE
+
+STOP CONDITION: `READY_FOR_PROJECT_OVERVIEW_REVIEW_AND_CHECKPOINT`.
