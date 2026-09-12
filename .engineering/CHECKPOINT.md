@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M01_S02`
+Status: `READY_FOR_GBS_M01_S03`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
@@ -10,21 +10,19 @@ Status: `READY_FOR_GBS_M01_S02`
 - Functional implementation: `AUTHORIZED_NOT_STARTED`
 - Completed modules: `GBS-M00 — Bootstrap Constitution`
 - Active construction module: `GBS-M01 — Deterministic Work Plane Kernel`
-- Completed construction sessions: `GBS-M01-S01 — Deterministic Work Plane Runtime`
-- M01-S01 PR: `#37`
-- M01-S01 reviewed head: `f3f17c6b7fb405c0f5ca8e78b1bcbe1fc75b0d5b`
-- Main after M01-S01 merge: `d5d0dda98652685f589896ceb029654dc4cec9c9`
+- Completed construction sessions: `GBS-M01-S01`, `GBS-M01-S02`
 - M01-S01 runtime contract: `FROZEN`
-- Runtime: `TYPESCRIPT + SUPPORTED NODE LTS`
-- Operator model: `LIBRARY_FIRST + THIN_CLI`
-- Process model: `REQUEST_SCOPED_SINGLE_PROCESS_BASELINE`
-- Concurrency: `BOUNDED_OPT_IN`
-- Process security: `EXECUTABLE_PLUS_ARGV; SHELL_DISABLED_BY_DEFAULT`
-- Core network behavior: `NETWORK_OPTIONAL`
-- Derived-state baseline: `FILESYSTEM_BACKED; SQLITE_OPTIONAL_BEHIND_PORT`
-- Worker threads: `NOT_BASELINE; BENCHMARK_GATED`
-- Adapter rule: `TRUSTED_OFFICIAL_CAPABILITY_CONSTRAINED; UNTRUSTED_ISOLATION_M42`
-- Canonicalization ownership: `M37 + VERSIONED MACHINE CONTRACTS`
+- M01-S02 command router contract: `FROZEN`
+- M01-S02 PR: `#39`
+- M01-S02 reviewed head: `42e0c600caaeb60f43ce46cb8be0f877c98afbcb`
+- Main after M01-S02 merge: `7ee617dfbb8b8ff017e4f98752951d0c6edbbe93`
+- Canonical command IDs: `gef.<domain>.<action>`
+- Core registry: `STATIC TYPESCRIPT COMPOSITION`
+- Adapter registrations: `VALIDATED M42 CAPABILITY MANIFESTS`
+- Routing ambiguity: `FAIL_CLOSED`
+- Recursive router dispatch: `PROHIBITED; EXPLICIT ORCHESTRATORS ONLY`
+- Version compatibility: `EXPLICIT REGISTERED VERSION ADAPTERS ONLY`
+- Introspection: `NON_SECRET CONTRACT/CAPABILITY METADATA ONLY`
 - Constitution version: `GBS-CONSTITUTION-v1.1`
 - Product model: `HYBRID`
 - Product release target: `ONE COMPLETE PRODUCTION VERSION`
@@ -40,20 +38,20 @@ Status: `READY_FOR_GBS_M01_S02`
 - Denominator change: `NONE`
 - ETA: `NOT_YET_RELIABLE`
 - Current canonical branch: `main`
-- Next legal stage: `GBS-M01-S02 — Command Router`
-- Stop state: `READY_FOR_GBS_M01_S02`
+- Next legal stage: `GBS-M01-S03 — Lifecycle`
+- Stop state: `READY_FOR_GBS_M01_S03`
 
-## M01-S01 outcome
-The deterministic work plane runtime foundation is frozen. It establishes a TypeScript/Node LTS, library-first, request-scoped, bounded and testable substrate. Deterministic mechanics remain subordinate to semantic governance. State classes remain separate, child processes are shell-free by default, network access is capability-driven, filesystem is the required derived-state baseline, SQLite is optional behind a port, worker threads are benchmark-gated, and untrusted plugins require stronger isolation through M42.
+## M01-S02 outcome
+The deterministic command router is frozen. Requests resolve through stable namespaced command IDs, validated contracts, capability/policy checks and target/state binding to exactly one primary use-case. Core registration is static and explicit, adapter registrations are manifest-governed, ambiguous or unsupported requests fail closed, direct recursive routing is prohibited, and version migration requires explicit deterministic adapters.
 
 ## Official progress truth
-No production weight is awarded for an individual planning session. The frozen denominator remains 1088 and earned weight remains 16 until a weighted production item satisfies its applicable DoD and evidence promotion. Official completion remains `16 / 1088 = 1.47%`.
+No production weight is awarded for an individual planning session. The denominator remains 1088 and earned weight remains 16 until a weighted production item satisfies its applicable DoD and evidence promotion. Official completion remains `16 / 1088 = 1.47%`.
 
 ## Continuity/checkpoint contract
 Every material milestone, review, merge, baseline recalibration or chat-transition point must leave both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
 
 ## Do not redo
-Do not reopen M01-S01 without governed change control. Do not introduce shell-first execution, hidden canonical database state, ambient nondeterministic inputs, unbounded concurrency, provider semantics in core contracts or polyglot/native components without the frozen promotion criteria.
+Do not reopen M01-S01/S02 without governed change control. Do not add fuzzy command matching, repository-scanning handler discovery, implicit version coercion, recursive hidden routing or semantic-governance decisions inside the router.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Planning Protocol, Master Module Index and `planning/modules/area-a-foundation-and-governance/m01-cli-kernel/S01-runtime.md`. Resume at `GBS-M01-S02 — Command Router`. Report `1.47% complete`, `16/1088 earned`, `1072/1088 remaining` unless a newer audited checkpoint changes it.
+In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Planning Protocol, Master Module Index, M01-S01 and M01-S02. Resume at `GBS-M01-S03 — Lifecycle`. Report `1.47% complete`, `16/1088 earned`, `1072/1088 remaining` unless a newer audited checkpoint changes it.
