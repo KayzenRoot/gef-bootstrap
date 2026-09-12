@@ -1,60 +1,54 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_WO_M01_001`
+Status: `READY_FOR_GBS_M02_S01`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
 - Areas registered: 16
 - Modules registered: 64
 - Sessions registered: 282
-- Functional implementation: `READY_TO_START_M01`
-- Completed modules: `GBS-M00 — Bootstrap Constitution`
-- Active construction module: `GBS-M01 — Deterministic Work Plane Kernel`
+- Completed modules: `GBS-M00 — Bootstrap Constitution`, `GBS-M01 — Deterministic Work Plane Kernel`
+- Active module: `GBS-M02 — Configuration & Schema`
 - M01 planning sessions: `S01-S05 FROZEN`
-- M01-S05 PR: `#45`
-- M01-S05 reviewed head: `8ac761cc0a98f7aacee711feaea1db97cd9dd1e5`
-- Main after M01-S05 merge: `02b8ffe98dc7e5fafa2a7b0e30dd5e0a6fae21ee`
-- M01 module gate: `PLANNING_FROZEN_IMPLEMENTATION_REQUIRED`
-- Active Work Order: `GBS-WO-M01-001 — Implement Deterministic Work Plane Kernel Foundation`
-- Work Order status: `ADMITTED_READY`
-- Runtime contract: `FROZEN`
-- Command Router contract: `FROZEN`
-- Lifecycle contract: `FROZEN`
-- Exit Code contract: `FROZEN`
-- Error Model contract: `FROZEN`
+- M01 implementation PR: `#47`
+- M01 exact reviewed head: `4ce343817270cf26230fa67decf4cd0bc77a1ea4`
+- M01 merge on main: `fef39c2adbbb2d2f53b867fec01bede247eb4ad3`
+- M01 hosted CI run: `34720065257 — PASS`
+- Hosted validation: `Node 24.20.0`, `npm 11.19.0`, `npm ci --ignore-scripts`, `0 vulnerabilities`, strict TypeScript typecheck, `32/32 tests PASS`
+- M01 module gate: `MODULE_DONE`
+- M01 Work Order: `GBS-WO-M01-001 — APPROVED / COMPLETE`
 - Constitution version: `GBS-CONSTITUTION-v1.1`
 - Product model: `HYBRID`
 - Product release target: `ONE COMPLETE PRODUCTION VERSION`
-- Terminal production state: `PRODUCTION_RELEASE_DONE`
 - GEF Bootstrap implementation executor: `CHATGPT / CONNECTED PROJECT TOOLS`
 - Codex for building this repository: `PROHIBITED`
 - Source Pack Closure Audit: `PASSED`
 - Main production denominator: `1088 WEIGHT POINTS`
-- Earned production weight: `16 WEIGHT POINTS`
-- Remaining production weight: `1072 WEIGHT POINTS`
-- Official audited overall completion: `1.47%`
-- Official audited remaining: `98.53%`
-- M01 frozen module weight: `20 WEIGHT POINTS, NOT YET EARNED`
+- Earned production weight: `36 WEIGHT POINTS`
+- Remaining production weight: `1052 WEIGHT POINTS`
+- Official audited overall completion: `3.31%`
+- Official audited remaining: `96.69%`
+- M01 module weight: `20/20 EARNED`
 - Denominator change: `NONE`
-- ETA: `NOT_YET_RELIABLE`
+- ETA: `NOT_YET_RELIABLE — only one completed implementation module observed`
 - Current canonical branch: `main`
-- Next legal stage: `EXECUTE GBS-WO-M01-001`
-- Stop state: `READY_FOR_GBS_WO_M01_001`
+- Next legal stage: `GBS-M02-S01`
+- Stop state: `READY_FOR_GBS_M02_S01`
 
-## M01 planning closure outcome
-All five M01 planning contracts have passed exact-head review and merge. Their in-file status is synchronized to `FROZEN`. The module-level gate confirms that planning is complete but `MODULE_DONE` is not satisfied because production implementation, tests, evidence and semantic audit do not yet exist.
+## M01 outcome
+M01 passed its bounded implementation Work Order and exact-head HEDS review. The production foundation now includes the TypeScript workspace, contracts package, deterministic kernel, thin CLI exit projection, stable command routing, lifecycle/error/exit semantics, explicit delegated ports, runtime identity, bounded read concurrency, conservative mutation serialization across handler → verification → receipt, cancellation/deadline propagation, recovery precedence, shell-free process specifications, redaction and focused hosted validation.
 
-## Construction decision
-The frozen Planning Protocol requires an admitted Work Order before implementation. `GBS-WO-M01-001` is the next legal increment. Do not advance directly to M02. M01 implementation may define neutral ports/test doubles for delegated M02+ responsibilities but cannot implement competing semantic ownership.
+## Evidence truth
+The exact reviewed PR head was `4ce343817270cf26230fa67decf4cd0bc77a1ea4`. Hosted run `34720065257` passed with 32/32 tests and no open HIGH/CRITICAL finding. PR #47 was squash-merged to main as `fef39c2adbbb2d2f53b867fec01bede247eb4ad3`.
 
 ## Official progress truth
-No new weight is awarded for planning closure, status synchronization, module gate or Work Order admission. Official completion remains `16 / 1088 = 1.47%`; remaining remains `1072 / 1088 = 98.53%`. If and only if M01 later receives evidence-backed `MODULE_DONE`, the frozen 20-point module weight may be promoted.
+M01 satisfies `MODULE_DONE`, so its frozen 20-point weight is promoted. Earned production weight is now `36/1088 = 3.31%`; remaining is `1052/1088 = 96.69%`. The denominator did not change.
 
 ## Continuity/checkpoint contract
 Every material milestone, review, merge, baseline recalibration or chat-transition point leaves both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
 
 ## Do not redo
-Do not reopen S01-S05 without governed change control. Do not jump to M02 merely because planning sessions are complete. Do not credit M01 weight before implementation evidence and APPROVED module verdict. Do not use Codex to implement this repository.
+Do not reopen M01 S01-S05 or GBS-WO-M01-001 without governed change control or invalidated evidence. Do not use Codex to implement this repository. Do not alter the frozen denominator without a governed recalibration.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, `.engineering/M01-MODULE-GATE.md`, `.engineering/work-orders/GBS-WO-M01-001.md`, frozen Source Pack documents, Planning Protocol, Backlog, DoD and frozen M01 S01-S05. Resume by executing `GBS-WO-M01-001` through ChatGPT + connected project tools. Report `1.47% complete`, `16/1088 earned`, `1072/1088 remaining` unless a newer audited checkpoint changes it.
+In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, `.engineering/evidence/GBS-M01-EVIDENCE-RECEIPT.md`, frozen Source Pack documents, Backlog, DoD, M01 gate/Work Order and the Master Module Index. Resume at `GBS-M02-S01 — Configuration & Schema`. Report `3.31% complete`, `36/1088 earned`, `1052/1088 remaining` unless a newer audited checkpoint changes it.
