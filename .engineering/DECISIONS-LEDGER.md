@@ -81,3 +81,27 @@ Status: `ACTIVE`
 ## D-0020 — S01 purpose and principles are frozen
 - Decision: GBS-M00-S01 is frozen with P1–P27 as the constitutional purpose/principle baseline. Detailed source hierarchy, context routing, assurance matrices and implementation mechanisms remain delegated to their owning later sessions/modules and are not implied as fully designed by this freeze.
 - Status: APPROVED
+
+## D-0021 — Source authority is domain-specific
+- Decision: GEF V1 uses constitutional authority domains rather than one naive total source order. The universal domains are REPOSITORY_STATE, PROJECT_STATE, DECISION, SCOPE, REQUIREMENT, ARCHITECTURE, SECURITY, COMPLETION, EXECUTION, VALIDATION, PLANNING, FUTURE_WORK, INNOVATION and CONVERSATION. Project profiles may add subdomains but may not silently redefine base-domain semantics.
+- Status: APPROVED
+
+## D-0022 — Canonical facts are addressable and validity-bound
+- Decision: Canonical sources may expose stable fact IDs with minimum metadata sufficient to locate, fingerprint, relate, apply and invalidate them. V1 minimum metadata is id, domain, status, source, locator, fingerprint, dependencies and applicability; supersession, compact values and validated bindings are conditional. Fact references never replace canonical truth.
+- Status: APPROVED
+
+## D-0023 — Source validity uses hybrid fact/dependency fingerprints
+- Decision: Source validity is tracked at the smallest safe authoritative granularity through a DOCUMENT -> SECTION -> FACT -> DEPENDENCY SET hierarchy. Relevant upstream changes invalidate dependent capsules, execution packs, proofs or review state without forcing unrelated project-wide invalidation. Unknown dependencies widen context/validation.
+- Status: APPROVED
+
+## D-0024 — Assurance overrides optimization budgets
+- Decision: Token, search, file, test and latency budgets never override the required assurance floor. High-assurance signals such as security boundaries, money, signing, privileged authorization, secrets, destructive/irreversible operations and critical data integrity require appropriate context expansion/fail-closed behavior. Formal assurance classes remain delegated to GBS-M27/security.
+- Status: APPROVED
+
+## D-0025 — Machine current state and human checkpoint are governed views, not competing truth
+- Decision: Machine current state and the human Checkpoint represent the same progression state at different densities. Shared fields must remain consistent and disagreement yields STATE_CONFLICT. GEF Bootstrap planning continues using .engineering/CHECKPOINT.md and .engineering/CHECKPOINT.json; a target-repository .gef/current.json path/schema is not frozen by S02 and belongs to continuity modules.
+- Status: APPROVED
+
+## D-0026 — Source hierarchy application requires conformance evidence
+- Decision: A future bootstrap materialization must prove source-hierarchy application through a conformance receipt capable of showing authority mapping, source discovery, conflict/missing-source detection, fact addressability, fingerprints/dependency validity, brownfield drift preservation, MSC construction, expansion policy and fail-closed configuration. Decorative SUCCESS is insufficient.
+- Status: APPROVED
