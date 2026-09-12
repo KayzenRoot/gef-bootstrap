@@ -1,4 +1,11 @@
-import type { ProjectIdentityAssessment, ProjectIdentityDocument, ProjectOnlyBinding, UuidV4Generator } from "./types.js";
+import type {
+  FormalAdoptionIdentity,
+  ProjectIdentityAssessment,
+  ProjectIdentityAssessmentContext,
+  ProjectIdentityDocument,
+  ProjectOnlyBinding,
+  UuidV4Generator,
+} from "./types.js";
 
 const UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
@@ -18,13 +25,32 @@ export function generateProjectId(generator: UuidV4Generator = secureUuidV4): st
   return value;
 }
 
-export function assessProjectIdentity(document: ProjectIdentityDocument | null | undefined): ProjectIdentityAssessment {
-  if (!document || document.adopted !== true) return { state: "UNADOPTED" };
+export function createFormalAdoptionIdentity(generator?: UuidV4Generator): FormalAdoptionIdentity {
+  return { adopted: true, projectId: generateProjectId(generator) };
+}
+
+export function assessProjectIdentity(
+  document: ProjectIdentityDocument | null | undefined,
+  context: ProjectIdentityAssessmentContext = {},
+): ProjectIdentityAssessment {
+  if (context.expectedProjectId !== undefined && !isCanonicalProjectId(context.expectedProjectId)) {
+    return { state: "IDENTITY_CONFLICT", reasonCode: "gef.identity.expected_project_id_invalid" };
+  }
+  if (!document || document.adopted !== true) {
+    return context.identityPreviouslyEstablished
+      ? { state: "IDENTITY_CONFLICT", reasonCode: "gef.identity.established_identity_missing" }
+      : { state: "UNADOPTED" };
+  }
   if (document.projectId === undefined || document.projectId === null || document.projectId === "") {
-    return { state: "IDENTITY_BOOTSTRAP_REQUIRED", reasonCode: "gef.identity.bootstrap_required" };
+    return context.identityPreviouslyEstablished
+      ? { state: "IDENTITY_CONFLICT", reasonCode: "gef.identity.established_project_id_missing" }
+      : { state: "IDENTITY_BOOTSTRAP_REQUIRED", reasonCode: "gef.identity.bootstrap_required" };
   }
   if (!isCanonicalProjectId(document.projectId)) {
     return { state: "INVALID_PROJECT_ID", reasonCode: "gef.identity.project_id_invalid" };
+  }
+  if (context.expectedProjectId !== undefined && context.expectedProjectId !== document.projectId) {
+    return { state: "IDENTITY_CONFLICT", projectId: document.projectId, reasonCode: "gef.identity.project_id_conflict" };
   }
   return { state: "ADOPTED_VALID", projectId: document.projectId };
 }
