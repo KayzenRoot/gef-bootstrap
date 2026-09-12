@@ -34,22 +34,12 @@ A target repository received the applicable Bootstrap materialization and the re
 Every admitted NECESSARY V1 obligation is complete under the release DoD. IMPORTANT/FUTURE inventory does not block V1 unless promoted.
 
 ## Evidence-first completion
-Every DONE state points to evidence appropriate to the obligation. Typical bindings include:
-
-```text
-planning decision -> frozen session + Decisions Ledger + reviewed/merged binding
-repository change -> exact state/SHA + required validation
-GitHub governance -> observable configuration/checks or truthful gap state
-source hierarchy -> Source Hierarchy Conformance Receipt
-executor workflow -> execution evidence + semantic review + state binding
-release -> release-level proofs + unresolved-risk disposition
-```
+Every DONE state points to evidence appropriate to the obligation. Typical bindings include planning decision -> frozen session + Decisions Ledger + reviewed/merged binding; repository change -> exact state/SHA + required validation; GitHub governance -> observable configuration/checks or truthful gap state; source hierarchy -> Source Hierarchy Conformance Receipt; executor workflow -> execution evidence + semantic review + state binding; release -> release-level proofs + unresolved-risk disposition.
 
 Evidence must be attributable to the subject and candidate state it claims to prove.
 
 ## Minimum evidence for a completed planning session
 Every FROZEN planning session must have at least:
-
 1. stable session ID and explicit final status;
 2. documented decision/contract sufficient to resume without chat memory;
 3. unresolved questions either closed or explicitly routed to owning future scope;
@@ -78,27 +68,18 @@ S03 rules apply directly:
 - promotion of new NECESSARY work legitimately reopens/rebaselines affected completion.
 
 ## Accepted gaps policy
-`DONE_WITH_ACCEPTED_GAPS` is **not a universal escape hatch**. It may be used only when an owning policy/profile explicitly permits that terminal state for the subject.
+`DONE_WITH_ACCEPTED_GAPS` is not a universal escape hatch. It may be used only when an owning policy/profile explicitly permits that terminal state for the subject.
 
-An accepted gap must have:
-- stable identity;
-- risk/severity classification;
-- reason it is non-blocking for the current subject;
-- owner/disposition or explicit permanent acceptance;
-- evidence showing no violated NECESSARY obligation;
-- truthful terminal label.
+An accepted gap must have stable identity, risk/severity classification, reason it is non-blocking, owner/disposition or explicit permanent acceptance, evidence showing no violated NECESSARY obligation and a truthful terminal label.
 
 A known HIGH/CRITICAL defect, violated security/assurance floor, corrupted evidence, unresolved source conflict, or missing mandatory completion obligation cannot be hidden inside `DONE_WITH_ACCEPTED_GAPS`.
 
-If no policy explicitly permits accepted gaps, the available states remain DONE, READY_WITH_GAPS, INCOMPLETE, BLOCKED, SOURCE_CONFLICT, EVIDENCE_INVALID or REOPENED as applicable.
-
 ## Findings and blocking behavior
 S04 freezes behavior without preempting the full assurance taxonomy:
+- blocking finding: violation or credible material risk to a NECESSARY obligation, security/assurance floor, integrity, required evidence or release acceptance;
+- non-blocking finding: advisory improvement or bounded residual risk explicitly allowed by policy without falsifying completion.
 
-- **blocking finding**: demonstrates violation or credible material risk to a NECESSARY obligation, security/assurance floor, integrity, required evidence, or release acceptance;
-- **non-blocking finding**: advisory improvement or bounded residual risk that the applicable policy explicitly allows without falsifying completion.
-
-Severity names such as INFO/WARNING/LOW/MEDIUM/HIGH/CRITICAL are owned later by Assurance/Security. Until then, uncertainty that could conceal a material violation fails closed or requires escalation.
+Severity names are delegated to Assurance/Security. Until then, uncertainty that could conceal a material violation fails closed or requires escalation.
 
 ## Reopen semantics
 DONE is not eternal. A completed subject reopens when relevant canonical source changes, proof validity changes, regression invalidates acceptance, an admitted dependency changes, a superseding decision changes the obligation, or a previously unknown blocking defect is confirmed.
@@ -125,7 +106,6 @@ Not every task needs every dimension. The applicable set is compiled from admitt
 
 ## READY_FOR_PLANNING contract
 A Bootstrap application may report `READY_FOR_PLANNING` only when, for its declared adoption mode/profile:
-
 1. project/repository identity is established;
 2. required Source Pack/governance skeleton is materialized or validly mapped/aliased for brownfield;
 3. source authority and known gaps/conflicts are represented truthfully;
@@ -135,27 +115,17 @@ A Bootstrap application may report `READY_FOR_PLANNING` only when, for its decla
 7. no unresolved blocker prevents safe product planning;
 8. conformance/evidence receipt binds the achieved state.
 
-If planning is possible but one or more non-blocking optional/environmental controls remain unavailable under policy, use `READY_WITH_GAPS`. If source conflict, missing mandatory authority, security blocker or unusable continuity remains, do not claim ready.
+If planning is possible but non-blocking optional/environmental controls remain unavailable under policy, use `READY_WITH_GAPS`. If source conflict, missing mandatory authority, security blocker or unusable continuity remains, do not claim ready.
 
 ## Brownfield completion
-Existing-project bootstrapping distinguishes capability support from maturity:
-
-```text
-BOOTSTRAP_SUPPORT_READY
-TARGET_PROJECT_BASELINE_ESTABLISHED
-DOMAIN_GOVERNED
-DOMAIN_OPTIMIZED
-PROJECT_FULLY_NORMALIZED
-```
+Existing-project bootstrapping distinguishes `BOOTSTRAP_SUPPORT_READY`, `TARGET_PROJECT_BASELINE_ESTABLISHED`, `DOMAIN_GOVERNED`, `DOMAIN_OPTIMIZED` and `PROJECT_FULLY_NORMALIZED`.
 
 A project may be successfully bootstrapped without full historical normalization when the approved adoption mode is progressive. The receipt names achieved maturity and remaining gaps precisely.
 
 ## V1 optimization proof requirement
 GEF V1 must include the capability and telemetry needed to measure token/time/engineering-cost outcomes and must establish a reproducible baseline/benchmark path before final acceptance.
 
-V1 does **not** require fabricating a universal percentage improvement before representative baseline data exists. Where comparable baseline data is available before V1 acceptance, measured results must be reported truthfully, including regressions and confidence. Optimization claims remain targets until proven.
-
-This prevents a paradox where V1 cannot be completed because pre-GEF production history does not exist, while still making measurement a real release obligation.
+V1 does not require fabricating a universal percentage improvement before representative baseline data exists. Where comparable baseline data is available before V1 acceptance, measured results must be reported truthfully, including regressions and confidence. Optimization claims remain targets until proven.
 
 ## Optional integrations
 UADS, Hive, UGAS and other ecosystem adapters are optional integrations unless independently admitted into a target profile.
@@ -163,13 +133,7 @@ UADS, Hive, UGAS and other ecosystem adapters are optional integrations unless i
 Core V1 DONE must be provable with those integrations absent. Optional integration failure may block that adapter/profile, but may not block the independent Bootstrap core unless a frozen V1 scope decision explicitly changes the boundary.
 
 ## Token-economy rule
-DoD itself must not become a token tax. Therefore:
-- keep constitutional DoD compact;
-- address detailed gates with stable IDs;
-- compile only applicable obligations into Execution/Review Packs;
-- reuse still-valid completion proofs;
-- do not inject full release checklists into every bounded task;
-- invalidate only affected proof obligations.
+DoD itself must not become a token tax. Keep constitutional DoD compact, address detailed gates with stable IDs, compile only applicable obligations into Execution/Review Packs, reuse still-valid completion proofs, avoid injecting the full release checklist into every bounded task and invalidate only affected proof obligations.
 
 A future Completion Manifest may carry subject ID, scope binding, required/satisfied DoD IDs, proof refs, invalidated proofs, blockers, accepted gaps, reviewed state and verdict. Exact schema belongs to evidence/progress modules.
 
@@ -196,6 +160,7 @@ S04 freezes completion as **evidence-bound, layered, scope-aware, exact-state wh
 - S02 source/evidence validity consistency: PASS
 - S03 admitted-scope consistency: PASS
 - Decisions Ledger synchronization: PASS
+- Technology Ledger synchronization: PASS
 - accepted-gap escape hatch prevented: PASS
 - exact-state rule generalized beyond Git: PASS
 - brownfield truthfulness: PASS
