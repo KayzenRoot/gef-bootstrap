@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_PRODUCTION_CONSTRUCTION`
+Status: `READY_FOR_GBS_M01_S02`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
@@ -9,57 +9,51 @@ Status: `READY_FOR_PRODUCTION_CONSTRUCTION`
 - Sessions registered: 282
 - Functional implementation: `AUTHORIZED_NOT_STARTED`
 - Completed modules: `GBS-M00 — Bootstrap Constitution`
+- Active construction module: `GBS-M01 — Deterministic Work Plane Kernel`
+- Completed construction sessions: `GBS-M01-S01 — Deterministic Work Plane Runtime`
+- M01-S01 PR: `#37`
+- M01-S01 reviewed head: `f3f17c6b7fb405c0f5ca8e78b1bcbe1fc75b0d5b`
+- Main after M01-S01 merge: `d5d0dda98652685f589896ceb029654dc4cec9c9`
+- M01-S01 runtime contract: `FROZEN`
+- Runtime: `TYPESCRIPT + SUPPORTED NODE LTS`
+- Operator model: `LIBRARY_FIRST + THIN_CLI`
+- Process model: `REQUEST_SCOPED_SINGLE_PROCESS_BASELINE`
+- Concurrency: `BOUNDED_OPT_IN`
+- Process security: `EXECUTABLE_PLUS_ARGV; SHELL_DISABLED_BY_DEFAULT`
+- Core network behavior: `NETWORK_OPTIONAL`
+- Derived-state baseline: `FILESYSTEM_BACKED; SQLITE_OPTIONAL_BEHIND_PORT`
+- Worker threads: `NOT_BASELINE; BENCHMARK_GATED`
+- Adapter rule: `TRUSTED_OFFICIAL_CAPABILITY_CONSTRAINED; UNTRUSTED_ISOLATION_M42`
+- Canonicalization ownership: `M37 + VERSIONED MACHINE CONTRACTS`
 - Constitution version: `GBS-CONSTITUTION-v1.1`
 - Product model: `HYBRID`
 - Product release target: `ONE COMPLETE PRODUCTION VERSION`
 - Terminal production state: `PRODUCTION_RELEASE_DONE`
 - GEF Bootstrap implementation executor: `CHATGPT / CONNECTED PROJECT TOOLS`
 - Codex for building this repository: `PROHIBITED`
-- Project Overview: `FROZEN`
-- Requirements: `FROZEN`
-- Scope: `FROZEN`
-- Architecture: `FROZEN`
-- Security: `FROZEN`
-- Test & Benchmark Plan: `FROZEN`
-- Definition of Done: `FROZEN`
-- Backlog Baseline: `FROZEN`
-- Deployment & Distribution: `FROZEN`
-- Source Hierarchy: `FROZEN`
-- Decisions Supersession Map: `FROZEN`
 - Source Pack Closure Audit: `PASSED`
-- Source Pack closure PR: `#35`
-- Source Pack reviewed head: `8895f091165a1281d64804231f580206728692f6`
-- Main after Source Pack closure merge: `800666c9d4ca95c5eb4453ac32f00ab54915ee27`
-- Master Module Index: `SOURCE_PACK_CLOSURE_SYNCED`
-- Planning Protocol: `FROZEN_FOR_PRODUCTION_CONSTRUCTION`
 - Main production denominator: `1088 WEIGHT POINTS`
 - Earned production weight: `16 WEIGHT POINTS`
 - Remaining production weight: `1072 WEIGHT POINTS`
 - Official audited overall completion: `1.47%`
 - Official audited remaining: `98.53%`
-- Denominator change at this promotion: `NONE`
-- Main denominator modules: `61 = 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED`
-- Optional adapters: `3 SEPARATE TRACKS (M39/M40/M41)`
-- Progress weighting model: `RAW_WEIGHT = E + R + I + P`
+- Denominator change: `NONE`
 - ETA: `NOT_YET_RELIABLE`
 - Current canonical branch: `main`
-- Next legal stage: `GBS-M01-S01 — Deterministic Work Plane Kernel runtime/foundation planning`
-- First construction module: `GBS-M01 — Deterministic Work Plane Kernel`
-- Stop state: `READY_FOR_GBS_M01_S01`
+- Next legal stage: `GBS-M01-S02 — Command Router`
+- Stop state: `READY_FOR_GBS_M01_S02`
 
-## Source Pack closure outcome
-The Source Pack closure audit passed after correcting two governance drift findings: the stale linear Source Hierarchy was replaced with the frozen domain-specific authority model, and historical instruction-first/V1/Codex-era decisions received an explicit supersession map. Master Module Index and Planning Protocol are synchronized with the hybrid complete-production model.
-
-The project is now authorized to enter production construction. Authorization does not mean skipping module/session planning. Each construction session still follows the frozen Planning Protocol, Work Order/evidence/review flow, and exact-state checkpoint promotion.
+## M01-S01 outcome
+The deterministic work plane runtime foundation is frozen. It establishes a TypeScript/Node LTS, library-first, request-scoped, bounded and testable substrate. Deterministic mechanics remain subordinate to semantic governance. State classes remain separate, child processes are shell-free by default, network access is capability-driven, filesystem is the required derived-state baseline, SQLite is optional behind a port, worker threads are benchmark-gated, and untrusted plugins require stronger isolation through M42.
 
 ## Official progress truth
-The audited denominator remains 1088. Earned weight remains 16 because Source Pack closure and checkpoint promotion do not themselves satisfy additional production module DoD. Official completion remains `16 / 1088 = 1.47%`; remaining is `1072 / 1088 = 98.53%`.
+No production weight is awarded for an individual planning session. The frozen denominator remains 1088 and earned weight remains 16 until a weighted production item satisfies its applicable DoD and evidence promotion. Official completion remains `16 / 1088 = 1.47%`.
 
 ## Continuity/checkpoint contract
-Every material milestone, review, merge, baseline recalibration or chat-transition point must leave human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
+Every material milestone, review, merge, baseline recalibration or chat-transition point must leave both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
 
 ## Do not redo
-Do not reopen frozen Source Pack artifacts without governed change control. Do not revive legacy instruction-first/V1 assumptions contrary to the Decisions Supersession Map. Do not use simple newest-wins source precedence. Do not inflate progress from planning artifacts. Do not silently change the 1088 denominator or optional-adapter treatment. Do not use Codex to implement this repository.
+Do not reopen M01-S01 without governed change control. Do not introduce shell-first execution, hidden canonical database state, ambient nondeterministic inputs, unbounded concurrency, provider semantics in core contracts or polyglot/native components without the frozen promotion criteria.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means: read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, `.engineering/SOURCE-PACK-CLOSURE-AUDIT.md`, `.engineering/SOURCE-HIERARCHY.md`, `.engineering/DECISIONS-SUPERSESSION-MAP.md`, frozen Source Pack documents, Backlog Baseline, ADR/Decision/Technology ledgers, Planning Protocol and Master Module Index. Resume at `GBS-M01-S01`. Report official audited progress on every material continuation: `1.47% complete`, `16/1088 earned`, `1072/1088 remaining`, unless a newer audited checkpoint changes it.
+In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Planning Protocol, Master Module Index and `planning/modules/area-a-foundation-and-governance/m01-cli-kernel/S01-runtime.md`. Resume at `GBS-M01-S02 — Command Router`. Report `1.47% complete`, `16/1088 earned`, `1072/1088 remaining` unless a newer audited checkpoint changes it.
