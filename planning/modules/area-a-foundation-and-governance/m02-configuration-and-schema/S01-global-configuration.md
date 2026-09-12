@@ -1,6 +1,6 @@
 # GBS-M02-S01 — Global Configuration
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the global configuration contract for GEF Bootstrap without mixing project-specific configuration, schema mechanics, defaults, migrations, credentials, operational state or semantic project decisions into this session.
@@ -199,6 +199,6 @@ Implementation acceptance for this contract must eventually prove at least:
 3. Initial schema domains: **minimal owner-backed domains only; speculative/provider-specific domains omitted until their owners freeze semantics — FROZEN**.
 
 ## Session completion rule
-Planning content is frozen-candidate. Final `FROZEN` requires exact-head semantic review and merge. No functional implementation is introduced by this planning session.
+This session is frozen subject to exact-head review and merge. No functional implementation is introduced by this planning session.
 
 STOP CONDITION: `M02_S01_EXACT_HEAD_REVIEW_REQUIRED`.
