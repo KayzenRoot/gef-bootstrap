@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M02_S01`
+Status: `READY_FOR_GBS_M02_S02`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
@@ -9,14 +9,17 @@ Status: `READY_FOR_GBS_M02_S01`
 - Sessions registered: 282
 - Completed modules: `GBS-M00 — Bootstrap Constitution`, `GBS-M01 — Deterministic Work Plane Kernel`
 - Active module: `GBS-M02 — Configuration & Schema`
-- M01 planning sessions: `S01-S05 FROZEN`
+- M02-S01 Global Configuration: `FROZEN`
+- M02-S01 PR: `#49`
+- M02-S01 reviewed head: `67f100057f62ed34ab5765afc8c9aff5f4c8eca8`
+- Main after M02-S01 merge: `e8eb2b824a0b819b7bc10b88867bb0c80c7a2743`
+- Next session: `GBS-M02-S02 — Project Configuration`
+- M01 module gate: `MODULE_DONE`
 - M01 implementation PR: `#47`
 - M01 exact reviewed head: `4ce343817270cf26230fa67decf4cd0bc77a1ea4`
 - M01 merge on main: `fef39c2adbbb2d2f53b867fec01bede247eb4ad3`
 - M01 hosted CI run: `34720065257 — PASS`
 - Hosted validation: `Node 24.20.0`, `npm 11.19.0`, `npm ci --ignore-scripts`, `0 vulnerabilities`, strict TypeScript typecheck, `32/32 tests PASS`
-- M01 module gate: `MODULE_DONE`
-- M01 Work Order: `GBS-WO-M01-001 — APPROVED / COMPLETE`
 - Constitution version: `GBS-CONSTITUTION-v1.1`
 - Product model: `HYBRID`
 - Product release target: `ONE COMPLETE PRODUCTION VERSION`
@@ -28,27 +31,25 @@ Status: `READY_FOR_GBS_M02_S01`
 - Remaining production weight: `1052 WEIGHT POINTS`
 - Official audited overall completion: `3.31%`
 - Official audited remaining: `96.69%`
-- M01 module weight: `20/20 EARNED`
 - Denominator change: `NONE`
 - ETA: `NOT_YET_RELIABLE — only one completed implementation module observed`
 - Current canonical branch: `main`
-- Next legal stage: `GBS-M02-S01`
-- Stop state: `READY_FOR_GBS_M02_S01`
+- Next legal stage: `GBS-M02-S02`
+- Stop state: `READY_FOR_GBS_M02_S02`
 
-## M01 outcome
-M01 passed its bounded implementation Work Order and exact-head HEDS review. The production foundation now includes the TypeScript workspace, contracts package, deterministic kernel, thin CLI exit projection, stable command routing, lifecycle/error/exit semantics, explicit delegated ports, runtime identity, bounded read concurrency, conservative mutation serialization across handler → verification → receipt, cancellation/deadline propagation, recovery precedence, shell-free process specifications, redaction and focused hosted validation.
+## M02-S01 outcome
+Global configuration is frozen as an optional, known-path, OS-resolved user layer at logical path `gef/config.json`. Effective precedence is `PRODUCT_DEFAULTS < GLOBAL_CONFIG < PROJECT_CONFIG < EXPLICIT_INVOCATION_OVERRIDE`, with provenance retained for effective non-default values. Environment variables are not a generic hidden override layer. Secrets remain references only. Global config cannot redefine project truth, waive safety floors, authorize S4, or create canonical evidence/checkpoint verdicts.
 
-## Evidence truth
-The exact reviewed PR head was `4ce343817270cf26230fa67decf4cd0bc77a1ea4`. Hosted run `34720065257` passed with 32/32 tests and no open HIGH/CRITICAL finding. PR #47 was squash-merged to main as `fef39c2adbbb2d2f53b867fec01bede247eb4ad3`.
+Versioned extension namespaces may be preserved when their owner is unavailable, but remain inactive and non-authoritative until compatibility/capability validation succeeds. The initial schema surface is intentionally minimal and only admits domains with an existing semantic owner.
 
 ## Official progress truth
-M01 satisfies `MODULE_DONE`, so its frozen 20-point weight is promoted. Earned production weight is now `36/1088 = 3.31%`; remaining is `1052/1088 = 96.69%`. The denominator did not change.
+M02-S01 is planning evidence only and earns no standalone production weight. Official completion remains `36 / 1088 = 3.31%`; remaining remains `1052 / 1088 = 96.69%`; denominator unchanged.
 
 ## Continuity/checkpoint contract
 Every material milestone, review, merge, baseline recalibration or chat-transition point leaves both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
 
 ## Do not redo
-Do not reopen M01 S01-S05 or GBS-WO-M01-001 without governed change control or invalidated evidence. Do not use Codex to implement this repository. Do not alter the frozen denominator without a governed recalibration.
+Do not reopen M01 or M02-S01 without governed change control or invalidated evidence. Do not use Codex to implement this repository. Do not credit M02 weight until evidence-backed `MODULE_DONE` or an explicitly frozen partial allocation exists.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, `.engineering/evidence/GBS-M01-EVIDENCE-RECEIPT.md`, frozen Source Pack documents, Backlog, DoD, M01 gate/Work Order and the Master Module Index. Resume at `GBS-M02-S01 — Configuration & Schema`. Report `3.31% complete`, `36/1088 earned`, `1052/1088 remaining` unless a newer audited checkpoint changes it.
+In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, the Master Module Index, M01 evidence/gate, and `planning/modules/area-a-foundation-and-governance/m02-configuration-and-schema/S01-global-configuration.md`. Resume at `GBS-M02-S02 — Project Configuration`. Report `3.31% complete`, `36/1088 earned`, `1052/1088 remaining` unless a newer audited checkpoint changes it.

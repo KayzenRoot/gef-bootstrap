@@ -1,16 +1,24 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M02_S01",
+  "status": "READY_FOR_GBS_M02_S02",
   "phase": "PRODUCTION_CONSTRUCTION",
   "areasRegistered": 16,
   "modulesRegistered": 64,
   "sessionsRegistered": 282,
-  "implementation": "M01_MODULE_DONE",
+  "implementation": "M01_MODULE_DONE_M02_PLANNING_ACTIVE",
   "completedModules": ["GBS-M00", "GBS-M01"],
   "activeModule": "GBS-M02_CONFIGURATION_AND_SCHEMA",
-  "m01PlanningSessions": ["GBS-M01-S01", "GBS-M01-S02", "GBS-M01-S03", "GBS-M01-S04", "GBS-M01-S05"],
-  "m01PlanningStatus": "FROZEN",
+  "m02PlanningSessions": {
+    "S01": "FROZEN",
+    "S02": "NEXT",
+    "S03": "PLANNED",
+    "S04": "PLANNED",
+    "S05": "PLANNED"
+  },
+  "m02s01Pr": 49,
+  "m02s01ReviewedHead": "67f100057f62ed34ab5765afc8c9aff5f4c8eca8",
+  "mainAfterM02S01Merge": "e8eb2b824a0b819b7bc10b88867bb0c80c7a2743",
   "m01ModuleGate": "MODULE_DONE",
   "m01ImplementationPr": 47,
   "m01ReviewedHead": "4ce343817270cf26230fa67decf4cd0bc77a1ea4",
@@ -20,13 +28,6 @@
   "m01HostedTests": {"total": 32, "passed": 32, "failed": 0},
   "activeWorkOrder": null,
   "activeWorkOrderStatus": null,
-  "m01Contracts": {
-    "runtime": "FROZEN",
-    "commandRouter": "FROZEN",
-    "lifecycle": "FROZEN",
-    "exitCodes": "FROZEN",
-    "errorModel": "FROZEN"
-  },
   "constitutionVersion": "GBS-CONSTITUTION-v1.1",
   "productModel": "HYBRID",
   "productReleaseTarget": "ONE_COMPLETE_PRODUCTION_VERSION",
@@ -44,8 +45,8 @@
   "denominatorChanged": false,
   "eta": "NOT_YET_RELIABLE_ONE_COMPLETED_IMPLEMENTATION_MODULE",
   "canonicalBranch": "main",
-  "nextPlanningStage": "GBS-M02-S01",
-  "stopState": "READY_FOR_GBS_M02_S01",
+  "nextPlanningStage": "GBS-M02-S02",
+  "stopState": "READY_FOR_GBS_M02_S02",
   "reportingContract": "REPORT_AUDITED_PERCENT_EARNED_REMAINING_AND_DENOMINATOR_CHANGES_ON_MATERIAL_CONTINUATIONS",
   "continuityContract": "HUMAN_AND_MACHINE_CHECKPOINT_AT_MATERIAL_MILESTONES_AND_CHAT_TRANSITIONS_CHAT_HISTORY_NOT_SOLE_AUTHORITY"
 }
