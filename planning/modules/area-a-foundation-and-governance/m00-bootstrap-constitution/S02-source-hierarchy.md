@@ -205,6 +205,140 @@ Candidate metric estimating ambiguity/duplication/conflict in the selected sourc
 ### 10. Token-Amortized Canonicalization
 Allows one-time investment in stable IDs, indexes and distilled machine facts when expected recurring token savings across future changes justify it.
 
+## Fingerprint model
+The preferred direction is a **hybrid fingerprint hierarchy**, not one hash for an entire project document.
+
+Candidate levels:
+
+```text
+DOCUMENT
+  -> SECTION
+      -> FACT
+          -> DEPENDENCY SET
+```
+
+Each Source Capsule should depend only on the smallest authoritative units that actually support the task.
+
+Example:
+
+```text
+ARCH-PAY-014 changes
+  -> payment source capsules INVALIDATED
+  -> payment proofs MAY_INVALIDATE
+  -> payment test impact recalculated
+
+ARCH-AUTH-004 unchanged
+  -> auth capsule remains VALID
+  -> auth proofs remain eligible for carry-forward
+```
+
+This prevents an unrelated edit in a large architecture document from forcing Codex to reload or reconsider the whole document.
+
+### Fingerprint requirements
+A governed fact fingerprint should be capable of representing, directly or by reference:
+- fact ID;
+- canonical source location;
+- normalized fact content hash;
+- governing source/version;
+- dependency IDs;
+- supersession state;
+- applicability/profile where needed;
+- toolchain/config fingerprint only when validity depends on it.
+
+A dependency fingerprint changes when any relevant upstream fact changes, even if the local prose is byte-identical.
+
+## Dependency invalidation
+Invalidation should propagate through explicit relationships, not through project-wide pessimism.
+
+Candidate graph:
+
+```text
+SOURCE FACT
+   ↓
+CONTRACT
+   ↓
+IMPLEMENTATION REGION
+   ↓
+TEST IMPACT
+   ↓
+PROOF
+   ↓
+SOURCE CAPSULE / EXECUTION PACK / REVIEW STATE
+```
+
+Only descendants of a changed relevant node are invalidated by default. Unknown dependencies widen the radius and may force broader validation.
+
+## Mandatory full-source read triggers
+Token economy must yield to full or broader source reading when any of the following applies:
+
+1. the task changes the canonical source itself;
+2. fact extraction/fingerprint confidence is insufficient;
+3. dependency relationships are unknown or materially incomplete;
+4. an authoritative conflict cannot be resolved from fact metadata;
+5. source semantics depend on surrounding text that cannot be safely sliced;
+6. security, money, signing, privileged authorization, destructive/irreversible behavior or another HIGH_ASSURANCE domain requires broader inspection;
+7. adoption of an existing repository reveals undocumented behavior or code/spec drift;
+8. a previous capsule or optimization produced a missed dependency/false negative;
+9. policy explicitly requires whole-document or whole-domain review;
+10. an agent can state a concrete engineering reason why the narrow context is insufficient.
+
+The expansion reason should be recorded so repeated unnecessary expansions can later be optimized away.
+
+## Existing-project / brownfield source resolution
+Existing projects are expected to begin with imperfect source structure. GEF must not require the repository to be rewritten before it can benefit from token-aware execution.
+
+### Brownfield source modes
+Candidate stages:
+
+```text
+B0 DISCOVER
+  inventory actual repo/docs/tests/checks
+
+B1 MAP
+  map existing sources to GEF authority domains
+
+B2 ALIAS
+  create lightweight pointers/aliases to existing canonical sources
+
+B3 BASELINE
+  bind current code/tests/decisions to pre-adoption fingerprints
+
+B4 SHADOW
+  generate Source Capsules/Test Impact/proof reuse in shadow mode
+
+B5 PROMOTE
+  enable authoritative optimized behavior only after evidence supports it
+
+B6 NORMALIZE
+  progressively normalize high-value/high-ambiguity areas when ROI justifies it
+```
+
+### Brownfield preservation rules
+- Existing working architecture is not rewritten merely to match GEF naming.
+- Existing canonical documents may be aliased rather than copied.
+- Existing CI/test commands are discovered before new ones are proposed.
+- Existing active PRs/branches/work are preserved unless a conflict makes continuation unsafe.
+- Missing documentation becomes an explicit gap, not an invitation to invent history.
+- Code behavior may be mapped as observed truth while architecture intent remains `UNKNOWN` until supported.
+- The earliest safe GEF benefits should be enabled first: prompt narrowing, source routing, delta review, search budgets and compact evidence.
+- Aggressive test skipping/proof reuse remains shadow-only until validated.
+
+This makes `EXISTING_PROJECT` a native bootstrap mode rather than a degraded version of `NEW_PROJECT`.
+
+## Performance interaction with source hierarchy
+Source hierarchy must also reduce wall-clock executor latency, not only tokens.
+
+A Source Capsule should aim to reduce:
+- repository search calls;
+- files opened;
+- serial discovery steps;
+- repeated source conflict reasoning;
+- repeated architecture interpretation;
+- unnecessary test discovery;
+- correction loops caused by ambiguous prompts.
+
+The future GBS-M63 Executor Performance Engine will benchmark whether source routing and capsules actually reduce active Codex completion time.
+
 ## Safety invariants
 - Conversation never silently outranks canonical repository sources.
 - Newer does not automatically mean more authoritative.
@@ -219,12 +353,13 @@ Allows one-time investment in stable IDs, indexes and distilled machine facts wh
 1. Exact domain taxonomy for the Source Authority Matrix.
 2. Whether CURRENT and CHECKPOINT are separate authority classes or two views of one governed state.
 3. Minimum metadata required for Canonical Fact IDs.
-4. Fingerprint granularity: document, section, fact, dependency graph, or hybrid.
-5. When full-source reading is mandatory regardless of token cost.
-6. How source authority interacts with code-vs-spec drift during existing-project adoption.
+4. Exact hybrid fingerprint granularity and normalization rules.
+5. Which high-assurance domains always require broader source reading.
+6. Detailed code-vs-spec drift resolution during existing-project adoption.
 7. Whether Source Entropy Score becomes a formal V1 mechanism or remains a later optimization.
+8. Threshold/criteria for normalizing an existing source instead of aliasing it.
 
 ## Current direction
-The session currently favors a **domain-aware, fact-addressable, fingerprinted source hierarchy** that compiles minimal Source Capsules and expands only on evidence-backed triggers.
+The session currently favors a **domain-aware, fact-addressable, dependency-fingerprinted source hierarchy** that compiles minimal Source Capsules, preserves existing-project truth through progressive brownfield mapping, and expands context only on evidence-backed triggers.
 
 No final hierarchy is frozen yet.
