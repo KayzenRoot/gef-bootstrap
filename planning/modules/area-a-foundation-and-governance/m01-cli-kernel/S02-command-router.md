@@ -1,6 +1,6 @@
 # GBS-M01-S02 — Deterministic Command Router
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Objective
 Freeze the command/use-case routing contract for the Deterministic Work Plane Kernel so a bounded request resolves to exactly one registered use-case with the minimum necessary validation, capability checks and context, without semantic rediscovery or open-ended repository exploration.
@@ -151,7 +151,7 @@ The router is an explicit efficiency boundary:
 4. Introspection exposes non-secret schema IDs/versions: **RESOLVED YES**.
 5. Incompatible versions use explicit registered adapters only: **RESOLVED YES**.
 
-## Session completion gate
-Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M01-S03`. No functional implementation is introduced by this planning session.
+## Freeze record
+Final exact-head review passed on PR `#39`, reviewed head `42e0c600caaeb60f43ce46cb8be0f877c98afbcb`, and the session was merged before checkpoint promotion to S03.
 
-STOP CONDITION: `M01_S02_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M01_S02_FROZEN`.
