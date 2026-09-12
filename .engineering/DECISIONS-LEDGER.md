@@ -181,3 +181,23 @@ Status: `ACTIVE`
 ## D-0045 — Source Pack canonical documents are not prematurely populated by M00
 - Decision: S05 does not pre-fill SOURCE-HIERARCHY, SCOPE or DEFINITION-OF-DONE with detailed product conclusions. Those documents are materialized in their ordered Source Pack/owning-module sequence from the frozen Constitution, preventing duplicated authority and drift.
 - Status: APPROVED
+
+## D-0046 — Canonical Project Overview mission and role model
+- Decision: GEF Bootstrap's canonical mission is to turn repeated AI-assisted software-engineering discovery/reasoning into governed, validity-bound, reusable project knowledge so new and existing repositories can be planned, executed, reviewed and resumed with less token cost, less executor latency and stronger evidence without weakening correctness or assurance. The product recognizes logical Project Owner, Planning Agent, Executor and Reviewer/Auditor roles; one actor may hold multiple roles but responsibilities remain distinct.
+- Status: APPROVED
+
+## D-0047 — Core remains instruction-first; deterministic CLI/tooling may be an optional mechanical layer
+- Decision: GEF Bootstrap does not become a hard-coded planner or standalone runtime/CLI product. A future thin CLI/script/tooling layer may be admitted when it provides measurable ROI for deterministic tasks such as materialization, schema validation, fingerprints, repository inspection and conformance receipts. Such tooling is subordinate to governed canonical sources and must never silently become semantic authority for architecture, scope admission or review.
+- Status: APPROVED
+
+## D-0048 — GitHub is the primary platform profile, not a universal semantic dependency
+- Decision: GEF core expects version-controlled repository identity and governed change/evidence/continuity surfaces, but GitHub itself is not constitutionally mandatory. GitHub is the primary first-class platform profile for the current product; equivalent non-GitHub platforms may conform when they satisfy the applicable governed contracts.
+- Status: APPROVED
+
+## D-0049 — Brownfield adoption must deliver operational value before full normalization
+- Decision: An existing project bootstrap must provide safe operational value before full normalization, including baseline/identity, active-area source mapping, bounded context/search behavior, compact evidence/delta review, checkpoint continuity and shadow-mode proof/test optimization. Merely copying templates is insufficient brownfield adoption.
+- Status: APPROVED
+
+## D-0050 — Optimization telemetry is required; percentage gains remain benchmark claims until proven
+- Decision: V1 must be capable of measuring or explicitly accounting for observable token, executor-time, repository-discovery, validation, retry/correction, review/evidence and proof-reuse behavior, while distinguishing measured values, estimates and unavailable telemetry. Specific improvement percentages remain benchmark targets until representative evidence proves them.
+- Status: APPROVED
