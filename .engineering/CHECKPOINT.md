@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_SOURCE_PACK_DEPLOYMENT`
+Status: `READY_FOR_SOURCE_PACK_CLOSURE_AUDIT`
 
 - Project: GEF Bootstrap
 - Phase: Post-Constitution Source Pack Planning
@@ -23,9 +23,16 @@ Status: `READY_FOR_SOURCE_PACK_DEPLOYMENT`
 - Test & Benchmark Plan: `FROZEN`
 - Definition of Done: `FROZEN`
 - Backlog Baseline: `FROZEN`
-- Backlog Baseline PR: #31
-- Backlog Baseline reviewed head: `7a2f80cc736f99f3553368e59795a971b3e45020`
-- Main after Backlog Baseline merge: `b7b3f53f3250bee97d0652d5dbe86ffcc40b709a`
+- Deployment & Distribution: `FROZEN`
+- Deployment PR: #33
+- Deployment reviewed head: `320efa786af6eeb99504b8bd5dcea6f45af415e1`
+- Main after Deployment merge: `d91daab672086305478436ecc289355f0455bf78`
+- Primary distribution: `NPM/PACKAGE-FIRST + LIBRARY API + THIN CLI`
+- Standalone executable: `SEPARATELY PROMOTABLE; NOT INITIAL CORE RELEASE BLOCKER`
+- Publication security: `OIDC/TRUSTED PUBLISHING PREFERRED; GOVERNED FALLBACK ONLY`
+- Release channels: `DEV/INTERNAL -> RC -> STABLE`; stable requires `PRODUCTION_RELEASE_DONE`
+- Install policy: `NON-DESTRUCTIVE; SETUP EXPLICIT; UNINSTALL PRESERVES TARGET GOVERNANCE/HISTORY`
+- Upgrade policy: `DETECT -> COMPATIBILITY -> PLAN -> PREVIEW -> RECOVERY -> APPLY -> VERIFY -> RECEIPT`
 - Main production denominator: `1088 WEIGHT POINTS`
 - Earned production weight: `16 WEIGHT POINTS`
 - Remaining production weight: `1072 WEIGHT POINTS`
@@ -33,28 +40,23 @@ Status: `READY_FOR_SOURCE_PACK_DEPLOYMENT`
 - Official audited remaining: `98.53%`
 - Main denominator modules: `61 = 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED`
 - Optional adapters: `3 SEPARATE TRACKS (M39/M40/M41)`
-- Progress weighting model: `RAW_WEIGHT = E + R + I + P`, each dimension 1–5 with evidence/rationale
-- Historical credit policy: `EVIDENCE-MAPPED; NO DOUBLE COUNTING; MODULE_DONE REQUIRED FOR FULL MODULE CREDIT`
-- Source Pack planning artifacts: `KNOWLEDGE/REQUIREMENT INPUT, NOT AUTOMATIC DUPLICATE PRODUCT CREDIT`
-- Current canonical branch: `main`
+- Progress weighting model: `RAW_WEIGHT = E + R + I + P`
 - ETA: `NOT_YET_RELIABLE`
-- Next legal planning stage: `.engineering/DEPLOYMENT.md`
-- Stop state: `READY_FOR_SOURCE_PACK_DEPLOYMENT`
+- Current canonical branch: `main`
+- Next legal planning stage: `SOURCE PACK CLOSURE AUDIT + DECISIONS/INDEX/CHECKPOINT SYNCHRONIZATION`
+- Stop state: `READY_FOR_SOURCE_PACK_CLOSURE_AUDIT`
 
-## Frozen Backlog Baseline outcome
-The complete independent-product denominator is now frozen at 1088 weighted points across 61 release-blocking modules. Optional adapters M39–M41 remain separate and do not dilute the independent-product denominator unless a future release claim explicitly includes them.
+## Frozen Deployment outcome
+GEF Bootstrap is package-first for production distribution, with official library/API and thin CLI surfaces, explicit Node LTS compatibility, secure publication preference for OIDC/trusted publishing, exact-source release manifests, non-destructive installation, governed migrations/upgrades and truthful recovery semantics. Standalone executable distribution is optional until separately promoted with sufficient evidence.
 
-Only objectively reconciled evidence earns production credit. M00 currently contributes 16 points as MODULE_DONE. Existing Source Pack work remains valuable governed knowledge and will reduce future implementation/reasoning cost, but it is not double-counted as completed module implementation where the applicable module DoD is not yet satisfied.
+## Official progress truth
+The audited denominator remains 1088. Earned weight remains 16 because freezing Deployment planning does not itself satisfy a production module DoD. Official completion is therefore `16 / 1088 = 1.47%`; remaining is `1072 / 1088 = 98.53%`.
 
-Official audited completion is therefore `16 / 1088 = 1.47%`, with `1072 / 1088 = 98.53%` remaining.
-
-## Baseline truth
-The percentage is now valid under the frozen denominator and current evidence. It may change only through governed earned-weight promotion, evidence invalidation/reopening, or explicit denominator recalibration with before/after impact recorded.
-
-ETA remains `NOT_YET_RELIABLE` because no sufficient production-construction throughput history exists yet. Calendar estimates will be activated only after observable delivery velocity is available.
+## Continuity/checkpoint contract
+Every material milestone, review, merge, baseline recalibration or chat-transition point must leave a recoverable checkpoint in both human-readable and machine-readable form. A checkpoint must state current phase, active/frozen artifacts, PR/head/main bindings, official audited percentage, earned/remaining weight, denominator changes, blockers, next legal stage and a resume instruction. Chat history is never the sole continuation authority.
 
 ## Do not redo
-Do not reopen Constitution, Project Overview, Requirements, Scope, Architecture, Security, Test & Benchmark, DoD or the weighted Backlog Baseline without governed change control. Do not inflate progress from planning artifact existence. Do not add optional adapters to the main denominator silently. Do not use Codex to implement this repository.
+Do not reopen frozen Source Pack artifacts without governed change control. Do not inflate progress from documentation/planning alone. Do not silently change the 1088 denominator or optional-adapter treatment. Do not begin functional implementation until the Source Pack closure audit explicitly promotes the project to production-construction readiness. Do not use Codex to implement this repository.
 
 ## Resume instruction
-Read this checkpoint plus all frozen Source Pack documents, Backlog Baseline, ADR-0001, Decisions/Technology Ledgers, Planning Protocol and Master Module Index. Continue with canonical Deployment & Distribution planning. Functional implementation remains NOT_STARTED. Every material continuation/review should report the official audited completion percentage, earned/remaining weight, and denominator changes if any.
+In a new chat, the instruction `continue do chat anterior` should cause the agent to read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Backlog Baseline, ADR/Decision/Technology ledgers, Planning Protocol and Master Module Index. Resume at `SOURCE PACK CLOSURE AUDIT + DECISIONS/INDEX/CHECKPOINT SYNCHRONIZATION`. Functional implementation remains NOT_STARTED. Report official audited progress in every material continuation: `1.47% complete`, `16/1088 earned`, `1072/1088 remaining`, unless a newer audited checkpoint changes it.
