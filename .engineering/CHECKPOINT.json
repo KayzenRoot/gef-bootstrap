@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M03_S04",
+  "status": "READY_FOR_GBS_M03_MODULE_GATE",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02"],
   "activeModule": "GBS-M03_PROJECT_IDENTITY",
-  "m03PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"NEXT"},
-  "m03s03Pr": 65,
-  "m03s03ReviewedHead": "3363f8ed9532f3fea545978f3d4e03f62119d6a0",
-  "mainAfterM03S03Merge": "be856d71f139c85fa3ab44073a14bae261e91b81",
+  "m03PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN"},
+  "m03s04Pr": 67,
+  "m03s04ReviewedHead": "8636a12d282214a7519849acbc2564b40357f1e8",
+  "mainAfterM03S04Merge": "2491a16bf45b1d0528fc36732f3506efb4abe72d",
   "mainProductionDenominatorWeight": 1088,
   "earnedProductionWeight": 53,
   "remainingProductionWeight": 1035,
@@ -17,8 +17,8 @@
   "denominatorChanged": false,
   "eta": "NOT_YET_RELIABLE_INSUFFICIENT_IMPLEMENTATION_MODULE_SAMPLE",
   "canonicalBranch": "main",
-  "nextPlanningStage": "GBS-M03-S04",
-  "stopState": "READY_FOR_GBS_M03_S04",
+  "nextPlanningStage": "GBS-M03_MODULE_GATE",
+  "stopState": "READY_FOR_GBS_M03_MODULE_GATE",
   "bootstrapImplementationExecutor": "CHATGPT_CONNECTED_PROJECT_TOOLS",
   "codexForBootstrap": "PROHIBITED_UNTIL_GOVERNED_BENCHMARK_EXCEPTION",
   "plannedExecutorBenchmark": {
@@ -26,6 +26,13 @@
     "timing": "AFTER_M03_OR_M04",
     "requiresGovernedExceptionBeforeExecution": true,
     "dimensions": ["WALL_CLOCK_TIME","MODEL_TOKENS","SEARCHES","FILES_READ","CORRECTION_ROUNDS","TEST_CI_OUTCOMES","ESCAPED_FINDINGS","EVIDENCE_QUALITY"]
+  },
+  "m03CollisionPolicy": {
+    "normalRekeyTarget": "SECURE_UUIDV4_PREVIEW_BOUND",
+    "externalProjectId": "IMPORT_RECOVERY_ONLY",
+    "lineageProvenance": "RECEIPT_LEDGER_NON_AUTHORITATIVE",
+    "standardPureRebindAuthorization": "ADMITTED_WORK_ORDER_SUFFICIENT_NO_REDUNDANT_PROMPT",
+    "registryOnlyDuplicate": "SUSPECTED_UNTIL_CORROBORATED"
   },
   "reportingContract": "REPORT_AUDITED_PERCENT_EARNED_REMAINING_AND_DENOMINATOR_CHANGES_ON_MATERIAL_CONTINUATIONS",
   "continuityContract": "HUMAN_AND_MACHINE_CHECKPOINT_AT_MATERIAL_MILESTONES_AND_CHAT_TRANSITIONS_CHAT_HISTORY_NOT_SOLE_AUTHORITY"
