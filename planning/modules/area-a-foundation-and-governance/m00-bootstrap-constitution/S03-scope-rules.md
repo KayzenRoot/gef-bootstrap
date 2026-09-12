@@ -1,53 +1,42 @@
 # GBS-M00-S03 — Scope Rules
 
-Status: `IN_DISCUSSION`
+Status: `DECIDED`
 
 ## Purpose
 Define how GEF Bootstrap decides what belongs in V1, what may enter an active increment, what must be deferred, and how scope expansion is controlled without suppressing valuable engineering discoveries.
 
 This session governs **classification and admission**, not detailed product Scope content. The canonical `.engineering/SCOPE.md` is updated only after this session is reviewed/frozen.
 
-## Core problem
-GEF Bootstrap is intentionally deep and innovation-heavy. Without explicit scope rules, every useful idea can become an immediate requirement and turn V1 into an endless horizon. Conversely, overly rigid scope control can reject mechanisms that are genuinely required for correctness, token economy, brownfield adoption or assurance.
-
-The system therefore needs a deterministic bias:
+## Core rule
 
 ```text
 DISCOVER IDEA
    -> preserve it
    -> classify it
-   -> test necessity for current objective
+   -> test necessity
    -> admit / defer / reject
    -> record dependencies and rationale
 ```
 
 Discovery is cheap. Admission is governed.
 
-## Existing constitutional classification
-Planning Protocol already defines:
-
-- `NECESSARY`
-- `IMPORTANT`
-- `FUTURE`
-- `OUT_OF_SCOPE`
-
-Only `NECESSARY` automatically enters V1. S03 must now define the semantics and promotion/demotion rules precisely enough that later modules cannot inflate scope casually.
-
-## Candidate classification semantics
+## V1 classifications
 ### NECESSARY
-Without it, V1 cannot satisfy a frozen purpose, constitutional principle, security/assurance floor, required adoption mode, completion obligation or another already-admitted NECESSARY dependency.
+Without it, V1 cannot satisfy a frozen purpose, constitutional principle, source-truth requirement, security/assurance floor, required adoption mode, completion obligation or another already-admitted NECESSARY dependency.
 
 ### IMPORTANT
-Materially improves quality, token/time efficiency, usability, maintainability or evidence, but V1 can still satisfy its frozen obligations without it. May be promoted only with explicit evidence/decision.
+Materially improves quality, token/time efficiency, usability, maintainability or evidence, but V1 can still satisfy its frozen obligations without it. IMPORTANT never auto-enters V1 merely because capacity remains.
 
 ### FUTURE
-Valuable capability whose design/implementation is not justified for V1 by current dependencies, evidence or ROI. Preserve with owner and trigger for reconsideration.
+Valuable capability whose design/implementation is not justified for V1 by current dependencies, evidence or ROI. It remains preserved with a reconsideration trigger.
 
 ### OUT_OF_SCOPE
 Conflicts with product boundary, belongs to another product/version, duplicates an owned mechanism without added value, or has been explicitly rejected for this V1.
 
-## Necessity test candidate
-A candidate is `NECESSARY` only if at least one admission basis is explicit and traceable:
+## NECESSARY admission basis
+A NECESSARY item must carry one **primary admission basis** and may carry additional supporting bases.
+
+Allowed constitutional bases:
 
 ```text
 CONSTITUTION_REQUIRED
@@ -64,45 +53,78 @@ CONTINUITY_REQUIRED
 EVIDENCE_REQUIRED
 ```
 
-A vague claim that something is "professional", "enterprise" or "nice to have" is insufficient.
+A vague claim such as "professional", "enterprise", "best practice" or "nice to have" is not an admission basis.
 
-## Scope admission rule
-No discovered technology, module, session, artifact or behavior becomes a V1 requirement merely because it is documented, discussed, added to the Technology Ledger or present in the Master Module Index.
+This answers closure question 1: one primary basis is mandatory; zero is invalid; multiple supporting bases are allowed.
 
-Admission requires:
+## IMPORTANT promotion rule
+IMPORTANT work never enters V1 automatically because time, token budget or implementation capacity happens to remain.
+
+Promotion to NECESSARY requires an explicit governed decision identifying:
+- the new primary admission basis;
+- dependency/completion impact;
+- carrying-cost impact;
+- whether Scope/DoD/Backlog/estimate must change.
+
+This answers closure question 2.
+
+## FUTURE metadata contract
+To preserve value without bloating hot context, a FUTURE item needs only:
 
 ```text
-candidate
-+ classification
-+ admission basis
-+ owner
-+ dependency impact
-+ acceptance/completion impact
-+ explicit governed decision when promotion is required
+id
+title
+reason
+authoritative owner/origin
+promotion trigger
+key dependencies, if known
 ```
 
-## Master Module Index rule
-The Master Module Index is an inventory/roadmap, not proof that every registered module/session belongs to V1.
+Optional richer notes remain cold/addressable. Routine executor context must not load FUTURE details unless a promotion trigger is relevant.
 
-During Scope freeze, each module/session or appropriate grouped unit must be mapped to V1 classification. FUTURE/OUT_OF_SCOPE entries may remain in the repository as planned placeholders without inflating V1 completion denominator.
+This answers closure question 3.
 
-## Scope expansion during active work
-An active session/work order may not silently absorb a newly discovered feature.
+## Scope decision authority
+### During planning
+ChatGPT/planning governance may propose classification and promotion/demotion, but canonical scope changes require the applicable planning decision to be reviewed and frozen before `.engineering/SCOPE.md` changes.
 
-New discoveries are classified as:
+### During implementation
+Executors may classify a discovery provisionally but may not authorize product-scope expansion. They may only continue automatically for:
+- `IN_SCOPE_CLARIFICATION`;
+- `REQUIRED_DEPENDENCY` that is demonstrably necessary and bounded;
+- `DEFECT/CONFORMANCE_GAP` against an already-approved obligation.
 
-- `IN_SCOPE_CLARIFICATION`: resolves ambiguity without changing approved outcome;
-- `REQUIRED_DEPENDENCY`: necessary to complete the approved outcome safely;
-- `SCOPE_EXPANSION_CANDIDATE`: valuable but not necessary for current outcome;
-- `DEFECT/CONFORMANCE_GAP`: approved obligation is not actually satisfied;
-- `FUTURE_DISCOVERY`: preserve and continue current work.
+Anything else stops/routes as `SCOPE_EXPANSION_REQUIRED` or is preserved as FUTURE/IMPORTANT.
 
-Only clarification, required dependency and defect/conformance repair may enter the active increment without a separate product-scope expansion decision, and even those must remain bounded and traceable.
+### Demotion
+An admitted NECESSARY item may be demoted only by an explicit superseding decision that proves the original admission basis no longer applies or that the governing Purpose/DoD changed. Demotion solely to improve ETA or completion percentage is forbidden.
+
+This answers closure question 4.
+
+## Scope admission record
+No discovered technology, module, session, artifact or behavior becomes a V1 requirement merely because it is documented, discussed, in the Technology Ledger or present in the Master Module Index.
+
+A V1-admitted unit must be traceable to:
+
+```text
+classification
+primary admission basis
+owner
+dependency impact
+acceptance/completion impact
+scope decision/reference
+```
 
 ## Scope Expansion Gate
-If an executor/planner discovers work outside the current admitted boundary, the default is STOP/route rather than improvise.
+Discoveries during active work are classified as:
 
-Candidate outcomes:
+- `IN_SCOPE_CLARIFICATION`
+- `REQUIRED_DEPENDENCY`
+- `SCOPE_EXPANSION_CANDIDATE`
+- `DEFECT_CONFORMANCE_GAP`
+- `FUTURE_DISCOVERY`
+
+Gate outcomes:
 
 - `SCOPE_MATCH`
 - `SCOPE_CLARIFICATION`
@@ -111,35 +133,84 @@ Candidate outcomes:
 - `SCOPE_CONFLICT`
 - `SCOPE_DEFERRED`
 
-Codex should never decide a product-scope expansion by itself.
+Codex or another executor never decides product-scope expansion by itself.
 
-## Innovation preservation
-Scope control must not kill invention. Every material idea that is not admitted immediately should retain enough metadata to be reconsidered later without rediscovery:
+## Scope Carrying Cost V1
+V1 uses a **qualitative deterministic profile**, not a fabricated numeric score.
+
+Each proposed permanent obligation can be tagged on these dimensions:
 
 ```text
-id
-idea/technology
-classification
-reason
-owner
-origin session
-dependencies
-promotion trigger
-rejection/supersession state
+CONTEXT_SURFACE: LOW | MEDIUM | HIGH
+MAINTENANCE_SURFACE: LOW | MEDIUM | HIGH
+VALIDATION_SURFACE: LOW | MEDIUM | HIGH
+REVIEW_SURFACE: LOW | MEDIUM | HIGH
+MIGRATION_SURFACE: LOW | MEDIUM | HIGH
 ```
 
-The Technology & Innovation Ledger is the preferred routing mechanism for technical inventions.
+A short rationale is required only for HIGH values. Later telemetry/baseline modules may replace qualitative tags with evidence-backed measurements.
 
-## Token-economy rule
-Scope itself has token cost. Every additional mandatory artifact, module, protocol, check and execution obligation increases future context, validation and maintenance burden.
+This answers closure question 5 and avoids inventing precision before data exists.
 
-Therefore a V1 addition must be evaluated not only for capability gain but for **recurring cognitive/token surface area**. A feature that saves 5% execution tokens but permanently adds 20% context/maintenance complexity is suspect unless assurance/quality benefit justifies it.
+## Inventory classification granularity
+The 64-module / 282-session inventory is **not classified session-by-session by default**.
 
-This creates a `Scope Carrying Cost` concept for later ROI/baseline modules.
+V1 classification occurs hierarchically:
 
-## Brownfield rule
-Existing projects must not be forced to adopt every V1 optimization at once merely because the capability is NECESSARY for the Bootstrap product.
+```text
+AREA default, if useful
+  -> MODULE classification
+       -> SESSION override only when needed
+```
 
+Rules:
+- module is the normal admission unit;
+- all sessions inherit the module classification unless an explicit override exists;
+- session-level classification is used only when a module mixes NECESSARY and non-V1 work;
+- area-level defaults may reduce repetition but never override an explicit module/session classification;
+- grouped classifications may be used when several modules share one identical admission basis and owner.
+
+This answers closure question 6 and avoids hundreds of low-value classification records.
+
+## Master Module Index semantics
+The Master Module Index is an inventory/roadmap, not V1 commitment.
+
+FUTURE/OUT_OF_SCOPE modules may remain as placeholders without entering V1 completion denominator. IMPORTANT also does not enter the denominator until explicitly promoted. Only admitted NECESSARY work contributes to V1 planned completion obligations.
+
+## Legacy-name / architecture-drift handling
+The current index contains names inherited from the earlier runtime/CLI interpretation, including at least:
+- `GBS-M01 — CLI Kernel`;
+- `GBS-M47 — CLI UX`;
+- `GBS-M49 — Installation`;
+- several quality modules whose wording assumes a runtime executable rather than instruction/protocol conformance.
+
+S03 does **not** delete, renumber or silently rewrite these modules because stable IDs and references already exist.
+
+Instead it assigns the planning state:
+
+```text
+REFACTOR_REQUIRED
+```
+
+Meaning:
+- ID remains stable;
+- old name is not treated as frozen product architecture;
+- detailed rename/responsibility redesign happens in Scope/Architecture planning;
+- module may be renamed/reframed, split or reclassified without pretending it was already correctly specified;
+- references should prefer stable ID over legacy display name during transition.
+
+Initial likely reframing directions, not yet frozen names:
+- M01: agent/bootstrap orchestration kernel or instruction lifecycle rather than CLI runtime;
+- M47: agent interaction / output UX rather than CLI UX;
+- M49: bootstrap consumption/adoption/distribution rather than software installation;
+- M53–M58: protocol/template/conformance/behavioral validation where runtime testing does not apply.
+
+This answers closure question 7 while keeping detailed architecture in its rightful sessions.
+
+## Innovation preservation
+Every material idea that is not admitted immediately retains enough metadata to be reconsidered without rediscovery. Technology inventions route through the Technology & Innovation Ledger. Preservation never equals admission.
+
+## Brownfield scope rule
 Distinguish:
 
 ```text
@@ -148,35 +219,40 @@ TARGET_PROJECT_IMMEDIATE_REQUIRED
 TARGET_PROJECT_PROGRESSIVE
 ```
 
-A capability can be mandatory for GEF Bootstrap V1 to support, while its application to an existing target project remains progressive/shadowed based on risk and maturity.
+A capability may be mandatory for Bootstrap V1 to support while its adoption in an existing target repository remains progressive, shadowed or domain-specific.
 
 ## No denominator gaming
-Completion metrics must not improve by reclassifying unfinished NECESSARY work as FUTURE merely to raise percentage or meet a date. Demotion of admitted scope requires an explicit decision with rationale and impact on Purpose/DoD.
+- unfinished NECESSARY work cannot be demoted merely to raise completion percentage or meet a date;
+- adding FUTURE/IMPORTANT inventory cannot lower V1 completion percentage;
+- promoting new NECESSARY work legitimately changes the denominator and must trigger baseline/ETA recalculation once those systems exist;
+- defect repair against an admitted obligation remains part of that obligation rather than a new feature;
+- scope metrics must expose material reclassification events.
 
-Likewise, adding FUTURE inventory must not reduce V1 completion percentage.
+## Scope/token doctrine
+Scope itself has recurring token, context, validation, review and maintenance cost. A permanent mechanism must justify its carrying cost through required assurance, correctness, adoption value, token/time savings or another frozen objective.
 
-## Candidate anti-scope-creep invariants
-- Every material discovery is preserved before it is deferred.
+Optimization that reduces one cost while expanding the total recurring engineering surface without sufficient benefit should not be admitted merely because it sounds sophisticated.
+
+## Frozen-candidate invariants
+- Every material discovery is preserved before defer/reject.
 - Inventory is not commitment.
-- NECESSARY requires traceable admission basis.
-- IMPORTANT does not auto-enter V1.
-- FUTURE does not count against V1 completion.
+- NECESSARY has one traceable primary admission basis.
+- IMPORTANT never auto-enters V1.
+- FUTURE stays out of hot context and V1 denominator.
 - OUT_OF_SCOPE remains auditable.
-- Active executors cannot authorize product-scope expansion.
+- Executors cannot authorize product-scope expansion.
 - Required dependencies are not mislabeled feature creep.
-- Defect repair against an already-approved obligation is not a new feature.
+- Defect/conformance repair is not a new feature.
 - Scope cannot be manipulated to fabricate progress.
-- Brownfield support and brownfield immediate adoption are different questions.
-- Optimization complexity must pay for its recurring carrying cost or assurance value.
+- Brownfield support and immediate brownfield adoption are different decisions.
+- Scope carrying cost is considered before permanent admission.
+- Stable IDs survive naming/refactoring of legacy scaffold concepts.
 
-## Questions to close before freeze
-1. Should `NECESSARY` require exactly one admission basis, or one-or-more with a primary basis?
-2. Should IMPORTANT work ever enter V1 automatically when budget/time is available, or always require explicit promotion?
-3. What metadata is mandatory for FUTURE items so they remain useful without bloating normal context?
-4. What exact decision authority can promote/demote scope during planning versus implementation?
-5. How should `Scope Carrying Cost` be represented in V1: qualitative flag, deterministic score, or deferred metric?
-6. At what granularity should the 64-module/282-session inventory be classified for V1 without creating hundreds of low-value classifications?
-7. Which current modules are structurally obsolete/need renaming because the product changed from CLI/runtime to instruction-first governance, and should S03 classify them now or leave detailed refactoring to Scope/Architecture planning?
+## Closure audit state
+All seven closure questions now have a decided direction. Before freeze, S03 still requires:
+1. Decisions Ledger synchronization;
+2. Technology Ledger capture of Scope Carrying Cost / Scope Expansion Gate if materially distinct;
+3. exact-delta review against S01/S02/Planning Protocol;
+4. verification that canonical `.engineering/SCOPE.md` has not been prematurely changed.
 
-## Current direction
-S03 is moving toward **preserve every idea, admit only traceably necessary work, make scope expansion fail-closed, separate inventory from V1 commitment, and charge recurring context/maintenance cost against optimization value**.
+STOP CONDITION before freeze: `READY_FOR_GBS-M00-S03_FINAL_AUDIT`.
