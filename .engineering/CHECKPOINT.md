@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M01_S04`
+Status: `READY_FOR_GBS_M01_S05`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
@@ -10,20 +10,19 @@ Status: `READY_FOR_GBS_M01_S04`
 - Functional implementation: `AUTHORIZED_NOT_STARTED`
 - Completed modules: `GBS-M00 — Bootstrap Constitution`
 - Active construction module: `GBS-M01 — Deterministic Work Plane Kernel`
-- Completed construction sessions: `GBS-M01-S01`, `GBS-M01-S02`, `GBS-M01-S03`
+- Completed construction sessions: `GBS-M01-S01`, `GBS-M01-S02`, `GBS-M01-S03`, `GBS-M01-S04`
 - M01-S01 runtime contract: `FROZEN`
 - M01-S02 command router contract: `FROZEN`
 - M01-S03 lifecycle contract: `FROZEN`
-- M01-S03 PR: `#41`
-- M01-S03 reviewed head: `82868f28c33cbf67a0adb4ee07206df7765151d0`
-- Main after M01-S03 merge: `118e99456e747eea1dd3afa1fffd2ab1f760666b`
-- Lifecycle model: `RECEIVED -> VALIDATING -> PREFLIGHTING -> READY -> EXECUTING -> VERIFYING -> RECEIPTING -> SUCCEEDED`
-- Mechanical success: `NOT_SEMANTIC_APPROVAL`
-- Blocked state: `TERMINAL_FAMILY_WITH_TYPED_REASON_CODES`
-- Read-only phase optimization: `PHYSICAL_COLLAPSE_ALLOWED_LOGICAL_PROOF_REQUIRED`
-- Recovery identity: `IMMEDIATE_COMPENSATION_SAME_RUN; LATER_RECOVERY_LINKED_NEW_RUN`
-- Retry baseline: `MUTATION_RETRY_OPT_IN; NO_CROSS_PROCESS_AUTORETRY`
-- Terminal receipts: `APPEND_ONLY_IMMUTABLE`
+- M01-S04 exit-code contract: `FROZEN`
+- M01-S04 PR: `#43`
+- M01-S04 reviewed head: `a58e8c7fd3f3e21cec47975e148747b6c91b7350`
+- Main after M01-S04 merge: `e931dbc3b10195c689be8ddf37f005cf2c9ee465`
+- Exit code families: `0,10,20,30,40,50,60,70,80,90`
+- Exit code truth model: `COARSE_PROCESS_SIGNAL; TYPED_RESULTS_AUTHORITATIVE`
+- Recovery precedence: `RECOVERY_REQUIRED_OR_PARTIAL_EFFECT > GENERIC_EXECUTION_FAILURE`
+- Timeout/cancellation: `SHARED_COARSE_FAMILY_DISTINCT_TYPED_REASONS`
+- Version incompatibility: `PRECONDITION_OR_STATE; MALFORMED_VERSION_SYNTAX_USAGE_OR_INPUT`
 - Constitution version: `GBS-CONSTITUTION-v1.1`
 - Product model: `HYBRID`
 - Product release target: `ONE COMPLETE PRODUCTION VERSION`
@@ -39,11 +38,11 @@ Status: `READY_FOR_GBS_M01_S04`
 - Denominator change: `NONE`
 - ETA: `NOT_YET_RELIABLE`
 - Current canonical branch: `main`
-- Next legal stage: `GBS-M01-S04 — Exit Codes`
-- Stop state: `READY_FOR_GBS_M01_S04`
+- Next legal stage: `GBS-M01-S05 — Error Model`
+- Stop state: `READY_FOR_GBS_M01_S05`
 
-## M01-S03 outcome
-The deterministic invocation lifecycle is frozen. Every invocation has explicit logical phases, exactly one immutable terminal classification for the original run, fail-closed mutation preflight, truthful cancellation/timeout handling, bounded retry rules, explicit recovery linkage and receipt completion before mutation success. Physical phase collapsing is allowed only when logical gate completion remains provable, preserving speed without sacrificing auditability.
+## M01-S04 outcome
+The process exit-code contract is frozen. Exit integers are intentionally coarse and portable, while typed results and receipts remain authoritative. Recovery-required/partial-effect outcomes outrank generic execution failure for safe operator response; timeout and cancellation share a coarse family with distinct typed reasons; structured output and process code are forbidden from contradicting each other.
 
 ## Official progress truth
 No production weight is awarded for an individual planning session. The denominator remains 1088 and earned weight remains 16 until a weighted production item satisfies its applicable DoD and evidence promotion. Official completion remains `16 / 1088 = 1.47%`.
@@ -52,7 +51,7 @@ No production weight is awarded for an individual planning session. The denomina
 Every material milestone, review, merge, baseline recalibration or chat-transition point must leave both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
 
 ## Do not redo
-Do not reopen M01-S01/S02/S03 without governed change control. Do not treat mechanical SUCCEEDED as semantic acceptance. Do not rewrite terminal receipts, blindly retry semantic/policy/state failures, cross process boundaries with implicit retries, or hide partial external effects.
+Do not reopen M01-S01 through S04 without governed change control. Do not expand exit integers into a detailed error taxonomy, contradict structured machine results, treat platform signal termination as a fabricated GEF outcome, or downgrade recovery-required truth because some child work succeeded.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Planning Protocol, Master Module Index and frozen M01-S01/S02/S03 session files. Resume at `GBS-M01-S04 — Exit Codes`. Report `1.47% complete`, `16/1088 earned`, `1072/1088 remaining` unless a newer audited checkpoint changes it.
+In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Planning Protocol, Master Module Index and frozen M01-S01/S02/S03/S04 session files. Resume at `GBS-M01-S05 — Error Model`. Report `1.47% complete`, `16/1088 earned`, `1072/1088 remaining` unless a newer audited checkpoint changes it.
