@@ -1,6 +1,6 @@
 # GBS-M03-S02 — Project Fingerprint
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Define the compact mutable fingerprint contract used to bind cached context, evidence, derived state and execution plans to the relevant project-identity state without confusing mutable state with the immutable `projectId` frozen in S01.
@@ -134,6 +134,6 @@ Implementation must eventually prove:
 4. Delta classification is mandatory when a previous compatible manifest is supplied; otherwise output `BASELINE_CREATED`: **RESOLVED**.
 
 ## Session completion rule
-Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M03-S03`.
+Exact-head semantic review passed. This session is `FROZEN`; checkpoint must advance to `GBS-M03-S03`.
 
-STOP CONDITION: `M03_S02_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M03_S02_FROZEN_READY_FOR_CHECKPOINT`.
