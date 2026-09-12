@@ -1,6 +1,6 @@
 # Scope
 
-Status: `DECIDED`
+Status: `FROZEN`
 
 ## Binding
 Scope is derived from `GBS-CONSTITUTION-v1.1`, frozen Project Overview, frozen Requirements and the Project Owner decision that GEF Bootstrap targets **one complete production version**, not a deliberately reduced V1/MVP slice.
@@ -131,8 +131,6 @@ Architecture may share harness infrastructure to reduce duplication; proof oblig
 Total inventory remains 64 modules. All useful module families remain in the complete product program; only ecosystem-specific adapters are non-blocking.
 
 ## Stable module reframes
-The following names are frozen while IDs remain unchanged:
-
 | Stable ID | Legacy name | Complete-product name |
 |---|---|---|
 | `GBS-M01` | CLI Kernel | Deterministic Work Plane Kernel |
@@ -164,7 +162,7 @@ The complete product must support:
 5. `EXISTING_PROJECT/BROWNFIELD` mode;
 6. representative project profiles covering at least JavaScript/TypeScript-style, Python-style and nontrivial brownfield repositories, refined later by Architecture/Test planning.
 
-A second hosted provider such as GitLab or Bitbucket is **not mandatory** for `PRODUCTION_RELEASE_DONE`. Portability is proven by provider-neutral contracts plus the GitHub reference implementation and conformance tests that prevent GitHub-specific semantics from leaking into core. Additional hosted providers remain compatible future/profile additions, not a missing piece of the complete core product.
+A second hosted provider such as GitLab or Bitbucket is **not mandatory** for `PRODUCTION_RELEASE_DONE`. Portability is proven by provider-neutral contracts plus the GitHub reference implementation and conformance tests that prevent GitHub-specific semantics from leaking into core.
 
 ## GitHub automation boundary
 The GitHub profile includes governed repository discovery, branch/PR lifecycle, checks/status evidence, CI integration, issues/templates where relevant, ruleset/permission-gap reporting, release surfaces and exact-head evidence binding. Unavailable administrative permissions produce truthful gap/block states rather than fabricated success.
@@ -200,13 +198,10 @@ Tracked separately:
 - `OPTIONAL_ADAPTER` work, unless a specific release claim explicitly includes that adapter.
 
 Module progress is weighted rather than counted equally. The baseline uses four 1–5 dimensions:
-
 - `E` — implementation/planning effort;
 - `R` — engineering/security/operational risk;
 - `I` — integration/dependency breadth;
 - `P` — proof/validation burden.
-
-Initial module weight formula:
 
 ```text
 RAW_WEIGHT = E + R + I + P
@@ -223,14 +218,17 @@ Overall production completion becomes valid only after:
 
 Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 
-## Scope freeze decisions
-1. Stable reframes: M01/M47/M49/M62 names above are canonical; IDs do not change.
-2. Ecosystem adapters: official but separately activatable/non-blocking.
-3. Experimental technologies: four production-promotion gates frozen.
-4. Hosted portability: provider-neutral core + GitHub reference profile is sufficient; no second hosted provider mandatory.
-5. Production weighting: E/R/I/P 1–5 additive raw weight, activated only with frozen DoD/backlog baseline.
+## Frozen Scope decisions
+1. Single complete production target, not MVP/small-V1.
+2. All 64 inventory modules retained: 47 CORE_REQUIRED, 14 PRODUCT_INCLUDED, 3 OPTIONAL_ADAPTER.
+3. Stable reframes: M01/M47/M49/M62 canonical names changed; IDs remain stable.
+4. Ecosystem adapters are official, separately activatable and non-blocking.
+5. Experimental technologies use Utility, Assurance, Validity/Stability and Engineering ROI production gates.
+6. Hosted portability is provider-neutral core + GitHub reference profile; no second hosted provider is mandatory.
+7. Production weighting uses E/R/I/P 1–5 additive raw weight and activates only with frozen DoD/backlog baseline.
+8. Complete-product decision and supersession rationale are recorded in `ADR-0001-COMPLETE-PRODUCTION-TARGET.md`.
 
-## Freeze readiness audit
+## Freeze audit
 - single complete production target: PASS
 - all 64 inventory modules classified: PASS
 - counts reconcile to 64: PASS
@@ -240,11 +238,11 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 - experimental risk/ROI gates: PASS
 - portability boundary: PASS
 - weighted baseline method defined without fabricating current percentage: PASS
+- stable module names synchronized with Master Module Index: PASS
+- governed supersession ADR present: PASS
 - ChatGPT-only Bootstrap implementation rule preserved: PASS
 - Architecture not prematurely selected: PASS
 - implementation not started: PASS
 - remaining Scope closure questions: 0
 
-Next lifecycle step: exact-delta review, freeze and checkpoint promotion.
-
-STOP CONDITION: `READY_FOR_SCOPE_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
+STOP CONDITION: `READY_FOR_SCOPE_REVIEW_AND_CHECKPOINT`.
