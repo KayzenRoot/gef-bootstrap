@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M02_S02`
+Status: `READY_FOR_GBS_M02_S03`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
@@ -10,10 +10,11 @@ Status: `READY_FOR_GBS_M02_S02`
 - Completed modules: `GBS-M00 — Bootstrap Constitution`, `GBS-M01 — Deterministic Work Plane Kernel`
 - Active module: `GBS-M02 — Configuration & Schema`
 - M02-S01 Global Configuration: `FROZEN`
-- M02-S01 PR: `#49`
-- M02-S01 reviewed head: `67f100057f62ed34ab5765afc8c9aff5f4c8eca8`
-- Main after M02-S01 merge: `e8eb2b824a0b819b7bc10b88867bb0c80c7a2743`
-- Next session: `GBS-M02-S02 — Project Configuration`
+- M02-S02 Project Configuration: `FROZEN`
+- M02-S01 PR: `#49`, reviewed head `67f100057f62ed34ab5765afc8c9aff5f4c8eca8`
+- M02-S02 PR: `#51`, reviewed head `f78f68c953143f521771bdb23f30928952a45566`
+- Main after M02-S02 merge: `d4c7e1d5e1f0b5eeaf3989817e9d9ee22f3aa770`
+- Next session: `GBS-M02-S03 — Schemas`
 - M01 module gate: `MODULE_DONE`
 - M01 implementation PR: `#47`
 - M01 exact reviewed head: `4ce343817270cf26230fa67decf4cd0bc77a1ea4`
@@ -34,22 +35,22 @@ Status: `READY_FOR_GBS_M02_S02`
 - Denominator change: `NONE`
 - ETA: `NOT_YET_RELIABLE — only one completed implementation module observed`
 - Current canonical branch: `main`
-- Next legal stage: `GBS-M02-S02`
-- Stop state: `READY_FOR_GBS_M02_S02`
+- Next legal stage: `GBS-M02-S03`
+- Stop state: `READY_FOR_GBS_M02_S03`
 
-## M02-S01 outcome
-Global configuration is frozen as an optional, known-path, OS-resolved user layer at logical path `gef/config.json`. Effective precedence is `PRODUCT_DEFAULTS < GLOBAL_CONFIG < PROJECT_CONFIG < EXPLICIT_INVOCATION_OVERRIDE`, with provenance retained for effective non-default values. Environment variables are not a generic hidden override layer. Secrets remain references only. Global config cannot redefine project truth, waive safety floors, authorize S4, or create canonical evidence/checkpoint verdicts.
+## M02-S02 outcome
+Project configuration is frozen at tracked canonical path `.gef/project.json`. Formal GEF adoption always materializes a minimal versioned adoption marker without redundantly copying defaults. Private operational state is rooted at `.gef/private/` and selectively ignored; blanket ignoring `.gef/` is prohibited. Project config remains below semantic governance, cannot store secrets or authorize S4, preserves precedence/provenance, and is portable across clones.
 
-Versioned extension namespaces may be preserved when their owner is unavailable, but remain inactive and non-authoritative until compatibility/capability validation succeeds. The initial schema surface is intentionally minimal and only admits domains with an existing semantic owner.
+Project-level distribution/update fields are intentionally absent from the base schema until M33/M49/M50 or another admitted owner defines project-persistent semantics. This prevents speculative release policy from leaking into every repository.
 
 ## Official progress truth
-M02-S01 is planning evidence only and earns no standalone production weight. Official completion remains `36 / 1088 = 3.31%`; remaining remains `1052 / 1088 = 96.69%`; denominator unchanged.
+M02-S02 is planning evidence only and earns no standalone production weight. Official completion remains `36 / 1088 = 3.31%`; remaining remains `1052 / 1088 = 96.69%`; denominator unchanged.
 
 ## Continuity/checkpoint contract
 Every material milestone, review, merge, baseline recalibration or chat-transition point leaves both human-readable and machine-readable checkpoints. Chat history is never the sole continuation authority.
 
 ## Do not redo
-Do not reopen M01 or M02-S01 without governed change control or invalidated evidence. Do not use Codex to implement this repository. Do not credit M02 weight until evidence-backed `MODULE_DONE` or an explicitly frozen partial allocation exists.
+Do not reopen M01, M02-S01 or M02-S02 without governed change control or invalidated evidence. Do not use Codex to implement this repository. Do not credit M02 weight until evidence-backed `MODULE_DONE` or an explicitly frozen partial allocation exists.
 
 ## Resume instruction
-In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, the Master Module Index, M01 evidence/gate, and `planning/modules/area-a-foundation-and-governance/m02-configuration-and-schema/S01-global-configuration.md`. Resume at `GBS-M02-S02 — Project Configuration`. Report `3.31% complete`, `36/1088 earned`, `1052/1088 remaining` unless a newer audited checkpoint changes it.
+In a new chat, `continue do chat anterior` means read `.engineering/CHECKPOINT.md`, `.engineering/CHECKPOINT.json`, frozen Source Pack documents, Master Module Index, M01 evidence/gate, and M02 S01-S02 planning contracts. Resume at `GBS-M02-S03 — Schemas`. Report `3.31% complete`, `36/1088 earned`, `1052/1088 remaining` unless a newer audited checkpoint changes it.
