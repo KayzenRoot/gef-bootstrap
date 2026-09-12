@@ -1,6 +1,6 @@
 # GEF Bootstrap — Master Module Index
 
-Status: `SCOPE_CLASSIFIED_PENDING_FREEZE`
+Status: `SCOPE_FROZEN`
 
 Inventory and planning map for the single complete production target. Canonical module classification lives in `.engineering/SCOPE.md`; this index does not duplicate Scope authority.
 
