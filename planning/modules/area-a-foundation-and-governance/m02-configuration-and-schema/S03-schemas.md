@@ -1,6 +1,6 @@
 # GBS-M02-S03 — Schemas
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the canonical machine-schema contract for persisted/interchanged GEF configuration and related M02 documents, ensuring one authoritative validation model, deterministic compatibility behavior, compact diagnostics and mechanical alignment with TypeScript.
@@ -29,7 +29,7 @@ M02-S03 DOES NOT OWN:
 - arbitrary schemas owned by later modules, except shared conventions they adopt;
 - runtime business policy beyond structural/contract validation.
 
-## Candidate schema contract
+## Frozen schema contract
 
 ### SC-01 — JSON Schema 2020-12 is canonical
 Persisted/interchanged JSON owned by M02 uses JSON Schema 2020-12 as the language-neutral source of machine structural truth.
@@ -44,7 +44,13 @@ Every canonical persisted/interchange schema has:
 - stable artifact name independent of filesystem location;
 - declared owner module.
 
-Filesystem paths may evolve under governed migration without changing semantic identity accidentally.
+The canonical GEF schema namespace is an opaque URN namespace:
+
+`urn:gef:schema:<artifact>:<major>`
+
+Example: `urn:gef:schema:global-config:1`.
+
+The URN is semantic identity only and does not imply network resolution. Filesystem paths may evolve under governed migration without changing semantic identity accidentally.
 
 ### SC-03 — One source of machine structural truth
 For any persisted/interchanged document, there is exactly one canonical schema authority. TypeScript types are generated from, or mechanically checked against, that schema where practical.
@@ -52,7 +58,13 @@ For any persisted/interchanged document, there is exactly one canonical schema a
 Handwritten TypeScript may exist for richer runtime behavior, but persisted field shape cannot silently diverge. CI must detect schema/type drift before release.
 
 ### SC-04 — Closed core, explicit extensions
-Core configuration objects are closed by default. Unknown keys fail validation unless they occur inside a declared extension namespace whose owning contract explicitly permits preservation.
+Core configuration objects are closed by default.
+
+Rules:
+- simple non-composed core objects use `additionalProperties: false` where appropriate;
+- composed boundaries using `$ref`, `allOf`, conditional branches or other composition use `unevaluatedProperties: false` when that is the safer 2020-12 closure mechanism;
+- schema tests must prove that intended composition does not accidentally reject evaluated referenced properties or admit unknown keys;
+- unknown keys fail validation unless they occur inside a declared extension namespace whose owning contract explicitly permits preservation.
 
 This prevents typos such as `assurence` from silently behaving as absent configuration.
 
@@ -64,7 +76,7 @@ Unknown or unsupported fields affecting authorization, security class, assurance
 Readers may preserve unknown inert extension data, but must not interpret it permissively.
 
 ### SC-06 — Validation phases are explicit
-Candidate deterministic validation pipeline:
+Deterministic validation pipeline:
 
 `BYTES/UTF8 -> JSON_PARSE -> BASE_ENVELOPE -> SCHEMA_SELECT -> STRUCTURAL_VALIDATE -> OWNER/POLICY_VALIDATE -> NORMALIZE -> SNAPSHOT`
 
@@ -93,7 +105,7 @@ Schema validation has explicit limits against hostile/accidental pathological in
 ### SC-10 — References are controlled
 `$ref` resolution is local/bundled by default. Validation must not fetch arbitrary remote schemas at runtime. External network schema resolution is prohibited unless a future explicit capability contract admits and verifies it.
 
-Schemas may reference other bundled GEF schemas through stable IDs resolved by the local registry.
+Schemas may reference other bundled GEF schemas through stable URN IDs resolved by the local registry.
 
 ### SC-11 — Schema registry is deterministic
 The product exposes a read-only schema registry mapping stable artifact IDs and supported schema versions to bundled validators/schema documents.
@@ -106,18 +118,32 @@ Compiled validators may be cached as derived runtime artifacts keyed by schema b
 LLM/executor flows should consume compact validation results/fingerprints instead of rereading full schemas when compatible proof remains valid.
 
 ### SC-13 — Canonical configuration artifacts
-Initial M02 schema family should include only documents already justified by S01/S02:
+The initial M02 schema family includes only documents already justified by S01/S02:
 - `gef.global-config`
 - `gef.project-config`
-- a shared resolved/provenance snapshot contract only if it crosses a persistence/process/public API boundary
+
+`ResolvedConfigurationSnapshot` remains an ephemeral runtime contract for now. It does not receive a persisted/interchange schema until a later owner or public/process/persistence boundary proves that interchange/persistence is required.
 
 Defaults catalogue and migration receipts are introduced only when S04/S05 freeze their ownership.
 
 ### SC-14 — Schema tests are contract tests
 Each canonical schema eventually requires positive fixtures, negative fixtures, unknown-field tests, boundary/resource tests, secret/redaction-sensitive diagnostic tests, version-compatibility fixtures and schema/type alignment proof.
 
-## Candidate schema repository structure
-Illustrative only until implementation Work Order:
+### SC-15 — Validator implementation is not frozen here
+M02-S03 freezes validator behavior and conformance, not a specific npm library.
+
+Any implementation selected by the Work Order must prove:
+- JSON Schema 2020-12 support sufficient for the frozen schemas;
+- local/bundled `$ref` registry support with network resolution disabled;
+- deterministic, capturable diagnostics that can be normalized to the GEF diagnostic contract;
+- bounded resource behavior or enforceable surrounding bounds;
+- compatibility with supported Node LTS and the repository dependency/security policy;
+- no material divergence from schema semantics across supported environments.
+
+A preferred library may be selected in implementation only after dependency/security/maintenance review. Replacing the validator does not change this semantic contract if conformance remains proven.
+
+## Frozen schema repository structure direction
+Implementation may refine physical paths, but the initial organization is:
 
 ```text
 schemas/
@@ -148,27 +174,30 @@ Schema design must reduce repeated reasoning by providing:
 4. Malformed or oversized inputs fail before governed side effects.
 5. Duplicate/ambiguous schema identity fails closed.
 6. Validation never grants authorization or semantic approval.
+7. Schema closure cannot be weakened for convenience by the selected validator.
 
 ## Future implementation proof
 Eventually prove:
-- canonical schema IDs/version selection;
+- canonical URN schema IDs/version selection;
 - global/project positive and negative fixtures;
 - strict unknown-key behavior;
+- `additionalProperties`/`unevaluatedProperties` composition behavior;
 - inert extension preservation;
 - no remote `$ref` network access;
 - deterministic diagnostic order;
 - bounded pathological input handling;
 - schema/type drift detection;
 - validator cache invalidation by schema fingerprint;
-- M01 typed error projection.
+- M01 typed error projection;
+- validator implementation conformance across supported environments.
 
-## Open decisions before freeze
-1. Freeze schema IDs under an HTTPS-style namespace such as `https://schemas.gef.dev/...`, or use an opaque URN namespace such as `urn:gef:schema:...`?
-2. Should canonical schemas use `additionalProperties: false` broadly, or `unevaluatedProperties: false` at composed object boundaries to support safer `$ref`/composition?
-3. Do we freeze a persisted `ResolvedConfigurationSnapshot` schema now, or keep snapshots ephemeral until a later consumer proves persistence/interchange is required?
-4. Which validator implementation constraints belong here versus the implementation Work Order: standards compliance only, or a preferred library as part of the contract?
+## Resolved freeze decisions
+1. Schema IDs use `urn:gef:schema:<artifact>:<major>`: **RESOLVED**.
+2. Object closure uses `additionalProperties: false` for simple boundaries and `unevaluatedProperties: false` where composition requires it: **RESOLVED**.
+3. `ResolvedConfigurationSnapshot` remains ephemeral until a real persistence/interchange consumer exists: **RESOLVED**.
+4. S03 freezes validator conformance requirements, not a specific library: **RESOLVED**.
 
 ## Session completion rule
-S03 may freeze only after these four decisions are resolved and exact-head review confirms consistency with Architecture A8, Security and S01/S02.
+S03 is semantically frozen subject to exact-head review and merge. No functional implementation or production-weight promotion is introduced by this planning session.
 
-STOP CONDITION: `SCHEMA_DECISIONS_REQUIRED`.
+STOP CONDITION: `M02_S03_EXACT_HEAD_REVIEW_REQUIRED`.
