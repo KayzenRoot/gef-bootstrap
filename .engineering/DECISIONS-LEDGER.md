@@ -201,3 +201,7 @@ Status: `ACTIVE`
 ## D-0050 — Optimization telemetry is required; percentage gains remain benchmark claims until proven
 - Decision: V1 must be capable of measuring or explicitly accounting for observable token, executor-time, repository-discovery, validation, retry/correction, review/evidence and proof-reuse behavior, while distinguishing measured values, estimates and unavailable telemetry. Specific improvement percentages remain benchmark targets until representative evidence proves them.
 - Status: APPROVED
+
+## D-0051 — Project Overview is frozen
+- Decision: `.engineering/PROJECT-OVERVIEW.md` is frozen as the canonical product overview derived from `GBS-CONSTITUTION-v1.0`, including mission, logical roles, universal/profile boundaries, platform boundary, minimum brownfield value, optimization measurement requirements and explicit non-goals. Detailed requirements, scope and architecture remain delegated to their ordered Source Pack stages.
+- Status: APPROVED
