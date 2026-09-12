@@ -1,6 +1,6 @@
 # GBS-M00-S01 — Purpose & Principles
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN`
 
 ## Purpose
 GEF Bootstrap exists to prepare a newly created or existing GitHub repository to be developed under a governed, instruction-first engineering system optimized for **maximum safe token economy, construction speed, minimal executor cognition, narrow repository exploration, selective validation, strong review quality, and safe continuation across chats**.
@@ -215,7 +215,7 @@ INICIAR PROJETO
 
 This is an **instruction intent**, not a requirement for a local executable CLI.
 
-## Core principles proposed for freeze
+## Core principles
 
 ### P1 — Planning before implementation
 Bootstrap prepares the engineering environment before functional product implementation starts.
@@ -286,6 +286,18 @@ The future master prompt must reference and orchestrate the versioned intelligen
 ### P23 — Measure the complete token path
 A shorter prompt is not automatically cheaper. Optimization must account for context assembly, executor input/output, reasoning, searches, retries, review and correction rounds so token cost is not merely displaced to another stage.
 
+### P24 — Executor latency is a first-class objective
+Every applicable module should reduce avoidable wall-clock executor time by minimizing discovery, file I/O, reasoning branches, unnecessary tests, retries, serial waits and verbose output while preserving required assurance.
+
+### P25 — Brownfield adoption is first-class
+Existing repositories may adopt GEF progressively without restarting product planning, rewriting working architecture or normalizing the entire project before receiving safe benefits.
+
+### P26 — Governed knowledge must appreciate over time
+Approved work should leave behind validity-bound reusable knowledge so comparable future changes require fewer searches, less rereading, less repeated reasoning and less executor context.
+
+### P27 — Innovation is preserved without premature freezing
+Material technologies and optimization ideas discovered during planning must be recorded, routed to an owning module and explicitly classified. A candidate idea never becomes an executor requirement merely because it appeared in discussion.
+
 ## Product-level optimization technologies to develop in later sessions
 The following concepts are candidates for dedicated design, not yet frozen implementations:
 
@@ -310,7 +322,7 @@ The following concepts are candidates for dedicated design, not yet frozen imple
 - **Executor Cognition Budget**: cap open-ended reasoning/discovery and force escalation when the recipe cannot be followed safely.
 - **Prompt Entropy Reducer**: remove ambiguity, alternative paths and unnecessary prose from execution packs while retaining constraints and proof obligations.
 - **Delta Context Capsule**: provide prior accepted state plus only changed/invalidated facts for subsequent correction rounds.
-- **Token ROI Governor**: require expensive context expansion, model escalation or broad validation to have a stated engineering reason and expected assurance benefit.
+- **Engineering ROI Governor**: require expensive context expansion, model escalation, broad validation or permanent optimization complexity to justify its expected token/time/quality benefit.
 - **Knowledge Distillation Layer**: maintain compact, versioned machine-oriented summaries of stable project contracts without replacing canonical human sources.
 - **Hot Context Cache**: reuse validated high-frequency project facts while fingerprints remain compatible.
 - **Cold Source Pointer Model**: keep rarely needed detail addressable but outside normal executor context until explicitly required.
@@ -329,6 +341,9 @@ The user has explicitly established that:
 - test execution must become impact-aware so coding does not repeatedly run thousands of irrelevant tests;
 - test/review optimization must preserve assurance and expand when risk/uncertainty requires;
 - project initialization must configure planning, canonical sources, checkpoint/chat continuation, prompt/review standards, GitHub workflow, progress and evidence conventions;
+- existing repositories must receive safe GEF benefits progressively rather than through mandatory big-bang migration;
+- executor wall-clock latency is a first-class performance objective alongside token cost;
+- governed knowledge should reduce recurring discovery and reasoning costs as a project matures;
 - a canonical Master Bootstrap Prompt will be designed and finalized **after** the Bootstrap body is complete enough to support it;
 - operational questions such as exactly how the user invokes the Bootstrap and whether ChatGPT, Codex or another compatible agent is the preferred bootstrap orchestrator are intentionally deferred until final acceptance/closure.
 
@@ -344,3 +359,9 @@ Do not prematurely optimize the project around the final invocation UX. The foll
 - final bootstrap invocation instructions and user workflow.
 
 These decisions must be made during final acceptance using the completed Bootstrap as evidence, not speculation at project start.
+
+## Freeze acceptance
+S01 is frozen because the product purpose, optimization doctrine, instruction-first boundary, GEF V1 default, executor/reasoning split, token/time objectives, brownfield posture, assurance floor, continuity requirement and innovation-governance principles are explicit enough for downstream planning. Detailed mechanisms remain owned by their dedicated sessions and modules rather than being prematurely implemented here.
+
+Frozen session: `GBS-M00-S01`
+Next session after checkpoint promotion: `GBS-M00-S02 — Source Hierarchy`.
