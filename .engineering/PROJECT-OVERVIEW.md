@@ -1,6 +1,6 @@
 # Project Overview
 
-Status: `IN_DISCUSSION`
+Status: `DECIDED`
 
 ## Project
 **GEF Bootstrap**
@@ -8,10 +8,28 @@ Status: `IN_DISCUSSION`
 ## Constitutional binding
 This overview is derived from `GBS-CONSTITUTION-v1.0` and must remain compatible with `CONST-F1` through `CONST-F8`. It summarizes the product boundary for downstream planning; it does not supersede the Constitution or Decisions Ledger.
 
+## Mission
+**Turn repeated AI-assisted software-engineering discovery and reasoning into governed, validity-bound, reusable project knowledge so new and existing repositories can be planned, executed, reviewed and resumed with less token cost, less executor latency and stronger evidence without weakening correctness or assurance.**
+
+This sentence is the preferred canonical mission for README-level/product-level summaries. Shorter marketing wording may be derived later without changing its meaning.
+
 ## Product definition
 GEF Bootstrap is a **versioned instruction/governance repository** used by ChatGPT, Codex and compatible future agents to initialize or progressively govern software projects under the GEF V1 engineering model.
 
-It is not a standalone runtime application or CLI product. Its value is the governed knowledge, protocols, schemas, templates, planning structures, evidence contracts, review rules and reusable bootstrap instructions that compatible agents materialize into a target repository.
+It is not a standalone runtime application or CLI product. Its primary value is the governed knowledge, protocols, schemas, templates, planning structures, evidence contracts, review rules and reusable bootstrap instructions that compatible agents materialize into a target repository.
+
+### Tooling boundary
+GEF Bootstrap may later include or integrate a **thin deterministic automation layer** such as a CLI, script or compatible tool when that layer demonstrably reduces repetitive mechanical work.
+
+Such tooling may:
+- materialize approved files/templates;
+- validate schemas/contracts;
+- compute fingerprints/hashes;
+- inspect repository state;
+- run deterministic conformance checks;
+- generate machine receipts from known inputs.
+
+Such tooling must **not** become the owner of product reasoning, architecture choice, scope admission or semantic review merely because it is executable code. The governed repository and its canonical sources remain the product brain; automation is an optional mechanical execution surface.
 
 ## Problem being solved
 AI-assisted software construction repeatedly pays expensive costs that should not need to be paid again:
@@ -47,6 +65,23 @@ model/executor tokens
 
 Token economy and Codex/executor latency are first-class design objectives. They never override correctness, security, integrity or required assurance.
 
+## Canonical roles
+GEF Bootstrap recognizes four explicit roles. One person/agent may hold more than one role, but the responsibilities remain distinct.
+
+### Project Owner
+Owns product intent, boundary and deliberate product-direction changes. May initiate governed constitutional/scope supersession but does not bypass the evidence/review process.
+
+### Planning Agent
+Reads canonical source truth, resolves ambiguity, performs high-cost engineering reasoning, proposes/finalizes governed planning and compiles bounded execution/review context.
+
+### Executor
+Applies an approved bounded change or materialization recipe, performs required local proof, reports compact evidence and stops/escalates when source/scope/assumptions fail.
+
+### Reviewer / Auditor
+Evaluates exact-state evidence, semantic delta, invalidated proofs, scope/architecture/DoD conformance and produces a governed verdict independent from executor self-claim.
+
+These roles are logical contracts, not mandatory separate human accounts or separate models in every project.
+
 ## Core operating model
 Preferred flow:
 
@@ -74,24 +109,66 @@ GEF Bootstrap inventories and maps current truth, preserves working architecture
 
 New-project and existing-project adoption are first-class modes.
 
-## Expected target-repository outcomes
-Depending on profile and adoption mode, Bootstrap materialization should be capable of creating or mapping a governed project surface that includes applicable:
+## Universal target contract
+Every successfully bootstrapped target project, regardless of profile, must have enough governed state to provide:
 
-- project identity and fingerprint;
-- source/authority model;
-- project overview and requirements;
-- scope and Definition of Done;
-- architecture/security/test/deployment planning sources;
-- decisions/ADR system;
-- checkpoint/resume state;
-- GEF adoption/policy/execution/review/evidence contracts;
-- Git/GitHub governance assets;
-- evidence and conformance receipts;
+- stable project/repository identity;
+- recoverable authoritative source mapping;
+- explicit adoption mode and known gaps/conflicts;
+- governed planning/decision/checkpoint/resume path;
+- GEF execution/review/evidence policy sufficient for bounded work;
+- truthful readiness/conformance state;
+- a route for scope, completion and source conflicts to fail closed rather than be improvised.
+
+## Profile/adoption-mode conditional outcomes
+The following are materialized or mapped when applicable to the target profile, platform and maturity:
+
+- detailed Requirements/Scope/Architecture/Security/Test/Deployment sources;
+- Git/GitHub workflows, rulesets, labels, issue/PR templates and CI contracts;
 - progress/baseline/telemetry structures;
-- prompt/execution/review artifacts;
-- brownfield compatibility/gap mappings.
+- proof/test-impact machinery;
+- brownfield domain maturity/normalization structures;
+- optional ecosystem adapters;
+- platform-specific automation/installation helpers.
 
-Exact artifacts remain owned by later modules and profiles. This overview does not freeze their filenames or schemas beyond already frozen constitutional decisions.
+Exact artifacts remain owned by later modules. This overview does not freeze their filenames or schemas beyond already frozen constitutional decisions.
+
+## Platform boundary
+A version-controlled repository is part of the expected operating model, but **GitHub is not a universal semantic dependency of the GEF core**.
+
+GitHub is the primary first-class platform profile for this project because it provides PRs, checks, Actions, issues, rulesets and evidence surfaces used by our current workflow. A non-GitHub repository may still conform to the GEF core if it supplies equivalent governed repository identity, change-review/evidence and checkpoint capabilities required by the applicable profile.
+
+GitHub-specific capabilities therefore belong to dedicated platform/governance modules rather than the constitutional definition of GEF itself.
+
+## Minimum brownfield value
+Before full normalization, an existing project must be able to receive at least a safe subset of immediate GEF value:
+
+1. repository/project identity and pre-adoption baseline;
+2. source/authority and gap mapping for the active work area;
+3. bounded prompt/context routing instead of unrestricted rediscovery;
+4. search/file/read budgets and explicit expansion triggers;
+5. compact evidence and delta-oriented review for governed increments;
+6. checkpoint/resume continuity;
+7. shadow-mode test/proof optimization until confidence permits promotion.
+
+A brownfield bootstrap that merely copies templates but provides none of these operational benefits is not sufficient.
+
+## Optimization requirements versus targets
+### Product requirements
+GEF V1 must be capable of measuring or explicitly accounting for, where observable:
+- model/executor token cost;
+- executor wall-clock/active duration;
+- repository searches/files/context loaded;
+- validation/test effort;
+- retries/correction rounds;
+- review/evidence effort;
+- proof/cache/carry-forward behavior;
+- correctness/assurance outcomes relevant to optimization safety.
+
+The system must distinguish measured values, estimates and unavailable telemetry.
+
+### Benchmark targets
+Specific percentage reductions for tokens, time, searches, tests or review are benchmark targets until representative evidence proves them. No target percentage is a constitutional truth merely because it appears in planning.
 
 ## Foundational invariants
 1. Source truth outranks conversational memory.
@@ -107,6 +184,7 @@ Exact artifacts remain owned by later modules and profiles. This overview does n
 11. Frozen constitutional decisions reopen only through governed supersession.
 12. Optional ecosystem integrations cannot silently become core dependencies.
 13. Every accepted increment should make comparable future work cheaper to understand.
+14. Deterministic automation may mechanize governed work but must not silently become semantic authority.
 
 ## Product boundary
 ### In the core product
@@ -117,15 +195,21 @@ Exact artifacts remain owned by later modules and profiles. This overview does n
 - evidence/assurance/continuity/progress/governance contracts;
 - target-repository materialization instructions;
 - new-project and brownfield adoption paths;
-- Git/GitHub governance planning and conformance where applicable;
+- platform governance planning/conformance where applicable;
 - measurement/baseline path for engineering-cost optimization.
 
-### Not automatically core
-- a standalone CLI/runtime daemon/application;
-- UADS/Hive/UGAS dependency;
-- project-specific product architecture belonging to target projects;
-- cross-project engineering memory before dedicated provenance/security design;
-- experimental optimizations that have not been admitted into V1 scope.
+### Explicit non-goals for the current core
+- becoming a general-purpose software-development IDE;
+- replacing ChatGPT/planning agents with a hard-coded planner;
+- becoming a standalone always-running daemon/service;
+- requiring UADS, Hive, UGAS or another proprietary ecosystem to function;
+- rewriting target-project architecture solely to fit GEF naming;
+- fully normalizing a brownfield repository before value can be delivered;
+- storing project-specific product architecture in the Bootstrap repository;
+- granting cross-project learned knowledge authority over local canonical sources;
+- optimizing tokens/time by weakening required assurance;
+- promising universal improvement percentages without representative evidence;
+- turning a future CLI/tooling layer into the semantic source of truth.
 
 ## Integration boundary
 UADS, Hive, UGAS and future ecosystems may provide adapters/capabilities, but the independent GEF Bootstrap core must remain usable and completable without them unless a future governed scope decision explicitly changes this boundary.
@@ -147,6 +231,7 @@ No universal percentage improvement is asserted by this overview. Optimization t
 - Constitution: `GBS-M00 MODULE_DONE`
 - Constitution version: `GBS-CONSTITUTION-v1.0`
 - Source Pack: `IN_PLANNING`
+- Project Overview: `DECIDED`
 - Requirements: `UNPLANNED`
 - Scope: `UNPLANNED`
 - Architecture: `UNPLANNED`
@@ -154,14 +239,7 @@ No universal percentage improvement is asserted by this overview. Optimization t
 - Overall completion: `NOT_YET_BASELINED`
 - ETA: `NOT_YET_RELIABLE`
 
-## Questions to close before freeze
-1. What exact one-sentence product mission should appear in README and future Master Bootstrap Prompt?
-2. Should the canonical user of the repository be described primarily as the project owner, the planning agent, the executor, or all three with explicit roles?
-3. Which target-repository outcomes are universally mandatory versus profile/adoption-mode conditional?
-4. Should GitHub be part of the minimum universal target contract or a first-class optional platform profile for non-GitHub repositories?
-5. What minimum brownfield benefit must be achievable before full governance normalization?
-6. Which optimization dimensions are constitutional requirements versus later benchmark targets?
-7. What explicit non-goals should be frozen here to prevent future scope creep?
+## Decision summary
+Project Overview decides a universal **instruction-first, repository-native, agent-consumed engineering bootstrap** with explicit Project Owner / Planning Agent / Executor / Reviewer roles, a small universal target contract, profile-conditional platform artifacts, GitHub as the primary first-class platform profile rather than a core semantic dependency, immediate safe brownfield value, measurable optimization requirements, evidence-only benchmark claims and explicit non-goals preventing a future CLI/tool layer from replacing governed reasoning.
 
-## Current direction
-A universal, instruction-first engineering bootstrap that turns expensive repeated AI/software-development reasoning into **governed, validity-bound, reusable project knowledge**, allowing agents to execute narrower, faster and more provably while keeping correctness and assurance above optimization.
+Next lifecycle step: exact-delta audit, Decisions Ledger synchronization and `FROZEN` promotion before Requirements planning.
