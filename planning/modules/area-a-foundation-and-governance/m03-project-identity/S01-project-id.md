@@ -1,6 +1,6 @@
 # GBS-M03-S01 — Project ID
 
-Status: `IN_DISCUSSION`
+Status: `FROZEN_CANDIDATE`
 
 ## Purpose
 Freeze the canonical project identity primitive used across GEF Bootstrap. Project identity must remain stable across path changes, repository renames, remotes, machines, operating systems and ordinary clones, while remaining distinct from repository identity, project fingerprint and human-facing project name.
@@ -30,26 +30,24 @@ S01 DOES NOT OWN:
 - project registry/index (M19);
 - source authority beyond identity semantics.
 
-## Candidate frozen contract
+## Frozen project ID contract
 
 ### PID-01 — Project ID is opaque and non-semantic
-`projectId` identifies the governed project lineage. It MUST NOT encode project name, owner, repository URL, filesystem path, GitHub organization, machine, branch, technology stack, security class or business meaning.
+`projectId` identifies the governed project lineage. It MUST NOT encode project name, owner, repository URL, filesystem path, GitHub organization, machine, branch, technology stack, security class or business meaning. No policy decision may be inferred from the ID itself.
 
-No policy decision may be inferred from the ID itself.
-
-### PID-02 — ID is generated once at formal adoption
-A new governed project receives one ID during explicit GEF adoption/bootstrap. Generation is a bounded deterministic operation around an injected cryptographically secure random source.
-
-Candidate format:
-`gefproj_<uuid-v4-lowercase>`
+### PID-02 — Canonical syntax is bare lowercase UUIDv4
+The canonical textual form is an RFC 9562-compatible UUID version 4 rendered in lowercase canonical hexadecimal-with-hyphens form, with no GEF-specific prefix.
 
 Example shape only:
-`gefproj_550e8400-e29b-41d4-a716-446655440000`
+`550e8400-e29b-41d4-a716-446655440000`
 
-The prefix provides type recognition; UUID v4 supplies high-entropy uniqueness without requiring network coordination or leaking creation time.
+The `projectId` field already provides type context, so adding `gefproj_` would duplicate information in every prompt, receipt and machine contract. UUIDv4 supplies local-first high-entropy uniqueness without network coordination or embedded creation time.
 
-### PID-03 — Canonical storage is project configuration
-The canonical project ID is persisted as an M03-owned field inside tracked `.gef/project.json`, using the M02 schema/versioning mechanism. M02 owns structural config mechanics; M03 owns the meaning and lifecycle of the field.
+### PID-03 — ID is generated once at formal adoption
+A new governed project receives one ID during explicit GEF adoption/bootstrap. Production generation requires an injected cryptographically secure random source implementing UUIDv4 semantics. Deterministic tests inject a controlled generator rather than weakening production randomness.
+
+### PID-04 — Canonical storage is project configuration
+The canonical project ID is persisted as an M03-owned mandatory field inside tracked `.gef/project.json`, using M02 schema/versioning mechanics. M02 owns structural config mechanics; M03 owns meaning and lifecycle.
 
 Conceptual fragment:
 ```json
@@ -57,81 +55,74 @@ Conceptual fragment:
   "schemaVersion": "1.0",
   "configVersion": "1.0",
   "adopted": true,
-  "projectId": "gefproj_<uuid-v4>"
+  "projectId": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
 No duplicate canonical ID file is created.
 
-### PID-04 — Stable across location/provider changes
-Changing any of the following MUST NOT change `projectId`:
-- local checkout directory;
-- drive or operating system;
-- Git remote URL;
-- GitHub owner/repository name;
-- default branch;
-- repository visibility;
-- workstation;
-- ordinary backup/restore;
-- ordinary clone used as another checkout of the same governed project.
+### PID-05 — Mandatory for every formally adopted project
+Every project considered fully GEF-adopted MUST have a valid `projectId`. This includes new projects and brownfield projects after their adoption transaction completes.
 
-Those facts belong to repository identity/fingerprint layers, not project identity.
+A pre-M03 or legacy project that already carries adoption markers but lacks `projectId` is not silently declared corrupt and is not silently assigned an ID. It enters the explicit transitional state `IDENTITY_BOOTSTRAP_REQUIRED`. A governed one-time identity-bootstrap operation must generate, preview and persist the ID before further identity-dependent governed mutation.
 
-### PID-05 — Immutable under normal operation
-Once committed as part of formal adoption, `projectId` is immutable in normal configuration editing, migration, upgrade and bootstrap replay.
+Once this transition is completed, a missing `projectId` is an integrity/precondition failure.
 
-Any requested change is a dedicated `REKEY` semantic operation owned by S04 and must never occur as a side effect of migration, merge, repair or config normalization.
+### PID-06 — Stable across location/provider changes
+Changing local directory, drive, operating system, Git remote URL, GitHub owner/repository name, default branch, visibility, workstation, backup/restore or ordinary checkout/clone MUST NOT change `projectId`. Those facts belong to repository identity/fingerprint layers.
 
-### PID-06 — Copy versus fork semantics
-A byte-for-byte repository copy/backup/clone initially preserves `projectId`, because it represents the same governed project lineage until explicitly declared otherwise.
+### PID-07 — Immutable under normal operation
+Once persisted, `projectId` is immutable in normal configuration editing, migration, upgrade, bootstrap replay and repair. Any requested change is a dedicated `REKEY` semantic operation owned by S04 and can never occur as an incidental migration/normalization effect.
 
-If a copy is intentionally turned into an independent project, it MUST undergo an explicit rekey/fork-adoption operation before independent governed state is promoted. Silent ID regeneration is prohibited.
+### PID-08 — Copy versus fork semantics
+A byte-for-byte repository copy, backup or ordinary clone preserves `projectId`, because it initially represents the same governed project lineage. If a copy is intentionally turned into an independent project, it MUST undergo explicit rekey/fork-adoption before independent governed state is promoted. Silent regeneration is prohibited.
 
-### PID-07 — Missing/invalid identity fails before governed mutation
-After formal adoption, missing, malformed, duplicated or semantically conflicting project identity is a precondition/integrity block. GEF must not guess identity from path, Git remote or project name.
+### PID-09 — Missing/invalid identity fails closed
+After identity bootstrap, missing, malformed, non-v4, noncanonical, duplicated or semantically conflicting identity blocks identity-dependent governed mutation. GEF MUST NOT infer identity from path, repository remote, project name or provider metadata.
 
-For a genuinely unadopted repository, absence is descriptive truth and the explicit adoption flow may create a new ID.
+A genuinely unadopted repository remains distinguishable from an adopted project with invalid identity.
 
-### PID-08 — Equality is exact canonical ID equality
-Two project identity values are equal only after canonical syntax normalization and exact ID equality. Names, paths, remotes, fingerprints or repository IDs cannot substitute for `projectId` equality.
+### PID-10 — Equality is canonical exact equality
+Two project identities are equal only when both are valid canonical UUIDv4 values and their canonical lowercase strings are exactly equal. Name, path, remote, fingerprint and repository ID are evidence/context, never substitutes for project identity equality.
 
-The canonical textual form is lowercase and round-trippable without locale-sensitive transformation.
+### PID-11 — No registry/network dependency
+Generation and validation require no GitHub, central registry, DNS, network call or global service. Registries may later index `projectId`, but cannot become its semantic authority.
 
-### PID-09 — No registry/network dependency for generation
-Project ID generation is local-first and requires no GitHub, central registry, DNS, network call or global service. Registries may later index the ID but cannot become its authority.
+### PID-12 — Minimum identity context
+Once validated, downstream machine contracts and prompts should carry the compact `projectId` plus only the specific mutable identity facts required for that operation. They should not repeatedly restate path, remote, name and provider identity merely to identify the project.
 
-### PID-10 — Minimal context/token footprint
-Once validated, downstream prompts and machine contracts should carry `projectId` as a compact stable identity token rather than repeatedly restating path, remote, project name and other mutable identifiers.
-
-Identity validation may reuse a compact validity/fingerprint receipt until relevant input changes.
+Identity validation may be reused through fingerprint-bound receipts until relevant inputs change.
 
 ## Security and privacy properties
-- ID contains no secret and no personal data by construction.
-- ID generation uses a cryptographically secure random source when creating a new project.
-- deterministic test fixtures inject the generator rather than weakening production randomness.
+- `projectId` contains no secret or personal data by design.
+- production generation uses cryptographically secure UUIDv4 randomness.
+- test determinism is provided by dependency injection.
 - project ID alone grants no authorization or trust.
 - externally supplied IDs are untrusted until syntax and project-state binding are validated.
+- malformed or legacy transitional identity cannot silently downgrade to a guessed identity.
 
 ## Required future proof
 Implementation must eventually prove:
-1. generated IDs satisfy canonical syntax;
+1. generated IDs conform to RFC-compatible UUIDv4 canonical lowercase syntax;
 2. independent secure generations do not deterministically collide;
-3. generation can be injected in tests;
-4. project ID survives path/remote/platform changes;
+3. generation is injectable in tests;
+4. ID survives path/remote/platform changes;
 5. normal config merge/migration cannot rewrite it;
-6. missing/invalid adopted identity fails closed;
-7. unadopted repository remains distinguishable from corrupt adopted state;
-8. clone/copy preserves identity by default;
-9. rekey requires an explicit separate operation;
-10. no GitHub/network dependency is used to establish identity.
+6. new formal adoption requires project ID;
+7. legacy adopted state without ID becomes `IDENTITY_BOOTSTRAP_REQUIRED` and is not guessed;
+8. post-bootstrap missing/invalid identity fails closed;
+9. clone/copy preserves identity by default;
+10. rekey requires an explicit separate operation;
+11. no GitHub/network dependency establishes identity;
+12. downstream identity receipts are invalidated when the canonical project config identity field changes.
 
-## Open decisions before freeze
-1. Freeze `gefproj_<uuid-v4-lowercase>` as the canonical syntax, or use bare UUID?
-2. Should `projectId` become mandatory in `.gef/project.json` immediately for every formally adopted project, including legacy/brownfield adoption?
-3. Should an already-adopted legacy project missing `projectId` be treated as corrupt, or as a one-time explicit identity-bootstrap migration state?
-4. Should UUID generation remain implementation-agnostic at contract level or explicitly require RFC-compatible v4 semantics?
+## Resolved freeze decisions
+1. Canonical syntax: **bare lowercase RFC-compatible UUIDv4**.
+2. `projectId` mandatory after formal adoption: **YES**.
+3. Legacy adopted project missing ID: **explicit one-time `IDENTITY_BOOTSTRAP_REQUIRED` transition, never guess/silent generation**.
+4. Generation semantics: **explicit UUIDv4 contract, not implementation-defined opaque randomness**.
 
 ## Session completion rule
-S01 becomes `FROZEN` only after these four decisions are resolved and exact-head semantic review confirms no ownership conflict with M02, S02-S04, M04 or M19.
+Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M03-S02`.
 
-STOP CONDITION: `PROJECT_ID_DECISIONS_REQUIRED`.
+STOP CONDITION: `M03_S01_EXACT_HEAD_REVIEW_REQUIRED`.
