@@ -37,6 +37,8 @@ export interface GefConfigDocument {
 
 export interface GefProjectConfigDocument extends GefConfigDocument {
   readonly adopted: true;
+  readonly projectId?: string;
+  readonly repositoryBinding?: Readonly<Record<string, unknown>>;
 }
 
 export interface ResolvedConfigurationSnapshot {
@@ -71,9 +73,10 @@ const MAX_CONFIG_BYTES = 256 * 1024;
 const MAX_DEPTH = 32;
 const MAX_KEYS = 2048;
 const CORE_KEYS = new Set(["schemaVersion", "configVersion", "extensions"]);
-const PROJECT_KEYS = new Set(["schemaVersion", "configVersion", "extensions", "adopted"]);
+const PROJECT_KEYS = new Set(["schemaVersion", "configVersion", "extensions", "adopted", "projectId", "repositoryBinding"]);
 const SECRET_KEY_PATTERN = /(token|secret|password|privatekey|api[_-]?key|credential)/i;
 const REFERENCE_KEY_PATTERN = /(ref|reference)$/i;
+const PROJECT_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 
 function slashJoin(...parts: readonly string[]): string {
   const raw = parts.filter((part) => part.length > 0).join("/").replace(/\\/g, "/");
@@ -197,6 +200,8 @@ export const projectConfigSchema = Object.freeze({
     schemaVersion: { const: "1.0" },
     configVersion: { type: "string", pattern: "^[0-9]+\\.[0-9]+$" },
     adopted: { const: true },
+    projectId: { type: "string", pattern: "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$" },
+    repositoryBinding: { type: "object" },
     extensions: { type: "object" },
   },
 } as const);
@@ -241,6 +246,8 @@ function validateDocument(value: unknown, project: boolean): readonly ConfigDiag
   if (value.schemaVersion !== "1.0") diagnostics.push({ code: "gef.config.schema_version_invalid", path: "$.schemaVersion", summary: "schemaVersion must be 1.0.", severity: "ERROR" });
   if (typeof value.configVersion !== "string" || !/^\d+\.\d+$/.test(value.configVersion)) diagnostics.push({ code: "gef.config.contract_version_invalid", path: "$.configVersion", summary: "configVersion must use MAJOR.MINOR.", severity: "ERROR" });
   if (project && value.adopted !== true) diagnostics.push({ code: "gef.config.project_adoption_invalid", path: "$.adopted", summary: "Project configuration must explicitly declare adopted=true.", severity: "ERROR" });
+  if (project && value.projectId !== undefined && (typeof value.projectId !== "string" || !PROJECT_ID_PATTERN.test(value.projectId))) diagnostics.push({ code: "gef.config.project_id_invalid", path: "$.projectId", summary: "projectId must be a canonical lowercase UUIDv4 when present.", severity: "ERROR" });
+  if (project && value.repositoryBinding !== undefined && !isRecord(value.repositoryBinding)) diagnostics.push({ code: "gef.config.repository_binding_invalid", path: "$.repositoryBinding", summary: "repositoryBinding must be an object when present.", severity: "ERROR" });
   if (value.extensions !== undefined && !isRecord(value.extensions)) diagnostics.push({ code: "gef.config.extensions_invalid", path: "$.extensions", summary: "extensions must be an object.", severity: "ERROR" });
   diagnostics.push(...scanSecretLikeKeys(value));
   return diagnostics.slice(0, 64);
@@ -602,6 +609,9 @@ export async function applyMigration(input: MigrationApplyInput): Promise<{ valu
   if (!path || path.map((step) => step.id).join("|") !== input.preview.stepIds.join("|")) throw new Error("gef.config.migration_plan_stale");
   let current: Readonly<Record<string, unknown>> = input.document;
   for (const step of path) current = step.transform(current);
+  for (const field of ["projectId", "repositoryBinding"] as const) {
+    if (stableStringify(input.document[field]) !== stableStringify(current[field])) throw new Error("gef.config.identity_field_mutation_forbidden");
+  }
   const diagnostics = input.validateTarget(current);
   if (diagnostics.some((item) => item.severity === "ERROR")) throw new Error("gef.config.migration_target_invalid");
   if (input.write) await input.write(current);
