@@ -57,3 +57,15 @@ Status: `ACTIVE`
 ## D-0014 — Brownfield optimization uses progressive normalization
 - Decision: Existing-project adoption must prefer progressive normalization over big-bang migration. GEF may initially index and alias existing documents, tests, checks and conventions, then normalize only where the expected reduction in recurring token/time cost, ambiguity or risk justifies the change. Shadow assurance is required before aggressive proof/test reuse becomes authoritative in an adopted project.
 - Status: APPROVED
+
+## D-0015 — Descriptive truth and normative truth remain distinct
+- Decision: In existing or drifted projects, GEF must record separately what is actually implemented/observed and what is approved/required. Code or tests may establish descriptive truth for a specific SHA; Scope, Requirements, Architecture and frozen Decisions establish normative truth for their domains. A mismatch creates an explicit drift record and must never silently rewrite either side.
+- Status: APPROVED
+
+## D-0016 — Minimum Sufficient Context governs executor context
+- Decision: Executor context must target the smallest verifiably sufficient set of authoritative facts, contracts, dependencies, risks and proof obligations. Context may expand only on evidence-backed triggers or assurance requirements. Token budgets never override required correctness, security, data integrity or high-assurance inspection.
+- Status: APPROVED
+
+## D-0017 — Governed knowledge should appreciate over time
+- Decision: Approved work should enrich validity-bound reusable engineering knowledge so comparable future work requires less rediscovery, fewer reads/searches, less repeated reasoning and less review rereading. Reuse remains subordinate to current canonical sources and must be invalidated by relevant source, dependency, toolchain or policy changes.
+- Status: APPROVED
