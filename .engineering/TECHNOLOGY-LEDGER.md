@@ -272,10 +272,22 @@ Purpose: preserve optimization ideas, invented mechanisms and reusable engineeri
 - Intended owner: GBS-M24 / bootstrap validation
 - Goal: prove that source hierarchy materialization is usable, conflict-aware, fingerprinted, brownfield-safe and fail-closed rather than reporting decorative success.
 
-## S02 closure audit
-- Material discoveries captured: PASS
-- V1 routing classification recorded: PASS
-- Candidate ideas separated from constitutional decisions: PASS
-- Detailed implementations remain delegated to owning modules: PASS
-- Cross-project memory remains deferred: PASS
-- Overlapping context mechanisms remain candidates for consolidation: PASS
+### TECH-0038 — Scope Expansion Gate
+- Status: PROPOSED
+- V1 classification: NECESSARY
+- Discovered: GBS-M00-S03
+- Intended owner: GBS-M12 / GBS-M16
+- Goal: classify discoveries during active work and prevent executors from silently authorizing product-scope expansion while allowing bounded clarification, required dependency and conformance repair.
+
+### TECH-0039 — Scope Carrying Cost Profile
+- Status: PROPOSED
+- V1 classification: IMPORTANT
+- Discovered: GBS-M00-S03
+- Intended owner: GBS-M12 / GBS-M45
+- Goal: expose recurring context, maintenance, validation, review and migration surface before permanent scope admission; V1 uses qualitative LOW/MEDIUM/HIGH dimensions until measured telemetry supports numeric scoring.
+
+## S03 closure preparation
+- Scope-governance discoveries captured: PASS
+- Scope Expansion Gate registered: PASS
+- Scope Carrying Cost registered without fake numeric precision: PASS
+- Candidate ideas remain separate from V1 admission: PASS
