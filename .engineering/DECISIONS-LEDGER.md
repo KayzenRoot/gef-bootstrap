@@ -45,3 +45,15 @@ Status: `ACTIVE`
 ## D-0011 — Token optimization must be measured end-to-end
 - Decision: Optimization is not accepted merely because a prompt is shorter. GEF must measure or estimate with explicit confidence the total token path per governed change, including source/context loading, prompt input, executor reasoning/output, retries, review rereads and correction rounds, and compare it with quality/defect outcomes. Targets and measured gains must remain distinct.
 - Status: APPROVED
+
+## D-0012 — Executor latency is a first-class performance objective
+- Decision: GEF Bootstrap must optimize not only token consumption but also wall-clock completion time for each bounded Codex interaction. Applicable modules must reduce avoidable repository discovery, file I/O, reasoning branches, test volume, retries, serial waits and unnecessary output. Execution packs should carry explicit latency/performance budgets where meaningful, and performance regressions must be measured against baselines without trading away required correctness or assurance.
+- Status: APPROVED
+
+## D-0013 — Brownfield adoption is a first-class bootstrap path
+- Decision: GEF Bootstrap must support both NEW_PROJECT and EXISTING_PROJECT adoption as first-class operating modes. An existing complex repository may adopt GEF incrementally without restarting product planning, rewriting working architecture, discarding active work, or forcing full historical normalization before receiving benefits. Adoption must inventory current truth, build a compatibility/gap map, establish a pre-adoption baseline, introduce governance and optimization in safe slices, and preserve project-specific source authority. Existing projects must be able to gain prompt, context, review, token and execution-speed improvements as early as safely possible.
+- Status: APPROVED
+
+## D-0014 — Brownfield optimization uses progressive normalization
+- Decision: Existing-project adoption must prefer progressive normalization over big-bang migration. GEF may initially index and alias existing documents, tests, checks and conventions, then normalize only where the expected reduction in recurring token/time cost, ambiguity or risk justifies the change. Shadow assurance is required before aggressive proof/test reuse becomes authoritative in an adopted project.
+- Status: APPROVED
