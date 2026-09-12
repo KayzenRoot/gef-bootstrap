@@ -1,6 +1,6 @@
 # GBS-M01-S04 — Exit Codes
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Objective
 Freeze the process-level exit-code contract for the Deterministic Work Plane Kernel so CLI/automation callers receive a compact, stable and script-safe summary while rich error/lifecycle detail remains in typed machine results and receipts.
@@ -101,7 +101,7 @@ A small stable family lets CI, scripts and wrappers branch immediately without p
 4. Recovery-required/partial-effect outranks generic execution failure: **RESOLVED YES**.
 5. Incompatible versions map to state/precondition; malformed syntax maps to usage/input: **RESOLVED YES**.
 
-## Session completion gate
-Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M01-S05`. No functional implementation is introduced by this planning session.
+## Freeze record
+Final exact-head review passed on PR `#43`, reviewed head `a58e8c7fd3f3e21cec47975e148747b6c91b7350`, and the session was merged before checkpoint promotion to S05.
 
-STOP CONDITION: `M01_S04_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M01_S04_FROZEN`.

@@ -1,6 +1,6 @@
 # GBS-M01-S03 — Deterministic Lifecycle
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Objective
 Freeze the lifecycle contract for every deterministic work-plane invocation, from request acceptance through preflight, execution, verification, receipt emission and terminal classification, including cancellation, compensation and recovery handoff.
@@ -161,7 +161,7 @@ Lifecycle structure makes phase, state and failure location machine-visible so c
 4. Terminal receipts append-only/immutable; corrections linked: **RESOLVED YES**.
 5. Baseline automatic retries do not cross process restarts: **RESOLVED YES**.
 
-## Session completion gate
-Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M01-S04`. No functional implementation is introduced by this planning session.
+## Freeze record
+Final exact-head review passed on PR `#41`, reviewed head `82868f28c33cbf67a0adb4ee07206df7765151d0`, and the session was merged before checkpoint promotion to S04.
 
-STOP CONDITION: `M01_S03_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M01_S03_FROZEN`.

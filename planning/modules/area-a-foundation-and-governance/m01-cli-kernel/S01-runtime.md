@@ -1,6 +1,6 @@
 # GBS-M01-S01 — Deterministic Work Plane Runtime
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Session identity
 - Module: `GBS-M01 — Deterministic Work Plane Kernel`
@@ -99,7 +99,7 @@ Mechanical facts use typed machine results rather than prose parsing. Stable use
 4. Worker Threads require measured M63 CPU-bound ROI and are not baseline: **RESOLVED YES**.
 5. Hash/signature canonicalization belongs to M37/versioned contracts: **RESOLVED YES**.
 
-## Session completion gate
-Planning content is frozen-candidate. Final `FROZEN` requires exact-head review, merge and checkpoint advancement to `GBS-M01-S02`. No functional code is introduced by this planning session.
+## Freeze record
+Final exact-head review passed on PR `#37`, reviewed head `f3f17c6b7fb405c0f5ca8e78b1bcbe1fc75b0d5b`, and the session was merged before checkpoint promotion to S02.
 
-STOP CONDITION: `M01_S01_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M01_S01_FROZEN`.
