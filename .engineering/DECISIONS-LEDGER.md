@@ -161,3 +161,23 @@ Status: `ACTIVE`
 ## D-0040 — Optional integrations never silently block independent core completion
 - Decision: UADS, Hive, UGAS and other ecosystem integrations remain optional unless explicitly admitted into a target profile or future core scope. Their absence/failure may block the corresponding adapter/profile but cannot block independent GEF Bootstrap core completion under the current product boundary.
 - Status: APPROVED
+
+## D-0041 — CONST-F1 through CONST-F8 are stable constitutional group IDs
+- Decision: GEF Bootstrap V1 uses CONST-F1 through CONST-F8 as stable compact reference groups for product boundary, engineering model, optimization objective, brownfield adoption, source truth, scope, completion and continuity/auditability. Individual D-* entries and frozen session documents remain the detailed canonical records; group IDs never replace them.
+- Status: APPROVED
+
+## D-0042 — Frozen constitutional changes require governed reopening and supersession
+- Decision: A frozen constitutional decision may be reopened only for governed triggers such as source drift, proven contradiction, security/integrity defect, invalidated foundational dependency, governed scope/version supersession, measured failure against its objective, or an explicit product-owner decision. Product-owner direction is sufficient to initiate reopening but becomes effective only through a recorded superseding planning decision, impact analysis, audit and checkpoint promotion. New-chat/model preference or executor convenience are insufficient.
+- Status: APPROVED
+
+## D-0043 — Constitution is versioned and fingerprintable without fabricated hashes
+- Decision: M00 closure establishes `GBS-CONSTITUTION-v1.0`. A deterministic constitution fingerprint is required from later Source Pack/Integrity mechanisms; until that exists, repository exact-state binding plus the version ID identifies the current frozen Constitution. Placeholder or invented fingerprints are prohibited.
+- Status: APPROVED
+
+## D-0044 — M00 completion freezes outcomes while delegating implementation mechanics
+- Decision: GBS-M00 is complete only when S01-S05 are frozen with required evidence, ledgers synchronized, constitutional groups contradiction-free, later mechanics explicitly delegated, exact-head review clean, checkpoint promoted and no accidental functional implementation introduced. M00 freezes constitutional outcomes/invariants, not detailed schemas, filenames, algorithms or later module mechanics.
+- Status: APPROVED
+
+## D-0045 — Source Pack canonical documents are not prematurely populated by M00
+- Decision: S05 does not pre-fill SOURCE-HIERARCHY, SCOPE or DEFINITION-OF-DONE with detailed product conclusions. Those documents are materialized in their ordered Source Pack/owning-module sequence from the frozen Constitution, preventing duplicated authority and drift.
+- Status: APPROVED
