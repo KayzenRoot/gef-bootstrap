@@ -1,11 +1,11 @@
 # GBS-M00-S03 — Scope Rules
 
-Status: `DECIDED`
+Status: `FROZEN`
 
 ## Purpose
 Define how GEF Bootstrap decides what belongs in V1, what may enter an active increment, what must be deferred, and how scope expansion is controlled without suppressing valuable engineering discoveries.
 
-This session governs **classification and admission**, not detailed product Scope content. The canonical `.engineering/SCOPE.md` is updated only after this session is reviewed/frozen.
+This session governs **classification and admission**, not detailed product Scope content. The canonical `.engineering/SCOPE.md` remains unplanned until its dedicated scope materialization step.
 
 ## Core rule
 
@@ -55,18 +55,10 @@ EVIDENCE_REQUIRED
 
 A vague claim such as "professional", "enterprise", "best practice" or "nice to have" is not an admission basis.
 
-This answers closure question 1: one primary basis is mandatory; zero is invalid; multiple supporting bases are allowed.
-
 ## IMPORTANT promotion rule
 IMPORTANT work never enters V1 automatically because time, token budget or implementation capacity happens to remain.
 
-Promotion to NECESSARY requires an explicit governed decision identifying:
-- the new primary admission basis;
-- dependency/completion impact;
-- carrying-cost impact;
-- whether Scope/DoD/Backlog/estimate must change.
-
-This answers closure question 2.
+Promotion to NECESSARY requires an explicit governed decision identifying the new primary admission basis, dependency/completion impact, carrying-cost impact and whether Scope/DoD/Backlog/estimate must change.
 
 ## FUTURE metadata contract
 To preserve value without bloating hot context, a FUTURE item needs only:
@@ -82,24 +74,17 @@ key dependencies, if known
 
 Optional richer notes remain cold/addressable. Routine executor context must not load FUTURE details unless a promotion trigger is relevant.
 
-This answers closure question 3.
-
 ## Scope decision authority
 ### During planning
 ChatGPT/planning governance may propose classification and promotion/demotion, but canonical scope changes require the applicable planning decision to be reviewed and frozen before `.engineering/SCOPE.md` changes.
 
 ### During implementation
-Executors may classify a discovery provisionally but may not authorize product-scope expansion. They may only continue automatically for:
-- `IN_SCOPE_CLARIFICATION`;
-- `REQUIRED_DEPENDENCY` that is demonstrably necessary and bounded;
-- `DEFECT/CONFORMANCE_GAP` against an already-approved obligation.
+Executors may classify a discovery provisionally but may not authorize product-scope expansion. They may continue automatically only for bounded `IN_SCOPE_CLARIFICATION`, demonstrably necessary `REQUIRED_DEPENDENCY`, or `DEFECT_CONFORMANCE_GAP` against an already-approved obligation.
 
 Anything else stops/routes as `SCOPE_EXPANSION_REQUIRED` or is preserved as FUTURE/IMPORTANT.
 
 ### Demotion
-An admitted NECESSARY item may be demoted only by an explicit superseding decision that proves the original admission basis no longer applies or that the governing Purpose/DoD changed. Demotion solely to improve ETA or completion percentage is forbidden.
-
-This answers closure question 4.
+An admitted NECESSARY item may be demoted only by an explicit superseding decision proving the original admission basis no longer applies or that governing Purpose/DoD changed. Demotion solely to improve ETA or completion percentage is forbidden.
 
 ## Scope admission record
 No discovered technology, module, session, artifact or behavior becomes a V1 requirement merely because it is documented, discussed, in the Technology Ledger or present in the Master Module Index.
@@ -138,7 +123,7 @@ Codex or another executor never decides product-scope expansion by itself.
 ## Scope Carrying Cost V1
 V1 uses a **qualitative deterministic profile**, not a fabricated numeric score.
 
-Each proposed permanent obligation can be tagged on these dimensions:
+Each proposed permanent obligation can be tagged:
 
 ```text
 CONTEXT_SURFACE: LOW | MEDIUM | HIGH
@@ -149,8 +134,6 @@ MIGRATION_SURFACE: LOW | MEDIUM | HIGH
 ```
 
 A short rationale is required only for HIGH values. Later telemetry/baseline modules may replace qualitative tags with evidence-backed measurements.
-
-This answers closure question 5 and avoids inventing precision before data exists.
 
 ## Inventory classification granularity
 The 64-module / 282-session inventory is **not classified session-by-session by default**.
@@ -165,50 +148,36 @@ AREA default, if useful
 
 Rules:
 - module is the normal admission unit;
-- all sessions inherit the module classification unless an explicit override exists;
+- all sessions inherit module classification unless an explicit override exists;
 - session-level classification is used only when a module mixes NECESSARY and non-V1 work;
-- area-level defaults may reduce repetition but never override an explicit module/session classification;
+- area-level defaults may reduce repetition but never override explicit module/session classification;
 - grouped classifications may be used when several modules share one identical admission basis and owner.
 
-This answers closure question 6 and avoids hundreds of low-value classification records.
-
 ## Master Module Index semantics
-The Master Module Index is an inventory/roadmap, not V1 commitment.
+The Master Module Index is inventory/roadmap, not V1 commitment.
 
 FUTURE/OUT_OF_SCOPE modules may remain as placeholders without entering V1 completion denominator. IMPORTANT also does not enter the denominator until explicitly promoted. Only admitted NECESSARY work contributes to V1 planned completion obligations.
 
 ## Legacy-name / architecture-drift handling
-The current index contains names inherited from the earlier runtime/CLI interpretation, including at least:
-- `GBS-M01 — CLI Kernel`;
-- `GBS-M47 — CLI UX`;
-- `GBS-M49 — Installation`;
-- several quality modules whose wording assumes a runtime executable rather than instruction/protocol conformance.
+The scaffold contains names inherited from the earlier runtime/CLI interpretation, including at least `GBS-M01 — CLI Kernel`, `GBS-M47 — CLI UX`, `GBS-M49 — Installation`, and quality modules whose wording assumes a runtime executable.
 
-S03 does **not** delete, renumber or silently rewrite these modules because stable IDs and references already exist.
-
-Instead it assigns the planning state:
+S03 does not delete, renumber or silently rewrite these modules. Their planning state is:
 
 ```text
 REFACTOR_REQUIRED
 ```
 
 Meaning:
-- ID remains stable;
-- old name is not treated as frozen product architecture;
-- detailed rename/responsibility redesign happens in Scope/Architecture planning;
+- stable ID remains;
+- legacy display name is not frozen architecture;
+- detailed rename/responsibility redesign belongs to Scope/Architecture planning;
 - module may be renamed/reframed, split or reclassified without pretending it was already correctly specified;
-- references should prefer stable ID over legacy display name during transition.
+- references should prefer stable IDs during transition.
 
-Initial likely reframing directions, not yet frozen names:
-- M01: agent/bootstrap orchestration kernel or instruction lifecycle rather than CLI runtime;
-- M47: agent interaction / output UX rather than CLI UX;
-- M49: bootstrap consumption/adoption/distribution rather than software installation;
-- M53–M58: protocol/template/conformance/behavioral validation where runtime testing does not apply.
-
-This answers closure question 7 while keeping detailed architecture in its rightful sessions.
+Likely directions, not frozen names: M01 toward bootstrap/agent orchestration lifecycle; M47 toward agent interaction/output UX; M49 toward bootstrap consumption/adoption/distribution; M53–M58 toward protocol/template/conformance/behavioral validation where runtime testing does not apply.
 
 ## Innovation preservation
-Every material idea that is not admitted immediately retains enough metadata to be reconsidered without rediscovery. Technology inventions route through the Technology & Innovation Ledger. Preservation never equals admission.
+Every material idea not admitted immediately remains addressable with classification, reason, owner/origin and promotion trigger. Technology inventions route through the Technology & Innovation Ledger. Preservation never equals admission.
 
 ## Brownfield scope rule
 Distinguish:
@@ -233,7 +202,7 @@ Scope itself has recurring token, context, validation, review and maintenance co
 
 Optimization that reduces one cost while expanding the total recurring engineering surface without sufficient benefit should not be admitted merely because it sounds sophisticated.
 
-## Frozen-candidate invariants
+## Frozen invariants
 - Every material discovery is preserved before defer/reject.
 - Inventory is not commitment.
 - NECESSARY has one traceable primary admission basis.
@@ -248,11 +217,19 @@ Optimization that reduces one cost while expanding the total recurring engineeri
 - Scope carrying cost is considered before permanent admission.
 - Stable IDs survive naming/refactoring of legacy scaffold concepts.
 
-## Closure audit state
-All seven closure questions now have a decided direction. Before freeze, S03 still requires:
-1. Decisions Ledger synchronization;
-2. Technology Ledger capture of Scope Carrying Cost / Scope Expansion Gate if materially distinct;
-3. exact-delta review against S01/S02/Planning Protocol;
-4. verification that canonical `.engineering/SCOPE.md` has not been prematurely changed.
+## Freeze audit
+- S01 consistency: PASS
+- S02 consistency: PASS
+- Planning Protocol boundary: PASS
+- Decisions Ledger synchronization: PASS
+- Technology Ledger synchronization: PASS
+- `.engineering/SCOPE.md` unchanged by this session: PASS
+- inventory vs V1 commitment separation: PASS
+- active executor expansion authority: FAIL-CLOSED
+- anti-denominator-gaming protection: PASS
+- brownfield distinction: PASS
+- legacy IDs preserved: PASS
+- fake numeric carrying-cost precision: AVOIDED
+- accidental product implementation: NONE
 
-STOP CONDITION before freeze: `READY_FOR_GBS-M00-S03_FINAL_AUDIT`.
+STOP CONDITION: `READY_FOR_GBS-M00-S03_REVIEW_AND_CHECKPOINT`.
