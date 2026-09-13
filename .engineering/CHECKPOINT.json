@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M05_S04",
+  "status": "READY_FOR_GBS_M05_S05",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03", "GBS-M04"],
   "activeModule": "GBS-M05_TRANSACTIONAL_APPLY_ENGINE",
   "activeModuleStatus": "PLANNING_IN_PROGRESS",
   "m04PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN","S05":"FROZEN"},
   "m04ModuleGate": "MODULE_DONE_APPROVED",
-  "m05PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"PLANNED","S05":"PLANNED"},
+  "m05PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN","S05":"PLANNED"},
   "m05S01Pr": 88,
   "m05S01ReviewedHead": "074a5b2bb91bc6848999946146d88028c6a503e2",
   "m05S01MergeSha": "f600ee4ffce03c90bf0c2ff9d28cccfd9881f424",
@@ -18,6 +18,9 @@
   "m05S03Pr": 92,
   "m05S03ReviewedHead": "d2d4836af21354bcfd2fad41eb073a5588c64840",
   "m05S03MergeSha": "2834011067ded8bc302dca9c8bb5023c8a04f241",
+  "m05S04Pr": 94,
+  "m05S04ReviewedHead": "5a6747ff66e3e13d2fc7410991dbf1564b166857",
+  "m05S04MergeSha": "742016a1b5542a7a6a3fac632e8cd170cbfe00df",
   "m05ModuleGate": "NOT_STARTED",
   "activeWorkOrder": "NONE",
   "activeWorkOrderStatus": "NONE",
@@ -31,7 +34,7 @@
   "m05Weight": 20,
   "m05EarnedWeight": 0,
   "denominatorChanged": false,
-  "nextPlanningStage": "PLAN_GBS_M05_S04_ROLLBACK",
+  "nextPlanningStage": "PLAN_GBS_M05_S05_IDEMPOTENCY",
   "codexBootstrapConstructionAuthorized": false,
-  "stopState": "READY_FOR_GBS_M05_S04"
+  "stopState": "READY_FOR_GBS_M05_S05"
 }
