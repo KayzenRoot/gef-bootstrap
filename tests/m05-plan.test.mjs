@@ -92,16 +92,79 @@ test("dependency cycle fails closed", () => {
   assert.match(result.error.reasonCode, /dependency_cycle/);
 });
 
+test("security floor cannot be caller-downgraded", () => {
+  const result = compileTransactionPlan(body({
+    securityClass: "S1_MANAGED_WRITE",
+    authorizationRequirements: ["owner:dangerous-target"],
+    intents: [{ ...body().intents[0], securityClass: "S4_ELEVATED_DESTRUCTIVE" }],
+  }), digest);
+  assert.equal(result.ok, false);
+  assert.match(result.error.reasonCode, /security_downgrade/);
+});
+
+test("move intent requires exact composite source-destination pre-state", () => {
+  const targetRef = "move:a:b";
+  const move = { intentId: "move", kind: "MOVE_MANAGED_ARTIFACT", targetRef, securityClass: "S1_MANAGED_WRITE", recoveryClass: "REVERSIBLE_MANAGED", dependsOn: [], desiredFingerprint: "src=ABSENT|dst=before" };
+  const shared = {
+    mutationSurface: [targetRef],
+    intents: [move],
+    recoveryRequirements: [{ intentId: "move", recoveryClass: "REVERSIBLE_MANAGED", requirementRef: "move-pre" }],
+    verificationObligations: [],
+  };
+  const missing = compileTransactionPlan(body({ ...shared, expectedPreState: [] }), digest);
+  assert.equal(missing.ok, false);
+  assert.match(missing.error.reasonCode, /move_pre_state_missing/);
+
+  const compatible = compileTransactionPlan(body({ ...shared, expectedPreState: [{ key: `target:${targetRef}`, owner: "fixture", predicate: "COMPATIBLE", value: "src=before|dst=ABSENT" }] }), digest);
+  assert.equal(compatible.ok, false);
+  assert.match(compatible.error.reasonCode, /move_pre_state_missing/);
+
+  const exact = compileTransactionPlan(body({ ...shared, expectedPreState: [{ key: `target:${targetRef}`, owner: "fixture", predicate: "EXACT", value: "src=before|dst=ABSENT", contractVersion: "composite-endpoints-v1" }] }), digest);
+  assert.equal(exact.ok, true, exact.ok ? "" : exact.error.summary);
+});
+
 test("dry run is zero-effect and returns READY for pending managed change", async () => {
   const plan = compile();
-  const result = await dryRunTransaction(plan, ports());
+  let sideEffects = 0;
+  const p = {
+    ...ports(),
+    journal: {
+      begin: async () => { sideEffects += 1; return { ok: true, value: true }; },
+      update: async () => { sideEffects += 1; return { ok: true, value: true }; },
+      finish: async () => { sideEffects += 1; return { ok: true, value: true }; },
+    },
+    effects: {
+      checkPhysicalSafety: async () => { sideEffects += 1; return { ok: true, value: true }; },
+      captureRecovery: async () => { sideEffects += 1; return { ok: true, value: "r" }; },
+      stage: async () => { sideEffects += 1; return { ok: true, value: true }; },
+      verifyStaged: async () => { sideEffects += 1; return { ok: true, value: true }; },
+      revalidateCommitBarrier: async () => { sideEffects += 1; return { ok: true, value: true }; },
+      promote: async () => { sideEffects += 1; return { ok: true, value: {} }; },
+      verifyPostState: async () => { sideEffects += 1; return { ok: true, value: [] }; },
+      cleanup: async () => { sideEffects += 1; return { ok: true, value: true }; },
+      restore: async () => { sideEffects += 1; return { ok: true, value: {} }; },
+    },
+  };
+  const result = await dryRunTransaction(plan, p);
   assert.equal(result.outcome, "READY");
   assert.equal(result.intentResults[0].action, "WOULD_UPDATE");
+  assert.equal(sideEffects, 0);
 });
 
 test("dry run returns NOOP when desired state is already present", async () => {
   const result = await dryRunTransaction(compile(), ports({ target: "after" }));
   assert.equal(result.outcome, "NOOP");
+});
+
+test("dry run returns STALE when exact pre-state no longer matches", async () => {
+  const result = await dryRunTransaction(compile(), ports({ binding: "changed" }));
+  assert.equal(result.outcome, "STALE");
+});
+
+test("dry run returns BLOCKED for a tampered plan digest", async () => {
+  const plan = compile();
+  const result = await dryRunTransaction({ ...plan, planDigest: "tampered" }, ports());
+  assert.equal(result.outcome, "BLOCKED");
 });
 
 test("compatible state predicate requires owning compatibility policy", async () => {
