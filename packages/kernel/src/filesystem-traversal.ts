@@ -28,11 +28,7 @@ function traversalError(
       recoverability: "NONE_REQUIRED",
       terminal: "BLOCKED",
       targetRef: request.path.rootRef,
-      metadata: {
-        rootRef: request.path.rootRef,
-        operation: request.path.operation,
-        targetKind: request.target.kind,
-      },
+      metadata: { rootRef: request.path.rootRef, operation: request.path.operation, targetKind: request.target.kind },
     }),
   };
 }
@@ -63,6 +59,25 @@ function requireIdentity(request: FilesystemTraversalRequest, observation: Files
   return { ok: true, value: observation.identityToken };
 }
 
+function requireFilesystemIdentity(request: FilesystemTraversalRequest, observation: FilesystemEntryObservation, scope: string): FilesystemResult<string> {
+  if (observation.filesystemId === undefined || observation.filesystemId.length === 0) {
+    return traversalError(request, "filesystem_boundary_unobservable", `${scope} filesystem identity cannot be observed strongly enough to exclude a mount or volume boundary`, "CAPABILITY");
+  }
+  return { ok: true, value: observation.filesystemId };
+}
+
+function blockLinkLike(request: FilesystemTraversalRequest, observation: FilesystemEntryObservation, ancestor: boolean): FilesystemResult<never> | undefined {
+  if (observation.kind === "REPARSE" && (observation.reparseTag === undefined || observation.reparseTag.trim().length === 0)) {
+    return traversalError(request, "unknown_reparse_tag", "Unknown or unclassified reparse metadata cannot authorize managed mutation", "CAPABILITY");
+  }
+  if (!LINK_LIKE.has(observation.kind)) return undefined;
+  return traversalError(
+    request,
+    ancestor ? "link_ancestor_blocked" : "target_link_requires_typed_operation",
+    ancestor ? "Managed mutation cannot traverse an unexpected link, junction or reparse ancestor" : "Managed mutation cannot silently dereference a link-like target object",
+  );
+}
+
 export function proveFilesystemTraversal(request: FilesystemTraversalRequest): FilesystemResult<FilesystemTraversalProof> {
   if (request.ancestors.length > MAX_ANCESTORS) return traversalError(request, "ancestor_limit", "Filesystem ancestry exceeds the bounded traversal limit", "CAPABILITY");
   if (request.path.caseSemantics === "UNKNOWN") return traversalError(request, "case_semantics_unknown", "Filesystem case semantics are ambiguous for mutation traversal", "CAPABILITY");
@@ -72,23 +87,25 @@ export function proveFilesystemTraversal(request: FilesystemTraversalRequest): F
   const insensitive = request.path.caseSemantics === "INSENSITIVE";
   const dependencyTokens: string[] = [];
   let previousLength = -1;
+  let traversalFilesystemId: string | undefined;
 
   for (const ancestor of request.ancestors) {
     if (!ancestor.accessible) return traversalError(request, "ancestor_access_gap", "Filesystem ancestor metadata is not safely observable", "CAPABILITY");
-    if (ancestor.kind === "ABSENT" || ancestor.kind === "UNKNOWN" || ancestor.kind === "SPECIAL") {
-      return traversalError(request, "ancestor_kind_gap", "Filesystem ancestor kind cannot establish a safe traversal", "CAPABILITY");
-    }
-    if (LINK_LIKE.has(ancestor.kind)) return traversalError(request, "link_ancestor_blocked", "Managed mutation cannot traverse an unexpected link, junction or reparse ancestor");
+    if (ancestor.kind === "ABSENT" || ancestor.kind === "UNKNOWN" || ancestor.kind === "SPECIAL") return traversalError(request, "ancestor_kind_gap", "Filesystem ancestor kind cannot establish a safe traversal", "CAPABILITY");
+    const linkBlocked = blockLinkLike(request, ancestor, true);
+    if (linkBlocked !== undefined) return linkBlocked;
     if (ancestor.kind !== "DIRECTORY") return traversalError(request, "ancestor_not_directory", "Filesystem ancestor required for traversal is not a directory");
 
     const ancestorComponents = pathComponents(ancestor.relativePath, separatorValue);
-    if (!isPrefix(ancestorComponents, targetComponents, insensitive) || ancestorComponents.length <= previousLength) {
-      return traversalError(request, "ancestor_chain_invalid", "Filesystem ancestry is not an ordered prefix chain for the admitted target");
-    }
+    if (!isPrefix(ancestorComponents, targetComponents, insensitive) || ancestorComponents.length <= previousLength) return traversalError(request, "ancestor_chain_invalid", "Filesystem ancestry is not an ordered prefix chain for the admitted target");
     previousLength = ancestorComponents.length;
     const identity = requireIdentity(request, ancestor, "Ancestor");
     if (!identity.ok) return identity;
     dependencyTokens.push(identity.value);
+    const filesystem = requireFilesystemIdentity(request, ancestor, "Ancestor");
+    if (!filesystem.ok) return filesystem;
+    if (traversalFilesystemId === undefined) traversalFilesystemId = filesystem.value;
+    else if (filesystem.value !== traversalFilesystemId) return traversalError(request, "mount_or_volume_boundary_gap", "Managed traversal crosses a mount, volume or filesystem boundary not admitted by this core contract", "CAPABILITY");
   }
 
   const target = request.target;
@@ -96,13 +113,17 @@ export function proveFilesystemTraversal(request: FilesystemTraversalRequest): F
   if (!target.accessible && target.kind !== "ABSENT") return traversalError(request, "target_access_gap", "Filesystem target metadata is not safely observable", "CAPABILITY");
   if (target.kind === "UNKNOWN" || target.kind === "SPECIAL") return traversalError(request, "target_kind_gap", "Filesystem target kind cannot establish a safe traversal", "CAPABILITY");
   if (LINK_LIKE.has(target.kind) && request.allowTargetLinkObject !== true) {
-    return traversalError(request, "target_link_requires_typed_operation", "Managed mutation cannot silently dereference a link-like target object");
+    const targetBlocked = blockLinkLike(request, target, false);
+    if (targetBlocked !== undefined) return targetBlocked;
   }
 
   if (target.kind !== "ABSENT") {
     const identity = requireIdentity(request, target, "Target");
     if (!identity.ok) return identity;
     dependencyTokens.push(identity.value);
+    const filesystem = requireFilesystemIdentity(request, target, "Target");
+    if (!filesystem.ok) return filesystem;
+    if (traversalFilesystemId !== undefined && filesystem.value !== traversalFilesystemId) return traversalError(request, "mount_or_volume_boundary_gap", "Target resolves on a different filesystem than its admitted traversal chain", "CAPABILITY");
   }
 
   const aliasRisk = target.kind === "FILE" && target.linkCount !== undefined && target.linkCount > 1 ? "HARDLINK" as const : "NONE" as const;
