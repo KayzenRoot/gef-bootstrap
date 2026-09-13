@@ -1,3 +1,4 @@
+import { measureRenderedUtf8Bytes } from "./render-budget.js";
 import { applyLineEndings, boundProjection, renderLogicalTarget } from "./render-helpers.js";
 import { checkControl, encodeUtf8, fail, freezeBytes, stableStringify, thawBytes } from "./runtime.js";
 import type { ConditionalSelectionSnapshot, DigestPort, RenderArtifact, RenderSnapshot, TemplateControl, TemplateDescriptor, TemplateResult, VariableResolutionSnapshot } from "./types.js";
@@ -18,27 +19,43 @@ export function renderTemplate(template: TemplateDescriptor, variables: Variable
     if (!controlGate.ok) return controlGate;
     const target = renderLogicalTarget(entry.targetPattern, variableMap, control);
     if (!target.ok) return target;
+
     let bytes: Uint8Array;
-    if (entry.kind === "BINARY_COPY") bytes = thawBytes(entry.sourceBytes);
-    else {
+    if (entry.kind === "BINARY_COPY") {
+      const measured = entry.sourceBytes.length;
+      if (measured > control.budgets.maxRenderedBytesPerEntry) return fail("RENDER_ENTRY_BUDGET_EXCEEDED", "RENDERING", "Rendered artifact exceeds the per-entry byte budget.", entry.entryId);
+      if (totalBytes + measured > control.budgets.maxRenderedBytesTotal) return fail("RENDER_TOTAL_BUDGET_EXCEEDED", "RENDERING", "Rendered artifact set exceeds the aggregate byte budget.");
+      bytes = thawBytes(entry.sourceBytes);
+    } else {
       const selection = selectionMap.get(entry.entryId);
       if (!selection) return fail("RENDER_SELECTION_MISSING", "RENDERING", "TEXT_TEMPLATE entry has no compatible selection.", entry.entryId);
-      let logicalText = "";
+      const chunks: string[] = [];
       for (const token of selection.selectedTokens) {
-        if (token.kind === "LITERAL") logicalText += token.text;
+        const tokenGate = checkControl(control, "RENDERING");
+        if (!tokenGate.ok) return tokenGate;
+        if (token.kind === "LITERAL") chunks.push(token.text);
         else if (token.kind === "VAR") {
           const value = boundProjection(variableMap.get(token.id), "TEXT_CONTENT");
           if (!value.ok) return value;
-          logicalText += value.value;
-        } else if (token.kind === "LITERAL_OPEN") logicalText += RESERVED_INTRODUCER;
+          chunks.push(value.value);
+        } else if (token.kind === "LITERAL_OPEN") chunks.push(RESERVED_INTRODUCER);
         else return fail("RENDER_CONTROL_TOKEN_LEAK", "RENDERING", "Condition control token reached byte rendering.", entry.entryId);
       }
-      bytes = encodeUtf8(applyLineEndings(logicalText, entry.lineEndings ?? "PRESERVE_SOURCE"));
+
+      const policy = entry.lineEndings ?? "PRESERVE_SOURCE";
+      const measured = measureRenderedUtf8Bytes(chunks, policy, control.budgets.maxRenderedBytesPerEntry);
+      if (measured > control.budgets.maxRenderedBytesPerEntry) return fail("RENDER_ENTRY_BUDGET_EXCEEDED", "RENDERING", "Rendered artifact exceeds the per-entry byte budget.", entry.entryId);
+      if (totalBytes + measured > control.budgets.maxRenderedBytesTotal) return fail("RENDER_TOTAL_BUDGET_EXCEEDED", "RENDERING", "Rendered artifact set exceeds the aggregate byte budget.");
+
+      const logicalText = chunks.join("");
+      bytes = encodeUtf8(applyLineEndings(logicalText, policy));
+      if (bytes.byteLength !== measured) return fail("RENDER_MEASUREMENT_MISMATCH", "RENDERING", "Rendered byte measurement disagrees with materialized output.", entry.entryId);
     }
-    if (bytes.byteLength > control.budgets.maxRenderedBytesPerEntry) return fail("RENDER_ENTRY_BUDGET_EXCEEDED", "RENDERING", "Rendered artifact exceeds the per-entry byte budget.", entry.entryId);
+
     totalBytes += bytes.byteLength;
-    if (totalBytes > control.budgets.maxRenderedBytesTotal) return fail("RENDER_TOTAL_BUDGET_EXCEEDED", "RENDERING", "Rendered artifact set exceeds the aggregate byte budget.");
-    artifacts.push(Object.freeze({ entryId: entry.entryId, kind: entry.kind, logicalTarget: target.value, renderedTargetDigest: digest.digest(target.value), renderedContentDigest: digest.digest(bytes), byteLength: bytes.byteLength, content: freezeBytes(bytes) }));
+    const renderedTargetDigest = digest.digest(target.value);
+    const renderedContentDigest = digest.digest(bytes);
+    artifacts.push(Object.freeze({ entryId: entry.entryId, kind: entry.kind, logicalTarget: target.value, renderedTargetDigest, renderedContentDigest, byteLength: bytes.byteLength, content: freezeBytes(bytes) }));
   }
   artifacts.sort((a, b) => a.entryId.localeCompare(b.entryId));
   const identity = artifacts.map((item) => ({ entryId: item.entryId, kind: item.kind, logicalTarget: item.logicalTarget, renderedTargetDigest: item.renderedTargetDigest, renderedContentDigest: item.renderedContentDigest, byteLength: item.byteLength }));
