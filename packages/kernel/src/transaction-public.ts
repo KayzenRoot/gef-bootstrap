@@ -11,8 +11,8 @@ export {
   validateTransactionPlanRuntime,
   verifyTransactionPlanDigest,
 } from "./transaction-plan-engine.js";
-export { rollbackIntentFor, rollbackTransaction } from "./transaction-rollback-governed.js";
-export type { RollbackTransactionInput } from "./transaction-rollback-governed.js";
+export { rollbackIntentFor, rollbackTransaction } from "./transaction-rollback-certified.js";
+export type { RollbackTransactionInput } from "./transaction-rollback-certified.js";
 export { evaluateStateBinding } from "./transaction-state.js";
 export type * from "./transaction-ports.js";
 export type * from "./transaction-recovery-types.js";
