@@ -5,11 +5,12 @@ import { EnvironmentObservationSession, GitObservationSession, ProjectPreflightS
 
 const digest = { algorithm: "sha256-test", digest: (text) => createHash("sha256").update(text).digest("hex") };
 
-test("project preflight snapshot excludes config document cwd env values and Git root", async () => {
+test("project preflight snapshot excludes config document cwd env values Git root and tool executable identity", async () => {
   const configMarker = "CONFIG_CONTEXT_MARKER";
   const environmentMarker = "ENV_CONTEXT_MARKER";
   const cwdMarker = "/local/CWD_CONTEXT_MARKER";
   const rootMarker = "/local/GIT_ROOT_CONTEXT_MARKER";
+  const toolMarker = "/local/TOOL_EXECUTABLE_CONTEXT_MARKER";
   const session = new ProjectPreflightSession({
     digest,
     configReader: { readText: async () => JSON.stringify({ schemaVersion: "1.0", configVersion: "1.0", adopted: true, extensions: { note: configMarker } }) },
@@ -26,6 +27,10 @@ test("project preflight snapshot excludes config document cwd env values and Git
       observeStatus: async () => ({ summary: { staged: 0, unstaged: 0, untracked: 0, conflicted: 0 } }),
       observeRemotes: async () => ({ remotes: [] }),
     },
+    tools: {
+      resolve: async () => ({ status: "FOUND", executable: "node", executableIdentity: toolMarker }),
+      probe: async () => ({ status: "SUCCEEDED", exitCode: 0, stdout: "", stderr: "" }),
+    },
   });
 
   const result = await session.run({
@@ -33,6 +38,7 @@ test("project preflight snapshot excludes config document cwd env values and Git
     requireProjectConfig: true,
     requireRepository: true,
     environment: { facts: ["workingDirectory", "platform"], environmentKeys: ["DISPLAY_NAME"], allowedEnvironmentKeys: ["DISPLAY_NAME"] },
+    tools: [{ descriptor: { toolId: "node", source: "BUILTIN", resolution: { kind: "PATH_NAME", executable: "node" } }, required: false }],
   });
 
   assert.equal(result.readiness, "READY");
@@ -40,11 +46,13 @@ test("project preflight snapshot excludes config document cwd env values and Git
   assert.equal(result.environment.requestedEnvironment.DISPLAY_NAME.status, "OBSERVED");
   assert.equal(result.git.repository.state, "WORKTREE");
   assert.equal("root" in result.git.repository, false);
+  assert.equal("executableIdentity" in result.tools[0], false);
   const serialized = JSON.stringify(result);
   assert.equal(serialized.includes(configMarker), false);
   assert.equal(serialized.includes(environmentMarker), false);
   assert.equal(serialized.includes(cwdMarker), false);
   assert.equal(serialized.includes(rootMarker), false);
+  assert.equal(serialized.includes(toolMarker), false);
 });
 
 test("environment platform fixtures preserve Windows Linux and macOS observations", () => {
