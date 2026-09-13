@@ -28,3 +28,8 @@ export { KernelRuntime } from "./runtime.js";
 export type { KernelRuntimeOptions } from "./runtime.js";
 export type { ExecutionContext } from "./runtime-types.js";
 export * from "./transaction-public.js";
+export * from "./filesystem-types.js";
+export { authorizeFilesystemPath } from "./filesystem-paths.js";
+export { evaluateFilesystemOverwrite } from "./filesystem-overwrite.js";
+export { proveFilesystemTraversal } from "./filesystem-traversal.js";
+export { composeFilesystemPhysicalSafety } from "./filesystem-atomic.js";
