@@ -41,4 +41,4 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: npm test && npm run validate
       - name: M06 focused deterministic and real filesystem proof
-        run: node --test tests/m06-policy.test.mjs tests/m06-binding.test.mjs tests/m06-effect-adapter.test.mjs tests/m06-effect-certainty.test.mjs tests/m06-race.test.mjs tests/m06-brownfield-startup.test.mjs tests/m06-real-filesystem.test.mjs
+        run: node --test tests/m06-policy.test.mjs tests/m06-binding.test.mjs tests/m06-effect-adapter.test.mjs tests/m06-managed-intent-matrix.test.mjs tests/m06-effect-certainty.test.mjs tests/m06-race.test.mjs tests/m06-brownfield-startup.test.mjs tests/m06-real-filesystem.test.mjs
