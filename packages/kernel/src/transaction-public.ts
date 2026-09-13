@@ -15,4 +15,5 @@ export { rollbackIntentFor, rollbackTransaction } from "./transaction-rollback-g
 export type { RollbackTransactionInput } from "./transaction-rollback-governed.js";
 export { evaluateStateBinding } from "./transaction-state.js";
 export type * from "./transaction-ports.js";
+export type * from "./transaction-recovery-types.js";
 export type * from "./transaction-types.js";
