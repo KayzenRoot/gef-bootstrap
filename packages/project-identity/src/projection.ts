@@ -13,12 +13,27 @@ function hasOnlyKeys(value: Record<string, unknown>, allowed: readonly string[])
   return Object.keys(value).every((key) => allowedSet.has(key));
 }
 
+function isCanonicalEndpointHost(value: unknown): value is string {
+  if (typeof value !== "string" || value.length === 0 || value.length > 260 || value !== value.toLowerCase()) return false;
+  if (/[\s\\/@?#]/.test(value) || value.includes("..")) return false;
+  const ipv6 = /^(\[[0-9a-f:.]+\])(?::(\d{1,5}))?$/.exec(value);
+  const named = /^([^:]+)(?::(\d{1,5}))?$/.exec(value);
+  const match = ipv6 ?? named;
+  if (!match) return false;
+  const port = match[2];
+  if (port !== undefined) {
+    const numeric = Number(port);
+    if (!Number.isInteger(numeric) || numeric < 1 || numeric > 65535) return false;
+  }
+  return true;
+}
+
 function canonicalLocator(value: unknown): RepositoryRemoteLocator {
   if (!isRecord(value) || !hasOnlyKeys(value, ["transportIndependentHost", "normalizedRepositoryPath", "providerHint"])) throw new Error("gef.identity.repository_projection_invalid");
   const host = value.transportIndependentHost;
   const path = value.normalizedRepositoryPath;
   const providerHint = value.providerHint;
-  if (typeof host !== "string" || host.length === 0 || host.length > 253 || host !== host.toLowerCase() || /[\s\\/@?#]/.test(host) || host.includes("..")) throw new Error("gef.identity.repository_projection_invalid");
+  if (!isCanonicalEndpointHost(host)) throw new Error("gef.identity.repository_projection_invalid");
   if (typeof path !== "string" || path.length === 0 || path.length > 1024 || path.startsWith("/") || path.endsWith("/") || path.endsWith(".git") || /[\u0000-\u001f\u007f?#]/.test(path)) throw new Error("gef.identity.repository_projection_invalid");
   if (path.split("/").some((segment) => segment.length === 0 || segment === "." || segment === "..")) throw new Error("gef.identity.repository_projection_invalid");
   if (providerHint !== undefined && (typeof providerHint !== "string" || !SAFE_PROVIDER_HINT.test(providerHint))) throw new Error("gef.identity.repository_projection_invalid");
