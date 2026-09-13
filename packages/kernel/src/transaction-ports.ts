@@ -1,4 +1,5 @@
 import type { GefError } from "@gef-bootstrap/contracts";
+import type { RollbackJournalSnapshot } from "./transaction-recovery-types.js";
 import type {
   AppliedIntentResult,
   ExternalEffectDeclaration,
@@ -31,6 +32,8 @@ export interface TransactionAuthorizationPort {
     readonly runId: string;
     readonly plan: TransactionPlan;
     readonly authorizationRefs: readonly string[];
+    readonly phase: "APPLY" | "ROLLBACK";
+    readonly intent?: TransactionIntent;
   }): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
 }
 
@@ -38,11 +41,23 @@ export interface TransactionJournalPort {
   begin(snapshot: TransactionJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   update(snapshot: TransactionJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   finish(snapshot: TransactionJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
+  beginRollback?(snapshot: RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
+  updateRollback?(snapshot: RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
+  finishRollback?(snapshot: RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
 }
 
 export interface TransactionEffectPort {
   checkPhysicalSafety(intent: TransactionIntent): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   captureRecovery(intent: TransactionIntent): Promise<TransactionPortResult<string | undefined>> | TransactionPortResult<string | undefined>;
+  verifyRecoveryMaterial?(request: {
+    readonly phase: "APPLY" | "ROLLBACK";
+    readonly planDigest: string;
+    readonly transactionId: string;
+    readonly intent: TransactionIntent;
+    readonly recoveryRef: string;
+    readonly expectedPreFingerprint?: string;
+    readonly expectedPostFingerprint?: string;
+  }): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   stage(intent: TransactionIntent): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   verifyStaged(intent: TransactionIntent, obligations: readonly VerificationObligation[]): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   revalidateCommitBarrier(plan: TransactionPlan): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
