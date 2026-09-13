@@ -1,6 +1,6 @@
 # GBS-M04 — Preflight & Discovery Module Gate
 
-Status: `READY_FOR_IMPLEMENTATION_WORK_ORDER`
+Status: `MODULE_DONE_APPROVED`
 
 ## Planning evidence
 - S01 Environment Discovery: `FROZEN` — PR `#72`
@@ -9,117 +9,96 @@ Status: `READY_FOR_IMPLEMENTATION_WORK_ORDER`
 - S04 Toolchain Discovery: `FROZEN` — PR `#78`
 - S05 Project State Discovery: `FROZEN` — PR `#80`
 - Canonical checkpoint after S05: `READY_FOR_GBS_M04_MODULE_GATE`
+- Work Order admission PR: `#84`
 
-## Gate audit basis
-Reviewed against frozen Requirements, Scope, Architecture, Security, Test/Benchmark Plan, Definition of Done, Deployment, Backlog, M01 lifecycle/runtime, M02 configuration/schema and M03 project identity.
+## Implementation evidence
+- Work Order: `GBS-WO-M04-001`
+- Implementation PR: `#86`
+- Admitted base SHA: `04e711c7208476728187609c14ef9119530633ef`
+- Exact reviewed/merged head: `bc26829fa8f3043056b6d9b614c618767f02e6c7`
+- Exact implementation tree: `46c80e056dde05ef108e9599485c33de844cec5a`
+- Squash merge SHA: `67b4377a6df7a34874f751c13d1659b942eed859`
+- Exact-head GitHub Actions run: `34730911026`
+- CI job: `103653404874`
+- Strict TypeScript build/typecheck: `PASS`
+- Locked dependency audit: `0 vulnerabilities`
+- Tests: `118 PASS / 0 FAIL / 0 SKIP / 0 TODO`
+- Exact-head workflow conclusion: `SUCCESS`
+- Exact-head semantic verdict: `APPROVED`
+- Canonical Evidence Bundle: `.engineering/M04-MODULE-EVIDENCE.md`
 
-## Coverage result
+## Gate audit result
 ### Environment
-PASS. S01 defines explicit S0 read-only primitive environment observation, request-scoped allowlisted variables, no startup scan, no subprocess for primitive facts, compact evidence and per-invocation reuse.
+`PASS`. Explicit injectable observation, exact variable allowlists, startup silence and compact reusable evidence are implemented without broad host scanning.
 
 ### Local Git
-PASS. S02 defines exact request-driven repository/HEAD/status/remotes observation, summary-first status, no alias authority, no silent repair and targeted freshness while preserving M29 execution ownership.
+`PASS`. Repository/HEAD/status/remotes are request-driven; worktree/bare/absent/access/unavailable/invalid states and attached/detached/unborn HEAD remain distinct; raw remotes are reduced through M03 before reusable snapshotting.
 
-### GitHub reference profile
-PASS. S03 defines conditional exact-target provider discovery, zero provider calls for local-only paths, stable provider-ID handoff to M03, request-scoped capability checks, truthful gap/block states and no provider mutation.
+### Hosted profile
+`PASS`. Local-only paths make zero hosted calls; hosted lookup is exact-target and request-scoped; returned identity is runtime validated; capability observation does not imply authorization; no provider mutation is performed.
 
 ### Toolchain
-PASS. S04 defines exact logical-tool observation, safe bounded direct probes, presence/version/compatibility separation, no broad software inventory, no auto-install/repair and targeted reuse while preserving M38/M51 ownership.
+`PASS`. Logical tools are observed only when requested; probes are bounded and shell-free by contract; no broad inventory/install/repair occurs; parser and M51 compatibility-policy identity participate in requirement fingerprinting.
 
 ### Project state composition
-PASS. S05 defines an ephemeral operation-relative preflight snapshot, requirement-driven composition, cheap-blocker short-circuit, bounded independent-read concurrency, compact expected-state bindings and no hidden repair.
+`PASS`. The composer builds the smallest sufficient fact graph, orders cheap blockers before expensive work, detects stale expected state early, permits bounded independent reads only after prerequisites, reuses observations within one invocation and emits compact state.
 
-## Cross-cutting gate results
-- M01 lifecycle/preflight compatibility: `PASS`
-- M02 config ownership preserved: `PASS`
-- M03 identity/repository binding ownership preserved: `PASS`
-- NEW_PROJECT / EXISTING_PROJECT preservation: `PASS`
-- brownfield non-destructive behavior: `PASS`
-- GitHub remains profile-conditional: `PASS`
-- provider/local-tool security boundaries: `PASS`
-- least-necessary discovery: `PASS`
-- exact-state/staleness handoff to execution: `PASS`
-- no M05/M06/M29/M30+ mutation implementation absorbed: `PASS`
-- no M17-M19/M21/M23 persistent continuity/status ownership absorbed: `PASS`
-- no broad repository/provider/software scan baseline: `PASS`
-- token/time objective represented structurally: `PASS`
-- implementation proof obligations identified: `PASS`
-- planning-only credit remains zero: `PASS`
+## Mechanical proof families
+The implementation/test evidence covers all 32 frozen M04 proof families, including:
+- explicit environment observation and allowlist hygiene;
+- request-driven Git facts and truthful gap states;
+- no remote-alias/path authority over project identity;
+- zero-hosted local paths and exact-target provider observation;
+- stable provider-ID handoff only through M03 semantics;
+- bounded safe tool probing with version/compatibility separation;
+- no hidden repair or mutation;
+- cheap-blocker short-circuit and bounded independent concurrency;
+- optional-vs-mandatory readiness semantics;
+- configuration/identity separation and brownfield preservation;
+- compact expected-state bindings and targeted stale detection;
+- stronger-requirement expansion and targeted invalidation;
+- no recursive baseline repository scan;
+- compact snapshot hygiene;
+- Windows/Linux/macOS fixtures;
+- strict build/tests and hosted exact-head evidence.
+
+## Performance contract result
+`PASS` by construction and tests:
+- no discovery at import/startup;
+- requirements drive the smallest fact graph;
+- repository-presence-only requests do not read remotes;
+- cheap blockers stop unnecessary provider/tool/environment work;
+- local-only paths use zero provider calls;
+- provider/tool work can overlap only when independent and prerequisites are satisfied;
+- per-invocation caches avoid duplicate reads;
+- narrower invalidation re-observes only affected facts where provable;
+- compact normalized state replaces raw machine/provider/process dumps.
+
+Quantitative regression thresholds remain M63-owned.
+
+## Ownership result
+M04 owns read-only deterministic preflight/discovery and exact-state handoff only. M05/M06 retain transactional mutation/filesystem safety and recovery; M13 adoption; M17-M19 continuity/registry; M21-M25 progress/evidence/proof; M29 Git execution; M30-M33 hosted mutation/governance/CI/release; M38 capability registry; M51 compatibility policy; M63 executor-performance thresholds.
 
 ## Gate verdict
 Planning completeness: `PASS`.
-Implementation completeness: `NOT_STARTED`.
-Evidence completeness: `NOT_APPLICABLE_YET_FOR_IMPLEMENTATION`.
-Module state: `PLANNED_READY_FOR_IMPLEMENTATION`.
+Implementation completeness: `PASS`.
+Evidence completeness: `PASS`.
+Semantic audit: `PASS`.
+Module state: `MODULE_DONE`.
 
-M04 frozen production weight is `17`. Planning earns `0/17`. Production credit requires implementation, tests, exact-head evidence and semantic audit.
+M04 frozen production weight is `17`; approved merge and checkpoint promotion earn `17/17`.
 
-## Required implementation proof families
-The M04 Work Order must prove at minimum:
-1. environment observation is explicit/injectable and startup remains scan/network/process silent;
-2. environment variables are exact allowlist only and sensitive values cannot enter compact evidence;
-3. local Git fact families are request-driven and independently observable/reusable;
-4. repository absence, invalid repo, detached/unborn HEAD, status and remote gaps are truthful;
-5. remote aliases never become canonical authority and M03 normalization/collision rules are reused;
-6. local-only paths execute with zero provider calls;
-7. GitHub provider lookup is exact-target and bounded;
-8. stable provider repository ID strengthens M03 continuity only through the admitted identity contract;
-9. provider capability checks are exact-operation scoped and do not imply authorization;
-10. provider unavailable/permission/identity gaps remain distinct and non-mutating;
-11. tool observation is exact logical-tool scoped and performs no broad inventory;
-12. arbitrary repository executables cannot enter trusted probe execution;
-13. safe tool probes use executable+argv, shell disabled, bounded time/output/cancellation;
-14. version presence and M51 compatibility decision remain distinct;
-15. no tool installation/update/repair occurs during preflight;
-16. S05 requests only required fact families;
-17. cheap blockers prevent unnecessary provider/tool calls;
-18. independent reads may run concurrently only after prerequisite bindings are established;
-19. optional gaps do not block mandatory-ready paths;
-20. missing mandatory evidence never returns READY;
-21. configuration and identity remain distinct facts;
-22. NEW_PROJECT/BROWNFIELD mode is not guessed from arbitrary heuristics;
-23. project/repository identity cannot be reconstructed from cwd/HEAD/remote alias;
-24. compact expected-state bindings can be carried to later mutation revalidation;
-25. changed relevant state causes targeted stale/block classification;
-26. weaker reused observations cannot satisfy stronger requirements;
-27. preflight performs no hidden repair/mutation across config/Git/provider/tool surfaces;
-28. baseline project-state preflight does not require recursive repository scan;
-29. compact snapshot/receipts exclude unnecessary raw paths, environment maps, provider payloads and tool output;
-30. deterministic fixtures prove Windows/Linux/macOS observation semantics where applicable;
-31. strict typecheck/build and focused tests pass with no skipped critical path;
-32. hosted exact-head CI evidence exists and no blocking semantic finding remains.
-
-## Implementation architecture constraint
-Prefer one provider-neutral M04 package/surface with injected environment, Git, provider and tool ports plus a project-preflight composer. Do not introduce actual Git mutation, provider mutation, broad capability registry, compatibility matrix, persistent registry or transaction engine ownership.
-
-## Performance contract
-Implementation must make the common path faster than naive all-facts discovery by construction:
-- no discovery at import/startup;
-- requirements compile to the smallest fact graph;
-- cheap blockers before expensive calls;
-- zero hosted calls for local-only operations;
-- exact tool probes only when selected path requires them;
-- bounded parallel independent reads;
-- per-invocation memoization/reuse keyed by relevant dependencies;
-- compact normalized results instead of raw output propagation.
-
-Quantitative regression thresholds remain M63-owned, but M04 must expose enough deterministic counters/hooks to permit later measurement without adding broad telemetry ownership.
-
-## Ownership result
-M04 owns read-only deterministic preflight/discovery contracts and their implementation only. M05/M06 retain transactional mutation/filesystem safety; M13 adoption; M17-M19 continuity/registry; M21/M23 progress/status; M29 Git execution; M30-M33 hosted mutations/governance/CI/release; M38 capability registry; M51 compatibility policy; M63 performance benchmarks.
-
-## Progress truth
+## Progress truth after promotion
 - Production denominator: `1088`
-- Earned before M04 implementation: `70`
-- Remaining: `1018`
-- Official completion: `6.43%`
+- Earned: `87`
+- Remaining: `1001`
+- Official completion: `8.00%`
+- Official remaining: `92.00%`
 - M04 weight: `17`
-- M04 earned: `0`
-- Potential after approved M04 MODULE_DONE: `87 / 1088 = 8.00%`
-- Potential remaining after M04 MODULE_DONE: `1001 / 1088 = 92.00%`
+- M04 earned: `17`
 - Denominator changed: `NO`
 
 ## Next-stage rule
-The only legal next production increment is compilation/admission of `GBS-WO-M04-001 — Implement Preflight & Discovery Foundation`. Do not begin M05. Do not award M04 credit before exact-head implementation evidence and semantic audit.
+M05 may enter planning only after the canonical human/machine checkpoint records this M04 promotion. M05 implementation is not implied or admitted. Codex remains outside Bootstrap construction unless a separately governed benchmark exception/ADR is explicitly admitted.
 
-STOP CONDITION: `GBS_WO_M04_001_REQUIRED`.
+STOP CONDITION: `M04_MODULE_DONE_APPROVED`.
