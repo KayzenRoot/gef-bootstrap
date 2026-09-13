@@ -29,7 +29,7 @@ export type { KernelRuntimeOptions } from "./runtime.js";
 export type { ExecutionContext } from "./runtime-types.js";
 export * from "./transaction-public.js";
 export * from "./filesystem-types.js";
-export type { FilesystemIntentResolver, FilesystemPhysicalPort, FilesystemResolvedIntent, FilesystemResolvedPath } from "./filesystem-ports.js";
+export type { FilesystemExecutionContext, FilesystemIntentResolver, FilesystemPhysicalPort, FilesystemResolvedIntent, FilesystemResolvedPath } from "./filesystem-ports.js";
 export { authorizeFilesystemPath } from "./filesystem-paths.js";
 export { evaluateFilesystemOverwrite } from "./filesystem-overwrite.js";
 export { proveFilesystemTraversal } from "./filesystem-traversal.js";
