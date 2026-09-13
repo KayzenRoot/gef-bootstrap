@@ -15,11 +15,12 @@ import {
   type RepositoryResolution,
 } from "@gef-bootstrap/project-identity";
 import { createMutableCounters, fingerprintRequirement, snapshotCounters, stablePreflightStringify } from "./canonical.js";
-import { EnvironmentObservationSession } from "./environment.js";
-import { GitObservationSession } from "./git.js";
+import { compactEnvironmentEvidence, EnvironmentObservationSession } from "./environment.js";
+import { compactGitEvidence, GitObservationSession } from "./git.js";
 import { HostedProfileObservationSession } from "./provider.js";
 import { ToolObservationSession } from "./toolchain.js";
 import type {
+  CompactGitObservation,
   EnvironmentObservationPort,
   ExpectedStateBinding,
   GitFactFamily,
@@ -27,6 +28,7 @@ import type {
   GitObservationPort,
   HostedProfileObservation,
   HostedProfilePort,
+  InternalProjectConfigObservation,
   MutablePreflightCounters,
   PreflightGap,
   ProjectConfigObservation,
@@ -102,6 +104,14 @@ function repositoryAvailable(git: GitObservation | undefined): boolean {
   return git?.repository?.state === "WORKTREE" || git?.repository?.state === "BARE_REPOSITORY";
 }
 
+function compactProjectConfig(observation: InternalProjectConfigObservation): ProjectConfigObservation {
+  return Object.freeze({ status: observation.status, fingerprint: observation.fingerprint, diagnostics: observation.diagnostics });
+}
+
+function compactGitSnapshot(observation: GitObservation): CompactGitObservation {
+  return compactGitEvidence(observation) as CompactGitObservation;
+}
+
 export class ProjectPreflightSession {
   readonly #digest: RequirementDigestPort;
   readonly #configReader: ConfigReadPort | undefined;
@@ -110,7 +120,7 @@ export class ProjectPreflightSession {
   readonly #git?: GitObservationSession;
   readonly #hosted?: HostedProfileObservationSession;
   readonly #tools?: ToolObservationSession;
-  readonly #configCache = new Map<string, ProjectConfigObservation>();
+  readonly #configCache = new Map<string, InternalProjectConfigObservation>();
 
   constructor(options: ProjectPreflightSessionOptions) {
     this.#digest = options.digest;
@@ -121,13 +131,13 @@ export class ProjectPreflightSession {
     if (options.tools) this.#tools = new ToolObservationSession(options.tools, this.#counters);
   }
 
-  async #projectConfig(projectRoot: string): Promise<ProjectConfigObservation | undefined> {
+  async #projectConfig(projectRoot: string): Promise<InternalProjectConfigObservation | undefined> {
     const cached = this.#configCache.get(projectRoot);
     if (cached) { this.#counters.cacheHits += 1; return cached; }
     if (!this.#configReader) return undefined;
     const paths = resolveProjectConfigPaths(projectRoot);
     const loaded = await loadProjectConfig(this.#configReader, paths.configPath);
-    const observation: ProjectConfigObservation = loaded.value
+    const observation: InternalProjectConfigObservation = loaded.value
       ? { status: "VALID", document: loaded.value, fingerprint: loaded.fingerprint, diagnostics: loaded.diagnostics }
       : loaded.diagnostics.some((item) => item.severity === "ERROR")
         ? { status: "INVALID", fingerprint: loaded.fingerprint, diagnostics: loaded.diagnostics }
@@ -153,7 +163,7 @@ export class ProjectPreflightSession {
     const generatedBindings: ExpectedStateBinding[] = [];
     const needIdentity = requirements.identityBindingStrength !== undefined;
     const needConfig = requirements.requireProjectConfig === true || needIdentity;
-    let projectConfig: ProjectConfigObservation | undefined;
+    let projectConfig: InternalProjectConfigObservation | undefined;
     let identity: ProjectIdentityAssessment | undefined;
     let git: GitObservation | undefined;
     let repositoryResolution: RepositoryResolution | undefined;
@@ -170,7 +180,7 @@ export class ProjectPreflightSession {
       appendKnownExpectedBindingGaps(gaps, requirements.expectedBindings, generatedBindings);
       if (hasBlockingGap(gaps) && !requirements.diagnosticMode) {
         this.#countSkippedExpensive(requirements);
-        return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig } : {}), tools, expectedStateBindings: generatedBindings, gaps });
+        return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig: compactProjectConfig(projectConfig) } : {}), tools, expectedStateBindings: generatedBindings, gaps });
       }
     }
 
@@ -181,7 +191,7 @@ export class ProjectPreflightSession {
       appendKnownExpectedBindingGaps(gaps, requirements.expectedBindings, generatedBindings);
       if (hasBlockingGap(gaps) && !requirements.diagnosticMode) {
         this.#countSkippedExpensive(requirements);
-        return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig } : {}), identity, tools, expectedStateBindings: generatedBindings, gaps });
+        return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig: compactProjectConfig(projectConfig) } : {}), identity, tools, expectedStateBindings: generatedBindings, gaps });
       }
     }
 
@@ -199,7 +209,7 @@ export class ProjectPreflightSession {
     }
     if (hasBlockingGap(gaps) && !requirements.diagnosticMode) {
       this.#countSkippedExpensive(requirements);
-      return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig } : {}), ...(identity ? { identity } : {}), tools, expectedStateBindings: generatedBindings, gaps });
+      return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig: compactProjectConfig(projectConfig) } : {}), ...(identity ? { identity } : {}), tools, expectedStateBindings: generatedBindings, gaps });
     }
 
     if (requestedGitFacts.size > 0) {
@@ -240,9 +250,9 @@ export class ProjectPreflightSession {
       return this.#finish({
         requirementFingerprint,
         mode,
-        ...(projectConfig ? { projectConfig } : {}),
+        ...(projectConfig ? { projectConfig: compactProjectConfig(projectConfig) } : {}),
         ...(identity ? { identity } : {}),
-        ...(git ? { git } : {}),
+        ...(git ? { git: compactGitSnapshot(git) } : {}),
         ...(repositoryResolution ? { repositoryResolution, repositoryProjection: repositoryResolution.projection } : {}),
         tools,
         expectedStateBindings: generatedBindings,
@@ -250,7 +260,7 @@ export class ProjectPreflightSession {
       });
     }
 
-    let environmentResult: Awaited<ReturnType<EnvironmentObservationSession["observe"]>> | undefined;
+    let environmentResult: ReturnType<EnvironmentObservationSession["observe"]> | undefined;
     const parallel: Promise<void>[] = [];
     if (requirements.environment) {
       if (!this.#environment) gaps.push(gap("gef.preflight.environment.port_unavailable", "M04", true));
@@ -299,10 +309,10 @@ export class ProjectPreflightSession {
     return this.#finish({
       requirementFingerprint,
       mode,
-      ...(projectConfig ? { projectConfig } : {}),
+      ...(projectConfig ? { projectConfig: compactProjectConfig(projectConfig) } : {}),
       ...(identity ? { identity } : {}),
-      ...(environmentResult ? { environment: environmentResult } : {}),
-      ...(git ? { git } : {}),
+      ...(environmentResult ? { environment: compactEnvironmentEvidence(environmentResult) } : {}),
+      ...(git ? { git: compactGitSnapshot(git) } : {}),
       ...(repositoryResolution ? { repositoryResolution, repositoryProjection: repositoryResolution.projection } : {}),
       ...(hosted ? { hosted } : {}),
       tools,
