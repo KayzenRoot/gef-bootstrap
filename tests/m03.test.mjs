@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import test from "node:test";
 import {
   MigrationGraph,
@@ -13,12 +14,14 @@ import {
   bindingStrengthSatisfies,
   canonicalIdentityStringify,
   createFingerprintManifest,
+  createFormalAdoptionIdentity,
   createIdentityTransitionPlan,
   createProjectFingerprint,
   createProjectOnlyBinding,
   generateProjectId,
   isCanonicalProjectId,
   normalizeRemoteLocator,
+  parsePersistedRepositoryBinding,
   repositoryIdentityEqual,
   repositoryResolutionSatisfiesBound,
   resolveRepositoryIdentity,
@@ -27,7 +30,8 @@ import {
 const P1 = "550e8400-e29b-41d4-a716-446655440000";
 const P2 = "123e4567-e89b-42d3-a456-426614174000";
 const P3 = "123e4567-e89b-42d3-b456-426614174001";
-const digest = { algorithm: "test-v1", digest: (text) => `d:${Buffer.from(text).toString("base64url").slice(0, 40)}` };
+const digest = { algorithm: "sha256-test", digest: (text) => createHash("sha256").update(text).digest("hex") };
+const recoveryEvidence = { sourceRef: "backup.snapshot.20260912", authorityRef: "recovery.approval.1", collisionCheck: "NO_AUTHORITATIVE_CONFLICT" };
 const remote = (path = "Owner/Repo", stable = "repo-1") => ({
   schemaVersion: 1,
   state: "RESOLVED_REMOTE_BOUND",
@@ -45,10 +49,16 @@ test("project ids are canonical lowercase UUIDv4 and production generation has a
   assert.equal(isCanonicalProjectId(generateProjectId()), true);
 });
 
-test("identity lifecycle distinguishes unadopted, brownfield bootstrap, invalid and valid adopted state", () => {
+test("formal adoption always carries a generated project id", () => {
+  assert.deepEqual(createFormalAdoptionIdentity(() => P2), { adopted: true, projectId: P2 });
+});
+
+test("identity lifecycle distinguishes unadopted, brownfield bootstrap, invalid, conflict and valid adopted state", () => {
   assert.equal(assessProjectIdentity(null).state, "UNADOPTED");
   assert.equal(assessProjectIdentity({ adopted: true }).state, "IDENTITY_BOOTSTRAP_REQUIRED");
+  assert.equal(assessProjectIdentity({ adopted: true }, { identityPreviouslyEstablished: true }).state, "IDENTITY_CONFLICT");
   assert.equal(assessProjectIdentity({ adopted: true, projectId: "bad" }).state, "INVALID_PROJECT_ID");
+  assert.equal(assessProjectIdentity({ adopted: true, projectId: P1 }, { expectedProjectId: P2 }).state, "IDENTITY_CONFLICT");
   assert.deepEqual(assessProjectIdentity({ adopted: true, projectId: P1 }), { state: "ADOPTED_VALID", projectId: P1 });
 });
 
@@ -57,6 +67,14 @@ test("M02 project config admits optional identity fields without silently requir
   assert.deepEqual(validateProjectConfig({ schemaVersion: "1.0", configVersion: "1.0", adopted: true, projectId: P1, repositoryBinding: { bindingKind: "LOCAL", localBindingId: "local-1" } }), []);
   assert.equal(validateProjectConfig({ schemaVersion: "1.0", configVersion: "1.0", adopted: true, projectId: "BAD" }).some((item) => item.code === "gef.config.project_id_invalid"), true);
   assert.equal(validateProjectConfig({ schemaVersion: "1.0", configVersion: "1.0", adopted: true, repositoryBinding: "bad" }).some((item) => item.code === "gef.config.repository_binding_invalid"), true);
+});
+
+test("M03 strictly parses repositoryBinding materialized through M02 config", () => {
+  assert.equal(parsePersistedRepositoryBinding({ bindingKind: "LOCAL", localBindingId: "local-1" }).ok, true);
+  assert.equal(parsePersistedRepositoryBinding({ bindingKind: "REMOTE", normalizedLocator: { transportIndependentHost: "github.com", normalizedRepositoryPath: "Owner/Repo" }, stableProviderId: "repo-42" }).ok, true);
+  assert.equal(parsePersistedRepositoryBinding({ bindingKind: "LOCAL", localBindingId: "../unsafe" }).ok, false);
+  assert.equal(parsePersistedRepositoryBinding({ bindingKind: "REMOTE", normalizedLocator: { transportIndependentHost: "GitHub.com", normalizedRepositoryPath: "Owner/Repo" } }).ok, false);
+  assert.equal(parsePersistedRepositoryBinding({ bindingKind: "LOCAL", localBindingId: "local-1", extra: true }).ok, false);
 });
 
 test("ordinary M02 migration cannot add, remove or rewrite project identity fields", async () => {
@@ -91,10 +109,7 @@ test("SSH and HTTPS forms normalize equally while credentials, query and fragmen
 
 test("unsupported schemes fail closed and generic repository path case stays opaque", () => {
   assert.equal(normalizeRemoteLocator({ alias: "x", url: "file:///tmp/repo" }), null);
-  assert.notDeepEqual(
-    normalizeRemoteLocator({ alias: "x", url: "https://github.com/Owner/Repo" }),
-    normalizeRemoteLocator({ alias: "x", url: "https://github.com/owner/repo" }),
-  );
+  assert.notDeepEqual(normalizeRemoteLocator({ alias: "x", url: "https://github.com/Owner/Repo" }), normalizeRemoteLocator({ alias: "x", url: "https://github.com/owner/repo" }));
 });
 
 test("local-only repository requires an explicit persisted binding before repository-bound use", () => {
@@ -180,11 +195,25 @@ test("normal rekey generates its target in preview, binds it and rejects caller-
   assert.deepEqual(applied.receipt.invalidationClasses, ["PROJECT_BOUND", "REPOSITORY_BOUND"]);
 });
 
-test("controlled import recovery is the only path accepting an externally supplied project id", () => {
+test("minimum rekey invalidation cannot be weakened by caller input", () => {
   const current = { projectId: P1, projectConfigFingerprint: "cfg1", identityFingerprint: "i1" };
-  const plan = createIdentityTransitionPlan({ operation: "IMPORT_RECOVERY", reason: "recovery.import", current, assurance: "ELEVATED", importRecoveryProjectId: P3 }, digest);
+  const plan = createIdentityTransitionPlan({ operation: "REKEY_PROJECT", reason: "lineage.split", current, assurance: "STANDARD", invalidationClasses: ["REPOSITORY_BOUND"] }, digest, () => P2);
+  assert.deepEqual(plan.invalidationClasses, ["PROJECT_BOUND", "REPOSITORY_BOUND"]);
+});
+
+test("controlled import recovery requires externally supplied id plus bounded source/authority evidence", () => {
+  const current = { projectId: P1, projectConfigFingerprint: "cfg1", identityFingerprint: "i1" };
+  assert.throws(() => createIdentityTransitionPlan({ operation: "IMPORT_RECOVERY", reason: "recovery.import", current, assurance: "ELEVATED", importRecoveryProjectId: P3 }, digest), /evidence_required/);
+  const plan = createIdentityTransitionPlan({ operation: "IMPORT_RECOVERY", reason: "recovery.import", current, assurance: "ELEVATED", importRecoveryProjectId: P3, importRecoveryEvidence: recoveryEvidence }, digest);
   assert.equal(plan.newProjectId, P3);
   assert.throws(() => applyIdentityTransitionPlan(plan, { current }, digest), /acknowledgement/);
+  const applied = applyIdentityTransitionPlan(plan, { current, acknowledged: true }, digest);
+  assert.equal(applied.receipt.recoveryReference, recoveryEvidence.authorityRef);
+});
+
+test("recovery-only evidence is rejected outside controlled import recovery", () => {
+  const current = { projectId: P1, projectConfigFingerprint: "cfg1", identityFingerprint: "i1" };
+  assert.throws(() => createIdentityTransitionPlan({ operation: "REKEY_PROJECT", reason: "lineage.split", current, assurance: "STANDARD", importRecoveryEvidence: recoveryEvidence }, digest, () => P2), /evidence_forbidden/);
 });
 
 test("STANDARD rebind consumes Work Order authorization while elevated rebind adds acknowledgement", () => {
