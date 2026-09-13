@@ -8,7 +8,7 @@
   "activeModuleStatus": "PLANNING_NOT_STARTED",
   "m04PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN","S05":"FROZEN"},
   "m04ModuleGate": "MODULE_DONE_APPROVED",
-  "activeWorkOrder": null,
+  "activeWorkOrder": "NONE",
   "activeWorkOrderStatus": "NONE",
   "completedWorkOrder": "GBS-WO-M04-001",
   "completedWorkOrderStatus": "APPROVED_MODULE_DONE",
