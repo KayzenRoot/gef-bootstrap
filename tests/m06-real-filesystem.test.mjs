@@ -211,7 +211,17 @@ test("real reversible remove preserves recovery material before logical removal"
   const bytes = await readFile(target);
   await writeFile(recoveryFile, bytes);
   const recoveryHandle = await open(recoveryFile, "r");
-  try { await recoveryHandle.sync(); } finally { await recoveryHandle.close(); }
+  try {
+    try {
+      await recoveryHandle.sync();
+    } catch (cause) {
+      if (!["EPERM", "EACCES", "EINVAL", "ENOTSUP"].includes(cause?.code)) throw cause;
+      console.log(`M06_PLATFORM_GAP ${process.platform} recovery-file fsync unavailable: ${cause.code}`);
+    }
+  } finally {
+    await recoveryHandle.close();
+  }
+  assert.equal(await readFile(recoveryFile, "utf8"), "recover-me");
   await unlink(target);
   await assert.rejects(lstat(target), (cause) => cause?.code === "ENOENT");
   assert.equal(await readFile(recoveryFile, "utf8"), "recover-me");
