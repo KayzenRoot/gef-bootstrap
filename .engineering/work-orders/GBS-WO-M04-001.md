@@ -1,129 +1,47 @@
 # GBS-WO-M04-001 — Implement Preflight & Discovery Foundation
 
-Status: `ADMITTED`
+Status: `APPROVED_MODULE_DONE`
 Risk: `STANDARD`
 
-## OBJECTIVE
-Implement the bounded production foundation of `GBS-M04 — Preflight & Discovery` from the frozen S01-S05 contracts. Reuse M01 runtime/lifecycle, M02 configuration and M03 identity. Optimize the common path around the smallest sufficient fact graph.
+## Completion evidence
+- Implementation PR: `#86`
+- Admitted base: `04e711c7208476728187609c14ef9119530633ef`
+- Exact reviewed/merged head: `bc26829fa8f3043056b6d9b614c618767f02e6c7`
+- Exact implementation tree: `46c80e056dde05ef108e9599485c33de844cec5a`
+- Squash merge: `67b4377a6df7a34874f751c13d1659b942eed859`
+- Exact-head Actions run: `34730911026`
+- CI job: `103653404874`
+- Tests: `118 PASS / 0 FAIL / 0 SKIP / 0 TODO`
+- Strict TypeScript build/typecheck: `PASS`
+- Locked dependency audit: `0 vulnerabilities`
+- Exact-head semantic verdict: `APPROVED`
+- Canonical evidence: `.engineering/M04-MODULE-EVIDENCE.md`
+- Production credit after promotion: `17/17`
 
-## CONTEXT
-Canonical base: `894a05363f3ee4cde0d4805941c9bb63aa823303`.
-Admission evidence: PR `#84`, reviewed head `88f5e77957ff50903d0e637913f98e540c493e58`, merge `1705bf3bbfda9d4563bad1c08cc91fa8ecf22e30`.
+## Objective completed
+The bounded production foundation of `GBS-M04 — Preflight & Discovery` is implemented from frozen S01-S05, reusing M01 runtime/lifecycle, M02 configuration and M03 identity while preserving the smallest-sufficient fact-graph performance contract.
 
-Context Lock fingerprints:
-- S01 Environment `014c8acb0fa257f141c3830651f0a14dbf27f3db`
-- S02 Git `e536cae93b5365561f6e844cd4e3344eef1e63be`
-- S03 GitHub `3608211d3dc13fcd4318f70588e0b668240e49fc`
-- S04 Toolchain `42bdb16679df056c040d848e78ecf1a8d07db22d`
-- S05 Project State `22ccc8e94ba726f680edd0beec932797ca2e55ae`
-- M04 Module Gate `33c85959ea4af0e8152ea92ad5e7440f764d5eac`
-- root package manifest `5b974bba4a0619c25ff115f468098abc6cc4b780`
-
-If base main, checkpoint, Scope, Architecture, DoD, S01-S05 or Module Gate changes before exact-head review, mark this Work Order `STALE` and recompile/rebase.
-
-## SCOPE
-Implement only M04-owned read-only discovery/preflight capability:
+## Delivered scope
+M04 now owns and implements read-only deterministic preflight/discovery for:
 - injected environment observation;
 - request-driven local Git observation;
-- conditional hosted-profile observation;
+- conditional exact-target hosted-profile observation;
 - request-scoped logical-tool observation;
-- operation-relative project-preflight requirements/snapshot;
-- cheap-blocker short-circuit;
-- bounded concurrency for independent reads after prerequisite binding;
-- per-invocation reuse with targeted dependencies;
-- expected-state bindings for later stale-state revalidation;
-- compact typed readiness/gap results;
-- focused tests and required workspace/build wiring.
+- operation-relative project-state composition;
+- cheap-blocker and stale-state short-circuit;
+- bounded independent-read concurrency after prerequisites;
+- per-invocation reuse and targeted invalidation;
+- compact expected-state bindings for later execution owners;
+- compact typed readiness/gap results.
 
-## OUT OF SCOPE
-Do not implement M05/M06 mutation/recovery, M13 adoption changes, M17-M19 continuity/registry, M21-M23 progress/status, M24/M25 proof graph, M29 Git mutation, M30-M33 hosted mutations/governance/CI/release, M38 general capability registry, M51 compatibility-policy ownership, M63 benchmark thresholds, dependency repair, broad repository inventory or semantic product decisions.
+## Acceptance result
+All frozen S01-S05 obligations and all 32 proof families in `.engineering/M04-MODULE-GATE.md` are satisfied by the exact implementation/evidence set. Mechanical tests prove local-only zero-hosted behavior, request-driven fact acquisition, bounded tool probing, brownfield preservation, stronger-requirement expansion, stale-state blocking, targeted reuse/invalidation, compact snapshot hygiene and Windows/Linux/macOS observation semantics.
 
-## FILES / SOURCES TO READ
-Read before changes:
-1. current checkpoint and `.engineering/M04-MODULE-GATE.md`;
-2. Scope, Architecture, Security, DoD and Test/Benchmark Plan;
-3. frozen M04 S01-S05;
-4. relevant M01 runtime/lifecycle/error implementation;
-5. M02 config/schema implementation/tests;
-6. M03 project-identity implementation/tests;
-7. root package/workspace config, lockfile and current tests.
+## Ownership preserved
+This Work Order did not absorb M05/M06 transaction/filesystem mutation or recovery, M13 adoption mutation, M17-M19 continuity/registry, M21-M25 progress/evidence/proof ownership, M29 Git mutation, M30-M33 hosted mutation/governance, M38 global capability registry, M51 compatibility-policy ownership or M63 benchmark thresholds.
 
-Inspect the repository before choosing package placement. Prefer a bounded provider-neutral M04 surface only if it fits the existing dependency graph better than extending an established boundary.
+## Evidence correction
+The original PR body/review named an immediately preceding successful run. PR conversation comment `5650008716` records the canonical exact-head binding: head `bc26829fa8f3043056b6d9b614c618767f02e6c7` has successful run `34730911026`, job `103653404874`. The implementation verdict is unchanged.
 
-## REQUIREMENTS
-All frozen S01-S05 clauses and all implementation proof families in the M04 Module Gate are binding acceptance requirements for this Work Order. They are referenced by fingerprint above and are not duplicated here.
-
-The implementation must additionally prove:
-- no discovery during import/startup;
-- local-only paths perform no hosted lookup;
-- requested fact families drive work;
-- cheap blockers avoid unnecessary later observations;
-- independent reads may run concurrently only after prerequisites;
-- reuse avoids duplicate stable observations;
-- changed relevant dependencies invalidate only affected conclusions where narrower invalidation is provable;
-- weaker cached observations cannot satisfy stronger requests;
-- project/config/identity boundaries remain distinct;
-- preflight remains read-only and performs no hidden repair;
-- expected-state bindings cross cleanly to later execution owners;
-- compact results avoid broad machine/provider/process dumps;
-- controlled identical inputs produce deterministic logical readiness.
-
-## ARCHITECTURE RULES
-- TypeScript strict ESM, library/application API first.
-- Environment, Git, hosted-profile and tool facts cross injected ports.
-- Provider-neutral domain code does not import profile-specific implementation models.
-- Reuse M02 and M03 semantics rather than forking them.
-- Compatibility conclusions are supplied by owning policy, not hard-coded here.
-- Process-backed probes use the existing safe process boundary.
-- M04 `READY` is mechanical preflight readiness only.
-- No broad capability registry, persistent registry, transaction engine or later-module ownership may be introduced.
-
-## CONSTRAINTS
-- M04 discovery is `S0_READ_ONLY`.
-- No new production dependency without objective necessity and lockfile evidence.
-- Preserve Windows/Linux/macOS semantics.
-- External facts are injectable in tests.
-- No unbounded retry, pagination, output capture, filesystem walk or software enumeration.
-- No unrelated cleanup.
-- Preserve existing public contracts unless additive M04 integration is required and tested.
-
-## ACCEPTANCE CRITERIA
-1. All S01-S05 future-proof obligations applicable to implementation are covered by tests or exact code evidence.
-2. All 32 proof families in the M04 Module Gate are mapped to implementation evidence.
-3. Environment, local Git, hosted profile and tool observations are independently requestable/reusable.
-4. Project-preflight composition requests only required facts and preserves component ownership.
-5. Local-only zero-hosted-call behavior is mechanically tested.
-6. Cheap-blocker short-circuit is mechanically tested.
-7. Per-invocation reuse and targeted invalidation are mechanically tested.
-8. Stronger requirements cannot reuse weaker observations silently.
-9. Expected-state bindings are explicit and testable.
-10. M01-M03 regression suite remains green.
-11. Strict typecheck/build passes.
-12. Full repository tests pass with no skipped critical M04 path.
-13. Locked install/audit shows no new blocking dependency issue.
-14. Hosted CI validates the exact reviewed head.
-15. Semantic audit finds no HIGH/CRITICAL defect against frozen M04 sources, Scope, Architecture, Security and DoD.
-
-## TESTS
-Prefer `tests/m04.test.mjs` unless inspection proves a clearer bounded split. Cover environment, Git, hosted profile, toolchain, project-state composition, short-circuit, bounded concurrency, reuse, targeted stale state, brownfield/unadopted/identity-bootstrap cases, compact-result hygiene, platform fixtures and M01-M03 regression.
-
-Run at minimum:
-- `npm ci --ignore-scripts`
-- `npm run typecheck`
-- `npm run build`
-- `npm test`
-
-## DELIVERABLES
-- inspected/reconciled package placement;
-- M04 production code and public exports;
-- minimal additive integration only where required;
-- workspace/build/lockfile changes only as required;
-- focused tests;
-- implementation PR aligned to this Work Order;
-- Evidence Bundle with base/head SHA, changed files, tests/checks, dependency observations, performance-structure proof, corrected errors, residual risks and proposed Checkpoint Delta.
-
-## REVIEW FORMAT
-Brazilian Portuguese: summary; exact base/head; changed files/ownership; acceptance mapping; checks/tests; proof of local-only zero-hosted path, short-circuit and reuse; findings by severity; residual risks/deferred ownership; Evidence Bundle references; proposed Checkpoint Delta; verdict `APPROVED`, `CORRECTION_REQUIRED` or `BLOCKED`.
-
-## STOP CONDITION
-Stop only at `M04_IMPLEMENTATION_READY_FOR_EXACT_HEAD_AUDIT`, `CORRECTION_REQUIRED` or `BLOCKED`. Do not begin M05 and do not award M04 weight before exact-head evidence and semantic approval.
+## Stop condition
+Satisfied as `M04_MODULE_DONE_APPROVED`. Do not reopen this Work Order without governed change control. M05 may enter planning only after the separate M04 checkpoint promotion is merged; M05 implementation remains separately gated.
