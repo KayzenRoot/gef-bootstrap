@@ -72,6 +72,7 @@ function fixture(options = {}) {
     },
     atomicFacts: async ({ path }) => ({ ok: true, value: {
       primitive: { capabilityRef: `primitive:${path.operation}`, operation: path.operation, visibilityAtomic: true, raceResistant: true, noClobberCreate: true, replaceExisting: true, requiresSameFilesystem: true, durability: "CRASH_DURABLE" },
+      stagingAuthorityRef: "stage-authority:test",
       stagingFilesystemId: "fs1",
       destinationFilesystemId: "fs1",
     } }),
