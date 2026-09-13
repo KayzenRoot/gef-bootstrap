@@ -59,77 +59,15 @@ export interface FilesystemPromotionReceipt {
 
 export interface FilesystemPhysicalPort {
   observe(path: FilesystemPathCapsule, context: FilesystemExecutionContext): FilesystemMaybePromise<FilesystemResult<FilesystemObservationBundle>>;
-  atomicFacts(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly intent: TransactionIntent;
-    readonly path: FilesystemPathCapsule;
-    readonly desiredFingerprint?: string;
-    readonly requireCrashDurability: boolean;
-  }): FilesystemMaybePromise<FilesystemResult<FilesystemAtomicFacts>>;
-  captureRecovery(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly transactionId: string;
-    readonly intent: TransactionIntent;
-    readonly target: FilesystemPathCapsule;
-    readonly source?: FilesystemPathCapsule;
-  }): FilesystemMaybePromise<FilesystemResult<FilesystemRecoveryCapture>>;
-  verifyRecovery(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly transactionId: string;
-    readonly intent: TransactionIntent;
-    readonly recoveryRef: string;
-    readonly expectedPreFingerprint?: string;
-    readonly expectedPostFingerprint?: string;
-  }): FilesystemMaybePromise<FilesystemResult<true>>;
-  stage(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly transactionId: string;
-    readonly intent: TransactionIntent;
-    readonly target: FilesystemPathCapsule;
-    readonly source?: FilesystemPathCapsule;
-    readonly payloadRef?: string;
-    readonly desiredFingerprint?: string;
-  }): FilesystemMaybePromise<FilesystemResult<FilesystemStageReceipt>>;
-  verifyStage(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly transactionId: string;
-    readonly intent: TransactionIntent;
-    readonly stageRef: string;
-    readonly desiredFingerprint?: string;
-    readonly obligations: readonly VerificationObligation[];
-  }): FilesystemMaybePromise<FilesystemResult<true>>;
-  promote(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly transactionId: string;
-    readonly intent: TransactionIntent;
-    readonly target: FilesystemPathCapsule;
-    readonly source?: FilesystemPathCapsule;
-    readonly stageRef: string;
-    readonly capabilityRef: string;
-  }): FilesystemMaybePromise<FilesystemResult<FilesystemPromotionReceipt>>;
-  verifyPost(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly transactionId: string;
-    readonly intent: TransactionIntent;
-    readonly target: FilesystemPathCapsule;
-    readonly source?: FilesystemPathCapsule;
-    readonly desiredFingerprint?: string;
-    readonly obligations: readonly VerificationObligation[];
-  }): FilesystemMaybePromise<FilesystemResult<readonly FilesystemEntryObservation[]>>;
-  cleanup(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly transactionId: string;
-    readonly successful: boolean;
-  }): FilesystemMaybePromise<FilesystemResult<true>>;
-  restore(request: {
-    readonly context: FilesystemExecutionContext;
-    readonly transactionId: string;
-    readonly intent: TransactionIntent;
-    readonly recoveryRef: string;
-    readonly target: FilesystemPathCapsule;
-    readonly source?: FilesystemPathCapsule;
-    readonly capabilityRef: string;
-  }): FilesystemMaybePromise<FilesystemResult<FilesystemPromotionReceipt>>;
+  atomicFacts(request: { readonly context: FilesystemExecutionContext; readonly intent: TransactionIntent; readonly path: FilesystemPathCapsule; readonly desiredFingerprint?: string; readonly requireCrashDurability: boolean }): FilesystemMaybePromise<FilesystemResult<FilesystemAtomicFacts>>;
+  captureRecovery(request: { readonly context: FilesystemExecutionContext; readonly transactionId: string; readonly intent: TransactionIntent; readonly target: FilesystemPathCapsule; readonly source?: FilesystemPathCapsule }): FilesystemMaybePromise<FilesystemResult<FilesystemRecoveryCapture>>;
+  verifyRecovery(request: { readonly context: FilesystemExecutionContext; readonly transactionId: string; readonly intent: TransactionIntent; readonly recoveryRef: string; readonly expectedPreFingerprint?: string; readonly expectedPostFingerprint?: string }): FilesystemMaybePromise<FilesystemResult<true>>;
+  stage(request: { readonly context: FilesystemExecutionContext; readonly transactionId: string; readonly intent: TransactionIntent; readonly target: FilesystemPathCapsule; readonly source?: FilesystemPathCapsule; readonly payloadRef?: string; readonly desiredFingerprint?: string }): FilesystemMaybePromise<FilesystemResult<FilesystemStageReceipt>>;
+  verifyStage(request: { readonly context: FilesystemExecutionContext; readonly transactionId: string; readonly intent: TransactionIntent; readonly stageRef: string; readonly desiredFingerprint?: string; readonly obligations: readonly VerificationObligation[] }): FilesystemMaybePromise<FilesystemResult<true>>;
+  promote(request: { readonly context: FilesystemExecutionContext; readonly transactionId: string; readonly intent: TransactionIntent; readonly target: FilesystemPathCapsule; readonly source?: FilesystemPathCapsule; readonly stageRef: string; readonly capabilityRef: string }): FilesystemMaybePromise<FilesystemResult<FilesystemPromotionReceipt>>;
+  verifyPost(request: { readonly context: FilesystemExecutionContext; readonly transactionId: string; readonly intent: TransactionIntent; readonly target: FilesystemPathCapsule; readonly source?: FilesystemPathCapsule; readonly desiredFingerprint?: string; readonly obligations: readonly VerificationObligation[] }): FilesystemMaybePromise<FilesystemResult<readonly FilesystemEntryObservation[]>>;
+  cleanup(request: { readonly context: FilesystemExecutionContext; readonly transactionId: string; readonly successful: boolean; readonly preserveRecoveryRefs: readonly string[] }): FilesystemMaybePromise<FilesystemResult<true>>;
+  restore(request: { readonly context: FilesystemExecutionContext; readonly transactionId: string; readonly intent: TransactionIntent; readonly recoveryRef: string; readonly target: FilesystemPathCapsule; readonly source?: FilesystemPathCapsule; readonly capabilityRef: string }): FilesystemMaybePromise<FilesystemResult<FilesystemPromotionReceipt>>;
 }
 
 export interface FilesystemIntentResolver {
