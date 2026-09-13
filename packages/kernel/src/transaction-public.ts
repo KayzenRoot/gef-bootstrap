@@ -1,5 +1,5 @@
-export { applyTransaction } from "./transaction-apply-governed.js";
-export type { ApplyTransactionInput } from "./transaction-apply-governed.js";
+export { applyTransaction } from "./transaction-apply-certified.js";
+export type { ApplyTransactionInput } from "./transaction-apply-certified.js";
 export { dryRunTransaction } from "./transaction-dry-run-engine.js";
 export { decideIdempotentAction, sameIdempotencyScope } from "./transaction-idempotency.js";
 export {
