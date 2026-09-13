@@ -1,18 +1,13 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M07_S02",
+  "status": "READY_FOR_GBS_M07_S03",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03", "GBS-M04", "GBS-M05", "GBS-M06"],
   "activeModule": "GBS-M07_TEMPLATE_ENGINE",
   "activeModuleStatus": "PLANNING",
   "m06ModuleGate": "MODULE_DONE_APPROVED",
-  "m07PlanningSessions": {"S01":"FROZEN","S02":"PLANNED","S03":"PLANNED","S04":"PLANNED","S05":"PLANNED"},
-  "m07S01Pr": 119,
-  "m07S01ReviewedHead": "a5a61eb9e14bfa60ddcbd3c4b9df0599cd3482ab",
-  "m07S01SemanticBlob": "1e5ea91fd101d95870f986ae5f4b3b8225b19d8f",
-  "m07S01SemanticReview": 5190406557,
-  "m07S01MergeSha": "16f7a815db9d3b558dd2981e983bff65ecb5ac65",
+  "m07PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"PLANNED","S04":"PLANNED","S05":"PLANNED"},
   "m07ModuleGate": "NOT_EVALUATED",
   "activeWorkOrder": null,
   "activeWorkOrderStatus": null,
@@ -24,7 +19,7 @@
   "m07Weight": 14,
   "m07EarnedWeight": 0,
   "denominatorChanged": false,
-  "nextPlanningStage": "GBS-M07_S02_VARIABLES",
+  "nextPlanningStage": "GBS-M07_S03_CONDITIONAL_TEMPLATES",
   "codexBootstrapConstructionAuthorized": false,
-  "stopState": "READY_FOR_GBS_M07_S02"
+  "stopState": "READY_FOR_GBS_M07_S03"
 }
