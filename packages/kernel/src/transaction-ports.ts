@@ -38,9 +38,9 @@ export interface TransactionAuthorizationPort {
 }
 
 export interface TransactionJournalPort {
-  begin(snapshot: TransactionJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
-  update(snapshot: TransactionJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
-  finish(snapshot: TransactionJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
+  begin(snapshot: TransactionJournalSnapshot | RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
+  update(snapshot: TransactionJournalSnapshot | RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
+  finish(snapshot: TransactionJournalSnapshot | RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   beginRollback?(snapshot: RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   updateRollback?(snapshot: RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
   finishRollback?(snapshot: RollbackJournalSnapshot): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
