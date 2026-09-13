@@ -9,7 +9,6 @@ import {
   canonicalIdentityStringify,
   parsePersistedRepositoryBinding,
   repositoryResolutionSatisfiesBound,
-  resolveRepositoryIdentity,
   type BindingStrength,
   type PersistedRepositoryBinding,
   type ProjectIdentityAssessment,
@@ -97,6 +96,10 @@ function appendKnownExpectedBindingGaps(gaps: PreflightGap[], expected: readonly
 
 function hasBlockingGap(gaps: readonly PreflightGap[]): boolean {
   return gaps.some((item) => item.blocking);
+}
+
+function repositoryAvailable(git: GitObservation | undefined): boolean {
+  return git?.repository?.state === "WORKTREE" || git?.repository?.state === "BARE_REPOSITORY";
 }
 
 export class ProjectPreflightSession {
@@ -187,43 +190,45 @@ export class ProjectPreflightSession {
     const needRepositoryPresence = requirements.requireRepository === true || needRepositoryIdentity;
     if (needRepositoryPresence) requestedGitFacts.add("repository");
     if (needRepositoryIdentity) requestedGitFacts.add("remotes");
+
+    let persistedBinding: PersistedRepositoryBinding | undefined;
+    if (needRepositoryIdentity && projectConfig?.document?.repositoryBinding !== undefined) {
+      const parsed = parsePersistedRepositoryBinding(projectConfig.document.repositoryBinding);
+      if (!parsed.ok) gaps.push(gap(parsed.diagnostic.code, "M03", true));
+      else persistedBinding = parsed.value;
+    }
+    if (hasBlockingGap(gaps) && !requirements.diagnosticMode) {
+      this.#countSkippedExpensive(requirements);
+      return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig } : {}), ...(identity ? { identity } : {}), tools, expectedStateBindings: generatedBindings, gaps });
+    }
+
     if (requestedGitFacts.size > 0) {
       if (!this.#git) gaps.push(gap("gef.preflight.git.port_unavailable", "M29", true));
       else {
-        git = await this.#git.observe({ startingDirectory: requirements.projectRoot, facts: [...requestedGitFacts], ...(requirements.statusDetail ? { statusDetail: requirements.statusDetail } : {}) });
+        git = await this.#git.observe({
+          startingDirectory: requirements.projectRoot,
+          facts: [...requestedGitFacts],
+          ...(requirements.statusDetail ? { statusDetail: requirements.statusDetail } : {}),
+          ...(persistedBinding ? { persistedRepositoryBinding: persistedBinding } : {}),
+        });
         const forceGitBlocking = requirements.requireRepository === true || (requirements.gitFacts?.length ?? 0) > 0 || requirements.hosted !== undefined;
         const identityStateAbsenceIsValid = requirements.identityBindingStrength === "IDENTITY_STATE"
           && requirements.requireRepository !== true
           && requirements.hosted === undefined
           && (requirements.gitFacts?.length ?? 0) === 0
-          && git.repository?.presence === "ABSENT";
+          && git.repository?.state === "NOT_REPOSITORY";
         const relevantGitGaps = identityStateAbsenceIsValid
-          ? git.gaps.filter((item) => item.code !== "gef.preflight.git.repository_absent")
+          ? git.gaps.filter((item) => item.code !== "gef.preflight.git.repository_not_repository")
           : git.gaps;
         mergeGaps(gaps, relevantGitGaps, forceGitBlocking);
         if (git.head) generatedBindings.push({ kind: "GIT_HEAD", value: stablePreflightStringify(git.head) });
         if (git.status) generatedBindings.push({ kind: "GIT_STATUS", value: stablePreflightStringify(git.status.summary) });
-
-        if (needRepositoryIdentity) {
-          const repositoryPresent = git.repository?.presence === "PRESENT";
-          let persistedBinding: PersistedRepositoryBinding | undefined;
-          if (projectConfig?.document?.repositoryBinding !== undefined) {
-            const parsed = parsePersistedRepositoryBinding(projectConfig.document.repositoryBinding);
-            if (!parsed.ok) gaps.push(gap(parsed.diagnostic.code, "M03", true));
-            else persistedBinding = parsed.value;
-          }
-          repositoryResolution = resolveRepositoryIdentity({
-            repositoryPresent,
-            ...(git.remotes ? { remotes: git.remotes.remotes } : {}),
-            ...(persistedBinding ? { persistedBinding } : {}),
-          });
-          generatedBindings.push({ kind: "REPOSITORY_IDENTITY", value: canonicalIdentityStringify(repositoryResolution.projection) });
-          for (const diagnostic of repositoryResolution.diagnostics) gaps.push(gap(diagnostic.code, "M03", diagnostic.severity === "ERROR"));
-        }
+        repositoryResolution = git.repositoryIdentity;
+        if (repositoryResolution) generatedBindings.push({ kind: "REPOSITORY_IDENTITY", value: canonicalIdentityStringify(repositoryResolution.projection) });
       }
     }
 
-    if (requirements.requireRepository && git?.repository?.presence !== "PRESENT") gaps.push(gap("gef.preflight.git.repository_required", "M29", true));
+    if (requirements.requireRepository && !repositoryAvailable(git)) gaps.push(gap("gef.preflight.git.repository_required", "M29", true));
     if (needIdentity && requirements.identityBindingStrength) {
       const actual = actualBindingStrength(identity, repositoryResolution);
       if (!actual || !bindingStrengthSatisfies(actual, requirements.identityBindingStrength)) gaps.push(gap("gef.preflight.identity.binding_strength_insufficient", "M03", true));
