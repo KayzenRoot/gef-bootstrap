@@ -1,6 +1,6 @@
 # GBS-M05-S01 — Transaction Plan
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the provider-neutral logical transaction-plan contract for `GBS-M05 — Transactional Apply Engine`. S01 defines what a mutation plan is, how it binds to exact pre-state and admitted mutation surfaces, how deterministic plan identity is computed, and what information later dry-run/apply/rollback/idempotency sessions must consume.
@@ -338,7 +338,10 @@ Implementation must eventually prove:
 11. M06 boundary: **M05 owns logical transaction semantics; M06 owns filesystem path/staging/atomic replacement safety**.
 12. Integrity ownership: **M05 consumes an injected/versioned digest capability; broad integrity/hash policy remains delegated to M37**.
 
-## Session completion rule
-This candidate becomes `FROZEN` only after exact-head semantic review and merge. Planning earns `0/20` M05 production weight. After checkpoint promotion, the next legal planning session is `GBS-M05-S02 — Dry Run`. No M05 implementation Work Order may be compiled or admitted until S01-S05 and the M05 module gate are complete.
+## Freeze record
+Planning contract is frozen for exact-head review on PR `#88`. The immutable reviewed head is recorded by the PR review itself rather than embedded here, avoiding a self-referential evidence commit.
 
-STOP CONDITION: `M05_S01_READY_FOR_EXACT_HEAD_REVIEW`.
+## Session completion rule
+M05-S01 is frozen after exact-head semantic review and merge. Planning earns `0/20` M05 production weight. After checkpoint promotion, the next legal planning session is `GBS-M05-S02 — Dry Run`. No M05 implementation Work Order may be compiled or admitted until S01-S05 and the M05 module gate are complete.
+
+STOP CONDITION: `M05_S01_FROZEN`.
