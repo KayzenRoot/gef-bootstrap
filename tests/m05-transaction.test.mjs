@@ -56,7 +56,7 @@ function fixture(options = {}) {
   const preState = new Map(Object.entries(options.preState ?? { "target:file:a": "before" }));
   let bindingCalls = 0;
   let authCalls = 0;
-  const calls = { journalBegin: 0, journalUpdate: 0, journalFinish: 0, cleanup: 0, promote: [], restore: [], stage: 0, verifyStaged: 0, barrier: 0, observedTargets: [] };
+  const calls = { journalBegin: 0, journalUpdate: 0, journalFinish: 0, rollbackJournalBegin: 0, rollbackJournalUpdate: 0, rollbackJournalFinish: 0, cleanup: 0, promote: [], restore: [], stage: 0, verifyStaged: 0, verifyRecovery: 0, barrier: 0, observedTargets: [] };
   const journals = [];
 
   const state = {
@@ -75,11 +75,15 @@ function fixture(options = {}) {
     begin: async (snapshot) => { calls.journalBegin += 1; journals.push(snapshot); return { ok: true, value: true }; },
     update: async (snapshot) => { calls.journalUpdate += 1; journals.push(snapshot); return { ok: true, value: true }; },
     finish: async (snapshot) => { calls.journalFinish += 1; journals.push(snapshot); return { ok: true, value: true }; },
+    beginRollback: async (snapshot) => { calls.rollbackJournalBegin += 1; journals.push(snapshot); return { ok: true, value: true }; },
+    updateRollback: async (snapshot) => { calls.rollbackJournalUpdate += 1; journals.push(snapshot); return { ok: true, value: true }; },
+    finishRollback: async (snapshot) => { calls.rollbackJournalFinish += 1; journals.push(snapshot); return { ok: true, value: true }; },
   };
 
   const effects = {
     checkPhysicalSafety: async () => options.safetyFail ? failure("safety") : { ok: true, value: true },
     captureRecovery: async (intent) => options.recoveryFail ? failure("recovery") : { ok: true, value: `recovery:${intent.intentId}` },
+    verifyRecoveryMaterial: async () => { calls.verifyRecovery += 1; return options.recoveryVerifyFail ? failure("recovery_verify") : { ok: true, value: true }; },
     stage: async () => { calls.stage += 1; if (options.abortOnStage) options.abortOnStage(); return options.stageFail ? failure("stage") : { ok: true, value: true }; },
     verifyStaged: async () => { calls.verifyStaged += 1; return options.verifyStageFail ? failure("verify_stage") : { ok: true, value: true }; },
     revalidateCommitBarrier: async () => { calls.barrier += 1; return options.barrierFail ? failure("barrier") : { ok: true, value: true }; },
@@ -244,6 +248,8 @@ test("successful apply can be rolled back when transaction still owns current st
   assert.equal(rolled.outcome, "RESTORED");
   assert.equal(fx.targetState.get("file:a"), "before");
   assert.deepEqual(fx.calls.restore, ["i1"]);
+  assert.equal(fx.calls.rollbackJournalBegin, 1);
+  assert.equal(fx.calls.rollbackJournalFinish, 1);
 });
 
 test("rollback refuses to clobber later user or tool edit", async () => {
