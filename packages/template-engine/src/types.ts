@@ -38,6 +38,7 @@ export interface TemplateBudgets {
   readonly maxRenderedBytesTotal: number;
   readonly maxTargetBytes: number;
   readonly maxTargetComponents: number;
+  readonly maxTargetComponentBytes: number;
   readonly maxEvidenceEntries: number;
 }
 
