@@ -10,24 +10,6 @@ const MAX_PATH_INPUT = 65_536;
 const MAX_COMPONENTS = 1_024;
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i;
 
-function pathError(request: FilesystemPathRequest, reason: string, summary: string, category: "INPUT" | "POLICY" | "CAPABILITY" = "PRECONDITION" as never): FilesystemResult<never> {
-  return {
-    ok: false,
-    error: createGefError({
-      id: `m06-path-${reason}`,
-      category,
-      reason: `filesystem_path.${reason}`,
-      severity: "ERROR",
-      summary,
-      retryability: "NEVER",
-      recoverability: "NONE_REQUIRED",
-      terminal: "BLOCKED",
-      targetRef: request.root.rootRef,
-      metadata: { rootRef: request.root.rootRef, operation: request.operation },
-    }),
-  };
-}
-
 function simplePathError(request: FilesystemPathRequest, reason: string, summary: string): FilesystemResult<never> {
   return {
     ok: false,
