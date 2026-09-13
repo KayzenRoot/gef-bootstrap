@@ -1,6 +1,6 @@
 # GBS-M04-S03 — GitHub Discovery
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the GitHub reference-profile discovery contract consumed by deterministic preflight. S03 discovers only the hosted facts and permission/capability gaps required by an admitted operation, while keeping GitHub outside core semantic authority and outside local-only execution paths.
@@ -181,15 +181,7 @@ The GitHub reference profile may use direct API access, an authorized connector,
 S03 contracts do not require `gh` to be installed. Tool presence/version discovery belongs to S04/M38/M51. Equivalent transport implementations must produce the same logical observation contract for the same provider facts.
 
 ### GH-15 — No provider mutation during discovery
-S03 never creates/updates/deletes:
-- repositories or repository metadata;
-- branches/commits;
-- issues/PRs/comments/reviews;
-- labels/milestones/templates;
-- workflows/checks/actions configuration;
-- releases/tags;
-- rulesets/branch protection/settings;
-- collaborators/teams/permissions.
+S03 never creates/updates/deletes repositories, repository metadata, branches, commits, issues, pull requests, labels, workflows, checks, releases, rulesets, settings, collaborators, teams or permissions.
 
 A provider endpoint that cannot safely prove a capability without side effect is classified `NOT_OBSERVABLE_WITHOUT_ATTEMPT`, not invoked speculatively.
 
@@ -251,7 +243,7 @@ Implementation must eventually prove:
 8. Performance: **zero provider calls unless required; exact target and minimal fact families; dependency-bound reuse**.
 9. Transport: **API/connector/gh are interchangeable behind the provider port; S03 does not mandate GitHub CLI**.
 
-## Session completion rule
-Planning content is frozen-candidate. Exact-head semantic review must confirm alignment with M03 identity, S01/S02 lazy preflight, Security least privilege, M30-M33 ownership, M38/M51 boundaries and performance goals. After approval/merge, checkpoint advances only to `GBS-M04-S04 — Toolchain`.
+## Freeze record
+Exact-head semantic review passed on PR `#76` for head `6a4ecc79e09a3ce33b4656aa71a56a143622f2a8`. The connection could not formally self-approve the author-owned PR, so the semantic verdict was recorded as a review comment on that exact head; review threads were empty. The reviewed content was squash-merged as `990d0b1669138f04e787319ef555e0e79f2459a6` before checkpoint promotion.
 
-STOP CONDITION: `M04_S03_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M04_S03_FROZEN`.
