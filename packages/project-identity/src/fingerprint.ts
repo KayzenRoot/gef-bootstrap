@@ -1,6 +1,6 @@
 import { canonicalIdentityStringify } from "./canonical.js";
+import { canonicalizeRepositoryIdentityProjection } from "./projection.js";
 import { isCanonicalProjectId } from "./project-id.js";
-import { canonicalRepositoryProjection } from "./repository.js";
 import type {
   BindingStrength,
   DigestPort,
@@ -17,7 +17,7 @@ export function createFingerprintManifest(projectId: unknown, repositoryIdentity
     manifestVersion: 1,
     projectId,
     projectConfigIdentityProjection: { schemaVersion: 1, projectId },
-    repositoryIdentityProjection: canonicalRepositoryProjection(repositoryIdentityProjection),
+    repositoryIdentityProjection: canonicalizeRepositoryIdentityProjection(repositoryIdentityProjection),
     identityPolicyVersion,
   };
 }
@@ -41,27 +41,30 @@ export function createProjectFingerprint(
   previous?: ProjectFingerprintSnapshot,
   repositoryBindingPersisted = false,
 ): ProjectFingerprintSnapshot {
+  if (manifest.manifestVersion !== 1) throw new Error("gef.identity.manifest_version_invalid");
+  const canonicalManifest = createFingerprintManifest(manifest.projectId, manifest.repositoryIdentityProjection, manifest.identityPolicyVersion);
+  if (canonicalIdentityStringify(manifest.projectConfigIdentityProjection) !== canonicalIdentityStringify(canonicalManifest.projectConfigIdentityProjection)) throw new Error("gef.identity.project_config_projection_invalid");
   if (!digestPort.algorithm || digestPort.algorithm.length > 128) throw new Error("gef.identity.digest_algorithm_invalid");
   if (bindingStrength === "REPOSITORY_BOUND") {
-    const projection = manifest.repositoryIdentityProjection;
+    const projection = canonicalManifest.repositoryIdentityProjection;
     const materiallyBound =
       (projection.state === "RESOLVED_REMOTE_BOUND" && projection.bindingKind === "REMOTE" && projection.normalizedLocator !== undefined) ||
       (projection.state === "RESOLVED_LOCAL_ONLY" && projection.bindingKind === "LOCAL" && Boolean(projection.localBindingId));
     if (!repositoryBindingPersisted || !materiallyBound) throw new Error("gef.identity.repository_bound_requirement_unsatisfied");
   }
-  const digest = digestPort.digest(canonicalIdentityStringify(manifest));
+  const digest = digestPort.digest(canonicalIdentityStringify(canonicalManifest));
   if (!digest || digest.length > 1024) throw new Error("gef.identity.digest_invalid");
   return {
-    manifest,
+    manifest: canonicalManifest,
     fingerprint: {
       schemaVersion: 1,
       manifestVersion: 1,
       algorithm: digestPort.algorithm,
       digest,
       bindingStrength,
-      repositoryProjectionState: manifest.repositoryIdentityProjection.state,
+      repositoryProjectionState: canonicalManifest.repositoryIdentityProjection.state,
     },
-    deltaClasses: classifyFingerprintDelta(previous, manifest, digestPort.algorithm),
+    deltaClasses: classifyFingerprintDelta(previous, canonicalManifest, digestPort.algorithm),
   };
 }
 
