@@ -170,7 +170,7 @@ export function resolveVariables(template: TemplateDescriptor, bindings: Variabl
     const normalized = normalizeValue(declaration, rawValue, control);
     if (!normalized.ok) return normalized;
     const usedContexts = usage.value.get(declaration.id);
-    if (usedContexts?.has("TARGET_PATH_SEGMENT") && !validPortableSegment(normalized.value.projection)) return fail("VARIABLE_PATH_UNSAFE", "VARIABLES", "Resolved target-path variable is not a portable single segment.", declaration.id);
+    if (usedContexts?.has("TARGET_PATH_SEGMENT") && (!validPortableSegment(normalized.value.projection) || utf8Length(normalized.value.projection) > control.budgets.maxTargetComponentBytes)) return fail("VARIABLE_PATH_UNSAFE", "VARIABLES", "Resolved target-path variable is not a portable bounded single segment.", declaration.id);
     const provenanceRef = selected?.sourceRef === undefined ? undefined : digest.digest(selected.sourceRef);
     const base = { id: declaration.id, type: declaration.type, status: "BOUND" as const, source, value: normalized.value.value, projection: normalized.value.projection, valueClass: declaration.valueClass, allowedContexts: declaration.allowedContexts };
     resolved.push(Object.freeze(provenanceRef === undefined ? base : { ...base, provenanceRef }));
