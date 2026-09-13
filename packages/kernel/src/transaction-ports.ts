@@ -22,6 +22,10 @@ export interface TransactionStatePort {
   observeTargetFingerprint(targetRef: string): Promise<TransactionPortResult<string | undefined>> | TransactionPortResult<string | undefined>;
 }
 
+export interface TransactionCompatibilityPort {
+  evaluate(binding: TransactionStateBinding, observedValue: string): Promise<TransactionPortResult<boolean>> | TransactionPortResult<boolean>;
+}
+
 export interface TransactionAuthorizationPort {
   authorize(request: {
     readonly runId: string;
@@ -60,6 +64,7 @@ export interface ExternalEffectObservationPort {
 export interface TransactionPorts {
   readonly digest: DigestPort;
   readonly state: TransactionStatePort;
+  readonly compatibility?: TransactionCompatibilityPort;
   readonly authorization?: TransactionAuthorizationPort;
   readonly journal?: TransactionJournalPort;
   readonly effects?: TransactionEffectPort;
