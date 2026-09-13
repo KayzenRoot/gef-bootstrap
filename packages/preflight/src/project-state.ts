@@ -86,6 +86,19 @@ function bindingMap(bindings: readonly ExpectedStateBinding[]): Map<string, stri
   return new Map(bindings.map((item) => [item.kind, item.value]));
 }
 
+function appendKnownExpectedBindingGaps(gaps: PreflightGap[], expected: readonly ExpectedStateBinding[] | undefined, currentBindings: readonly ExpectedStateBinding[]): void {
+  if (!expected || expected.length === 0) return;
+  const current = bindingMap(currentBindings);
+  for (const item of expected) {
+    const actual = current.get(item.kind);
+    if (actual !== undefined && actual !== item.value) gaps.push(gap(`gef.preflight.expected_binding_stale:${item.kind}`, "M04", true));
+  }
+}
+
+function hasBlockingGap(gaps: readonly PreflightGap[]): boolean {
+  return gaps.some((item) => item.blocking);
+}
+
 export class ProjectPreflightSession {
   readonly #digest: RequirementDigestPort;
   readonly #configReader: ConfigReadPort | undefined;
@@ -125,6 +138,10 @@ export class ProjectPreflightSession {
     return Object.freeze({ schemaVersion: 1, ...input, gaps, readiness: readinessForGaps(gaps), counters: snapshotCounters(this.#counters) });
   }
 
+  #countSkippedExpensive(requirements: ProjectPreflightRequirements): void {
+    this.#counters.skippedByPrerequisite += (requirements.hosted ? 1 : 0) + (requirements.tools?.length ?? 0) + (requirements.environment ? 1 : 0);
+  }
+
   async run(requirements: ProjectPreflightRequirements): Promise<ProjectPreflightSnapshot> {
     const requirementFingerprint = fingerprintRequirement(requirements, this.#digest);
     const mode = requirements.mode ?? "MODE_UNRESOLVED";
@@ -147,8 +164,9 @@ export class ProjectPreflightSession {
         if (projectConfig.status === "MISSING") gaps.push(gap("gef.preflight.config.project_missing", "M02", requirements.requireProjectConfig === true || needIdentity));
         if (projectConfig.status === "INVALID") gaps.push(gap("gef.preflight.config.project_invalid", "M02", true));
       }
-      if (gaps.some((item) => item.blocking) && !requirements.diagnosticMode) {
-        this.#counters.skippedByPrerequisite += (requirements.hosted ? 1 : 0) + (requirements.tools?.length ?? 0) + (requirements.environment ? 1 : 0);
+      appendKnownExpectedBindingGaps(gaps, requirements.expectedBindings, generatedBindings);
+      if (hasBlockingGap(gaps) && !requirements.diagnosticMode) {
+        this.#countSkippedExpensive(requirements);
         return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig } : {}), tools, expectedStateBindings: generatedBindings, gaps });
       }
     }
@@ -157,8 +175,9 @@ export class ProjectPreflightSession {
       identity = assessProjectIdentity(projectConfig?.document);
       if (identity.projectId) generatedBindings.push({ kind: "PROJECT_ID", value: identity.projectId });
       if (identity.state !== "ADOPTED_VALID") gaps.push(gap(identity.reasonCode ?? `gef.preflight.identity.${identity.state.toLowerCase()}`, "M03", true));
-      if (gaps.some((item) => item.blocking) && !requirements.diagnosticMode) {
-        this.#counters.skippedByPrerequisite += (requirements.hosted ? 1 : 0) + (requirements.tools?.length ?? 0) + (requirements.environment ? 1 : 0);
+      appendKnownExpectedBindingGaps(gaps, requirements.expectedBindings, generatedBindings);
+      if (hasBlockingGap(gaps) && !requirements.diagnosticMode) {
+        this.#countSkippedExpensive(requirements);
         return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig } : {}), identity, tools, expectedStateBindings: generatedBindings, gaps });
       }
     }
@@ -209,9 +228,10 @@ export class ProjectPreflightSession {
       const actual = actualBindingStrength(identity, repositoryResolution);
       if (!actual || !bindingStrengthSatisfies(actual, requirements.identityBindingStrength)) gaps.push(gap("gef.preflight.identity.binding_strength_insufficient", "M03", true));
     }
+    appendKnownExpectedBindingGaps(gaps, requirements.expectedBindings, generatedBindings);
 
-    if (gaps.some((item) => item.blocking) && !requirements.diagnosticMode) {
-      this.#counters.skippedByPrerequisite += (requirements.hosted ? 1 : 0) + (requirements.tools?.length ?? 0) + (requirements.environment ? 1 : 0);
+    if (hasBlockingGap(gaps) && !requirements.diagnosticMode) {
+      this.#countSkippedExpensive(requirements);
       return this.#finish({
         requirementFingerprint,
         mode,
@@ -252,7 +272,18 @@ export class ProjectPreflightSession {
       if (hosted.repository.stableRepositoryId) generatedBindings.push({ kind: "PROVIDER_REPOSITORY_ID", value: hosted.repository.stableRepositoryId });
       generatedBindings.push({ kind: "PROVIDER_CAPABILITIES", value: stablePreflightStringify(hosted.repository.capabilities) });
     }
-    for (const tool of tools) generatedBindings.push({ kind: `TOOL:${tool.toolId}`, value: stablePreflightStringify({ presence: tool.presence, version: tool.observedVersion ?? null, compatibility: tool.compatibility }) });
+    for (const tool of tools) {
+      generatedBindings.push({
+        kind: `TOOL:${tool.toolId}`,
+        value: stablePreflightStringify({
+          presence: tool.presence,
+          version: tool.observedVersion ?? null,
+          versionParserRef: tool.versionParserRef ?? null,
+          compatibility: tool.compatibility,
+          compatibilityPolicyRef: tool.compatibilityPolicyRef ?? null,
+        }),
+      });
+    }
 
     const currentBindings = bindingMap(generatedBindings);
     for (const expected of requirements.expectedBindings ?? []) {
