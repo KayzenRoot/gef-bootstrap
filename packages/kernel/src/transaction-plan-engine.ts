@@ -115,7 +115,7 @@ export function validateTransactionPlanRuntime(body: unknown): TransactionPortRe
 
   for (const intent of plan.intents) {
     if (!objectValue(intent) || !nonEmpty(intent.intentId) || !nonEmpty(intent.targetRef) || !Array.isArray(intent.dependsOn)) return runtimeError("invalid_intent", "Transaction intent contains an invalid required field");
-    if (!intentKinds.has(intent.kind)) return runtimeError("unsupported_intent_kind", "Transaction intent kind is unsupported", { intentId: intent.intentId, kind: intent.kind });
+    if (!intentKinds.has(intent.kind)) return runtimeError("unsupported_intent_kind", "Transaction intent kind is unsupported", { intentId: intent.intentId });
     if (!securityClasses.has(intent.securityClass)) return runtimeError("invalid_intent_security_class", "Transaction intent security class is invalid", { intentId: intent.intentId });
     if (!recoveryClasses.has(intent.recoveryClass)) return runtimeError("invalid_recovery_class", "Transaction intent recovery class is invalid", { intentId: intent.intentId });
     for (const dependency of intent.dependsOn) if (!nonEmpty(dependency)) return runtimeError("invalid_dependency", "Transaction intent dependency references must be non-empty", { intentId: intent.intentId });
@@ -135,13 +135,14 @@ export function validateTransactionPlanRuntime(body: unknown): TransactionPortRe
     }
     if (intent.kind === "MOVE_MANAGED_ARTIFACT") {
       if (!nonEmpty(intent.desiredFingerprint)) return runtimeError("move_post_state_missing", "Move intent requires an exact composite post-state fingerprint", { intentId: intent.intentId, targetRef: intent.targetRef });
-      if (exactPreStateForTarget(plan, intent.targetRef) === undefined) return runtimeError("move_pre_state_missing", "Move intent requires an exact composite pre-state binding covering both endpoints", { intentId: intent.intentId, targetRef: intent.targetRef });
+      const movePreState = exactPreStateForTarget(plan, intent.targetRef);
+      if (movePreState === undefined || !nonEmpty(movePreState.contractVersion)) return runtimeError("move_pre_state_missing", "Move intent requires a versioned exact composite pre-state binding covering both endpoints", { intentId: intent.intentId, targetRef: intent.targetRef });
     }
   }
 
   const externalIds = new Set<string>();
   for (const declaration of plan.externalEffectDeclarations) {
-    if (!objectValue(declaration) || !nonEmpty(declaration.effectId) || externalIds.has(declaration.effectId)) return runtimeError("duplicate_external_effect", "External effect identifiers must be unique and non-empty", { effectId: objectValue(declaration) ? declaration.effectId : undefined });
+    if (!objectValue(declaration) || !nonEmpty(declaration.effectId) || externalIds.has(declaration.effectId)) return runtimeError("duplicate_external_effect", "External effect identifiers must be unique and non-empty", { effectId: objectValue(declaration) && nonEmpty(declaration.effectId) ? declaration.effectId : undefined });
     externalIds.add(declaration.effectId);
     if (!nonEmpty(declaration.owner) || !nonEmpty(declaration.targetRef)) return runtimeError("invalid_external_effect", "External effect declaration contains an empty required field", { effectId: declaration.effectId });
     if (!securityClasses.has(declaration.securityClass)) return runtimeError("invalid_external_security_class", "External effect security class is invalid", { effectId: declaration.effectId });
