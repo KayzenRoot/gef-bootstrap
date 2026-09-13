@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M06_S02",
+  "status": "READY_FOR_GBS_M06_S03",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03", "GBS-M04", "GBS-M05"],
   "activeModule": "GBS-M06_FILESYSTEM_SAFETY",
@@ -11,10 +11,12 @@
   "completedWorkOrderStatus": "APPROVED_MODULE_DONE",
   "activeWorkOrder": null,
   "activeWorkOrderStatus": null,
-  "m06PlanningSessions": {"S01":"FROZEN","S02":"PLANNED","S03":"PLANNED","S04":"PLANNED"},
+  "m06PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"PLANNED","S04":"PLANNED"},
   "m06S01Pr": 105,
-  "m06S01ReviewedHead": "aabd617804bacb35e426607d9c2a92dd88c2e9b9",
   "m06S01MergeSha": "c58db5541c7b1d636118992603ee61ce47a12946",
+  "m06S02Pr": 107,
+  "m06S02ReviewedHead": "b83b042fc22cdba110241237a144a5d4058628c2",
+  "m06S02MergeSha": "096cec4c9816e755188433275e475f3cf1248f0e",
   "m06ModuleGate": "NOT_EVALUATED",
   "mainProductionDenominatorWeight": 1088,
   "earnedProductionWeight": 107,
@@ -26,7 +28,7 @@
   "m06Weight": 18,
   "m06EarnedWeight": 0,
   "denominatorChanged": false,
-  "nextPlanningStage": "GBS-M06_S02_OVERWRITE_POLICY",
+  "nextPlanningStage": "GBS-M06_S03_SYMLINK_SAFETY",
   "codexBootstrapConstructionAuthorized": false,
-  "stopState": "READY_FOR_GBS_M06_S02"
+  "stopState": "READY_FOR_GBS_M06_S03"
 }
