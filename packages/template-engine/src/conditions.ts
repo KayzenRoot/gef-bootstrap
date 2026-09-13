@@ -1,4 +1,4 @@
-import { checkControl, fail, stableStringify } from "./runtime.js";
+import { checkControl, CONDITION_CONTRACT_VERSION, fail, stableStringify, VARIABLE_CONTRACT_VERSION } from "./runtime.js";
 import type {
   ConditionDecision,
   ConditionalSelectionSnapshot,
@@ -142,7 +142,7 @@ function treeIdentity(nodes: readonly TreeNode[]): unknown[] {
 export function selectConditions(template: TemplateDescriptor, variables: VariableResolutionSnapshot, digest: DigestPort, control: TemplateControl): TemplateResult<ConditionalSelectionSnapshot> {
   const gate = checkControl(control, "CONDITIONS");
   if (!gate.ok) return gate;
-  if (!template || !variables || template.templateSemanticDigest !== variables.templateSemanticDigest || !Array.isArray(template.entries) || !Array.isArray(variables.entries)) return fail("CONDITION_INPUT_MISMATCH", "CONDITIONS", "S01/S02 snapshots are incompatible.");
+  if (!template || !variables || variables.variableContractVersion !== VARIABLE_CONTRACT_VERSION || template.templateSemanticDigest !== variables.templateSemanticDigest || !Array.isArray(template.entries) || !Array.isArray(variables.entries)) return fail("CONDITION_INPUT_MISMATCH", "CONDITIONS", "S01/S02 snapshots are incompatible.");
   const resolutions = new Map(variables.entries.map((item) => [item.id, item] as const));
   const selectedEntries: SelectedTemplateEntry[] = [];
   const staticRefs = new Set<string>();
@@ -174,7 +174,7 @@ export function selectConditions(template: TemplateDescriptor, variables: Variab
   selectedEntries.sort((a, b) => a.entryId.localeCompare(b.entryId));
   const staticConditionRefs = Object.freeze([...staticRefs].sort());
   const evaluatedConditionRefs = Object.freeze([...evaluatedRefs].sort());
-  const decisionShape = selectedEntries.map((entry) => ({ entryId: entry.entryId, conditionTreeDigest: entry.conditionTreeDigest, decisions: entry.decisions }));
-  const conditionalDecisionDigest = digest.digest(stableStringify({ templateSemanticDigest: template.templateSemanticDigest, variableValueDigest: variables.variableValueDigest, decisionShape, evaluatedConditionRefs }));
-  return { ok: true, value: Object.freeze({ templateSemanticDigest: template.templateSemanticDigest, variableValueDigest: variables.variableValueDigest, entries: Object.freeze(selectedEntries), staticConditionRefs, evaluatedConditionRefs, conditionalDecisionDigest }) };
+  const decisionShape = selectedEntries.map((entry) => ({ entryId: entry.entryId, conditionTreeDigest: entry.conditionTreeDigest, decisions: entry.decisions, selectedTokens: entry.selectedTokens }));
+  const conditionalDecisionDigest = digest.digest(stableStringify({ conditionContractVersion: CONDITION_CONTRACT_VERSION, templateSemanticDigest: template.templateSemanticDigest, variableValueDigest: variables.variableValueDigest, decisionShape, evaluatedConditionRefs }));
+  return { ok: true, value: Object.freeze({ conditionContractVersion: CONDITION_CONTRACT_VERSION, templateSemanticDigest: template.templateSemanticDigest, variableValueDigest: variables.variableValueDigest, entries: Object.freeze(selectedEntries), staticConditionRefs, evaluatedConditionRefs, conditionalDecisionDigest }) };
 }
