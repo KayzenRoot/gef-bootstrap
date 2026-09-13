@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-WO-M06-001",
+  "status": "FRESH",
+  "implementationBase": "533b5d7b2ccec9036268d605bd844a2633df933b",
+  "admissionCheckpoint": "READY_FOR_GBS_WO_M06_001",
+  "criticalFingerprints": {
+    "m06s01": "caf7b28e9946cb2851339a0b4f57bff4cdbff0cd",
+    "m06s02": "83904f5b310fe49bd16236c3d4a86ccc29e23de0",
+    "m06s03": "62f940f59bf8d52de79f66565a1660b266797f0a",
+    "m06s04": "9fb43293121a73f0609de530f1d135287d3b8cb1",
+    "moduleGate": "43fad06c0cdf986df891c094ff29cd747d5a4a0f",
+    "rootPackage": "33f1fe6387e5add6274ed7839c9ba4879280b3fb"
+  },
+  "reason": "Implementation begins only from the separately merged M06 admission checkpoint; frozen S01-S04 and Module Gate semantics remain unchanged."
+}
