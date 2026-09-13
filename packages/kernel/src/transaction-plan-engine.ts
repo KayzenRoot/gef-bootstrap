@@ -84,9 +84,14 @@ function requiredArrays(source: Readonly<Record<string, unknown>>): boolean {
 export function validateTransactionPlanRuntime(body: unknown): TransactionPortResult<true> {
   if (!objectValue(body)) return runtimeError("malformed_plan", "Transaction plan must be an object");
   if (body.schemaVersion !== 1 || body.planContractVersion !== "1.0") return runtimeError("unsupported_version", "Unsupported transaction plan contract version");
-  if (!objectValue(body.targetBinding) || !nonEmpty(body.targetBinding.targetRef) || !bindingStrengths.has(body.targetBinding.bindingStrength)) return runtimeError("missing_target", "Transaction target binding is invalid or missing");
+  if (
+    !objectValue(body.targetBinding) ||
+    !nonEmpty(body.targetBinding.targetRef) ||
+    !nonEmpty(body.targetBinding.bindingStrength) ||
+    !bindingStrengths.has(body.targetBinding.bindingStrength)
+  ) return runtimeError("missing_target", "Transaction target binding is invalid or missing");
   if (!requiredArrays(body)) return runtimeError("malformed_plan", "Transaction plan required collection fields must be arrays");
-  if (!securityClasses.has(body.securityClass)) return runtimeError("invalid_security_class", "Transaction security class is invalid");
+  if (!nonEmpty(body.securityClass) || !securityClasses.has(body.securityClass)) return runtimeError("invalid_security_class", "Transaction security class is invalid");
 
   const plan = body as unknown as TransactionPlanBody;
 
