@@ -1,6 +1,6 @@
 # GBS-M06-S02 — Overwrite Policy
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the provider-neutral existing-target/occupancy policy for `GBS-M06 — Filesystem Safety`. S02 answers the question that begins **after S01 has already admitted the logical path**: given the current target state, may GEF create, update, replace, remove or move that target without clobbering unrelated/later work?
@@ -294,4 +294,4 @@ M06 planning earns no production credit.
 - M06 earned: `0 / 18`;
 - denominator changed: `NO`.
 
-STOP CONDITION: `M06_S02_FROZEN_CANDIDATE_READY_FOR_EXACT_HEAD_REVIEW`.
+STOP CONDITION: `M06_S02_FROZEN`.
