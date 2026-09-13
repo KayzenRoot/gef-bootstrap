@@ -14,6 +14,20 @@ const SAFE_ENV_KEY = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/;
 const KNOWN_PLATFORMS = new Set(["win32", "linux", "darwin"]);
 const SAFE_ATOM = /^[A-Za-z0-9._+\-]{1,128}$/;
 
+interface NodeProcessLike {
+  readonly platform: string;
+  readonly arch: string;
+  readonly versions: { readonly node: string };
+  readonly env: Readonly<Record<string, string | undefined>>;
+  cwd(): string;
+}
+
+function currentNodeProcess(): NodeProcessLike {
+  const candidate = (globalThis as unknown as { readonly process?: NodeProcessLike }).process;
+  if (!candidate) throw new Error("gef.preflight.environment.node_process_unavailable");
+  return candidate;
+}
+
 function malformed<T>(reasonCode: string): ObservedValue<T> { return { status: "MALFORMED", reasonCode }; }
 function unavailable<T>(reasonCode: string): ObservedValue<T> { return { status: "UNAVAILABLE", reasonCode }; }
 function observed<T>(value: T): ObservedValue<T> { return { status: "OBSERVED", value }; }
@@ -49,11 +63,11 @@ function validateWorkingDirectory(value: unknown): ObservedValue<string> {
 
 export function createNodeEnvironmentPort(): EnvironmentObservationPort {
   return Object.freeze({
-    platform: () => process.platform,
-    architecture: () => process.arch,
-    runtime: () => ({ family: "node", version: process.versions.node }),
-    workingDirectory: () => process.cwd(),
-    readEnvironment: (key: string) => process.env[key],
+    platform: () => currentNodeProcess().platform,
+    architecture: () => currentNodeProcess().arch,
+    runtime: () => ({ family: "node", version: currentNodeProcess().versions.node }),
+    workingDirectory: () => currentNodeProcess().cwd(),
+    readEnvironment: (key: string) => currentNodeProcess().env[key],
   });
 }
 
@@ -127,15 +141,15 @@ export class EnvironmentObservationSession {
       else if (fact === "architecture") result.architecture = value as ObservedValue<string>;
       else if (fact === "runtime") result.runtime = value as ObservedValue<RuntimeObservation>;
       else result.workingDirectory = value as ObservedValue<string>;
-      const gap = gapFor(fact, value);
-      if (gap) gaps.push(gap);
+      const factGap = gapFor(fact, value);
+      if (factGap) gaps.push(factGap);
     }
 
     for (const key of requestedKeys) {
       const value = this.#readEnvironment(key, allowed);
       result.requestedEnvironment[key] = value;
-      const gap = gapFor(`env_${key}`, value);
-      if (gap) gaps.push(gap);
+      const envGap = gapFor(`env_${key}`, value);
+      if (envGap) gaps.push(envGap);
     }
 
     return Object.freeze({ ...result, requestedEnvironment: Object.freeze({ ...result.requestedEnvironment }), gaps: Object.freeze([...gaps]) });
