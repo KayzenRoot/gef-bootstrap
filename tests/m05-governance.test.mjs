@@ -143,6 +143,7 @@ function rollbackPorts(targets, restore) {
   return {
     digest,
     state: { observeTargetFingerprint: async (target) => ({ ok: true, value: targets.get(target) }), observeBinding: async () => ({ ok: true, value: undefined }) },
+    authorization: { authorize: async () => ({ ok: true, value: true }) },
     journal: { begin: async () => ({ ok: true, value: true }), update: async () => ({ ok: true, value: true }), finish: async () => ({ ok: true, value: true }), ...recoveryJournal() },
     effects: {
       checkPhysicalSafety: async () => ({ ok: true, value: true }),
