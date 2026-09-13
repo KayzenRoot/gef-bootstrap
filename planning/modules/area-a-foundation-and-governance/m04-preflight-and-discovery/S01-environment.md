@@ -1,6 +1,6 @@
 # GBS-M04-S01 — Environment Discovery
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the minimal provider-neutral environment discovery contract consumed by deterministic preflight. S01 establishes observable host/runtime facts and their safety/validity semantics without turning local machine state into canonical project identity, hard-coding compatibility policy or performing broad repository/tool/provider discovery.
@@ -192,7 +192,10 @@ Implementation must eventually prove:
 7. Evidence: **compact/sanitized facts and typed gaps; raw sensitive/local material excluded by default**.
 8. M38 boundary: **M38 owns general capability detection/registry; S01 owns only primitive environment observations required to begin M04 preflight**.
 
-## Session completion rule
-Planning content is frozen-candidate. Exact-head semantic review must confirm alignment with M01 lifecycle/runtime, M02 configuration paths, M03 identity boundaries, Security, M38/M51/M63 ownership and token-economy requirements. After approval/merge, checkpoint advances to `GBS-M04-S02 — Git`.
+## Freeze record
+Exact-head semantic review passed on PR `#72`, reviewed head `60d89f5a6969d9579db22eb9e7a6462f2affb7b6`, and the planning contract was merged as `4890124c7258c05f7df7dd12934e0800e3564d1d` before checkpoint promotion.
 
-STOP CONDITION: `M04_S01_EXACT_HEAD_REVIEW_REQUIRED`.
+## Session completion rule
+M04-S01 is frozen. Reopening requires governed change control or invalidated evidence. The next legal planning session is `GBS-M04-S02 — Git`.
+
+STOP CONDITION: `M04_S01_FROZEN`.
