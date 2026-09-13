@@ -148,7 +148,7 @@ export class ProjectPreflightSession {
         if (projectConfig.status === "INVALID") gaps.push(gap("gef.preflight.config.project_invalid", "M02", true));
       }
       if (gaps.some((item) => item.blocking) && !requirements.diagnosticMode) {
-        this.#counters.skippedByPrerequisite += (requirements.hosted ? 1 : 0) + (requirements.tools?.length ?? 0);
+        this.#counters.skippedByPrerequisite += (requirements.hosted ? 1 : 0) + (requirements.tools?.length ?? 0) + (requirements.environment ? 1 : 0);
         return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig } : {}), tools, expectedStateBindings: generatedBindings, gaps });
       }
     }
@@ -158,7 +158,7 @@ export class ProjectPreflightSession {
       if (identity.projectId) generatedBindings.push({ kind: "PROJECT_ID", value: identity.projectId });
       if (identity.state !== "ADOPTED_VALID") gaps.push(gap(identity.reasonCode ?? `gef.preflight.identity.${identity.state.toLowerCase()}`, "M03", true));
       if (gaps.some((item) => item.blocking) && !requirements.diagnosticMode) {
-        this.#counters.skippedByPrerequisite += (requirements.hosted ? 1 : 0) + (requirements.tools?.length ?? 0);
+        this.#counters.skippedByPrerequisite += (requirements.hosted ? 1 : 0) + (requirements.tools?.length ?? 0) + (requirements.environment ? 1 : 0);
         return this.#finish({ requirementFingerprint, mode, ...(projectConfig ? { projectConfig } : {}), identity, tools, expectedStateBindings: generatedBindings, gaps });
       }
     }
@@ -172,8 +172,16 @@ export class ProjectPreflightSession {
       if (!this.#git) gaps.push(gap("gef.preflight.git.port_unavailable", "M29", true));
       else {
         git = await this.#git.observe({ startingDirectory: requirements.projectRoot, facts: [...requestedGitFacts], ...(requirements.statusDetail ? { statusDetail: requirements.statusDetail } : {}) });
-        const forceGitBlocking = requirements.requireRepository === true || (requirements.gitFacts?.length ?? 0) > 0 || needRepositoryIdentity;
-        mergeGaps(gaps, git.gaps, forceGitBlocking);
+        const forceGitBlocking = requirements.requireRepository === true || (requirements.gitFacts?.length ?? 0) > 0 || requirements.hosted !== undefined;
+        const identityStateAbsenceIsValid = requirements.identityBindingStrength === "IDENTITY_STATE"
+          && requirements.requireRepository !== true
+          && requirements.hosted === undefined
+          && (requirements.gitFacts?.length ?? 0) === 0
+          && git.repository?.presence === "ABSENT";
+        const relevantGitGaps = identityStateAbsenceIsValid
+          ? git.gaps.filter((item) => item.code !== "gef.preflight.git.repository_absent")
+          : git.gaps;
+        mergeGaps(gaps, relevantGitGaps, forceGitBlocking);
         if (git.head) generatedBindings.push({ kind: "GIT_HEAD", value: stablePreflightStringify(git.head) });
         if (git.status) generatedBindings.push({ kind: "GIT_STATUS", value: stablePreflightStringify(git.status.summary) });
 
