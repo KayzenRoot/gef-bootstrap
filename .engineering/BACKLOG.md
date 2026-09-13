@@ -40,7 +40,7 @@ The main denominator contains 61 release-blocking modules: 47 `CORE_REQUIRED` + 
 | M01 Deterministic Work Plane Kernel | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
 | M02 Configuration & Schema | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | MODULE_DONE |
 | M03 Project Identity | CORE_REQUIRED | 3 | 5 | 5 | 4 | 17 | MODULE_DONE |
-| M04 Preflight & Discovery | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | PLANNED |
+| M04 Preflight & Discovery | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | MODULE_DONE |
 | M05 Transactional Apply Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
 | M06 Filesystem Safety | CORE_REQUIRED | 4 | 5 | 4 | 5 | 18 | PLANNED |
 | M07 Template Engine | PRODUCT_INCLUDED | 4 | 3 | 4 | 3 | 14 | PLANNED |
@@ -139,22 +139,24 @@ Canonical rounded values:
 This low percentage is intentional and truthful: extensive planning has reduced future uncertainty and should reduce execution cost, but most production capability is not implemented yet. Planning value is preserved as reusable canonical knowledge rather than inflated production completion.
 
 ## Current audited production position
-The frozen denominator remains unchanged. Approved MODULE_DONE evidence now exists for M00-M03.
+The frozen denominator remains unchanged. Approved MODULE_DONE evidence now exists for M00-M04.
 
 ```text
 TOTAL_WEIGHT   = 1088
-EARNED_WEIGHT  = 70
-REMAINING      = 1018
-COMPLETION     = 70 / 1088 = 6.433823...%
+EARNED_WEIGHT  = 87
+REMAINING      = 1001
+COMPLETION     = 87 / 1088 = 7.996323...%
 ```
 
 Canonical rounded values:
-- `overallCompletion`: `6.43%`;
-- `remainingCompletion`: `93.57%`;
-- `earnedWeight`: `70`;
-- `remainingWeight`: `1018`.
+- `overallCompletion`: `8.00%`;
+- `remainingCompletion`: `92.00%`;
+- `earnedWeight`: `87`;
+- `remainingWeight`: `1001`.
 
 M03 evidence is bound to PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc` and GitHub Actions run `34727238254`.
+
+M04 evidence is bound to PR #86, exact reviewed/merged head `bc26829fa8f3043056b6d9b614c618767f02e6c7`, exact tree `46c80e056dde05ef108e9599485c33de844cec5a`, merge `67b4377a6df7a34874f751c13d1659b942eed859` and exact-head GitHub Actions run `34730911026`.
 
 ## ETA rule
 ETA remains `NOT_YET_RELIABLE`. Raw weights are not days. A trustworthy ETA requires observed delivery velocity from production construction increments plus critical-path/dependency information. M22/M45 will own the mature estimator. Early velocity may be reported with wide confidence only after construction begins.
