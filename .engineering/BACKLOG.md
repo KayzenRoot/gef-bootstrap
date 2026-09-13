@@ -3,36 +3,17 @@
 Status: `FROZEN`
 
 ## Purpose
-This backlog converts the frozen 64-module production inventory into the first auditable weighted denominator for the single complete production target. It separates production completion from planning activity and prevents historical governance work from manufacturing implementation progress.
+This backlog is the canonical weighted production denominator for the single complete GEF Bootstrap production target. Production credit is evidence-bound; planning activity alone does not earn weight.
 
-## Weight model
-Each production module receives four reviewed dimensions from 1–5:
-- `E` effort/implementation depth;
-- `R` engineering/security/operational risk;
-- `I` integration/dependency breadth;
-- `P` proof/validation burden.
-
-`RAW_WEIGHT = E + R + I + P`.
-
-Weights describe relative production burden, not calendar days. They are based on frozen Architecture, Security, Test/Benchmark, session inventory, cross-module ownership and release proof obligations. Recalibration after freeze requires governed change with before/after denominator impact.
-
-## State and credit model
-Governed states: `PLANNED`, `IN_DISCUSSION`, `IMPLEMENTING`, `EVIDENCE_PENDING`, `ITEM_DONE`, `MODULE_DONE`, `BLOCKED`.
-
-Credit rules:
-1. `MODULE_DONE` earns 100% of that module's weight.
-2. Partial credit is allowed only for explicit admitted backlog items with their own acceptance criteria, proof binding and allocated share of module weight.
-3. Partial shares inside one module may never sum above the module raw weight.
-4. Document existence, discussion count, merged PR count or subjective effort never earns production credit by itself.
-5. Planning-only artifacts receive no automatic production credit. They may later satisfy an explicit module item only when that module's frozen acceptance contract recognizes the artifact and proves it remains valid.
-6. No generic planning percentage cap is needed because credit is item/evidence bound rather than activity bound.
-7. Full module weight remains reserved for `MODULE_DONE`.
-8. Reopened/invalidated evidence removes only the affected earned credit.
-
-This deliberately conservative model prevents double counting between the Source Pack and later implementation modules.
+## Credit rules
+1. `MODULE_DONE` earns 100% of a module weight.
+2. Partial credit is allowed only for explicit admitted items with allocated weight and proof.
+3. Planning/docs/PR count alone never manufacture production credit.
+4. Invalidated evidence removes only affected earned credit.
+5. Denominator changes require governed before/after impact recording.
 
 ## Main production denominator
-The main denominator contains 61 release-blocking modules: 47 `CORE_REQUIRED` + 14 `PRODUCT_INCLUDED`. Optional adapters M39–M41 are tracked separately.
+61 release-blocking modules. Optional M39-M41 adapters remain outside this denominator.
 
 | Module | Class | E | R | I | P | Weight | Current evidence state |
 |---|---|---:|---:|---:|---:|---:|---|
@@ -41,7 +22,7 @@ The main denominator contains 61 release-blocking modules: 47 `CORE_REQUIRED` + 
 | M02 Configuration & Schema | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | MODULE_DONE |
 | M03 Project Identity | CORE_REQUIRED | 3 | 5 | 5 | 4 | 17 | MODULE_DONE |
 | M04 Preflight & Discovery | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | MODULE_DONE |
-| M05 Transactional Apply Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
+| M05 Transactional Apply Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
 | M06 Filesystem Safety | CORE_REQUIRED | 4 | 5 | 4 | 5 | 18 | PLANNED |
 | M07 Template Engine | PRODUCT_INCLUDED | 4 | 3 | 4 | 3 | 14 | PLANNED |
 | M08 Project Profiles | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | PLANNED |
@@ -110,65 +91,35 @@ The main denominator contains 61 release-blocking modules: 47 `CORE_REQUIRED` + 
 | M40 Hive Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 | M41 UGAS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 
-## Weight review outcome
-The 1–5 scores were reviewed against the frozen architecture/risk/proof model and retained. High-risk mutation, authority, assurance, release and security subsystems occupy the 19–20 band; significant cross-cutting subsystems occupy the 16–18 band; bounded product surfaces occupy the 11–15 band. This avoids equal module counting while preserving a deliberately simple, inspectable formula.
-
-## Historical evidence reconciliation
-Reconciliation result for baseline activation:
-- `M00 Bootstrap Constitution`: valid `MODULE_DONE`, earns full `16` weight.
-- frozen Project Overview, Requirements, Scope, Architecture, Security, Test & Benchmark and project-level DoD: recognized as authoritative pre-production governance evidence but **not independently credited** into M09/M12/M34/M45 or other future modules yet.
-- reason: those modules own production engines/capabilities, not merely the existence of project-level planning documents. Crediting those documents now would double count planning against future implementation obligations.
-- those artifacts remain reusable evidence and may satisfy explicit item acceptance later without repeating the reasoning.
-
-Therefore initial earned production weight is `16`.
-
-## First official completion baseline
-```text
-TOTAL_WEIGHT   = 1088
-EARNED_WEIGHT  = 16
-REMAINING      = 1072
-COMPLETION     = 16 / 1088 = 1.470588...%
-```
-
-Canonical rounded values:
-- `overallCompletion`: `1.47%`
-- `remainingCompletion`: `98.53%`
-- `earnedWeight`: `16`
-- `remainingWeight`: `1072`
-
-This low percentage is intentional and truthful: extensive planning has reduced future uncertainty and should reduce execution cost, but most production capability is not implemented yet. Planning value is preserved as reusable canonical knowledge rather than inflated production completion.
-
 ## Current audited production position
-The frozen denominator remains unchanged. Approved MODULE_DONE evidence now exists for M00-M04.
+Approved MODULE_DONE evidence now exists for M00-M05.
 
 ```text
 TOTAL_WEIGHT   = 1088
-EARNED_WEIGHT  = 87
-REMAINING      = 1001
-COMPLETION     = 87 / 1088 = 7.996323...%
+EARNED_WEIGHT  = 107
+REMAINING      = 981
+COMPLETION     = 107 / 1088 = 9.834558...%
 ```
 
 Canonical rounded values:
-- `overallCompletion`: `8.00%`;
-- `remainingCompletion`: `92.00%`;
-- `earnedWeight`: `87`;
-- `remainingWeight`: `1001`.
+- `overallCompletion`: `9.83%`;
+- `remainingCompletion`: `90.17%`;
+- `earnedWeight`: `107`;
+- `remainingWeight`: `981`.
 
-M03 evidence is bound to PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc` and GitHub Actions run `34727238254`.
-
-M04 evidence is bound to PR #86, exact reviewed/merged head `bc26829fa8f3043056b6d9b614c618767f02e6c7`, exact tree `46c80e056dde05ef108e9599485c33de844cec5a`, merge `67b4377a6df7a34874f751c13d1659b942eed859` and exact-head GitHub Actions run `34730911026`.
+Latest evidence bindings:
+- M03: PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc`, run `34727238254`.
+- M04: PR #86, reviewed head `bc26829fa8f3043056b6d9b614c618767f02e6c7`, tree `46c80e056dde05ef108e9599485c33de844cec5a`, merge `67b4377a6df7a34874f751c13d1659b942eed859`, run `34730911026`.
+- M05: PR #103, reviewed head `0eea9b410755410cb8ae2e34042e6ccb87fae4c6`, tree `d740f3ef4f6ed3ea4a322b8969d8eaf5f5befa65`, merge `3c93e4da5c12bd2ce5ed4ebfb8b809a256815c93`, run `34735379266`.
 
 ## ETA rule
-ETA remains `NOT_YET_RELIABLE`. Raw weights are not days. A trustworthy ETA requires observed delivery velocity from production construction increments plus critical-path/dependency information. M22/M45 will own the mature estimator. Early velocity may be reported with wide confidence only after construction begins.
+ETA remains `NOT_YET_RELIABLE`. Weights are production burden, not days. M22/M45 own mature estimation; M63 owns quantitative executor-performance thresholds.
 
-## Freeze decisions
-1. All 61 release-blocking module weights are accepted for baseline v1.
-2. M39–M41 remain outside the independent-product denominator.
-3. Partial credit is explicit-item/evidence bound, never activity based.
-4. No automatic planning credit or arbitrary planning cap is used.
-5. M00 receives full historical credit; Source Pack artifacts receive reusable evidence status but zero additional production weight at baseline activation.
-6. First official production completion baseline is `1.47%`.
-7. ETA remains untrusted until observed construction velocity exists.
-8. Any future weight recalibration must record denominator and completion impact before/after.
+## Frozen decisions
+- 61 release-blocking weights remain accepted and unchanged.
+- M39-M41 stay outside the independent-product denominator.
+- production credit is evidence-bound, never activity-based.
+- planning artifacts may be reused but do not independently earn future engine weights.
+- any future recalibration records denominator/completion impact before and after.
 
 STOP CONDITION: `BACKLOG_BASELINE_ACTIVE_USE_CURRENT_CHECKPOINT_FOR_CONTINUATION`.
