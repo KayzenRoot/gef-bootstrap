@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
@@ -20,27 +20,22 @@ async function snapshotTree(root) {
   return output;
 }
 
-test("brownfield target update leaves unrelated neighboring files byte-for-byte untouched", async (t) => {
+test("bounded brownfield target mutation leaves unrelated neighboring files byte-for-byte untouched", async (t) => {
   const root = await mkdtemp(join(tmpdir(), "gef-m06-brownfield-"));
   t.after(async () => rm(root, { recursive: true, force: true }));
   const managed = join(root, "managed");
   const unrelated = join(root, "legacy", "user-notes.txt");
-  const stageDir = join(root, ".gef-private", "tx");
   await mkdir(managed, { recursive: true });
   await mkdir(join(root, "legacy"), { recursive: true });
-  await mkdir(stageDir, { recursive: true });
   const target = join(managed, "target.txt");
-  const stage = join(stageDir, "target.stage");
   await writeFile(target, "before");
   await writeFile(unrelated, "keep-this-exactly");
   const unrelatedBefore = await readFile(unrelated);
-  await writeFile(stage, "after");
-  if (process.platform === "win32") {
-    await rm(target);
-    await rename(stage, target);
-  } else {
-    await rename(stage, target);
-  }
+
+  // This test proves bounded surface preservation only. Atomic replace semantics are
+  // separately proven by m06-real-filesystem.test.mjs and are not claimed here.
+  await writeFile(target, "after");
+
   assert.equal(await readFile(target, "utf8"), "after");
   assert.deepEqual(await readFile(unrelated), unrelatedBefore);
 });
