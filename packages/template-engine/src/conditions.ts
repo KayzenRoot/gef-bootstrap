@@ -116,9 +116,9 @@ function evaluateNodes(
     evaluated.add(node.variableId);
     if (resolution.value) {
       decisions.push(Object.freeze({ conditionNodeId: node.nodeId, variableId: node.variableId, evaluationStatus: "TRUE", selectedBranch: "PRIMARY" }));
-      if (node.alternate) markNotEvaluated(node.alternate, decisions);
       const primary = evaluateNodes(node.primary, resolutions, decisions, selected, evaluated, control);
       if (!primary.ok) return primary;
+      if (node.alternate) markNotEvaluated(node.alternate, decisions);
     } else if (node.alternate) {
       decisions.push(Object.freeze({ conditionNodeId: node.nodeId, variableId: node.variableId, evaluationStatus: "FALSE", selectedBranch: "ALTERNATE" }));
       markNotEvaluated(node.primary, decisions);
