@@ -1,29 +1,28 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M07_MODULE_GATE`
+Status: `READY_TO_COMPILE_GBS_WO_M07_001`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
 - Completed modules: `GBS-M00` through `GBS-M06`
 - Active module: `GBS-M07 — Template Engine`
-- Active module status: `PLANNING_COMPLETE_GATE_PENDING`
-- M07-S01 Template Format: `FROZEN`
-- M07-S02 Variables: `FROZEN`
-- M07-S03 Conditional Templates: `FROZEN`
-- M07-S04 Rendering: `FROZEN`
-- M07-S05 Validation: `FROZEN`
-- M07-S05 evidence: PR `#127`, reviewed head `19eb1384d268a3484feb4af5f829ee2ef99e77b9`, review `5190820656`, merge `2e132da73a07fffbf813f4075fb19cdc89b083b2`
-- M07 Module Gate: `NOT_EVALUATED`
+- Active module status: `PLANNED_READY_FOR_IMPLEMENTATION`
+- M07-S01..S05: `FROZEN`
+- M07 Module Gate: `PLANNED_READY_FOR_IMPLEMENTATION`
+- Module Gate PR: `#129`
+- Module Gate reviewed head: `91f5f411e6cc0dc665f7865d4a17d628689a881c`
+- Module Gate review: `5190851400`
+- Module Gate merge: `66ee19eb3bf4e069f345413f0580127eaa84b257`
 - Active Work Order: `NONE`
-- Next legal stage: `EVALUATE_GBS_M07_MODULE_GATE`
+- Next legal stage: `COMPILE_GBS_WO_M07_001`
 - Production: `125 / 1088 = 11.49%`
 - Remaining: `963 / 1088 = 88.51%`
 - M07 earned: `0 / 14`
 - Denominator change: `NONE`
 
 ## Continuation contract
-Evaluate only the M07 Module Gate. The gate may approve planning readiness for Work Order compilation, but it cannot award production credit or authorize implementation by itself.
+Compile only `GBS-WO-M07-001` from the frozen M07 planning and approved Module Gate. Compilation does not authorize implementation. A separately reviewed admission checkpoint is required before production code may begin.
 
 Codex remains outside Bootstrap construction absent a separately governed exception.
 
-STOP CONDITION: `READY_FOR_GBS_M07_MODULE_GATE`.
+STOP CONDITION: `READY_TO_COMPILE_GBS_WO_M07_001`.
