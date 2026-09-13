@@ -1,6 +1,6 @@
 # GBS-M06-S01 — Allowed Paths
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the provider-neutral path-authority and lexical-containment contract for `GBS-M06 — Filesystem Safety`. S01 defines **which filesystem locations a governed operation is allowed to address** and how a logical target is mapped to a bounded authorized root without granting authority from cwd, string-prefix coincidence, OS permissions or repository content.
@@ -285,4 +285,4 @@ M06 planning earns no production credit.
 - M06 earned: `0 / 18`;
 - denominator changed: `NO`.
 
-STOP CONDITION: `M06_S01_FROZEN_CANDIDATE_READY_FOR_EXACT_HEAD_REVIEW`.
+STOP CONDITION: `M06_S01_FROZEN`.
