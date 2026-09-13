@@ -32,6 +32,7 @@ export interface FilesystemObservationBundle {
 
 export interface FilesystemAtomicFacts {
   readonly primitive: FilesystemPrimitiveCapability;
+  readonly stagingAuthorityRef: string;
   readonly stagingFilesystemId?: string;
   readonly destinationFilesystemId?: string;
 }
