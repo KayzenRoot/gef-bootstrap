@@ -12,5 +12,7 @@
     "m04s05": "22ccc8e94ba726f680edd0beec932797ca2e55ae",
     "moduleGate": "33c85959ea4af0e8152ea92ad5e7440f764d5eac"
   },
-  "reason": "Admission promotion changed the checkpoint after the original candidate lock; implementation is rebased to the admitted checkpoint without reopening frozen M04 planning sources."
+  "reason": "Admission promotion changed the checkpoint after the original candidate lock; implementation is rebased to the admitted checkpoint without reopening frozen M04 planning sources.",
+  "implementationEvidenceCandidateHead": "8ff00f038f3dfa4f723ab84e741b1f175dabd0cd",
+  "implementationEvidenceCandidateRun": 34730762691
 }
