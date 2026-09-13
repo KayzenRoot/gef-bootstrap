@@ -1,3 +1,4 @@
+import { canonicalizeRepositoryIdentityProjection } from "./projection.js";
 import { isCanonicalProjectId } from "./project-id.js";
 import { repositoryIdentityEqual, repositoryLocatorEqual } from "./repository.js";
 import type { CollisionAssessment, CollisionAssessmentInput, RepositoryIdentityProjection } from "./types.js";
@@ -12,24 +13,38 @@ function providerConflict(a: RepositoryIdentityProjection | undefined, b: Reposi
   return a.stableProviderId !== b.stableProviderId && repositoryLocatorEqual(a.normalizedLocator, b.normalizedLocator);
 }
 
+function canonicalOptionalProjection(value: RepositoryIdentityProjection | undefined): RepositoryIdentityProjection | undefined {
+  return value === undefined ? undefined : canonicalizeRepositoryIdentityProjection(value);
+}
+
 export function assessIdentityCollision(input: CollisionAssessmentInput): CollisionAssessment {
   if (!isCanonicalProjectId(input.currentProjectId) || !isCanonicalProjectId(input.candidateProjectId)) {
     return { collision: "AMBIGUOUS_COPY_OR_FORK", blocksGovernedMutation: true, restriction: "BLOCK_ALL", reasonCode: "gef.identity.collision_input_invalid" };
   }
+
+  let currentRepository: RepositoryIdentityProjection | undefined;
+  let candidateRepository: RepositoryIdentityProjection | undefined;
+  try {
+    currentRepository = canonicalOptionalProjection(input.currentRepository);
+    candidateRepository = canonicalOptionalProjection(input.candidateRepository);
+  } catch {
+    return { collision: "AMBIGUOUS_COPY_OR_FORK", blocksGovernedMutation: true, restriction: "BLOCK_ALL", reasonCode: "gef.identity.repository_projection_invalid" };
+  }
+
   if (input.artifactIsStale) return { collision: "STALE_IDENTITY_ARTIFACT", blocksGovernedMutation: true, restriction: "BLOCK_ALL", reasonCode: "gef.identity.stale_identity_artifact" };
   if (input.copyOrForkAmbiguous) return { collision: "AMBIGUOUS_COPY_OR_FORK", blocksGovernedMutation: true, restriction: "BLOCK_ALL", reasonCode: "gef.identity.copy_or_fork_ambiguous" };
-  if (providerConflict(input.currentRepository, input.candidateRepository)) {
+  if (providerConflict(currentRepository, candidateRepository)) {
     return { collision: "PROVIDER_BINDING_CONFLICT", blocksGovernedMutation: true, restriction: "BLOCK_ALL", reasonCode: "gef.identity.provider_binding_conflict" };
   }
 
   const sameProject = input.currentProjectId === input.candidateProjectId;
-  const repositoryComparable = input.currentRepository !== undefined && input.candidateRepository !== undefined;
-  const sameRepository = repositoryComparable && repositoryIdentityEqual(input.currentRepository, input.candidateRepository);
+  const repositoryComparable = currentRepository !== undefined && candidateRepository !== undefined;
+  const sameRepository = repositoryComparable && repositoryIdentityEqual(currentRepository, candidateRepository);
 
   if (input.registryEvidenceOnly && sameProject && repositoryComparable && !sameRepository) {
     return { collision: "REGISTRY_DUPLICATE_SUSPECTED", blocksGovernedMutation: false, restriction: "LOCAL_SAFE_ONLY", reasonCode: "gef.identity.registry_duplicate_suspected" };
   }
-  if (sameLocalBinding(input.currentRepository, input.candidateRepository) && input.independentLineageClaimed) {
+  if (sameLocalBinding(currentRepository, candidateRepository) && input.independentLineageClaimed) {
     return { collision: "LOCAL_BINDING_COLLISION", blocksGovernedMutation: true, restriction: "BLOCK_ALL", reasonCode: "gef.identity.local_binding_collision" };
   }
   if (sameProject && (!repositoryComparable || sameRepository)) {
