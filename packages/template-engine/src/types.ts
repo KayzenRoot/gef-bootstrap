@@ -120,6 +120,7 @@ export interface VariableResolutionEntry {
 }
 
 export interface VariableResolutionSnapshot {
+  readonly variableContractVersion: "1.0";
   readonly templateSemanticDigest: string;
   readonly entries: readonly VariableResolutionEntry[];
   readonly variableValueDigest: string;
@@ -141,6 +142,7 @@ export interface SelectedTemplateEntry {
 }
 
 export interface ConditionalSelectionSnapshot {
+  readonly conditionContractVersion: "1.0";
   readonly templateSemanticDigest: string;
   readonly variableValueDigest: string;
   readonly entries: readonly SelectedTemplateEntry[];
@@ -160,6 +162,7 @@ export interface RenderArtifact {
 }
 
 export interface RenderSnapshot {
+  readonly renderContractVersion: "1.0";
   readonly templateSemanticDigest: string;
   readonly variableValueDigest: string;
   readonly conditionalDecisionDigest: string;
@@ -180,6 +183,7 @@ export interface DesiredArtifact {
 }
 
 export interface TemplateValidationSnapshot {
+  readonly validationContractVersion: "1.0";
   readonly outcome: "VALIDATED_FOR_EFFECT_PLANNING" | "BLOCKED" | "INDETERMINATE";
   readonly renderSnapshotDigest: string;
   readonly artifacts: readonly DesiredArtifact[];
