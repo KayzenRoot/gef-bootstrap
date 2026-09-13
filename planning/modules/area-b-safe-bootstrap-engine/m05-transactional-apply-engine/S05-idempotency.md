@@ -1,6 +1,6 @@
 # GBS-M05-S05 — Idempotency
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the provider-neutral idempotency, replay and bounded-retry contract for `GBS-M05 — Transactional Apply Engine`. S05 defines how GEF determines whether a previously attempted mutation is safe to execute again, should collapse to a verified no-op/prior result, requires recovery first, or must block because prior effect state is uncertain.
@@ -398,7 +398,10 @@ Implementation must eventually prove:
 11. External effects: **provider-owned idempotency/effect detection required; ambiguous external response is never blind replayed**.
 12. Authorization: **idempotency keys/records never grant or extend mutation authorization**.
 
-## Session completion rule
-This candidate becomes `FROZEN` only after exact-head semantic review and merge. Planning earns `0/20` M05 production weight. After checkpoint promotion, the next legal stage is the `GBS-M05 MODULE GATE` across S01-S05. No M05 implementation Work Order may be compiled or admitted before that module gate explicitly approves implementation readiness.
+## Freeze record
+Candidate semantic review passed on PR `#96` for head `70c8c96cadb3fe7c25a1bb615a63fcdde3283ee3` with no HIGH/CRITICAL planning finding. The final `FROZEN` head must receive an exact-head semantic review before merge; that immutable reviewed-head binding is recorded in the PR review/checkpoint promotion rather than embedded self-referentially in this commit.
 
-STOP CONDITION: `M05_S05_READY_FOR_EXACT_HEAD_REVIEW`.
+## Session completion rule
+M05-S05 is `FROZEN` after final exact-head semantic approval and merge. Planning earns `0/20` M05 production weight. After checkpoint promotion, the next legal stage is the `GBS-M05 MODULE GATE` across S01-S05. No M05 implementation Work Order may be compiled or admitted before that module gate explicitly approves implementation readiness.
+
+STOP CONDITION: `M05_S05_FROZEN_PENDING_FINAL_EXACT_HEAD_REVIEW`.
