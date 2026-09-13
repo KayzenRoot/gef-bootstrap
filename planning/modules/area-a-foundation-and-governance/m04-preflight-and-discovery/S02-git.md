@@ -1,6 +1,6 @@
 # GBS-M04-S02 — Git Discovery
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the provider-neutral local Git discovery contract consumed by deterministic preflight. S02 defines which Git facts may be observed, how ambiguity/gaps are represented and how discovery remains bounded, without implementing Git commands, branch/commit policy, dirty-tree mutation safety or hosted-provider behavior.
@@ -239,7 +239,10 @@ Implementation must eventually prove:
 9. Snapshot reuse: **allowed within validity dependencies; HEAD/status/remotes have targeted freshness rules**.
 10. Provider boundary: **no GitHub/provider network or stable provider-ID claim in local S02 discovery**.
 
-## Session completion rule
-Planning content is frozen-candidate. Exact-head semantic review must confirm alignment with M03 repository identity, M01 lifecycle, Security Git rules, M29 ownership, M51 compatibility and S01 lazy discovery. After approval/merge, checkpoint advances to `GBS-M04-S03 — GitHub`.
+## Freeze record
+Exact-head semantic review passed on PR `#74`, reviewed head `20740a9170ebb473c44ac814bc2e965264933666`, and the planning contract was merged as `413d20b763c46958ada0f2346d41938817a853d8` before checkpoint promotion.
 
-STOP CONDITION: `M04_S02_EXACT_HEAD_REVIEW_REQUIRED`.
+## Session completion rule
+M04-S02 is frozen. Reopening requires governed change control or invalidated evidence. The next legal planning session is `GBS-M04-S03 — GitHub`.
+
+STOP CONDITION: `M04_S02_FROZEN`.
