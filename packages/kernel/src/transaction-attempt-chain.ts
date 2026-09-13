@@ -21,7 +21,6 @@ export interface LinkRetryAttemptInput {
   readonly planDigest: string;
   readonly runId: string;
   readonly transactionId?: string;
-  readonly effectState?: EffectState;
 }
 
 function invalid(reason: string, summary: string): TransactionPortResult<never> {
@@ -43,6 +42,9 @@ function invalid(reason: string, summary: string): TransactionPortResult<never> 
 export function linkRetryAttempt(input: LinkRetryAttemptInput): TransactionPortResult<TransactionAttemptRecord> {
   if (input.eligibility.decision !== "RETRY_ELIGIBLE" && input.eligibility.decision !== "FRESH_ATTEMPT_ELIGIBLE") {
     return invalid("not_eligible", "A new attempt can be linked only after explicit retry or fresh-attempt eligibility");
+  }
+  if (input.eligibility.effectState !== input.prior.effectState) {
+    return invalid("eligibility_state_mismatch", "Retry eligibility must be derived from the predecessor's exact observed effect state");
   }
   if (!sameIdempotencyScope(input.prior.scope, input.scope)) {
     return invalid("scope_mismatch", "Retry attempt scope must exactly match its predecessor idempotency scope");
@@ -66,7 +68,7 @@ export function linkRetryAttempt(input: LinkRetryAttemptInput): TransactionPortR
       runId: input.runId,
       ...(input.transactionId === undefined ? {} : { transactionId: input.transactionId }),
       predecessorRunId: input.prior.runId,
-      effectState: input.effectState ?? "IN_FLIGHT",
+      effectState: "IN_FLIGHT" as const,
     }),
   };
 }
