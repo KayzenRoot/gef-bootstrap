@@ -1,6 +1,6 @@
 # GBS-M05 — Transactional Apply Engine Module Gate
 
-Status: `GATE_CANDIDATE`
+Status: `PLANNED_READY_FOR_IMPLEMENTATION`
 
 ## Planning evidence
 - S01 Transaction Plan: `FROZEN` — PR `#88` — reviewed head `074a5b2bb91bc6848999946146d88028c6a503e2` — merge `f600ee4ffce03c90bf0c2ff9d28cccfd9881f424`
@@ -202,7 +202,7 @@ M05 owns provider-neutral logical transaction semantics. M06 owns real filesyste
 - Implementation completeness: `NOT_STARTED`
 - Production evidence: `NOT_STARTED`
 - M05 production weight earned: `0 / 20`
-- Gate candidate verdict: `PLANNED_READY_FOR_IMPLEMENTATION`
+- Gate verdict: `PLANNED_READY_FOR_IMPLEMENTATION`
 
 ## Progress truth
 - Production denominator: `1088`
@@ -215,9 +215,12 @@ M05 owns provider-neutral logical transaction semantics. M06 owns real filesyste
 - Potential after approved M05 MODULE_DONE: `107 / 1088 = 9.83%`
 - Denominator changed: `NO`
 
+## Freeze record
+Candidate module-gate review passed on PR `#98` for head `c3c603912a450eb607e929c232129f3f6a176a0d` with no HIGH/CRITICAL planning blocker. The final promoted head must receive an exact-head semantic review before merge; the final reviewed-head binding is recorded in the PR review/checkpoint promotion.
+
 ## Next-stage rule
-If this gate receives exact-head semantic approval and merge, the canonical checkpoint may authorize compilation/admission of exactly one bounded M05 implementation Work Order. Gate approval alone does not authorize implementation before that Work Order is merged/admitted.
+After final exact-head approval and merge, the canonical checkpoint may authorize compilation/admission of exactly one bounded M05 implementation Work Order. Gate approval alone does not authorize implementation before that Work Order is merged/admitted.
 
 Codex remains prohibited for Bootstrap construction unless a separate governed benchmark exception/ADR is explicitly admitted.
 
-STOP CONDITION: `M05_MODULE_GATE_READY_FOR_EXACT_HEAD_REVIEW`.
+STOP CONDITION: `M05_MODULE_GATE_PLANNED_READY_FOR_IMPLEMENTATION_PENDING_FINAL_REVIEW`.
