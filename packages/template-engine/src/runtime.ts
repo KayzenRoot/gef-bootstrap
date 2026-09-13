@@ -22,6 +22,7 @@ export const DEFAULT_TEMPLATE_BUDGETS: TemplateBudgets = Object.freeze({
   maxRenderedBytesTotal: 64 * 1024 * 1024,
   maxTargetBytes: 4096,
   maxTargetComponents: 128,
+  maxTargetComponentBytes: 255,
   maxEvidenceEntries: 65536,
 });
 
@@ -126,7 +127,7 @@ export function validateLogicalFileTarget(target: string, budgets: TemplateBudge
   if (utf8Length(target) > budgets.maxTargetBytes) return false;
   const parts = target.split("/");
   if (parts.length > budgets.maxTargetComponents) return false;
-  return parts.every(validPortableSegment);
+  return parts.every((part) => validPortableSegment(part) && utf8Length(part) <= budgets.maxTargetComponentBytes);
 }
 
 export function validateSourceRef(ref: string, budgets: TemplateBudgets): boolean {
