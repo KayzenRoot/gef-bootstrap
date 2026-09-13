@@ -1,5 +1,7 @@
 export { applyTransaction } from "./transaction-apply-certified.js";
 export type { ApplyTransactionInput } from "./transaction-apply-certified.js";
+export { linkRetryAttempt } from "./transaction-attempt-chain.js";
+export type { LinkRetryAttemptInput, TransactionAttemptRecord } from "./transaction-attempt-chain.js";
 export { dryRunTransaction } from "./transaction-dry-run-engine.js";
 export { decideIdempotentAction, sameIdempotencyScope } from "./transaction-idempotency.js";
 export {
