@@ -3,65 +3,58 @@
 Status: `FROZEN`
 
 ## Purpose
-Freeze the deterministic, portable, non-executable baseline contract for `GBS-M08 — Project Profiles`. S01 defines the generic project-profile envelope, the built-in generic profile identity, deterministic profile selection/default behavior, exact template-reference and profile-binding projection semantics, immutable selection evidence, and the safety boundary between profile intent and the already-completed M07/M05/M06 contracts.
+Freeze the deterministic, portable, non-executable baseline contract for `GBS-M08 — Project Profiles`. S01 defines the generic project-profile envelope, the product-owned `generic` identity, exact explicit/default selection behavior, declarative template references, M07 profile-binding projection, immutable selection evidence, and the authority boundary between profile intent and completed M07/M05/M06 contracts.
 
-The generic profile is deliberately technology-neutral. It MUST be usable when no language/framework-specific profile is selected and MUST NOT guess Node, TypeScript, Python, web, app, package manager, framework, deployment target or repository topology from ambient state. Specialized content belongs to S02-S04; inheritance/overlay composition belongs to S05.
+The generic profile is technology-neutral. It MUST work without assuming Node, TypeScript, Python, web, app, package manager, framework, deployment target or repository topology. Specialized semantics belong to S02-S04; inheritance/composition belongs to S05.
 
 S01 is planning only. It performs no filesystem mutation, template fetching, rendering, dependency installation, shell/process execution, Git/provider mutation or Source Pack materialization.
 
 ## Binding sources
 - canonical checkpoint `READY_FOR_GBS_M08_S01`;
 - completed M00-M07 public contracts;
-- M02 deterministic schema/versioning, explicit precedence/provenance, strict core fields and inert-extension principles;
-- M03 project/repository identity separation from content/profile identity;
-- M04 bounded discovery, explicit-input and hosted-profile observation rules;
+- M02 deterministic schema/versioning, explicit precedence/provenance, strict core fields and inert extensions;
+- M03 project/repository identity separation from profile/content identity;
+- M04 bounded discovery and explicit-input rules;
 - M05 MODULE_DONE transactional desired-state/apply/rollback/idempotency contracts;
 - M06 MODULE_DONE path authority, overwrite, link/reparse, staging and atomicity contracts;
-- M07 MODULE_DONE template format, typed variables, conditional templates, rendering and complete desired-artifact validation;
-- M07-S02 frozen precedence `TEMPLATE_DEFAULT < PROFILE_BINDING < EXPLICIT_INPUT` and prohibition on ambient environment as a generic binding layer;
-- frozen Architecture deterministic-input, immutable-snapshot, startup-purity, library-first and canonical/derived/operational-state separation rules;
+- M07 MODULE_DONE template format, typed variables, conditions, rendering and desired-artifact validation;
+- M07-S02 precedence `TEMPLATE_DEFAULT < PROFILE_BINDING < EXPLICIT_INPUT` and its prohibition on ambient environment as a generic binding layer;
+- frozen Architecture startup-purity, deterministic-input, immutable-snapshot, library-first and state-separation rules;
 - frozen Security repository-content trust limits, secret handling, process-execution policy and capability-vs-authorization rules;
 - frozen Requirements, Scope, Definition of Done and Test & Benchmark Plan;
 - M09 ownership of Source Pack aggregation/distribution and template-source resolution;
 - M24/M25 ownership of broad evidence/proof-graph products;
 - M37 ownership of global trust/integrity/authorship policy;
-- M51 ownership of supported platform/runtime compatibility policy;
+- M51 ownership of compatibility policy;
 - M63 ownership of quantitative executor-performance thresholds.
 
 ## Ownership boundary
 M08-S01 OWNS:
-- the versioned generic project-profile envelope;
-- generic profile identity and technology-neutral semantics;
+- the generic project-profile logical envelope;
+- generic profile identity and neutral semantics;
 - deterministic explicit-profile versus generic-default selection;
-- exact selected-profile snapshot semantics;
-- declarative template-reference intent carried by a profile;
-- declarative M07 `PROFILE_BINDING` candidates carried by a profile;
+- immutable selected-profile snapshots;
+- declarative exact template-reference intent;
+- declarative typed candidates for M07 `PROFILE_BINDING`;
 - profile semantic identity/digest inputs;
-- compact profile-selection/projection evidence;
-- fail-closed duplicate/unknown/conflicting profile content behavior;
-- bounded, cancellable, S0 read-only profile parse/selection/projection behavior;
-- the baseline constraints that specialized profiles in S02-S04 may only refine, never weaken.
+- compact selection/projection evidence;
+- fail-closed duplicate/conflict behavior;
+- bounded, cancellable, S0 read-only profile parsing/selection/projection;
+- baseline rules that S02-S04 may refine but never weaken.
 
 M08-S01 DOES NOT OWN:
-- TypeScript/Node profile semantics (M08-S02);
-- Python profile semantics (M08-S03);
-- Web/App profile semantics (M08-S04);
-- profile inheritance, parent graphs, overlays or merge precedence (M08-S05);
-- template syntax, variable declarations/types/contexts, conditions, rendering or rendered-output validation (M07);
-- template/source fetching, catalog distribution or Source Pack aggregation (M09);
-- repository/project identity (M03);
-- repository discovery heuristics or tool probing (M04);
-- semantic transaction apply/rollback/idempotency (M05);
-- physical filesystem/path authority or atomic writes (M06);
-- process/tool execution, dependency installation or arbitrary code loading (M01/Security and later owning modules);
+- TypeScript/Node profile semantics (S02);
+- Python profile semantics (S03);
+- Web/App profile semantics (S04);
+- inheritance, parents, overlays or merge precedence (S05);
+- M07 template/variable/condition/render/validation semantics;
+- template fetching/catalog/source distribution or Source Pack aggregation (M09);
+- project identity (M03), repository discovery (M04), semantic transaction authority (M05), physical path authority (M06);
+- process/tool execution, package installation or arbitrary module loading;
 - Git/provider mutation (M29/M30+);
-- global integrity/trust policy (M37);
-- compatibility-matrix policy (M51);
-- quantitative performance thresholds (M63).
+- global trust/integrity policy (M37), compatibility policy (M51), or quantitative performance thresholds (M63).
 
-## Canonical logical profile envelope
-
-Conceptually:
+## Canonical logical envelope
 
 ```text
 ProjectProfile {
@@ -87,342 +80,180 @@ ProfileVariableBinding {
   variableId
   valueType
   value
-  valueClass?
 }
 
 ProfileSelectionRequest {
-  mode                  // EXPLICIT_PROFILE | DEFAULT_GENERIC
-  profileId?            // required only for EXPLICIT_PROFILE
+  mode                       // EXPLICIT_PROFILE | DEFAULT_GENERIC
+  profileId?                 // required for EXPLICIT_PROFILE
   expectedProfileVersion?
   expectedProfileDigest?
 }
 ```
 
-This is a logical contract, not permission to invent alternate profile loaders. Future implementation may choose a library-owned serialized form, but it MUST preserve the exact semantics frozen here and MUST NOT turn profile loading into module execution.
+The envelope is logical. Future serialization MUST preserve these semantics and MUST NOT turn profile loading into executable-module loading.
 
-## Frozen Generic Profile contract
+## Frozen contract
 
-### PRF-01 — Profile data is declarative and non-executable
-A project profile is data. Loading, validating, selecting or projecting a profile MUST NOT execute repository code, import arbitrary modules, resolve package entry points, run hooks, evaluate expressions or invoke shell/tools.
+### PRF-01 — Profiles are declarative, never executable
+Loading, validating, selecting or projecting a profile MUST NOT execute repository code, import arbitrary modules, resolve package entry points, run hooks, evaluate expressions or invoke shell/tools.
 
-JavaScript/TypeScript executable config modules, callbacks, functions, templated code evaluation and package lifecycle hooks are not admitted profile semantics.
+Executable JavaScript/TypeScript config, callbacks, functions and package lifecycle hooks are not profile semantics.
 
-### PRF-02 — Core profile shape is strict and versioned
-Every admitted profile MUST carry:
-- `schemaVersion`: positive integer schema discriminator;
-- `profileContractVersion`: canonical bounded contract-version string;
-- `profileId`: stable profile identifier;
-- `profileVersion`: canonical SemVer content version;
-- `profileKind`: closed kind vocabulary for the active contract version.
+### PRF-02 — Core shape is strict and versioned
+Every admitted profile MUST carry `schemaVersion`, `profileContractVersion`, `profileId`, `profileVersion` and `profileKind`.
 
-Unknown core fields fail closed. Compatibility with an unrecognized contract/schema version is never inferred by best effort.
+Unknown core fields fail closed. Unknown schema/contract versions never fall back to best-effort parsing. Namespaced `extensions` MAY exist only as inert data and cannot change selection, bindings, execution, mutation or authorization.
 
-A top-level `extensions` object MAY contain namespaced inert extension data. An unknown extension cannot change selection, templates, bindings, authority, execution, mutation or authorization.
+### PRF-03 — Profile identity is separate from project identity and authority
+`profileId` identifies only a profile definition. It is not M03 project/repository identity, signer/trust identity, filesystem authority or authorization.
 
-### PRF-03 — Profile identity is not project/repository identity
-`profileId` identifies a profile definition only. It MUST NOT be treated as M03 project identity, repository identity, filesystem authority, signer identity, trust level or authorization.
-
-Canonical `profileId` uses a bounded lowercase ASCII identifier grammar:
+Canonical profile IDs use:
 
 ```text
 ^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$
 ```
 
-Maximum length is 64 ASCII bytes. Case folding is not performed.
+Maximum 64 ASCII bytes; no case folding.
 
-### PRF-04 — `generic` is the reserved built-in baseline profile ID
+### PRF-04 — `generic` is the reserved product-owned baseline
 The canonical generic profile ID is exactly `generic`.
 
-`generic` is product-owned and MUST resolve only to the versioned built-in generic-profile definition admitted by the active GEF Bootstrap release. Repository-local content cannot shadow, replace or redefine the product-owned `generic` ID under the same selection source.
+Repository/local content cannot shadow or redefine the product-owned `generic` profile. A future custom-profile namespace requires an explicit owning contract.
 
-A future user/custom profile namespace requires an explicit owning contract and cannot impersonate `generic`.
+### PRF-05 — Generic means technology-neutral
+The built-in generic profile MUST NOT assume Node/TypeScript/JavaScript, Python, browser/mobile/desktop frameworks, package managers, containers/clouds, monorepo shape, CI provider, database, API style, UI stack or license.
 
-### PRF-05 — Generic profile semantics are technology-neutral
-The built-in generic profile MUST NOT assume or require:
-- Node.js, TypeScript, JavaScript or npm-family tooling;
-- Python or a Python package manager;
-- browser/web frameworks;
-- mobile/desktop app frameworks;
-- containers, cloud providers or deployment platforms;
-- monorepo/single-package topology;
-- a particular CI provider;
-- a particular license, database, API style or UI stack.
+### PRF-06 — Semantic changes require new identity/version
+`profileVersion` is canonical SemVer. Output-relevant semantic change requires a new profile semantic digest and an appropriate governed version change. Version text itself is not trust or authorization.
 
-Those choices belong to explicit later profiles/contracts.
-
-### PRF-06 — Profile version changes with semantic changes
-`profileVersion` is canonical SemVer. Any output-relevant change to template references, profile bindings or other frozen semantic content requires a corresponding new profile semantic identity and an appropriate governed version change.
-
-Version text alone is not trust, freshness or authorization.
-
-### PRF-07 — S01 admits two selection modes only
-The baseline selection modes are:
+### PRF-07 — S01 admits exactly two selection modes
 - `EXPLICIT_PROFILE`;
 - `DEFAULT_GENERIC`.
 
-No `AUTO`, `LATEST`, `BEST_MATCH`, fuzzy-name, nearest-framework or heuristic selection mode is admitted by S01.
+No `AUTO`, `LATEST`, `BEST_MATCH`, fuzzy matching or heuristic selection exists in S01.
 
 ### PRF-08 — Explicit selection is exact and fail-closed
-`EXPLICIT_PROFILE` requires exactly one canonical `profileId`.
+`EXPLICIT_PROFILE` requires one canonical `profileId`. Missing, ambiguous, unsupported, malformed or stale-against-expectation profiles fail. They MUST NOT silently fall back to `generic`.
 
-If the requested profile is absent, ambiguous, unsupported, malformed, stale against supplied expectation fields, or otherwise inadmissible, selection fails. It MUST NOT silently fall back to `generic`.
+### PRF-09 — Generic default is explicit policy, not discovery
+`DEFAULT_GENERIC` deterministically selects only the built-in `generic` profile. It does not inspect package files, source extensions, dependencies, Git history, directory names, README text, environment, installed tools or provider/network metadata to choose another profile.
 
-This preserves user/operator intent and makes unsupported specialization visible.
+### PRF-10 — Selection modes cannot conflict
+A request cannot simultaneously be explicit and generic-default. Ambiguous dual-mode input fails closed. Explicit user/operator intent is never shadowed by the default.
 
-### PRF-09 — Generic default is explicit policy, not heuristic discovery
-`DEFAULT_GENERIC` deterministically selects the built-in `generic` profile.
-
-It does not inspect package files, source extensions, dependency manifests, Git history, directory names, README text, environment variables, installed tools or network/provider metadata to decide that another profile would be “better”.
-
-Later sessions may define explicit specialized selection inputs, but they cannot retroactively make S01's generic default heuristic or ambient.
-
-### PRF-10 — Explicit selection always dominates generic default intent
-A request cannot simultaneously mean “explicit X” and “default generic”. Ambiguous dual-mode input fails closed.
-
-The generic profile is a baseline/default, never a shadowing override for an explicit requested profile.
-
-### PRF-11 — Optional expectation binding prevents stale profile use
-A selection request MAY bind expected profile version and/or semantic digest.
-
-When supplied, those expectations are exact preconditions. Mismatch blocks selection instead of silently accepting a newer/older/different profile.
-
-This allows resumable operations and future checkpoints to pin profile semantics without treating a display name as sufficient identity.
+### PRF-11 — Version/digest expectations are exact preconditions
+A request MAY pin expected profile version and/or semantic digest. When supplied, mismatch blocks selection. This enables stale-state detection and resumable governed execution.
 
 ### PRF-12 — Selection produces an immutable snapshot
-Successful selection produces an invocation-scoped immutable `SelectedProfileSnapshot` logically containing at least:
-- selected profile ID;
-- profile contract/schema version;
-- profile content version;
-- profile semantic digest;
-- selection mode/source class;
-- sanitized request/expectation identity;
-- selected template-binding identities;
-- compact selection/projection diagnostics.
+Successful selection produces an immutable invocation-scoped `SelectedProfileSnapshot` containing at least profile ID, schema/contract version, content version, semantic digest, selection mode/source class, sanitized expectation identity, selected template-binding identities and compact diagnostics.
 
-Ambient repository/config changes cannot rewrite the snapshot in place. A later selection creates a new snapshot.
+Ambient changes cannot mutate that snapshot in place.
 
-### PRF-13 — Profile content may reference templates but cannot resolve/fetch them
-A profile may carry declarative `templateBindings` pointing to exact M07 template identities.
+### PRF-13 — Profiles may reference templates but cannot fetch them
+`templateBindings` may reference exact M07 template identities. S01 MUST NOT fetch templates, scan for templates, resolve registries/catalogs, install packages, choose `latest`, or infer templates by filename/extension.
 
-M08-S01 MUST NOT:
-- fetch remote templates;
-- scan the repository for matching templates;
-- resolve registries/catalogs;
-- choose `latest`;
-- install packages;
-- infer a template by file extension/name.
+M09 or another explicit owning source contract resolves admitted references later.
 
-M09 or another explicit owning source contract resolves an admitted template reference into exact template bytes/snapshot later.
+### PRF-14 — Template references are exact
+Every template binding has exact `templateId` and exact canonical `templateVersion`. An optional `templateSemanticDigest`, when present, is an exact precondition.
 
-### PRF-14 — Template references are exact, never floating ranges
-Each `ProfileTemplateBinding` identifies a template by exact `templateId` and exact canonical `templateVersion`.
+SemVer ranges, wildcards, `latest`, moving tags and branch names are not deterministic profile semantics.
 
-A profile MAY additionally pin `templateSemanticDigest`; when present, digest mismatch blocks use.
+### PRF-15 — Binding identities are stable and duplicate-free
+Every `ProfileTemplateBinding` has a stable `bindingId` under the same lowercase/hyphen grammar. Duplicate IDs fail closed. Conflicting bindings to the same exact template identity fail unless a later S05 composition contract explicitly defines otherwise.
 
-SemVer ranges, wildcards, `latest`, moving tags, branch names and “newest compatible” lookup are not deterministic profile semantics.
+Serialized/list order is never precedence.
 
-### PRF-15 — Binding IDs are stable and unique
-Every profile template binding has a stable canonical `bindingId` using the same bounded lowercase/hyphen identifier discipline as profile IDs.
+### PRF-16 — Template-binding order is non-semantic
+`templateBindings` are a declarative set. Their order does not imply execution, render, write or precedence order. Canonical hashing/evidence sorts by stable identity.
 
-Duplicate `bindingId` values fail closed. Two entries that target the same exact template identity but disagree in bindings are also a conflict unless S05 later defines an explicit, separately reviewed composition rule.
+### PRF-17 — Profile bindings are only M07 `PROFILE_BINDING` candidates
+`variableBindings` are declarative candidates that may be projected into M07's frozen `PROFILE_BINDING` layer. M08 cannot bypass M07 declaration existence, exact type, context, source-permission, sensitive-reference, unknown-binding or conflict rules.
 
-JSON/list order is never precedence.
-
-### PRF-16 — Profile template order is non-semantic
-`templateBindings` are a declarative set. Their serialized/list order MUST NOT imply execution, render, write or precedence order.
-
-Canonical hashing/evidence orders them deterministically by stable binding identity.
-
-### PRF-17 — Profile bindings are candidates for M07 `PROFILE_BINDING`, not direct render values
-`variableBindings` are M08-owned declarative candidates that may be projected into M07's frozen `PROFILE_BINDING` layer.
-
-M08 does not bypass M07. For each selected template, the projected candidates remain subject to M07 declaration existence, exact type, allowed context, allowed binding source, sensitive-reference and unknown/conflict rules.
-
-### PRF-18 — Profile binding value types mirror the closed M07 scalar vocabulary
-S01 admits only the existing M07 scalar value types:
+### PRF-18 — Value types mirror M07 exactly
+S01 profile values may be only:
 - `STRING`;
 - `BOOLEAN`;
 - `INTEGER`;
 - `ENUM`.
 
-No objects, arrays, maps, functions, dates, binary blobs or arbitrary JSON values are admitted as baseline profile variable bindings.
+Objects, arrays, maps, functions, dates, binary blobs and arbitrary JSON are forbidden. Values retain their original type; coercion/stringification is forbidden.
 
-The M08 representation MUST preserve the original typed value; stringification/coercion is forbidden.
+### PRF-19 — M08 cannot reclassify M07 value semantics
+`valueClass` is **not** a profile-owned field. `PLAIN` versus `SENSITIVE_REFERENCE` remains authority of the target M07 variable declaration.
 
-### PRF-19 — M08 never coerces a profile binding to satisfy M07
-Examples that remain invalid:
-- string `"true"` for BOOLEAN;
-- string `"42"` for INTEGER;
-- integer `1` for BOOLEAN;
-- case-folded or trimmed ENUM guessing.
+A profile supplies only the typed value. During projection, M07 decides whether that value is admissible under the declaration's `valueClass`, contexts and allowed sources. M08 cannot mark a value safe, sensitive, secret, path-safe or executable to bypass M07 policy.
 
-A profile binding that does not satisfy the target M07 declaration blocks projection/use. It is never repaired silently.
+### PRF-20 — No value coercion or repair
+Examples that remain invalid include string `"true"` for BOOLEAN, string `"42"` for INTEGER, integer `1` for BOOLEAN, or trimmed/case-folded ENUM guessing.
 
-### PRF-20 — Unknown profile bindings are not silently ignored
-A profile may be broader than one concrete template request only when the owning later projection step deterministically scopes bindings by explicit template binding identity.
+Invalid profile candidates block projection/use; they are never silently rewritten.
 
-Within an active `ProfileTemplateBinding`, a supplied variable key that is not declared/admitted by the resolved target template MUST surface a typed failure before render. Typos and cross-template leakage cannot disappear silently.
+### PRF-21 — Unknown bindings are not ignored
+Within an active template binding, a supplied variable ID that the resolved target template does not declare/admit MUST surface a typed failure before render. Typos and cross-template leakage cannot disappear silently.
 
-### PRF-21 — Explicit input still has higher precedence than profile binding
-M08 MUST preserve M07-S02's frozen precedence:
+### PRF-22 — Existing M07 precedence is immutable here
+M08 MUST preserve:
 
 ```text
 TEMPLATE_DEFAULT < PROFILE_BINDING < EXPLICIT_INPUT
 ```
 
-Profiles cannot mark their bindings “forced”, “locked”, “unoverrideable” or otherwise outrank a valid M07 `EXPLICIT_INPUT` under the current contract.
+Profiles cannot declare values forced/locked/unoverrideable or otherwise outrank valid explicit input.
 
-Any future policy that changes precedence requires an explicit versioned cross-module decision, not a profile field.
+### PRF-23 — Profiles cannot create M07 declarations
+Mentioning a variable in a profile does not declare it. Variable declaration/type/context/source policy remains M07 template semantics.
 
-### PRF-22 — Profiles cannot create new M07 variables
-A profile does not declare template variables by mentioning them.
+### PRF-24 — Ambient environment is not a binding layer
+S01 MUST NOT auto-import process environment, shell variables, cwd/home state, Git user config, hostname or machine-local preferences into profile bindings. Another owning contract may resolve a non-secret value and pass it through an explicit governed source with provenance; S01 itself does not.
 
-Variable declarations, types, allowed contexts and allowed binding sources remain part of M07 template semantics. M08 only offers candidates to declarations that already exist in the resolved template.
+### PRF-25 — Secret material is forbidden profile content
+Passwords, API keys, private keys, access/session tokens and similar secret material MUST NOT be intentionally stored or projected from generic profiles.
 
-### PRF-23 — Ambient environment is not a generic profile-binding source
-S01 MUST NOT auto-import process environment variables, shell variables, cwd/home state, Git user config, hostnames or machine-local preferences into profile bindings.
+A non-secret reference value may be supplied only as ordinary typed data and only if the target M07 declaration classifies it as `SENSITIVE_REFERENCE`. M08 does not classify or dereference it. Diagnostics/evidence never echo suspected secret material.
 
-If another owning contract resolves an environment-derived non-secret value, it must hand that value forward through an explicit governed input/source with provenance. S01 itself performs no ambient expansion.
+### PRF-26 — Display metadata is inert
+Human-facing display name/description data cannot affect selection, template identity, values, precedence, execution, authority or the S01 semantic digest.
 
-### PRF-24 — Secret material is not admitted profile content
-Passwords, API keys, private keys, access/session tokens and similar secret material MUST NOT be intentionally stored in or projected from generic project profiles.
+### PRF-27 — Semantic identity is deterministic
+`profileSemanticDigest` binds canonical output-relevant semantics including schema/contract version, profile ID/version/kind, canonical template-binding identities, exact template version/digest pins and canonical typed variable bindings.
 
-A profile may carry an M07-compatible non-secret `SENSITIVE_REFERENCE` only when the target M07 declaration permits it. M08 MUST NOT dereference the reference or acquire secret material.
+It excludes list/order noise, whitespace, display metadata, local source paths, timestamps and machine-local provenance locations.
 
-Diagnostics/evidence MUST avoid echoing suspected secret values.
+### PRF-28 — Runtime evidence is separate from semantic identity
+Selection/projection evidence may bind profile digest, selection mode, expectation preconditions, sanitized provenance, resolved template identity and typed status/error codes. Evidence does not mutate canonical profile identity.
 
-### PRF-25 — Display metadata is inert
-Optional human-facing metadata such as display name or description cannot affect:
-- profile selection;
-- template identity;
-- variable values;
-- precedence;
-- execution;
-- filesystem/provider authority;
-- semantic digest unless an owning contract explicitly classifies a field as semantic.
+### PRF-29 — Source location is not authority
+Built-in/catalog/future admitted source location does not by itself grant trust or mutation authority. Source provenance is separate; global trust decisions remain M37-owned.
 
-Machine decisions use frozen semantic fields, never presentation text.
+### PRF-30 — Repository files cannot shadow `generic`
+Files named `generic`, `profile.json`, `.gef/profile.*` or similar do not automatically replace the product-owned generic profile. Future repository-local discovery requires an explicit contract with bounded discovery and namespace/precedence rules.
 
-### PRF-26 — Profile semantic identity is deterministic
-The `profileSemanticDigest` binds canonical output-relevant profile semantics including at least:
-- profile contract/schema version;
-- profile ID/version/kind;
-- canonical set of exact template-binding identities;
-- exact template version/digest pins;
-- canonical typed profile variable bindings;
-- any future admitted output-relevant S01 field.
+### PRF-31 — Profiles grant no M05/M06 authority
+Profiles/templates cannot grant overwrite/delete/move permission, path escape, symlink/reparse traversal, filesystem-root authority, irreversible-operation authorization or recovery bypass. M07 validates desired logical artifacts; M05/M06 separately authorize physical effects.
 
-It excludes incidental serialization order, whitespace, display metadata, local file paths, timestamps and machine-local source locations.
+### PRF-32 — Profiles grant no process/tool/provider authority
+Profiles cannot authorize shell commands, package installs, build/test commands, hooks, network calls, Git mutation, GitHub/provider mutation or connector/plugin actions.
 
-### PRF-27 — Selection/projection evidence is separate from profile semantic identity
-Runtime evidence may bind:
-- profile semantic digest;
-- selection mode;
-- expected version/digest preconditions;
-- sanitized source/provenance identifier;
-- target template identity/digest when resolved;
-- projection status and typed error/gap codes.
+### PRF-33 — No inheritance exists in S01
+S01 has no parent, `extends`, mixin, overlay, deep-merge, last-write-wins or multiple-inheritance behavior. Such core fields are invalid until S05 defines a versioned composition contract.
 
-This operational evidence does not mutate canonical profile content identity.
+### PRF-34 — Specialized profiles may refine, not weaken
+S02-S04 may add technology-specific template/binding content, but may not weaken strict parsing, non-executable data, exact selection, explicit-over-default behavior, M07 validation, no-secret-material rules, M05/M06 authority boundaries, no ambient fallback, immutable snapshots or deterministic digests.
 
-### PRF-28 — Profile source location is not semantic authority
-Whether a profile definition is built-in, loaded from a future catalog, or supplied through another admitted source does not by itself grant trust or mutation authority.
+### PRF-35 — Profile evaluation is S0 read-only
+Parsing, validation, selection, hashing and projection MUST NOT write files, create transaction staging/recovery state, mutate Git/provider state, install packages, invoke tools/processes, change cwd/environment or fetch remote data.
 
-Source/provenance is recorded separately. Global trust/integrity decisions remain with M37 and owning source policies.
+### PRF-36 — Work is bounded and cancellable
+Future implementation MUST bound profile bytes, extension bytes, template-binding count, variable-binding count, identifier lengths, scalar bytes, diagnostics/evidence and canonicalization/hash work. Cancellation/budget exhaustion returns typed non-success, never partial acceptance.
 
-### PRF-29 — Repository content cannot shadow product-owned generic profile
-A repository file named `generic`, `profile.json`, `.gef/profile.*` or similar does not automatically replace the built-in generic profile.
+### PRF-37 — Duplicates/conflicts fail before host-object collapse
+Duplicate semantic keys/IDs/bindings must be detected before last-write-wins behavior can hide them. Prototype-pollution-sensitive structures must be rejected or represented with prototype-safe data structures.
 
-Any future repository-local custom-profile discovery requires an explicit owning contract, bounded discovery rules and namespace/precedence semantics. S01 has none.
+### PRF-38 — Generic semantics are cross-host deterministic
+Generic behavior MUST NOT depend on path separators, locale, timezone, clock, random values, username/home, host newline defaults or filesystem case behavior. Identical admitted inputs and exact template snapshots produce identical profile selection/projection semantics on supported hosts.
 
-### PRF-30 — Profile intent grants no M05/M06 authority
-Template/profile content may describe desired logical outputs and provide variable candidates, but it cannot grant:
-- overwrite permission;
-- delete/move authority;
-- path escape;
-- symlink/reparse traversal;
-- filesystem root authority;
-- irreversible-operation authorization;
-- recovery bypass.
-
-M07 produces validated desired artifacts; M05/M06 separately decide and authorize physical effects.
-
-### PRF-31 — Profile intent grants no process/tool/provider authority
-A profile cannot authorize or trigger:
-- shell commands;
-- package installation;
-- build/test commands;
-- scripts/hooks;
-- network calls;
-- Git mutations;
-- GitHub/provider mutations;
-- connector/plugin actions.
-
-Later modules must own and authorize such operations explicitly.
-
-### PRF-32 — S01 has no inheritance or overlay merge semantics
-The baseline S01 profile has no parent, `extends`, mixin, overlay, deep-merge, last-write-wins or multiple-inheritance behavior.
-
-If such fields appear under the S01 contract, they are unknown core fields and fail closed unless carried as inert namespaced extension data that cannot affect semantics.
-
-S05 alone owns future inheritance/composition semantics.
-
-### PRF-33 — Specialized profiles may refine but not weaken S01 safety
-S02-S04 may add technology-specific template bindings, variable bindings and explicit profile metadata under versioned contracts.
-
-They MUST NOT weaken:
-- strict/versioned parsing;
-- non-executable profile data;
-- exact selection semantics;
-- explicit-over-default behavior;
-- M07 typed binding validation;
-- no-secret-material rule;
-- M05/M06 authority boundaries;
-- no ambient heuristic fallback;
-- immutable snapshot/digest behavior.
-
-Any incompatible relaxation requires a separately governed architecture/security decision.
-
-### PRF-34 — Profile evaluation is S0 read-only
-Parsing, validating, selecting, hashing and projecting a profile are S0 read-only operations.
-
-They MUST NOT:
-- write project/profile/template files;
-- create transaction staging/recovery state;
-- mutate Git/provider state;
-- install packages;
-- invoke processes/tools;
-- change cwd/environment;
-- fetch remote data to “complete” a profile.
-
-### PRF-35 — Work is bounded and cancellable
-Future implementation MUST enforce finite budgets for at least:
-- profile document bytes;
-- extension bytes;
-- template-binding count;
-- variable-binding count;
-- identifier lengths;
-- scalar value bytes;
-- diagnostics/evidence entries;
-- canonicalization/hash work.
-
-No unlimited production mode is admitted. Budget exhaustion or cancellation produces a typed non-success result, never partial profile acceptance.
-
-### PRF-36 — Duplicate and conflicting data fail closed
-The profile parser/model MUST detect duplicate semantic keys/IDs before ordinary host-object collapsing can hide them.
-
-Last-write-wins based on JSON/object/list order is forbidden for profile IDs, binding IDs, variable IDs or other semantic keys.
-
-Prototype-pollution-sensitive keys/structures MUST be rejected or represented through prototype-safe data structures in future implementation.
-
-### PRF-37 — Generic profile is portable across supported hosts
-Generic semantics MUST not depend on host path separators, locale, timezone, clock, random values, username/home directory, platform-specific newline defaults or filesystem case behavior.
-
-The same admitted generic profile plus the same explicit inputs and exact template snapshots must yield the same profile-selection/projection semantics on supported hosts.
-
-Physical filesystem differences remain M06/M51 concerns.
-
-### PRF-38 — Error vocabulary is typed and stable enough for later evidence
+### PRF-39 — Typed result vocabulary
 Future implementation should distinguish at least:
 - `PROFILE_SCHEMA_INVALID`;
 - `PROFILE_CONTRACT_UNSUPPORTED`;
@@ -442,94 +273,79 @@ Future implementation should distinguish at least:
 - `PROFILE_CANCELLED`;
 - `PROFILE_INTERNAL_CONTRACT_VIOLATION`.
 
-Error details MUST remain bounded and secret/value safe.
+Success/non-success states should include `PROFILE_SELECTED`, `PROFILE_PROJECTED`, `PROFILE_BLOCKED` and `PROFILE_INDETERMINATE`. Empty/null/throw-only behavior cannot mean implicit successful fallback.
 
-### PRF-39 — Success vocabulary is explicit
-Baseline profile processing exposes explicit non-ambiguous states such as:
-- `PROFILE_SELECTED`;
-- `PROFILE_PROJECTED`;
-- `PROFILE_BLOCKED`;
-- `PROFILE_INDETERMINATE`.
+### PRF-40 — Startup purity is mandatory
+Importing the future project-profiles package MUST NOT scan repositories, mutate files, make network requests, harvest environment state, access Git/providers, discover packages or execute processes. Operations begin only through explicit APIs with explicit inputs/ports.
 
-A caller MUST NOT interpret a thrown/empty/null result as successful generic fallback.
-
-### PRF-40 — Startup purity applies
-Importing the future project-profiles package/module MUST NOT perform repository scans, filesystem mutation, network requests, environment harvesting, Git/provider access, package discovery or process execution.
-
-Profile operations begin only through explicit API calls with explicit ports/inputs.
-
-## Generic profile minimum semantic content
-The built-in `generic` profile is intentionally small. Under S01 it MUST:
-- identify itself as `profileId = generic`;
-- carry the active S01 contract/schema versions and governed `profileVersion`;
+## Generic minimum semantics
+The product-owned `generic` profile MUST:
+- use `profileId = generic`;
+- carry active S01 schema/contract versions and governed `profileVersion`;
 - use `profileKind = GENERIC`;
 - remain technology-neutral;
 - contain only explicitly governed template references/bindings admitted by the release, if any;
-- contain no hidden ambient-derived bindings;
-- contain no inheritance/overlay fields;
-- contain no secret material;
+- contain no ambient-derived bindings, inheritance fields or secret material;
 - grant no execution or mutation authority.
 
-An empty `templateBindings` set is semantically valid at the S01 contract level. Whether a production GEF release must ship one or more useful generic template bindings is decided by the complete M08/M09/DoD integration gate, not invented here by unsafe placeholder references.
+An empty `templateBindings` set is valid at S01 contract level. Whether production release must ship useful generic template bindings is decided by complete M08/M09/DoD integration, not by inventing placeholder references here.
 
-## Deterministic selection algorithm
-Conceptually, S01 selection follows this order:
-
-1. Validate the selection request shape and mode.
-2. If `EXPLICIT_PROFILE`, validate the exact requested ID and resolve only that admitted profile identity through the supplied profile source/registry port.
-3. If `DEFAULT_GENERIC`, resolve only the product-owned built-in `generic` profile.
-4. Validate strict profile schema/contract/ID/version/kind and duplicate-free semantic structure.
+## Deterministic selection/projection algorithm
+1. Validate request shape/mode.
+2. `EXPLICIT_PROFILE`: resolve only the exact requested admitted profile identity.
+3. `DEFAULT_GENERIC`: resolve only product-owned `generic`.
+4. Strictly validate schema/contract/ID/version/kind and duplicate-free structure.
 5. Compute/verify canonical `profileSemanticDigest`.
-6. Enforce any supplied expected version/digest preconditions.
-7. Produce an immutable selected-profile snapshot.
-8. When an exact M07 template snapshot is supplied for a declared template binding, project only that binding's typed profile candidates into M07's `PROFILE_BINDING` layer.
-9. Let M07 independently validate declaration/type/source/context and produce its own resolution/render/validation results.
+6. Enforce supplied expected version/digest preconditions.
+7. Produce immutable selected-profile snapshot.
+8. For an exact supplied M07 template snapshot, project only that binding's typed candidates as M07 `PROFILE_BINDING` candidates.
+9. Let M07 independently enforce declarations, types, value classification, contexts, source policy, resolution/render/validation.
 10. Emit compact bounded selection/projection evidence.
 
 No step auto-discovers a specialized profile or authorizes effects.
 
-## Proof obligations for future implementation
-At minimum, the M08 implementation Work Order must require executable evidence that:
-1. `DEFAULT_GENERIC` selects only the built-in generic profile.
-2. Missing explicit profiles do not fall back to generic.
-3. Explicit/digest/version expectation mismatch fails closed.
-4. Repository-local shadow attempts cannot replace product-owned `generic` under S01.
-5. Duplicate IDs/keys/bindings fail before last-write-wins collapse.
+## Proof obligations for implementation
+The later M08 Work Order must prove at minimum:
+1. `DEFAULT_GENERIC` selects only product-owned generic.
+2. Missing explicit profiles never fall back to generic.
+3. Version/digest expectation mismatch fails closed.
+4. Repository shadow attempts cannot replace generic.
+5. Duplicate keys/IDs/bindings fail before last-write-wins collapse.
 6. Unknown schema/contract/kind fails closed.
-7. Template references are exact and reject floating/range/latest semantics.
-8. Profile bindings preserve M07 scalar types without coercion.
-9. Profile bindings remain below explicit input in M07 precedence.
-10. Unknown/disallowed/type-invalid M07 bindings fail rather than disappear.
-11. Actual secret material is rejected/redacted safely.
-12. Import/startup performs zero ambient discovery/effects.
-13. Selection/projection performs no filesystem/Git/provider/process/network mutation.
-14. Cancellation and finite budgets are enforced.
-15. Canonical digest is independent of semantic-set serialization order and display metadata.
-16. Identical admitted input yields identical selected-profile semantic identity across supported hosts.
-17. Stale selected-profile snapshots are detectable through pinned semantic identity.
-18. Specialized profiles cannot use S01 APIs to bypass M07/M05/M06 authority boundaries.
+7. Template refs reject floating/range/latest semantics.
+8. Profile values preserve M07 scalar types without coercion.
+9. M08 cannot set/override M07 `valueClass`.
+10. Profile binding remains below explicit input in M07 precedence.
+11. Unknown/disallowed/type-invalid M07 bindings fail visibly.
+12. Secret material is rejected/redacted safely.
+13. Import/startup performs zero ambient discovery/effects.
+14. Selection/projection performs no filesystem/Git/provider/process/network mutation.
+15. Cancellation and finite budgets are enforced.
+16. Digest is independent of set serialization order/display metadata.
+17. Identical admitted inputs yield identical semantic identity across supported hosts.
+18. Stale snapshots are detectable through pinned semantic identity.
+19. Specialized profiles cannot bypass M07/M05/M06 boundaries through S01 APIs.
 
 ## Review checklist
-- [x] Next legal stage matched canonical checkpoint.
-- [x] Generic profile is deterministic, strict, technology-neutral and non-executable.
-- [x] Explicit selection and generic-default behavior are unambiguous.
-- [x] No heuristic/ambient profile guessing was introduced.
-- [x] Profile identity remains separate from project/repository identity and authorization.
-- [x] Template references are declarative/exact and do not fetch or execute.
-- [x] M07 `PROFILE_BINDING` precedence/type/context boundaries are preserved.
+- [x] Next legal stage matches canonical checkpoint.
+- [x] Generic profile is strict, deterministic, technology-neutral and non-executable.
+- [x] Explicit/default selection is unambiguous with no heuristic fallback.
+- [x] Profile identity is separate from project identity/authorization.
+- [x] Template references are exact and non-fetching.
+- [x] M07 type, `valueClass`, source and precedence authority remains M07-owned.
 - [x] Secret material is not admitted.
-- [x] M05/M06 mutation/path authority is not weakened.
+- [x] M05/M06 authority boundaries are preserved.
 - [x] S02-S04 specialization and S05 inheritance remain deferred.
-- [x] S0 read-only, startup purity, cancellation and resource bounds are explicit.
-- [x] Future implementation proof obligations are testable.
+- [x] S0 read-only/startup purity/cancellation/resource bounds are explicit.
+- [x] Future proof obligations are executable and auditable.
 
 ## Session completion rule
 S01 may be promoted to `FROZEN` only after exact-head semantic review finds no unresolved HIGH/CRITICAL architecture, security, determinism or ownership-boundary defect.
 
-Promotion of S01 earns **no M08 production credit**. After a separate checkpoint promotion, the only next legal planning stage is:
+S01 earns **no M08 production credit**. After a separate checkpoint promotion, the only next legal planning stage is:
 
 `GBS-M08-S02 — TypeScript and Node`
 
-No M08 Work Order may be compiled until all M08 planning sessions S01-S05 are frozen and the separate M08 Module Gate returns implementation-ready.
+No M08 Work Order may be compiled until S01-S05 are frozen and the separate M08 Module Gate returns implementation-ready.
 
 Codex remains outside Bootstrap construction absent a separately governed exception/ADR.
