@@ -76,7 +76,7 @@ test("journal failure immediately after target promotion requires recovery befor
       begin: async () => ({ ok: true, value: true }),
       update: async () => {
         journalUpdates += 1;
-        if (journalUpdates === 3) return fail("journal-after-promotion");
+        if (journalUpdates === 3) return fail("journal_after_promotion");
         return { ok: true, value: true };
       },
       finish: async () => ({ ok: true, value: true }),
