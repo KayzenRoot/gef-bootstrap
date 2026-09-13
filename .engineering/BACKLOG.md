@@ -23,7 +23,7 @@ This backlog is the canonical weighted production denominator for the single com
 | M03 Project Identity | CORE_REQUIRED | 3 | 5 | 5 | 4 | 17 | MODULE_DONE |
 | M04 Preflight & Discovery | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | MODULE_DONE |
 | M05 Transactional Apply Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
-| M06 Filesystem Safety | CORE_REQUIRED | 4 | 5 | 4 | 5 | 18 | PLANNED |
+| M06 Filesystem Safety | CORE_REQUIRED | 4 | 5 | 4 | 5 | 18 | MODULE_DONE |
 | M07 Template Engine | PRODUCT_INCLUDED | 4 | 3 | 4 | 3 | 14 | PLANNED |
 | M08 Project Profiles | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | PLANNED |
 | M09 Source Pack Engine | CORE_REQUIRED | 5 | 4 | 5 | 5 | 19 | PLANNED |
@@ -92,25 +92,26 @@ This backlog is the canonical weighted production denominator for the single com
 | M41 UGAS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 
 ## Current audited production position
-Approved MODULE_DONE evidence now exists for M00-M05.
+Approved MODULE_DONE evidence now exists for M00-M06.
 
 ```text
 TOTAL_WEIGHT   = 1088
-EARNED_WEIGHT  = 107
-REMAINING      = 981
-COMPLETION     = 107 / 1088 = 9.834558...%
+EARNED_WEIGHT  = 125
+REMAINING      = 963
+COMPLETION     = 125 / 1088 = 11.488970...%
 ```
 
 Canonical rounded values:
-- `overallCompletion`: `9.83%`;
-- `remainingCompletion`: `90.17%`;
-- `earnedWeight`: `107`;
-- `remainingWeight`: `981`.
+- `overallCompletion`: `11.49%`;
+- `remainingCompletion`: `88.51%`;
+- `earnedWeight`: `125`;
+- `remainingWeight`: `963`.
 
 Latest evidence bindings:
 - M03: PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc`, run `34727238254`.
 - M04: PR #86, reviewed head `bc26829fa8f3043056b6d9b614c618767f02e6c7`, tree `46c80e056dde05ef108e9599485c33de844cec5a`, merge `67b4377a6df7a34874f751c13d1659b942eed859`, run `34730911026`.
 - M05: PR #103, reviewed head `0eea9b410755410cb8ae2e34042e6ccb87fae4c6`, tree `d740f3ef4f6ed3ea4a322b8969d8eaf5f5befa65`, merge `3c93e4da5c12bd2ce5ed4ebfb8b809a256815c93`, run `34735379266`.
+- M06: PR #117, reviewed head `5ae4404db34447ad4d08eefc22ea0b0ad2ca89c2`, tree `e17b23c59f05785ab0cf1ccaebfd2608af3f3a70`, merge `7e92051e9a675f05bee27e830fd2486fce4a2bbd`, repository run `34750998852`, platform run `34750998868`.
 
 ## ETA rule
 ETA remains `NOT_YET_RELIABLE`. Weights are production burden, not days. M22/M45 own mature estimation; M63 owns quantitative executor-performance thresholds.
