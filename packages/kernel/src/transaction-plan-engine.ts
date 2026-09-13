@@ -81,6 +81,12 @@ function requiredArrays(source: Readonly<Record<string, unknown>>): boolean {
   ].every((key) => Array.isArray(source[key]));
 }
 
+function exactPreStateForTarget(plan: TransactionPlanBody, targetRef: string) {
+  return plan.expectedPreState.find((binding) =>
+    (binding.key === targetRef || binding.key === `target:${targetRef}`) && binding.predicate === "EXACT"
+  );
+}
+
 export function validateTransactionPlanRuntime(body: unknown): TransactionPortResult<true> {
   if (!objectValue(body)) return runtimeError("malformed_plan", "Transaction plan must be an object");
   if (body.schemaVersion !== 1 || body.planContractVersion !== "1.0") return runtimeError("unsupported_version", "Unsupported transaction plan contract version");
@@ -98,9 +104,13 @@ export function validateTransactionPlanRuntime(body: unknown): TransactionPortRe
   for (const requirement of plan.authorizationRequirements) if (!nonEmpty(requirement)) return runtimeError("invalid_authorization_requirement", "Authorization requirement references must be non-empty");
   for (const target of plan.mutationSurface) if (!nonEmpty(target)) return runtimeError("invalid_mutation_surface", "Mutation surface entries must be non-empty");
 
+  const stateBindingKeys = new Set<string>();
   for (const binding of plan.expectedPreState) {
     if (!objectValue(binding) || !nonEmpty(binding.key) || !nonEmpty(binding.owner) || !nonEmpty(binding.value)) return runtimeError("invalid_state_binding", "Transaction state binding contains an empty required field");
     if (!statePredicates.has(binding.predicate)) return runtimeError("unsupported_state_predicate", "Transaction state predicate is unsupported", { key: binding.key, predicate: binding.predicate });
+    const stateKey = `${binding.owner}:${binding.key}`;
+    if (stateBindingKeys.has(stateKey)) return runtimeError("duplicate_state_binding", "Transaction state bindings must be unique per owner/key", { key: binding.key, owner: binding.owner });
+    stateBindingKeys.add(stateKey);
   }
 
   for (const intent of plan.intents) {
@@ -122,6 +132,10 @@ export function validateTransactionPlanRuntime(body: unknown): TransactionPortRe
     if (managedIntentKinds.has(intent.kind) && intent.securityClass !== "S0_READ_ONLY") {
       const declaredRecovery = recoveryByIntent.get(intent.intentId);
       if (declaredRecovery === undefined || declaredRecovery !== intent.recoveryClass) return runtimeError("missing_recovery_requirement", "S1+ managed intent requires a matching declared recovery requirement", { intentId: intent.intentId });
+    }
+    if (intent.kind === "MOVE_MANAGED_ARTIFACT") {
+      if (!nonEmpty(intent.desiredFingerprint)) return runtimeError("move_post_state_missing", "Move intent requires an exact composite post-state fingerprint", { intentId: intent.intentId, targetRef: intent.targetRef });
+      if (exactPreStateForTarget(plan, intent.targetRef) === undefined) return runtimeError("move_pre_state_missing", "Move intent requires an exact composite pre-state binding covering both endpoints", { intentId: intent.intentId, targetRef: intent.targetRef });
     }
   }
 
