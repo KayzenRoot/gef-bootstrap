@@ -11,6 +11,9 @@ import type { AppliedIntentResult, TransactionIntent, TransactionPlan, Transacti
 interface PreparedTarget {
   readonly path: FilesystemPathCapsule;
   readonly safety: FilesystemPhysicalSafetyCapability;
+  readonly stagingAuthorityRef: string;
+  readonly stagingFilesystemId?: string;
+  readonly destinationFilesystemId?: string;
 }
 
 interface IntentState {
@@ -66,6 +69,9 @@ function safetySignature(target: PreparedTarget): string {
     dependencies: [...target.safety.dependencyTokens],
     durability: target.safety.durability,
     visibilityAtomic: target.safety.visibilityAtomic,
+    stagingAuthorityRef: target.stagingAuthorityRef,
+    stagingFilesystemId: target.stagingFilesystemId ?? null,
+    destinationFilesystemId: target.destinationFilesystemId ?? null,
   });
 }
 
@@ -110,7 +116,16 @@ async function prepareTarget(
     ...(facts.value.destinationFilesystemId === undefined ? {} : { destinationFilesystemId: facts.value.destinationFilesystemId }),
   });
   if (!atomic.ok) return atomic;
-  return { ok: true, value: Object.freeze({ path: path.value, safety: atomic.value }) };
+  return {
+    ok: true,
+    value: Object.freeze({
+      path: path.value,
+      safety: atomic.value,
+      stagingAuthorityRef: facts.value.stagingAuthorityRef,
+      ...(facts.value.stagingFilesystemId === undefined ? {} : { stagingFilesystemId: facts.value.stagingFilesystemId }),
+      ...(facts.value.destinationFilesystemId === undefined ? {} : { destinationFilesystemId: facts.value.destinationFilesystemId }),
+    }),
+  };
 }
 
 async function prepareIntent(options: FilesystemEffectAdapterOptions, intent: TransactionIntent): Promise<FilesystemResult<IntentState>> {
@@ -122,7 +137,6 @@ async function prepareIntent(options: FilesystemEffectAdapterOptions, intent: Tr
   const durable = resolved.value.requireCrashDurability ?? false;
   const target = await prepareTarget(options.physical, intent, resolved.value.target, operation, desiredFingerprint, durable, resolved.value.target.replaceExisting ?? false);
   if (!target.ok) return target;
-
   if (intent.kind !== "MOVE_MANAGED_ARTIFACT") return { ok: true, value: Object.freeze({ resolved: resolved.value, target: target.value }) };
   if (resolved.value.source === undefined) return adapterError(intent, "move_source_missing", "Managed move requires independently resolved source and destination paths");
   const source = await prepareTarget(options.physical, intent, resolved.value.source, "MOVE_SOURCE", undefined, durable, false);
@@ -140,7 +154,6 @@ function expectedPost(intent: TransactionIntent, resolved: FilesystemResolvedInt
 
 export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOptions): TransactionEffectPort {
   const states = new Map<string, IntentState>();
-
   return {
     checkPhysicalSafety: async (intent) => {
       const prepared = await prepareIntent(options, intent);
@@ -148,14 +161,12 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
       states.set(intent.intentId, prepared.value);
       return { ok: true, value: true };
     },
-
     captureRecovery: async (intent) => {
       const state = states.get(intent.intentId);
       if (state === undefined) return adapterError(intent, "safety_not_prepared", "Recovery capture requires a current physical-safety capability", "CAPABILITY");
       const captured = await options.physical.captureRecovery({ transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }) });
       return captured.ok ? { ok: true, value: captured.value.recoveryRef } : captured;
     },
-
     verifyRecoveryMaterial: async (request) => {
       if (request.transactionId !== options.transactionId) return adapterError(request.intent, "transaction_binding_mismatch", "Recovery material is bound to another transaction", "RECOVERY");
       return options.physical.verifyRecovery({
@@ -166,7 +177,6 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
         ...(request.expectedPostFingerprint === undefined ? {} : { expectedPostFingerprint: request.expectedPostFingerprint }),
       });
     },
-
     stage: async (intent) => {
       const state = states.get(intent.intentId);
       if (state === undefined) return adapterError(intent, "safety_not_prepared", "Staging requires a current physical-safety capability", "CAPABILITY");
@@ -184,20 +194,12 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
       states.set(intent.intentId, Object.freeze({ ...state, stage: staged.value }));
       return { ok: true, value: true };
     },
-
     verifyStaged: async (intent, obligations) => {
       const state = states.get(intent.intentId);
       if (state?.stage === undefined) return adapterError(intent, "stage_missing", "Staged verification requires transaction-private staged state", "VERIFICATION");
       const desiredFingerprint = expectedPost(intent, state.resolved);
-      return options.physical.verifyStage({
-        transactionId: options.transactionId,
-        intent,
-        stageRef: state.stage.stageRef,
-        ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }),
-        obligations,
-      });
+      return options.physical.verifyStage({ transactionId: options.transactionId, intent, stageRef: state.stage.stageRef, ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), obligations });
     },
-
     revalidateCommitBarrier: async (plan: TransactionPlan) => {
       for (const intent of plan.intents) {
         const existing = states.get(intent.intentId);
@@ -206,18 +208,16 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
         if (!refreshed.ok) return refreshed;
         const sourceShapeChanged = (existing.source === undefined) !== (refreshed.value.source === undefined);
         const sourceChanged = existing.source !== undefined && refreshed.value.source !== undefined && !samePrepared(existing.source, refreshed.value.source);
-        if (!samePrepared(existing.target, refreshed.value.target) || sourceShapeChanged || sourceChanged) return adapterError(intent, "stale_physical_state", "Filesystem identity or physical capability changed before the commit barrier", "PRECONDITION");
+        if (!samePrepared(existing.target, refreshed.value.target) || sourceShapeChanged || sourceChanged) return adapterError(intent, "stale_physical_state", "Filesystem identity, staging authority or physical capability changed before the commit barrier", "PRECONDITION");
         states.set(intent.intentId, Object.freeze({ ...refreshed.value, ...(existing.stage === undefined ? {} : { stage: existing.stage }) }));
       }
       return { ok: true, value: true };
     },
-
     promote: async (intent) => {
       const state = states.get(intent.intentId);
       if (state?.stage === undefined) return adapterError(intent, "stage_missing", "Promotion requires verified transaction-private staged state", "EXECUTION");
       return options.physical.promote({ transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }), stageRef: state.stage.stageRef, capabilityRef: state.target.safety.capabilityRef });
     },
-
     verifyPostState: async (plan, applied: readonly AppliedIntentResult[], obligations: readonly VerificationObligation[]) => {
       const bindings: TransactionStateBinding[] = [];
       for (const result of applied) {
@@ -227,14 +227,7 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
         if (intent === undefined) continue;
         const relevant = obligations.filter((item) => item.targetRef === undefined || item.targetRef === intent.targetRef);
         const desiredFingerprint = expectedPost(intent, state.resolved);
-        const verified = await options.physical.verifyPost({
-          transactionId: options.transactionId,
-          intent,
-          target: state.target.path,
-          ...(state.source === undefined ? {} : { source: state.source.path }),
-          ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }),
-          obligations: relevant,
-        });
+        const verified = await options.physical.verifyPost({ transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }), ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), obligations: relevant });
         if (!verified.ok) return verified;
         const target = verified.value[0];
         if (target === undefined) return adapterError(intent, "post_state_missing", "Post-state verification did not observe the actual destination", "VERIFICATION");
@@ -253,16 +246,13 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
       }
       return { ok: true, value: Object.freeze(bindings) };
     },
-
     cleanup: (request) => options.physical.cleanup(request),
-
     restore: async (request) => {
       const resolved = options.resolver.resolve(request.intent);
       if (!resolved.ok) return resolved;
       let target: PreparedTarget;
       let source: PreparedTarget | undefined;
       const durable = resolved.value.requireCrashDurability ?? false;
-
       if (request.intent.kind === "CREATE_MANAGED_ARTIFACT") {
         const rollbackPath: FilesystemResolvedPath = Object.freeze({ ...resolved.value.target, expected: { ownershipRef: `m05:${request.intent.intentId}`, ...(request.expectedCurrentFingerprint === undefined ? {} : { expectedFingerprint: request.expectedCurrentFingerprint }) } });
         const prepared = await prepareTarget(options.physical, request.intent, rollbackPath, "REMOVE", undefined, durable, false);
@@ -287,7 +277,6 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
         if (!prepared.ok) return prepared;
         target = prepared.value;
       }
-
       return options.physical.restore({ transactionId: options.transactionId, intent: request.intent, recoveryRef: request.recoveryRef, target: target.path, ...(source === undefined ? {} : { source: source.path }), capabilityRef: target.safety.capabilityRef });
     },
   };
