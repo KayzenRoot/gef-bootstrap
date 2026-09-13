@@ -27,3 +27,4 @@ export type { CommandRegistration } from "./registry.js";
 export { KernelRuntime } from "./runtime.js";
 export type { KernelRuntimeOptions } from "./runtime.js";
 export type { ExecutionContext } from "./runtime-types.js";
+export * from "./transaction-public.js";
