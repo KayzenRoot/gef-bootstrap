@@ -1,6 +1,6 @@
 # GBS-WO-M04-001 — Implement Preflight & Discovery Foundation
 
-Status: `ADMISSION_CANDIDATE`
+Status: `ADMITTED`
 Risk: `STANDARD`
 
 ## OBJECTIVE
@@ -8,6 +8,7 @@ Implement the bounded production foundation of `GBS-M04 — Preflight & Discover
 
 ## CONTEXT
 Canonical base: `894a05363f3ee4cde0d4805941c9bb63aa823303`.
+Admission evidence: PR `#84`, reviewed head `88f5e77957ff50903d0e637913f98e540c493e58`, merge `1705bf3bbfda9d4563bad1c08cc91fa8ecf22e30`.
 
 Context Lock fingerprints:
 - S01 Environment `014c8acb0fa257f141c3830651f0a14dbf27f3db`
