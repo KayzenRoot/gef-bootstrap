@@ -169,4 +169,4 @@ ETA remains `NOT_YET_RELIABLE`. Raw weights are not days. A trustworthy ETA requ
 7. ETA remains untrusted until observed construction velocity exists.
 8. Any future weight recalibration must record denominator and completion impact before/after.
 
-STOP CONDITION: `READY_FOR_BACKLOG_BASELINE_REVIEW_AND_CHECKPOINT`.
+STOP CONDITION: `BACKLOG_BASELINE_ACTIVE_USE_CURRENT_CHECKPOINT_FOR_CONTINUATION`.
