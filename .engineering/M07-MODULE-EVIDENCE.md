@@ -1,6 +1,6 @@
 # GBS-M07 — Template Engine Module Evidence
 
-Status: `MODULE_DONE_CANDIDATE`
+Status: `MODULE_DONE_APPROVED`
 
 ## Governed increment
 - Module: `GBS-M07 — Template Engine`
@@ -14,7 +14,7 @@ Status: `MODULE_DONE_CANDIDATE`
 - Implementation squash merge: `60e3c0f2a0da69ce2a505212e30bc09a2ece3afd`
 - Review verdict: `PASS — no unresolved HIGH/CRITICAL findings`
 
-This evidence bundle is promotion input. M07 earns production credit only when the separate MODULE_DONE promotion PR containing this bundle is exact-head reviewed and merged.
+This evidence bundle is approved promotion evidence. Production credit is awarded only when the separate MODULE_DONE promotion PR containing this bundle is exact-head reviewed and merged.
 
 ## Delivered capability
 M07 now provides a dedicated library-first `packages/template-engine` implementing the frozen pure pipeline:
@@ -211,16 +211,15 @@ All were corrected before reviewed head `a76bfc20a6a6300d6d98f42748bad01d7708871
 
 These are ownership boundaries, not incomplete M07 acceptance items.
 
-## Production-credit proposal
-Upon merge of the separate MODULE_DONE promotion PR:
-- M07: `14 / 14`
-- total earned: `139 / 1088 = 12.78%`
-- remaining: `949 / 1088 = 87.22%`
-- denominator change: `NONE`
+## Production credit
+- M07: `14 / 14` after merge of the separate MODULE_DONE promotion PR containing this bundle;
+- total earned: `139 / 1088 = 12.78%`;
+- remaining: `949 / 1088 = 87.22%`;
+- denominator change: `NONE`.
 
 ## Next legal stage after promotion
 `GBS-M08 — Project Profiles`, session `S01 — Generic Profile`.
 
-Proposed checkpoint: `READY_FOR_GBS_M08_S01`.
+Checkpoint after promotion: `READY_FOR_GBS_M08_S01`.
 
-STOP CONDITION: `M07_MODULE_DONE_EVIDENCE_READY_FOR_PROMOTION_REVIEW`.
+STOP CONDITION: `M07_MODULE_DONE_APPROVED`.
