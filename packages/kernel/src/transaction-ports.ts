@@ -32,7 +32,7 @@ export interface TransactionAuthorizationPort {
     readonly runId: string;
     readonly plan: TransactionPlan;
     readonly authorizationRefs: readonly string[];
-    readonly phase: "APPLY" | "ROLLBACK";
+    readonly phase?: "APPLY" | "ROLLBACK";
     readonly intent?: TransactionIntent;
   }): Promise<TransactionPortResult<true>> | TransactionPortResult<true>;
 }
