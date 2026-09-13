@@ -1,7 +1,14 @@
 # GBS-WO-M06-001 — Implement Filesystem Safety
 
-Status: `COMPILED_PENDING_ADMISSION`
+Status: `ADMITTED`
 Risk: `ELEVATED`
+
+## Admission evidence
+- Compilation PR: `#115`
+- Compiled reviewed head: `6e59eea69e9b3bddc51c0647ee0f0ecb919a74d1`
+- Compilation review: `5189490447`
+- Compilation merge: `c6c2d7cc7b5a02d8fca2a14dc240870dab3267e7`
+- Exact implementation base: the merge SHA of the separate admission checkpoint that activates this Work Order.
 
 ## Objective
 Implement the provider-neutral physical filesystem safety layer frozen by `GBS-M06 — Filesystem Safety`, integrated through the existing M05 physical-effect port boundary. The implementation must make path authority, overwrite policy, traversal safety and final physical effects mechanically provable without inventing unsupported atomicity or durability guarantees.
@@ -155,7 +162,7 @@ No critical M06 path may be skipped and then counted as passing evidence.
 - Evidence Bundle with base/head/tree, CI/jobs, platform evidence, findings/corrections, residual capability gaps and proposed checkpoint delta.
 
 ## Admission rule
-This compiled Work Order does not authorize implementation. A separate checkpoint/admission PR must set it to `ADMITTED` and bind the exact implementation base before production code starts.
+This Work Order is admitted only when the separate admission checkpoint is merged. That merge SHA becomes the exact implementation base. No production code may start from an earlier base.
 
 ## Stop condition
-Stop at `M06_WORK_ORDER_COMPILED_PENDING_ADMISSION`.
+Stop at `READY_FOR_GBS_WO_M06_001` after the admission checkpoint merge, or `STALE`/`BLOCKED` if a frozen dependency changes first.
