@@ -57,7 +57,7 @@ const toolRequest = (toolId = "node", required = true) => ({
   descriptor: { toolId, source: "BUILTIN", resolution: { kind: "PATH_NAME", executable: toolId }, versionProbe: { argv: ["--version"], timeoutMs: 1000, maxOutputBytes: 1024 } },
   requireVersion: true,
   required,
-  compatibility: { classify: () => "COMPATIBLE" },
+  compatibility: { policyRef: "m51.test.v1", classify: () => "COMPATIBLE" },
 });
 
 test("environment discovery is explicit, allowlisted and compact evidence excludes values/cwd", () => {
@@ -151,6 +151,13 @@ test("hosted discovery is exact-target, request-scoped and detects provider iden
   assert.equal(conflict.readiness, "BLOCKED_IDENTITY");
 });
 
+test("malformed hosted locator fails closed before entering compact provider state", async () => {
+  const malformed = providerPort({ observeRepository: async ({ locator: expected, capabilities }) => ({ locator: { ...expected, unexpected: "field" }, stableRepositoryId: "repo-1", authenticationStatus: "AVAILABLE", capabilities: capabilities.map((capability) => ({ capability, status: "AVAILABLE" })) }) });
+  const result = await new HostedProfileObservationSession(malformed.port, createMutableCounters()).observe({ profileId: "github", expectedHost: "github.com", repository: remoteResolution, capabilities: ["repository_read"] });
+  assert.equal(result.readiness, "BLOCKED_PROVIDER");
+  assert.equal(result.repository, undefined);
+});
+
 test("tool observation rejects repository-selected path names before resolution", async () => {
   const { port, calls } = toolPort();
   const result = await new ToolObservationSession(port, createMutableCounters()).observe({ descriptor: { toolId: "bad", source: "PROFILE", resolution: { kind: "PATH_NAME", executable: "./node_modules/.bin/bad" } }, required: true });
@@ -166,16 +173,18 @@ test("tool version probe is bounded, shell-free by shape, cached and compatibili
   const first = await session.observe(request);
   assert.equal(first.observedVersion, "1.2.3");
   assert.equal(first.compatibility, "COMPATIBLE");
+  assert.equal(first.compatibilityPolicyRef, "m51.test.v1");
   assert.deepEqual(calls.specs[0].argv, ["--version"]);
   assert.equal(calls.specs[0].timeoutMs, 1000);
   assert.equal(calls.specs[0].maxOutputBytes, 1024);
   assert.deepEqual(calls.specs[0].env, {});
   assert.equal("shell" in calls.specs[0], false);
-  await session.observe({ ...request, compatibility: { classify: () => "INCOMPATIBLE" } });
+  await session.observe({ ...request, compatibility: { policyRef: "m51.test.v2", classify: () => "INCOMPATIBLE" } });
   assert.equal(calls.resolve, 1);
   assert.equal(calls.probe, 1);
-  const second = await session.observe({ ...request, compatibility: { classify: () => "INCOMPATIBLE" } });
+  const second = await session.observe({ ...request, compatibility: { policyRef: "m51.test.v2", classify: () => "INCOMPATIBLE" } });
   assert.equal(second.compatibility, "INCOMPATIBLE");
+  assert.equal(second.compatibilityPolicyRef, "m51.test.v2");
 });
 
 test("project preflight cheap config blocker avoids provider, tool and environment work", async () => {
@@ -293,6 +302,32 @@ test("expected-state mismatch becomes targeted stale block", async () => {
   const result = await session.run({ projectRoot: "/repo", requireRepository: true, gitFacts: ["head"], expectedBindings: [{ kind: "GIT_HEAD", value: "different" }] });
   assert.equal(result.readiness, "BLOCKED_STALE");
   assert.equal(result.gaps.some((item) => item.code.includes("expected_binding_stale:GIT_HEAD")), true);
+});
+
+test("stale HEAD short-circuits hosted and tool discovery", async () => {
+  const git = gitPort();
+  const provider = providerPort();
+  const tool = toolPort();
+  const session = new ProjectPreflightSession({ digest, configReader: configReader(validConfig()), git: git.port, hosted: provider.port, tools: tool.port });
+  const result = await session.run({
+    projectRoot: "/repo",
+    identityBindingStrength: "REPOSITORY_BOUND",
+    gitFacts: ["head"],
+    expectedBindings: [{ kind: "GIT_HEAD", value: "stale-head" }],
+    hosted: { profileId: "github", expectedHost: "github.com", capabilities: ["repository_read"] },
+    tools: [toolRequest()],
+  });
+  assert.equal(result.readiness, "BLOCKED_STALE");
+  assert.equal(provider.calls(), 0);
+  assert.equal(tool.calls.resolve, 0);
+});
+
+test("compatibility policy ref participates in requirement fingerprint", async () => {
+  const tool = toolPort();
+  const session = new ProjectPreflightSession({ digest, tools: tool.port });
+  const first = await session.run({ projectRoot: "/repo", tools: [toolRequest("node", false)] });
+  const second = await session.run({ projectRoot: "/repo", tools: [{ ...toolRequest("node", false), compatibility: { policyRef: "m51.test.v2", classify: () => "COMPATIBLE" } }] });
+  assert.notEqual(first.requirementFingerprint, second.requirementFingerprint);
 });
 
 test("controlled identical requirements produce stable requirement fingerprint", async () => {
