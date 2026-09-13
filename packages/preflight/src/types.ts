@@ -169,6 +169,7 @@ export interface ToolObservationPort {
   probe(spec: ToolProbeSpec): Promise<ToolProbeResult> | ToolProbeResult;
 }
 export interface ToolCompatibilityPort {
+  readonly policyRef: string;
   classify(toolId: string, observedVersion: string): ToolCompatibilityStatus;
 }
 export interface ToolObservationRequest {
@@ -176,6 +177,7 @@ export interface ToolObservationRequest {
   readonly requireVersion?: boolean;
   readonly required?: boolean;
   readonly parseVersion?: (stdout: string, stderr: string) => string | null;
+  readonly parseVersionRef?: string;
   readonly compatibility?: ToolCompatibilityPort;
   readonly signal?: AbortSignal;
 }
@@ -185,8 +187,10 @@ export interface ToolObservation {
   readonly presence: ToolPresenceStatus;
   readonly executableIdentity?: string;
   readonly observedVersion?: string;
+  readonly versionParserRef?: string;
   readonly probeStatus: ToolProbeStatus;
   readonly compatibility: ToolCompatibilityStatus;
+  readonly compatibilityPolicyRef?: string;
   readonly gaps: readonly PreflightGap[];
 }
 
