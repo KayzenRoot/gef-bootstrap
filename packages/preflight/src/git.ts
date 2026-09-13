@@ -1,6 +1,7 @@
 import { resolveRepositoryIdentity } from "@gef-bootstrap/project-identity";
 import { incrementCounter } from "./canonical.js";
 import type {
+  CompactGitObservation,
   GitFactFamily,
   GitHeadObservation,
   GitHeadState,
@@ -273,7 +274,7 @@ export class GitObservationSession {
   }
 }
 
-export function compactGitEvidence(observation: GitObservation): Readonly<Record<string, unknown>> {
+export function compactGitEvidence(observation: GitObservation): CompactGitObservation {
   return Object.freeze({
     schemaVersion: 1,
     ...(observation.repository ? { repository: { state: observation.repository.state, ...(observation.repository.reasonCode ? { reasonCode: observation.repository.reasonCode } : {}) } } : {}),
