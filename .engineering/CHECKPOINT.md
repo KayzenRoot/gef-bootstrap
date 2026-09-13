@@ -1,30 +1,33 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M04_S05`
+Status: `READY_FOR_GBS_M04_MODULE_GATE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
 - Completed modules: `GBS-M00`, `GBS-M01`, `GBS-M02`, `GBS-M03`
 - Active module: `GBS-M04 — Preflight & Discovery`
-- M04-S01 Environment Discovery: `FROZEN` — PR `#72`, merge `4890124c7258c05f7df7dd12934e0800e3564d1d`
-- M04-S02 Git Discovery: `FROZEN` — PR `#74`, merge `413d20b763c46958ada0f2346d41938817a853d8`
-- M04-S03 GitHub Discovery: `FROZEN` — PR `#76`, merge `990d0b1669138f04e787319ef555e0e79f2459a6`
-- M04-S04 Toolchain Discovery: `FROZEN` — PR `#78`, head `6b2f5156916a6ab24d1b81fc07d59f40ee13da7c`, merge `8047d20378a41428612feb77e72bc18a6eeb8cd9`
-- Next session: `GBS-M04-S05 — Project State`
-- Next legal stage: `GBS-M04_S05_PLANNING`
+- M04-S01 Environment Discovery: `FROZEN` — PR `#72`
+- M04-S02 Git Discovery: `FROZEN` — PR `#74`
+- M04-S03 GitHub Discovery: `FROZEN` — PR `#76`
+- M04-S04 Toolchain Discovery: `FROZEN` — PR `#78`
+- M04-S05 Project State Discovery: `FROZEN` — PR `#80`, head `3d16f89418c4b0f793f66d9aacbb392abd3fce98`, merge `602e8cad65c67499af1929c0d20113bd5d02f8ec`
+- Next legal stage: `GBS_M04_MODULE_GATE_COMPILATION`
 - Production: `70 / 1088 = 6.43%`
 - Remaining: `1018 / 1088 = 93.57%`
 - M04 earned: `0 / 17`
 - Denominator change: `NONE`
 - ETA: `NOT_YET_RELIABLE`
 
-## Carried contracts
-Preflight discovery is lazy and fact-family driven. Environment, local Git, GitHub and tool observations are separately requestable/reusable. Tool discovery resolves only approved logical tools, performs no broad software inventory and never installs or repairs dependencies.
+## M04 planning closure
+S01-S05 are frozen. The planned M04 surface now covers environment, local Git, GitHub reference-profile discovery, toolchain discovery and operation-relative project-state composition. Discovery remains read-only, lazy, bounded, separately invalidatable and brownfield-preserving.
+
+## Performance contract
+Normal preflight uses the smallest sufficient fact graph: cheap blockers first, zero hosted calls for local-only paths, exact tool probes only when needed, bounded parallel independent reads, and reuse of still-valid component observations.
 
 ## Construction constraint
-GEF Bootstrap implementation remains assigned to ChatGPT connected project tools. Codex remains prohibited until a separately governed benchmark exception is admitted.
+No M04 production credit is earned by planning. Implementation remains prohibited until the M04 Module Gate passes and admits an exact Work Order. Codex remains prohibited for this Bootstrap until a separately governed benchmark exception exists.
 
 ## Resume
-Compile only `GBS-M04-S05 — Project State`. It must aggregate already-owned observations without redefining project identity, configuration, Git/provider/tool policies or later mutation ownership. Do not begin M04 implementation before S05 and the module gate are complete.
+Compile and audit the M04 Module Gate against frozen S01-S05, Source Pack, M01 lifecycle, M02 config and M03 identity. Do not start M05 or M04 implementation before the gate authorizes it.
 
-STOP CONDITION: `READY_FOR_GBS_M04_S05`.
+STOP CONDITION: `READY_FOR_GBS_M04_MODULE_GATE`.
