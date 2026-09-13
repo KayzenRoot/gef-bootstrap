@@ -1,6 +1,6 @@
 # GBS-M04-S04 — Toolchain Discovery
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the bounded toolchain-observation contract used by deterministic preflight. S04 answers only the tool facts required by the admitted operation, with safe process probing and explicit gaps, without scanning the machine, installing/updating tools or duplicating capability/compatibility ownership.
@@ -55,7 +55,7 @@ Tool discovery crosses an injectable typed port. A baseline request contains onl
 ```text
 ToolObservationRequest
   toolId
-  requiredFacts[]          # presence, version, executable identity/capability marker
+  requiredFacts[]
   resolutionPolicyRef
   probeContractRef?
   timeoutBudget?
@@ -71,7 +71,7 @@ ToolObservation
   schemaVersion
   toolId
   presenceStatus
-  executableIdentity?      # bounded opaque/local identity, not raw machine inventory
+  executableIdentity?
   observedVersion?
   versionParseStatus?
   probeStatus
@@ -83,19 +83,10 @@ Absolute executable paths are operational details and are excluded from reusable
 ### TOOL-05 — Presence, version and compatibility are distinct
 S04 may prove that a declared tool was found and may observe a version using an admitted read-only probe. It does not decide that the observed version is supported.
 
-Compatibility is evaluated against an injected/versioned policy owned by M51. Therefore:
-- `FOUND` does not imply `COMPATIBLE`;
-- a parsable version does not imply support;
-- an unparseable version is a gap, not a guessed version;
-- support ranges are never duplicated inside S04.
+Compatibility is evaluated against an injected/versioned policy owned by M51. Therefore `FOUND` does not imply `COMPATIBLE`; a parsable version does not imply support; an unparseable version is a gap rather than a guessed version; and support ranges are never duplicated inside S04.
 
 ### TOOL-06 — Safe resolution only
-Executable resolution must obey Security SEC-05:
-- only approved logical tools or explicitly admitted trusted paths may be resolved;
-- repository-controlled arbitrary paths are not executed without owning policy validation;
-- no untrusted shell interpolation;
-- no implicit privilege escalation;
-- no write-capable probe selected merely because it is convenient.
+Executable resolution must obey Security SEC-05: only approved logical tools or explicitly admitted trusted paths may be resolved; repository-controlled arbitrary paths are not executed without owning policy validation; shell interpolation is not used; privilege escalation is not implicit; and write-capable probes are not selected merely for convenience.
 
 A candidate executable that cannot be established under the declared resolution policy remains unavailable/ambiguous rather than guessed.
 
@@ -105,13 +96,7 @@ S04 does not walk filesystem trees or enumerate every PATH directory to build a 
 Resolution may use the platform/process abstraction for one requested approved tool under a bounded policy. The implementation may cache the result within the invocation. A request for one tool must not trigger discovery of unrelated tools.
 
 ### TOOL-08 — Version probes are declarative and side-effect-free
-If version observation requires process execution, the probe contract is predefined/validated for that logical tool/profile. The baseline probe:
-- launches the executable directly with an argument array;
-- uses shell-disabled process execution;
-- is expected to be read-only;
-- has bounded timeout/output;
-- uses a minimal environment;
-- cannot receive arbitrary extra arguments from repository content.
+If version observation requires process execution, the probe contract is predefined/validated for that logical tool/profile. The baseline probe launches the executable directly with an argument array, keeps shell disabled, is expected to be read-only, has bounded timeout/output, uses a minimal environment and cannot receive arbitrary extra arguments from repository content.
 
 If a safe version probe is unknown, S04 reports version `UNOBSERVABLE` rather than improvising a command.
 
@@ -131,32 +116,17 @@ An admitted operation may declare alternatives, for example a GitHub provider ad
 The preflight contract evaluates the exact requirement expression supplied by the owning use-case/profile. S04 does not mark the whole operation blocked merely because one optional transport tool is absent when an admitted equivalent capability is already available.
 
 ### TOOL-12 — Readiness is requirement-relative
-For an exact tool requirement, S04 may classify:
-- `READY` — required presence/facts are observed and downstream compatibility requirements pass when applicable;
-- `READY_WITH_GAPS` — missing optional facts/tools do not block the admitted path;
-- `BLOCKED_TOOL_MISSING` — required tool is absent;
-- `BLOCKED_TOOL_AMBIGUOUS` — required tool cannot be safely resolved;
-- `BLOCKED_TOOL_INCOMPATIBLE` — injected M51 policy classifies observed version unsupported;
-- `BLOCKED_PROBE` — required tool fact cannot be safely observed;
-- `NOT_REQUIRED` — no tool observation is needed for the selected path.
+For an exact tool requirement, S04 may classify `READY`, `READY_WITH_GAPS`, `BLOCKED_TOOL_MISSING`, `BLOCKED_TOOL_AMBIGUOUS`, `BLOCKED_TOOL_INCOMPATIBLE`, `BLOCKED_PROBE` or `NOT_REQUIRED`.
 
 Compatibility judgment itself remains M51-owned even when the result is projected into M04 readiness.
 
 ### TOOL-13 — Snapshot reuse and targeted invalidation
-A validated tool observation may be reused inside the governed invocation.
-
-Each tool observation is independently invalidatable. Re-observe only when a relevant dependency changes, for example:
-- resolution policy changes;
-- process environment/PATH input relevant to resolution changes;
-- explicit tool path/config changes;
-- compatibility policy needs a fact that was not previously observed.
+A validated tool observation may be reused inside the governed invocation. Each tool observation is independently invalidatable. Re-observe only when a relevant dependency changes, such as resolution policy, relevant process environment, explicit tool path/config or required compatibility facts.
 
 A Git HEAD change alone does not invalidate a stable tool version observation. Provider availability alone does not invalidate local tool presence.
 
 ### TOOL-14 — Cross-run persistence is subordinate
-S04 does not make durable tool caches authoritative. Cross-run reuse requires an owning validity contract that binds the relevant environment/tool-resolution inputs.
-
-When current proof is required and cache validity is uncertain, the fact is re-observed rather than assumed.
+S04 does not make durable tool caches authoritative. Cross-run reuse requires an owning validity contract that binds the relevant environment/tool-resolution inputs. When current proof is required and cache validity is uncertain, the fact is re-observed rather than assumed.
 
 ### TOOL-15 — Missing tools do not trigger automatic installation
 Discovery never installs, upgrades, downgrades, repairs or removes tools. It may emit a structured remediation reference owned by distribution/help/compatibility systems.
@@ -164,9 +134,7 @@ Discovery never installs, upgrades, downgrades, repairs or removes tools. It may
 A missing or incompatible dependency remains a truthful preflight gap/block until a separately admitted operation changes the environment and a new observation proves the result.
 
 ### TOOL-16 — Project-local executables are not automatically trusted
-Files under `node_modules/.bin`, virtual environments, repository scripts or other project-local tool surfaces may later be supported by an explicit profile/security contract, but their mere presence inside the target repository does not make them trusted executable sources.
-
-S04 baseline must not auto-execute repository-supplied code during discovery.
+Files under project-local tool surfaces may later be supported by an explicit profile/security contract, but their mere presence inside the target repository does not make them trusted executable sources. S04 baseline must not auto-execute repository-supplied code during discovery.
 
 ### TOOL-17 — Tool discovery is cancellable and bounded
 Every process-backed probe receives cancellation, timeout and output limits. Probe failures are isolated and classified per tool; optional unrelated probes may proceed only when orchestration declares independence.
@@ -174,9 +142,7 @@ Every process-backed probe receives cancellation, timeout and output limits. Pro
 No hidden retry loop is allowed. Automatic retry, when safe and useful, remains bounded by the invocation budget and never retries deterministic incompatibility/policy failures.
 
 ### TOOL-18 — Compact evidence surface
-Evidence carries only requested tool IDs and normalized status/version/compatibility/gap classifications needed by the admitted operation.
-
-It excludes complete PATH contents, global software inventories, raw environment maps, arbitrary process output and unnecessary absolute local paths.
+Evidence carries only requested tool IDs and normalized status/version/compatibility/gap classifications needed by the admitted operation. It excludes complete PATH contents, global software inventories, raw environment maps, arbitrary process output and unnecessary absolute local paths.
 
 ## Security and reliability invariants
 - approved logical tool before resolution/execution;
@@ -230,7 +196,7 @@ Implementation must eventually prove:
 7. Project-local tooling: **not auto-trusted or auto-executed by baseline S04**.
 8. Performance: **lazy per-tool observation, transport alternatives first, targeted snapshot reuse**.
 
-## Session completion rule
-Planning content is frozen-candidate. Exact-head semantic review must confirm alignment with Security process policy, M01 runtime, S01-S03 lazy preflight, M38 capability ownership, M51 compatibility ownership and M63 performance goals. After approval/merge, checkpoint advances only to `GBS-M04-S05 — Project State`.
+## Freeze record
+Exact-head semantic review passed on PR `#78` for head `6b2f5156916a6ab24d1b81fc07d59f40ee13da7c`; review threads were empty. The reviewed content was squash-merged as `8047d20378a41428612feb77e72bc18a6eeb8cd9` before checkpoint promotion.
 
-STOP CONDITION: `M04_S04_EXACT_HEAD_REVIEW_REQUIRED`.
+STOP CONDITION: `M04_S04_FROZEN`.

@@ -1,15 +1,16 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M04_S04",
+  "status": "READY_FOR_GBS_M04_S05",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03"],
   "activeModule": "GBS-M04_PREFLIGHT_AND_DISCOVERY",
-  "m04PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"PLANNED","S05":"PLANNED"},
+  "m04PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN","S05":"PLANNED"},
   "m04Evidence": {
-    "S01": {"pr":72,"reviewedHead":"60d89f5a6969d9579db22eb9e7a6462f2affb7b6","mergeSha":"4890124c7258c05f7df7dd12934e0800e3564d1d"},
-    "S02": {"pr":74,"reviewedHead":"20740a9170ebb473c44ac814bc2e965264933666","mergeSha":"413d20b763c46958ada0f2346d41938817a853d8"},
-    "S03": {"pr":76,"reviewedHead":"6a4ecc79e09a3ce33b4656aa71a56a143622f2a8","mergeSha":"990d0b1669138f04e787319ef555e0e79f2459a6"}
+    "S01": {"pr":72,"mergeSha":"4890124c7258c05f7df7dd12934e0800e3564d1d"},
+    "S02": {"pr":74,"mergeSha":"413d20b763c46958ada0f2346d41938817a853d8"},
+    "S03": {"pr":76,"reviewedHead":"6a4ecc79e09a3ce33b4656aa71a56a143622f2a8","mergeSha":"990d0b1669138f04e787319ef555e0e79f2459a6"},
+    "S04": {"pr":78,"reviewedHead":"6b2f5156916a6ab24d1b81fc07d59f40ee13da7c","mergeSha":"8047d20378a41428612feb77e72bc18a6eeb8cd9"}
   },
   "mainProductionDenominatorWeight": 1088,
   "earnedProductionWeight": 70,
@@ -21,8 +22,8 @@
   "denominatorChanged": false,
   "eta": "NOT_YET_RELIABLE",
   "canonicalBranch": "main",
-  "nextPlanningStage": "GBS-M04_S04_TOOLCHAIN",
-  "stopState": "READY_FOR_GBS_M04_S04",
+  "nextPlanningStage": "GBS-M04_S05_PROJECT_STATE",
+  "stopState": "READY_FOR_GBS_M04_S05",
   "bootstrapImplementationExecutor": "CHATGPT_CONNECTED_PROJECT_TOOLS",
   "codexForBootstrap": "PROHIBITED_UNTIL_GOVERNED_BENCHMARK_EXCEPTION",
   "m04DiscoveryPolicy": {
@@ -30,8 +31,9 @@
     "environment": "FROZEN",
     "localGit": "FROZEN",
     "github": "FROZEN",
-    "localOnlyHostedCalls": "ZERO",
-    "providerMutation": "OUT_OF_SCOPE",
+    "toolchain": "FROZEN",
+    "toolInventory": "PROHIBITED",
+    "automaticDependencyMutation": "PROHIBITED",
     "reuse": "TARGETED_DEPENDENCY_BOUND"
   },
   "reportingContract": "REPORT_AUDITED_PERCENT_EARNED_REMAINING_AND_DENOMINATOR_CHANGES_ON_MATERIAL_CONTINUATIONS",
