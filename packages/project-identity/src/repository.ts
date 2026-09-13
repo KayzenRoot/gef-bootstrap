@@ -10,9 +10,20 @@ import type {
 
 const SAFE_STABLE_ID = /^[A-Za-z0-9._:-]{1,256}$/;
 const SAFE_LOCAL_BINDING_ID = /^[A-Za-z0-9._:-]{1,256}$/;
+const SAFE_PROVIDER_HINT = /^[A-Za-z0-9._:-]{1,128}$/;
 
 function hostLooksUnsafe(host: string): boolean {
   return host.length === 0 || host.length > 253 || /[\s\\/@?#]/.test(host) || host.includes("..");
+}
+
+function normalizedEndpointHost(protocol: string, hostname: string, port: string): string | null {
+  const host = hostname.toLowerCase();
+  if (hostLooksUnsafe(host)) return null;
+  const defaultPort = (protocol === "https:" && port === "443") || (protocol === "ssh:" && port === "22");
+  if (!port || defaultPort) return host;
+  if (!/^\d{1,5}$/.test(port) || Number(port) < 1 || Number(port) > 65535) return null;
+  const endpoint = `${host}:${port}`;
+  return endpoint.length <= 260 ? endpoint : null;
 }
 
 function normalizeRepositoryPath(rawPath: string): string | null {
@@ -27,6 +38,7 @@ function normalizeRepositoryPath(rawPath: string): string | null {
 export function normalizeRemoteLocator(observation: RemoteObservation): RepositoryRemoteLocator | null {
   const raw = observation.url.trim();
   if (raw.length === 0 || raw.length > 4096 || /[\u0000-\u001f\u007f]/.test(raw)) return null;
+  if (observation.providerHint !== undefined && !SAFE_PROVIDER_HINT.test(observation.providerHint)) return null;
 
   let host: string;
   let path: string;
@@ -40,16 +52,18 @@ export function normalizeRemoteLocator(observation: RemoteObservation): Reposito
     }
     const protocol = parsed.protocol.toLowerCase();
     if (protocol !== "https:" && protocol !== "ssh:") return null;
-    host = parsed.hostname.toLowerCase();
+    const endpointHost = normalizedEndpointHost(protocol, parsed.hostname, parsed.port);
+    if (!endpointHost) return null;
+    host = endpointHost;
     path = parsed.pathname;
   } else {
     const scp = /^(?:[^@\s/:]+@)?([^\s/:]+):(.+)$/.exec(raw);
     if (!scp || scp[1] === undefined || scp[2] === undefined) return null;
     host = scp[1].toLowerCase();
     path = scp[2].split(/[?#]/, 1)[0] ?? "";
+    if (hostLooksUnsafe(host)) return null;
   }
 
-  if (hostLooksUnsafe(host)) return null;
   const normalizedRepositoryPath = normalizeRepositoryPath(path);
   if (!normalizedRepositoryPath) return null;
   return {
