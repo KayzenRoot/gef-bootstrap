@@ -1,6 +1,6 @@
 # GBS-WO-M05-001 — Implement Transactional Apply Engine
 
-Status: `ADMISSION_CANDIDATE`
+Status: `ADMITTED`
 Risk: `ELEVATED`
 
 ## OBJECTIVE
@@ -10,6 +10,7 @@ The implementation must make managed mutation mechanically inspectable and fail-
 
 ## CONTEXT
 Canonical compilation base: `02ce79a676e9f0527aa2d7e9d052e8972ab9f3ff`.
+Admission evidence: PR `#100`, reviewed head `2bb4e043e991f4c4dead8081a473a8fcfccb6e34`, merge `2178960f3139aa9c3528257cb0f49ec78d7ad229`.
 
 Context Lock fingerprints:
 - S01 Transaction Plan: `7ee8396f81c1201e0aec909518badf13d8fe2593`
@@ -20,9 +21,9 @@ Context Lock fingerprints:
 - M05 Module Gate: `1727d60ef00c1835257dfe6d51e41b1f43a578f7`
 - root package manifest: `33f1fe6387e5add6274ed7839c9ba4879280b3fb`
 
-If main/base, checkpoint, Scope, Architecture, Security, DoD, Test/Benchmark Plan, S01-S05, Module Gate, relevant M01-M04 public contracts or root build topology changes before implementation admission/exact-head review, mark this Work Order `STALE` and recompile/reconcile it before code execution.
+If main/base, checkpoint, Scope, Architecture, Security, DoD, Test/Benchmark Plan, S01-S05, Module Gate, relevant M01-M04 public contracts or root build topology changes before implementation exact-head review, mark this Work Order `STALE` and reconcile it before code execution continues.
 
-The implementation base SHA is assigned only by the separate admission checkpoint after this Work Order is reviewed and merged.
+The exact implementation base SHA is the merge SHA of the separate admission checkpoint that activates this Work Order.
 
 ## SCOPE
 Implement only M05-owned provider-neutral logical transaction capability, primarily in `packages/kernel`, with `packages/contracts` used only where a persisted/interchange/public machine contract requires Architecture A8 treatment.
