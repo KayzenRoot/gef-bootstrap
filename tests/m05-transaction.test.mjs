@@ -115,14 +115,7 @@ function fixture(options = {}) {
     },
   };
 
-  return {
-    ports: { digest, state, journal, effects, authorization },
-    targetState,
-    preState,
-    calls,
-    journals,
-    authCalls: () => authCalls,
-  };
+  return { ports: { digest, state, journal, effects, authorization }, targetState, preState, calls, journals, authCalls: () => authCalls };
 }
 
 async function apply(plan, fx, overrides = {}) {
@@ -140,10 +133,7 @@ function twoIntentPlan() {
       { ...baseBody().intents[0], intentId: "b", targetRef: "file:b", dependsOn: ["a"], desiredFingerprint: "after-b" },
       { ...baseBody().intents[0], intentId: "a", targetRef: "file:a", dependsOn: [], desiredFingerprint: "after-a" },
     ],
-    recoveryRequirements: [
-      { intentId: "a", recoveryClass: "REVERSIBLE_MANAGED" },
-      { intentId: "b", recoveryClass: "REVERSIBLE_MANAGED" },
-    ],
+    recoveryRequirements: [{ intentId: "a", recoveryClass: "REVERSIBLE_MANAGED" }, { intentId: "b", recoveryClass: "REVERSIBLE_MANAGED" }],
     verificationObligations: [{ verificationId: "post", phase: "POST_STATE" }],
   });
 }
@@ -357,13 +347,7 @@ test("rollback refuses to clobber later user or tool edit", async () => {
 });
 
 test("create rollback refuses to delete later replaced content", async () => {
-  const plan = compile({
-    expectedPreState: [],
-    mutationSurface: ["file:create"],
-    intents: [{ intentId: "create", kind: "CREATE_MANAGED_ARTIFACT", targetRef: "file:create", securityClass: "S1_MANAGED_WRITE", recoveryClass: "REVERSIBLE_MANAGED", dependsOn: [], desiredFingerprint: "created-by-tx" }],
-    recoveryRequirements: [{ intentId: "create", recoveryClass: "REVERSIBLE_MANAGED", requirementRef: "create-pre" }],
-    verificationObligations: [],
-  });
+  const plan = compile({ expectedPreState: [], mutationSurface: ["file:create"], intents: [{ intentId: "create", kind: "CREATE_MANAGED_ARTIFACT", targetRef: "file:create", securityClass: "S1_MANAGED_WRITE", recoveryClass: "REVERSIBLE_MANAGED", dependsOn: [], desiredFingerprint: "created-by-tx" }], recoveryRequirements: [{ intentId: "create", recoveryClass: "REVERSIBLE_MANAGED", requirementRef: "create-pre" }], verificationObligations: [] });
   const fx = fixture({ targetState: { "file:unrelated": "legacy" }, preState: {} });
   const applied = await apply(plan, fx);
   assert.equal(applied.ok, true);
@@ -375,13 +359,7 @@ test("create rollback refuses to delete later replaced content", async () => {
 });
 
 test("delete rollback refuses to overwrite independently recreated target", async () => {
-  const plan = compile({
-    expectedPreState: [{ key: "target:file:delete", owner: "fixture", predicate: "EXACT", value: "before-delete" }],
-    mutationSurface: ["file:delete"],
-    intents: [{ intentId: "delete", kind: "REMOVE_MANAGED_ARTIFACT", targetRef: "file:delete", securityClass: "S1_MANAGED_WRITE", recoveryClass: "REVERSIBLE_MANAGED", dependsOn: [] }],
-    recoveryRequirements: [{ intentId: "delete", recoveryClass: "REVERSIBLE_MANAGED", requirementRef: "delete-pre" }],
-    verificationObligations: [],
-  });
+  const plan = compile({ expectedPreState: [{ key: "target:file:delete", owner: "fixture", predicate: "EXACT", value: "before-delete" }], mutationSurface: ["file:delete"], intents: [{ intentId: "delete", kind: "REMOVE_MANAGED_ARTIFACT", targetRef: "file:delete", securityClass: "S1_MANAGED_WRITE", recoveryClass: "REVERSIBLE_MANAGED", dependsOn: [] }], recoveryRequirements: [{ intentId: "delete", recoveryClass: "REVERSIBLE_MANAGED", requirementRef: "delete-pre" }], verificationObligations: [] });
   const fx = fixture({ targetState: { "file:delete": "before-delete", "file:unrelated": "legacy" }, preState: { "target:file:delete": "before-delete" } });
   const applied = await apply(plan, fx);
   assert.equal(applied.ok, true);
@@ -397,13 +375,7 @@ test("move rollback uses exact composite source-destination state and blocks div
   const targetRef = "move:a:b";
   const before = "src=before|dst=ABSENT";
   const after = "src=ABSENT|dst=before";
-  const plan = compile({
-    expectedPreState: [{ key: `target:${targetRef}`, owner: "fixture", predicate: "EXACT", value: before, contractVersion: "composite-endpoints-v1" }],
-    mutationSurface: [targetRef],
-    intents: [{ intentId: "move", kind: "MOVE_MANAGED_ARTIFACT", targetRef, securityClass: "S1_MANAGED_WRITE", recoveryClass: "REVERSIBLE_MANAGED", dependsOn: [], desiredFingerprint: after }],
-    recoveryRequirements: [{ intentId: "move", recoveryClass: "REVERSIBLE_MANAGED", requirementRef: "move-pre" }],
-    verificationObligations: [],
-  });
+  const plan = compile({ expectedPreState: [{ key: `target:${targetRef}`, owner: "fixture", predicate: "EXACT", value: before, contractVersion: "composite-endpoints-v1" }], mutationSurface: [targetRef], intents: [{ intentId: "move", kind: "MOVE_MANAGED_ARTIFACT", targetRef, securityClass: "S1_MANAGED_WRITE", recoveryClass: "REVERSIBLE_MANAGED", dependsOn: [], desiredFingerprint: after }], recoveryRequirements: [{ intentId: "move", recoveryClass: "REVERSIBLE_MANAGED", requirementRef: "move-pre" }], verificationObligations: [] });
   const fx = fixture({ targetState: { [targetRef]: before, "file:unrelated": "legacy" }, preState: { [`target:${targetRef}`]: before } });
   const applied = await apply(plan, fx);
   assert.equal(applied.ok, true);
@@ -412,7 +384,6 @@ test("move rollback uses exact composite source-destination state and blocks div
   const conflicted = await rollbackTransaction({ plan, applyReceipt: applied.receipt, recoveryRunId: "recovery-move-conflict", ports: fx.ports });
   assert.equal(conflicted.outcome, "ROLLBACK_CONFLICT");
   assert.equal(fx.targetState.get(targetRef), "src=user-new|dst=before");
-
   fx.targetState.set(targetRef, after);
   const restored = await rollbackTransaction({ plan, applyReceipt: applied.receipt, recoveryRunId: "recovery-move-restored", ports: fx.ports });
   assert.equal(restored.outcome, "RESTORED");
@@ -469,11 +440,11 @@ test("rollback timeout after one restoration preserves partial progress", async 
   const fx = twoIntentFixture();
   const applied = await apply(plan, fx);
   assert.equal(applied.ok, true);
-  const ticks = [0, 0, 0, 0, 100];
+  const ticks = [0, 0, 100];
   let index = 0;
   const rolled = await rollbackTransaction({ plan, applyReceipt: applied.receipt, recoveryRunId: "recovery-partial-timeout", ports: fx.ports, deadlineMs: 50, nowMs: () => ticks[index++] ?? 100 });
-  assert.equal(["PARTIALLY_RESTORED", "ROLLBACK_FAILED"].includes(rolled.outcome), true);
-  assert.equal(fx.calls.restore.length <= 1, true);
+  assert.equal(rolled.outcome, "PARTIALLY_RESTORED");
+  assert.equal(fx.calls.restore.length, 1);
 });
 
 test("rollback authorization request is recovery-phase and target-bound", async () => {
