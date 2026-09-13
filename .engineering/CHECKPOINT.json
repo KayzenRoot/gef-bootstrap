@@ -1,17 +1,16 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M04_S03",
+  "status": "READY_FOR_GBS_M04_S04",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03"],
   "activeModule": "GBS-M04_PREFLIGHT_AND_DISCOVERY",
-  "m04PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"PLANNED","S04":"PLANNED","S05":"PLANNED"},
-  "m04s01Pr": 72,
-  "m04s01ReviewedHead": "60d89f5a6969d9579db22eb9e7a6462f2affb7b6",
-  "m04s01MergeSha": "4890124c7258c05f7df7dd12934e0800e3564d1d",
-  "m04s02Pr": 74,
-  "m04s02ReviewedHead": "20740a9170ebb473c44ac814bc2e965264933666",
-  "m04s02MergeSha": "413d20b763c46958ada0f2346d41938817a853d8",
+  "m04PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"PLANNED","S05":"PLANNED"},
+  "m04Evidence": {
+    "S01": {"pr":72,"reviewedHead":"60d89f5a6969d9579db22eb9e7a6462f2affb7b6","mergeSha":"4890124c7258c05f7df7dd12934e0800e3564d1d"},
+    "S02": {"pr":74,"reviewedHead":"20740a9170ebb473c44ac814bc2e965264933666","mergeSha":"413d20b763c46958ada0f2346d41938817a853d8"},
+    "S03": {"pr":76,"reviewedHead":"6a4ecc79e09a3ce33b4656aa71a56a143622f2a8","mergeSha":"990d0b1669138f04e787319ef555e0e79f2459a6"}
+  },
   "mainProductionDenominatorWeight": 1088,
   "earnedProductionWeight": 70,
   "remainingProductionWeight": 1018,
@@ -20,41 +19,21 @@
   "m04Weight": 17,
   "m04EarnedWeight": 0,
   "denominatorChanged": false,
-  "eta": "NOT_YET_RELIABLE_INSUFFICIENT_STABLE_IMPLEMENTATION_MODULE_VELOCITY_SAMPLE",
+  "eta": "NOT_YET_RELIABLE",
   "canonicalBranch": "main",
-  "nextModule": "GBS-M04_PREFLIGHT_AND_DISCOVERY",
-  "nextPlanningStage": "GBS-M04_S03_GITHUB",
-  "stopState": "READY_FOR_GBS_M04_S03",
+  "nextPlanningStage": "GBS-M04_S04_TOOLCHAIN",
+  "stopState": "READY_FOR_GBS_M04_S04",
   "bootstrapImplementationExecutor": "CHATGPT_CONNECTED_PROJECT_TOOLS",
   "codexForBootstrap": "PROHIBITED_UNTIL_GOVERNED_BENCHMARK_EXCEPTION",
-  "plannedExecutorBenchmark": {
-    "approvedByUser": true,
-    "timing": "AFTER_M03_OR_M04",
-    "automaticallyAdmitted": false,
-    "requiresGovernedExceptionBeforeExecution": true,
-    "dimensions": ["WALL_CLOCK_TIME","MODEL_TOKENS","SEARCHES","FILES_READ","CORRECTION_ROUNDS","TEST_CI_OUTCOMES","ESCAPED_FINDINGS","EVIDENCE_QUALITY"]
-  },
-  "m04EnvironmentPolicy": {
-    "securityClass": "S0_READ_ONLY",
-    "discovery": "MINIMAL_LAZY_PRIMITIVE_OBSERVATION",
-    "environmentAccess": "REQUEST_SCOPED_ALLOWLIST_ONLY",
-    "subprocessForPrimitiveFacts": "PROHIBITED",
-    "workingDirectoryAuthority": "OPERATIONAL_INPUT_NOT_PROJECT_IDENTITY",
-    "compatibilityPolicyOwner": "GBS-M51",
-    "generalCapabilityDetectionOwner": "GBS-M38",
-    "reuse": "VALIDATED_PER_INVOCATION_SNAPSHOT"
-  },
-  "m04GitPolicy": {
-    "securityClass": "S0_READ_ONLY",
-    "discovery": "REQUEST_DRIVEN_FACT_FAMILIES",
-    "executionOwner": "GBS-M29",
-    "compatibilityPolicyOwner": "GBS-M51_S02",
-    "remoteAuthority": "M03_NORMALIZED_BINDING_NOT_ALIAS",
-    "status": "SUMMARY_FIRST_LAZY",
-    "broadRepositoryScan": "PROHIBITED",
-    "automaticGitRepair": "PROHIBITED",
-    "freshness": "TARGETED_HEAD_STATUS_REMOTES_DEPENDENCIES"
+  "m04DiscoveryPolicy": {
+    "mode": "LAZY_REQUEST_DRIVEN_FACT_FAMILIES",
+    "environment": "FROZEN",
+    "localGit": "FROZEN",
+    "github": "FROZEN",
+    "localOnlyHostedCalls": "ZERO",
+    "providerMutation": "OUT_OF_SCOPE",
+    "reuse": "TARGETED_DEPENDENCY_BOUND"
   },
   "reportingContract": "REPORT_AUDITED_PERCENT_EARNED_REMAINING_AND_DENOMINATOR_CHANGES_ON_MATERIAL_CONTINUATIONS",
-  "continuityContract": "HUMAN_AND_MACHINE_CHECKPOINT_AT_MATERIAL_MILESTONES_AND_CHAT_TRANSITIONS_CHAT_HISTORY_NOT_SOLE_AUTHORITY"
+  "continuityContract": "CHECKPOINT_IS_CANONICAL_CONTINUATION_STATE"
 }
