@@ -21,6 +21,7 @@ interface IntentState {
   readonly target: PreparedTarget;
   readonly source?: PreparedTarget;
   readonly stage?: FilesystemStageReceipt;
+  readonly recoveryRef?: string;
 }
 
 export interface FilesystemEffectAdapterOptions {
@@ -35,29 +36,11 @@ export interface FilesystemEffectAdapterOptions {
 type AdapterCategory = "PRECONDITION" | "CAPABILITY" | "EXECUTION" | "VERIFICATION" | "RECOVERY";
 
 function executionContext(options: FilesystemEffectAdapterOptions): FilesystemExecutionContext {
-  return Object.freeze({
-    ...(options.signal === undefined ? {} : { signal: options.signal }),
-    ...(options.deadlineMs === undefined ? {} : { deadlineMs: options.deadlineMs }),
-    ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
-  });
+  return Object.freeze({ ...(options.signal === undefined ? {} : { signal: options.signal }), ...(options.deadlineMs === undefined ? {} : { deadlineMs: options.deadlineMs }), ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }) });
 }
 
 function adapterError(intent: TransactionIntent, reason: string, summary: string, category: AdapterCategory = "PRECONDITION"): FilesystemResult<never> {
-  return {
-    ok: false,
-    error: createGefError({
-      id: `m06-effect-${reason}`,
-      category,
-      reason: `filesystem_effect.${reason}`,
-      severity: category === "RECOVERY" ? "CRITICAL" : "ERROR",
-      summary,
-      retryability: category === "RECOVERY" ? "REQUIRES_EFFECT_CHECK" : "NEVER",
-      recoverability: category === "RECOVERY" ? "RECOVERY_REQUIRED" : "NONE_REQUIRED",
-      terminal: category === "RECOVERY" ? "RECOVERY_REQUIRED" : "BLOCKED",
-      targetRef: intent.targetRef,
-      metadata: { intentId: intent.intentId, intentKind: intent.kind },
-    }),
-  };
+  return { ok: false, error: createGefError({ id: `m06-effect-${reason}`, category, reason: `filesystem_effect.${reason}`, severity: category === "RECOVERY" ? "CRITICAL" : "ERROR", summary, retryability: category === "RECOVERY" ? "REQUIRES_EFFECT_CHECK" : "NEVER", recoverability: category === "RECOVERY" ? "RECOVERY_REQUIRED" : "NONE_REQUIRED", terminal: category === "RECOVERY" ? "RECOVERY_REQUIRED" : "BLOCKED", targetRef: intent.targetRef, metadata: { intentId: intent.intentId, intentKind: intent.kind } }) };
 }
 
 function applyOperation(intent: TransactionIntent): FilesystemOperation | undefined {
@@ -71,46 +54,20 @@ function applyOperation(intent: TransactionIntent): FilesystemOperation | undefi
 }
 
 function safetySignature(target: PreparedTarget): string {
-  return JSON.stringify({
-    rootRef: target.safety.rootRef,
-    path: target.safety.normalizedRelativePath,
-    operation: target.safety.operation,
-    capabilityRef: target.safety.capabilityRef,
-    identity: target.safety.observedIdentityToken ?? null,
-    dependencies: [...target.safety.dependencyTokens],
-    durability: target.safety.durability,
-    visibilityAtomic: target.safety.visibilityAtomic,
-    stagingAuthorityRef: target.stagingAuthorityRef,
-    stagingFilesystemId: target.stagingFilesystemId ?? null,
-    destinationFilesystemId: target.destinationFilesystemId ?? null,
-  });
+  return JSON.stringify({ rootRef: target.safety.rootRef, path: target.safety.normalizedRelativePath, operation: target.safety.operation, capabilityRef: target.safety.capabilityRef, identity: target.safety.observedIdentityToken ?? null, dependencies: [...target.safety.dependencyTokens], durability: target.safety.durability, visibilityAtomic: target.safety.visibilityAtomic, stagingAuthorityRef: target.stagingAuthorityRef, stagingFilesystemId: target.stagingFilesystemId ?? null, destinationFilesystemId: target.destinationFilesystemId ?? null });
 }
 
 function samePrepared(left: PreparedTarget, right: PreparedTarget): boolean {
   return safetySignature(left) === safetySignature(right);
 }
 
-async function prepareTarget(
-  options: FilesystemEffectAdapterOptions,
-  intent: TransactionIntent,
-  resolved: FilesystemResolvedPath,
-  operation: FilesystemOperation,
-  desiredFingerprint: string | undefined,
-  requireCrashDurability: boolean,
-  replaceExisting = false,
-): Promise<FilesystemResult<PreparedTarget>> {
+async function prepareTarget(options: FilesystemEffectAdapterOptions, intent: TransactionIntent, resolved: FilesystemResolvedPath, operation: FilesystemOperation, desiredFingerprint: string | undefined, requireCrashDurability: boolean, replaceExisting = false): Promise<FilesystemResult<PreparedTarget>> {
   const path = authorizeFilesystemPath({ root: resolved.root, relativePath: resolved.relativePath, operation });
   if (!path.ok) return path;
   const context = executionContext(options);
   const observed = await options.physical.observe(path.value, context);
   if (!observed.ok) return observed;
-  const overwrite = evaluateFilesystemOverwrite({
-    path: path.value,
-    observation: observed.value.target,
-    ...(resolved.expected === undefined ? {} : { expected: resolved.expected }),
-    ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }),
-    ...(replaceExisting ? { replaceExistingDestination: true } : {}),
-  });
+  const overwrite = evaluateFilesystemOverwrite({ path: path.value, observation: observed.value.target, ...(resolved.expected === undefined ? {} : { expected: resolved.expected }), ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), ...(replaceExisting ? { replaceExistingDestination: true } : {}) });
   if (!overwrite.ok) return overwrite;
   if (overwrite.value.noop) return adapterError(intent, "unexpected_noop", "M05 must resolve no-op state before opening a physical mutation capability");
   const traversal = proveFilesystemTraversal({ path: path.value, ancestors: observed.value.ancestors, target: observed.value.target });
@@ -118,26 +75,9 @@ async function prepareTarget(
   const facts = await options.physical.atomicFacts({ context, intent, path: path.value, ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), requireCrashDurability });
   if (!facts.ok) return facts;
   if (facts.value.stagingAuthorityRef.trim().length === 0) return adapterError(intent, "staging_authority_missing", "Transaction-private staging has no governed authority binding", "CAPABILITY");
-  const atomic = composeFilesystemPhysicalSafety({
-    path: path.value,
-    overwrite: overwrite.value,
-    traversal: traversal.value,
-    primitive: facts.value.primitive,
-    requireCrashDurability,
-    ...(facts.value.stagingFilesystemId === undefined ? {} : { stagingFilesystemId: facts.value.stagingFilesystemId }),
-    ...(facts.value.destinationFilesystemId === undefined ? {} : { destinationFilesystemId: facts.value.destinationFilesystemId }),
-  });
+  const atomic = composeFilesystemPhysicalSafety({ path: path.value, overwrite: overwrite.value, traversal: traversal.value, primitive: facts.value.primitive, requireCrashDurability, ...(facts.value.stagingFilesystemId === undefined ? {} : { stagingFilesystemId: facts.value.stagingFilesystemId }), ...(facts.value.destinationFilesystemId === undefined ? {} : { destinationFilesystemId: facts.value.destinationFilesystemId }) });
   if (!atomic.ok) return atomic;
-  return {
-    ok: true,
-    value: Object.freeze({
-      path: path.value,
-      safety: atomic.value,
-      stagingAuthorityRef: facts.value.stagingAuthorityRef,
-      ...(facts.value.stagingFilesystemId === undefined ? {} : { stagingFilesystemId: facts.value.stagingFilesystemId }),
-      ...(facts.value.destinationFilesystemId === undefined ? {} : { destinationFilesystemId: facts.value.destinationFilesystemId }),
-    }),
-  };
+  return { ok: true, value: Object.freeze({ path: path.value, safety: atomic.value, stagingAuthorityRef: facts.value.stagingAuthorityRef, ...(facts.value.stagingFilesystemId === undefined ? {} : { stagingFilesystemId: facts.value.stagingFilesystemId }), ...(facts.value.destinationFilesystemId === undefined ? {} : { destinationFilesystemId: facts.value.destinationFilesystemId }) }) };
 }
 
 async function prepareIntent(options: FilesystemEffectAdapterOptions, intent: TransactionIntent): Promise<FilesystemResult<IntentState>> {
@@ -177,7 +117,9 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
       const state = states.get(intent.intentId);
       if (state === undefined) return adapterError(intent, "safety_not_prepared", "Recovery capture requires a current physical-safety capability", "CAPABILITY");
       const captured = await options.physical.captureRecovery({ context: executionContext(options), transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }) });
-      return captured.ok ? { ok: true, value: captured.value.recoveryRef } : captured;
+      if (!captured.ok) return captured;
+      states.set(intent.intentId, Object.freeze({ ...state, recoveryRef: captured.value.recoveryRef }));
+      return { ok: true, value: captured.value.recoveryRef };
     },
     verifyRecoveryMaterial: async (request) => {
       if (request.transactionId !== options.transactionId) return adapterError(request.intent, "transaction_binding_mismatch", "Recovery material is bound to another transaction", "RECOVERY");
@@ -208,7 +150,7 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
         const sourceShapeChanged = (existing.source === undefined) !== (refreshed.value.source === undefined);
         const sourceChanged = existing.source !== undefined && refreshed.value.source !== undefined && !samePrepared(existing.source, refreshed.value.source);
         if (!samePrepared(existing.target, refreshed.value.target) || sourceShapeChanged || sourceChanged) return adapterError(intent, "stale_physical_state", "Filesystem identity, staging authority or physical capability changed before the commit barrier", "PRECONDITION");
-        states.set(intent.intentId, Object.freeze({ ...refreshed.value, ...(existing.stage === undefined ? {} : { stage: existing.stage }) }));
+        states.set(intent.intentId, Object.freeze({ ...refreshed.value, ...(existing.stage === undefined ? {} : { stage: existing.stage }), ...(existing.recoveryRef === undefined ? {} : { recoveryRef: existing.recoveryRef }) }));
       }
       return { ok: true, value: true };
     },
@@ -245,7 +187,7 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
       }
       return { ok: true, value: Object.freeze(bindings) };
     },
-    cleanup: (request) => options.physical.cleanup({ context: executionContext(options), ...request }),
+    cleanup: (request) => options.physical.cleanup({ context: executionContext(options), ...request, preserveRecoveryRefs: Object.freeze([...states.values()].flatMap((state) => state.recoveryRef === undefined ? [] : [state.recoveryRef])) }),
     restore: async (request) => {
       const resolved = options.resolver.resolve(request.intent);
       if (!resolved.ok) return resolved;
