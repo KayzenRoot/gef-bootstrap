@@ -1,12 +1,15 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M06_MODULE_GATE",
+  "status": "READY_TO_COMPILE_GBS_WO_M06_001",
   "completedModules": ["GBS-M00","GBS-M01","GBS-M02","GBS-M03","GBS-M04","GBS-M05"],
   "activeModule": "GBS-M06_FILESYSTEM_SAFETY",
-  "activeModuleStatus": "PLANNING_COMPLETE_GATE_PENDING",
+  "activeModuleStatus": "WORK_ORDER_COMPILATION_READY",
   "m06PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN"},
-  "m06ModuleGate": "NOT_EVALUATED",
+  "m06ModuleGate": "PLANNED_READY_FOR_IMPLEMENTATION",
+  "m06ModuleGatePr": 113,
+  "m06ModuleGateReviewedHead": "1dc245a17be5fb43bfd5ac95b821ef202532fce3",
+  "m06ModuleGateMergeSha": "22876108b5d3363584f65d138ffcaf02562b4fcb",
   "activeWorkOrder": null,
   "activeWorkOrderStatus": null,
   "mainProductionDenominatorWeight": 1088,
@@ -17,7 +20,7 @@
   "m06Weight": 18,
   "m06EarnedWeight": 0,
   "denominatorChanged": false,
-  "nextPlanningStage": "GBS-M06_MODULE_GATE",
+  "nextPlanningStage": "COMPILE_GBS_WO_M06_001",
   "codexBootstrapConstructionAuthorized": false,
-  "stopState": "READY_FOR_GBS_M06_MODULE_GATE"
+  "stopState": "READY_TO_COMPILE_GBS_WO_M06_001"
 }
