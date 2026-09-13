@@ -1,6 +1,6 @@
 # GBS-M05-S03 — Apply
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the provider-neutral Apply contract for `GBS-M05 — Transactional Apply Engine`. S03 defines how an immutable S01 `TransactionPlan` transitions from validated intent into bounded operational effects through revalidation, recovery preparation, staging, staged verification, commit/promotion, post-state verification, receipt emission and cleanup.
@@ -470,7 +470,10 @@ Implementation must eventually prove:
 11. M06 boundary: **M05 owns logical transaction gates/state; M06 owns physical filesystem safety and atomic primitives**.
 12. Brownfield: **only admitted targets are changed; no opportunistic normalization**.
 
-## Session completion rule
-This candidate becomes `FROZEN` only after exact-head semantic review and merge. Planning earns `0/20` M05 production weight. After checkpoint promotion, the next legal planning session is `GBS-M05-S04 — Rollback`. No M05 implementation Work Order may be compiled or admitted until S01-S05 and the M05 module gate are complete.
+## Freeze record
+Candidate semantic review passed on PR `#92` for head `e034855e0797ca76f4fd544e3e7b3dee61c590a0` with no HIGH/CRITICAL planning finding. The final `FROZEN` head must receive an exact-head semantic review before merge; that immutable reviewed-head binding is recorded in the PR review/checkpoint promotion rather than embedded self-referentially in this commit.
 
-STOP CONDITION: `M05_S03_READY_FOR_EXACT_HEAD_REVIEW`.
+## Session completion rule
+M05-S03 is `FROZEN` after final exact-head semantic approval and merge. Planning earns `0/20` M05 production weight. After checkpoint promotion, the next legal planning session is `GBS-M05-S04 — Rollback`. No M05 implementation Work Order may be compiled or admitted until S01-S05 and the M05 module gate are complete.
+
+STOP CONDITION: `M05_S03_FROZEN_PENDING_FINAL_EXACT_HEAD_REVIEW`.
