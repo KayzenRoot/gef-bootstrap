@@ -1,6 +1,7 @@
 import { createGefError } from "./errors.js";
 import { stableTransactionSerialize, validateTransactionPlanBody, verifyTransactionPlanDigest } from "./transaction-plan.js";
 import type { TransactionPorts } from "./transaction-ports.js";
+import { evaluateStateBinding } from "./transaction-state.js";
 import type { DryRunIntentResult, DryRunOutcome, DryRunReport, TransactionFinding, TransactionPlan, TransactionStateBinding } from "./transaction-types.js";
 
 function intentAction(kind: TransactionPlan["intents"][number]["kind"]): DryRunIntentResult["action"] {
@@ -41,31 +42,25 @@ export async function dryRunTransaction(plan: TransactionPlan, ports: Transactio
   const observed: TransactionStateBinding[] = [];
   const findings: TransactionFinding[] = [];
   let stale = false;
+  let conflict = false;
   let indeterminate = false;
+
   for (const binding of plan.expectedPreState) {
-    const result = await ports.state.observeBinding(binding);
+    const result = await evaluateStateBinding(binding, ports);
     if (!result.ok) {
       indeterminate = true;
       findings.push(Object.freeze({ code: result.error.reasonCode, severity: "ERROR", summary: result.error.summary }));
       continue;
     }
-    if (result.value === undefined) {
-      indeterminate = true;
-      findings.push(Object.freeze({ code: "STATE_UNAVAILABLE", severity: "ERROR", summary: `Required state binding ${binding.key} is unavailable` }));
-      continue;
-    }
-    observed.push(Object.freeze({ ...binding, value: result.value }));
-    if (result.value !== binding.value) {
+    observed.push(Object.freeze({ ...binding, value: result.value.observedValue }));
+    if (!result.value.matches) {
       stale = true;
-      findings.push(Object.freeze({ code: "STATE_STALE", severity: "ERROR", summary: `Required state binding ${binding.key} no longer matches` }));
+      findings.push(Object.freeze({ code: "STATE_STALE", severity: "ERROR", summary: `Required state binding ${binding.key} no longer satisfies ${binding.predicate}` }));
     }
   }
 
-  if (indeterminate) return finish(plan, ports, "INDETERMINATE", observed, [], findings);
-  if (stale) return finish(plan, ports, "STALE", observed, [], findings);
-
   const intentResults: DryRunIntentResult[] = [];
-  let allNoChange = plan.intents.length > 0;
+  let allManagedNoChange = plan.intents.length > 0;
   for (const intent of plan.intents) {
     const current = await ports.state.observeTargetFingerprint(intent.targetRef);
     if (!current.ok) {
@@ -76,7 +71,7 @@ export async function dryRunTransaction(plan: TransactionPlan, ports: Transactio
     const desiredMatches = intent.desiredFingerprint !== undefined && current.value === intent.desiredFingerprint && intent.kind !== "REMOVE_MANAGED_ARTIFACT";
     const removeAlreadyAbsent = intent.kind === "REMOVE_MANAGED_ARTIFACT" && current.value === undefined;
     const noChange = desiredMatches || removeAlreadyAbsent;
-    if (!noChange) allNoChange = false;
+    if (!noChange) allManagedNoChange = false;
     intentResults.push(Object.freeze({
       intentId: intent.intentId,
       targetRef: intent.targetRef,
@@ -86,9 +81,31 @@ export async function dryRunTransaction(plan: TransactionPlan, ports: Transactio
     }));
   }
 
+  if (plan.externalEffectDeclarations.length > 0) {
+    if (ports.externalEffects === undefined) {
+      indeterminate = true;
+      findings.push(Object.freeze({ code: "EXTERNAL_OBSERVATION_UNAVAILABLE", severity: "ERROR", summary: "External effect observation capability is unavailable" }));
+    } else {
+      for (const declaration of plan.externalEffectDeclarations) {
+        const external = await ports.externalEffects.observeEffect(declaration);
+        if (!external.ok || external.value === "UNKNOWN") {
+          indeterminate = true;
+          findings.push(Object.freeze({ code: external.ok ? "EXTERNAL_EFFECT_UNKNOWN" : external.error.reasonCode, severity: "ERROR", summary: external.ok ? `External effect ${declaration.effectId} state is unknown` : external.error.summary, targetRef: declaration.targetRef }));
+        } else if (external.value === "PRESENT") {
+          conflict = true;
+          findings.push(Object.freeze({ code: "EXTERNAL_EFFECT_PRESENT", severity: "ERROR", summary: `External effect ${declaration.effectId} is already present and requires owning-saga reconciliation`, targetRef: declaration.targetRef }));
+        }
+      }
+    }
+  }
+
+  if (conflict) return finish(plan, ports, "CONFLICT", observed, intentResults, findings);
+  if (stale) return finish(plan, ports, "STALE", observed, intentResults, findings);
   if (indeterminate) return finish(plan, ports, "INDETERMINATE", observed, intentResults, findings);
-  const noManagedIntent = plan.intents.length === 0 && plan.externalEffectDeclarations.length === 0;
-  return finish(plan, ports, allNoChange || noManagedIntent ? "NOOP" : "READY", observed, intentResults, findings);
+
+  const noEffects = plan.intents.length === 0 && plan.externalEffectDeclarations.length === 0;
+  const managedNoop = allManagedNoChange && plan.externalEffectDeclarations.length === 0;
+  return finish(plan, ports, noEffects || managedNoop ? "NOOP" : "READY", observed, intentResults, findings);
 }
 
 export function dryRunErrorToGefError(report: DryRunReport) {
