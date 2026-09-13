@@ -8,6 +8,7 @@ import {
   utf8Length,
   validPortableSegment,
   validVariableId,
+  VARIABLE_CONTRACT_VERSION,
 } from "./runtime.js";
 import type {
   BindingCandidate,
@@ -179,6 +180,6 @@ export function resolveVariables(template: TemplateDescriptor, bindings: Variabl
   const valueShape = resolved.map((item) => ({ id: item.id, type: item.type, status: item.status, value: item.value }));
   const variableValueDigest = digest.digest(stableStringify({ templateSemanticDigest: template.templateSemanticDigest, values: valueShape }));
   const resolutionShape = resolved.map((item) => ({ id: item.id, source: item.source, provenanceRef: item.provenanceRef, valueClass: item.valueClass }));
-  const variableResolutionDigest = digest.digest(stableStringify({ variableValueDigest, resolution: resolutionShape }));
-  return { ok: true, value: Object.freeze({ templateSemanticDigest: template.templateSemanticDigest, entries: Object.freeze(resolved), variableValueDigest, variableResolutionDigest }) };
+  const variableResolutionDigest = digest.digest(stableStringify({ variableValueDigest, variableContractVersion: VARIABLE_CONTRACT_VERSION, resolution: resolutionShape }));
+  return { ok: true, value: Object.freeze({ variableContractVersion: VARIABLE_CONTRACT_VERSION, templateSemanticDigest: template.templateSemanticDigest, entries: Object.freeze(resolved), variableValueDigest, variableResolutionDigest }) };
 }
