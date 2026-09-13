@@ -1,6 +1,7 @@
-import { repositoryLocatorEqual } from "@gef-bootstrap/project-identity";
+import { canonicalizeRepositoryIdentityProjection, repositoryLocatorEqual } from "@gef-bootstrap/project-identity";
 import { stablePreflightStringify } from "./canonical.js";
 import type {
+  AuthenticationStatus,
   HostedProfileObservation,
   HostedProfilePort,
   HostedProfileRequest,
@@ -8,10 +9,87 @@ import type {
   MutablePreflightCounters,
   PreflightGap,
   ProviderCapabilityResult,
+  ProviderCapabilityStatus,
 } from "./types.js";
+
+const SAFE_ID = /^[A-Za-z0-9._:-]{1,128}$/;
+const SAFE_REASON = /^[A-Za-z0-9._:-]{1,256}$/;
+const AUTHENTICATION_STATUSES = new Set<AuthenticationStatus>(["NOT_REQUIRED", "AVAILABLE", "MISSING", "EXPIRED_OR_REJECTED", "UNAVAILABLE", "UNKNOWN"]);
+const CAPABILITY_STATUSES = new Set<ProviderCapabilityStatus>(["AVAILABLE", "MISSING_PERMISSION", "NOT_SUPPORTED", "NOT_OBSERVABLE_WITHOUT_ATTEMPT", "AUTH_REQUIRED", "PROVIDER_UNAVAILABLE", "UNKNOWN"]);
+const VISIBILITIES = new Set(["public", "private", "internal"]);
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 function gap(code: string, blocking: boolean): PreflightGap {
   return { code, owner: "M30", blocking };
+}
+
+function canonicalExpectedHost(value: string): string | null {
+  try {
+    const projection = canonicalizeRepositoryIdentityProjection({
+      schemaVersion: 1,
+      state: "RESOLVED_REMOTE_BOUND",
+      bindingKind: "REMOTE",
+      normalizedLocator: { transportIndependentHost: value.toLowerCase(), normalizedRepositoryPath: "gef/host-validation" },
+      normalizationVersion: 1,
+    }, true);
+    return projection.normalizedLocator?.transportIndependentHost ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeProviderResult(value: unknown): HostedRepositoryResult | null {
+  if (!isRecord(value)) return null;
+  const stableRepositoryId = value.stableRepositoryId;
+  let projection;
+  try {
+    projection = canonicalizeRepositoryIdentityProjection({
+      schemaVersion: 1,
+      state: "RESOLVED_REMOTE_BOUND",
+      bindingKind: "REMOTE",
+      normalizedLocator: value.locator,
+      ...(stableRepositoryId !== undefined ? { stableProviderId: stableRepositoryId } : {}),
+      normalizationVersion: 1,
+    }, true);
+  } catch {
+    return null;
+  }
+  if (!projection.normalizedLocator) return null;
+
+  const authenticationStatus = value.authenticationStatus;
+  if (typeof authenticationStatus !== "string" || !AUTHENTICATION_STATUSES.has(authenticationStatus as AuthenticationStatus)) return null;
+  const rawCapabilities = value.capabilities;
+  if (!Array.isArray(rawCapabilities) || rawCapabilities.length > 128) return null;
+  const capabilities: ProviderCapabilityResult[] = [];
+  for (const raw of rawCapabilities) {
+    if (!isRecord(raw) || typeof raw.capability !== "string" || !SAFE_ID.test(raw.capability) || typeof raw.status !== "string" || !CAPABILITY_STATUSES.has(raw.status as ProviderCapabilityStatus)) return null;
+    if (raw.reasonCode !== undefined && (typeof raw.reasonCode !== "string" || !SAFE_REASON.test(raw.reasonCode))) return null;
+    capabilities.push({
+      capability: raw.capability,
+      status: raw.status as ProviderCapabilityStatus,
+      ...(typeof raw.reasonCode === "string" ? { reasonCode: raw.reasonCode } : {}),
+    });
+  }
+
+  const visibility = value.visibility;
+  if (visibility !== undefined && (typeof visibility !== "string" || !VISIBILITIES.has(visibility))) return null;
+  if (value.archived !== undefined && typeof value.archived !== "boolean") return null;
+  if (value.fork !== undefined && typeof value.fork !== "boolean") return null;
+  if (value.defaultBranch !== undefined && (typeof value.defaultBranch !== "string" || value.defaultBranch.length === 0 || value.defaultBranch.length > 256 || /[\u0000\r\n]/.test(value.defaultBranch))) return null;
+
+  return {
+    locator: projection.normalizedLocator,
+    ...(projection.stableProviderId ? { stableRepositoryId: projection.stableProviderId } : {}),
+    ...(typeof visibility === "string" ? { visibility: visibility as "public" | "private" | "internal" } : {}),
+    ...(typeof value.archived === "boolean" ? { archived: value.archived } : {}),
+    ...(typeof value.fork === "boolean" ? { fork: value.fork } : {}),
+    ...(typeof value.defaultBranch === "string" ? { defaultBranch: value.defaultBranch } : {}),
+    authenticationStatus: authenticationStatus as AuthenticationStatus,
+    capabilities,
+  };
 }
 
 function requestedCapabilities(result: HostedRepositoryResult, requested: readonly string[]): readonly ProviderCapabilityResult[] {
@@ -51,8 +129,16 @@ export class HostedProfileObservationSession {
   }
 
   async observe(request: HostedProfileRequest): Promise<HostedProfileObservation> {
-    const projection = request.repository.projection;
     const required = request.required ?? true;
+    if (!SAFE_ID.test(request.profileId)) return { schemaVersion: 1, profileId: request.profileId, readiness: "BLOCKED_PROVIDER", gaps: [gap("gef.preflight.provider.profile_invalid", required)] };
+    const expectedHost = canonicalExpectedHost(request.expectedHost);
+    if (!expectedHost) return { schemaVersion: 1, profileId: request.profileId, readiness: "BLOCKED_PROVIDER", gaps: [gap("gef.preflight.provider.host_invalid", required)] };
+    const capabilities = [...new Set(request.capabilities ?? [])].sort();
+    if (capabilities.length > 128 || capabilities.some((capability) => !SAFE_ID.test(capability))) {
+      return { schemaVersion: 1, profileId: request.profileId, readiness: "BLOCKED_PROVIDER", gaps: [gap("gef.preflight.provider.capability_request_invalid", required)] };
+    }
+
+    const projection = request.repository.projection;
     if (projection.state === "RESOLVED_LOCAL_ONLY" || projection.state === "UNRESOLVED_NO_REPOSITORY") {
       if (!required) return { schemaVersion: 1, profileId: request.profileId, readiness: "NOT_REQUIRED", gaps: [] };
       return { schemaVersion: 1, profileId: request.profileId, readiness: "BLOCKED_IDENTITY", gaps: [gap("gef.preflight.provider.remote_repository_required", true)] };
@@ -60,13 +146,10 @@ export class HostedProfileObservationSession {
     if (projection.state !== "RESOLVED_REMOTE_BOUND" || projection.bindingKind !== "REMOTE" || !projection.normalizedLocator) {
       return { schemaVersion: 1, profileId: request.profileId, readiness: "BLOCKED_IDENTITY", gaps: [gap("gef.preflight.provider.repository_binding_ambiguous", true)] };
     }
-
-    const expectedHost = request.expectedHost.toLowerCase();
     if (projection.normalizedLocator.transportIndependentHost !== expectedHost) {
       return { schemaVersion: 1, profileId: request.profileId, readiness: "BLOCKED_IDENTITY", gaps: [gap("gef.preflight.provider.host_mismatch", true)] };
     }
 
-    const capabilities = [...new Set(request.capabilities ?? [])].sort();
     const cacheKey = stablePreflightStringify({ profileId: request.profileId, expectedHost, locator: projection.normalizedLocator, capabilities, required });
     const cached = this.#cache.get(cacheKey);
     if (cached) { this.#counters.cacheHits += 1; return cached; }
@@ -74,13 +157,16 @@ export class HostedProfileObservationSession {
     this.#counters.providerReads += 1;
     let observed: HostedRepositoryResult;
     try {
-      observed = await this.#port.observeRepository({ profileId: request.profileId, host: expectedHost, locator: projection.normalizedLocator, capabilities });
+      const rawObserved: unknown = await this.#port.observeRepository({ profileId: request.profileId, host: expectedHost, locator: projection.normalizedLocator, capabilities });
+      const normalized = normalizeProviderResult(rawObserved);
+      if (!normalized) throw new Error("gef.preflight.provider.result_invalid");
+      observed = normalized;
     } catch {
       const unavailable: HostedProfileObservation = {
         schemaVersion: 1,
         profileId: request.profileId,
         readiness: required ? "BLOCKED_PROVIDER" : "READY_WITH_GAPS",
-        gaps: [gap("gef.preflight.provider.unavailable", required)],
+        gaps: [gap("gef.preflight.provider.unavailable_or_invalid", required)],
       };
       this.#cache.set(cacheKey, unavailable);
       return unavailable;
