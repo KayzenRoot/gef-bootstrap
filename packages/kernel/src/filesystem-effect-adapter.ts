@@ -2,7 +2,7 @@ import { createGefError } from "./errors.js";
 import { composeFilesystemPhysicalSafety } from "./filesystem-atomic.js";
 import { evaluateFilesystemOverwrite } from "./filesystem-overwrite.js";
 import { authorizeFilesystemPath } from "./filesystem-paths.js";
-import type { FilesystemIntentResolver, FilesystemPhysicalPort, FilesystemResolvedIntent, FilesystemResolvedPath, FilesystemStageReceipt } from "./filesystem-ports.js";
+import type { FilesystemExecutionContext, FilesystemIntentResolver, FilesystemPhysicalPort, FilesystemResolvedIntent, FilesystemResolvedPath, FilesystemStageReceipt } from "./filesystem-ports.js";
 import { proveFilesystemTraversal } from "./filesystem-traversal.js";
 import type { FilesystemOperation, FilesystemPathCapsule, FilesystemPhysicalSafetyCapability, FilesystemResult } from "./filesystem-types.js";
 import type { TransactionEffectPort } from "./transaction-ports.js";
@@ -27,9 +27,20 @@ export interface FilesystemEffectAdapterOptions {
   readonly transactionId: string;
   readonly resolver: FilesystemIntentResolver;
   readonly physical: FilesystemPhysicalPort;
+  readonly signal?: AbortSignal;
+  readonly deadlineMs?: number;
+  readonly nowMs?: () => number;
 }
 
 type AdapterCategory = "PRECONDITION" | "CAPABILITY" | "EXECUTION" | "VERIFICATION" | "RECOVERY";
+
+function executionContext(options: FilesystemEffectAdapterOptions): FilesystemExecutionContext {
+  return Object.freeze({
+    ...(options.signal === undefined ? {} : { signal: options.signal }),
+    ...(options.deadlineMs === undefined ? {} : { deadlineMs: options.deadlineMs }),
+    ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
+  });
+}
 
 function adapterError(intent: TransactionIntent, reason: string, summary: string, category: AdapterCategory = "PRECONDITION"): FilesystemResult<never> {
   return {
@@ -80,7 +91,7 @@ function samePrepared(left: PreparedTarget, right: PreparedTarget): boolean {
 }
 
 async function prepareTarget(
-  physical: FilesystemPhysicalPort,
+  options: FilesystemEffectAdapterOptions,
   intent: TransactionIntent,
   resolved: FilesystemResolvedPath,
   operation: FilesystemOperation,
@@ -90,7 +101,8 @@ async function prepareTarget(
 ): Promise<FilesystemResult<PreparedTarget>> {
   const path = authorizeFilesystemPath({ root: resolved.root, relativePath: resolved.relativePath, operation });
   if (!path.ok) return path;
-  const observed = await physical.observe(path.value);
+  const context = executionContext(options);
+  const observed = await options.physical.observe(path.value, context);
   if (!observed.ok) return observed;
   const overwrite = evaluateFilesystemOverwrite({
     path: path.value,
@@ -103,7 +115,7 @@ async function prepareTarget(
   if (overwrite.value.noop) return adapterError(intent, "unexpected_noop", "M05 must resolve no-op state before opening a physical mutation capability");
   const traversal = proveFilesystemTraversal({ path: path.value, ancestors: observed.value.ancestors, target: observed.value.target });
   if (!traversal.ok) return traversal;
-  const facts = await physical.atomicFacts({ intent, path: path.value, ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), requireCrashDurability });
+  const facts = await options.physical.atomicFacts({ context, intent, path: path.value, ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), requireCrashDurability });
   if (!facts.ok) return facts;
   if (facts.value.stagingAuthorityRef.trim().length === 0) return adapterError(intent, "staging_authority_missing", "Transaction-private staging has no governed authority binding", "CAPABILITY");
   const atomic = composeFilesystemPhysicalSafety({
@@ -135,11 +147,11 @@ async function prepareIntent(options: FilesystemEffectAdapterOptions, intent: Tr
   if (operation === undefined) return adapterError(intent, "unsupported_intent", "Filesystem effect adapter accepts only managed filesystem intents", "CAPABILITY");
   const desiredFingerprint = resolved.value.desiredFingerprint ?? intent.desiredFingerprint;
   const durable = resolved.value.requireCrashDurability ?? false;
-  const target = await prepareTarget(options.physical, intent, resolved.value.target, operation, desiredFingerprint, durable, resolved.value.target.replaceExisting ?? false);
+  const target = await prepareTarget(options, intent, resolved.value.target, operation, desiredFingerprint, durable, resolved.value.target.replaceExisting ?? false);
   if (!target.ok) return target;
   if (intent.kind !== "MOVE_MANAGED_ARTIFACT") return { ok: true, value: Object.freeze({ resolved: resolved.value, target: target.value }) };
   if (resolved.value.source === undefined) return adapterError(intent, "move_source_missing", "Managed move requires independently resolved source and destination paths");
-  const source = await prepareTarget(options.physical, intent, resolved.value.source, "MOVE_SOURCE", undefined, durable, false);
+  const source = await prepareTarget(options, intent, resolved.value.source, "MOVE_SOURCE", undefined, durable, false);
   if (!source.ok) return source;
   return { ok: true, value: Object.freeze({ resolved: resolved.value, target: target.value, source: source.value }) };
 }
@@ -164,32 +176,19 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
     captureRecovery: async (intent) => {
       const state = states.get(intent.intentId);
       if (state === undefined) return adapterError(intent, "safety_not_prepared", "Recovery capture requires a current physical-safety capability", "CAPABILITY");
-      const captured = await options.physical.captureRecovery({ transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }) });
+      const captured = await options.physical.captureRecovery({ context: executionContext(options), transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }) });
       return captured.ok ? { ok: true, value: captured.value.recoveryRef } : captured;
     },
     verifyRecoveryMaterial: async (request) => {
       if (request.transactionId !== options.transactionId) return adapterError(request.intent, "transaction_binding_mismatch", "Recovery material is bound to another transaction", "RECOVERY");
-      return options.physical.verifyRecovery({
-        transactionId: options.transactionId,
-        intent: request.intent,
-        recoveryRef: request.recoveryRef,
-        ...(request.expectedPreFingerprint === undefined ? {} : { expectedPreFingerprint: request.expectedPreFingerprint }),
-        ...(request.expectedPostFingerprint === undefined ? {} : { expectedPostFingerprint: request.expectedPostFingerprint }),
-      });
+      return options.physical.verifyRecovery({ context: executionContext(options), transactionId: options.transactionId, intent: request.intent, recoveryRef: request.recoveryRef, ...(request.expectedPreFingerprint === undefined ? {} : { expectedPreFingerprint: request.expectedPreFingerprint }), ...(request.expectedPostFingerprint === undefined ? {} : { expectedPostFingerprint: request.expectedPostFingerprint }) });
     },
     stage: async (intent) => {
       const state = states.get(intent.intentId);
       if (state === undefined) return adapterError(intent, "safety_not_prepared", "Staging requires a current physical-safety capability", "CAPABILITY");
       const payloadRef = state.resolved.payloadRef ?? intent.payloadRef;
       const desiredFingerprint = expectedPost(intent, state.resolved);
-      const staged = await options.physical.stage({
-        transactionId: options.transactionId,
-        intent,
-        target: state.target.path,
-        ...(state.source === undefined ? {} : { source: state.source.path }),
-        ...(payloadRef === undefined ? {} : { payloadRef }),
-        ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }),
-      });
+      const staged = await options.physical.stage({ context: executionContext(options), transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }), ...(payloadRef === undefined ? {} : { payloadRef }), ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }) });
       if (!staged.ok) return staged;
       states.set(intent.intentId, Object.freeze({ ...state, stage: staged.value }));
       return { ok: true, value: true };
@@ -198,7 +197,7 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
       const state = states.get(intent.intentId);
       if (state?.stage === undefined) return adapterError(intent, "stage_missing", "Staged verification requires transaction-private staged state", "VERIFICATION");
       const desiredFingerprint = expectedPost(intent, state.resolved);
-      return options.physical.verifyStage({ transactionId: options.transactionId, intent, stageRef: state.stage.stageRef, ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), obligations });
+      return options.physical.verifyStage({ context: executionContext(options), transactionId: options.transactionId, intent, stageRef: state.stage.stageRef, ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), obligations });
     },
     revalidateCommitBarrier: async (plan: TransactionPlan) => {
       for (const intent of plan.intents) {
@@ -216,7 +215,7 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
     promote: async (intent) => {
       const state = states.get(intent.intentId);
       if (state?.stage === undefined) return adapterError(intent, "stage_missing", "Promotion requires verified transaction-private staged state", "EXECUTION");
-      return options.physical.promote({ transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }), stageRef: state.stage.stageRef, capabilityRef: state.target.safety.capabilityRef });
+      return options.physical.promote({ context: executionContext(options), transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }), stageRef: state.stage.stageRef, capabilityRef: state.target.safety.capabilityRef });
     },
     verifyPostState: async (plan, applied: readonly AppliedIntentResult[], obligations: readonly VerificationObligation[]) => {
       const bindings: TransactionStateBinding[] = [];
@@ -227,7 +226,7 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
         if (intent === undefined) continue;
         const relevant = obligations.filter((item) => item.targetRef === undefined || item.targetRef === intent.targetRef);
         const desiredFingerprint = expectedPost(intent, state.resolved);
-        const verified = await options.physical.verifyPost({ transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }), ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), obligations: relevant });
+        const verified = await options.physical.verifyPost({ context: executionContext(options), transactionId: options.transactionId, intent, target: state.target.path, ...(state.source === undefined ? {} : { source: state.source.path }), ...(desiredFingerprint === undefined ? {} : { desiredFingerprint }), obligations: relevant });
         if (!verified.ok) return verified;
         const target = verified.value[0];
         if (target === undefined) return adapterError(intent, "post_state_missing", "Post-state verification did not observe the actual destination", "VERIFICATION");
@@ -246,7 +245,7 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
       }
       return { ok: true, value: Object.freeze(bindings) };
     },
-    cleanup: (request) => options.physical.cleanup(request),
+    cleanup: (request) => options.physical.cleanup({ context: executionContext(options), ...request }),
     restore: async (request) => {
       const resolved = options.resolver.resolve(request.intent);
       if (!resolved.ok) return resolved;
@@ -255,29 +254,29 @@ export function createFilesystemEffectAdapter(options: FilesystemEffectAdapterOp
       const durable = resolved.value.requireCrashDurability ?? false;
       if (request.intent.kind === "CREATE_MANAGED_ARTIFACT") {
         const rollbackPath: FilesystemResolvedPath = Object.freeze({ ...resolved.value.target, expected: { ownershipRef: `m05:${request.intent.intentId}`, ...(request.expectedCurrentFingerprint === undefined ? {} : { expectedFingerprint: request.expectedCurrentFingerprint }) } });
-        const prepared = await prepareTarget(options.physical, request.intent, rollbackPath, "REMOVE", undefined, durable, false);
+        const prepared = await prepareTarget(options, request.intent, rollbackPath, "REMOVE", undefined, durable, false);
         if (!prepared.ok) return prepared;
         target = prepared.value;
       } else if (request.intent.kind === "REMOVE_MANAGED_ARTIFACT") {
-        const prepared = await prepareTarget(options.physical, request.intent, resolved.value.target, "CREATE", request.expectedPreFingerprint, durable, false);
+        const prepared = await prepareTarget(options, request.intent, resolved.value.target, "CREATE", request.expectedPreFingerprint, durable, false);
         if (!prepared.ok) return prepared;
         target = prepared.value;
       } else if (request.intent.kind === "MOVE_MANAGED_ARTIFACT") {
         if (resolved.value.source === undefined) return adapterError(request.intent, "move_source_missing", "Move rollback requires both original endpoints", "RECOVERY");
         const currentDestination: FilesystemResolvedPath = Object.freeze({ ...resolved.value.target, expected: { ownershipRef: `m05:${request.intent.intentId}`, ...(request.expectedCurrentFingerprint === undefined ? {} : { expectedFingerprint: request.expectedCurrentFingerprint }) } });
-        const preparedSource = await prepareTarget(options.physical, request.intent, currentDestination, "MOVE_SOURCE", undefined, durable, false);
+        const preparedSource = await prepareTarget(options, request.intent, currentDestination, "MOVE_SOURCE", undefined, durable, false);
         if (!preparedSource.ok) return preparedSource;
-        const preparedDestination = await prepareTarget(options.physical, request.intent, resolved.value.source, "MOVE_DESTINATION", request.expectedPreFingerprint, durable, false);
+        const preparedDestination = await prepareTarget(options, request.intent, resolved.value.source, "MOVE_DESTINATION", request.expectedPreFingerprint, durable, false);
         if (!preparedDestination.ok) return preparedDestination;
         target = preparedSource.value;
         source = preparedDestination.value;
       } else {
         const rollbackPath: FilesystemResolvedPath = Object.freeze({ ...resolved.value.target, expected: { ownershipRef: `m05:${request.intent.intentId}`, ...(request.expectedCurrentFingerprint === undefined ? {} : { expectedFingerprint: request.expectedCurrentFingerprint }) } });
-        const prepared = await prepareTarget(options.physical, request.intent, rollbackPath, "RESTORE", request.expectedPreFingerprint, durable, false);
+        const prepared = await prepareTarget(options, request.intent, rollbackPath, "RESTORE", request.expectedPreFingerprint, durable, false);
         if (!prepared.ok) return prepared;
         target = prepared.value;
       }
-      return options.physical.restore({ transactionId: options.transactionId, intent: request.intent, recoveryRef: request.recoveryRef, target: target.path, ...(source === undefined ? {} : { source: source.path }), capabilityRef: target.safety.capabilityRef });
+      return options.physical.restore({ context: executionContext(options), transactionId: options.transactionId, intent: request.intent, recoveryRef: request.recoveryRef, target: target.path, ...(source === undefined ? {} : { source: source.path }), capabilityRef: target.safety.capabilityRef });
     },
   };
 }
