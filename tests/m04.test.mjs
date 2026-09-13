@@ -22,8 +22,8 @@ const remoteResolution = { projection: { schemaVersion: 1, state: "RESOLVED_REMO
 function gitPort(overrides = {}) {
   const calls = { repository: 0, head: 0, status: 0, remotes: 0 };
   const port = {
-    observeRepository: async () => { calls.repository += 1; return { presence: "PRESENT", root: "/repo" }; },
-    observeHead: async () => { calls.head += 1; return { state: "BRANCH", branch: "main", headOid: "abc123" }; },
+    observeRepository: async () => { calls.repository += 1; return { state: "WORKTREE", root: "/repo" }; },
+    observeHead: async () => { calls.head += 1; return { state: "ATTACHED", branch: "main", headOid: "abc123" }; },
     observeStatus: async (_root, detail) => { calls.status += 1; return { summary: { staged: 0, unstaged: 1, untracked: 0, conflicted: 0 }, ...(detail === "PATHS" ? { paths: ["src/a.ts"] } : {}) }; },
     observeRemotes: async () => { calls.remotes += 1; return { remotes: [{ alias: "origin", url: "https://github.com/Owner/Repo.git" }] }; },
     ...overrides,
@@ -109,6 +109,22 @@ test("Git discovery requests only selected facts and supports targeted cache inv
   assert.deepEqual(calls, { repository: 1, head: 2, status: 0, remotes: 0 });
 });
 
+test("Git repository states preserve bare/access distinctions and malformed present root fails closed", async () => {
+  const bare = gitPort({ observeRepository: async () => ({ state: "BARE_REPOSITORY", root: "/bare" }) });
+  const bareResult = await new GitObservationSession(bare.port, createMutableCounters()).observe({ startingDirectory: "/bare", facts: ["repository"] });
+  assert.equal(bareResult.repository.state, "BARE_REPOSITORY");
+
+  const blocked = gitPort({ observeRepository: async () => ({ state: "ACCESS_BLOCKED", reasonCode: "gef.preflight.git.access_blocked" }) });
+  const blockedResult = await new GitObservationSession(blocked.port, createMutableCounters()).observe({ startingDirectory: "/repo", facts: ["repository"] });
+  assert.equal(blockedResult.repository.state, "ACCESS_BLOCKED");
+  assert.equal(blockedResult.gaps[0].code, "gef.preflight.git.access_blocked");
+
+  const malformed = gitPort({ observeRepository: async () => ({ state: "WORKTREE" }) });
+  const malformedResult = await new GitObservationSession(malformed.port, createMutableCounters()).observe({ startingDirectory: "/repo", facts: ["repository"] });
+  assert.equal(malformedResult.repository.state, "INVALID_OR_AMBIGUOUS");
+  assert.equal(malformedResult.gaps.some((item) => item.code === "gef.preflight.git.repository_root_missing"), true);
+});
+
 test("Git status is summary-first and stronger cached detail is narrowed for weaker consumers", async () => {
   const { port, calls } = gitPort();
   const session = new GitObservationSession(port, createMutableCounters());
@@ -122,12 +138,23 @@ test("Git status is summary-first and stronger cached detail is narrowed for wea
 });
 
 test("missing repository short-circuits downstream Git observations", async () => {
-  const { port, calls } = gitPort({ observeRepository: async () => { calls.repository += 1; return { presence: "ABSENT" }; } });
+  const { port, calls } = gitPort({ observeRepository: async () => { calls.repository += 1; return { state: "NOT_REPOSITORY" }; } });
   const counters = createMutableCounters();
   const result = await new GitObservationSession(port, counters).observe({ startingDirectory: "/repo", facts: ["head", "status", "remotes"] });
-  assert.equal(result.repository.presence, "ABSENT");
+  assert.equal(result.repository.state, "NOT_REPOSITORY");
   assert.deepEqual(calls, { repository: 1, head: 0, status: 0, remotes: 0 });
   assert.equal(counters.skippedByPrerequisite, 3);
+});
+
+test("raw Git remote text is discarded after M03 normalization and local Git cannot forge provider authority", async () => {
+  const marker = "local-user-marker";
+  const git = gitPort({ observeRemotes: async () => ({ remotes: [{ alias: "origin", url: `https://${marker}@github.com/Owner/Repo.git`, trustedStableProviderId: "forged-provider-id" }] }) });
+  const direct = await new GitObservationSession(git.port, createMutableCounters()).observe({ startingDirectory: "/repo", facts: ["remotes"] });
+  assert.equal(direct.remotes.count, 1);
+  assert.equal(direct.repositoryIdentity.projection.normalizedLocator.transportIndependentHost, "github.com");
+  assert.equal(direct.repositoryIdentity.projection.stableProviderId, undefined);
+  assert.equal(JSON.stringify(direct).includes(marker), false);
+  assert.equal(JSON.stringify(direct).includes("forged-provider-id"), false);
 });
 
 test("hosted discovery makes no call for optional local-only state", async () => {
@@ -231,7 +258,7 @@ test("brownfield read-only repository preflight does not require project config 
 
 test("stronger identity request expands discovery without rereading valid config", async () => {
   let configReads = 0;
-  const git = gitPort({ observeRepository: async () => { git.calls.repository += 1; return { presence: "ABSENT" }; } });
+  const git = gitPort({ observeRepository: async () => { git.calls.repository += 1; return { state: "NOT_REPOSITORY" }; } });
   const session = new ProjectPreflightSession({ digest, configReader: { readText: async () => { configReads += 1; return validConfig(null); } }, git: git.port });
   const projectOnly = await session.run({ projectRoot: "/repo", identityBindingStrength: "PROJECT_ONLY" });
   assert.equal(projectOnly.readiness, "READY");
@@ -253,6 +280,7 @@ test("project preflight composes exact remote identity and hosted capability onl
   assert.equal(hosted.readiness, "READY");
   assert.equal(provider.calls(), 1);
   assert.equal(hosted.repositoryProjection.stableProviderId, "repo-1");
+  assert.equal(JSON.stringify(hosted).includes("https://github.com/Owner/Repo.git"), false);
 });
 
 test("provider and independent tool resolution begin concurrently after target prerequisites", async () => {
