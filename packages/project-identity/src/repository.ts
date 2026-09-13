@@ -1,3 +1,4 @@
+import { canonicalizeRepositoryIdentityProjection } from "./projection.js";
 import type {
   PersistedRepositoryBinding,
   RemoteObservation,
@@ -64,9 +65,7 @@ function normalizedStableProviderId(value: string | undefined): string | undefin
 }
 
 export function canonicalRepositoryProjection(projection: RepositoryIdentityProjection): RepositoryIdentityProjection {
-  if (!projection.normalizedLocator?.providerHint) return projection;
-  const { providerHint: _providerHint, ...locator } = projection.normalizedLocator;
-  return { ...projection, normalizedLocator: locator };
+  return canonicalizeRepositoryIdentityProjection(projection);
 }
 
 export function repositoryLocatorEqual(a: RepositoryRemoteLocator | undefined, b: RepositoryRemoteLocator | undefined): boolean {
@@ -76,13 +75,21 @@ export function repositoryLocatorEqual(a: RepositoryRemoteLocator | undefined, b
 
 export function repositoryIdentityEqual(a: RepositoryIdentityProjection | undefined, b: RepositoryIdentityProjection | undefined): boolean {
   if (!a || !b) return false;
-  if (a.state !== b.state || a.bindingKind !== b.bindingKind) return false;
-  if (a.bindingKind === "LOCAL") return Boolean(a.localBindingId && b.localBindingId && a.localBindingId === b.localBindingId);
-  if (a.bindingKind === "REMOTE") {
-    if (a.stableProviderId !== undefined && b.stableProviderId !== undefined) return a.stableProviderId === b.stableProviderId;
-    return repositoryLocatorEqual(a.normalizedLocator, b.normalizedLocator);
+  let left: RepositoryIdentityProjection;
+  let right: RepositoryIdentityProjection;
+  try {
+    left = canonicalizeRepositoryIdentityProjection(a);
+    right = canonicalizeRepositoryIdentityProjection(b);
+  } catch {
+    return false;
   }
-  return a.state === "UNRESOLVED_NO_REPOSITORY";
+  if (left.state !== right.state || left.bindingKind !== right.bindingKind) return false;
+  if (left.bindingKind === "LOCAL") return Boolean(left.localBindingId && right.localBindingId && left.localBindingId === right.localBindingId);
+  if (left.bindingKind === "REMOTE") {
+    if (left.stableProviderId !== undefined && right.stableProviderId !== undefined) return left.stableProviderId === right.stableProviderId;
+    return repositoryLocatorEqual(left.normalizedLocator, right.normalizedLocator);
+  }
+  return left.state === "UNRESOLVED_NO_REPOSITORY";
 }
 
 function persistedRemoteMatches(binding: Extract<PersistedRepositoryBinding, { bindingKind: "REMOTE" }>, candidate: RepositoryIdentityProjection): boolean {
@@ -211,8 +218,10 @@ export function resolveRepositoryIdentity(input: RepositoryResolutionInput): Rep
 
 export function repositoryResolutionSatisfiesBound(resolution: RepositoryResolution): boolean {
   if (!resolution.canonicalBindingPersisted) return false;
-  const projection = resolution.projection;
-  if (projection.state === "RESOLVED_REMOTE_BOUND") return projection.bindingKind === "REMOTE" && projection.normalizedLocator !== undefined;
-  if (projection.state === "RESOLVED_LOCAL_ONLY") return projection.bindingKind === "LOCAL" && Boolean(projection.localBindingId);
-  return false;
+  try {
+    canonicalizeRepositoryIdentityProjection(resolution.projection, true);
+    return true;
+  } catch {
+    return false;
+  }
 }
