@@ -40,6 +40,14 @@ export interface EnvironmentObservation {
   readonly requestedEnvironment: Readonly<Record<string, ObservedValue<string>>>;
   readonly gaps: readonly PreflightGap[];
 }
+export interface CompactEnvironmentObservation {
+  readonly schemaVersion: 1;
+  readonly platform?: ObservedValue<string>;
+  readonly architecture?: ObservedValue<string>;
+  readonly runtime?: ObservedValue<RuntimeObservation>;
+  readonly requestedEnvironment: Readonly<Record<string, { readonly status: ObservationStatus; readonly reasonCode?: string }>>;
+  readonly gaps: readonly PreflightGap[];
+}
 export interface EnvironmentObservationPort {
   platform(): string;
   architecture(): string;
@@ -94,6 +102,15 @@ export interface GitObservation {
   readonly status?: GitStatusObservation;
   readonly remotes?: GitRemotesSummary;
   readonly repositoryIdentity?: RepositoryResolution;
+  readonly gaps: readonly PreflightGap[];
+}
+export interface CompactGitObservation {
+  readonly schemaVersion: 1;
+  readonly repository?: { readonly state: GitRepositoryState; readonly reasonCode?: string };
+  readonly head?: GitHeadObservation;
+  readonly status?: { readonly summary: GitStatusSummary; readonly reasonCode?: string };
+  readonly remotes?: GitRemotesSummary;
+  readonly repositoryIdentity?: { readonly projection: RepositoryIdentityProjection; readonly canonicalBindingPersisted: boolean; readonly candidateCount: number };
   readonly gaps: readonly PreflightGap[];
 }
 export interface GitObservationPort {
@@ -203,9 +220,11 @@ export interface ToolObservation {
 
 export interface ProjectConfigObservation {
   readonly status: "MISSING" | "VALID" | "INVALID";
-  readonly document?: GefProjectConfigDocument;
   readonly fingerprint: string;
   readonly diagnostics: readonly ConfigDiagnostic[];
+}
+export interface InternalProjectConfigObservation extends ProjectConfigObservation {
+  readonly document?: GefProjectConfigDocument;
 }
 export type ProjectMode = "NEW_PROJECT" | "EXISTING_PROJECT" | "MODE_UNRESOLVED";
 export type ProjectPreflightReadiness =
@@ -241,8 +260,8 @@ export interface ProjectPreflightSnapshot {
   readonly mode: ProjectMode;
   readonly projectConfig?: ProjectConfigObservation;
   readonly identity?: ProjectIdentityAssessment;
-  readonly environment?: EnvironmentObservation;
-  readonly git?: GitObservation;
+  readonly environment?: CompactEnvironmentObservation;
+  readonly git?: CompactGitObservation;
   readonly repositoryResolution?: RepositoryResolution;
   readonly repositoryProjection?: RepositoryIdentityProjection;
   readonly hosted?: HostedProfileObservation;
