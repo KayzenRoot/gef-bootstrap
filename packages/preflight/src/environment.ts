@@ -1,5 +1,6 @@
 import { incrementCounter, stablePreflightStringify } from "./canonical.js";
 import type {
+  CompactEnvironmentObservation,
   EnvironmentFact,
   EnvironmentObservation,
   EnvironmentObservationPort,
@@ -163,7 +164,7 @@ export class EnvironmentObservationSession {
   cacheKey(request: EnvironmentObservationRequest): string { return stablePreflightStringify(request); }
 }
 
-export function compactEnvironmentEvidence(observation: EnvironmentObservation): Readonly<Record<string, unknown>> {
+export function compactEnvironmentEvidence(observation: EnvironmentObservation): CompactEnvironmentObservation {
   return Object.freeze({
     schemaVersion: observation.schemaVersion,
     ...(observation.platform ? { platform: observation.platform } : {}),
