@@ -1,6 +1,7 @@
 import type { ConfigDiagnostic, GefProjectConfigDocument } from "@gef-bootstrap/config";
 import type {
   BindingStrength,
+  PersistedRepositoryBinding,
   ProjectIdentityAssessment,
   RemoteObservation,
   RepositoryIdentityProjection,
@@ -48,13 +49,13 @@ export interface EnvironmentObservationPort {
 }
 
 export type GitFactFamily = "repository" | "head" | "status" | "remotes";
-export type RepositoryPresence = "PRESENT" | "ABSENT" | "INVALID" | "UNAVAILABLE";
+export type GitRepositoryState = "NOT_REPOSITORY" | "WORKTREE" | "BARE_REPOSITORY" | "ACCESS_BLOCKED" | "UNAVAILABLE" | "INVALID_OR_AMBIGUOUS";
 export interface GitRepositoryObservation {
-  readonly presence: RepositoryPresence;
+  readonly state: GitRepositoryState;
   readonly root?: string;
   readonly reasonCode?: string;
 }
-export type GitHeadState = "BRANCH" | "DETACHED" | "UNBORN" | "UNAVAILABLE";
+export type GitHeadState = "ATTACHED" | "DETACHED" | "UNBORN" | "UNAVAILABLE" | "INVALID_OR_AMBIGUOUS";
 export interface GitHeadObservation {
   readonly state: GitHeadState;
   readonly branch?: string;
@@ -76,17 +77,23 @@ export interface GitRemotesObservation {
   readonly remotes: readonly RemoteObservation[];
   readonly reasonCode?: string;
 }
+export interface GitRemotesSummary {
+  readonly count: number;
+  readonly reasonCode?: string;
+}
 export interface GitObservationRequest {
   readonly startingDirectory: string;
   readonly facts: readonly GitFactFamily[];
   readonly statusDetail?: "SUMMARY" | "PATHS";
+  readonly persistedRepositoryBinding?: PersistedRepositoryBinding;
 }
 export interface GitObservation {
   readonly schemaVersion: 1;
   readonly repository?: GitRepositoryObservation;
   readonly head?: GitHeadObservation;
   readonly status?: GitStatusObservation;
-  readonly remotes?: GitRemotesObservation;
+  readonly remotes?: GitRemotesSummary;
+  readonly repositoryIdentity?: RepositoryResolution;
   readonly gaps: readonly PreflightGap[];
 }
 export interface GitObservationPort {
