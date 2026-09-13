@@ -83,7 +83,7 @@ function fixture(options = {}) {
       if (options.stageFail) return error("stage");
       return { ok: true, value: { stageRef: "stage:i1", ...(desiredFingerprint === undefined ? {} : { fingerprint: desiredFingerprint }) } };
     },
-    verifyStage: async () => { calls.push("verify-stage"); return options.verifyStageFail ? error("verify-stage", "VERIFICATION") : { ok: true, value: true }; },
+    verifyStage: async () => { calls.push("verify-stage"); return options.verifyStageFail ? error("verify_stage", "VERIFICATION") : { ok: true, value: true }; },
     promote: async ({ intent }) => {
       calls.push("promote");
       promoteCount += 1;
