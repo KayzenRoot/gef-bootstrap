@@ -56,13 +56,15 @@ function certifiedEffects(input: ApplyTransactionInput, effects: TransactionEffe
     captureRecovery: async (intent) => {
       const captured = await effects.captureRecovery(intent);
       if (!captured.ok || captured.value === undefined || intent.recoveryClass !== "REVERSIBLE_MANAGED") return captured;
-      const verified = await effects.verifyRecoveryMaterial?.({
+      const verifier = effects.verifyRecoveryMaterial;
+      const expectedPre = preFingerprint(input, intent.targetRef);
+      const verified = verifier === undefined ? undefined : await verifier({
         phase: "APPLY",
         planDigest: input.plan.planDigest,
         transactionId: input.transactionId ?? "UNBOUND_TRANSACTION",
         intent,
         recoveryRef: captured.value,
-        ...(preFingerprint(input, intent.targetRef) === undefined ? {} : { expectedPreFingerprint: preFingerprint(input, intent.targetRef) }),
+        ...(expectedPre === undefined ? {} : { expectedPreFingerprint: expectedPre }),
       });
       if (verified === undefined) {
         return {
@@ -104,9 +106,10 @@ export async function applyTransaction(input: ApplyTransactionInput): Promise<Ap
     return capabilityFailure(input, "recovery_verifier_missing", "Reversible mutation requires an exact recovery-material verification capability");
   }
 
+  const authorization = certifiedAuthorization(input);
   const ports: TransactionPorts = {
     ...input.ports,
-    ...(input.ports.authorization === undefined ? {} : { authorization: certifiedAuthorization(input) }),
+    ...(authorization === undefined ? {} : { authorization }),
     ...(input.ports.effects === undefined ? {} : { effects: certifiedEffects(input, input.ports.effects) }),
   };
   return applyCore({ ...input, ports });
