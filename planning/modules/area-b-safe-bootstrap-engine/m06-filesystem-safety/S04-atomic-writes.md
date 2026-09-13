@@ -1,6 +1,6 @@
 # GBS-M06-S04 — Atomic Writes
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze the physical staging, final-effect, atomicity and durability contract for `GBS-M06 — Filesystem Safety`. S04 consumes the frozen S01 path-authority, S02 overwrite-policy and S03 traversal-safety contracts and defines the exact physical capability that M05 may consume at its commit barrier.
@@ -84,4 +84,4 @@ M06 planning earns no production credit.
 - potential after approved M06 MODULE_DONE: `125 / 1088 = 11.49%`;
 - denominator changed: `NO`.
 
-STOP CONDITION: `M06_S04_FROZEN_CANDIDATE_READY_FOR_EXACT_HEAD_REVIEW`.
+STOP CONDITION: `M06_S04_FROZEN`.
