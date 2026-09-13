@@ -1,6 +1,6 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M06_S03`
+Status: `READY_FOR_GBS_M06_S04`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
@@ -17,20 +17,24 @@ Status: `READY_FOR_GBS_M06_S03`
 - M06-S02 PR: `#107`
 - M06-S02 reviewed head: `b83b042fc22cdba110241237a144a5d4058628c2`
 - M06-S02 merge: `096cec4c9816e755188433275e475f3cf1248f0e`
-- M06-S03 Symlink Safety: `PLANNED`
+- M06-S03 Symlink Safety: `FROZEN`
+- M06-S03 PR: `#109`
+- M06-S03 semantic blob: `62f940f59bf8d52de79f66565a1660b266797f0a`
+- M06-S03 exact-head review: `5189464517`
+- M06-S03 merge: `d995aba58eb7b0009cf17140a86a61b06128e298`
 - M06-S04 Atomic Writes: `PLANNED`
-- Next legal stage: `GBS-M06_S03_SYMLINK_SAFETY`
+- Next legal stage: `GBS-M06_S04_ATOMIC_WRITES`
 - Production: `107 / 1088 = 9.83%`
 - Remaining: `981 / 1088 = 90.17%`
 - M06 earned: `0 / 18`
 - Denominator change: `NONE`
 
-## S02 freeze summary
-Overwrite Policy now freezes no-clobber create/update/remove/move semantics, exact state/ownership requirements, generic-force prohibition, bounded collision/type observation and brownfield preservation. Allow decisions remain pending S03/S04 physical proof.
+## S03 freeze summary
+Symlink Safety now freezes no-follow ancestry/target proof, symlink/junction/reparse/mount/alias handling, stale identity/race invalidation, rollback traversal revalidation and a strict rule that `realpath` alone never grants mutation authority. The exact reviewed semantic body is blob-bound and accompanied by `S03-FREEZE.md`.
 
 ## Continuation contract
-Begin only `GBS-M06-S03 — Symlink Safety` planning. S03 owns no-follow physical traversal, symlink/junction/reparse/alias/mount escape behavior and race-aware ancestry identity. Atomic staging/replace/durability remains S04-owned. No filesystem implementation is admitted.
+Begin only `GBS-M06-S04 — Atomic Writes` planning. S04 owns staging placement, same-filesystem guarantees, race-resistant final effect primitives, atomic replace/remove/move semantics, durability/fsync truthfulness, cleanup and the composed physical-safety capsule consumed by M05. No filesystem implementation is admitted until the M06 Module Gate and a separate Work Order are approved.
 
 Codex remains outside Bootstrap construction absent a separately governed benchmark exception/ADR.
 
-STOP CONDITION: `READY_FOR_GBS_M06_S03`.
+STOP CONDITION: `READY_FOR_GBS_M06_S04`.
