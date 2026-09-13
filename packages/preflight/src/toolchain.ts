@@ -154,7 +154,7 @@ export class ToolObservationSession {
       ...(request.signal ? { signal: request.signal } : {}),
     };
     const probe = await this.#probe(request.descriptor.toolId, spec);
-    const parserRef = request.parseVersion ? request.parseVersionRef : DEFAULT_VERSION_PARSER_REF;
+    const parserRef: string = request.parseVersion ? request.parseVersionRef! : DEFAULT_VERSION_PARSER_REF;
     if (probe.status !== "SUCCEEDED") {
       const code = `gef.preflight.tool.probe_${probe.status.toLowerCase()}`;
       return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", ...(resolution.executableIdentity ? { executableIdentity: resolution.executableIdentity } : {}), versionParserRef: parserRef, probeStatus: probe.status, compatibility: "UNKNOWN", gaps: [gap(code, required)] };
