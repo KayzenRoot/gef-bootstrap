@@ -5,11 +5,13 @@ Status: `READY_FOR_GBS_M05_PLANNING`
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
 - Completed modules: `GBS-M00`, `GBS-M01`, `GBS-M02`, `GBS-M03`, `GBS-M04`
-- Completed module: `GBS-M04 — Preflight & Discovery`
+- Active module: `GBS-M05 — Transactional Apply Engine`
+- Active module status: `PLANNING_NOT_STARTED`
 - M04-S01..S05: `FROZEN`
 - M04 Module Gate: `MODULE_DONE_APPROVED`
-- Work Order: `GBS-WO-M04-001`
+- Completed Work Order: `GBS-WO-M04-001`
 - Work Order status: `APPROVED_MODULE_DONE`
+- Active Work Order: `NONE`
 - Implementation PR: `#86`
 - Exact reviewed/merged head: `bc26829fa8f3043056b6d9b614c618767f02e6c7`
 - Implementation tree: `46c80e056dde05ef108e9599485c33de844cec5a`
@@ -17,7 +19,6 @@ Status: `READY_FOR_GBS_M05_PLANNING`
 - Exact-head Actions run: `34730911026`
 - CI job: `103653404874`
 - M04 Evidence Bundle: `.engineering/M04-MODULE-EVIDENCE.md`
-- Next module: `GBS-M05 — Transactional Apply Engine`
 - Next legal stage: `PLAN_GBS_M05`
 - Production: `87 / 1088 = 8.00%`
 - Remaining: `1001 / 1088 = 92.00%`
