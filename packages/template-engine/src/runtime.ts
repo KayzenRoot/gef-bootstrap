@@ -87,7 +87,7 @@ export function thawBytes(bytes: readonly number[]): Uint8Array {
 }
 
 const SIMPLE_ID = /^[a-z0-9](?:[a-z0-9._-]{0,62}[a-z0-9])?$/;
-const DOTTED_ID = /^[a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)*$/;
+const DOTTED_ID = /^[a-z][a-z0-9]*(?:\.[a-z][a-z0-9]*)*$/;
 const SEMVER = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
 const WINDOWS_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 const CONTROL_CHARS = /[\u0000-\u001f\u007f]/u;
@@ -98,7 +98,13 @@ export function validSimpleId(value: string): boolean {
 }
 
 export function validVariableId(value: string): boolean {
-  return value.length <= 128 && DOTTED_ID.test(value);
+  if (value.length > 128 || !DOTTED_ID.test(value)) return false;
+  const segments = value.split(".");
+  return segments.every((segment) => segment.length <= 32);
+}
+
+export function validTemplateVariableDeclarationId(value: string): boolean {
+  return validVariableId(value) && value.split(".")[0] !== "gef";
 }
 
 export function validSemver(value: string): boolean {
