@@ -49,8 +49,8 @@ function unknownField(record: Record<string, unknown>, allowed: ReadonlySet<stri
   return null;
 }
 
-function uniqueStrings(value: unknown, allowed: ReadonlySet<string>): readonly string[] | null {
-  if (!Array.isArray(value) || value.length === 0) return null;
+function uniqueStrings(value: unknown, allowed: ReadonlySet<string>, allowEmpty = false): readonly string[] | null {
+  if (!Array.isArray(value) || (!allowEmpty && value.length === 0)) return null;
   const out: string[] = [];
   const seen = new Set<string>();
   for (const item of value) {
@@ -108,8 +108,8 @@ function parseVariable(value: unknown, control: TemplateControl): TemplateResult
   const rawSources = ownField(value, "allowedBindingSources");
   const sources = rawSources === undefined
     ? Object.freeze(["PROFILE_BINDING", "EXPLICIT_INPUT"] as VariableBindingSource[])
-    : uniqueStrings(rawSources, BINDING_SOURCES) as readonly VariableBindingSource[] | null;
-  if (!sources) return fail("VARIABLE_DECLARATION_INVALID", "FORMAT", "allowedBindingSources must be a unique admitted set.", rawId);
+    : uniqueStrings(rawSources, BINDING_SOURCES, true) as readonly VariableBindingSource[] | null;
+  if (!sources) return fail("VARIABLE_DECLARATION_INVALID", "FORMAT", "allowedBindingSources must be a unique admitted subset.", rawId);
 
   const rawClass = ownField(value, "valueClass");
   const valueClass = rawClass === undefined ? "PLAIN" : rawClass;
@@ -217,6 +217,8 @@ async function readSource(source: TemplateSourcePort, ref: string, control: Temp
   let bytes: Uint8Array | null;
   try { bytes = await source.read(ref, control); }
   catch { return fail("SOURCE_READ_FAILED", "FORMAT", "Template source read failed.", ref); }
+  const afterRead = checkControl(control, "FORMAT");
+  if (!afterRead.ok) return afterRead;
   if (bytes === null) return fail("SOURCE_NOT_FOUND", "FORMAT", "Required template source was not found.", ref);
   if (!(bytes instanceof Uint8Array)) return fail("SOURCE_READ_INVALID", "FORMAT", "Source port returned an invalid byte payload.", ref);
   if (bytes.byteLength > control.budgets.maxSourceBytes) return fail("SOURCE_TOO_LARGE", "FORMAT", "Template source exceeds the per-source byte budget.", ref);
@@ -229,6 +231,8 @@ export async function loadTemplate(source: TemplateSourcePort, digest: DigestPor
   let manifestBytes: Uint8Array | null;
   try { manifestBytes = await source.read("template.json", control); }
   catch { return fail("MANIFEST_READ_FAILED", "FORMAT", "template.json could not be read."); }
+  const afterManifestRead = checkControl(control, "FORMAT");
+  if (!afterManifestRead.ok) return afterManifestRead;
   if (manifestBytes === null || !(manifestBytes instanceof Uint8Array)) return fail("MANIFEST_NOT_FOUND", "FORMAT", "template.json is required.");
   if (manifestBytes.byteLength > control.budgets.maxManifestBytes) return fail("MANIFEST_TOO_LARGE", "FORMAT", "template.json exceeds the admitted byte budget.");
   if (hasUtf8Bom(manifestBytes)) return fail("MANIFEST_BOM_FORBIDDEN", "FORMAT", "UTF-8 BOM is not canonical for template.json.");
@@ -280,6 +284,7 @@ export async function loadTemplate(source: TemplateSourcePort, digest: DigestPor
   const cachedSources = new Map<string, Uint8Array>();
   const sourceDigests = new Map<string, string>();
   let aggregateBytes = 0;
+  let aggregateMarkers = 0;
   const entries: TemplateEntryDescriptor[] = [];
   for (const spec of entrySpecs) {
     const controlGate = checkControl(control, "FORMAT");
@@ -302,6 +307,8 @@ export async function loadTemplate(source: TemplateSourcePort, digest: DigestPor
       if (!text.ok) return text;
       const tokens = scanTemplateTokens(text.value, control);
       if (!tokens.ok) return tokens;
+      aggregateMarkers += tokens.value.reduce((count, token) => count + (token.kind === "LITERAL" ? 0 : 1), 0);
+      if (aggregateMarkers > control.budgets.maxMarkers) return fail("MARKER_BUDGET_EXCEEDED", "FORMAT", "Aggregate marker count exceeds the admitted bound.");
       entries.push(Object.freeze({ entryId: spec.entryId, kind: spec.kind, sourceRef: spec.sourceRef, targetPattern: spec.targetPattern, lineEndings: spec.lineEndings ?? "PRESERVE_SOURCE", sourceBytes: freezeBytes(bytes), sourceDigest, tokens: tokens.value }));
     } else {
       entries.push(Object.freeze({ entryId: spec.entryId, kind: spec.kind, sourceRef: spec.sourceRef, targetPattern: spec.targetPattern, sourceBytes: freezeBytes(bytes), sourceDigest }));
