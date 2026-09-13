@@ -133,16 +133,16 @@ export class ToolObservationSession {
     const resolution = await this.#resolve(request.descriptor);
     if (resolution.status !== "FOUND" || !resolution.executable) {
       const code = resolution.reasonCode ?? `gef.preflight.tool.${resolution.status.toLowerCase()}`;
-      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: resolution.status, ...(resolution.executableIdentity ? { executableIdentity: resolution.executableIdentity } : {}), probeStatus: "NOT_REQUIRED", compatibility: "NOT_CHECKED", gaps: [gap(code, required)] };
+      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: resolution.status, probeStatus: "NOT_REQUIRED", compatibility: "NOT_CHECKED", gaps: [gap(code, required)] };
     }
 
     if (!request.requireVersion) {
-      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", ...(resolution.executableIdentity ? { executableIdentity: resolution.executableIdentity } : {}), probeStatus: "NOT_REQUIRED", compatibility: "NOT_CHECKED", gaps: [] };
+      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", probeStatus: "NOT_REQUIRED", compatibility: "NOT_CHECKED", gaps: [] };
     }
 
     const probeContract = request.descriptor.versionProbe;
     if (!probeContract || probeContract.timeoutMs < 1 || probeContract.timeoutMs > 120_000 || probeContract.maxOutputBytes < 1 || probeContract.maxOutputBytes > 1_048_576) {
-      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", ...(resolution.executableIdentity ? { executableIdentity: resolution.executableIdentity } : {}), probeStatus: "UNOBSERVABLE", compatibility: "UNKNOWN", gaps: [gap("gef.preflight.tool.version_probe_unavailable", required)] };
+      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", probeStatus: "UNOBSERVABLE", compatibility: "UNKNOWN", gaps: [gap("gef.preflight.tool.version_probe_unavailable", required)] };
     }
 
     const spec: ToolProbeSpec = {
@@ -157,10 +157,10 @@ export class ToolObservationSession {
     const parserRef: string = request.parseVersion ? request.parseVersionRef! : DEFAULT_VERSION_PARSER_REF;
     if (probe.status !== "SUCCEEDED") {
       const code = `gef.preflight.tool.probe_${probe.status.toLowerCase()}`;
-      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", ...(resolution.executableIdentity ? { executableIdentity: resolution.executableIdentity } : {}), versionParserRef: parserRef, probeStatus: probe.status, compatibility: "UNKNOWN", gaps: [gap(code, required)] };
+      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", versionParserRef: parserRef, probeStatus: probe.status, compatibility: "UNKNOWN", gaps: [gap(code, required)] };
     }
     if (probe.exitCode !== 0 || !boundedText(probe.stdout, probeContract.maxOutputBytes) || !boundedText(probe.stderr, probeContract.maxOutputBytes)) {
-      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", ...(resolution.executableIdentity ? { executableIdentity: resolution.executableIdentity } : {}), versionParserRef: parserRef, probeStatus: "FAILED", compatibility: "UNKNOWN", gaps: [gap("gef.preflight.tool.probe_output_invalid", required)] };
+      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", versionParserRef: parserRef, probeStatus: "FAILED", compatibility: "UNKNOWN", gaps: [gap("gef.preflight.tool.probe_output_invalid", required)] };
     }
 
     const parser = request.parseVersion ?? defaultVersionParser;
@@ -171,7 +171,7 @@ export class ToolObservationSession {
       version = null;
     }
     if (!version || version.length > 128 || /[\u0000-\u001f\u007f]/.test(version)) {
-      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", ...(resolution.executableIdentity ? { executableIdentity: resolution.executableIdentity } : {}), versionParserRef: parserRef, probeStatus: "SUCCEEDED", compatibility: "UNKNOWN", gaps: [gap("gef.preflight.tool.version_unparseable", required)] };
+      return { schemaVersion: 1, toolId: request.descriptor.toolId, presence: "FOUND", versionParserRef: parserRef, probeStatus: "SUCCEEDED", compatibility: "UNKNOWN", gaps: [gap("gef.preflight.tool.version_unparseable", required)] };
     }
 
     let compatibility = "NOT_CHECKED" as ToolObservation["compatibility"];
@@ -190,7 +190,6 @@ export class ToolObservationSession {
       schemaVersion: 1,
       toolId: request.descriptor.toolId,
       presence: "FOUND",
-      ...(resolution.executableIdentity ? { executableIdentity: resolution.executableIdentity } : {}),
       observedVersion: version,
       versionParserRef: parserRef,
       probeStatus: "SUCCEEDED",
@@ -207,7 +206,7 @@ export class ToolObservationSession {
   }
 }
 
-export function compactToolEvidence(observation: ToolObservation): Readonly<Record<string, unknown>> {
+export function compactToolEvidence(observation: ToolObservation): ToolObservation {
   return Object.freeze({
     schemaVersion: 1,
     toolId: observation.toolId,
