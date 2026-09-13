@@ -6,6 +6,7 @@ import {
   compileTransactionPlan,
   createGefError,
   rollbackTransaction,
+  stableTransactionSerialize,
 } from "../packages/kernel/dist/index.js";
 
 const digest = { digest: (text) => createHash("sha256").update(text).digest("hex") };
@@ -59,6 +60,14 @@ function compilePlan() {
   return result.value;
 }
 
+function recoveryJournal() {
+  return {
+    beginRollback: async () => ({ ok: true, value: true }),
+    updateRollback: async () => ({ ok: true, value: true }),
+    finishRollback: async () => ({ ok: true, value: true }),
+  };
+}
+
 test("journal failure immediately after target promotion requires recovery before another effect", async () => {
   const plan = compilePlan();
   const targets = new Map([["file:a", "before-a"], ["file:b", "before-b"]]);
@@ -80,10 +89,12 @@ test("journal failure immediately after target promotion requires recovery befor
         return { ok: true, value: true };
       },
       finish: async () => ({ ok: true, value: true }),
+      ...recoveryJournal(),
     },
     effects: {
       checkPhysicalSafety: async () => ({ ok: true, value: true }),
       captureRecovery: async (intent) => ({ ok: true, value: `recovery:${intent.intentId}` }),
+      verifyRecoveryMaterial: async () => ({ ok: true, value: true }),
       stage: async () => ({ ok: true, value: true }),
       verifyStaged: async () => ({ ok: true, value: true }),
       revalidateCommitBarrier: async () => ({ ok: true, value: true }),
@@ -106,7 +117,7 @@ test("journal failure immediately after target promotion requires recovery befor
 });
 
 function receiptFor(plan) {
-  return {
+  const base = {
     schemaVersion: 1,
     applyContractVersion: "1.0",
     runId: "run-applied",
@@ -124,7 +135,27 @@ function receiptFor(plan) {
     postStateBindings: [],
     externalEffectRefs: [],
     outcome: "APPLIED",
-    receiptDigest: "receipt-source",
+  };
+  return { ...base, receiptDigest: digest.digest(stableTransactionSerialize(base)) };
+}
+
+function rollbackPorts(targets, restore) {
+  return {
+    digest,
+    state: { observeTargetFingerprint: async (target) => ({ ok: true, value: targets.get(target) }), observeBinding: async () => ({ ok: true, value: undefined }) },
+    journal: { begin: async () => ({ ok: true, value: true }), update: async () => ({ ok: true, value: true }), finish: async () => ({ ok: true, value: true }), ...recoveryJournal() },
+    effects: {
+      checkPhysicalSafety: async () => ({ ok: true, value: true }),
+      captureRecovery: async () => ({ ok: true, value: undefined }),
+      verifyRecoveryMaterial: async () => ({ ok: true, value: true }),
+      stage: async () => ({ ok: true, value: true }),
+      verifyStaged: async () => ({ ok: true, value: true }),
+      revalidateCommitBarrier: async () => ({ ok: true, value: true }),
+      promote: async () => ({ ok: true, value: {} }),
+      verifyPostState: async () => ({ ok: true, value: [] }),
+      cleanup: async () => ({ ok: true, value: true }),
+      restore,
+    },
   };
 }
 
@@ -133,26 +164,12 @@ test("rollback cancellation after one restoration marks remaining effect unresol
   const controller = new AbortController();
   const targets = new Map([["file:a", "after-a"], ["file:b", "after-b"]]);
   let restores = 0;
-  const ports = {
-    digest,
-    state: { observeTargetFingerprint: async (target) => ({ ok: true, value: targets.get(target) }), observeBinding: async () => ({ ok: true, value: undefined }) },
-    effects: {
-      checkPhysicalSafety: async () => ({ ok: true, value: true }),
-      captureRecovery: async () => ({ ok: true, value: undefined }),
-      stage: async () => ({ ok: true, value: true }),
-      verifyStaged: async () => ({ ok: true, value: true }),
-      revalidateCommitBarrier: async () => ({ ok: true, value: true }),
-      promote: async () => ({ ok: true, value: {} }),
-      verifyPostState: async () => ({ ok: true, value: [] }),
-      cleanup: async () => ({ ok: true, value: true }),
-      restore: async ({ intent, expectedPreFingerprint }) => {
-        restores += 1;
-        targets.set(intent.targetRef, expectedPreFingerprint);
-        if (restores === 1) controller.abort();
-        return { ok: true, value: { postFingerprint: expectedPreFingerprint } };
-      },
-    },
-  };
+  const ports = rollbackPorts(targets, async ({ intent, expectedPreFingerprint }) => {
+    restores += 1;
+    targets.set(intent.targetRef, expectedPreFingerprint);
+    if (restores === 1) controller.abort();
+    return { ok: true, value: { postFingerprint: expectedPreFingerprint } };
+  });
 
   const result = await rollbackTransaction({ plan, applyReceipt: receiptFor(plan), recoveryRunId: "recovery-cancel", ports, signal: controller.signal });
   assert.equal(result.outcome, "PARTIALLY_RESTORED");
@@ -165,13 +182,8 @@ test("rollback already cancelled cannot report already restored", async () => {
   const plan = compilePlan();
   const controller = new AbortController();
   controller.abort();
-  const ports = {
-    digest,
-    state: { observeTargetFingerprint: async () => ({ ok: true, value: "after" }), observeBinding: async () => ({ ok: true, value: undefined }) },
-    effects: {
-      checkPhysicalSafety: async () => ({ ok: true, value: true }), captureRecovery: async () => ({ ok: true, value: undefined }), stage: async () => ({ ok: true, value: true }), verifyStaged: async () => ({ ok: true, value: true }), revalidateCommitBarrier: async () => ({ ok: true, value: true }), promote: async () => ({ ok: true, value: {} }), verifyPostState: async () => ({ ok: true, value: [] }), cleanup: async () => ({ ok: true, value: true }), restore: async () => ({ ok: true, value: {} }),
-    },
-  };
+  const targets = new Map([["file:a", "after-a"], ["file:b", "after-b"]]);
+  const ports = rollbackPorts(targets, async () => ({ ok: true, value: {} }));
   const result = await rollbackTransaction({ plan, applyReceipt: receiptFor(plan), recoveryRunId: "recovery-pre-cancel", ports, signal: controller.signal });
   assert.equal(result.outcome, "ROLLBACK_FAILED");
   assert.equal(result.effectResults.length, 2);
