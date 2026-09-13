@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_TO_COMPILE_GBS_WO_M07_001",
+  "status": "READY_FOR_GBS_WO_M07_001",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03", "GBS-M04", "GBS-M05", "GBS-M06"],
   "activeModule": "GBS-M07_TEMPLATE_ENGINE",
-  "activeModuleStatus": "PLANNED_READY_FOR_IMPLEMENTATION",
+  "activeModuleStatus": "IMPLEMENTATION_ADMITTED",
   "m07PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN","S05":"FROZEN"},
   "m07ModuleGate": "PLANNED_READY_FOR_IMPLEMENTATION",
-  "activeWorkOrder": null,
-  "activeWorkOrderStatus": null,
+  "activeWorkOrder": "GBS-WO-M07-001",
+  "activeWorkOrderStatus": "ADMITTED",
   "mainProductionDenominatorWeight": 1088,
   "earnedProductionWeight": 125,
   "remainingProductionWeight": 963,
@@ -18,7 +18,7 @@
   "m07Weight": 14,
   "m07EarnedWeight": 0,
   "denominatorChanged": false,
-  "nextPlanningStage": "COMPILE_GBS_WO_M07_001",
+  "nextPlanningStage": "IMPLEMENT_GBS_WO_M07_001",
   "codexBootstrapConstructionAuthorized": false,
-  "stopState": "READY_TO_COMPILE_GBS_WO_M07_001"
+  "stopState": "READY_FOR_GBS_WO_M07_001"
 }
