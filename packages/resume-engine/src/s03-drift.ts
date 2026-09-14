@@ -1,16 +1,29 @@
-import { buildCheckpointDependencyGraph, selectiveContinuationInvalidation } from '@gef-bootstrap/checkpoint-engine';
+import { buildCheckpointDependencyGraph, selectiveContinuationInvalidation, verifyCanonicalContinuationCapsule } from '@gef-bootstrap/checkpoint-engine';
 import type { CanonicalContinuationCapsule, ResumeReadinessCertificate } from '@gef-bootstrap/checkpoint-engine';
 import type { ConversationIndependenceResult, DeltaRehydrationGraph, LineageContinuityProof, OperationOptions, OrphanWorkReport, ResumeAuthorityBoundary, ResumeConflictEntry, ResumeConflictQuarantine, ResumeContextRef, ResumeDriftEntry, ResumeDriftVector, ResumeObservation, ResumeReadPlan, Result, SafeReentryDecision, WorkObservation } from './types.js';
 import { cancelled, compareCodePoint, deepFreeze, fail, nodeBudget, sha, sortedUnique } from './utils.js';
+import { verifyLineageContinuityProof, verifyResumeAuthorityBoundary } from './s01-intent.js';
+
+function verifyReadiness(readiness:ResumeReadinessCertificate,checkpoint:CanonicalContinuationCapsule,options:OperationOptions):Result<true>{
+  const semantic={validity:readiness.validity,checkpointDigest:readiness.checkpointDigest,ready:readiness.ready,missingBindingIds:readiness.missingBindingIds,unresolvedBlockers:readiness.unresolvedBlockers,requiredCapabilityGaps:readiness.requiredCapabilityGaps};const d=sha(options,semantic);if(!d.ok)return d as Result<true>;
+  if(d.value!==readiness.certificateDigest)return fail('READINESS_TAMPERED','Resume readiness certificate digest does not match its payload');
+  if(readiness.checkpointDigest!==checkpoint.checkpointDigest||readiness.ready!==(readiness.validity==='VALID'))return fail('READINESS_STATE_INVALID','Resume readiness certificate is not consistent with the canonical checkpoint');
+  return{ok:true,value:true};
+}
+function verifyDrift(drift:ResumeDriftVector,options:OperationOptions):Result<true>{const d=sha(options,{entries:drift.entries,hasMaterialDrift:drift.hasMaterialDrift,hasUnknown:drift.hasUnknown});if(!d.ok)return d as Result<true>;return d.value===drift.vectorDigest?{ok:true,value:true}:fail('DRIFT_VECTOR_TAMPERED','Resume drift vector digest does not match its payload');}
+function verifyPlan(plan:ResumeReadPlan,options:OperationOptions):Result<true>{const d=sha(options,{steps:plan.steps,maxReads:plan.maxReads,expansionRequired:plan.expansionRequired});if(!d.ok)return d as Result<true>;return d.value===plan.planDigest?{ok:true,value:true}:fail('READ_PLAN_TAMPERED','Resume read plan digest does not match its payload');}
+function verifyOrphans(report:OrphanWorkReport,options:OperationOptions):Result<true>{const d=sha(options,{findings:report.findings,orphanWorkIds:report.orphanWorkIds});if(!d.ok)return d as Result<true>;return d.value===report.reportDigest?{ok:true,value:true}:fail('ORPHAN_REPORT_TAMPERED','Orphan work report digest does not match its payload');}
 
 export function buildResumeDriftVector(checkpoint:CanonicalContinuationCapsule,observation:ResumeObservation,options:OperationOptions):Result<ResumeDriftVector>{
-  const c=cancelled(options);if(c)return c;const entries:ResumeDriftEntry[]=[];
+  const c=cancelled(options);if(c)return c;const cv=verifyCanonicalContinuationCapsule(checkpoint,{digest:options.digest,cancellation:options.cancellation});if(!cv.ok)return{ok:false,diagnostics:cv.diagnostics};const entries:ResumeDriftEntry[]=[];
   const state=(expected:string,observed:string|undefined|null):ResumeDriftEntry['state']=>observed===undefined||observed===null?'MISSING':observed===expected?'SAME':'CHANGED';
+  entries.push({dimension:'PROJECT',subject:'project',state:state(checkpoint.projectId,observation.projectId),expected:checkpoint.projectId,observed:observation.projectId});
+  entries.push({dimension:'LINEAGE',subject:'lineage',state:state(checkpoint.lineageId,observation.lineageId),expected:checkpoint.lineageId,observed:observation.lineageId});
   entries.push({dimension:'CHECKPOINT',subject:'checkpoint',state:state(checkpoint.checkpointDigest,observation.checkpointDigest),expected:checkpoint.checkpointDigest,observed:observation.checkpointDigest});
   entries.push({dimension:'POLICY',subject:'policy-binding',state:state(checkpoint.policyBinding.bindingDigest,observation.policyBindingDigest),expected:checkpoint.policyBinding.bindingDigest,observed:observation.policyBindingDigest});
   for(const b of [...checkpoint.authorityBindings].sort((a,b)=>compareCodePoint(a.bindingId,b.bindingId))){const observed=observation.authorityIdentities[b.bindingId];entries.push({dimension:'AUTHORITY',subject:b.bindingId,state:observed===undefined?(b.required?'MISSING':'UNKNOWN'):observed===b.semanticIdentity?'SAME':'CHANGED',expected:b.semanticIdentity,observed:observed??null});}
   for(const claim of [...checkpoint.claims].sort((a,b)=>compareCodePoint(a.claimId,b.claimId))){const expected=`${claim.status}:${claim.maturity}`;const observed=observation.claimStates[claim.claimId];entries.push({dimension:'CLAIM',subject:claim.claimId,state:observed===undefined?'UNKNOWN':observed===expected?'SAME':'CHANGED',expected,observed:observed??null});}
-  const hasMaterialDrift=entries.some(e=>e.state==='CHANGED'||(e.state==='MISSING'&&(e.dimension==='CHECKPOINT'||e.dimension==='POLICY'||e.dimension==='AUTHORITY')));
+  const hasMaterialDrift=entries.some(e=>e.state==='CHANGED'||(e.state==='MISSING'&&e.dimension!=='CLAIM'));
   const hasUnknown=entries.some(e=>e.state==='UNKNOWN'||e.state==='MISSING');
   const semantic={entries,hasMaterialDrift,hasUnknown};const d=sha(options,semantic);if(!d.ok)return d;return{ok:true,value:deepFreeze({...semantic,vectorDigest:d.value})};
 }
@@ -25,12 +38,13 @@ export function buildDeltaRehydrationGraph(checkpoint:CanonicalContinuationCapsu
 }
 
 export function detectOrphanWork(checkpoint:CanonicalContinuationCapsule,work:readonly WorkObservation[],options:OperationOptions):Result<OrphanWorkReport>{
-  const c=cancelled(options);if(c)return c;const knownClaims=new Set(checkpoint.claims.map(x=>x.claimId));
-  const findings=[...work].sort((a,b)=>compareCodePoint(a.workId,b.workId)).map(w=>{const reasons:string[]=[];if(w.projectId!==checkpoint.projectId)reasons.push('PROJECT_MISMATCH');if(w.lineageId!==checkpoint.lineageId)reasons.push('LINEAGE_MISMATCH');if(w.baseCheckpointDigest!==checkpoint.checkpointDigest&&w.baseCheckpointDigest!==checkpoint.predecessorCheckpointDigest)reasons.push('BASE_NOT_RECOGNIZED');for(const id of w.claimIds)if(!knownClaims.has(id))reasons.push(`UNKNOWN_CLAIM:${id}`);return{workId:w.workId,orphaned:reasons.length>0,reasons:sortedUnique(reasons)};});
+  const c=cancelled(options);if(c)return c;const cv=verifyCanonicalContinuationCapsule(checkpoint,{digest:options.digest,cancellation:options.cancellation});if(!cv.ok)return{ok:false,diagnostics:cv.diagnostics};const ids=work.map(w=>w.workId);if(new Set(ids).size!==ids.length)return fail('WORK_OBSERVATION_DUPLICATE','Observed work identifiers must be unique');const knownClaims=new Set(checkpoint.claims.map(x=>x.claimId));
+  const findings=[...work].sort((a,b)=>compareCodePoint(a.workId,b.workId)).map(w=>{const reasons:string[]=[];if(w.projectId!==checkpoint.projectId)reasons.push('PROJECT_MISMATCH');if(w.lineageId!==checkpoint.lineageId)reasons.push('LINEAGE_MISMATCH');if(w.baseCheckpointDigest!==checkpoint.checkpointDigest)reasons.push('BASE_NOT_CURRENT');for(const id of w.claimIds)if(!knownClaims.has(id))reasons.push(`UNKNOWN_CLAIM:${id}`);return{workId:w.workId,orphaned:reasons.length>0,reasons:sortedUnique(reasons)};});
   const orphanWorkIds=sortedUnique(findings.filter(f=>f.orphaned).map(f=>f.workId));const semantic={findings,orphanWorkIds};const d=sha(options,semantic);if(!d.ok)return d;return{ok:true,value:deepFreeze({...semantic,reportDigest:d.value})};
 }
 
 export function buildResumeConflictQuarantine(drift:ResumeDriftVector,orphans:OrphanWorkReport,conversation:ConversationIndependenceResult,options:OperationOptions):Result<ResumeConflictQuarantine>{
+  const vd=verifyDrift(drift,options);if(!vd.ok)return vd as Result<ResumeConflictQuarantine>;const vo=verifyOrphans(orphans,options);if(!vo.ok)return vo as Result<ResumeConflictQuarantine>;
   const entries:ResumeConflictEntry[]=[];
   for(const d of drift.entries.filter(e=>e.state==='CHANGED'||e.state==='MISSING'))entries.push({subject:`${d.dimension}:${d.subject}`,reason:`DRIFT_${d.state}`,evidenceRefs:[d.expected,...(d.observed?[d.observed]:[])]});
   for(const f of orphans.findings.filter(f=>f.orphaned))entries.push({subject:`WORK:${f.workId}`,reason:f.reasons.join(','),evidenceRefs:[]});
@@ -38,9 +52,16 @@ export function buildResumeConflictQuarantine(drift:ResumeDriftVector,orphans:Or
   entries.sort((a,b)=>compareCodePoint(`${a.subject}:${a.reason}`,`${b.subject}:${b.reason}`));const d=sha(options,entries);if(!d.ok)return d;return{ok:true,value:deepFreeze({entries,quarantineDigest:d.value})};
 }
 
+export function verifySafeReentryDecision(decision:SafeReentryDecision,options:OperationOptions):Result<true>{const semantic={intentDigest:decision.intentDigest,handoffDigest:decision.handoffDigest,status:decision.status,checkpointDigest:decision.checkpointDigest,nextAction:decision.nextAction,expansionRefs:decision.expansionRefs,diagnostics:decision.diagnostics};const d=sha(options,semantic);if(!d.ok)return d as Result<true>;return d.value===decision.decisionDigest?{ok:true,value:true}:fail('REENTRY_DECISION_TAMPERED','Safe re-entry decision digest does not match its payload');}
+
 export function evaluateSafeReentry(checkpoint:CanonicalContinuationCapsule,lineage:LineageContinuityProof,authority:ResumeAuthorityBoundary,readiness:ResumeReadinessCertificate,drift:ResumeDriftVector,readPlan:ResumeReadPlan,orphans:OrphanWorkReport,options:OperationOptions):Result<SafeReentryDecision>{
-  const c=cancelled(options);if(c)return c;let status:SafeReentryDecision['status']='READY';const diagnostics:SafeReentryDecision['diagnostics'][number][]=[];let nextAction:string|null=checkpoint.nextLegalAction;const expansionRefs=sortedUnique(readPlan.steps.filter(s=>s.mandatory).map(s=>s.refId));
+  const c=cancelled(options);if(c)return c;const cv=verifyCanonicalContinuationCapsule(checkpoint,{digest:options.digest,cancellation:options.cancellation});if(!cv.ok)return{ok:false,diagnostics:cv.diagnostics};const vl=verifyLineageContinuityProof(lineage,checkpoint,options);if(!vl.ok)return vl as Result<SafeReentryDecision>;const va=verifyResumeAuthorityBoundary(authority,checkpoint,options);if(!va.ok)return va as Result<SafeReentryDecision>;const vr=verifyReadiness(readiness,checkpoint,options);if(!vr.ok)return vr as Result<SafeReentryDecision>;const vd=verifyDrift(drift,options);if(!vd.ok)return vd as Result<SafeReentryDecision>;const vp=verifyPlan(readPlan,options);if(!vp.ok)return vp as Result<SafeReentryDecision>;const vo=verifyOrphans(orphans,options);if(!vo.ok)return vo as Result<SafeReentryDecision>;
+  if(lineage.intentDigest!==authority.intentDigest||lineage.handoffDigest!==authority.handoffDigest)return fail('REENTRY_TRUST_CHAIN_MISMATCH','Lineage and authority proofs do not belong to the same resume intent and handoff');
+  let status:SafeReentryDecision['status']='READY';const diagnostics:SafeReentryDecision['diagnostics'][number][]=[];let nextAction:string|null=checkpoint.nextLegalAction;const expansionRefs=sortedUnique(readPlan.steps.filter(s=>s.mandatory).map(s=>s.refId));
+  const projectDrift=drift.entries.find(e=>e.dimension==='PROJECT'&&e.state!=='SAME');const lineageDrift=drift.entries.find(e=>e.dimension==='LINEAGE'&&e.state!=='SAME');
   if(!lineage.valid){status=lineage.mismatch==='PROJECT'?'PROJECT_MISMATCH':lineage.mismatch==='LINEAGE'?'LINEAGE_MISMATCH':'DRIFT_REQUIRES_REPLAN';diagnostics.push({code:`RESUME_${lineage.mismatch}_MISMATCH`,message:'Resume lineage continuity proof failed'});}
+  else if(projectDrift){status='PROJECT_MISMATCH';diagnostics.push({code:'RESUME_OBSERVED_PROJECT_MISMATCH',message:'Observed project identity differs from the canonical checkpoint'});}
+  else if(lineageDrift){status='LINEAGE_MISMATCH';diagnostics.push({code:'RESUME_OBSERVED_LINEAGE_MISMATCH',message:'Observed lineage differs from the canonical checkpoint'});}
   else if(!authority.authorized){status='INDETERMINATE';diagnostics.push({code:'RESUME_ACTION_NOT_CANONICAL',message:'Requested or handed-off action does not match canonical checkpoint action'});}
   else if(drift.entries.some(e=>e.dimension==='POLICY'&&e.state!=='SAME')){status='POLICY_BLOCKED';diagnostics.push({code:'RESUME_POLICY_DRIFT',message:'Policy continuity binding changed or is missing'});}
   else if(readiness.validity==='BLOCKED'){status='POLICY_BLOCKED';diagnostics.push({code:'RESUME_READINESS_BLOCKED',message:'Checkpoint readiness is blocked'});}
@@ -48,5 +69,5 @@ export function evaluateSafeReentry(checkpoint:CanonicalContinuationCapsule,line
   else if(readiness.validity==='PARTIAL'||readPlan.expansionRequired||drift.hasUnknown){status='EXPANSION_REQUIRED';diagnostics.push({code:'RESUME_EXPANSION_REQUIRED',message:'Additional bounded canonical reads are required before safe re-entry'});}
   else if(readiness.validity!=='VALID'){status='INDETERMINATE';diagnostics.push({code:'RESUME_READINESS_INDETERMINATE',message:'Checkpoint readiness is not conclusively valid'});}
   if(status!=='READY')nextAction=null;
-  const semantic={status,checkpointDigest:checkpoint.checkpointDigest,nextAction,expansionRefs,diagnostics};const d=sha(options,semantic);if(!d.ok)return d;return{ok:true,value:deepFreeze({...semantic,decisionDigest:d.value})};
+  const semantic={intentDigest:lineage.intentDigest,handoffDigest:lineage.handoffDigest,status,checkpointDigest:checkpoint.checkpointDigest,nextAction,expansionRefs,diagnostics};const d=sha(options,semantic);if(!d.ok)return d;return{ok:true,value:deepFreeze({...semantic,decisionDigest:d.value})};
 }
