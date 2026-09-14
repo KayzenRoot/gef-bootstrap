@@ -18,15 +18,15 @@ Admission merge / sole legal execution base: `54e1bdf6555b6170cc288617370592a072
 - `GBS-WO-M18-001` Resume Engine
 
 ## Exact execution-base rule
-The separate admission gate passed exact-head semantic audit and PR #191 merged. Its merge SHA `54e1bdf6555b6170cc288617370592a072d6cf95` is therefore the sole legal execution base for the M14-M18 implementation train. Canonical implementation branches must descend from that admitted base or a reviewed descendant on `main` that preserves the admitted contracts. PR #189 and its commits remain non-canonical and MUST NOT be merged, rebased into `main`, or treated as prior authorization.
+The separate admission gate passed exact-head semantic audit and PR #191 merged. Its merge SHA `54e1bdf6555b6170cc288617370592a072d6cf95` is therefore the sole legal execution base for the M14-M18 implementation train. Canonical implementation branches descended from that admitted base through reviewed and promoted `main` descendants while preserving all admitted contracts. PR #189 and its commits remain non-canonical and MUST NOT be merged, rebased into `main`, or treated as prior authorization.
 
-## Sequencing
-Acceptance and production credit remain dependency-ordered: M14 -> M15 -> M16 -> M17 -> M18. M14, M15, M16 and M17 are MODULE_DONE. M18 is the active admitted module and all upstream dependency gates are satisfied.
+## Sequencing outcome
+Acceptance and production credit remained dependency-ordered: M14 -> M15 -> M16 -> M17 -> M18. M14, M15, M16, M17 and M18 are now all `MODULE_DONE`. The governed M14-M18 implementation train is complete.
 
-## Restrictions
-Admission grants execution authority only; it grants no production credit. No frozen planning weakening, retroactive authorization, exact-head CI bypass, semantic-audit bypass, evidence bypass, HIGH/CRITICAL acceptance, or MODULE_DONE shortcut is permitted.
+## Restrictions preserved
+Admission granted execution authority only; it never granted production credit. Each module independently completed implementation, exact-head CI, semantic audit, Evidence Bundle and separate MODULE_DONE promotion with zero unresolved HIGH/CRITICAL findings.
 
 ## Current governed state
-Current promoted checkpoint after M17 is `321 / 1088 = 29.50%`. M18 owns `18` weight but has earned `0 / 18` until implementation, evidence, audit and separate MODULE_DONE promotion complete.
+Current promoted checkpoint after M18 is `339 / 1088 = 31.16%`. The train contributed its admitted modules without changing the frozen denominator. M19 is outside this admission record and receives neither execution authority nor production credit from completion of M14-M18.
 
-STOP CONDITION: `GBS_WO_M14_M18_ADMITTED_M18_ACTIVE`.
+STOP CONDITION: `GBS_WO_M14_M18_ADMITTED_TRAIN_COMPLETE`.
