@@ -1,12 +1,15 @@
 # GBS-WO-M20-001 — Implement Response Contract
 
-Status: `COMPILED_NOT_ADMITTED`
+Status: `ADMISSION_CANDIDATE`
 Risk: `MEDIUM`
 Assurance intensity: `STANDARD_PLUS`
 Module: `GBS-M20 — Response Contract`
 Canonical package: `packages/response-contract`
 Canonical weight: `13`
 Planning gate: `.engineering/gates/M20-PLANNING-GATE.md` (`PASSED`)
+Planning freeze PR: `#213`
+Planning freeze merge: `2c65f7cd1bd4f9015878acbe449118d9a873a88f`
+Admission PR: `#214`
 
 ## Objective
 Implement a deterministic, authority-bounded response contract that projects current governed truth to machine and human consumers without manufacturing source authority, progress, ETA, project status, confidence, evidence or success.
@@ -65,6 +68,6 @@ Progress calculation, ETA estimation, project-status computation, evidence/proof
 Exact admitted base/head/tree, focused test count, platform matrix, full regression count, dependency audit, Security CodeQL when triggered, semantic review, zero unresolved CRITICAL/HIGH, implementation merge and separate Evidence Bundle/MODULE_DONE promotion.
 
 ## Admission rule
-This Work Order grants no implementation authority until a separate exact-head admission audit/merge binds the frozen Source Pack and promotes both Work Order and checkpoint to `ADMITTED_READY_FOR_IMPLEMENTATION`. Planning earns no production credit.
+PR #214 is the admission candidate. It grants no execution authority until exact-head audit succeeds, #214 merges, and a post-merge binding records the real admission merge SHA as the sole legal M20 execution base. Only that binding may change this status to `ADMITTED_READY_FOR_IMPLEMENTATION`.
 
-STOP CONDITION: `GBS_WO_M20_001_COMPILED_NOT_ADMITTED`.
+STOP CONDITION: `GBS_WO_M20_001_ADMISSION_CANDIDATE`.
