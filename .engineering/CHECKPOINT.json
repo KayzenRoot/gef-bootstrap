@@ -7,7 +7,7 @@
   "activeModuleStatus": "PLANNING_FROZEN",
   "activeWorkOrder": null,
   "mainProductionDenominatorWeight": 1088,
-  "earnedProductionWeight": 153,
+  "earnedProductionWeight": 156,
   "nextPlanningStage": "RUN_GBS_M09_MODULE_GATE",
   "stopState": "READY_FOR_GBS_M09_MODULE_GATE"
 }
