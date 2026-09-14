@@ -387,6 +387,7 @@ export function statusForDiagnosticCode(code: string): PackStatus {
     case 'PACK_ENTROPY_OBLIGATION_MISSING':
       return 'BLOCKED';
     case 'PACK_TRUST_ANCHOR_MISSING':
+    case 'PACK_TRUST_ANCHOR_NOT_VALID':
     default:
       return 'INDETERMINATE';
   }
@@ -443,6 +444,13 @@ export function checkPreInvocationDrift(
       'PACK_TRUST_ANCHOR_MISSING',
       'Pre-invocation check requires the independent trusted receipt; candidate-carried digests are not a trust anchor',
       candidate.packId,
+    );
+  }
+  if (trusted.status !== 'VALID') {
+    return fail(
+      'PACK_TRUST_ANCHOR_NOT_VALID',
+      `Trusted receipt status is ${trusted.status}; only a VALID receipt can anchor pre-invocation verification`,
+      trusted.packId,
     );
   }
 
@@ -538,19 +546,60 @@ export function reducePromptEntropy(
 // ─── Pack Replay Contract (PRC) ───────────────────────────────────────────────
 
 /**
+ * Central replay-authorization gate: only a VALID, replayable,
+ * diagnostic-free receipt whose sealing fields are present authorizes replay.
+ * Digest equality alone never authorizes — a non-VALID anchor cannot be
+ * converted into replay authorization merely because digests match.
+ */
+export function isReplayAuthorizedReceipt(
+  trusted: PackReceipt | null | undefined,
+): boolean {
+  if (trusted === null || trusted === undefined) return false;
+  if (trusted.status !== 'VALID') return false;
+  if (trusted.replayable !== true) return false;
+  if (trusted.diagnostics.length !== 0) return false;
+  const sealing = [
+    trusted.packId,
+    trusted.taskIdentity,
+    trusted.contextIdentity,
+    trusted.contextDigest,
+    trusted.policyVersion,
+    trusted.graphDigest,
+    trusted.toolPlanDigest,
+    trusted.validationPlanDigest,
+    trusted.capabilityIdentity,
+    trusted.semanticDigest,
+  ];
+  return sealing.every(field => typeof field === 'string' && field.trim().length > 0);
+}
+
+/**
  * Prove a replay candidate equivalent to the trusted sealed semantics through
  * the same receipt-rooted primitives as PIDS — never through a duplicate
- * weaker path or a caller-provided boolean. The candidate payload digests
- * are recomputed and compared against the trusted receipt; any drift,
- * including binding drift (bindings are sealed inside the PSD), rejects
- * replay deterministically.
+ * weaker path or a caller-provided boolean. The trusted receipt must first
+ * authorize replay; then the candidate payload digests are recomputed and
+ * compared against the receipt. Any drift rejects replay deterministically.
  */
 export function evaluatePackReplay(
-  trusted: PackReceipt,
+  trusted: PackReceipt | null | undefined,
   candidate: ExecutionPack,
   options: OperationOptions,
 ): ReplayEvaluation {
-  if (candidate.packId !== trusted.packId) {
+  if (!isReplayAuthorizedReceipt(trusted)) {
+    const reason =
+      trusted === null || trusted === undefined
+        ? 'REJECTED: missing trusted receipt'
+        : trusted.status !== 'VALID'
+          ? `REJECTED: trusted receipt status is ${trusted.status}, not VALID`
+          : trusted.replayable !== true
+            ? 'REJECTED: trusted receipt is not replayable'
+            : trusted.diagnostics.length !== 0
+              ? 'REJECTED: trusted receipt carries diagnostics'
+              : 'REJECTED: trusted receipt sealing fields incomplete';
+    return deepFreeze({ replayable: false, reason });
+  }
+  const anchor = trusted as PackReceipt;
+  if (candidate.packId !== anchor.packId) {
     return deepFreeze({ replayable: false, reason: 'REJECTED: pack identity mismatch' });
   }
   const recomputed = computeSealedDigests(candidate, options);
@@ -558,10 +607,10 @@ export function evaluatePackReplay(
     return deepFreeze({ replayable: false, reason: 'REJECTED: digest recompute failed' });
   }
   const drift = findSealedDigestDrift(recomputed.value, {
-    graphDigest: trusted.graphDigest,
-    toolPlanDigest: trusted.toolPlanDigest,
-    validationPlanDigest: trusted.validationPlanDigest,
-    semanticDigest: trusted.semanticDigest,
+    graphDigest: anchor.graphDigest,
+    toolPlanDigest: anchor.toolPlanDigest,
+    validationPlanDigest: anchor.validationPlanDigest,
+    semanticDigest: anchor.semanticDigest,
   });
   if (drift.length > 0) {
     return deepFreeze({ replayable: false, reason: `REJECTED: sealed digest drift in ${drift.join(', ')}` });

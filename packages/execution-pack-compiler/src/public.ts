@@ -45,6 +45,7 @@ export {
   buildReadOnceContextIndex,
   validateReadOnceContextBinding,
   consumeReadOnce,
+  consumeReadOnceBound,
   normalizeLedgerQuery,
   recordNegativeSearch,
   checkNegativeSearch,
@@ -64,6 +65,7 @@ export {
   statusForDiagnosticCode,
   checkPreInvocationDrift,
   reducePromptEntropy,
+  isReplayAuthorizedReceipt,
   evaluatePackReplay,
 } from './s05-receipt.js';
 

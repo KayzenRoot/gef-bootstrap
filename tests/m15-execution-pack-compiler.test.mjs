@@ -36,6 +36,7 @@ import {
   buildReadOnceContextIndex,
   validateReadOnceContextBinding,
   consumeReadOnce,
+  consumeReadOnceBound,
   recordNegativeSearch,
   checkNegativeSearch,
   evaluateAmbiguityEscalation,
@@ -46,6 +47,7 @@ import {
   statusForDiagnosticCode,
   checkPreInvocationDrift,
   reducePromptEntropy,
+  isReplayAuthorizedReceipt,
   evaluatePackReplay,
   compileExecutionPack,
 } from '../packages/execution-pack-compiler/dist/public.js';
@@ -737,6 +739,19 @@ test('ROCI bound to another context fails closed', () => {
   assert.equal(failCode(validateReadOnceContextBinding(built.value, 'ctx-B')), 'PACK_ROCI_CONTEXT_MISMATCH');
 });
 
+test('bound consume checks the context internally', () => {
+  const built = buildReadOnceContextIndex({ k1: ['v1'] }, 'ctx-A');
+  assert.equal(built.ok, true);
+  const fresh = consumeReadOnceBound(built.value, 'k1', [], 'ctx-A');
+  assert.equal(fresh.ok, true);
+  assert.equal(fresh.value.reused, false);
+  assert.deepEqual(fresh.value.value, ['v1']);
+  assert.equal(
+    failCode(consumeReadOnceBound(built.value, 'k1', [], 'ctx-B')),
+    'PACK_ROCI_CONTEXT_MISMATCH',
+  );
+});
+
 test('negative search ledger is validity-bound; stale proofs do not suppress', () => {
   let ledger = recordNegativeSearch([], '  foo   bar ', 'fp-1', 'ctx-1');
   ledger = recordNegativeSearch(ledger, 'foo bar', 'fp-1', 'ctx-1');
@@ -1039,6 +1054,66 @@ test('replay proves equivalence against the trusted receipt; changed replays rej
   assert.equal(resealedReplay.replayable, false);
 });
 
+test('replay honors trusted receipt validity, never digests alone', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const sealed = compiled.value.pack;
+  const receipt = compiled.value.receipt;
+
+  // Positive control: VALID, replayable, diagnostic-free anchor authorizes.
+  assert.equal(isReplayAuthorizedReceipt(receipt), true);
+  const control = evaluatePackReplay(receipt, { ...sealed }, opts);
+  assert.equal(control.replayable, true);
+
+  // Every non-VALID status rejects even with identical sealed digests.
+  for (const status of ['STALE_CONTEXT', 'STALE_POLICY', 'CAPABILITY_MISMATCH', 'GRAPH_INVALID', 'BLOCKED', 'INDETERMINATE']) {
+    const tainted = { ...receipt, status, replayable: false, diagnostics: [`${status}: verdict`] };
+    assert.equal(isReplayAuthorizedReceipt(tainted), false, status);
+    const rejected = evaluatePackReplay(tainted, { ...sealed }, opts);
+    assert.equal(rejected.replayable, false, status);
+    assert.match(rejected.reason, /not VALID/, status);
+  }
+
+  // VALID status alone is not enough: replayable=false rejects.
+  const notReplayable = { ...receipt, replayable: false };
+  assert.equal(isReplayAuthorizedReceipt(notReplayable), false);
+  assert.equal(evaluatePackReplay(notReplayable, { ...sealed }, opts).replayable, false);
+
+  // Diagnostics on the anchor reject.
+  const withDiagnostics = { ...receipt, diagnostics: ['note: uncertain'] };
+  assert.equal(isReplayAuthorizedReceipt(withDiagnostics), false);
+  assert.equal(evaluatePackReplay(withDiagnostics, { ...sealed }, opts).replayable, false);
+
+  // Incomplete sealing fields reject.
+  const incomplete = { ...receipt, graphDigest: '' };
+  assert.equal(isReplayAuthorizedReceipt(incomplete), false);
+  assert.equal(evaluatePackReplay(incomplete, { ...sealed }, opts).replayable, false);
+
+  // Missing anchor rejects without touching digests.
+  assert.equal(isReplayAuthorizedReceipt(undefined), false);
+  assert.equal(evaluatePackReplay(undefined, { ...sealed }, opts).replayable, false);
+});
+
+test('PIDS fails closed when the trusted anchor itself is not VALID', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const pack = compiled.value.pack;
+  const receipt = compiled.value.receipt;
+  const staleAnchor = checkPreInvocationDrift(
+    pack,
+    receipt,
+    {
+      ...currentBindingsOf(pack),
+      currentBindings: { ...currentBindingsOf(pack).currentBindings, policyVersion: '9.9.9' },
+    },
+    opts,
+  );
+  assert.equal(staleAnchor.ok, true);
+  assert.equal(staleAnchor.value.status, 'STALE_POLICY');
+  const reused = checkPreInvocationDrift(pack, staleAnchor.value, currentBindingsOf(pack), opts);
+  assert.equal(failCode(reused), 'PACK_TRUST_ANCHOR_NOT_VALID');
+});
+
 test('diagnostic codes map to terminal states, never silently VALID', () => {
   assert.equal(statusForDiagnosticCode('PACK_CONTEXT_STALE'), 'STALE_CONTEXT');
   assert.equal(statusForDiagnosticCode('PACK_TASK_IDENTITY_MISSING'), 'STALE_CONTEXT');
@@ -1054,6 +1129,8 @@ test('diagnostic codes map to terminal states, never silently VALID', () => {
   assert.equal(statusForDiagnosticCode('PACK_AMBIGUITY_ESCALATED'), 'BLOCKED');
   assert.equal(statusForDiagnosticCode('PACK_REASONING_BRANCH_UNRESOLVED'), 'BLOCKED');
   assert.equal(statusForDiagnosticCode('PACK_ENTROPY_OBLIGATION_MISSING'), 'BLOCKED');
+  assert.equal(statusForDiagnosticCode('PACK_TRUST_ANCHOR_MISSING'), 'INDETERMINATE');
+  assert.equal(statusForDiagnosticCode('PACK_TRUST_ANCHOR_NOT_VALID'), 'INDETERMINATE');
   assert.equal(statusForDiagnosticCode('SOMETHING_UNKNOWN'), 'INDETERMINATE');
 });
 

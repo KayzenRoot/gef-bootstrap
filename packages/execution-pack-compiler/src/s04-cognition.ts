@@ -209,6 +209,22 @@ export function consumeReadOnce(
   };
 }
 
+/**
+ * Bound consume: verifies the index belongs to the active context internally
+ * before consuming, so callers cannot forget the binding check and leak
+ * foreign context. Prefer this over bare consumeReadOnce.
+ */
+export function consumeReadOnceBound(
+  index: ReadOnceContextIndex,
+  key: string,
+  consumedKeys: readonly string[],
+  contextIdentity: string,
+): Result<ReadOnceConsumption> {
+  const binding = validateReadOnceContextBinding(index, contextIdentity);
+  if (!binding.ok) return binding;
+  return consumeReadOnce(binding.value, key, consumedKeys);
+}
+
 // ─── Negative Search Ledger (NSL) ─────────────────────────────────────────────
 
 /** Normalize a ledger query so equivalent searches share one identity. */
