@@ -1,5 +1,5 @@
 # GBS-M19-S03 — Concurrency, Freshness & Repair
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 Module weight: `14`
 Assurance intensity: `STANDARD_PLUS`
 
@@ -29,4 +29,4 @@ Keep persistent registry state coherent under concurrent writers, stale observat
 ## Required tests
 CAS race, stale base, split brain, interrupted update, stale quarantine, freshness drift, tombstone resurrection attempt, diagnostic-cache invalidation and conservative repair widening when dependency knowledge is incomplete.
 
-STOP CONDITION: `M19_S03_FROZEN_CANDIDATE`.
+STOP CONDITION: `M19_S03_FROZEN`.
