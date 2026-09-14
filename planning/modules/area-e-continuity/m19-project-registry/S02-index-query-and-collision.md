@@ -1,5 +1,5 @@
 # GBS-M19-S02 — Index, Query & Collision
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 Module weight: `14`
 Assurance intensity: `STANDARD_PLUS`
 
@@ -26,4 +26,4 @@ Provide deterministic lookup and collision handling across registered projects w
 ## Required tests
 Exact lookup, alias lookup, collision, duplicate IDs, ambiguous repository identity, negative-cache validity, deterministic ordering, budget boundary and hostile/prototype-shaped identifiers.
 
-STOP CONDITION: `M19_S02_FROZEN_CANDIDATE`.
+STOP CONDITION: `M19_S02_FROZEN`.
