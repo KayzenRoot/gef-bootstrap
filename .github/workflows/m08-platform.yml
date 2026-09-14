@@ -1,0 +1,26 @@
+name: m08-platform
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/project-profiles/**"
+      - "tests/m08-*.mjs"
+      - ".github/workflows/m08-platform.yml"
+      - "package.json"
+      - "package-lock.json"
+jobs:
+  project-profiles:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build
+      - run: node --test tests/m08-project-profiles.test.mjs tests/m08-startup-purity.test.mjs
