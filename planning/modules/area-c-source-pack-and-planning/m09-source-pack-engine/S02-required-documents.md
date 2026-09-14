@@ -1,6 +1,6 @@
 # GBS-M09-S02 — Required Documents
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Define the minimum canonical document classes a governed Source Pack must represent before it can claim structural completeness. Required means required by the applicable GEF lifecycle and project mode, not that every repository must use one hard-coded filename.
