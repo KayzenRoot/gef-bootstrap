@@ -21,12 +21,12 @@ Admission merge / sole legal execution base: `54e1bdf6555b6170cc288617370592a072
 The separate admission gate passed exact-head semantic audit and PR #191 merged. Its merge SHA `54e1bdf6555b6170cc288617370592a072d6cf95` is therefore the sole legal execution base for the M14-M18 implementation train. Canonical implementation branches must descend from that admitted base or a reviewed descendant on `main` that preserves the admitted contracts. PR #189 and its commits remain non-canonical and MUST NOT be merged, rebased into `main`, or treated as prior authorization.
 
 ## Sequencing
-Acceptance and production credit remain dependency-ordered: M14 -> M15 -> M16 -> M17 -> M18. M14 and M15 are MODULE_DONE. M16 is the active admitted module. M17 and M18 remain admitted but dependency-blocked until their upstream modules are accepted.
+Acceptance and production credit remain dependency-ordered: M14 -> M15 -> M16 -> M17 -> M18. M14, M15 and M16 are MODULE_DONE. M17 is the active admitted module. M18 remains admitted but dependency-blocked until M17 is accepted.
 
 ## Restrictions
 Admission grants execution authority only; it grants no production credit. No frozen planning weakening, retroactive authorization, exact-head CI bypass, semantic-audit bypass, evidence bypass, HIGH/CRITICAL acceptance, or MODULE_DONE shortcut is permitted.
 
 ## Current governed state
-Current promoted checkpoint after M15 is `285 / 1088 = 26.19%`. M16 owns `19` weight but has earned `0 / 19` until implementation, evidence, audit and separate MODULE_DONE promotion complete.
+Current promoted checkpoint after M16 is `304 / 1088 = 27.94%`. M17 owns `17` weight but has earned `0 / 17` until implementation, evidence, audit and separate MODULE_DONE promotion complete. M18 remains admitted and waiting for M17.
 
-STOP CONDITION: `GBS_WO_M14_M18_ADMITTED_M16_ACTIVE`.
+STOP CONDITION: `GBS_WO_M14_M18_ADMITTED_M17_ACTIVE`.
