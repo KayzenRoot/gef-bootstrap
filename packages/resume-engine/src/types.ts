@@ -21,6 +21,7 @@ export interface ResumeIntentCapsuleInput {
 export interface ResumeIntentCapsule extends ResumeIntentCapsuleInput { readonly intentDigest: string; }
 
 export interface LineageContinuityProof {
+  readonly intentDigest: string;
   readonly projectId: string;
   readonly lineageId: string;
   readonly checkpointDigest: string;
@@ -31,6 +32,9 @@ export interface LineageContinuityProof {
 }
 
 export interface ResumeAuthorityBoundary {
+  readonly intentDigest: string;
+  readonly checkpointDigest: string;
+  readonly handoffDigest: string;
   readonly canonicalNextAction: string;
   readonly requestedNextAction: string | null;
   readonly authorized: boolean;
@@ -77,7 +81,7 @@ export interface ResumeObservation {
 export interface ResumeDriftEntry { readonly dimension: DriftDimension; readonly subject: string; readonly state: DriftState; readonly expected: string; readonly observed: string | null; }
 export interface ResumeDriftVector { readonly entries: readonly ResumeDriftEntry[]; readonly hasMaterialDrift: boolean; readonly hasUnknown: boolean; readonly vectorDigest: string; }
 
-export interface SafeReentryDecision { readonly status: ResumeStatus; readonly checkpointDigest: string; readonly nextAction: string | null; readonly expansionRefs: readonly string[]; readonly diagnostics: readonly Diagnostic[]; readonly decisionDigest: string; }
+export interface SafeReentryDecision { readonly intentDigest: string; readonly handoffDigest: string; readonly status: ResumeStatus; readonly checkpointDigest: string; readonly nextAction: string | null; readonly expansionRefs: readonly string[]; readonly diagnostics: readonly Diagnostic[]; readonly decisionDigest: string; }
 
 export interface DeltaRehydrationNode { readonly refId: string; readonly dependencyRefs: readonly string[]; readonly reasonKeys: readonly string[]; }
 export interface DeltaRehydrationGraph { readonly nodes: readonly DeltaRehydrationNode[]; readonly complete: boolean; readonly graphDigest: string; }
