@@ -1,31 +1,31 @@
 # Checkpoint
 
-Status: `GBS_M14_MODULE_DONE`
+Status: `GBS_M15_MODULE_DONE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M14`
-- Active module: `GBS-M15 — Execution Pack Compiler`
+- Completed modules: `GBS-M00` through `GBS-M15`
+- Active module: `GBS-M16 — Policy & Guardrail Engine`
 - Active module status: `ADMITTED_READY_FOR_IMPLEMENTATION`
-- Active Work Order: `GBS-WO-M15-001`
-- M14 status: `MODULE_DONE`
-- M14 implementation PR: `#192`
-- M14 reviewed head: `e07c358c1610c5b1958aaf81c9a8535f1e1730b6`
-- M14 semantic audit: `5197661645`
-- M14 implementation merge: `294b7c0961d72a2d1c1217f647b3116feef20ee0`
-- M14 evidence: `.engineering/evidence/GBS-WO-M14-001-EVIDENCE.md`
-- Production: `265 / 1088 = 24.36%`
-- Remaining: `823 / 1088 = 75.64%`
-- M14 earned: `19 / 19`
+- Active Work Order: `GBS-WO-M16-001`
+- M15 status: `MODULE_DONE`
+- M15 implementation PR: `#197`
+- M15 reviewed head: `4985270613387a7a5ca1c1c6393fa0bfaee13dc8`
+- M15 semantic audit: `5665613462`
+- M15 implementation merge: `4d466a0c6d1ad5a729a903104c0c4abe6e728b4f`
+- M15 evidence: `.engineering/evidence/GBS-WO-M15-001-EVIDENCE.md`
+- Production: `285 / 1088 = 26.19%`
+- Remaining: `803 / 1088 = 73.81%`
+- M15 earned: `20 / 20`
 - Denominator change: `NONE`
-- Next legal stage: `IMPLEMENT_GBS_M15`
+- Next legal stage: `IMPLEMENT_GBS_M16`
 
-## M14 outcome
-M14 delivers the Task & Context Compiler across S01-S05. It provides authority-aware context selection, minimum sufficient context proof, bounded context expansion, deterministic context receipts, selective invalidation and execution handoff. Routing relevance, source authority and context sufficiency remain separate invariants.
+## M15 outcome
+M15 delivers the Execution Pack Compiler across S01-S05 with deterministic execution packs, provenance, work DAG and critical path, safe parallelism, validation and rollback closure, cognition/tool boundaries, semantic sealing, drift detection and receipt-rooted replay.
 
-All ten required exact-head workflows passed, including the M14 Ubuntu/Windows/macOS matrix, full regression and dependency audit. Final semantic review records `CRITICAL 0` and `HIGH 0`.
+All twelve required exact-head workflows passed. Final semantic audit records `CRITICAL 0` and `HIGH 0`.
 
 ## Continuation contract
-M15 consumes valid M14 handoff under `GBS-WO-M15-001` and the existing M14-M18 admission. M15 production credit remains zero until its own implementation and promotion complete.
+M16 is next under the admitted M14-M18 implementation train. M16 production credit remains zero until its own promotion completes.
 
-STOP CONDITION: `GBS_M14_MODULE_DONE_READY_FOR_M15_IMPLEMENTATION`.
+STOP CONDITION: `GBS_M15_MODULE_DONE_READY_FOR_M16_IMPLEMENTATION`.
