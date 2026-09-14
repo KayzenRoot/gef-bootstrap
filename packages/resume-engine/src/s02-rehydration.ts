@@ -6,6 +6,20 @@ import { verifyContinuationHandoff } from './s01-intent.js';
 
 const TEMP_RANK:Record<string,number>={HOT:0,WARM:1,COLD:2};
 
+function verifyContext(context:ResumeMinimumSufficientContext,options:OperationOptions):Result<true>{
+  const semantic={checkpointDigest:context.checkpointDigest,handoffDigest:context.handoffDigest,nextLegalAction:context.nextLegalAction,activeClaimIds:context.activeClaimIds,requiredAuthorityBindingIds:context.requiredAuthorityBindingIds,evidenceRefs:context.evidenceRefs,blockerRefs:context.blockerRefs,contextRefs:context.contextRefs};
+  const d=sha(options,semantic);if(!d.ok)return d as Result<true>;return d.value===context.contextDigest?{ok:true,value:true}:fail('RMSC_TAMPERED','Resume minimum sufficient context digest does not match its payload');
+}
+function verifyHot(hot:HotStateRehydration,currentBinding:string,options:OperationOptions):Result<true>{
+  const d=sha(options,{accepted:hot.accepted,rejectedRefIds:hot.rejectedRefIds});if(!d.ok)return d as Result<true>;
+  if(d.value!==hot.rehydrationDigest)return fail('HOT_STATE_TAMPERED','Hot-state rehydration digest does not match its payload');
+  if(hot.accepted.some(e=>e.validityBindingDigest!==currentBinding))return fail('HOT_STATE_STALE_BINDING','Accepted hot state is not bound to the current continuation handoff');
+  return{ok:true,value:true};
+}
+function verifyTemperature(map:ContextTemperatureMap,options:OperationOptions):Result<true>{const d=sha(options,map.entries);if(!d.ok)return d as Result<true>;return d.value===map.mapDigest?{ok:true,value:true}:fail('TEMPERATURE_MAP_TAMPERED','Context temperature map digest does not match its payload');}
+function verifyPlan(plan:ResumeReadPlan,options:OperationOptions):Result<true>{const d=sha(options,{steps:plan.steps,maxReads:plan.maxReads,expansionRequired:plan.expansionRequired});if(!d.ok)return d as Result<true>;return d.value===plan.planDigest?{ok:true,value:true}:fail('READ_PLAN_TAMPERED','Resume read plan digest does not match its payload');}
+function verifyNegative(cache:NegativeRehydrationCache,options:OperationOptions):Result<true>{const d=sha(options,cache.entries);if(!d.ok)return d as Result<true>;return d.value===cache.cacheDigest?{ok:true,value:true}:fail('NEGATIVE_CACHE_TAMPERED','Negative rehydration cache digest does not match its payload');}
+
 export function buildResumeMinimumSufficientContext(checkpoint:CanonicalContinuationCapsule,handoff:ContinuationHandoffContract,contextRefs:readonly ResumeContextRef[],options:OperationOptions):Result<ResumeMinimumSufficientContext>{
   const c=cancelled(options);if(c)return c;
   const cv=verifyCanonicalContinuationCapsule(checkpoint,{digest:options.digest,cancellation:options.cancellation});if(!cv.ok)return{ok:false,diagnostics:cv.diagnostics};
@@ -27,17 +41,20 @@ export function rehydrateHotState(entries:readonly HotStateEntry[],currentValidi
 }
 
 export function buildContextTemperatureMap(refs:readonly ResumeContextRef[],relevance:Readonly<Record<string,number|undefined>>,options:OperationOptions):Result<ContextTemperatureMap>{
+  const c=cancelled(options);if(c)return c;const ids=refs.map(r=>r.refId);if(new Set(ids).size!==ids.length)return fail('TEMPERATURE_REF_DUPLICATE','Temperature map references must be unique');
   const entries=refs.map(ref=>{const raw=relevance[ref.refId]??(ref.mandatory?100:50);const score=Math.max(0,Math.min(100,Math.trunc(raw)));const temperature=score>=80?'HOT' as const:score>=40?'WARM' as const:'COLD' as const;return{refId:ref.refId,temperature,relevance:score};}).sort((a,b)=>compareCodePoint(a.refId,b.refId));
   const d=sha(options,entries);if(!d.ok)return d;return{ok:true,value:deepFreeze({entries,mapDigest:d.value})};
 }
 
 export function createNegativeRehydrationCache(entries:readonly NegativeRehydrationCacheEntry[],options:OperationOptions):Result<NegativeRehydrationCache>{
-  const ids=entries.map(e=>e.refId);if(new Set(ids).size!==ids.length||entries.some(e=>!validId(e.refId)||!isSha256(e.absenceProofDigest)||!isSha256(e.validityBindingDigest)))return fail('NEGATIVE_CACHE_INVALID','Negative cache entries require unique ids and proof/binding digests');
+  const c=cancelled(options);if(c)return c;const ids=entries.map(e=>e.refId);if(new Set(ids).size!==ids.length||entries.some(e=>!validId(e.refId)||!isSha256(e.absenceProofDigest)||!isSha256(e.validityBindingDigest)))return fail('NEGATIVE_CACHE_INVALID','Negative cache entries require unique ids and proof/binding digests');
   const normalized=[...entries].sort((a,b)=>compareCodePoint(a.refId,b.refId));const d=sha(options,normalized);if(!d.ok)return d;return{ok:true,value:deepFreeze({entries:normalized,cacheDigest:d.value})};
 }
 
 export function buildResumeReadPlan(context:ResumeMinimumSufficientContext,hot:HotStateRehydration,temperature:ContextTemperatureMap,options:OperationOptions):Result<ResumeReadPlan>{
-  const c=cancelled(options);if(c)return c;const maxReads=readBudget(options);const hotIds=new Set(hot.accepted.map(e=>e.refId));const temps=new Map(temperature.entries.map(e=>[e.refId,e.temperature]));
+  const c=cancelled(options);if(c)return c;const vc=verifyContext(context,options);if(!vc.ok)return vc as Result<ResumeReadPlan>;const vh=verifyHot(hot,context.handoffDigest,options);if(!vh.ok)return vh as Result<ResumeReadPlan>;const vt=verifyTemperature(temperature,options);if(!vt.ok)return vt as Result<ResumeReadPlan>;
+  const contextIds=new Set(context.contextRefs.map(r=>r.refId));if(hot.accepted.some(e=>!contextIds.has(e.refId)))return fail('HOT_STATE_OUTSIDE_CONTEXT','Hot-state reuse cannot suppress a reference outside the canonical resume context');
+  const maxReads=readBudget(options);const hotIds=new Set(hot.accepted.map(e=>e.refId));const temps=new Map(temperature.entries.map(e=>[e.refId,e.temperature]));
   const candidates=context.contextRefs.filter(r=>!hotIds.has(r.refId)).map<ResumeReadPlanStep>(r=>({refId:r.refId,temperature:temps.get(r.refId)??r.preferredTemperature,reason:r.mandatory?'MINIMUM_SUFFICIENT_CONTEXT':'PROGRESSIVE_EXPANSION',mandatory:r.mandatory,dependencyKeys:sortedUnique(r.dependencyKeys)}));
   candidates.sort((a,b)=>Number(b.mandatory)-Number(a.mandatory)||(TEMP_RANK[a.temperature]??9)-(TEMP_RANK[b.temperature]??9)||compareCodePoint(a.refId,b.refId));
   const steps=candidates.slice(0,maxReads);const expansionRequired=candidates.length>maxReads;
@@ -45,6 +62,7 @@ export function buildResumeReadPlan(context:ResumeMinimumSufficientContext,hot:H
 }
 
 export function applyNegativeRehydrationCache(plan:ResumeReadPlan,cache:NegativeRehydrationCache,currentValidityBindingDigest:string,options:OperationOptions):Result<{plan:ResumeReadPlan;cacheHitRefIds:readonly string[]}>{
+  const c=cancelled(options);if(c)return c;if(!isSha256(currentValidityBindingDigest))return fail('NEGATIVE_CACHE_BINDING_INVALID','Current negative-cache validity binding must be a semantic digest');const vp=verifyPlan(plan,options);if(!vp.ok)return vp as Result<{plan:ResumeReadPlan;cacheHitRefIds:readonly string[]}>;const vc=verifyNegative(cache,options);if(!vc.ok)return vc as Result<{plan:ResumeReadPlan;cacheHitRefIds:readonly string[]}>;
   const validNegative=new Set(cache.entries.filter(e=>e.validityBindingDigest===currentValidityBindingDigest).map(e=>e.refId));const cacheHitRefIds=sortedUnique(plan.steps.filter(s=>validNegative.has(s.refId)).map(s=>s.refId));
   const steps=plan.steps.filter(s=>!validNegative.has(s.refId));const expansionRequired=plan.expansionRequired||plan.steps.some(s=>s.mandatory&&validNegative.has(s.refId));const semantic={steps,maxReads:plan.maxReads,expansionRequired};const d=sha(options,semantic);if(!d.ok)return d;
   return{ok:true,value:deepFreeze({plan:{...semantic,planDigest:d.value},cacheHitRefIds})};
