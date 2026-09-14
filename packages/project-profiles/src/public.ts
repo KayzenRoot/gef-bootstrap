@@ -20,11 +20,12 @@ export type * from "./index.js";
 
 const issuedComposedSnapshots = new WeakSet<object>();
 const REQUEST_KEYS = new Set(["mode","profileId","expectedProfileVersion","expectedProfileDigest"]);
+const PRODUCT_IDS = new Set(Object.keys(BUILTIN_PROFILES));
 
 function fail<T>(code: string, message: string): ProfileResult<T> { return { ok:false, error:Object.freeze({code,message}) }; }
 function record(value: unknown): value is Record<string, unknown> { return value !== null && typeof value === "object" && !Array.isArray(value); }
 function ownKeysOnly(value: Record<string,unknown>, allowed: ReadonlySet<string>): boolean { return Object.keys(value).every((key)=>allowed.has(key) && key!=="__proto__" && key!=="constructor" && key!=="prototype"); }
-function capped(value: unknown, fallback: number): number { return value === undefined ? fallback : (Number.isSafeInteger(value) && (value as number) >= 0 ? Math.min(value as number,fallback) : 0); }
+function capped(value: unknown, fallback: number): number { return value === undefined ? fallback : (typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? Math.min(value,fallback) : 0); }
 function safeOptions(options?: OperationOptions): OperationOptions {
   const raw=options?.budgets as Partial<ProfileBudgets>|undefined;
   return { ...(options?.signal===undefined?{}:{signal:options.signal}), budgets:{ maxProfiles:capped(raw?.maxProfiles,DEFAULT_PROFILE_BUDGETS.maxProfiles), maxDepth:capped(raw?.maxDepth,DEFAULT_PROFILE_BUDGETS.maxDepth), maxTemplateBindings:capped(raw?.maxTemplateBindings,DEFAULT_PROFILE_BUDGETS.maxTemplateBindings), maxVariableBindings:capped(raw?.maxVariableBindings,DEFAULT_PROFILE_BUDGETS.maxVariableBindings), maxStringBytes:capped(raw?.maxStringBytes,DEFAULT_PROFILE_BUDGETS.maxStringBytes) } };
@@ -54,7 +55,16 @@ function verifiedRegistry(value: unknown, options?: OperationOptions): ProfileRe
   if (!(value instanceof Map)) return fail("PROFILE_INTERNAL_CONTRACT_VIOLATION","profile registry must be a Map");
   const limits={...DEFAULT_PROFILE_BUDGETS,...safeOptions(options).budgets} as ProfileBudgets;if(value.size>limits.maxProfiles)return fail("PROFILE_BUDGET_EXCEEDED","profile registry budget exceeded");
   const clean = new Map<string,ProfileSnapshot>();
-  for (const [key, raw] of value.entries()) { if(typeof key!=="string")return fail("PROFILE_INTERNAL_CONTRACT_VIOLATION","profile registry key is invalid"); const verified=verifiedSnapshot(raw,options);if(!verified.ok)return verified;if(verified.value.profile.profileId!==key)return fail("PROFILE_INTERNAL_CONTRACT_VIOLATION","profile registry key/id mismatch");clean.set(key,verified.value); }
+  for (const [key, raw] of value.entries()) {
+    if(typeof key!=="string")return fail("PROFILE_INTERNAL_CONTRACT_VIOLATION","profile registry key is invalid");
+    const verified=verifiedSnapshot(raw,options);if(!verified.ok)return verified;
+    if(verified.value.profile.profileId!==key)return fail("PROFILE_INTERNAL_CONTRACT_VIOLATION","profile registry key/id mismatch");
+    if(PRODUCT_IDS.has(key)){
+      const official=validateProfile(BUILTIN_PROFILES[key as keyof typeof BUILTIN_PROFILES],options);if(!official.ok)return official;
+      if(official.value.nativeProfileSemanticDigest!==verified.value.nativeProfileSemanticDigest)return fail("PROFILE_AMBIGUOUS","product-owned profile was shadowed or mutated");
+    }
+    clean.set(key,verified.value);
+  }
   return {ok:true,value:clean};
 }
 function issue<T extends object>(result: ProfileResult<T>): ProfileResult<T> { if(result.ok)issuedComposedSnapshots.add(result.value);return result; }
