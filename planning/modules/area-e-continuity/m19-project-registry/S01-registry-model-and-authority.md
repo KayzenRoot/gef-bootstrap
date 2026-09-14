@@ -1,5 +1,5 @@
 # GBS-M19-S01 — Registry Model & Authority
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 Module weight: `14`
 Assurance intensity: `STANDARD_PLUS`
 
@@ -28,4 +28,4 @@ M19 owns persistent registry/index semantics for known projects. M03 remains own
 ## Out of scope
 Repository discovery, Git operations, hosted-provider API calls, generic proof graph, telemetry, UI, project-status scoring and physical storage mutation primitives.
 
-STOP CONDITION: `M19_S01_FROZEN_CANDIDATE`.
+STOP CONDITION: `M19_S01_FROZEN`.
