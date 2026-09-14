@@ -28,7 +28,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm audit --audit-level=low
       - run: npm run typecheck
-      - run: node --test tests/m16-policy-guardrail-engine.test.mjs tests/m16-startup-purity.test.mjs
+      - run: node --test tests/m16-policy-guardrail-engine.test.mjs tests/m16-exception-domain-hardening.test.mjs tests/m16-startup-purity.test.mjs
   regression:
     runs-on: ubuntu-latest
     steps:
