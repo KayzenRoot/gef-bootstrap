@@ -1,0 +1,59 @@
+import { verifyCanonicalContinuationCapsule } from '@gef-bootstrap/checkpoint-engine';
+import type { CanonicalContinuationCapsule, ContinuationHandoffContract } from '@gef-bootstrap/checkpoint-engine';
+import type { ConversationClaim, ConversationIndependenceResult, LineageContinuityProof, OperationOptions, Result, ResumeAuthorityBoundary, ResumeIntentCapsule, ResumeIntentCapsuleInput } from './types.js';
+import { cancelled, deepFreeze, fail, isSha256, sha, sortedUnique, validId } from './utils.js';
+
+export function createResumeIntentCapsule(input:ResumeIntentCapsuleInput,options:OperationOptions):Result<ResumeIntentCapsule>{
+  const c=cancelled(options);if(c)return c;
+  if(!validId(input.resumeId)||!validId(input.projectId)||!validId(input.expectedLineageId)||!isSha256(input.expectedCheckpointDigest))return fail('RESUME_INTENT_INVALID','Resume intent requires stable resume/project/lineage ids and an exact checkpoint digest');
+  if(input.requestedNextAction!==null&&!input.requestedNextAction.trim())return fail('RESUME_ACTION_INVALID','Requested next action must be null or non-empty');
+  const semantic={resumeId:input.resumeId,projectId:input.projectId,expectedLineageId:input.expectedLineageId,expectedCheckpointDigest:input.expectedCheckpointDigest,requestedNextAction:input.requestedNextAction};
+  const d=sha(options,semantic);if(!d.ok)return d;return{ok:true,value:deepFreeze({...semantic,intentDigest:d.value})};
+}
+
+export function verifyResumeIntentCapsule(intent:ResumeIntentCapsule,options:OperationOptions):Result<true>{
+  const rebuilt=createResumeIntentCapsule(intent,options);if(!rebuilt.ok)return rebuilt as Result<true>;
+  if(rebuilt.value.intentDigest!==intent.intentDigest)return fail('RESUME_INTENT_TAMPERED','Resume intent semantic digest does not match its payload',intent.resumeId);
+  return{ok:true,value:true};
+}
+
+export function verifyContinuationHandoff(handoff:ContinuationHandoffContract,options:OperationOptions):Result<true>{
+  const semantic={checkpointDigest:handoff.checkpointDigest,projectId:handoff.projectId,lineageId:handoff.lineageId,nextLegalAction:handoff.nextLegalAction,authorityIndexDigest:handoff.authorityIndexDigest,policyBindingDigest:handoff.policyBindingDigest,readinessCertificateDigest:handoff.readinessCertificateDigest};
+  const d=sha(options,semantic);if(!d.ok)return d as Result<true>;
+  if(d.value!==handoff.handoffDigest)return fail('HANDOFF_TAMPERED','Continuation handoff digest does not match its payload');
+  return{ok:true,value:true};
+}
+
+export function proveLineageContinuity(intent:ResumeIntentCapsule,checkpoint:CanonicalContinuationCapsule,handoff:ContinuationHandoffContract,options:OperationOptions):Result<LineageContinuityProof>{
+  const c=cancelled(options);if(c)return c;
+  const iv=verifyResumeIntentCapsule(intent,options);if(!iv.ok)return iv as Result<LineageContinuityProof>;
+  const cv=verifyCanonicalContinuationCapsule(checkpoint,{digest:options.digest,cancellation:options.cancellation});if(!cv.ok)return{ok:false,diagnostics:cv.diagnostics};
+  const hv=verifyContinuationHandoff(handoff,options);if(!hv.ok)return hv as Result<LineageContinuityProof>;
+  let mismatch:LineageContinuityProof['mismatch']='NONE';
+  if(intent.projectId!==checkpoint.projectId||handoff.projectId!==checkpoint.projectId)mismatch='PROJECT';
+  else if(intent.expectedLineageId!==checkpoint.lineageId||handoff.lineageId!==checkpoint.lineageId)mismatch='LINEAGE';
+  else if(intent.expectedCheckpointDigest!==checkpoint.checkpointDigest||handoff.checkpointDigest!==checkpoint.checkpointDigest)mismatch='CHECKPOINT';
+  else if(handoff.authorityIndexDigest!==checkpoint.authorityIndex.indexDigest||handoff.policyBindingDigest!==checkpoint.policyBinding.bindingDigest)mismatch='HANDOFF';
+  const semantic={projectId:checkpoint.projectId,lineageId:checkpoint.lineageId,checkpointDigest:checkpoint.checkpointDigest,handoffDigest:handoff.handoffDigest,valid:mismatch==='NONE',mismatch};
+  const d=sha(options,semantic);if(!d.ok)return d;return{ok:true,value:deepFreeze({...semantic,proofDigest:d.value})};
+}
+
+export function enforceResumeAuthorityBoundary(intent:ResumeIntentCapsule,checkpoint:CanonicalContinuationCapsule,handoff:ContinuationHandoffContract,options:OperationOptions):Result<ResumeAuthorityBoundary>{
+  const c=cancelled(options);if(c)return c;
+  const canonical=checkpoint.nextLegalAction;
+  const exactHandoff=handoff.nextLegalAction===canonical;
+  const requestedOk=intent.requestedNextAction===null||intent.requestedNextAction===canonical;
+  const authorized=exactHandoff&&requestedOk;
+  const reason=!exactHandoff?'HANDOFF_ACTION_DRIFT':!requestedOk?'REQUESTED_ACTION_NOT_CANONICAL':'CANONICAL_ACTION_ONLY';
+  const semantic={canonicalNextAction:canonical,requestedNextAction:intent.requestedNextAction,authorized,reason};const d=sha(options,semantic);if(!d.ok)return d;
+  return{ok:true,value:deepFreeze({...semantic,boundaryDigest:d.value})};
+}
+
+export function applyConversationIndependence(claims:readonly ConversationClaim[],canonicalSubjects:Readonly<Record<string,string|undefined>>,options:OperationOptions):Result<ConversationIndependenceResult>{
+  const c=cancelled(options);if(c)return c;
+  const ids=claims.map(x=>x.claimId);if(new Set(ids).size!==ids.length||claims.some(x=>!validId(x.claimId)||!x.subject.trim()||!isSha256(x.assertedDigest)))return fail('CONVERSATION_CLAIM_INVALID','Conversation claims require unique ids, subject and semantic digest');
+  const conflicting=sortedUnique(claims.filter(x=>canonicalSubjects[x.subject]!==undefined&&canonicalSubjects[x.subject]!==x.assertedDigest).map(x=>x.claimId));
+  const informational=sortedUnique(claims.map(x=>x.claimId));
+  const semantic={informationalClaimIds:informational,conflictingClaimIds:conflicting,authoritySource:'CANONICAL_CHECKPOINT_ONLY' as const};const d=sha(options,semantic);if(!d.ok)return d;
+  return{ok:true,value:deepFreeze({...semantic,resultDigest:d.value})};
+}
