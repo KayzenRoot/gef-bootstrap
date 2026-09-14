@@ -1,0 +1,42 @@
+name: M12 Scope and DoD Engine
+on:
+  pull_request:
+    paths:
+      - 'packages/scope-dod-engine/**'
+      - 'tests/m12-scope-dod-engine.test.mjs'
+      - '.engineering/M12-MODULE-GATE.md'
+      - '.engineering/work-orders/GBS-WO-M12-001.md'
+      - '.engineering/context-locks/GBS-WO-M12-001.json'
+      - '.engineering/evidence/GBS-WO-M12-001-EVIDENCE.md'
+      - 'planning/modules/area-c-source-pack-and-planning/m12-scope-and-dod-engine/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/m12-platform.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: node --test tests/m12-scope-dod-engine.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
