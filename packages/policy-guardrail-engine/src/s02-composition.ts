@@ -15,7 +15,7 @@ function warrantCovers(w: ExceptionWarrant, policy: PolicyAuthorityCapsule, op: 
 export function buildApplicabilityWitnessSet(policies: readonly PolicyAuthorityCapsule[], operation: PolicyOperation, facts: Readonly<Record<string, boolean>>): ApplicabilityWitnessSet {
   const witnesses = [...policies].sort((a,b)=>compareCodePoint(a.policyId,b.policyId)).map(policy => {
     const reasons: string[] = [];
-    if (policy.status !== 'ACTIVE') reasons.push('POLICY_REVOKED');
+    if (policy.status !== 'ACTIVE') reasons.push(`POLICY_INACTIVE:${policy.status}`);
     if (!intersects(policy.domains, operation.domains)) reasons.push('DOMAIN_NOT_APPLICABLE');
     if (policy.appliesToOperations.length > 0 && !policy.appliesToOperations.includes(operation.operation)) reasons.push('OPERATION_NOT_APPLICABLE');
     if (policy.appliesToNodeIds.length > 0 && !policy.appliesToNodeIds.includes(operation.nodeId)) reasons.push('NODE_NOT_APPLICABLE');
@@ -53,7 +53,14 @@ export function conflictPreservingPolicyJoin(fragments: readonly PolicyEvaluatio
   const byAction = new Map<string, Set<string>>();
   for (const o of obligations) { const key = `${o.domain}:${o.action}`; const set = byAction.get(key) ?? new Set<string>(); set.add(o.effect); byAction.set(key,set); }
   const conflicts = [...byAction.entries()].filter(([,effects])=>effects.size > 1).map(([key])=>`CONFLICT:${key}`).sort(compareCodePoint);
-  return deepFreeze({ obligations, denials: sortedUnique(fragments.flatMap(f=>f.denials)), unknowns: sortedUnique(fragments.flatMap(f=>f.unknowns)), conflicts, exceptionWarrantIds: sortedUnique(fragments.flatMap(f=>f.exceptionWarrantIds)) });
+  return deepFreeze({
+    obligations,
+    denials: sortedUnique(fragments.flatMap(f=>f.denials)),
+    unknowns: sortedUnique(fragments.flatMap(f=>f.unknowns)),
+    conflicts,
+    exceptionWarrantIds: sortedUnique(fragments.flatMap(f=>f.exceptionWarrantIds)),
+    exceptionWarrantDigests: sortedUnique(fragments.flatMap(f=>f.exceptionWarrantDigests ?? [])),
+  });
 }
 
 export function evaluateGuardrailShortCircuit(join: PolicyJoinResult, mandatoryDomainCoverageComplete: boolean) {
@@ -61,7 +68,14 @@ export function evaluateGuardrailShortCircuit(join: PolicyJoinResult, mandatoryD
 }
 
 export function buildPolicyDecisionReceipt(operation: PolicyOperation, mandatoryDomains: readonly string[], join: PolicyJoinResult, witnesses: ApplicabilityWitnessSet, provenance: ReturnType<typeof buildPolicyProvenanceChain>, mandatoryDomainCoverageComplete: boolean, options: OperationOptions): Result<PolicyDecisionReceipt> {
-  const semantic = { decision: evaluateGuardrailShortCircuit(join, mandatoryDomainCoverageComplete), operation: { nodeId: operation.nodeId, operation: operation.operation, domains: sortedUnique(operation.domains) }, mandatoryDomains: sortedUnique(mandatoryDomains), obligations: join.obligations, denials: join.denials, unknowns: join.unknowns, conflicts: join.conflicts, witnesses, provenance, exceptionWarrantIds: join.exceptionWarrantIds, mandatoryDomainCoverageComplete } as const;
+  const semantic = {
+    decision: evaluateGuardrailShortCircuit(join, mandatoryDomainCoverageComplete),
+    operation: { nodeId: operation.nodeId, operation: operation.operation, domains: sortedUnique(operation.domains) },
+    mandatoryDomains: sortedUnique(mandatoryDomains), obligations: join.obligations, denials: join.denials,
+    unknowns: join.unknowns, conflicts: join.conflicts, witnesses, provenance,
+    exceptionWarrantIds: join.exceptionWarrantIds, exceptionWarrantDigests: join.exceptionWarrantDigests,
+    mandatoryDomainCoverageComplete,
+  } as const;
   const d = sha(options, semantic); if (!d.ok) return d;
   return { ok: true, value: deepFreeze({ ...semantic, receiptDigest: d.value }) };
 }
@@ -75,18 +89,27 @@ export function evaluatePolicies(input: PolicyEvaluationInput, options: Operatio
   for (const policy of input.policies) {
     const w = witnesses.witnesses.find(x=>x.policyId===policy.policyId);
     if (!w || w.state === 'DOES_NOT_APPLY') continue;
-    if (w.state === 'UNKNOWN') { fragments.push({ policyId:policy.policyId, obligations:[], denials:[], unknowns:w.reasons, exceptionWarrantIds:[] }); appliedPolicies.push(policy); continue; }
+    if (w.state === 'UNKNOWN') {
+      fragments.push({ policyId:policy.policyId, obligations:[], denials:[], unknowns:w.reasons, exceptionWarrantIds:[], exceptionWarrantDigests:[] });
+      appliedPolicies.push(policy);
+      continue;
+    }
     appliedPolicies.push(policy);
-    const used = new Set<string>(); const denials: string[] = []; const obligations: PolicyObligation[] = [];
+    const usedIds = new Set<string>(); const usedDigests = new Set<string>(); const denials: string[] = []; const obligations: PolicyObligation[] = [];
     if (policy.denyOperations.includes(input.operation.operation) || policy.denyOperations.includes('*')) {
       const waiver = input.exceptionWarrants.find(x=>warrantCovers(x,policy,input.operation,'WAIVE_DENY',null));
-      if (waiver) used.add(waiver.warrantId); else denials.push(`DENY:${policy.policyId}:${input.operation.operation}`);
+      if (waiver) { usedIds.add(waiver.warrantId); usedDigests.add(waiver.warrantDigest); }
+      else denials.push(`DENY:${policy.policyId}:${input.operation.operation}`);
     }
     for (const obligation of policy.obligations) {
       const waiver = input.exceptionWarrants.find(x=>warrantCovers(x,policy,input.operation,'WAIVE_OBLIGATION',obligation.obligationId));
-      if (waiver) used.add(waiver.warrantId); else obligations.push(obligation);
+      if (waiver) { usedIds.add(waiver.warrantId); usedDigests.add(waiver.warrantDigest); }
+      else obligations.push(obligation);
     }
-    fragments.push({ policyId:policy.policyId, obligations, denials, unknowns:[], exceptionWarrantIds:[...used].sort(compareCodePoint) });
+    fragments.push({
+      policyId:policy.policyId, obligations, denials, unknowns:[],
+      exceptionWarrantIds:[...usedIds].sort(compareCodePoint), exceptionWarrantDigests:[...usedDigests].sort(compareCodePoint),
+    });
   }
   const joinBase = conflictPreservingPolicyJoin(fragments);
   const coveredDomains = new Set(appliedPolicies.filter(p => witnesses.witnesses.find(w=>w.policyId===p.policyId)?.state === 'APPLIES').flatMap(p=>p.domains));
