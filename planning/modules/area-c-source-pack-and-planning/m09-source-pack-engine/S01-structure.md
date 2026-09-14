@@ -1,6 +1,6 @@
 # GBS-M09-S01 — Source Pack Structure
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 This session defines the deterministic structure of the GEF Source Pack. Canonical repository sources remain authoritative. The Source Pack provides addressable entries, project binding, authority metadata, applicability, dependencies, provenance and integrity metadata.
 
