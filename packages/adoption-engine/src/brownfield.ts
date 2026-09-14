@@ -1,5 +1,5 @@
-import type { AdoptionDependency, AdoptionSlice, CompatibilityBridgeContract, DriftClass, DriftResolution, EquivalenceState, LegacyCompatibilityMembrane, LegacyDebtRecord, NormalizationBudget, NormalizationFrontier, NormalizationState, NormalizationUsage, OperationOptions, Result, ReversibilityIndex, TruthPair } from './types.js';
-import { cancelled, canonical, compareCodePoint, deepFreeze, DEFAULT_MAX_DEPTH, fail, safeLimit } from './utils.js';
+import type { AdoptionDependency, AdoptionSlice, CompatibilityBridgeContract, DriftClass, DriftResolution, EquivalenceState, LegacyCompatibilityMembrane, LegacyDebtQuarantine, LegacyDebtRecord, NormalizationBudget, NormalizationFrontier, NormalizationState, NormalizationUsage, OperationOptions, ProgressiveGovernanceEnvelope, Result, ReversibilityIndex, TruthPair } from './types.js';
+import { cancelled, canonical, compareCodePoint, deepFreeze, DEFAULT_MAX_DEPTH, DEFAULT_MAX_EDGES, DEFAULT_MAX_NODES, fail, safeLimit, sha, validId } from './utils.js';
 
 const DRIFT_CLASSES=new Set<DriftClass>(['DRIFT_NONE','DOCUMENTATION_DRIFT','IMPLEMENTATION_DRIFT','TEST_DRIFT','GOVERNANCE_DRIFT','ARCHITECTURAL_DRIFT','INTENT_UNKNOWN','CONFLICTING_INTENT','LEGACY_ACCEPTED']);
 const NORMALIZATION_STATES=new Set<NormalizationState>(['LEGACY_UNMAPPED','LEGACY_MAPPED','DUAL_BOUND','GEF_CANONICAL_WITH_LEGACY_READ','GEF_CANONICAL','BLOCKED']);
@@ -24,7 +24,8 @@ export function validateLegacyCompatibilityMembrane(m:LegacyCompatibilityMembran
   if(!m.id||!m.legacySourceIdentity||!m.semanticClass||!m.sourceFingerprint||!m.owner)return fail('LEGACY_MAPPING_INVALID','Legacy Compatibility Membrane is incomplete',m.id);
   if(!['ALIAS','PROJECTION','ADAPTER','LEGACY_ACCEPTANCE'].includes(m.mappingType))return fail('LEGACY_MAPPING_TYPE_UNSUPPORTED','Unsupported legacy mapping type',m.id);
   if(m.lossy&&!m.approvalRef)return fail('LOSSY_MAPPING_UNAPPROVED','Lossy legacy mapping requires explicit approval',m.id);
-  return {ok:true,value:deepFreeze({...m})};
+  if(m.mutationPermission!==undefined&&m.mutationPermission!=='NONE')return fail('LEGACY_MAPPING_MUTATION_FORBIDDEN','M13 legacy membranes cannot grant mutation authority',m.id);
+  return {ok:true,value:deepFreeze({...m,mutationPermission:'NONE'})};
 }
 
 export function validateCompatibilityBridge(b:CompatibilityBridgeContract):Result<Readonly<CompatibilityBridgeContract>> {
@@ -32,6 +33,13 @@ export function validateCompatibilityBridge(b:CompatibilityBridgeContract):Resul
   if(!['READ_ONLY','BIDIRECTIONAL_PLANNED','MIGRATION_ONLY'].includes(b.direction))return fail('BRIDGE_DIRECTION_UNSUPPORTED','Unsupported compatibility bridge direction',b.id);
   if(b.lossy&&!b.approvalRef)return fail('LOSSY_MAPPING_UNAPPROVED','Lossy compatibility bridge requires explicit approval',b.id);
   return {ok:true,value:deepFreeze({...b})};
+}
+
+export function validateLegacyBindingFreshness(input:{kind:'MEMBRANE'|'BRIDGE';id:string;expectedFingerprint:string;currentFingerprint:string}):Result<Readonly<typeof input>> {
+  if(!input.id||!input.expectedFingerprint||!input.currentFingerprint)return fail('LEGACY_BINDING_FINGERPRINT_MISSING','Legacy binding freshness requires explicit identity and fingerprints',input.id);
+  if(input.kind!=='MEMBRANE'&&input.kind!=='BRIDGE')return fail('LEGACY_BINDING_KIND_UNSUPPORTED','Unsupported legacy binding kind',input.id);
+  if(input.expectedFingerprint!==input.currentFingerprint)return fail(input.kind==='MEMBRANE'?'LEGACY_ALIAS_STALE':'COMPATIBILITY_BRIDGE_STALE','Legacy binding fingerprint is stale',input.id);
+  return {ok:true,value:deepFreeze({...input})};
 }
 
 export function validateDriftResolution(action:DriftResolution,decisionRef?:string):Result<Readonly<{action:DriftResolution;decisionRef?:string}>> {
@@ -44,8 +52,10 @@ export function validateDriftResolution(action:DriftResolution,decisionRef?:stri
 
 export function planAdoptionSlice(input:{targets:readonly string[];dependencies:readonly AdoptionDependency[];governedDomains:readonly string[];blockedDomains?:readonly string[];optionalCleanup?:readonly string[]},options:OperationOptions):Result<AdoptionSlice> {
   const c=cancelled(options);if(c)return c;
-  const map=new Map<string,readonly string[]>();
-  for(const d of input.dependencies){if(map.has(d.domain))return fail('DUPLICATE_ADOPTION_DOMAIN','Duplicate adoption dependency domain',d.domain);map.set(d.domain,[...(d.dependsOn??[])].sort(compareCodePoint));}
+  const map=new Map<string,readonly string[]>();let edges=0;const graphNodes=new Set<string>(input.targets);
+  for(const d of input.dependencies){if(map.has(d.domain))return fail('DUPLICATE_ADOPTION_DOMAIN','Duplicate adoption dependency domain',d.domain);const deps=[...(d.dependsOn??[])].sort(compareCodePoint);map.set(d.domain,deps);graphNodes.add(d.domain);for(const dep of deps)graphNodes.add(dep);edges+=deps.length;}
+  if(graphNodes.size>safeLimit(options.maxNodes,DEFAULT_MAX_NODES))return fail('NODE_BUDGET_EXCEEDED','Adoption slice node budget exceeded');
+  if(edges>safeLimit(options.maxEdges,DEFAULT_MAX_EDGES))return fail('EDGE_BUDGET_EXCEEDED','Adoption slice edge budget exceeded');
   const required=new Set<string>(),visiting=new Set<string>();
   const blocked=new Set(input.blockedDomains??[]);const governed=new Set(input.governedDomains);
   const walk=(domain:string,depth:number):Result<void>=>{
@@ -62,11 +72,27 @@ export function planAdoptionSlice(input:{targets:readonly string[];dependencies:
   return {ok:true,value:deepFreeze({targetDomains:[...input.targets].sort(compareCodePoint),requiredDomains:[...required].sort(compareCodePoint),blockedDomains:blockedRequired,optionalCleanup:[...(input.optionalCleanup??[])].sort(compareCodePoint)})};
 }
 
+export function buildProgressiveGovernanceEnvelope(input:{projectId:string;slice:AdoptionSlice;governedDomains:readonly string[];safetyEnvelopeIdentity:string;requiredChecks:readonly string[];rollbackPlanRef:string},options:OperationOptions):Result<ProgressiveGovernanceEnvelope> {
+  if(!validId(input.projectId))return fail('PROJECT_ID_INVALID','Invalid project identity');
+  if(!input.safetyEnvelopeIdentity||!input.rollbackPlanRef)return fail('PROGRESSIVE_ENVELOPE_BINDING_MISSING','Safety envelope identity and rollback plan are required');
+  const normalized={projectId:input.projectId,targetDomains:[...new Set(input.slice.targetDomains)].sort(compareCodePoint),requiredDomains:[...new Set(input.slice.requiredDomains)].sort(compareCodePoint),governedDomains:[...new Set(input.governedDomains)].sort(compareCodePoint),blockedDomains:[...new Set(input.slice.blockedDomains)].sort(compareCodePoint),requiredChecks:[...new Set(input.requiredChecks)].sort(compareCodePoint),safetyEnvelopeIdentity:input.safetyEnvelopeIdentity,rollbackPlanRef:input.rollbackPlanRef};
+  const identity=sha(options,normalized);if(!identity.ok)return identity;
+  return {ok:true,value:deepFreeze({...normalized,semanticIdentity:identity.value})};
+}
+
 export function createLegacyDebtRecord(record:LegacyDebtRecord):Result<Readonly<LegacyDebtRecord>> {
   if(!record.id||!record.domain||!record.sourceBinding||!record.reason)return fail('LEGACY_DEBT_INVALID','Legacy debt record is incomplete',record.id);
   if(!DRIFT_CLASSES.has(record.driftClass))return fail('DRIFT_CLASS_UNSUPPORTED','Unsupported drift class',record.id);
   if(!['LOW','MEDIUM','HIGH','CRITICAL'].includes(record.severity))return fail('DEBT_SEVERITY_UNSUPPORTED','Unsupported legacy debt severity',record.id);
   return {ok:true,value:deepFreeze({...record,affectedCapabilities:[...record.affectedCapabilities].sort(compareCodePoint)})};
+}
+
+export function buildLegacyDebtQuarantine(projectId:string,records:readonly LegacyDebtRecord[],options:OperationOptions):Result<LegacyDebtQuarantine> {
+  if(!validId(projectId))return fail('PROJECT_ID_INVALID','Invalid project identity');
+  const normalized:LegacyDebtRecord[]=[];const ids=new Set<string>();
+  for(const record of records){if(ids.has(record.id))return fail('DUPLICATE_LEGACY_DEBT','Duplicate legacy debt record',record.id);ids.add(record.id);const validated=createLegacyDebtRecord(record);if(!validated.ok)return validated;normalized.push(validated.value);}
+  normalized.sort((a,b)=>compareCodePoint(a.id,b.id));const identity=sha(options,{projectId,records:normalized});if(!identity.ok)return identity;
+  return {ok:true,value:deepFreeze({projectId,records:normalized,semanticIdentity:identity.value})};
 }
 
 const NORMALIZATION_TRANSITIONS:Readonly<Record<NormalizationState,readonly NormalizationState[]>>={
@@ -79,6 +105,7 @@ export function validateNormalizationTransition(from:NormalizationState,to:Norma
 }
 
 export function buildNormalizationFrontier(projectId:string,domains:readonly {domain:string;state:NormalizationState}[]):Result<NormalizationFrontier> {
+  if(!validId(projectId))return fail('PROJECT_ID_INVALID','Invalid project identity');
   for(const d of domains){if(!d.domain)return fail('NORMALIZATION_DOMAIN_INVALID','Normalization domain is required');if(!NORMALIZATION_STATES.has(d.state))return fail('NORMALIZATION_STATE_UNSUPPORTED','Unsupported normalization state',d.domain);}
   const sorted=[...domains].sort((a,b)=>compareCodePoint(a.domain,b.domain));
   for(let i=1;i<sorted.length;i++)if(sorted[i]!.domain===sorted[i-1]!.domain)return fail('DUPLICATE_NORMALIZATION_DOMAIN','Duplicate normalization domain',sorted[i]!.domain);
@@ -104,4 +131,10 @@ export function classifyReversibility(mechanism:'DELETE_GENERATED'|'ALIAS_RESTOR
   if(mechanism==='TRANSACTION_ROLLBACK')return 'REVERSIBLE_BY_TRANSACTION_ROLLBACK';
   if(mechanism==='MIGRATION_ROLLBACK')return 'REQUIRES_MIGRATION_ROLLBACK';
   return 'IRREVERSIBILITY_UNKNOWN';
+}
+
+export function evaluateDestructivePromotion(reversibility:ReversibilityIndex,migrationRollbackEvidence=false):Result<Readonly<{admitted:true;reversibility:ReversibilityIndex}>> {
+  if(reversibility==='IRREVERSIBILITY_UNKNOWN')return fail('IRREVERSIBILITY_BLOCKS_PROMOTION','Unknown irreversibility blocks destructive promotion');
+  if(reversibility==='REQUIRES_MIGRATION_ROLLBACK'&&!migrationRollbackEvidence)return fail('MIGRATION_ROLLBACK_EVIDENCE_REQUIRED','Migration rollback evidence is required for destructive promotion');
+  return {ok:true,value:deepFreeze({admitted:true,reversibility})};
 }

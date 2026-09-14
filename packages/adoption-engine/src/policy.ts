@@ -23,6 +23,17 @@ export function createAdoptionIntentCapsule(input: AdoptionIntentInput, options:
   return { ok:true, value:deepFreeze({ ...normalized, semanticIdentity:identity.value }) };
 }
 
+export function validateAdoptionIntentCapsule(capsule:AdoptionIntentCapsule,current:{projectId:string;sourcePackIdentity:string;profileIdentity:string;profileDigest:string;policyVersion:string},options:OperationOptions):Result<AdoptionIntentCapsule> {
+  if(capsule.projectId!==current.projectId)return fail('PROJECT_BINDING_MISMATCH','Adoption Intent Capsule project binding is stale');
+  if(capsule.sourcePackIdentity!==current.sourcePackIdentity)return fail('SOURCE_PACK_STALE','Adoption Intent Capsule Source Pack binding is stale');
+  if(capsule.profileIdentity!==current.profileIdentity||capsule.profileDigest!==current.profileDigest)return fail('PROFILE_BINDING_STALE','Adoption Intent Capsule profile binding is stale');
+  if(capsule.policyVersion!==current.policyVersion)return fail('POLICY_VERSION_UNSUPPORTED','Adoption Intent Capsule policy version is not current');
+  const {semanticIdentity,...input}=capsule;const rebuilt=createAdoptionIntentCapsule(input,options);if(!rebuilt.ok)return rebuilt;if(rebuilt.value.semanticIdentity!==semanticIdentity)return fail('ADOPTION_INTENT_INTEGRITY_MISMATCH','Adoption Intent Capsule semantic identity does not match its content');
+  return {ok:true,value:capsule};
+}
+
+export function invalidateAdoptionAdmission(reason:'PROJECT_BINDING_CHANGED'|'SOURCE_FINGERPRINT_CHANGED'|'PROFILE_BINDING_CHANGED'|'POLICY_VERSION_CHANGED',unsafe=false):Readonly<{reason:string;nextState:'OBSERVED'|'BLOCKED'}> {return deepFreeze({reason,nextState:unsafe?'BLOCKED':'OBSERVED'});}
+
 export function validateAdoptionTransition(from: AdoptionState, to: AdoptionState): Result<Readonly<{from:AdoptionState;to:AdoptionState}>> {
   if (!(TRANSITIONS[from] ?? []).includes(to)) return fail('UNSUPPORTED_GOVERNANCE_TRANSITION',`Transition ${from} -> ${to} is not admitted`);
   return { ok:true, value:deepFreeze({from,to}) };
