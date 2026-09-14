@@ -1,47 +1,47 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M10_S01`
+Status: `READY_FOR_GBS_M11_S01`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M09`
-- Active module: `GBS-M10 — Planning Workspace`
+- Completed modules: `GBS-M00` through `GBS-M10`
+- Active module: `GBS-M11 — Decision System`
 - Active module status: `PLANNING`
-- M09 status: `MODULE_DONE`
-- M09-S01 through S05: `FROZEN`
-- M09 Module Gate: `PASSED`
-- Last completed Work Order: `GBS-WO-M09-001 — APPROVED_MODULE_DONE`
+- M10 status: `MODULE_DONE`
+- M10-S01 through S05: `FROZEN`
+- M10 Module Gate: `PASSED`
+- Last completed Work Order: `GBS-WO-M10-001 — APPROVED_MODULE_DONE`
 - Active Work Order: `NONE`
-- Implementation PR: `#169`
-- Admitted implementation base: `e68830f4edd84c0f989877abeffdf8e720c28dde`
-- Reviewed implementation head: `4bcad686bc0380e504f62c9ccbbf1a7b3038a237`
-- Reviewed implementation tree: `4bc4625b7565d9225bdeb38f6caa1bc44fccf2b3`
-- Implementation semantic audit review: `5193540943`
-- Evidence Bundle comment: `5658369916`
-- Implementation merge: `e67c75fda3d7ccfe7be1e877322555b8b6c0db60`
-- Exact-head CI: `m01-validation 34800956220 SUCCESS`; `m06-platform 34800956308 SUCCESS`; `m07-platform 34800956253 SUCCESS`; `m08-platform 34800956298 SUCCESS`; `m09-platform 34800956248 SUCCESS`
-- M09 platform matrix: `Ubuntu SUCCESS`, `Windows SUCCESS`, `macOS SUCCESS`
-- Dependency/security audit: `npm audit --audit-level=low — 0 vulnerabilities`
+- Implementation PR: `#171`
+- Admitted implementation base: `d9d4e973503382061d49e108db2990cd2a73df63`
+- Reviewed implementation head: `77b46ac9d3c99c994d49fea0a4047e671b5930aa`
+- Implementation semantic audit review: `5193635348`
+- Implementation merge: `1d8e4962a718d683c491cf9f96b49959d617fd53`
+- Exact-head M10 CI: regression `SUCCESS`; focused Ubuntu `SUCCESS`; focused Windows `SUCCESS`; focused macOS `SUCCESS`
+- Evidence Bundle: `.engineering/evidence/GBS-WO-M10-001-EVIDENCE.md`
+- Corrections closed before merge: strict TypeScript dependency-ID narrowing; focused schema/duplicate test separation; canonical accounting alignment
 - Unresolved findings: `CRITICAL 0`, `HIGH 0`
-- M10-S01 Areas: `PLANNED`
-- M10-S02 Modules: `PLANNED`
-- M10-S03 Sessions: `PLANNED`
-- M10-S04 Dependencies: `PLANNED`
-- M10-S05 Status and Freeze: `PLANNED`
-- Next legal stage: `PLAN_GBS_M10_S01_AREAS`
-- Production: `175 / 1088 = 16.08%`
-- Remaining: `913 / 1088 = 83.92%`
-- M09 earned: `19 / 19`
+- M11-S01 Decision Ledger: `PLANNED`
+- M11-S02 ADR: `PLANNED`
+- M11-S03 Supersession: `PLANNED`
+- M11-S04 Conflicts: `PLANNED`
+- M11-S05 Frozen Decisions: `PLANNED`
+- Next legal stage: `PLAN_GBS_M11_S01_DECISION_LEDGER`
+- Production: `191 / 1088 = 17.56%`
+- Remaining: `897 / 1088 = 82.44%`
+- M10 earned: `16 / 16`
 - Denominator change: `NONE`
 
-## M09 promotion basis
-GBS-WO-M09-001 was implemented from its exact admitted base and passed exact-final-head semantic review plus the required repository/platform regression evidence. The implementation preserves M03/M05/M06/M07/M08 authority boundaries, keeps M13 alias admission and M14 context selection outside M09, keeps final assurance outside M09, uses injected SHA-256 semantics, and provides deterministic read-only Source Pack topology, applicability, authority resolution, integrity/invalidation and exact template-source resolution.
+## M10 promotion basis
+GBS-WO-M10-001 passed its exact-head implementation audit and required cross-platform/regression evidence. The implementation provides deterministic planning hierarchy, topology/freeze projections, bounded dependency traversal, conservative widening, legal status transitions and explicit no-completion-authority freeze receipts.
 
-No HIGH/CRITICAL implementation defect remains known. Earlier red runs were bound to superseded heads and were corrected before the reviewed final head.
+The audit also detected and corrected a planning-only accounting mismatch before merge: production accounting follows the frozen Backlog Baseline, where M10 weight is `16`. Denominator remains `1088`.
+
+M10 preserves M09 Source Pack, M11 Decision, M12 Scope/DoD, M17 checkpoint, M21 progress, M24+ assurance and M63 executor-performance ownership boundaries. No HIGH/CRITICAL implementation defect remains known.
 
 ## Continuation contract
-M09 is closed as `MODULE_DONE`. The only legal continuation is planning `GBS-M10-S01 — Areas`. Planning earns no production credit until M10 implementation evidence later satisfies its own gate/Work Order.
+M10 is closed as `MODULE_DONE`. The only legal continuation is planning `GBS-M11-S01 — Decision Ledger`. Planning earns no production credit until M11 implementation evidence later satisfies its own gate/Work Order.
 
 Codex remains outside Bootstrap construction absent a separately governed exception/ADR.
 
-STOP CONDITION: `READY_FOR_GBS_M10_S01`.
+STOP CONDITION: `READY_FOR_GBS_M11_S01`.
