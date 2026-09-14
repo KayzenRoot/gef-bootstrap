@@ -1,47 +1,44 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M11_S01`
+Status: `READY_FOR_GBS_M12_S01`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M10`
-- Active module: `GBS-M11 — Decision System`
+- Completed modules: `GBS-M00` through `GBS-M11`
+- Active module: `GBS-M12 — Scope and DoD Engine`
 - Active module status: `PLANNING`
-- M10 status: `MODULE_DONE`
-- M10-S01 through S05: `FROZEN`
-- M10 Module Gate: `PASSED`
-- Last completed Work Order: `GBS-WO-M10-001 — APPROVED_MODULE_DONE`
+- M11 status: `MODULE_DONE`
+- M11-S01 through S05: `FROZEN`
+- M11 Module Gate: `PASSED`
+- Last completed Work Order: `GBS-WO-M11-001 — APPROVED_MODULE_DONE`
 - Active Work Order: `NONE`
-- Implementation PR: `#171`
-- Admitted implementation base: `d9d4e973503382061d49e108db2990cd2a73df63`
-- Reviewed implementation head: `77b46ac9d3c99c994d49fea0a4047e671b5930aa`
-- Implementation semantic audit review: `5193635348`
-- Implementation merge: `1d8e4962a718d683c491cf9f96b49959d617fd53`
-- Exact-head M10 CI: regression `SUCCESS`; focused Ubuntu `SUCCESS`; focused Windows `SUCCESS`; focused macOS `SUCCESS`
-- Evidence Bundle: `.engineering/evidence/GBS-WO-M10-001-EVIDENCE.md`
-- Corrections closed before merge: strict TypeScript dependency-ID narrowing; focused schema/duplicate test separation; canonical accounting alignment
+- Implementation PR: `#173`
+- Admitted implementation base: `a22979426462b4101734f4425337ae653c341bd7`
+- Reviewed implementation head: `9e4f0a30d73f27ee443b36c26fb828cd0ede6c76`
+- Implementation semantic audit review: `5193666909`
+- Implementation merge: `f580edcee276d5dd342f4bfb76e6752155e7fa9a`
+- Exact-head M11 CI: regression `SUCCESS`; focused Ubuntu `SUCCESS`; focused Windows `SUCCESS`; focused macOS `SUCCESS`
+- Evidence Bundle: `.engineering/evidence/GBS-WO-M11-001-EVIDENCE.md`
+- Correction closed before merge: strict TypeScript subject parsing/narrowing
 - Unresolved findings: `CRITICAL 0`, `HIGH 0`
-- M11-S01 Decision Ledger: `PLANNED`
-- M11-S02 ADR: `PLANNED`
-- M11-S03 Supersession: `PLANNED`
-- M11-S04 Conflicts: `PLANNED`
-- M11-S05 Frozen Decisions: `PLANNED`
-- Next legal stage: `PLAN_GBS_M11_S01_DECISION_LEDGER`
-- Production: `191 / 1088 = 17.56%`
-- Remaining: `897 / 1088 = 82.44%`
-- M10 earned: `16 / 16`
+- M12-S01 Classification: `PLANNED`
+- M12-S02 Necessary / Important / Future / Out of Scope: `PLANNED`
+- M12-S03 Definition of Done: `PLANNED`
+- M12-S04 Scope Drift: `PLANNED`
+- Next legal stage: `PLAN_GBS_M12_S01_CLASSIFICATION`
+- Production: `208 / 1088 = 19.12%`
+- Remaining: `880 / 1088 = 80.88%`
+- M11 earned: `17 / 17`
 - Denominator change: `NONE`
 
-## M10 promotion basis
-GBS-WO-M10-001 passed its exact-head implementation audit and required cross-platform/regression evidence. The implementation provides deterministic planning hierarchy, topology/freeze projections, bounded dependency traversal, conservative widening, legal status transitions and explicit no-completion-authority freeze receipts.
+## M11 promotion basis
+GBS-WO-M11-001 passed exact-head semantic audit and Linux/Windows/macOS focused tests plus full regression. The implemented Decision System provides strict decision/ADR records, deterministic lineage, explicit supersession, fail-closed conflict/unknown behavior, frozen-decision eligibility, staleness and immutable snapshot protection.
 
-The audit also detected and corrected a planning-only accounting mismatch before merge: production accounting follows the frozen Backlog Baseline, where M10 weight is `16`. Denominator remains `1088`.
-
-M10 preserves M09 Source Pack, M11 Decision, M12 Scope/DoD, M17 checkpoint, M21 progress, M24+ assurance and M63 executor-performance ownership boundaries. No HIGH/CRITICAL implementation defect remains known.
+M11 never resolves authority from recency, timestamps, file order, Git order or LLM confidence. Its receipt seed is explicitly decision-eligibility-only. Scope/DoD, checkpoint, progress, final assurance, integrity and audit-ledger ownership remain external.
 
 ## Continuation contract
-M10 is closed as `MODULE_DONE`. The only legal continuation is planning `GBS-M11-S01 — Decision Ledger`. Planning earns no production credit until M11 implementation evidence later satisfies its own gate/Work Order.
+M11 is closed as `MODULE_DONE`. The only legal continuation is planning `GBS-M12-S01 — Classification`. Planning earns no production credit until M12 implementation evidence satisfies its own gate and Work Order.
 
 Codex remains outside Bootstrap construction absent a separately governed exception/ADR.
 
-STOP CONDITION: `READY_FOR_GBS_M11_S01`.
+STOP CONDITION: `READY_FOR_GBS_M12_S01`.
