@@ -1,28 +1,42 @@
 import type { AdoptionDependency, AdoptionSlice, CompatibilityBridgeContract, DriftClass, DriftResolution, EquivalenceState, LegacyCompatibilityMembrane, LegacyDebtRecord, NormalizationBudget, NormalizationFrontier, NormalizationState, NormalizationUsage, OperationOptions, Result, ReversibilityIndex, TruthPair } from './types.js';
-import { cancelled, compareCodePoint, deepFreeze, DEFAULT_MAX_DEPTH, fail, safeLimit } from './utils.js';
+import { cancelled, canonical, compareCodePoint, deepFreeze, DEFAULT_MAX_DEPTH, fail, safeLimit } from './utils.js';
 
-export function reconcileBrownfieldTruth(input:{domain:string;observed:unknown;normative?:unknown;driftClass?:DriftClass;evidenceRefs?:readonly string[];legacyAcceptanceRef?:string}):TruthPair {
+const DRIFT_CLASSES=new Set<DriftClass>(['DRIFT_NONE','DOCUMENTATION_DRIFT','IMPLEMENTATION_DRIFT','TEST_DRIFT','GOVERNANCE_DRIFT','ARCHITECTURAL_DRIFT','INTENT_UNKNOWN','CONFLICTING_INTENT','LEGACY_ACCEPTED']);
+const NORMALIZATION_STATES=new Set<NormalizationState>(['LEGACY_UNMAPPED','LEGACY_MAPPED','DUAL_BOUND','GEF_CANONICAL_WITH_LEGACY_READ','GEF_CANONICAL','BLOCKED']);
+
+export function reconcileBrownfieldTruth(input:{domain:string;observed:unknown;normative?:unknown;driftClass?:DriftClass;evidenceRefs?:readonly string[];legacyAcceptanceRef?:string}):Result<TruthPair> {
+  if(!input.domain)return fail('BROWNFIELD_DOMAIN_MISSING','Brownfield truth domain is required');
   let drift:DriftClass;
   if(input.legacyAcceptanceRef) drift='LEGACY_ACCEPTED';
   else if(input.normative===undefined) drift='INTENT_UNKNOWN';
-  else if(input.driftClass) drift=input.driftClass;
-  else drift=JSON.stringify(input.observed)===JSON.stringify(input.normative)?'DRIFT_NONE':'CONFLICTING_INTENT';
-  return deepFreeze({domain:input.domain,observed:input.observed,...(input.normative===undefined?{}:{normative:input.normative}),driftClass:drift,evidenceRefs:[...(input.evidenceRefs??[])].sort(compareCodePoint),...(input.legacyAcceptanceRef?{legacyAcceptanceRef:input.legacyAcceptanceRef}:{})});
+  else {
+    let equivalent=false;
+    try{equivalent=canonical(input.observed)===canonical(input.normative);}catch{return fail('BROWNFIELD_VALUE_UNSUPPORTED','Observed or normative truth cannot be canonically compared',input.domain);}
+    if(equivalent) drift='DRIFT_NONE';
+    else if(!input.driftClass)return fail('BROWNFIELD_DRIFT_CLASS_REQUIRED','Non-equivalent observed and normative truth requires an explicit drift class',input.domain);
+    else drift=input.driftClass;
+  }
+  if(!DRIFT_CLASSES.has(drift))return fail('DRIFT_CLASS_UNSUPPORTED','Unsupported drift class',input.domain);
+  return {ok:true,value:deepFreeze({domain:input.domain,observed:input.observed,...(input.normative===undefined?{}:{normative:input.normative}),driftClass:drift,evidenceRefs:[...(input.evidenceRefs??[])].sort(compareCodePoint),...(input.legacyAcceptanceRef?{legacyAcceptanceRef:input.legacyAcceptanceRef}:{})})};
 }
 
 export function validateLegacyCompatibilityMembrane(m:LegacyCompatibilityMembrane):Result<Readonly<LegacyCompatibilityMembrane>> {
   if(!m.id||!m.legacySourceIdentity||!m.semanticClass||!m.sourceFingerprint||!m.owner)return fail('LEGACY_MAPPING_INVALID','Legacy Compatibility Membrane is incomplete',m.id);
+  if(!['ALIAS','PROJECTION','ADAPTER','LEGACY_ACCEPTANCE'].includes(m.mappingType))return fail('LEGACY_MAPPING_TYPE_UNSUPPORTED','Unsupported legacy mapping type',m.id);
   if(m.lossy&&!m.approvalRef)return fail('LOSSY_MAPPING_UNAPPROVED','Lossy legacy mapping requires explicit approval',m.id);
   return {ok:true,value:deepFreeze({...m})};
 }
 
 export function validateCompatibilityBridge(b:CompatibilityBridgeContract):Result<Readonly<CompatibilityBridgeContract>> {
   if(!b.id||!b.sourceIdentity||!b.targetSemanticClass||!b.mappingVersion||!b.invalidationFingerprint||!b.owner)return fail('COMPATIBILITY_BRIDGE_INVALID','Compatibility Bridge Contract is incomplete',b.id);
+  if(!['READ_ONLY','BIDIRECTIONAL_PLANNED','MIGRATION_ONLY'].includes(b.direction))return fail('BRIDGE_DIRECTION_UNSUPPORTED','Unsupported compatibility bridge direction',b.id);
   if(b.lossy&&!b.approvalRef)return fail('LOSSY_MAPPING_UNAPPROVED','Lossy compatibility bridge requires explicit approval',b.id);
   return {ok:true,value:deepFreeze({...b})};
 }
 
 export function validateDriftResolution(action:DriftResolution,decisionRef?:string):Result<Readonly<{action:DriftResolution;decisionRef?:string}>> {
+  const allowed:readonly DriftResolution[]=['ACCEPT_OBSERVED_AS_NORMATIVE','UPDATE_NORMATIVE_TO_APPROVED_INTENT','MIGRATE_IMPLEMENTATION_TO_NORMATIVE','MAP_WITH_ALIAS','LEGACY_ACCEPT_WITH_EXPIRY_OR_REVIEW_TRIGGER','DEFER_QUARANTINED','BLOCK'];
+  if(!allowed.includes(action))return fail('DRIFT_RESOLUTION_UNSUPPORTED','Unsupported drift resolution');
   const changesIntent=action==='ACCEPT_OBSERVED_AS_NORMATIVE'||action==='UPDATE_NORMATIVE_TO_APPROVED_INTENT'||action==='MIGRATE_IMPLEMENTATION_TO_NORMATIVE';
   if(changesIntent&&!decisionRef)return fail('DRIFT_RESOLUTION_DECISION_REQUIRED','This drift resolution requires explicit decision authority');
   return {ok:true,value:deepFreeze(decisionRef?{action,decisionRef}:{action})};
@@ -30,7 +44,8 @@ export function validateDriftResolution(action:DriftResolution,decisionRef?:stri
 
 export function planAdoptionSlice(input:{targets:readonly string[];dependencies:readonly AdoptionDependency[];governedDomains:readonly string[];blockedDomains?:readonly string[];optionalCleanup?:readonly string[]},options:OperationOptions):Result<AdoptionSlice> {
   const c=cancelled(options);if(c)return c;
-  const map=new Map(input.dependencies.map(d=>[d.domain,[...(d.dependsOn??[])].sort(compareCodePoint)]));
+  const map=new Map<string,readonly string[]>();
+  for(const d of input.dependencies){if(map.has(d.domain))return fail('DUPLICATE_ADOPTION_DOMAIN','Duplicate adoption dependency domain',d.domain);map.set(d.domain,[...(d.dependsOn??[])].sort(compareCodePoint));}
   const required=new Set<string>(),visiting=new Set<string>();
   const blocked=new Set(input.blockedDomains??[]);const governed=new Set(input.governedDomains);
   const walk=(domain:string,depth:number):Result<void>=>{
@@ -49,6 +64,8 @@ export function planAdoptionSlice(input:{targets:readonly string[];dependencies:
 
 export function createLegacyDebtRecord(record:LegacyDebtRecord):Result<Readonly<LegacyDebtRecord>> {
   if(!record.id||!record.domain||!record.sourceBinding||!record.reason)return fail('LEGACY_DEBT_INVALID','Legacy debt record is incomplete',record.id);
+  if(!DRIFT_CLASSES.has(record.driftClass))return fail('DRIFT_CLASS_UNSUPPORTED','Unsupported drift class',record.id);
+  if(!['LOW','MEDIUM','HIGH','CRITICAL'].includes(record.severity))return fail('DEBT_SEVERITY_UNSUPPORTED','Unsupported legacy debt severity',record.id);
   return {ok:true,value:deepFreeze({...record,affectedCapabilities:[...record.affectedCapabilities].sort(compareCodePoint)})};
 }
 
@@ -56,11 +73,13 @@ const NORMALIZATION_TRANSITIONS:Readonly<Record<NormalizationState,readonly Norm
   LEGACY_UNMAPPED:['LEGACY_MAPPED','BLOCKED'],LEGACY_MAPPED:['DUAL_BOUND','BLOCKED'],DUAL_BOUND:['GEF_CANONICAL_WITH_LEGACY_READ','GEF_CANONICAL','BLOCKED'],GEF_CANONICAL_WITH_LEGACY_READ:['GEF_CANONICAL','DUAL_BOUND','BLOCKED'],GEF_CANONICAL:['DUAL_BOUND','BLOCKED'],BLOCKED:['LEGACY_MAPPED','DUAL_BOUND']
 };
 export function validateNormalizationTransition(from:NormalizationState,to:NormalizationState):Result<Readonly<{from:NormalizationState;to:NormalizationState}>> {
+  if(!NORMALIZATION_STATES.has(from)||!NORMALIZATION_STATES.has(to))return fail('NORMALIZATION_STATE_UNSUPPORTED','Unsupported normalization state');
   if(!(NORMALIZATION_TRANSITIONS[from]??[]).includes(to))return fail('NORMALIZATION_FRONTIER_INVALID',`Transition ${from} -> ${to} is not admitted`);
   return {ok:true,value:deepFreeze({from,to})};
 }
 
 export function buildNormalizationFrontier(projectId:string,domains:readonly {domain:string;state:NormalizationState}[]):Result<NormalizationFrontier> {
+  for(const d of domains){if(!d.domain)return fail('NORMALIZATION_DOMAIN_INVALID','Normalization domain is required');if(!NORMALIZATION_STATES.has(d.state))return fail('NORMALIZATION_STATE_UNSUPPORTED','Unsupported normalization state',d.domain);}
   const sorted=[...domains].sort((a,b)=>compareCodePoint(a.domain,b.domain));
   for(let i=1;i<sorted.length;i++)if(sorted[i]!.domain===sorted[i-1]!.domain)return fail('DUPLICATE_NORMALIZATION_DOMAIN','Duplicate normalization domain',sorted[i]!.domain);
   return {ok:true,value:deepFreeze({projectId,domains:sorted})};
@@ -69,10 +88,12 @@ export function buildNormalizationFrontier(projectId:string,domains:readonly {do
 export function probeSemanticEquivalence(left:Readonly<Record<string,unknown>>,right:Readonly<Record<string,unknown>>,fields:readonly string[],supported=true):EquivalenceState {
   if(!supported)return 'UNSUPPORTED_MAPPING';
   for(const field of fields)if(!Object.prototype.hasOwnProperty.call(left,field)||!Object.prototype.hasOwnProperty.call(right,field))return 'INDETERMINATE';
-  return fields.every(field=>JSON.stringify(left[field])===JSON.stringify(right[field]))?'EQUIVALENT':'NON_EQUIVALENT';
+  try{return fields.every(field=>canonical(left[field])===canonical(right[field]))?'EQUIVALENT':'NON_EQUIVALENT';}catch{return 'INDETERMINATE';}
 }
 
 export function enforceNormalizationBudget(usage:NormalizationUsage,budget:NormalizationBudget):Result<Readonly<NormalizationUsage>> {
+  const values=[usage.domains,usage.mappings,usage.migrations,usage.dependencyExpansion,budget.maxDomains,budget.maxMappings,budget.maxMigrations,budget.maxDependencyExpansion];
+  if(values.some(v=>!Number.isInteger(v)||v<0))return fail('NORMALIZATION_BUDGET_INVALID','Normalization budget and usage must use non-negative integers');
   if(usage.domains>budget.maxDomains||usage.mappings>budget.maxMappings||usage.migrations>budget.maxMigrations||usage.dependencyExpansion>budget.maxDependencyExpansion)return fail('NORMALIZATION_BUDGET_EXCEEDED','Progressive normalization budget exceeded');
   return {ok:true,value:deepFreeze({...usage})};
 }
