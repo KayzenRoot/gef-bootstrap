@@ -1,6 +1,6 @@
 # GBS-M09-S04 — Source Hierarchy
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Operationalize the constitutional domain-specific authority model inside Source Packs without inventing a naive universal source order.
