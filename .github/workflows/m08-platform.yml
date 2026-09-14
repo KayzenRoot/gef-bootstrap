@@ -22,5 +22,6 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
       - run: npm run build
       - run: node --test tests/m08-project-profiles.test.mjs tests/m08-startup-purity.test.mjs
