@@ -8,6 +8,7 @@ Planning gate: `.engineering/gates/M20-PLANNING-GATE.md` (`PASSED`)
 Work Order: `.engineering/work-orders/GBS-WO-M20-001.md`
 Frozen weight: `13`
 Assurance intensity: `STANDARD_PLUS`
+Admission PR: `#214`
 
 ## Admission scope
 Admission, if approved, authorizes only the bounded implementation of the 25 M20 mechanisms frozen in S01-S05 and compiled into `GBS-WO-M20-001`.
@@ -19,15 +20,15 @@ No production credit, source-authority invention, progress/ETA/project-status ca
 M17, M18 and M19 required upstream continuation/registry semantics are MODULE_DONE. M20 implementation must consume their verified handoff identities and remain subordinate to later M21/M22/M23 metric owners.
 
 ## Admission requirements
-- exact-head semantic review of the admission delta;
+- exact-head semantic review of PR #214;
 - planning gate and Work Order remain mutually consistent;
 - CHECKPOINT.md and CHECKPOINT.json agree;
 - no production-code changes in admission PR;
 - CRITICAL 0 / HIGH 0;
-- admission merge becomes the admission decision event;
-- a post-merge binding must record the real admission merge SHA before implementation authority exists.
+- #214 merge becomes the admission decision event;
+- a post-merge binding must record the real #214 merge SHA before implementation authority exists.
 
 ## Execution-base rule
-The admission branch/PR is not execution authority. After the admission PR merges, a separate binding promotion records its exact merge SHA and may change Work Order/checkpoint to `ADMITTED_READY_FOR_IMPLEMENTATION`. Until that binding merges, M20 code implementation remains forbidden.
+PR #214 itself is not execution authority. After it merges, a separate binding promotion records the exact merge SHA and changes the Work Order/checkpoint to `ADMITTED_READY_FOR_IMPLEMENTATION`. Until then M20 code implementation remains forbidden.
 
-STOP CONDITION: `GBS_WO_M20_001_ADMISSION_CANDIDATE`.
+STOP CONDITION: `GBS_WO_M20_001_ADMISSION_CANDIDATE_PR_214`.
