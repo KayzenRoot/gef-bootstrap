@@ -41,9 +41,9 @@ Future/experimental: graph DB, learned clustering/dependency prediction, embeddi
 Contract validation; duplicate/orphan/cross-owner cases; deterministic projections; topology ordering/cycles; informational cycles; missing endpoints; cut-set/widening; transition legality; freeze/stale behavior; cancellation/budgets; prototype-hostile input; no completion authority; startup purity; full repository regression.
 
 ## Accounting
-M10 frozen weight: `20`. Planning/gate earns `0 / 20`. Denominator remains `1088` until objective implementation evidence and promoted completion.
+Canonical Backlog Baseline weight for M10: `16`. Planning/gate earns `0 / 16`. Denominator remains `1088` until objective implementation evidence and promoted completion. Any contradictory planning-only weight is non-authoritative for production accounting.
 
 Verdict: `PLANNED_READY_FOR_IMPLEMENTATION`.
-No known HIGH/CRITICAL planning defect.
+No known HIGH/CRITICAL planning defect after accounting correction.
 
 STOP CONDITION: `M10_PLANNED_READY_FOR_IMPLEMENTATION`.
