@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M09_MODULE_GATE",
+  "status": "READY_FOR_GBS_WO_M09_001_COMPILE",
   "phase": "PRODUCTION_CONSTRUCTION",
   "activeModule": "GBS-M09_SOURCE_PACK_ENGINE",
-  "activeModuleStatus": "PLANNING_FROZEN",
+  "activeModuleStatus": "PLANNED_READY_FOR_IMPLEMENTATION",
   "activeWorkOrder": null,
   "mainProductionDenominatorWeight": 1088,
   "earnedProductionWeight": 156,
-  "nextPlanningStage": "RUN_GBS_M09_MODULE_GATE",
-  "stopState": "READY_FOR_GBS_M09_MODULE_GATE"
+  "nextPlanningStage": "COMPILE_GBS_WO_M09_001",
+  "stopState": "READY_FOR_GBS_WO_M09_001_COMPILE"
 }
