@@ -25,17 +25,17 @@ This backlog is the canonical weighted production denominator for the single com
 | M05 Transactional Apply Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
 | M06 Filesystem Safety | CORE_REQUIRED | 4 | 5 | 4 | 5 | 18 | MODULE_DONE |
 | M07 Template Engine | PRODUCT_INCLUDED | 4 | 3 | 4 | 3 | 14 | MODULE_DONE |
-| M08 Project Profiles | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | PLANNED |
-| M09 Source Pack Engine | CORE_REQUIRED | 5 | 4 | 5 | 5 | 19 | PLANNED |
-| M10 Planning Workspace | CORE_REQUIRED | 4 | 3 | 5 | 4 | 16 | PLANNED |
-| M11 Decision System | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | PLANNED |
-| M12 Scope & DoD Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | PLANNED |
-| M13 GEF Adoption Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
-| M14 Task & Context Compiler | CORE_REQUIRED | 5 | 4 | 5 | 5 | 19 | PLANNED |
-| M15 Execution Pack Compiler | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
-| M16 Policy & Guardrail Engine | CORE_REQUIRED | 4 | 5 | 5 | 5 | 19 | PLANNED |
-| M17 Checkpoint Engine | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | PLANNED |
-| M18 Resume Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | PLANNED |
+| M08 Project Profiles | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | MODULE_DONE |
+| M09 Source Pack Engine | CORE_REQUIRED | 5 | 4 | 5 | 5 | 19 | MODULE_DONE |
+| M10 Planning Workspace | CORE_REQUIRED | 4 | 3 | 5 | 4 | 16 | MODULE_DONE |
+| M11 Decision System | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | MODULE_DONE |
+| M12 Scope & DoD Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | MODULE_DONE |
+| M13 GEF Adoption Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
+| M14 Task & Context Compiler | CORE_REQUIRED | 5 | 4 | 5 | 5 | 19 | MODULE_DONE |
+| M15 Execution Pack Compiler | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
+| M16 Policy & Guardrail Engine | CORE_REQUIRED | 4 | 5 | 5 | 5 | 19 | ADMITTED_ACTIVE |
+| M17 Checkpoint Engine | CORE_REQUIRED | 4 | 4 | 5 | 4 | 17 | ADMITTED_WAITING_DEPENDENCY |
+| M18 Resume Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | ADMITTED_WAITING_DEPENDENCY |
 | M19 Project Registry | PRODUCT_INCLUDED | 4 | 3 | 4 | 3 | 14 | PLANNED |
 | M20 Response Contract | PRODUCT_INCLUDED | 3 | 3 | 4 | 3 | 13 | PLANNED |
 | M21 Progress Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | PLANNED |
@@ -92,27 +92,29 @@ This backlog is the canonical weighted production denominator for the single com
 | M41 UGAS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 
 ## Current audited production position
-Approved MODULE_DONE evidence now exists for M00-M07.
+Approved MODULE_DONE evidence exists for M00-M15. M16 is admitted and active with zero earned weight until its separate promotion.
 
 ```text
 TOTAL_WEIGHT   = 1088
-EARNED_WEIGHT  = 139
-REMAINING      = 949
-COMPLETION     = 139 / 1088 = 12.775735...%
+EARNED_WEIGHT  = 285
+REMAINING      = 803
+COMPLETION     = 285 / 1088 = 26.194852...%
 ```
 
 Canonical rounded values:
-- `overallCompletion`: `12.78%`;
-- `remainingCompletion`: `87.22%`;
-- `earnedWeight`: `139`;
-- `remainingWeight`: `949`.
+- `overallCompletion`: `26.19%`;
+- `remainingCompletion`: `73.81%`;
+- `earnedWeight`: `285`;
+- `remainingWeight`: `803`.
 
-Latest evidence bindings:
+Current progression authority is `.engineering/CHECKPOINT.md` + `.engineering/CHECKPOINT.json`. Evidence remains bound to each accepted module's reviewed head/merge and evidence record. Selected historical bindings retained below are descriptive audit history, not a substitute for the current checkpoint:
 - M03: PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc`, run `34727238254`.
 - M04: PR #86, reviewed head `bc26829fa8f3043056b6d9b614c618767f02e6c7`, tree `46c80e056dde05ef108e9599485c33de844cec5a`, merge `67b4377a6df7a34874f751c13d1659b942eed859`, run `34730911026`.
 - M05: PR #103, reviewed head `0eea9b410755410cb8ae2e34042e6ccb87fae4c6`, tree `d740f3ef4f6ed3ea4a322b8969d8eaf5f5befa65`, merge `3c93e4da5c12bd2ce5ed4ebfb8b809a256815c93`, run `34735379266`.
 - M06: PR #117, reviewed head `5ae4404db34447ad4d08eefc22ea0b0ad2ca89c2`, tree `e17b23c59f05785ab0cf1ccaebfd2608af3f3a70`, merge `7e92051e9a675f05bee27e830fd2486fce4a2bbd`, repository run `34750998852`, platform run `34750998868`.
 - M07: PR #133, reviewed head `a76bfc20a6a6300d6d98f42748bad01d77088716`, tree `f5b9b6ad95dafaea2300e2711160d8673909d864`, merge `60e3c0f2a0da69ce2a505212e30bc09a2ece3afd`, review `5191003371`, repository run `34762400016`, platform run `34762400076`.
+- M14: evidence `.engineering/evidence/GBS-WO-M14-001-EVIDENCE.md`, merge `294b7c0961d72a2d1c1217f647b3116feef20ee0`.
+- M15: evidence `.engineering/evidence/GBS-WO-M15-001-EVIDENCE.md`, reviewed head `4985270613387a7a5ca1c1c6393fa0bfaee13dc8`, merge `4d466a0c6d1ad5a729a903104c0c4abe6e728b4f`.
 
 ## ETA rule
 ETA remains `NOT_YET_RELIABLE`. Weights are production burden, not days. M22/M45 own mature estimation; M63 owns quantitative executor-performance thresholds.

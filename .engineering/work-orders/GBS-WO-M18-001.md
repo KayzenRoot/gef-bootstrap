@@ -1,11 +1,14 @@
 # GBS-WO-M18-001 — Implement Resume Engine
 
-Status: `COMPILED_NOT_ADMITTED`
+Status: `ADMITTED_WAITING_FOR_M16_M17`
 Risk: `ELEVATED`
 Module: `GBS-M18 — Resume Engine`
 Canonical package: `packages/resume-engine`
 Canonical weight: `18`
 Compilation base: `6f86f8e7805b96c8632d2457b6c14e32123b6a14`
+Admission PR: `#191`
+Admission reviewed head: `c32b381f9de816568cc77ed31e7c4a93e59dd8d0`
+Admission merge / sole legal execution base: `54e1bdf6555b6170cc288617370592a072d6cf95`
 
 ## Required implementation
 Implement Resume Intent Capsule, Lineage Continuity Proof, Resume Authority Boundary, Conversation Independence Rule, Resume Minimum Sufficient Context, Hot-State Rehydrator, Resume Read Plan, Negative Rehydration Cache, Context Temperature Map, Resume Drift Vector, Safe Re-entry Gate, Delta Rehydration Graph, Orphan Work Detector, Resume Conflict Quarantine, Resume Receipt, Resume Semantic Digest, Continuity Loss Sentinel, Resume Efficiency Receipt and Safe Handback Contract.
@@ -16,6 +19,7 @@ Resume derives from canonical checkpoint and authority bindings, never conversat
 ## Evidence and acceptance
 Exact admitted base/head/tree, cold/warm resume, drift, lineage, orphan, budget and conversation-independence tests; platform matrix; full regression; audit/security; semantic review; zero unresolved HIGH/CRITICAL; separate MODULE_DONE promotion.
 
-Admission rule: implementation unauthorized until separate admission merge; its SHA is sole legal execution base.
+## Admission binding
+The M14-M18 train is admitted by PR #191 / merge `54e1bdf6555b6170cc288617370592a072d6cf95`. M18 remains dependency-blocked until both M16 and M17 receive MODULE_DONE promotion. Admission is satisfied; sequencing is the remaining gate.
 
-STOP CONDITION: `GBS_WO_M18_001_COMPILED_AWAITING_ADMISSION`.
+STOP CONDITION: `GBS_WO_M18_001_ADMITTED_WAITING_FOR_M16_M17_MODULE_DONE`.
