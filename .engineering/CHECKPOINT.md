@@ -1,29 +1,29 @@
 # Checkpoint
 
-Status: `GBS_M20_PLANNING_FROZEN`
+Status: `GBS_M20_ADMISSION_CANDIDATE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
 - Completed modules: `GBS-M00` through `GBS-M19`
 - Active module: `GBS-M20 — Response Contract`
-- Active module status: `PLANNING_FROZEN_WORK_ORDER_COMPILED_NOT_ADMITTED`
+- Active module status: `ADMISSION_CANDIDATE`
 - Active Work Order: `GBS-WO-M20-001`
 - M20 planning sessions: `5 / 5 FROZEN`
 - M20 planning gate: `.engineering/gates/M20-PLANNING-GATE.md` (`PASSED`)
+- M20 planning freeze PR: `#213`
+- M20 planning freeze merge: `2c65f7cd1bd4f9015878acbe449118d9a873a88f`
+- M20 admission PR: `#214`
 - M20 assurance intensity: `STANDARD_PLUS`
 - M20 required mechanisms: `25`
 - Production: `353 / 1088 = 32.44%`
 - Remaining: `735 / 1088 = 67.56%`
 - M20 earned: `0 / 13`
 - Denominator change: `NONE`
-- Next legal stage: `AUDIT_AND_ADMIT_GBS_M20`
+- Next legal stage: `REVIEW_AND_MERGE_GBS_M20_ADMISSION`
 
-## M20 planning outcome
-M20 is frozen as an authority-bounded Response Contract module. It owns deterministic response semantics/projection, delegated metric truth states, verdict/blocker/next-action projection, minimum-sufficient compactness, redaction boundaries, machine/human equivalence, integrity receipts, schema compatibility and stale-response rejection.
+## Admission contract
+PR #214 is the sole active admission candidate for the frozen M20 Work Order. The candidate grants no implementation authority by branch or PR existence. Exact-head review must confirm the frozen scope, ownership boundaries, checkpoint agreement and absence of production code/credit.
 
-It does not compute progress, ETA or project status; those remain M21/M22/M23. It does not generate evidence/proof, telemetry, artifacts, operator UI or external side effects. Missing baselines and stale/conflicting inputs remain explicit non-success states instead of invented values or optimistic prose.
+If #214 passes audit and merges, its actual merge SHA must be recorded in a separate post-merge binding before implementation can begin. That binding becomes the sole legal M20 execution base and is the only event allowed to set `ADMITTED_READY_FOR_IMPLEMENTATION`.
 
-## Continuation contract
-Planning and Work Order compilation grant no implementation authority and no production credit. `GBS-WO-M20-001` remains `COMPILED_NOT_ADMITTED`. The next legal increment is exact-head planning audit followed by a separate admission promotion. Implementation may begin only after both canonical checkpoint and Work Order say `ADMITTED_READY_FOR_IMPLEMENTATION`.
-
-STOP CONDITION: `GBS_M20_PLANNING_FROZEN_READY_FOR_ADMISSION_AUDIT`.
+STOP CONDITION: `GBS_M20_ADMISSION_CANDIDATE_READY_FOR_EXACT_HEAD_REVIEW`.
