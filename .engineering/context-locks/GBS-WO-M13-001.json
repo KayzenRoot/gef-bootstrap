@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-WO-M13-001",
+  "module": "GBS-M13_GEF_ADOPTION_ENGINE",
+  "risk": "ELEVATED",
+  "baseSha": "a1523b550988ca035ff95f86e71df7c63be9b928",
+  "sourceHierarchyLocked": true,
+  "canonicalDenominatorWeight": 1088,
+  "moduleWeight": 20,
+  "codexExecutorAllowed": false,
+  "lockedSources": [
+    {"path":".engineering/CHECKPOINT.md","fingerprint":"checkpoint@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":".engineering/M13-MODULE-GATE.md","fingerprint":"module-gate@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":".engineering/M13-PLANNING-FREEZE.md","fingerprint":"planning-freeze@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":".engineering/ledgers/M13-ADOPTION-LEDGER-SYNC.md","fingerprint":"ledger-sync@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":".engineering/work-orders/GBS-WO-M13-001.md","fingerprint":"work-order@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":".engineering/GBS-WO-M13-001-ADMISSION.md","fingerprint":"admission@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":"planning/modules/area-d-gef-v1/m13-gef-adoption-engine/S01-policy.md","fingerprint":"frozen@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":"planning/modules/area-d-gef-v1/m13-gef-adoption-engine/S02-new-project-adoption.md","fingerprint":"frozen@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":"planning/modules/area-d-gef-v1/m13-gef-adoption-engine/S03-existing-project-adoption.md","fingerprint":"frozen@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":"planning/modules/area-d-gef-v1/m13-gef-adoption-engine/S04-compatibility.md","fingerprint":"frozen@a1523b550988ca035ff95f86e71df7c63be9b928"},
+    {"path":"planning/modules/area-d-gef-v1/m13-gef-adoption-engine/S05-adoption-receipt.md","fingerprint":"frozen@a1523b550988ca035ff95f86e71df7c63be9b928"}
+  ],
+  "invariants": [
+    "Brownfield adoption is first-class and incremental",
+    "Descriptive truth and normative truth remain separate",
+    "No M13 direct filesystem Git GitHub or provider mutation authority",
+    "Partial adoption never collapses into full adoption",
+    "No newest-wins timestamp path order or model-confidence authority",
+    "Production denominator remains 1088 and M13 weight remains 20",
+    "No known HIGH/CRITICAL may survive audit"
+  ],
+  "staleIf": [
+    "M13 frozen planning or Module Gate changes",
+    "Source Hierarchy or relevant M09-M12 contracts change",
+    "execution base diverges from a1523b550988ca035ff95f86e71df7c63be9b928"
+  ],
+  "preflight": {
+    "m00ThroughM12ModuleDone": true,
+    "m13SessionsFrozen": true,
+    "moduleGatePassed": true,
+    "workOrderCompiled": true,
+    "executionAuthorizationMerged": true,
+    "denominatorUnchanged": true,
+    "highCriticalKnown": 0,
+    "result": "PASS"
+  }
+}
