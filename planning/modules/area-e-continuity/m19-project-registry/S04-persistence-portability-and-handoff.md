@@ -1,5 +1,5 @@
 # GBS-M19-S04 — Persistence, Portability & Handoff
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 Module weight: `14`
 Assurance intensity: `STANDARD_PLUS`
 
@@ -30,4 +30,4 @@ Define a bounded persistent registry contract that is portable, privacy-aware, c
 ## Acceptance shape
 M19 is complete only with deterministic snapshot/admission receipts, exact CAS persistence semantics, privacy/portability tests, collision/tombstone preservation, focused platform matrix, full repository regression, dependency audit, semantic review and zero unresolved HIGH/CRITICAL findings.
 
-STOP CONDITION: `M19_S04_FROZEN_CANDIDATE`.
+STOP CONDITION: `M19_S04_FROZEN`.
