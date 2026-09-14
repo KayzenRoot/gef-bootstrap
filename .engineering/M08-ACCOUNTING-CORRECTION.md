@@ -1,6 +1,6 @@
 # M08 Production Accounting Correction
 
-Status: `CORRECTION_READY_FOR_AUDIT`
+Status: `APPROVED`
 
 ## Defect
 The M08 completion checkpoint credited `14` production weight, but the frozen Backlog Baseline assigns `17` to `M08 Project Profiles`. Weight `14` belongs to M07.
@@ -25,4 +25,4 @@ This is an accounting correction only. M08 implementation evidence, semantic app
 ## Cause classification
 Checkpoint promotion copied M07's weight (`14`) into M08 accounting instead of reading M08's frozen Backlog weight (`17`). Future promotion gates must bind module weight directly to the Backlog Baseline row before calculating production progress.
 
-STOP CONDITION: exact-head audit required before correction promotion.
+STOP CONDITION: `ACCOUNTING_CORRECTED_READY_FOR_M09_MODULE_GATE`.
