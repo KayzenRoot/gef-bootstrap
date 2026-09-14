@@ -1,7 +1,7 @@
 # M19 Planning Gate
-Status: `PASSED_CANDIDATE`
+Status: `PASSED`
 Module: `GBS-M19 — Project Registry`
-Sessions: `4/4`
+Sessions: `4/4 FROZEN`
 Frozen weight: `14`
 Assurance intensity: `STANDARD_PLUS`
 
@@ -35,6 +35,6 @@ Newest-wins resolution, timestamp authority, registry-created identity, broad fi
 ## Acceptance gate for implementation
 Exact admitted base/head/tree; deterministic injected SHA-256; bounded/cancellable traversals; focused adversarial tests; collision/CAS/split-brain/tombstone/privacy/portability tests; Ubuntu/Windows/macOS matrix; full repository regression; dependency audit; semantic review; zero unresolved CRITICAL/HIGH; separate MODULE_DONE promotion.
 
-Planning verdict: `READY_FOR_WORK_ORDER_ADMISSION_REVIEW`.
+Planning verdict: `FROZEN_READY_FOR_WORK_ORDER_ADMISSION_REVIEW`.
 
-STOP CONDITION: `M19_PLANNING_FROZEN_CANDIDATE_READY_FOR_ADMISSION`.
+STOP CONDITION: `M19_PLANNING_FROZEN_READY_FOR_ADMISSION`.
