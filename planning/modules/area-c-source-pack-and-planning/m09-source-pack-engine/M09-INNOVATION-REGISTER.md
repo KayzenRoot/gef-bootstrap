@@ -1,8 +1,8 @@
 # GBS-M09 — Innovation Register
 
-Status: `AUDITED_CANDIDATE`
+Status: `FROZEN`
 
-This module-local register preserves the technologies introduced during the combined S01-S05 planning batch. Central Technology & Innovation Ledger synchronization remains a mandatory Module Gate precondition.
+This module-local register preserves the technologies introduced during the combined S01-S05 planning batch. Canonical ledger synchronization is bound through `.engineering/ledgers/M09-SOURCE-PACK-LEDGER-SYNC.md`, which continues the global Technology and Decisions ID sequences without rewriting earlier history.
 
 | ID | Technology | Session | Classification | Intended owner |
 |---|---|---|---|---|
@@ -20,5 +20,7 @@ This module-local register preserves the technologies introduced during the comb
 | TECH-M09-12 | Drift Shockwave Map | S05 | NECESSARY | M09/M25 |
 | TECH-M09-13 | Integrity Epoch | S05 | NECESSARY | M09/M37 |
 | TECH-M09-14 | Conformance Receipt Seed | S05 | NECESSARY | M09/M24 |
+
+Global ledger IDs: `TECH-0045` through `TECH-0058`.
 
 These names identify GEF-native design mechanisms. They are not claims of global patent novelty. Their canonical semantics live in S01-S05 and they do not authorize implementation before the M09 Module Gate and admitted Work Order.
