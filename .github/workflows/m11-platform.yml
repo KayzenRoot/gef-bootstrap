@@ -1,0 +1,40 @@
+name: M11 Decision System
+on:
+  pull_request:
+    paths:
+      - 'packages/decision-system/**'
+      - 'tests/m11-decision-system.test.mjs'
+      - '.engineering/M11-MODULE-GATE.md'
+      - '.engineering/work-orders/GBS-WO-M11-001.md'
+      - 'planning/modules/area-c-source-pack-and-planning/m11-decision-system/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/m11-platform.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: node --test tests/m11-decision-system.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
