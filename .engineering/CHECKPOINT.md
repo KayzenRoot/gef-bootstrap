@@ -1,36 +1,31 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_M14_S03_PLANNING`
+Status: `GBS_M14_MODULE_DONE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M13`
-- Active module: `GBS-M14 — Task & Context Compiler`
-- Active module status: `PLANNING_IN_PROGRESS`
-- Active Work Order: `NONE`
-- M14-S01: `FROZEN`
-- M14-S02: `FROZEN`
-- M14-S02 planning PR: `#186`
-- M14-S02 reviewed head: `cc42511534cc4c2acbba1711aba304528915ea6f`
-- M14-S02 semantic audit: `5196526877`
-- M14-S02 merge: `5fe54c6a70e6901942cef0c30b530bc748737076`
-- M14-S03: `PLANNED`
-- Production: `246 / 1088 = 22.61%`
-- Remaining: `842 / 1088 = 77.39%`
-- M14 earned: `0 / 19`
+- Completed modules: `GBS-M00` through `GBS-M14`
+- Active module: `GBS-M15 — Execution Pack Compiler`
+- Active module status: `ADMITTED_READY_FOR_IMPLEMENTATION`
+- Active Work Order: `GBS-WO-M15-001`
+- M14 status: `MODULE_DONE`
+- M14 implementation PR: `#192`
+- M14 reviewed head: `e07c358c1610c5b1958aaf81c9a8535f1e1730b6`
+- M14 semantic audit: `5197661645`
+- M14 implementation merge: `294b7c0961d72a2d1c1217f647b3116feef20ee0`
+- M14 evidence: `.engineering/evidence/GBS-WO-M14-001-EVIDENCE.md`
+- Production: `265 / 1088 = 24.36%`
+- Remaining: `823 / 1088 = 75.64%`
+- M14 earned: `19 / 19`
 - Denominator change: `NONE`
-- Next legal stage: `PLAN_GBS_M14_S03`
+- Next legal stage: `IMPLEMENT_GBS_M15`
 
-## M14-S01/S02 outcome
-S01 freezes the task/context contract, Minimum Sufficient Context invariants, context dependency closure and safety-expansion foundations. S02 freezes task-to-source routing and authority-bound selection while preserving the strict separation `ROUTING_RELEVANCE != SOURCE_AUTHORITY != CONTEXT_SUFFICIENCY`.
+## M14 outcome
+M14 delivers the Task & Context Compiler across S01-S05. It provides authority-aware context selection, minimum sufficient context proof, bounded context expansion, deterministic context receipts, selective invalidation and execution handoff. Routing relevance, source authority and context sufficiency remain separate invariants.
 
-M14 consumes M09 authority/applicability/topology contracts rather than replacing them. Context routing remains deterministic, validity-bound, budgeted and fail-closed when mandatory authority or applicability is unresolved.
+All ten required exact-head workflows passed, including the M14 Ubuntu/Windows/macOS matrix, full regression and dependency audit. Final semantic review records `CRITICAL 0` and `HIGH 0`.
 
 ## Continuation contract
-The only released next stage is `GBS-M14-S03 — Minimum Sufficient Context and Sufficiency Proof` planning. No M14 Work Order, implementation code or production credit is authorized.
+M15 consumes valid M14 handoff under `GBS-WO-M15-001` and the existing M14-M18 admission. M15 production credit remains zero until its own implementation and promotion complete.
 
-The legacy accounting presentation in `.engineering/BACKLOG.md` remains a separately bounded documentation-consistency debt; it does not override this higher-authority checkpoint.
-
-Codex remains outside Bootstrap construction absent a separately governed exception/ADR.
-
-STOP CONDITION: `READY_FOR_GBS_M14_S03_PLANNING`.
+STOP CONDITION: `GBS_M14_MODULE_DONE_READY_FOR_M15_IMPLEMENTATION`.
