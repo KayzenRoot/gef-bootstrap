@@ -29,6 +29,7 @@ export {
   issuePolicyDecisionReceipt,
   verifyPolicyDecisionReceipt,
   validatePolicyDomainLattice,
+  buildLatticeAuthorityEvidence,
   bindPolicyFingerprints,
   applyShortCircuitFirewall,
   decidePolicy,
@@ -37,8 +38,11 @@ export {
 // ─── S03 – Runtime Enforcement & Exceptions ───────────────────────────────────
 export {
   projectDecisionToNodes,
+  verifyVerifiedProjection,
   issueMutationLease,
+  issueVerifiedMutationLease,
   checkExceptionBlastRadius,
+  verifyBlastRadiusCap,
   applyExceptionWarrant,
   revalidateLeaseAtMutation,
   evaluateFailClosedDegradation,

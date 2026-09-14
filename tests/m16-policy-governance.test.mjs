@@ -262,7 +262,13 @@ test('PDR deterministic digest and full provenance', () => {
     conflicts: [],
     exceptionsApplied: [],
     provenance: [{ sourceRef: 'prov:p1', policyId: 'p1', decisionRef: 'ALLOW_WITH_OBLIGATIONS' }],
-    policyFingerprints: ['sha256:' + 'a'.repeat(64)],
+    policyFingerprints: { p1: 'sha256:' + 'a'.repeat(64) },
+    request: { domains: ['SCOPE'], operations: [] },
+    applicabilityWitnesses: [{ policyId: 'p1', state: 'APPLICABLE', witness: 'applicable:domain:SCOPE' }],
+    mandatoryDomains: ['SCOPE'],
+    unresolvedMandatoryDomains: [],
+    supportedSchemas: ['v1'],
+    latticeEvidence: { domains: [{ domain: 'domain-scope', order: ['p1'] }], evidenceFingerprint: 'sha256:' + 'b'.repeat(64) },
   };
   const first = issuePolicyDecisionReceipt(input, opts);
   const second = issuePolicyDecisionReceipt(input, opts);
@@ -299,10 +305,11 @@ test('decidePolicy end-to-end with mandatory domains and order independence', ()
       effectOnMatch: 'DENY',
     }),
   ];
+  const exactLattice = { domains: [{ domain: 'domain-scope', order: ['pol-allow', 'pol-deny-other'] }] };
   const input = {
     request: { domains: ['SCOPE'], operations: [] },
     policies,
-    lattice: LATTICE,
+    lattice: exactLattice,
     mandatoryDomains: ['SCOPE'],
     supportedSchemas: ['v1'],
     packBinding: PACK_BINDING,

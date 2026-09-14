@@ -279,7 +279,7 @@ test('HIGH-1: tampered PDR with unchanged digest fails GEM and verifier', () => 
 // ─── HIGH-2: MCL only from verified GEM/PDR chain ─────────────────────────────
 
 test('HIGH-2: caller-crafted ALLOW projection cannot mint a lease', () => {
-  const { pack } = compilePack();
+  const { pack, receipt } = compilePack();
   const pdr = decideBound([pac('pol-guard-a'), pac('pol-guard-b')], pack);
   const forgedProjection = {
     nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts',
@@ -288,7 +288,8 @@ test('HIGH-2: caller-crafted ALLOW projection cannot mint a lease', () => {
     provenanceRef: `sha256:${'e'.repeat(64)}`,
   };
   const leased = issueMutationLease({
-    projection: forgedProjection, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection: forgedProjection, receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest, reviewTrigger: 'review:mutation',
   }, opts);
   assert.equal(failCode(leased), 'POLICY_LEASE_DECISION_NOT_PERMISSIVE');
@@ -302,14 +303,16 @@ test('HIGH-2: mismatched decision digest fails lease and authorization', () => {
     operations: [{ nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts' }],
   }, opts).value[0];
   const mismatched = issueMutationLease({
-    projection: projected, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection: projected, receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: `sha256:${'0'.repeat(64)}`,
     reviewTrigger: 'review:mutation',
   }, opts);
   assert.equal(failCode(mismatched), 'POLICY_LEASE_DECISION_NOT_PERMISSIVE');
 
   const lease = issueMutationLease({
-    projection: projected, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection: projected, receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest, reviewTrigger: 'review:mutation',
   }, opts).value;
   const current = {
@@ -334,10 +337,11 @@ test('HIGH-3: forged or reused EBRC cap fails exception application', () => {
     ],
   });
   const pdr = decideBound([obligated], pack, []);
+  // Plain structural objects carry no seal and fail closed.
   const forgedCap = { nodeIds: ['other-node'], mutationDomains: ['dom-a'], obligations: ['audit-log'] };
-  assert.equal(failCode(applyExceptionWarrant(pdr, warrant('w-1'), forgedCap, opts)), 'POLICY_WARRANT_SCOPE_EXCEEDED');
+  assert.equal(failCode(applyExceptionWarrant(pdr, warrant('w-1'), forgedCap, opts)), 'POLICY_CAP_INVALID');
   const reusedCap = { nodeIds: ['a'], mutationDomains: ['other-domain'], obligations: ['audit-log'] };
-  assert.equal(failCode(applyExceptionWarrant(pdr, warrant('w-1'), reusedCap, opts)), 'POLICY_WARRANT_SCOPE_EXCEEDED');
+  assert.equal(failCode(applyExceptionWarrant(pdr, warrant('w-1'), reusedCap, opts)), 'POLICY_CAP_INVALID');
 });
 
 test('HIGH-3: exception-mutated PDR is resealed with a fresh digest', () => {
@@ -349,8 +353,13 @@ test('HIGH-3: exception-mutated PDR is resealed with a fresh digest', () => {
     ],
   });
   const pdr = decideBound([obligated], pack, []);
-  const cap = { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] };
-  const applied = applyExceptionWarrant(pdr, warrant('w-1'), cap, opts);
+  const byId = new Map([['pol-guard-a', obligated]]);
+  const sealed = checkExceptionBlastRadius(
+    warrant('w-1'), byId,
+    { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] }, 0, opts,
+  );
+  assert.equal(sealed.ok, true);
+  const applied = applyExceptionWarrant(pdr, warrant('w-1'), sealed.value, opts);
   assert.equal(applied.ok, true);
   assert.notEqual(applied.value.receipt.digest, pdr.digest);
   assert.equal(verifyPolicyDecisionReceipt(applied.value.receipt, opts).ok, true);
@@ -367,7 +376,8 @@ test('HIGH-4: swapped policy fingerprints across IDs fail PTS', () => {
     operations: [{ nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts' }],
   }, opts).value[0];
   const lease = issueMutationLease({
-    projection: projected, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection: projected, receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest, reviewTrigger: 'review:mutation',
   }, opts).value;
   const fps = currentFingerprints(policies);
@@ -412,7 +422,8 @@ test('HIGH-4: PTS rejects dropped or injected policy IDs', () => {
     operations: [{ nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts' }],
   }, opts).value[0];
   const lease = issueMutationLease({
-    projection: projected, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection: projected, receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest, reviewTrigger: 'review:mutation',
   }, opts).value;
   const fewer = { 'pol-guard-a': currentFingerprints(policies)['pol-guard-a'] };
@@ -442,7 +453,7 @@ test('HIGH-5: duplicate policy IDs rejected in both orders', () => {
 test('HIGH-5: missing request domain and operation evidence fails closed', () => {
   const policies = [pac('pol-needs-scope')];
   const set = buildApplicabilityWitnessSet(policies, { domains: [], operations: [] }, ['v1']);
-  assert.equal(set[0].state, 'NOT_APPLICABLE');
+  assert.equal(set[0].state, 'UNKNOWN');
   const { pack } = compilePack();
   const decided = decidePolicy({
     request: { domains: [], operations: [] },

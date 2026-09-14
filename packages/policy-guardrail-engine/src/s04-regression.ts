@@ -111,6 +111,16 @@ export function detectPolicyRegression(
           detail: `Policy ${policyId} with unknown applicability was removed`,
         });
       }
+      // Removal of a DENY that could apply is itself a weakening, even
+      // with non-empty applicability and no mandatory obligations: the
+      // guardrail that used to block now silently allows.
+      if (prev.effectOnMatch === 'DENY' && !applicabilityEmpty(prev)) {
+        findings.push({
+          kind: 'DENY_TO_ALLOW',
+          policyId,
+          detail: `Applicable DENY policy ${policyId} was removed`,
+        });
+      }
       for (const obligation of [...prev.obligations]
         .sort((a, b) => compareCodePoint(a.obligationId, b.obligationId))
         .filter(o => o.mandatory)) {
@@ -240,20 +250,38 @@ function policyCoversOperation(
 }
 
 /**
- * Map protected operations/domains/nodes to effective policies and
- * obligations, exposing gaps. Deterministic; an operation with no
+ * Map protected operations/domains/nodes to validated effective policies
+ * and obligations, exposing gaps. Deterministic; an operation with no
  * applicable policy is an explicit gap, never silent coverage.
+ *
+ * HIGH-E closure: only policies admitted by the supported-schema context
+ * can cover. Syntactically matching policies with unsupported, stale or
+ * unadmitted schemas are listed as excluded with an explicit validity
+ * state and never set covered=true.
  */
 export function buildGuardrailCoverageMap(
   protectedOperations: readonly { operation: string; domain: string; nodeId?: string | undefined }[],
   policies: readonly PolicyAuthorityCapsule[],
+  supportedSchemas?: readonly string[] | undefined,
 ): CoverageMap {
   const orderedPolicies = [...policies].sort((a, b) => compareCodePoint(a.policyId, b.policyId));
+  const admitted = supportedSchemas === undefined ? null : new Set(supportedSchemas);
   const entries: CoverageEntry[] = protectedOperations.map(op => {
-    const covering = orderedPolicies.filter(p => policyCoversOperation(p, op.operation, op.domain));
+    const syntacticallyCovering = orderedPolicies.filter(p => policyCoversOperation(p, op.operation, op.domain));
+    const covering = admitted === null
+      ? syntacticallyCovering
+      : syntacticallyCovering.filter(p => admitted.has(p.schemaVersion));
+    const excludedPolicyIds = sortedStrings(
+      syntacticallyCovering.filter(p => !covering.includes(p)).map(p => p.policyId),
+    );
     const obligationIds = sortedStrings(
       [...new Set(covering.flatMap(p => p.obligations.map(o => o.obligationId)))],
     );
+    const validity = covering.length > 0
+      ? ('VALID' as const)
+      : excludedPolicyIds.length > 0
+        ? ('UNSUPPORTED_SCHEMA' as const)
+        : ('NO_APPLICABLE_POLICY' as const);
     const entry: CoverageEntry = {
       operation: op.operation,
       domain: op.domain,
@@ -261,6 +289,8 @@ export function buildGuardrailCoverageMap(
       policyIds: covering.map(p => p.policyId),
       obligationIds,
       covered: covering.length > 0,
+      validity,
+      excludedPolicyIds,
     };
     return entry;
   });

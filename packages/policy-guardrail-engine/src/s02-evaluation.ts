@@ -8,6 +8,7 @@ import type {
   ApplicabilityAssessment,
   DecidePolicyInput,
   FirewallStep,
+  LatticeAuthorityEvidence,
   Obligation,
   ObligationComposition,
   OperationOptions,
@@ -137,41 +138,54 @@ export function composeObligations(
 
 // ─── Applicability Witness Set (AWS) ──────────────────────────────────────────
 
-type DimensionVerdict = 'MATCH' | 'NO_MATCH' | 'IRRELEVANT';
+/**
+ * Per-dimension verdict. NOT_CONSTRAINED means the policy declares nothing
+ * on this dimension. UNKNOWN means the policy constrains the dimension but
+ * the request carries no evidence for it — missing evidence is never a
+ * match and never a refutation. A DENY must not disappear because the
+ * caller omitted the dimension it constrains.
+ */
+type DimensionVerdict = 'MATCH' | 'NO_MATCH' | 'NOT_CONSTRAINED' | 'UNKNOWN';
 
 function dimensionVerdict(policySide: readonly string[], requestSide: readonly string[]): DimensionVerdict {
-  // A policy that constrains nothing on this dimension is irrelevant.
-  // A policy that constrains this dimension while the request carries no
-  // evidence for it is NO_MATCH (fail closed): missing domain/operation
-  // evidence must never read as APPLICABLE.
-  if (policySide.length === 0) return 'IRRELEVANT';
-  if (requestSide.length === 0) return 'NO_MATCH';
+  if (policySide.length === 0) return 'NOT_CONSTRAINED';
+  if (requestSide.length === 0) return 'UNKNOWN';
   if (policySide.includes('*')) return 'MATCH';
   return requestSide.some(entry => policySide.includes(entry)) ? 'MATCH' : 'NO_MATCH';
 }
 
+type RequestMatch = 'APPLICABLE' | 'NOT_APPLICABLE' | 'UNKNOWN';
+
 function matchesRequest(
   applicability: { domains: readonly string[]; operations: readonly string[]; matchMode: 'ANY' | 'ALL' },
   request: PolicyRequest,
-): boolean {
+): RequestMatch {
   if (applicability.domains.length === 0 && applicability.operations.length === 0) {
-    return request.domains.length === 0 && request.operations.length === 0;
+    return 'UNKNOWN';
   }
   const domain = dimensionVerdict(applicability.domains, request.domains);
   const operation = dimensionVerdict(applicability.operations, request.operations);
   if (applicability.matchMode === 'ANY') {
-    if (domain === 'MATCH' || operation === 'MATCH') return true;
-    if (domain === 'NO_MATCH' || operation === 'NO_MATCH') return false;
-    return true;
+    // Positive evidence on either dimension applies the policy. Without a
+    // positive match, missing evidence on any constrained dimension is
+    // UNKNOWN (the policy could still affect the request), never a quiet
+    // NOT_APPLICABLE.
+    if (domain === 'MATCH' || operation === 'MATCH') return 'APPLICABLE';
+    if (domain === 'UNKNOWN' || operation === 'UNKNOWN') return 'UNKNOWN';
+    return 'NOT_APPLICABLE';
   }
-  if (domain === 'NO_MATCH' || operation === 'NO_MATCH') return false;
-  return true;
+  // ALL: any positive refutation excludes; any missing evidence unknowns.
+  if (domain === 'NO_MATCH' || operation === 'NO_MATCH') return 'NOT_APPLICABLE';
+  if (domain === 'UNKNOWN' || operation === 'UNKNOWN') return 'UNKNOWN';
+  return 'APPLICABLE';
 }
 
 /**
  * Explain why every considered policy applies, does not apply, is unknown
  * or is blocked. Empty applicability is UNKNOWN (fail-closed: a policy that
- * declares nothing determines nothing); unsupported schema is BLOCKED.
+ * declares nothing determines nothing); unsupported schema is BLOCKED;
+ * constrained dimensions with missing request evidence are UNKNOWN and
+ * flow to BLOCK_UNKNOWN when the policy could affect the request.
  */
 export function buildApplicabilityWitnessSet(
   policies: readonly PolicyAuthorityCapsule[],
@@ -194,7 +208,8 @@ export function buildApplicabilityWitnessSet(
           witness: 'unknown:empty-applicability',
         };
       }
-      if (matchesRequest(policy.applicability, request)) {
+      const verdict = matchesRequest(policy.applicability, request);
+      if (verdict === 'APPLICABLE') {
         const domainWitness = request.domains.find(d =>
           policy.applicability.domains.includes('*') || policy.applicability.domains.includes(d),
         );
@@ -208,6 +223,20 @@ export function buildApplicabilityWitnessSet(
           policyId: policy.policyId,
           state: 'APPLICABLE' as const,
           witness: `applicable:${parts.join('+') || 'wildcard'}`,
+        };
+      }
+      if (verdict === 'UNKNOWN') {
+        const missing: string[] = [];
+        if (policy.applicability.domains.length > 0 && request.domains.length === 0) {
+          missing.push('domains');
+        }
+        if (policy.applicability.operations.length > 0 && request.operations.length === 0) {
+          missing.push('operations');
+        }
+        return {
+          policyId: policy.policyId,
+          state: 'UNKNOWN' as const,
+          witness: `unknown:missing-request-evidence:${missing.join('+') || 'dimension'}`,
         };
       }
       return {
@@ -313,10 +342,14 @@ function combineDecisionsForJoin(
 // ─── Policy Domain Lattice validation (HIGH-5) ─────────────────────────────────
 
 /**
- * Validate and consume the top-level lattice: non-empty, unique domains,
- * non-empty duplicate-free orders, and every policy precedenceDomain must
- * be declared. Input order never confers authority; the explicit lattice
- * does. Invalid or incomplete lattices fail closed.
+ * Validate and consume the top-level lattice with complete membership:
+ * non-empty, unique domains, non-empty duplicate-free orders, every order
+ * entry names a known input policy, and every input policy appears exactly
+ * once in its precedence-domain order. Ghost entries and omitted
+ * applicable policies fail closed. Input order never confers authority;
+ * the explicit lattice does. Lattice order never overrides DENY,
+ * BLOCK_UNKNOWN or recorded conflict — it genuinely participates in
+ * authority validation and its canonical evidence is sealed into the PDR.
  */
 export function validatePolicyDomainLattice(
   lattice: DecidePolicyInput['lattice'],
@@ -328,6 +361,13 @@ export function validatePolicyDomainLattice(
   const domains = (lattice as { domains: { domain: string; order: readonly string[] }[] }).domains;
   if (domains.length === 0) {
     return fail('POLICY_LATTICE_INVALID', 'Policy domain lattice must declare at least one domain');
+  }
+  const knownIds = new Set(policies.map(p => p.policyId));
+  const byDomain = new Map<string, string[]>();
+  for (const policy of policies) {
+    const list = byDomain.get(policy.precedenceDomain) ?? [];
+    list.push(policy.policyId);
+    byDomain.set(policy.precedenceDomain, list);
   }
   const seenDomains = new Set<string>();
   for (const entry of domains) {
@@ -350,6 +390,33 @@ export function validatePolicyDomainLattice(
         return fail('POLICY_LATTICE_INVALID', `Duplicate policy ${id} in lattice domain ${entry.domain}`, id);
       }
       seenOrder.add(id);
+      if (!knownIds.has(id)) {
+        return fail(
+          'POLICY_LATTICE_INVALID',
+          `Lattice domain ${entry.domain} names unknown policy ${id}`,
+          id,
+        );
+      }
+      const owner = policies.find(p => p.policyId === id);
+      if (owner !== undefined && owner.precedenceDomain !== entry.domain) {
+        return fail(
+          'POLICY_LATTICE_INVALID',
+          `Policy ${id} belongs to precedence domain ${owner.precedenceDomain}, not ${entry.domain}`,
+          id,
+        );
+      }
+    }
+    // Complete membership: every policy of this domain appears exactly once.
+    const expected = new Set(byDomain.get(entry.domain) ?? []);
+    if (expected.size !== seenOrder.size || [...expected].some(id => !seenOrder.has(id))) {
+      const missing = [...expected].filter(id => !seenOrder.has(id));
+      return fail(
+        'POLICY_LATTICE_INVALID',
+        missing.length > 0
+          ? `Lattice domain ${entry.domain} omits applicable policies: ${missing.sort(compareCodePoint).join(',')}`
+          : `Lattice domain ${entry.domain} order does not exactly cover its policies`,
+        entry.domain,
+      );
     }
   }
   for (const policy of policies) {
@@ -362,6 +429,24 @@ export function validatePolicyDomainLattice(
     }
   }
   return { ok: true, value: deepFreeze({ validated: true as const }) };
+}
+
+/** Canonical lattice authority evidence: domains sorted, orders preserved. */
+export function buildLatticeAuthorityEvidence(
+  lattice: DecidePolicyInput['lattice'],
+  options: OperationOptions,
+): Result<LatticeAuthorityEvidence> {
+  const c = cancelled(options);
+  if (c) return c;
+  const domains = [...lattice.domains]
+    .sort((a, b) => compareCodePoint(a.domain, b.domain))
+    .map(entry => ({ domain: entry.domain, order: [...entry.order] }));
+  const fingerprint = sha(options, { lattice: domains });
+  if (!fingerprint.ok) return fingerprint;
+  return {
+    ok: true,
+    value: deepFreeze({ domains: deepFreeze(domains), evidenceFingerprint: fingerprint.value }),
+  };
 }
 
 /** Bound `"<policyId>:<fingerprint>"` entries, sorted for determinism. */
@@ -377,7 +462,13 @@ export function bindPolicyFingerprints(
 
 const FINGERPRINT_RE = /^sha256:[0-9a-f]{64}$/;
 
-/** Issue the deterministic receipt binding inputs, outcome and provenance. */
+/**
+ * Issue the deterministic receipt binding inputs, outcome, provenance and
+ * the exact decision evidence: request, applicability witnesses,
+ * mandatory-domain resolution, supported schemas and lattice authority
+ * evidence. The receipt answers not only what was decided but under
+ * exactly which request and authority proof.
+ */
 export function issuePolicyDecisionReceipt(
   input: {
     packIdentity: string;
@@ -391,6 +482,12 @@ export function issuePolicyDecisionReceipt(
     exceptionsApplied: PolicyDecisionReceipt['exceptionsApplied'];
     provenance: readonly { sourceRef: string; policyId: string; decisionRef: string }[];
     policyFingerprints: Readonly<Record<string, string>>;
+    request: PolicyRequest;
+    applicabilityWitnesses: readonly ApplicabilityAssessment[];
+    mandatoryDomains: readonly string[];
+    unresolvedMandatoryDomains: readonly string[];
+    supportedSchemas: readonly string[];
+    latticeEvidence: LatticeAuthorityEvidence;
   },
   options: OperationOptions,
 ): Result<PolicyDecisionReceipt> {
@@ -416,6 +513,9 @@ export function issuePolicyDecisionReceipt(
       return fail('POLICY_RECEIPT_INVALID', `PDR policy ${id} carries an invalid fingerprint`, id);
     }
   }
+  if (!input.latticeEvidence || !Array.isArray(input.latticeEvidence.domains)) {
+    return fail('POLICY_RECEIPT_INVALID', 'PDR requires canonical lattice authority evidence');
+  }
 
   const bound = bindPolicyFingerprints(input.policyFingerprints);
   const setFingerprint = sha(options, {
@@ -423,6 +523,15 @@ export function issuePolicyDecisionReceipt(
   });
   if (!setFingerprint.ok) return setFingerprint;
 
+  const sortedRequest = {
+    domains: sortedStrings(input.request.domains),
+    operations: sortedStrings(input.request.operations),
+  };
+  const sortedWitnesses = sortedStrings(
+    [...input.applicabilityWitnesses]
+      .sort((a, b) => compareCodePoint(a.policyId, b.policyId))
+      .map(w => JSON.stringify({ policyId: w.policyId, state: w.state, witness: w.witness })),
+  );
   const digest = sha(options, {
     packIdentity: input.packIdentity,
     taskIdentity: input.taskIdentity,
@@ -446,6 +555,17 @@ export function issuePolicyDecisionReceipt(
     provenance: sortedStrings(input.provenance.map(p => JSON.stringify({ ...p }))),
     policyFingerprints: bound,
     policySetFingerprint: setFingerprint.value,
+    request: sortedRequest,
+    applicabilityWitnesses: sortedWitnesses,
+    mandatoryDomains: sortedStrings(input.mandatoryDomains),
+    unresolvedMandatoryDomains: sortedStrings(input.unresolvedMandatoryDomains),
+    supportedSchemas: sortedStrings(input.supportedSchemas),
+    latticeEvidence: {
+      domains: [...input.latticeEvidence.domains]
+        .sort((a, b) => compareCodePoint(a.domain, b.domain))
+        .map(d => ({ domain: d.domain, order: [...d.order] })),
+      evidenceFingerprint: input.latticeEvidence.evidenceFingerprint,
+    },
   });
   if (!digest.ok) return digest;
 
@@ -467,6 +587,19 @@ export function issuePolicyDecisionReceipt(
       policyFingerprints: bound,
       policyFingerprintById: byId,
       policySetFingerprint: setFingerprint.value,
+      request: deepFreeze({ domains: sortedStrings(input.request.domains), operations: sortedStrings(input.request.operations) }),
+      applicabilityWitnesses: deepFreeze(
+        [...input.applicabilityWitnesses].sort((a, b) => compareCodePoint(a.policyId, b.policyId)),
+      ),
+      mandatoryDomains: sortedStrings(input.mandatoryDomains),
+      unresolvedMandatoryDomains: sortedStrings(input.unresolvedMandatoryDomains),
+      supportedSchemas: sortedStrings(input.supportedSchemas),
+      latticeEvidence: deepFreeze({
+        domains: [...input.latticeEvidence.domains]
+          .sort((a, b) => compareCodePoint(a.domain, b.domain))
+          .map(d => ({ domain: d.domain, order: [...d.order] })),
+        evidenceFingerprint: input.latticeEvidence.evidenceFingerprint,
+      }),
       digest: digest.value,
     }),
   };
@@ -474,8 +607,11 @@ export function issuePolicyDecisionReceipt(
 
 /**
  * Independently re-verify a PDR seal: recompute the bound set fingerprint
- * and the full semantic digest from the receipt payload. A tampered PDR
- * that keeps a stale digest fails closed. Returns the receipt on success.
+ * and the full semantic digest — including request, witnesses,
+ * mandatory-domain resolution, schemas and lattice evidence — from the
+ * receipt payload. A tampered PDR that keeps a stale digest fails closed,
+ * including tampered request domains/operations, witness state/text,
+ * mandatory resolution, schemas or lattice evidence.
  */
 export function verifyPolicyDecisionReceipt(
   receipt: PolicyDecisionReceipt,
@@ -494,6 +630,19 @@ export function verifyPolicyDecisionReceipt(
   if (JSON.stringify(actualBound) !== JSON.stringify(expectedBound)) {
     return fail('POLICY_RECEIPT_INVALID', 'PDR policy fingerprint bindings do not match the bound map');
   }
+  const evidence = (receipt as Partial<PolicyDecisionReceipt>).latticeEvidence;
+  if (!evidence || !Array.isArray(evidence.domains) || typeof evidence.evidenceFingerprint !== 'string') {
+    return fail('POLICY_RECEIPT_INVALID', 'PDR carries no lattice authority evidence');
+  }
+  // Lattice evidence fingerprint must match its canonical content.
+  const evidenceCheck = buildLatticeAuthorityEvidence(
+    { domains: evidence.domains.map(d => ({ domain: d.domain, order: [...d.order] })) },
+    options,
+  );
+  if (!evidenceCheck.ok) return evidenceCheck;
+  if (evidenceCheck.value.evidenceFingerprint !== evidence.evidenceFingerprint) {
+    return fail('POLICY_RECEIPT_INVALID', 'PDR lattice evidence fingerprint drifted; tampering suspected');
+  }
   const recomputed = issuePolicyDecisionReceipt(
     {
       packIdentity: receipt.packIdentity,
@@ -507,6 +656,15 @@ export function verifyPolicyDecisionReceipt(
       exceptionsApplied: [...receipt.exceptionsApplied],
       provenance: [...receipt.provenance],
       policyFingerprints: { ...byId },
+      request: { domains: [...receipt.request.domains], operations: [...receipt.request.operations] },
+      applicabilityWitnesses: [...receipt.applicabilityWitnesses],
+      mandatoryDomains: [...receipt.mandatoryDomains],
+      unresolvedMandatoryDomains: [...receipt.unresolvedMandatoryDomains],
+      supportedSchemas: [...receipt.supportedSchemas],
+      latticeEvidence: {
+        domains: evidence.domains.map(d => ({ domain: d.domain, order: [...d.order] })),
+        evidenceFingerprint: evidence.evidenceFingerprint,
+      },
     },
     options,
   );
@@ -663,6 +821,8 @@ export function decidePolicy(
   for (const policy of [...input.policies].sort((a, b) => compareCodePoint(a.policyId, b.policyId))) {
     fingerprintById[policy.policyId] = policy.semanticIdentity;
   }
+  const latticeEvidence = buildLatticeAuthorityEvidence(input.lattice, options);
+  if (!latticeEvidence.ok) return latticeEvidence;
 
   return issuePolicyDecisionReceipt(
     {
@@ -681,6 +841,12 @@ export function decidePolicy(
         decisionRef: join.decision,
       })),
       policyFingerprints: fingerprintById,
+      request: { domains: [...input.request.domains], operations: [...input.request.operations] },
+      applicabilityWitnesses: [...witnessSet],
+      mandatoryDomains: [...input.mandatoryDomains],
+      unresolvedMandatoryDomains: [...unresolvedMandatory],
+      supportedSchemas: [...input.supportedSchemas],
+      latticeEvidence: latticeEvidence.value,
     },
     options,
   );

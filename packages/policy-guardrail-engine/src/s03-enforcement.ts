@@ -21,6 +21,7 @@ import type {
   PolicyDecisionReceipt,
   PolicyDependency,
   Result,
+  VerifiedEnforcementProjection,
   WarrantApplication,
 } from './types.js';
 import {
@@ -37,6 +38,107 @@ import { bindPolicyFingerprints, issuePolicyDecisionReceipt, verifyPolicyDecisio
 
 // ─── Guardrail Enforcement Membrane (GEM) ─────────────────────────────────────
 
+/** Digest over full obligation semantics for projection sealing. */
+function computeSealedObligationDigest(
+  obligations: readonly Obligation[],
+  options: OperationOptions,
+): Result<string> {
+  return sha(options, {
+    obligations: sortedStrings(
+      obligations.map(o =>
+        JSON.stringify({
+          id: o.obligationId,
+          statement: o.statement,
+          mandatory: o.mandatory,
+          dependsOn: [...o.dependsOn].sort(compareCodePoint),
+          conflictsWith: [...o.conflictsWith].sort(compareCodePoint),
+        }),
+      ),
+    ),
+  });
+}
+
+/** Deterministic projection seal over verified pack + PDR bindings. */
+function computeProjectionDigest(
+  fields: {
+    packId: string;
+    packDigest: string;
+    taskIdentity: string;
+    policyVersion: string;
+    nodeId: string;
+    mutationDomain: string;
+    operation: string;
+    decision: string;
+    obligations: readonly Obligation[];
+    policySetFingerprint: string;
+    provenanceRef: string;
+  },
+  options: OperationOptions,
+): Result<string> {
+  const obligationDigest = computeSealedObligationDigest(fields.obligations, options);
+  if (!obligationDigest.ok) return obligationDigest;
+  return sha(options, {
+    packId: fields.packId,
+    packDigest: fields.packDigest,
+    taskIdentity: fields.taskIdentity,
+    policyVersion: fields.policyVersion,
+    nodeId: fields.nodeId,
+    mutationDomain: fields.mutationDomain,
+    operation: fields.operation,
+    decision: fields.decision,
+    obligationDigest: obligationDigest.value,
+    policySetFingerprint: fields.policySetFingerprint,
+    provenanceRef: fields.provenanceRef,
+  });
+}
+
+/**
+ * Recompute a verified projection seal from its own sealed fields.
+ * Detects tampering of any sealed field with a stale digest. A
+ * from-scratch forgery with an internally consistent digest is still
+ * rejected downstream because lease issuance re-runs GEM checks against
+ * the independently verified pack instead of trusting the seal alone.
+ */
+export function verifyVerifiedProjection(
+  projection: VerifiedEnforcementProjection,
+  options: OperationOptions,
+): Result<{ verified: true }> {
+  const c = cancelled(options);
+  if (c) return c;
+  const seal = (projection as Partial<VerifiedEnforcementProjection>);
+  for (const field of ['packId', 'packDigest', 'taskIdentity', 'policyVersion', 'obligationDigest', 'projectionDigest'] as const) {
+    if (typeof seal[field] !== 'string' || (seal[field] as string).trim().length === 0) {
+      return fail('POLICY_PROJECTION_INVALID', `Verified projection carries no ${field}`, projection.nodeId);
+    }
+  }
+  const obligationDigest = computeSealedObligationDigest(projection.obligations, options);
+  if (!obligationDigest.ok) return obligationDigest;
+  if (obligationDigest.value !== projection.obligationDigest) {
+    return fail('POLICY_PROJECTION_INVALID', 'Projection obligation digest drifted; tampering suspected', projection.nodeId);
+  }
+  const recomputed = computeProjectionDigest(
+    {
+      packId: projection.packId,
+      packDigest: projection.packDigest,
+      taskIdentity: projection.taskIdentity,
+      policyVersion: projection.policyVersion,
+      nodeId: projection.nodeId,
+      mutationDomain: projection.mutationDomain,
+      operation: projection.operation,
+      decision: projection.decision,
+      obligations: [...projection.obligations],
+      policySetFingerprint: projection.policySetFingerprint,
+      provenanceRef: projection.provenanceRef,
+    },
+    options,
+  );
+  if (!recomputed.ok) return recomputed;
+  if (recomputed.value !== projection.projectionDigest) {
+    return fail('POLICY_PROJECTION_INVALID', 'Projection digest does not match its sealed fields', projection.nodeId);
+  }
+  return { ok: true, value: deepFreeze({ verified: true as const }) };
+}
+
 /**
  * Project a valid PDR onto exact M15 execution nodes and mutation domains.
  * Consumes the trusted M15 receipt — never a caller-provided boolean.
@@ -49,6 +151,12 @@ import { bindPolicyFingerprints, issuePolicyDecisionReceipt, verifyPolicyDecisio
  * the M15 pack and its trusted receipt. A tampered payload that keeps a
  * stale stored digest, or a PDR bound to another task/policy version,
  * fails closed.
+ *
+ * HIGH-A closure: each returned projection is a sealed
+ * VerifiedEnforcementProjection binding exact pack/digest/task/policy,
+ * node/domain/operation, PDR digest, policy set and obligation semantics
+ * under a deterministic projection digest. Plain caller-constructed
+ * objects carry no valid seal.
  */
 export function projectDecisionToNodes(
   input: {
@@ -58,7 +166,7 @@ export function projectDecisionToNodes(
     operations: readonly GuardedOperation[];
   },
   options: OperationOptions,
-): Result<readonly EnforcementProjection[]> {
+): Result<readonly VerifiedEnforcementProjection[]> {
   const { receipt, pack, trustedPackReceipt, operations } = input;
   const c = cancelled(options);
   if (c) return c;
@@ -149,7 +257,8 @@ export function projectDecisionToNodes(
   const effectivePolicies = new Set(
     boundCount > 0 ? receipt.provenance.map(p => p.policyId) : [],
   );
-  const projections: EnforcementProjection[] = [];
+  const verifiedPackDigest = recomputed.value.semanticDigest;
+  const projections: VerifiedEnforcementProjection[] = [];
 
   for (const operation of operations) {
     const node = nodesById.get(operation.nodeId);
@@ -184,6 +293,25 @@ export function projectDecisionToNodes(
         operation.nodeId,
       );
     }
+    const obligationDigest = computeSealedObligationDigest([...receipt.obligations], options);
+    if (!obligationDigest.ok) return obligationDigest;
+    const projectionDigest = computeProjectionDigest(
+      {
+        packId: pack.packId,
+        packDigest: verifiedPackDigest,
+        taskIdentity: pack.taskIdentity,
+        policyVersion: pack.policyVersion,
+        nodeId: operation.nodeId,
+        mutationDomain: operation.mutationDomain,
+        operation: operation.operation,
+        decision: receipt.decision,
+        obligations: [...receipt.obligations],
+        policySetFingerprint: receipt.policySetFingerprint,
+        provenanceRef: receipt.digest,
+      },
+      options,
+    );
+    if (!projectionDigest.ok) return projectionDigest;
     projections.push({
       nodeId: operation.nodeId,
       mutationDomain: operation.mutationDomain,
@@ -192,6 +320,12 @@ export function projectDecisionToNodes(
       obligations: [...receipt.obligations],
       policySetFingerprint: receipt.policySetFingerprint,
       provenanceRef: receipt.digest,
+      packId: pack.packId,
+      packDigest: verifiedPackDigest,
+      taskIdentity: pack.taskIdentity,
+      policyVersion: pack.policyVersion,
+      obligationDigest: obligationDigest.value,
+      projectionDigest: projectionDigest.value,
     });
   }
 
@@ -218,11 +352,22 @@ export function projectDecisionToNodes(
  * PDR digest, the supplied decision digest must equal both, the projection
  * policy set must equal the PDR set, and the lease pack must equal the PDR
  * pack. Caller-forged raw digests or projections fail closed.
+ *
+ * HIGH-A closure: the caller must additionally present the independently
+ * verified M15 pack and its trusted receipt. The pack seal is recomputed
+ * inside this path, the caller-supplied packDigest must exactly match the
+ * verified digest, the projection seal is recomputed, and GEM node checks
+ * (declared node, declared domain, permitted domain, bound policy) are
+ * re-run against the verified pack. A manually constructed projection for
+ * an undeclared node — even with the real PDR digest and policy set —
+ * fails here because it never passed GEM.
  */
 export function issueMutationLease(
   input: {
-    projection: EnforcementProjection;
+    projection: VerifiedEnforcementProjection | EnforcementProjection;
     receipt: PolicyDecisionReceipt;
+    pack: ExecutionPack;
+    trustedPackReceipt: PackReceipt;
     projectId: string;
     packId: string;
     packDigest: string;
@@ -254,9 +399,36 @@ export function issueMutationLease(
   if (!input.receipt || typeof input.receipt.digest !== 'string') {
     return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', 'Lease requires the sealed PDR that produced the projection');
   }
+  if (!input.pack || !input.trustedPackReceipt) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', 'Lease requires the verified M15 pack and trusted receipt');
+  }
+  // Independently verify the M15 pack inside the lease path: a
+  // caller-supplied packDigest becomes authority only when it matches the
+  // recomputed seal against the trusted receipt.
+  if (input.trustedPackReceipt.packId !== input.pack.packId) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', 'Trusted M15 receipt does not match the candidate pack', input.pack.packId);
+  }
+  if (input.trustedPackReceipt.status !== 'VALID' || !input.trustedPackReceipt.replayable) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', 'Trusted M15 receipt is not VALID replayable', input.pack.packId);
+  }
+  const recomputedPack = computeSealedDigests(input.pack, options);
+  if (!recomputedPack.ok) return recomputedPack;
+  if (recomputedPack.value.semanticDigest !== input.trustedPackReceipt.semanticDigest) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', 'Candidate M15 pack seal drifted from the trusted receipt', input.pack.packId);
+  }
+  if (input.packDigest !== recomputedPack.value.semanticDigest) {
+    return fail(
+      'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
+      'Caller-supplied pack digest does not match the independently verified M15 pack',
+      input.pack.packId,
+    );
+  }
   // The PDR seal itself must verify: a tampered receipt cannot authorize.
   const receiptCheck = verifyPolicyDecisionReceipt(input.receipt, options);
   if (!receiptCheck.ok) return receiptCheck;
+  if (input.receipt.packIdentity !== input.pack.packId) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', 'Sealed PDR pack does not match the verified M15 pack', input.pack.packId);
+  }
   // The projection must provably come from this PDR, and the supplied
   // decision binding must equal both. Caller-crafted ALLOW projections
   // with mismatched digests fail here.
@@ -288,12 +460,60 @@ export function issueMutationLease(
       input.projection.nodeId,
     );
   }
-  if (input.packId !== input.receipt.packIdentity) {
+  if (input.packId !== input.receipt.packIdentity || input.packId !== input.pack.packId) {
     return fail(
       'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
       `Lease pack ${input.packId} does not match sealed PDR pack ${input.receipt.packIdentity}`,
       input.packId,
     );
+  }
+  // Sealed-projection verification: the projection must carry a valid
+  // GEM seal over the verified pack bindings.
+  const sealed = input.projection as Partial<VerifiedEnforcementProjection>;
+  if (typeof sealed.projectionDigest !== 'string' || typeof sealed.packDigest !== 'string') {
+    return fail(
+      'POLICY_PROJECTION_INVALID',
+      'Lease requires a sealed verified GEM projection, not a plain caller object',
+      input.projection.nodeId,
+    );
+  }
+  const verifiedProjection = input.projection as VerifiedEnforcementProjection;
+  const projectionCheck = verifyVerifiedProjection(verifiedProjection, options);
+  if (!projectionCheck.ok) return projectionCheck;
+  if (verifiedProjection.packId !== input.pack.packId || verifiedProjection.packDigest !== recomputedPack.value.semanticDigest) {
+    return fail(
+      'POLICY_PROJECTION_INVALID',
+      'Projection pack binding does not match the independently verified M15 pack',
+      input.projection.nodeId,
+    );
+  }
+  if (verifiedProjection.taskIdentity !== input.pack.taskIdentity || verifiedProjection.policyVersion !== input.pack.policyVersion) {
+    return fail(
+      'POLICY_PROJECTION_INVALID',
+      'Projection task/policy binding does not match the verified M15 pack',
+      input.projection.nodeId,
+    );
+  }
+  // Re-run GEM node checks against the verified pack: a forged projection
+  // for an undeclared node/domain, or a node with no bound effective
+  // policy, fails here even when it copies real digests.
+  const nodesById = new Map(input.pack.workDag.map(n => [n.instructionId, n]));
+  const node = nodesById.get(verifiedProjection.nodeId);
+  if (node === undefined) {
+    return fail('POLICY_GEM_UNKNOWN_NODE', `Lease projection targets unknown pack node ${verifiedProjection.nodeId}`, verifiedProjection.nodeId);
+  }
+  if (!node.mutationDomains.includes(verifiedProjection.mutationDomain)) {
+    return fail('POLICY_GEM_UNDECLARED_MUTATION', `Node ${verifiedProjection.nodeId} does not declare mutation domain ${verifiedProjection.mutationDomain}`, verifiedProjection.mutationDomain);
+  }
+  if (!input.pack.allowedMutations.includes(verifiedProjection.mutationDomain)) {
+    return fail('POLICY_GEM_DOMAIN_NOT_PERMITTED', `Mutation domain ${verifiedProjection.mutationDomain} is outside pack allowedMutations`, verifiedProjection.mutationDomain);
+  }
+  const tableByNode = new Map(input.pack.guardrailTable.map(g => [g.nodeId, g]));
+  const effectivePolicies = new Set(input.receipt.provenance.map(p => p.policyId));
+  const boundPolicies = tableByNode.get(verifiedProjection.nodeId);
+  const governing = (boundPolicies === undefined ? [] : [...boundPolicies.policyIds]).filter(p => effectivePolicies.has(p));
+  if (governing.length === 0) {
+    return fail('POLICY_GEM_POLICY_NOT_BOUND', `Node ${verifiedProjection.nodeId} has no guardrail policy bound to the effective decision`, verifiedProjection.nodeId);
   }
 
   const obligations = input.obligations ?? input.projection.obligations;
@@ -317,12 +537,13 @@ export function issueMutationLease(
   const leaseId = sha(options, {
     projectId: input.projectId,
     packId: input.packId,
-    packDigest: input.packDigest,
-    decisionDigest: input.decisionDigest,
-    nodeId: input.projection.nodeId,
-    mutationDomain: input.projection.mutationDomain,
-    operation: input.projection.operation,
-    policySetFingerprint: input.projection.policySetFingerprint,
+    packDigest: recomputedPack.value.semanticDigest,
+    decisionDigest: input.receipt.digest,
+    nodeId: verifiedProjection.nodeId,
+    mutationDomain: verifiedProjection.mutationDomain,
+    operation: verifiedProjection.operation,
+    policySetFingerprint: verifiedProjection.policySetFingerprint,
+    projectionDigest: verifiedProjection.projectionDigest,
     policyBindings: bindPolicyFingerprints(policyById),
     obligations: sortedStrings(
       obligations.map(o =>
@@ -347,14 +568,15 @@ export function issueMutationLease(
     value: deepFreeze({
       leaseId: leaseId.value,
       projectId: input.projectId,
-      packId: input.packId,
-      packDigest: input.packDigest,
-      decisionDigest: input.decisionDigest,
-      nodeId: input.projection.nodeId,
-      mutationDomain: input.projection.mutationDomain,
-      operation: input.projection.operation,
-      policySetFingerprint: input.projection.policySetFingerprint,
+      packId: input.pack.packId,
+      packDigest: recomputedPack.value.semanticDigest,
+      decisionDigest: input.receipt.digest,
+      nodeId: verifiedProjection.nodeId,
+      mutationDomain: verifiedProjection.mutationDomain,
+      operation: verifiedProjection.operation,
+      policySetFingerprint: verifiedProjection.policySetFingerprint,
       policyFingerprintById: policyById,
+      projectionDigest: verifiedProjection.projectionDigest,
       obligations: [...obligations],
       warrantIds,
       warrantFingerprints,
@@ -364,19 +586,97 @@ export function issueMutationLease(
   };
 }
 
+/**
+ * High-level verified lease path: receives the M15 pack, its trusted
+ * receipt, the sealed PDR and one guarded operation, runs GEM internally
+ * and issues the lease. No raw caller projection ever creates authority
+ * on this path.
+ */
+export function issueVerifiedMutationLease(
+  input: {
+    pack: ExecutionPack;
+    trustedPackReceipt: PackReceipt;
+    receipt: PolicyDecisionReceipt;
+    operation: GuardedOperation;
+    projectId: string;
+    reviewTrigger: string;
+    obligations?: readonly Obligation[] | undefined;
+    warrantIds?: readonly string[] | undefined;
+    warrantFingerprints?: Readonly<Record<string, string>> | undefined;
+    warrantLimits?: Readonly<Record<string, number>> | undefined;
+  },
+  options: OperationOptions,
+): Result<{ lease: MutationCapabilityLease; projection: VerifiedEnforcementProjection }> {
+  const c = cancelled(options);
+  if (c) return c;
+  const projected = projectDecisionToNodes(
+    {
+      receipt: input.receipt,
+      pack: input.pack,
+      trustedPackReceipt: input.trustedPackReceipt,
+      operations: [input.operation],
+    },
+    options,
+  );
+  if (!projected.ok) return projected;
+  const projection = projected.value[0];
+  if (projection === undefined) {
+    return fail('POLICY_GEM_UNKNOWN_NODE', 'Verified GEM projection produced no output', input.operation.nodeId);
+  }
+  const leased = issueMutationLease(
+    {
+      projection,
+      receipt: input.receipt,
+      pack: input.pack,
+      trustedPackReceipt: input.trustedPackReceipt,
+      projectId: input.projectId,
+      packId: input.pack.packId,
+      packDigest: projection.packDigest,
+      decisionDigest: input.receipt.digest,
+      ...(input.obligations === undefined ? {} : { obligations: input.obligations }),
+      ...(input.warrantIds === undefined ? {} : { warrantIds: input.warrantIds }),
+      ...(input.warrantFingerprints === undefined ? {} : { warrantFingerprints: input.warrantFingerprints }),
+      ...(input.warrantLimits === undefined ? {} : { warrantLimits: input.warrantLimits }),
+      reviewTrigger: input.reviewTrigger,
+    },
+    options,
+  );
+  if (!leased.ok) return leased;
+  return { ok: true, value: deepFreeze({ lease: leased.value, projection }) };
+}
+
 // ─── Exception Blast-Radius Cap (EBRC) ────────────────────────────────────────
+
+/** Canonical affected-set fingerprint for cap sealing. */
+function computeAffectedSetFingerprint(
+  sets: { nodeIds: readonly string[]; mutationDomains: readonly string[]; obligations: readonly string[] },
+  options: OperationOptions,
+): Result<string> {
+  return sha(options, {
+    nodeIds: sortedStrings(sets.nodeIds),
+    mutationDomains: sortedStrings(sets.mutationDomains),
+    obligations: sortedStrings(sets.obligations),
+  });
+}
 
 /**
  * Cap exception effects to explicitly named obligations/domains/nodes.
  * The warrant scope must fit inside the computed maximum affected set, all
  * target policies must share one precedence domain (no cross-domain
  * relaxation), and every relaxed obligation must be named by the warrant.
+ *
+ * HIGH-B closure: the returned cap is a sealed validity-bound artifact.
+ * It binds warrant identity/fingerprint, target policies, precedence
+ * domain, the canonical affected set and the use-count bound under a
+ * deterministic cap digest. Only `checkExceptionBlastRadius` can issue
+ * it; `applyExceptionWarrant` independently verifies it.
  */
 export function checkExceptionBlastRadius(
   warrant: ExceptionWarrant,
   policiesById: ReadonlyMap<string, PolicyAuthorityCapsule>,
   maxAffected: { nodeIds: readonly string[]; mutationDomains: readonly string[]; obligations: readonly string[] },
   currentUses: number,
+  options: OperationOptions,
 ): Result<BlastRadiusCap> {
   if (isWarrantExhausted(warrant, currentUses)) {
     return fail(
@@ -451,14 +751,103 @@ export function checkExceptionBlastRadius(
       );
     }
   }
+  const precedenceDomain = [...domains].sort(compareCodePoint)[0] ?? '';
+  const sealedSets = {
+    nodeIds: sortedStrings(warrant.scopeNodeIds),
+    mutationDomains: sortedStrings(warrant.scopeMutationDomains),
+    obligations: sortedStrings(warrant.targetObligations),
+  };
+  const affectedSetFingerprint = computeAffectedSetFingerprint(sealedSets, options);
+  if (!affectedSetFingerprint.ok) return affectedSetFingerprint;
+  const capDigest = sha(options, {
+    warrantId: warrant.warrantId,
+    warrantFingerprint: warrant.semanticFingerprint,
+    targetPolicyIds: sortedStrings(warrant.targetPolicyIds),
+    precedenceDomain,
+    affectedSetFingerprint: affectedSetFingerprint.value,
+    useCount: currentUses,
+    maxUses: warrant.maxUses,
+  });
+  if (!capDigest.ok) return capDigest;
   return {
     ok: true,
     value: deepFreeze({
-      nodeIds: sortedStrings(warrant.scopeNodeIds),
-      mutationDomains: sortedStrings(warrant.scopeMutationDomains),
-      obligations: sortedStrings(warrant.targetObligations),
+      warrantId: warrant.warrantId,
+      warrantFingerprint: warrant.semanticFingerprint,
+      targetPolicyIds: sortedStrings(warrant.targetPolicyIds),
+      precedenceDomain,
+      nodeIds: sealedSets.nodeIds,
+      mutationDomains: sealedSets.mutationDomains,
+      obligations: sealedSets.obligations,
+      useCount: currentUses,
+      maxUses: warrant.maxUses,
+      affectedSetFingerprint: affectedSetFingerprint.value,
+      capDigest: capDigest.value,
     }),
   };
+}
+
+/**
+ * Independently verify a sealed blast-radius cap against the warrant it
+ * claims to authorize. Recomputes the affected-set fingerprint and the cap
+ * digest; any forged set, reused warrant binding, changed fingerprint,
+ * target, affected set or use count fails closed.
+ */
+export function verifyBlastRadiusCap(
+  cap: BlastRadiusCap,
+  warrant: ExceptionWarrant,
+  options: OperationOptions,
+): Result<{ verified: true }> {
+  const c = cancelled(options);
+  if (c) return c;
+  if (!cap || cap.warrantId !== warrant.warrantId) {
+    return fail('POLICY_CAP_INVALID', 'Blast-radius cap is not bound to this warrant', warrant.warrantId);
+  }
+  if (cap.warrantFingerprint !== warrant.semanticFingerprint) {
+    return fail('POLICY_CAP_INVALID', `Cap warrant fingerprint drifted for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  if (JSON.stringify([...cap.targetPolicyIds].sort(compareCodePoint)) !== JSON.stringify(sortedStrings(warrant.targetPolicyIds))) {
+    return fail('POLICY_CAP_INVALID', `Cap target policies drifted for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  if (cap.maxUses !== warrant.maxUses) {
+    return fail('POLICY_CAP_INVALID', `Cap use bound drifted for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  if (!Number.isInteger(cap.useCount) || cap.useCount < 0 || cap.useCount >= warrant.maxUses) {
+    return fail('POLICY_CAP_INVALID', `Cap use count is outside the live bound for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  const affectedSetFingerprint = computeAffectedSetFingerprint(
+    { nodeIds: [...cap.nodeIds], mutationDomains: [...cap.mutationDomains], obligations: [...cap.obligations] },
+    options,
+  );
+  if (!affectedSetFingerprint.ok) return affectedSetFingerprint;
+  if (affectedSetFingerprint.value !== cap.affectedSetFingerprint) {
+    return fail('POLICY_CAP_INVALID', `Cap affected-set fingerprint drifted for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  const capDigest = sha(options, {
+    warrantId: cap.warrantId,
+    warrantFingerprint: cap.warrantFingerprint,
+    targetPolicyIds: sortedStrings(cap.targetPolicyIds),
+    precedenceDomain: cap.precedenceDomain,
+    affectedSetFingerprint: cap.affectedSetFingerprint,
+    useCount: cap.useCount,
+    maxUses: cap.maxUses,
+  });
+  if (!capDigest.ok) return capDigest;
+  if (capDigest.value !== cap.capDigest) {
+    return fail('POLICY_CAP_INVALID', `Cap digest does not match its sealed fields for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  // The sealed sets must exactly equal the warrant scope: a cap whose
+  // sets merely cover the scope but differ is a different validity bound.
+  if (JSON.stringify(sortedStrings(cap.nodeIds)) !== JSON.stringify(sortedStrings(warrant.scopeNodeIds))) {
+    return fail('POLICY_CAP_INVALID', `Cap node set drifted for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  if (JSON.stringify(sortedStrings(cap.mutationDomains)) !== JSON.stringify(sortedStrings(warrant.scopeMutationDomains))) {
+    return fail('POLICY_CAP_INVALID', `Cap domain set drifted for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  if (JSON.stringify(sortedStrings(cap.obligations)) !== JSON.stringify(sortedStrings(warrant.targetObligations))) {
+    return fail('POLICY_CAP_INVALID', `Cap obligation set drifted for ${warrant.warrantId}`, warrant.warrantId);
+  }
+  return { ok: true, value: deepFreeze({ verified: true as const }) };
 }
 
 /**
@@ -479,6 +868,11 @@ export function applyExceptionWarrant(
 ): Result<WarrantApplication> {
   const c = cancelled(options);
   if (c) return c;
+  // HIGH-B: independently verify the sealed cap and its exact
+  // warrant/context binding before use. A plain structural object with
+  // identical sets carries no seal and fails here.
+  const capCheck = verifyBlastRadiusCap(cap, warrant, options);
+  if (!capCheck.ok) return capCheck;
   // Enforce the cap: forged or reused caps that do not cover the warrant
   // scope fail closed.
   const capNodes = new Set(cap.nodeIds);
@@ -533,6 +927,8 @@ export function applyExceptionWarrant(
   };
   // Reseal the mutated PDR: the relaxed receipt carries a fresh digest
   // bound to the new obligations and the recorded exception application.
+  // Decision evidence (request, witnesses, mandatory resolution, schemas,
+  // lattice) is preserved from the original sealed receipt.
   const resealed = issuePolicyDecisionReceipt(
     {
       packIdentity: receipt.packIdentity,
@@ -546,6 +942,15 @@ export function applyExceptionWarrant(
       exceptionsApplied: [...receipt.exceptionsApplied, application],
       provenance: [...receipt.provenance],
       policyFingerprints: { ...receipt.policyFingerprintById },
+      request: { domains: [...receipt.request.domains], operations: [...receipt.request.operations] },
+      applicabilityWitnesses: [...receipt.applicabilityWitnesses],
+      mandatoryDomains: [...receipt.mandatoryDomains],
+      unresolvedMandatoryDomains: [...receipt.unresolvedMandatoryDomains],
+      supportedSchemas: [...receipt.supportedSchemas],
+      latticeEvidence: {
+        domains: receipt.latticeEvidence.domains.map(d => ({ domain: d.domain, order: [...d.order] })),
+        evidenceFingerprint: receipt.latticeEvidence.evidenceFingerprint,
+      },
     },
     options,
   );
@@ -697,11 +1102,15 @@ export function evaluateFailClosedDegradation(
  * requested decision binding must all equal one verified PDR digest.
  * A mismatched decision digest (forged or reused EBRC-style) fails closed
  * here even if scope otherwise matches.
+ *
+ * HIGH-A closure: the lease is bound to the exact sealed projection digest
+ * it was issued from. A swapped projection — even with matching scope
+ * strings — fails unless its seal equals the lease's sealed digest.
  */
 export function authorizeMutation(
   input: {
     lease: MutationCapabilityLease;
-    projection: EnforcementProjection;
+    projection: VerifiedEnforcementProjection | EnforcementProjection;
     projectId: string;
     packDigest: string;
     decisionDigest: string;
@@ -725,6 +1134,23 @@ export function authorizeMutation(
   if (lease.policySetFingerprint !== projection.policySetFingerprint) {
     return scopeMismatch('policySetFingerprint');
   }
+  const sealedProjection = projection as Partial<VerifiedEnforcementProjection>;
+  if (typeof sealedProjection.projectionDigest !== 'string' || sealedProjection.projectionDigest.trim().length === 0) {
+    return fail(
+      'POLICY_PROJECTION_INVALID',
+      'Authorization requires a sealed verified GEM projection',
+      projection.nodeId,
+    );
+  }
+  if (lease.projectionDigest !== sealedProjection.projectionDigest) {
+    return fail(
+      'POLICY_LEASE_SCOPE_MISMATCH',
+      'Lease projection seal does not match the presented projection',
+      'projectionDigest',
+    );
+  }
+  const projectionCheck = verifyVerifiedProjection(projection as VerifiedEnforcementProjection, options);
+  if (!projectionCheck.ok) return projectionCheck;
   // Provenance-bound authorization: lease, projection and requested
   // decision must all name the same verified PDR digest.
   if (lease.decisionDigest !== projection.provenanceRef) {

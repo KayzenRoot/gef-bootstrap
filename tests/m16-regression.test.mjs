@@ -118,12 +118,14 @@ test('coverage map exposes gaps deterministically', () => {
       { operation: 'write:src/z.ts', domain: 'OTHER', nodeId: 'z' },
     ],
     policies,
+    ['v1'],
   );
   assert.equal(map.entries.length, 2);
   assert.equal(map.entries[0].covered, false);
   assert.equal(map.entries[0].domain, 'OTHER');
   assert.equal(map.entries[1].covered, true);
   assert.deepEqual(map.entries[1].policyIds, ['p-a']);
+  assert.equal(map.entries[1].validity, 'VALID');
   assert.equal(map.gaps.length, 1);
   const again = buildGuardrailCoverageMap(
     [
@@ -131,6 +133,7 @@ test('coverage map exposes gaps deterministically', () => {
       { operation: 'write:src/a.ts', domain: 'SCOPE', nodeId: 'a' },
     ],
     policies,
+    ['v1'],
   );
   assert.deepEqual(again, map);
 });

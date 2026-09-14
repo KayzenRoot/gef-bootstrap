@@ -312,9 +312,10 @@ function currentFingerprints(policies) {
 }
 
 test('lease issuance, TOCTOU revalidation and full authorization', () => {
-  const { pack, pdr, projection, policies } = leasedProjection();
+  const { pack, receipt, pdr, projection, policies } = leasedProjection();
   const lease = issueMutationLease({
-    projection, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection, receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest,
     reviewTrigger: 'review:mutation',
   }, opts);
@@ -338,9 +339,10 @@ test('lease issuance, TOCTOU revalidation and full authorization', () => {
 });
 
 test('lease reuse on another node, domain or project fails closed', () => {
-  const { pack, pdr, projection, policies } = leasedProjection();
+  const { pack, receipt, pdr, projection, policies } = leasedProjection();
   const lease = issueMutationLease({
-    projection, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection, receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest,
     reviewTrigger: 'review:mutation',
   }, opts).value;
@@ -363,9 +365,10 @@ test('lease reuse on another node, domain or project fails closed', () => {
 });
 
 test('TOCTOU: fingerprint change after decision invalidates the lease', () => {
-  const { pack, pdr, projection, policies } = leasedProjection();
+  const { pack, receipt, pdr, projection, policies } = leasedProjection();
   const lease = issueMutationLease({
-    projection, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection, receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest,
     reviewTrigger: 'review:mutation',
   }, opts).value;
@@ -396,7 +399,8 @@ test('no lease issues against a denying decision', () => {
   }, opts);
   assert.equal(projected.ok, true);
   assert.equal(failCode(issueMutationLease({
-    projection: projected.value[0], receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
+    projection: projected.value[0], receipt: pdr, pack, trustedPackReceipt: receipt,
+    projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest, reviewTrigger: 'review:mutation',
   }, opts)), 'POLICY_LEASE_DECISION_NOT_PERMISSIVE');
 });
@@ -409,12 +413,12 @@ test('narrow exception succeeds; cross-domain and broadened warrants rejected', 
   const cap = {
     nodeIds: ['a', 'b'], mutationDomains: ['dom-a', 'dom-b'], obligations: ['audit-log'],
   };
-  const narrow = checkExceptionBlastRadius(warrant('w-1'), byId, cap, 0);
+  const narrow = checkExceptionBlastRadius(warrant('w-1'), byId, cap, 0, opts);
   assert.equal(narrow.ok, true);
   assert.deepEqual(narrow.value.obligations, ['audit-log']);
 
   const broad = checkExceptionBlastRadius(
-    warrant('w-2', { scopeNodeIds: ['ghost-node'] }), byId, cap, 0,
+    warrant('w-2', { scopeNodeIds: ['ghost-node'] }), byId, cap, 0, opts,
   );
   assert.equal(failCode(broad), 'POLICY_WARRANT_SCOPE_EXCEEDED');
 
@@ -424,11 +428,11 @@ test('narrow exception succeeds; cross-domain and broadened warrants rejected', 
   ];
   const crossById = new Map(crossPolicies.map(p => [p.policyId, p]));
   const cross = checkExceptionBlastRadius(
-    warrant('w-3', { targetPolicyIds: ['pol-guard-a', 'pol-other'] }), crossById, cap, 0,
+    warrant('w-3', { targetPolicyIds: ['pol-guard-a', 'pol-other'] }), crossById, cap, 0, opts,
   );
   assert.equal(failCode(cross), 'POLICY_WARRANT_CROSS_DOMAIN');
 
-  const exhausted = checkExceptionBlastRadius(warrant('w-4'), byId, cap, 2);
+  const exhausted = checkExceptionBlastRadius(warrant('w-4'), byId, cap, 2, opts);
   assert.equal(failCode(exhausted), 'POLICY_WARRANT_EXHAUSTED');
 });
 
@@ -441,10 +445,11 @@ test('exception application relaxes only named obligations and preserves debt', 
       ],
     }),
   ]);
-  const cap = { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] };
+  const maxAffected = { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] };
   const byId = new Map([['pol-guard-a', pac('pol-guard-a')]]);
-  assert.equal(checkExceptionBlastRadius(warrant('w-1'), byId, cap, 0).ok, true);
-  const applied = applyExceptionWarrant(pdr, warrant('w-1'), cap, opts);
+  const sealed = checkExceptionBlastRadius(warrant('w-1'), byId, maxAffected, 0, opts);
+  assert.equal(sealed.ok, true);
+  const applied = applyExceptionWarrant(pdr, warrant('w-1'), sealed.value, opts);
   assert.equal(applied.ok, true);
   assert.deepEqual(applied.value.receipt.obligations.map(o => o.obligationId), ['keep-me']);
   assert.deepEqual(applied.value.receipt.exceptionsApplied[0].relaxedObligations, ['audit-log']);

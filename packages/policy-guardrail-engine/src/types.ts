@@ -173,6 +173,14 @@ export interface ExceptionApplication {
   readonly reviewTrigger: string;
 }
 
+/** Canonical lattice authority evidence sealed into the PDR. */
+export interface LatticeAuthorityEvidence {
+  /** Domains sorted by name; each order preserves its semantic precedence. */
+  readonly domains: readonly { readonly domain: string; readonly order: readonly string[] }[];
+  /** Deterministic fingerprint over the canonical domains/orders. */
+  readonly evidenceFingerprint: string;
+}
+
 export interface PolicyDecisionReceipt {
   readonly packIdentity: string;
   readonly taskIdentity: string;
@@ -193,6 +201,18 @@ export interface PolicyDecisionReceipt {
   /** Exact policy-ID to fingerprint binding for TOCTOU revalidation. */
   readonly policyFingerprintById: Readonly<Record<string, string>>;
   readonly policySetFingerprint: string;
+  /** Exact request evidence the decision was evaluated under. */
+  readonly request: PolicyRequest;
+  /** Applicability witness set backing the decision, sorted by policy ID. */
+  readonly applicabilityWitnesses: readonly ApplicabilityAssessment[];
+  /** Mandatory domains required by the caller, sorted. */
+  readonly mandatoryDomains: readonly string[];
+  /** Mandatory domains with no applicable policy, sorted. */
+  readonly unresolvedMandatoryDomains: readonly string[];
+  /** Supported schema versions admitted at evaluation, sorted. */
+  readonly supportedSchemas: readonly string[];
+  /** Canonical lattice authority evidence the decision was evaluated under. */
+  readonly latticeEvidence: LatticeAuthorityEvidence;
   readonly digest: string;
 }
 
@@ -234,6 +254,23 @@ export interface EnforcementProjection {
   readonly provenanceRef: string;
 }
 
+/**
+ * Sealed verified GEM projection. The projection digest binds the exact
+ * M15 pack identity/digest, task/policy bindings, node/domain/operation,
+ * PDR digest, policy-set fingerprint and full obligation semantics. A
+ * caller-constructed plain object with copied strings carries no valid
+ * seal unless GEM itself produced it; leases verify the seal and re-run
+ * GEM checks against the verified pack before issuing authority.
+ */
+export interface VerifiedEnforcementProjection extends EnforcementProjection {
+  readonly packId: string;
+  readonly packDigest: string;
+  readonly taskIdentity: string;
+  readonly policyVersion: string;
+  readonly obligationDigest: string;
+  readonly projectionDigest: string;
+}
+
 export interface MutationCapabilityLease {
   readonly leaseId: string;
   readonly projectId: string;
@@ -246,6 +283,8 @@ export interface MutationCapabilityLease {
   readonly policySetFingerprint: string;
   /** Exact policy-ID to fingerprint binding sealed at lease time. */
   readonly policyFingerprintById: Readonly<Record<string, string>>;
+  /** Seal of the verified GEM projection this lease was issued from. */
+  readonly projectionDigest: string;
   readonly obligations: readonly Obligation[];
   readonly warrantIds: readonly string[];
   readonly warrantFingerprints: Readonly<Record<string, string>>;
@@ -261,10 +300,26 @@ export interface LeaseCheckInput {
   readonly warrantUses: Readonly<Record<string, number>>;
 }
 
+/**
+ * Sealed validity-bound Exception Blast-Radius Cap. Issued only by
+ * `checkExceptionBlastRadius` after policy/warrant validation; verified
+ * independently by `applyExceptionWarrant`. A plain structural object with
+ * matching sets carries no valid seal and is rejected. The digest binds
+ * warrant identity/fingerprint, target policies, precedence domain, the
+ * canonical affected set and the use-count bound.
+ */
 export interface BlastRadiusCap {
+  readonly warrantId: string;
+  readonly warrantFingerprint: string;
+  readonly targetPolicyIds: readonly string[];
+  readonly precedenceDomain: string;
   readonly nodeIds: readonly string[];
   readonly mutationDomains: readonly string[];
   readonly obligations: readonly string[];
+  readonly useCount: number;
+  readonly maxUses: number;
+  readonly affectedSetFingerprint: string;
+  readonly capDigest: string;
 }
 
 export interface WarrantApplication {
@@ -303,6 +358,8 @@ export interface RegressionFinding {
   readonly detail: string;
 }
 
+export type CoverageValidity = 'VALID' | 'UNSUPPORTED_SCHEMA' | 'NO_APPLICABLE_POLICY';
+
 export interface CoverageEntry {
   readonly operation: string;
   readonly domain: string;
@@ -310,6 +367,10 @@ export interface CoverageEntry {
   readonly policyIds: readonly string[];
   readonly obligationIds: readonly string[];
   readonly covered: boolean;
+  /** Explicit validity: only VALID policies can cover. */
+  readonly validity: CoverageValidity;
+  /** Policies syntactically matching but excluded as invalid. */
+  readonly excludedPolicyIds: readonly string[];
 }
 
 export interface CoverageMap {
@@ -358,6 +419,8 @@ export const DIAGNOSTIC_CODES = {
   POLICY_GEM_UNDECLARED_MUTATION: 'POLICY_GEM_UNDECLARED_MUTATION',
   POLICY_GEM_DOMAIN_NOT_PERMITTED: 'POLICY_GEM_DOMAIN_NOT_PERMITTED',
   POLICY_GEM_POLICY_NOT_BOUND: 'POLICY_GEM_POLICY_NOT_BOUND',
+  POLICY_PROJECTION_INVALID: 'POLICY_PROJECTION_INVALID',
+  POLICY_CAP_INVALID: 'POLICY_CAP_INVALID',
   POLICY_LEASE_DECISION_NOT_PERMISSIVE: 'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
   POLICY_LEASE_SCOPE_MISMATCH: 'POLICY_LEASE_SCOPE_MISMATCH',
   POLICY_LEASE_STALE_PACK: 'POLICY_LEASE_STALE_PACK',
