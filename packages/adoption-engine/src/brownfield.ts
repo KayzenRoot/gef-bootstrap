@@ -1,35 +1,43 @@
-import type { AdoptionDependency, AdoptionSlice, CompatibilityBridgeContract, DriftClass, DriftResolution, EquivalenceState, LegacyCompatibilityMembrane, LegacyDebtQuarantine, LegacyDebtRecord, NormalizationBudget, NormalizationFrontier, NormalizationState, NormalizationUsage, OperationOptions, ProgressiveGovernanceEnvelope, Result, ReversibilityIndex, TruthPair } from './types.js';
+import type { AdoptionDependency, AdoptionSlice, CompatibilityBridgeContract, DriftClass, DriftResolution, EquivalenceState, GovernanceMaturity, LegacyCompatibilityMembrane, LegacyDebtQuarantine, LegacyDebtRecord, NormalizationBudget, NormalizationFrontier, NormalizationState, NormalizationUsage, OperationOptions, ProgressiveGovernanceEnvelope, Result, ReversibilityIndex, TruthPair } from './types.js';
 import { cancelled, canonical, compareCodePoint, deepFreeze, DEFAULT_MAX_DEPTH, DEFAULT_MAX_EDGES, DEFAULT_MAX_NODES, fail, safeLimit, sha, validId } from './utils.js';
 
 const DRIFT_CLASSES=new Set<DriftClass>(['DRIFT_NONE','DOCUMENTATION_DRIFT','IMPLEMENTATION_DRIFT','TEST_DRIFT','GOVERNANCE_DRIFT','ARCHITECTURAL_DRIFT','INTENT_UNKNOWN','CONFLICTING_INTENT','LEGACY_ACCEPTED']);
 const NORMALIZATION_STATES=new Set<NormalizationState>(['LEGACY_UNMAPPED','LEGACY_MAPPED','DUAL_BOUND','GEF_CANONICAL_WITH_LEGACY_READ','GEF_CANONICAL','BLOCKED']);
 
-export function reconcileBrownfieldTruth(input:{domain:string;observed:unknown;normative?:unknown;driftClass?:DriftClass;evidenceRefs?:readonly string[];legacyAcceptanceRef?:string}):Result<TruthPair> {
+export function reconcileBrownfieldTruth(input:{domain:string;observedTruth:unknown;normativeTruth?:unknown;bindingEvidence:readonly string[];driftClass?:DriftClass;confidence?:number;resolutionState?:'ALIGNED'|'UNRESOLVED'|'LEGACY_ACCEPTED'|'BLOCKED'|'RESOLUTION_ADMITTED';resolutionRef?:string;legacyAcceptanceRef?:string}):Result<TruthPair> {
   if(!input.domain)return fail('BROWNFIELD_DOMAIN_MISSING','Brownfield truth domain is required');
+  if(input.bindingEvidence.length===0)return fail('BROWNFIELD_EVIDENCE_MISSING','Brownfield truth requires explicit binding evidence',input.domain);
+  if(input.confidence!==undefined&&(!Number.isFinite(input.confidence)||input.confidence<0||input.confidence>1))return fail('BROWNFIELD_CONFIDENCE_INVALID','Descriptive confidence must be between 0 and 1',input.domain);
   let drift:DriftClass;
   if(input.legacyAcceptanceRef) drift='LEGACY_ACCEPTED';
-  else if(input.normative===undefined) drift='INTENT_UNKNOWN';
+  else if(input.normativeTruth===undefined) drift='INTENT_UNKNOWN';
   else {
     let equivalent=false;
-    try{equivalent=canonical(input.observed)===canonical(input.normative);}catch{return fail('BROWNFIELD_VALUE_UNSUPPORTED','Observed or normative truth cannot be canonically compared',input.domain);}
+    try{equivalent=canonical(input.observedTruth)===canonical(input.normativeTruth);}catch{return fail('BROWNFIELD_VALUE_UNSUPPORTED','Observed or normative truth cannot be canonically compared',input.domain);}
     if(equivalent) drift='DRIFT_NONE';
     else if(!input.driftClass)return fail('BROWNFIELD_DRIFT_CLASS_REQUIRED','Non-equivalent observed and normative truth requires an explicit drift class',input.domain);
     else drift=input.driftClass;
   }
   if(!DRIFT_CLASSES.has(drift))return fail('DRIFT_CLASS_UNSUPPORTED','Unsupported drift class',input.domain);
-  return {ok:true,value:deepFreeze({domain:input.domain,observed:input.observed,...(input.normative===undefined?{}:{normative:input.normative}),driftClass:drift,evidenceRefs:[...(input.evidenceRefs??[])].sort(compareCodePoint),...(input.legacyAcceptanceRef?{legacyAcceptanceRef:input.legacyAcceptanceRef}:{})})};
+  const resolutionState=input.resolutionState??(drift==='DRIFT_NONE'?'ALIGNED':drift==='LEGACY_ACCEPTED'?'LEGACY_ACCEPTED':'UNRESOLVED');
+  if(!['ALIGNED','UNRESOLVED','LEGACY_ACCEPTED','BLOCKED','RESOLUTION_ADMITTED'].includes(resolutionState))return fail('TRUTH_RESOLUTION_STATE_UNSUPPORTED','Unsupported TruthPair resolution state',input.domain);
+  if(resolutionState==='RESOLUTION_ADMITTED'&&!input.resolutionRef)return fail('TRUTH_RESOLUTION_REF_REQUIRED','Admitted truth resolution requires an explicit reference',input.domain);
+  if(resolutionState==='ALIGNED'&&drift!=='DRIFT_NONE')return fail('TRUTH_RESOLUTION_CONFLICT','Only DRIFT_NONE may be marked ALIGNED',input.domain);
+  const bindingEvidence=[...input.bindingEvidence].sort(compareCodePoint);
+  return {ok:true,value:deepFreeze({domain:input.domain,observedTruth:input.observedTruth,...(input.normativeTruth===undefined?{}:{normativeTruth:input.normativeTruth}),bindingEvidence,driftClass:drift,...(input.confidence===undefined?{}:{confidence:input.confidence}),resolutionState,...(input.resolutionRef?{resolutionRef:input.resolutionRef}:{}),...(input.legacyAcceptanceRef?{legacyAcceptanceRef:input.legacyAcceptanceRef}:{})})};
 }
 
 export function validateLegacyCompatibilityMembrane(m:LegacyCompatibilityMembrane):Result<Readonly<LegacyCompatibilityMembrane>> {
   if(!m.id||!m.legacySourceIdentity||!m.semanticClass||!m.sourceFingerprint||!m.owner)return fail('LEGACY_MAPPING_INVALID','Legacy Compatibility Membrane is incomplete',m.id);
   if(!['ALIAS','PROJECTION','ADAPTER','LEGACY_ACCEPTANCE'].includes(m.mappingType))return fail('LEGACY_MAPPING_TYPE_UNSUPPORTED','Unsupported legacy mapping type',m.id);
   if(m.lossy&&!m.approvalRef)return fail('LOSSY_MAPPING_UNAPPROVED','Lossy legacy mapping requires explicit approval',m.id);
+  if(m.mappingType==='ALIAS'&&!m.admissionRef)return fail('LEGACY_ALIAS_ADMISSION_REQUIRED','Legacy aliases require an explicit admission reference',m.id);
   if(m.mutationPermission!==undefined&&m.mutationPermission!=='NONE')return fail('LEGACY_MAPPING_MUTATION_FORBIDDEN','M13 legacy membranes cannot grant mutation authority',m.id);
   return {ok:true,value:deepFreeze({...m,mutationPermission:'NONE'})};
 }
 
 export function validateCompatibilityBridge(b:CompatibilityBridgeContract):Result<Readonly<CompatibilityBridgeContract>> {
-  if(!b.id||!b.sourceIdentity||!b.targetSemanticClass||!b.mappingVersion||!b.invalidationFingerprint||!b.owner)return fail('COMPATIBILITY_BRIDGE_INVALID','Compatibility Bridge Contract is incomplete',b.id);
+  if(!b.id||!b.sourceIdentity||!b.targetSemanticClass||!b.mappingVersion||!b.invalidationFingerprint||!b.owner||!b.reviewTrigger)return fail('COMPATIBILITY_BRIDGE_INVALID','Compatibility Bridge Contract is incomplete',b.id);
   if(!['READ_ONLY','BIDIRECTIONAL_PLANNED','MIGRATION_ONLY'].includes(b.direction))return fail('BRIDGE_DIRECTION_UNSUPPORTED','Unsupported compatibility bridge direction',b.id);
   if(b.lossy&&!b.approvalRef)return fail('LOSSY_MAPPING_UNAPPROVED','Lossy compatibility bridge requires explicit approval',b.id);
   return {ok:true,value:deepFreeze({...b})};
@@ -50,8 +58,9 @@ export function validateDriftResolution(action:DriftResolution,decisionRef?:stri
   return {ok:true,value:deepFreeze(decisionRef?{action,decisionRef}:{action})};
 }
 
-export function planAdoptionSlice(input:{targets:readonly string[];dependencies:readonly AdoptionDependency[];governedDomains:readonly string[];blockedDomains?:readonly string[];optionalCleanup?:readonly string[]},options:OperationOptions):Result<AdoptionSlice> {
+export function planAdoptionSlice(input:{targets:readonly string[];dependencies:readonly AdoptionDependency[];governedDomains:readonly string[];blockedDomains?:readonly string[];requiredMappings?:readonly string[];unresolvedBlockers?:readonly string[];optionalCleanup?:readonly string[];postAdoptionMaturityDelta?:readonly {domain:string;from:GovernanceMaturity;to:GovernanceMaturity}[];safetyEnvelopeIdentity:string},options:OperationOptions):Result<AdoptionSlice> {
   const c=cancelled(options);if(c)return c;
+  if(!input.safetyEnvelopeIdentity)return fail('ADOPTION_SLICE_SAFETY_BINDING_MISSING','Adoption slice requires an explicit safety-envelope identity');
   const map=new Map<string,readonly string[]>();let edges=0;const graphNodes=new Set<string>(input.targets);
   for(const d of input.dependencies){if(map.has(d.domain))return fail('DUPLICATE_ADOPTION_DOMAIN','Duplicate adoption dependency domain',d.domain);const deps=[...(d.dependsOn??[])].sort(compareCodePoint);map.set(d.domain,deps);graphNodes.add(d.domain);for(const dep of deps)graphNodes.add(dep);edges+=deps.length;}
   if(graphNodes.size>safeLimit(options.maxNodes,DEFAULT_MAX_NODES))return fail('NODE_BUDGET_EXCEEDED','Adoption slice node budget exceeded');
@@ -69,19 +78,23 @@ export function planAdoptionSlice(input:{targets:readonly string[];dependencies:
   };
   for(const target of [...input.targets].sort(compareCodePoint)){const r=walk(target,0);if(!r.ok)return r;}
   const blockedRequired=[...required].filter(d=>blocked.has(d)).sort(compareCodePoint);
-  return {ok:true,value:deepFreeze({targetDomains:[...input.targets].sort(compareCodePoint),requiredDomains:[...required].sort(compareCodePoint),blockedDomains:blockedRequired,optionalCleanup:[...(input.optionalCleanup??[])].sort(compareCodePoint)})};
+  const maturityDelta=[...(input.postAdoptionMaturityDelta??[])].sort((a,b)=>compareCodePoint(a.domain,b.domain));
+  for(let i=1;i<maturityDelta.length;i++)if(maturityDelta[i]!.domain===maturityDelta[i-1]!.domain)return fail('DUPLICATE_MATURITY_DELTA','Duplicate post-adoption maturity delta',maturityDelta[i]!.domain);
+  const blockers=[...new Set([...(input.unresolvedBlockers??[]),...blockedRequired.map(domain=>`BLOCKED_DOMAIN:${domain}`)])].sort(compareCodePoint);
+  return {ok:true,value:deepFreeze({targetDomains:[...input.targets].sort(compareCodePoint),requiredDomains:[...required].sort(compareCodePoint),requiredMappings:[...(input.requiredMappings??[])].sort(compareCodePoint),unresolvedBlockers:blockers,blockedDomains:blockedRequired,optionalCleanup:[...(input.optionalCleanup??[])].sort(compareCodePoint),postAdoptionMaturityDelta:maturityDelta,safetyEnvelopeIdentity:input.safetyEnvelopeIdentity})};
 }
 
 export function buildProgressiveGovernanceEnvelope(input:{projectId:string;slice:AdoptionSlice;governedDomains:readonly string[];safetyEnvelopeIdentity:string;requiredChecks:readonly string[];rollbackPlanRef:string},options:OperationOptions):Result<ProgressiveGovernanceEnvelope> {
   if(!validId(input.projectId))return fail('PROJECT_ID_INVALID','Invalid project identity');
   if(!input.safetyEnvelopeIdentity||!input.rollbackPlanRef)return fail('PROGRESSIVE_ENVELOPE_BINDING_MISSING','Safety envelope identity and rollback plan are required');
+  if(input.safetyEnvelopeIdentity!==input.slice.safetyEnvelopeIdentity)return fail('PROGRESSIVE_ENVELOPE_SAFETY_MISMATCH','Progressive Governance Envelope must preserve the adoption-slice safety binding');
   const normalized={projectId:input.projectId,targetDomains:[...new Set(input.slice.targetDomains)].sort(compareCodePoint),requiredDomains:[...new Set(input.slice.requiredDomains)].sort(compareCodePoint),governedDomains:[...new Set(input.governedDomains)].sort(compareCodePoint),blockedDomains:[...new Set(input.slice.blockedDomains)].sort(compareCodePoint),requiredChecks:[...new Set(input.requiredChecks)].sort(compareCodePoint),safetyEnvelopeIdentity:input.safetyEnvelopeIdentity,rollbackPlanRef:input.rollbackPlanRef};
   const identity=sha(options,normalized);if(!identity.ok)return identity;
   return {ok:true,value:deepFreeze({...normalized,semanticIdentity:identity.value})};
 }
 
 export function createLegacyDebtRecord(record:LegacyDebtRecord):Result<Readonly<LegacyDebtRecord>> {
-  if(!record.id||!record.domain||!record.sourceBinding||!record.reason)return fail('LEGACY_DEBT_INVALID','Legacy debt record is incomplete',record.id);
+  if(!record.id||!record.domain||!record.sourceBinding||!record.reason||!record.invalidationCondition)return fail('LEGACY_DEBT_INVALID','Legacy debt record is incomplete',record.id);
   if(!DRIFT_CLASSES.has(record.driftClass))return fail('DRIFT_CLASS_UNSUPPORTED','Unsupported drift class',record.id);
   if(!['LOW','MEDIUM','HIGH','CRITICAL'].includes(record.severity))return fail('DEBT_SEVERITY_UNSUPPORTED','Unsupported legacy debt severity',record.id);
   return {ok:true,value:deepFreeze({...record,affectedCapabilities:[...record.affectedCapabilities].sort(compareCodePoint)})};

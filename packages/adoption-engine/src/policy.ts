@@ -62,6 +62,13 @@ export function assessNewProject(signals:NewProjectSignals):NewProjectAssessment
   return signals.explicitNewProjectIntent && !signals.conflictingCanonicalSystem && !signals.retainedHistory && !signals.existingReleaseEvidence && !signals.remoteProjectEvidence ? 'TRUE_NEW' : 'NEWNESS_UNCERTAIN';
 }
 
+export function validateBootstrapTemplateBinding(actual:{id:string;version:string;digest:string},expected:{id:string;version:string;digest:string}):Result<Readonly<{id:string;version:string;digest:string}>> {
+  if(!actual.id||!actual.version||!actual.digest||!expected.id||!expected.version||!expected.digest)return fail('SEED_TEMPLATE_BINDING_INVALID','Template bindings must be complete');
+  if(actual.version==='latest'||actual.version==='*')return fail('SEED_TEMPLATE_BINDING_INVALID','Floating template versions are forbidden');
+  if(actual.id!==expected.id||actual.version!==expected.version||actual.digest!==expected.digest)return fail('SEED_TEMPLATE_MISMATCH','Bootstrap template binding does not match the admitted template');
+  return {ok:true,value:deepFreeze({...actual})};
+}
+
 export function buildBootstrapSeedGraph(nodes:readonly SeedNode[], options:OperationOptions):Result<BootstrapSeedGraph> {
   const c=cancelled(options); if(c)return c;
   if(nodes.length>safeLimit(options.maxNodes,DEFAULT_MAX_NODES))return fail('NODE_BUDGET_EXCEEDED','Bootstrap Seed Graph node budget exceeded');
@@ -69,7 +76,12 @@ export function buildBootstrapSeedGraph(nodes:readonly SeedNode[], options:Opera
   let edges=0;
   for(const node of nodes){
     if(!validId(node.id))return fail('SEED_NODE_ID_INVALID','Invalid seed node id',node.id);
+    if(!node.semanticClass||!node.sourceOwner||!node.profileIdentity||!node.profileDigest||!node.mutationOwner)return fail('SEED_NODE_BINDING_MISSING','Bootstrap Seed Graph node bindings are incomplete',node.id);
+    if(node.mutationOwner==='M13'||node.mutationOwner==='ADOPTION_ENGINE')return fail('SEED_MUTATION_OWNER_INVALID','M13 cannot own bootstrap mutation',node.id);
     if(!['CREATE_FROM_EXPLICIT_INPUT','CREATE_SKELETON_REQUIRING_DECISION','EXPLICIT_NOT_APPLICABLE'].includes(node.creationMode))return fail('SEED_CREATION_MODE_UNSUPPORTED','Unsupported seed creation mode',node.id);
+    if(node.creationMode==='CREATE_SKELETON_REQUIRING_DECISION'&&!(node.decisionRefs?.length))return fail('SEED_DECISION_REQUIRED','Skeleton creation requires an explicit unresolved decision reference',node.id);
+    if(node.templateRef&&(!node.templateRef.id||!node.templateRef.version||!node.templateRef.digest||node.templateRef.version==='latest'||node.templateRef.version==='*'))return fail('SEED_TEMPLATE_BINDING_INVALID','Seed template binding must be exact',node.id);
+    if(node.creationMode!=='EXPLICIT_NOT_APPLICABLE'&&node.postconditionChecks.length===0)return fail('SEED_POSTCONDITION_MISSING','Bootstrap seed requires at least one postcondition check',node.id);
     if(byId.has(node.id))return fail('DUPLICATE_SEED_NODE','Duplicate seed node',node.id);
     byId.set(node.id,node); edges+=node.dependencies?.length??0;
     if(edges>safeLimit(options.maxEdges,DEFAULT_MAX_EDGES))return fail('EDGE_BUDGET_EXCEEDED','Bootstrap Seed Graph edge budget exceeded');
@@ -87,7 +99,7 @@ export function buildBootstrapSeedGraph(nodes:readonly SeedNode[], options:Opera
     visiting.delete(id);done.add(id);order.push(id);return {ok:true,value:undefined};
   };
   for(const id of [...byId.keys()].sort(compareCodePoint)){const r=walk(id,0);if(!r.ok)return r;}
-  const normalized=[...nodes].map(n=>({...n,dependencies:[...(n.dependencies??[])].sort(compareCodePoint),decisionRefs:[...(n.decisionRefs??[])].sort(compareCodePoint)})).sort((a,b)=>compareCodePoint(a.id,b.id));
+  const normalized=[...nodes].map(n=>({...n,dependencies:[...(n.dependencies??[])].sort(compareCodePoint),decisionRefs:[...(n.decisionRefs??[])].sort(compareCodePoint),postconditionChecks:[...n.postconditionChecks].sort(compareCodePoint),...(n.templateRef?{templateRef:{...n.templateRef}}:{})})).sort((a,b)=>compareCodePoint(a.id,b.id));
   return {ok:true,value:deepFreeze({nodes:normalized,order})};
 }
 
