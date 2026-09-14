@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-WO-M12-001",
+  "module": "GBS-M12_SCOPE_AND_DOD_ENGINE",
+  "risk": "STANDARD",
+  "baseSha": "83133d1e2b49b6bf1f2456b98b0b038acde561c7",
+  "sourceHierarchyLocked": true,
+  "canonicalDenominatorWeight": 1088,
+  "moduleWeight": 18,
+  "codexExecutorAllowed": false,
+  "lockedSources": [
+    {"path":".engineering/CHECKPOINT.md","fingerprint":"checkpoint@83133d1e2b49b6bf1f2456b98b0b038acde561c7"},
+    {"path":".engineering/SCOPE.md","blobSha":"ce62e9823ebf040621652ff14363b055d38b9580"},
+    {"path":".engineering/DEFINITION-OF-DONE.md","blobSha":"d1833728b8dd2efed8d53064acfc6949c5bfc0d5"},
+    {"path":".engineering/BACKLOG.md","blobSha":"b9da965ffc8bccc5b6f01e70017f32cee5dedc16"},
+    {"path":"planning/MASTER-MODULE-INDEX.md","fingerprint":"main@83133d1e2b49b6bf1f2456b98b0b038acde561c7"},
+    {"path":"planning/modules/area-c-source-pack-and-planning/m12-scope-and-dod-engine/S01-classification.md","plannedBlobSha":"d8f01a6934518e22d24d46b19428f8d6685422c8"},
+    {"path":"planning/modules/area-c-source-pack-and-planning/m12-scope-and-dod-engine/S02-necessary-important-future-out-of-scope.md","plannedBlobSha":"77285b5cdc2123bf10ac760e3541c8e88a1cc184"},
+    {"path":"planning/modules/area-c-source-pack-and-planning/m12-scope-and-dod-engine/S03-definition-of-done.md","plannedBlobSha":"0c1cba31d548ae1f8b2727e84d30100e451d84c4"},
+    {"path":"planning/modules/area-c-source-pack-and-planning/m12-scope-and-dod-engine/S04-scope-drift.md","plannedBlobSha":"d9fc9a4330fe6f1327e283b9cba97faf15c7984b"}
+  ],
+  "invariants": [
+    "Only NECESSARY is automatically admission-eligible",
+    "M12 never mutates canonical sources or promotes completion",
+    "DoD required satisfaction requires evidence binding",
+    "Scope and criterion drift fail closed on unauthorized erosion/expansion",
+    "Production denominator remains 1088 and M12 weight remains 18",
+    "No known HIGH/CRITICAL may survive audit"
+  ],
+  "staleIf": [
+    "checkpoint changes before implementation audit",
+    "Scope/DoD/Architecture/Requirements/Decision authority relevant to M12 changes",
+    "M12 frozen session or Module Gate changes",
+    "base branch diverges in a way that changes locked contracts"
+  ],
+  "preflight": {
+    "checkpointAuthorizesM12": true,
+    "m10ModuleDone": true,
+    "m11ModuleDone": true,
+    "m12SessionsFrozen": true,
+    "moduleGateReady": true,
+    "denominatorUnchanged": true,
+    "highCriticalKnown": 0,
+    "result": "PASS"
+  }
+}
