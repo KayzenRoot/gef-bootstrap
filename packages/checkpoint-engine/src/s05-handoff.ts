@@ -4,7 +4,6 @@ import { cancelled, compareCodePoint, deepFreeze, sha, sortedUnique } from './ut
 export function buildCheckpointFreshnessVector(capsule:CanonicalContinuationCapsule,observedIdentities:Readonly<Record<string,string|undefined>>,options:OperationOptions):Result<CheckpointFreshnessVector>{
   const c=cancelled(options);if(c)return c;
   const entries:FreshnessEntry[]=[...capsule.authorityBindings].sort((a,b)=>compareCodePoint(a.bindingId,b.bindingId)).map(b=>{const observed=observedIdentities[b.bindingId];return{bindingId:b.bindingId,state:observed===undefined?(b.required?'MISSING':'UNKNOWN'):observed===b.semanticIdentity?'CURRENT':'STALE',expectedIdentity:b.semanticIdentity,observedIdentity:observed??null};});
-  const semantic={entries,allCurrent:entries.filter((_,i)=>capsule.authorityBindings.sort?.).length===0};
   const allCurrent=entries.every(e=>e.state==='CURRENT'||(!capsule.authorityBindings.find(b=>b.bindingId===e.bindingId)?.required&&e.state==='UNKNOWN'));
   const d=sha(options,{entries,allCurrent});if(!d.ok)return d;return{ok:true,value:deepFreeze({entries,allCurrent,vectorDigest:d.value})};
 }
