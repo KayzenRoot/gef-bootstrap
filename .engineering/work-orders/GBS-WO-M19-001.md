@@ -1,12 +1,15 @@
 # GBS-WO-M19-001 — Implement Project Registry
 
-Status: `COMPILED_NOT_ADMITTED`
+Status: `ADMISSION_CANDIDATE`
 Risk: `MEDIUM`
 Assurance intensity: `STANDARD_PLUS`
 Module: `GBS-M19 — Project Registry`
 Canonical package: `packages/project-registry`
 Canonical weight: `14`
-Planning gate: `.engineering/gates/M19-PLANNING-GATE.md`
+Planning gate: `.engineering/gates/M19-PLANNING-GATE.md` (`PASSED`)
+Planning freeze PR: `#208`
+Planning freeze merge: `074a45b1cfda7400dd87e7941218f390570d594a`
+Admission PR: `#209`
 
 ## Objective
 Implement a deterministic, persistent, collision-safe project registry that indexes known projects for routing/resume efficiency while remaining subordinate to canonical M03 identity and M17/M18 continuation truth.
@@ -66,6 +69,6 @@ Broad repository discovery, canonical identity transition, filesystem safety eng
 Exact admitted base/head/tree, focused test count, platform matrix, full regression count, dependency audit, Security CodeQL when triggered, semantic review, zero unresolved CRITICAL/HIGH, implementation merge and separate Evidence Bundle/MODULE_DONE promotion.
 
 ## Admission rule
-This Work Order has been compiled from frozen-candidate planning but grants no execution authority until a separate exact-head admission review/merge promotes its status to `ADMITTED_READY_FOR_IMPLEMENTATION` and the canonical checkpoint agrees.
+PR #209 is the admission candidate. It grants no execution authority until exact-head audit succeeds, #209 merges, and a post-merge binding records the real admission merge SHA as the sole legal M19 execution base. Only that binding may change this status to `ADMITTED_READY_FOR_IMPLEMENTATION`.
 
-STOP CONDITION: `GBS_WO_M19_001_COMPILED_NOT_ADMITTED`.
+STOP CONDITION: `GBS_WO_M19_001_ADMISSION_CANDIDATE`.
