@@ -23,10 +23,13 @@ Execution packs should include the decisions, file targets, dependency order, ac
 ## GitHub accelerators
 - `AGENTS.md` and scoped `.github/instructions` provide executor-local guidance.
 - `.github/prompts` provides reusable implementation, repair and review recipes.
-- CodeQL provides public-repository static analysis.
-- Dependency Review checks dependency-changing pull requests.
-- Dependabot groups routine npm and GitHub Actions maintenance.
-- Existing Actions remain evidence providers rather than application runtime dependencies.
+- repository custom-agent profiles provide optional executor/reviewer specialization where the connected GitHub/Copilot surface supports them;
+- CodeQL provides public-repository static analysis;
+- Dependabot groups routine npm and GitHub Actions maintenance;
+- existing Actions remain evidence providers rather than application runtime dependencies.
+
+## Capability discovery result
+Dependency Review was trialed on PR #194 but GitHub reported that the repository Dependency Graph is disabled. The failing trial workflow was removed rather than leaving a permanently red gate. Dependency Review remains an optional free capability to activate automatically if a future connected provider surface exposes Dependency Graph administration. Until then, existing locked installs plus `npm audit` remain the active dependency evidence. No success is claimed for an unavailable capability.
 
 ## M14-M18 integration
 M14 supplies validity-bound minimum sufficient context. M15 compiles work DAG, critical path, cognition budget, read-once index, negative-search ledger, progressive proof plan and reusable proof bindings. M16 governs automation and reuse. M17 checkpoints successful atomic increments. M18 resumes from minimum valid state without restarting accepted work.
