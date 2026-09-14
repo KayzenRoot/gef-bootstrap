@@ -1,32 +1,32 @@
 # Checkpoint
 
-Status: `GBS_M17_MODULE_DONE`
+Status: `GBS_M18_MODULE_DONE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M17`
-- Active module: `GBS-M18 — Resume Engine`
-- Active module status: `ADMITTED_READY_FOR_IMPLEMENTATION`
-- Active Work Order: `GBS-WO-M18-001`
-- M17 status: `MODULE_DONE`
-- M17 implementation PR: `#204`
-- M17 reviewed head: `e2120b1296d70e753d0adbf1a1edf169bf230f2d`
-- M17 reviewed tree: `628174991d6eb30491a14ea5f115452aab24876f`
-- M17 semantic audit: `5202801138`
-- M17 implementation merge: `6174547bfbd8511b8327df012ed4c1ece8282bd2`
-- M17 evidence: `.engineering/evidence/GBS-WO-M17-001-EVIDENCE.md`
-- Production: `321 / 1088 = 29.50%`
-- Remaining: `767 / 1088 = 70.50%`
-- M17 earned: `17 / 17`
+- Completed modules: `GBS-M00` through `GBS-M18`
+- Active module: `GBS-M19 — Project Registry`
+- Active module status: `PLANNING_REQUIRED`
+- Active Work Order: `NONE`
+- M18 status: `MODULE_DONE`
+- M18 implementation PR: `#206`
+- M18 reviewed head: `a7303b2f6ec36a6792f416a8db7bd72662fdf575`
+- M18 reviewed tree: `199f68199d5dbf76eea24ad1c777b35fc7a00a2d`
+- M18 semantic audit: `5203118861`
+- M18 implementation merge: `424ab545bc22dccad93a2bbecfbb5ab99dcdd335`
+- M18 evidence: `.engineering/evidence/GBS-WO-M18-001-EVIDENCE.md`
+- Production: `339 / 1088 = 31.16%`
+- Remaining: `749 / 1088 = 68.84%`
+- M18 earned: `18 / 18`
 - Denominator change: `NONE`
-- Next legal stage: `IMPLEMENT_GBS_M18`
+- Next legal stage: `PLAN_AND_FREEZE_GBS_M19`
 
-## M17 outcome
-M17 delivers the Checkpoint Engine across S01-S05 with deterministic continuation capsules, state and authority snapshots, invariant enforcement, semantic compare-and-swap promotion, promotion fencing, split-brain rejection, mutation receipts, dependency-aware selective invalidation, rollback pointers, stale-claim quarantine, continuity regression detection, minimum sufficient state, historical compaction, portability, size guards, freshness/readiness proofs and an exact handoff contract for M18.
+## M18 outcome
+M18 delivers the Resume Engine across S01-S04 with exact resume intent and lineage binding, canonical authority boundaries, conversation-independent continuation, minimum sufficient rehydration, validity-bound hot/negative caches, deterministic read planning, project/lineage/checkpoint/policy/authority/claim drift detection, delta rehydration, stale/orphan work quarantine, fail-closed safe re-entry, tamper-resistant receipts, continuity-loss detection, efficiency evidence and a safe handback that emits only the canonical next action for a verified `READY` state.
 
-Exact-head validation passed the M17 Ubuntu/Windows/macOS matrix, focused `43/43`, full regression `567/567`, dependency audit with `0 vulnerabilities`, Security CodeQL and every triggered inherited workflow. Final semantic review records `CRITICAL 0` and `HIGH 0`.
+Exact-head validation passed the M18 Ubuntu/Windows/macOS matrix, focused `55/55`, full regression `622/622`, dependency audit with `0 vulnerabilities`, Security CodeQL and every one of the `15` workflows triggered on the reviewed head. Final semantic review records `CRITICAL 0` and `HIGH 0`.
 
 ## Continuation contract
-M18 is already admitted under the governed M14-M18 implementation train. Its M16 and M17 dependencies are now satisfied. M18 production credit remains zero until its implementation, exact-head evidence, semantic audit and separate MODULE_DONE promotion complete.
+The governed M14-M18 implementation train is complete. M19 is present in the frozen production backlog and Master Module Index, but no admitted M19 Work Order or frozen M19 session Source Pack exists in the current canonical repository. Therefore M19 implementation is not authorized. The next legal increment is to plan/freeze M19, compile its Work Order, audit/admit it, and only then implement it.
 
-STOP CONDITION: `GBS_M17_MODULE_DONE_READY_FOR_M18_IMPLEMENTATION`.
+STOP CONDITION: `GBS_M18_MODULE_DONE_READY_FOR_M19_PLANNING`.
