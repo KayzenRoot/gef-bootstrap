@@ -1,5 +1,5 @@
 # M19 Project Registry — Ledger Sync
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 Module: `GBS-M19 — Project Registry`
 
 ## Existing Technology Ledger promotions
@@ -14,6 +14,6 @@ PRE, RIE, RAB19, RPC19, RSA19, RMI19, PRI19, RCW19, DRQP19, RML19, AAC19, RSV19,
 The registry can persist and index project routing metadata, but cannot become canonical identity, source, checkpoint, progress, evidence/proof, Git or provider authority. Existing M03/M04/M17/M18 ownership remains intact.
 
 ## Innovation policy
-The mechanisms above are implementation obligations only after M19 Work Order admission. This ledger sync does not itself authorize production code or earn production credit.
+The mechanisms above are frozen implementation obligations only after M19 Work Order admission. This ledger sync does not itself authorize production code or earn production credit.
 
-STOP CONDITION: `M19_LEDGER_SYNC_FROZEN_CANDIDATE`.
+STOP CONDITION: `M19_LEDGER_SYNC_FROZEN`.
