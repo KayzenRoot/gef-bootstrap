@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M08_S02",
+  "status": "READY_FOR_GBS_M08_S03",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03", "GBS-M04", "GBS-M05", "GBS-M06", "GBS-M07"],
   "activeModule": "GBS-M08_PROJECT_PROFILES",
   "activeModuleStatus": "PLANNING_RELEASED",
-  "m08PlanningSessions": {"S01":"FROZEN","S02":"PLANNED","S03":"PLANNED","S04":"PLANNED","S05":"PLANNED"},
+  "m08PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"PLANNED","S04":"PLANNED","S05":"PLANNED"},
   "activeWorkOrder": null,
   "activeWorkOrderStatus": null,
   "lastCompletedWorkOrder": "GBS-WO-M07-001",
@@ -19,6 +19,6 @@
   "m07Weight": 14,
   "m07EarnedWeight": 14,
   "denominatorChanged": false,
-  "nextPlanningStage": "PLAN_GBS_M08_S02_TYPESCRIPT_AND_NODE",
-  "stopState": "READY_FOR_GBS_M08_S02"
+  "nextPlanningStage": "PLAN_GBS_M08_S03_PYTHON",
+  "stopState": "READY_FOR_GBS_M08_S03"
 }
