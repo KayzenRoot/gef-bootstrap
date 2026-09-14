@@ -1,35 +1,29 @@
 # Checkpoint
 
-Status: `GBS_M19_MODULE_DONE`
+Status: `GBS_M20_PLANNING_FROZEN`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
 - Completed modules: `GBS-M00` through `GBS-M19`
 - Active module: `GBS-M20 — Response Contract`
-- Active module status: `PLANNING_REQUIRED`
-- Active Work Order: `NONE`
-- M19 status: `MODULE_DONE`
-- M19 assurance intensity: `STANDARD_PLUS`
-- M19 implementation PR: `#211`
-- M19 reviewed head: `0682d7f33427ee9e07368a300afc13f516cd6a66`
-- M19 reviewed tree: `48613e9babfd82f65659ef770138f83515a0ddd7`
-- M19 semantic audit: `5203667272`
-- M19 implementation merge: `e525a3cbe24dd27bca6ddd9f2eeaa5f1e766957f`
-- M19 evidence: `.engineering/evidence/GBS-WO-M19-001-EVIDENCE.md`
+- Active module status: `PLANNING_FROZEN_WORK_ORDER_COMPILED_NOT_ADMITTED`
+- Active Work Order: `GBS-WO-M20-001`
+- M20 planning sessions: `5 / 5 FROZEN`
+- M20 planning gate: `.engineering/gates/M20-PLANNING-GATE.md` (`PASSED`)
+- M20 assurance intensity: `STANDARD_PLUS`
+- M20 required mechanisms: `25`
 - Production: `353 / 1088 = 32.44%`
 - Remaining: `735 / 1088 = 67.56%`
-- M19 earned: `14 / 14`
+- M20 earned: `0 / 13`
 - Denominator change: `NONE`
-- Next legal stage: `PLAN_AND_FREEZE_GBS_M20`
+- Next legal stage: `AUDIT_AND_ADMIT_GBS_M20`
 
-## M19 outcome
-M19 delivers the deterministic Project Registry across S01-S04 with M03-bound identity envelopes, verified provenance, authority-bounded entries, deterministic indexes/query plans, collision-preserving lookup, validity-bound repository/negative knowledge, semantic versions, exact CAS/fencing, split-brain rejection, freshness verification, stale quarantine, conservative repair, tombstone lineage, privacy-safe snapshots, portability, compaction, size guards, integrity receipts and a read-only M20 handoff.
+## M20 planning outcome
+M20 is frozen as an authority-bounded Response Contract module. It owns deterministic response semantics/projection, delegated metric truth states, verdict/blocker/next-action projection, minimum-sufficient compactness, redaction boundaries, machine/human equivalence, integrity receipts, schema compatibility and stale-response rejection.
 
-The final accepted head incorporates review-driven hardening for cache/freshness/tombstone integrity, runtime state/kind validation, mandatory promotion fencing, schema/private-field tamper resistance, tombstone bypass prevention and global identity-collision propagation into narrow lookups.
-
-Exact-head validation passed the M19 Ubuntu/Windows/macOS matrix, focused `62/62`, full regression `684/684`, dependency audit with `0 vulnerabilities`, Security CodeQL and all `16` workflows triggered on the reviewed head. Final semantic review records `CRITICAL 0` and `HIGH 0`.
+It does not compute progress, ETA or project status; those remain M21/M22/M23. It does not generate evidence/proof, telemetry, artifacts, operator UI or external side effects. Missing baselines and stale/conflicting inputs remain explicit non-success states instead of invented values or optimistic prose.
 
 ## Continuation contract
-M20 is present in the frozen production Backlog and Master Module Index with five planned sessions and weight `13`, but no frozen M20 Source Pack or admitted Work Order exists yet. M19 completion does not grant M20 implementation authority. The next legal increment is to plan/freeze M20, compile its Work Order, audit/admit it, and only then implement it.
+Planning and Work Order compilation grant no implementation authority and no production credit. `GBS-WO-M20-001` remains `COMPILED_NOT_ADMITTED`. The next legal increment is exact-head planning audit followed by a separate admission promotion. Implementation may begin only after both canonical checkpoint and Work Order say `ADMITTED_READY_FOR_IMPLEMENTATION`.
 
-STOP CONDITION: `GBS_M19_MODULE_DONE_READY_FOR_M20_PLANNING`.
+STOP CONDITION: `GBS_M20_PLANNING_FROZEN_READY_FOR_ADMISSION_AUDIT`.
