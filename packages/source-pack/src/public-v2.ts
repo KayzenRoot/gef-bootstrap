@@ -97,7 +97,13 @@ export function buildSourcePack(input: { projectId:string; entries:readonly Gove
     if (entry.kind === 'ALIAS' && entry.aliasAdmission?.admitted !== true) return {ok:false,diagnostics:[{code:'ALIAS_NOT_ADMITTED',message:'Alias requires explicit prior M13 admission',subject:entry.id}]};
     if (entry.kind === 'DORMANT' && entry.applicability === 'ACTIVE') return {ok:false,diagnostics:[{code:'DORMANT_ACTIVE_AUTHORITY_FORBIDDEN',message:'Dormant source pointers cannot be active authority',subject:entry.id}]};
   }
-  const core = buildCore({projectId:input.projectId,entries:input.entries,requirements:[],constitutionEntryIds:input.constitutionEntryIds},options);
+  const coreInput = {
+    projectId: input.projectId,
+    entries: input.entries,
+    requirements: [],
+    ...(input.constitutionEntryIds ? { constitutionEntryIds: input.constitutionEntryIds } : {})
+  };
+  const core = buildCore(coreInput,options);
   if (!core.ok) return core;
   const requirementResolutions = evaluateRequirements(input.requirements??[],input.entries);
   const spine: IntegritySpineNode[] = [];
