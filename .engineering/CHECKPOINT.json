@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "GBS_WO_M09_001_COMPILED_AWAITING_AUDIT",
+  "status": "GBS_M09_IMPLEMENTATION_ADMITTED",
   "phase": "PRODUCTION_CONSTRUCTION",
   "activeModule": "GBS-M09_SOURCE_PACK_ENGINE",
-  "activeModuleStatus": "PLANNED_READY_FOR_IMPLEMENTATION",
-  "activeWorkOrder": null,
-  "compiledWorkOrder": "GBS-WO-M09-001",
-  "compiledWorkOrderStatus": "COMPILED_NOT_ADMITTED",
+  "activeModuleStatus": "IMPLEMENTATION_ADMITTED",
+  "activeWorkOrder": "GBS-WO-M09-001",
+  "activeWorkOrderStatus": "ADMITTED",
+  "admittedImplementationBase": "e68830f4edd84c0f989877abeffdf8e720c28dde",
   "mainProductionDenominatorWeight": 1088,
   "earnedProductionWeight": 156,
-  "nextPlanningStage": "AUDIT_AND_MERGE_GBS_WO_M09_001_COMPILATION",
-  "stopState": "GBS_WO_M09_001_COMPILED_AWAITING_AUDIT"
+  "nextPlanningStage": "EXECUTE_GBS_WO_M09_001_FROM_ADMITTED_BASE",
+  "stopState": "GBS_M09_IMPLEMENTATION_ADMITTED"
 }
