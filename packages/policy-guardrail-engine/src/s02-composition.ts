@@ -8,7 +8,7 @@ import { cancelled, compareCodePoint, deepFreeze, fail, intersects, sha, sortedU
 
 function warrantCovers(w: ExceptionWarrant, policy: PolicyAuthorityCapsule, op: PolicyOperation, effect: WarrantEffect, obligationId: string | null): boolean {
   if (w.status !== 'ACTIVE' || !w.permittedEffects.includes(effect) || !w.policyIds.includes(policy.policyId) || !w.policyDigestBindings.includes(policy.semanticDigest)) return false;
-  if (!w.nodeIds.includes(op.nodeId) || !w.operations.includes(op.operation) || !op.domains.some(d => w.domains.includes(d))) return false;
+  if (!w.nodeIds.includes(op.nodeId) || !w.operations.includes(op.operation) || !op.domains.every(d => w.domains.includes(d))) return false;
   return obligationId === null || w.obligationIds.includes(obligationId);
 }
 
