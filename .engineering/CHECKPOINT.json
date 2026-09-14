@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M09_S01",
+  "status": "READY_FOR_GBS_M09_LEDGER_SYNC",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03", "GBS-M04", "GBS-M05", "GBS-M06", "GBS-M07", "GBS-M08"],
   "activeModule": "GBS-M09_SOURCE_PACK_ENGINE",
-  "activeModuleStatus": "PLANNING",
+  "activeModuleStatus": "PLANNING_AUDITED",
   "m08PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN","S05":"FROZEN"},
-  "m09PlanningSessions": {"S01":"PLANNED","S02":"PLANNED","S03":"PLANNED","S04":"PLANNED","S05":"PLANNED"},
+  "m09PlanningSessions": {"S01":"AUDITED_CANDIDATE","S02":"AUDITED_CANDIDATE","S03":"AUDITED_CANDIDATE","S04":"AUDITED_CANDIDATE","S05":"AUDITED_CANDIDATE"},
   "activeWorkOrder": "NONE",
   "activeWorkOrderStatus": "NONE",
   "lastCompletedWorkOrder": "GBS-WO-M08-001",
@@ -19,7 +19,8 @@
   "overallRemainingPercent": 85.94,
   "m08Weight": 14,
   "m08EarnedWeight": 14,
+  "m09EarnedWeight": 0,
   "denominatorChanged": false,
-  "nextPlanningStage": "PLAN_GBS_M09_S01_STRUCTURE",
-  "stopState": "READY_FOR_GBS_M09_S01"
+  "nextPlanningStage": "SYNC_GBS_M09_TECHNOLOGY_AND_DECISION_LEDGERS",
+  "stopState": "READY_FOR_GBS_M09_LEDGER_SYNC"
 }
