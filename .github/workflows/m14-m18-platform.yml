@@ -1,0 +1,38 @@
+name: M14-M18 Platform
+on:
+  pull_request:
+    paths:
+      - 'packages/task-context-compiler/**'
+      - 'packages/execution-pack-compiler/**'
+      - 'packages/policy-guardrail-engine/**'
+      - 'packages/checkpoint-engine/**'
+      - 'packages/resume-engine/**'
+      - 'tests/m14-m18-continuity.test.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+jobs:
+  focused:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: node --test tests/m14-m18-continuity.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm test
