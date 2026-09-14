@@ -2,7 +2,10 @@ import type { CanonicalContinuationCapsule, CheckpointDependencyGraph, Checkpoin
 import { cancelled, compareCodePoint, deepFreeze, fail, sha, sortedUnique } from './utils.js';
 
 export function buildCheckpointDependencyGraph(capsule:CanonicalContinuationCapsule,complete=true):CheckpointDependencyGraph{
-  return deepFreeze({complete,nodes:[...capsule.claims].sort((a,b)=>compareCodePoint(a.claimId,b.claimId)).map(c=>({claimId:c.claimId,dependencyKeys:sortedUnique([...c.dependencyKeys,...c.authorityBindingIds.map(id=>`authority:${id}`),...c.evidenceRefs.map(id=>`evidence:${id}`)])}))});
+  const knownClaims=new Set(capsule.claims.map(c=>c.claimId));
+  const nodes=[...capsule.claims].sort((a,b)=>compareCodePoint(a.claimId,b.claimId)).map(c=>({claimId:c.claimId,dependencyKeys:sortedUnique([...c.dependencyKeys,...c.authorityBindingIds.map(id=>`authority:${id}`),...c.evidenceRefs.map(id=>`evidence:${id}`)])}));
+  const unresolvedClaimRef=nodes.some(n=>n.dependencyKeys.some(k=>k.startsWith('claim:')&&!knownClaims.has(k.slice(6))));
+  return deepFreeze({complete:complete&&!unresolvedClaimRef,nodes});
 }
 
 export function selectiveContinuationInvalidation(capsule:CanonicalContinuationCapsule,graph:CheckpointDependencyGraph,changedKeys:readonly string[]):InvalidationResult{
@@ -29,7 +32,7 @@ export function buildStaleClaimQuarantine(capsule:CanonicalContinuationCapsule,i
 export function detectContinuityRegression(previous:CanonicalContinuationCapsule,current:CanonicalContinuationCapsule,authorizedRollback=false):readonly ContinuityRegressionFinding[]{
   const findings:ContinuityRegressionFinding[]=[];
   if(previous.projectId!==current.projectId||previous.lineageId!==current.lineageId)return deepFreeze<readonly ContinuityRegressionFinding[]>([{kind:'AUTHORITY_LOSS',subject:'project-or-lineage'}]);
-  for(const p of previous.claims){const c=current.claims.find(x=>x.claimId===p.claimId);if(!c)continue;if(!authorizedRollback&&c.maturity<p.maturity)findings.push({kind:'MATURITY_ROLLBACK',subject:p.claimId});if(!authorizedRollback&&p.status==='DONE'&&c.status!=='DONE')findings.push({kind:'DONE_TO_NON_DONE',subject:p.claimId});}
+  for(const p of previous.claims){const c=current.claims.find(x=>x.claimId===p.claimId);if(!c){if(!authorizedRollback)findings.push({kind:'CLAIM_LOSS',subject:p.claimId});continue;}if(!authorizedRollback&&c.maturity<p.maturity)findings.push({kind:'MATURITY_ROLLBACK',subject:p.claimId});if(!authorizedRollback&&p.status==='DONE'&&c.status!=='DONE')findings.push({kind:'DONE_TO_NON_DONE',subject:p.claimId});}
   const currentBindings=new Set(current.authorityBindings.map(b=>b.bindingId));for(const b of previous.authorityBindings.filter(b=>b.required))if(!currentBindings.has(b.bindingId))findings.push({kind:'AUTHORITY_LOSS',subject:b.bindingId});
   for(const w of previous.admittedWorkOrderIds)if(!current.admittedWorkOrderIds.includes(w))findings.push({kind:'WORK_ORDER_LOSS',subject:w});
   if(!current.nextLegalAction.trim())findings.push({kind:'NEXT_ACTION_AMBIGUITY',subject:'nextLegalAction'});
