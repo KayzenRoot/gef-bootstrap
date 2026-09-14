@@ -18,9 +18,26 @@ export function verifyResumeIntentCapsule(intent:ResumeIntentCapsule,options:Ope
 }
 
 export function verifyContinuationHandoff(handoff:ContinuationHandoffContract,options:OperationOptions):Result<true>{
+  if(!isSha256(handoff.checkpointDigest)||!validId(handoff.projectId)||!validId(handoff.lineageId)||!handoff.nextLegalAction.trim()||!isSha256(handoff.authorityIndexDigest)||!isSha256(handoff.policyBindingDigest)||!isSha256(handoff.readinessCertificateDigest)||!isSha256(handoff.handoffDigest))return fail('HANDOFF_INVALID','Continuation handoff has invalid identifiers or semantic digests');
   const semantic={checkpointDigest:handoff.checkpointDigest,projectId:handoff.projectId,lineageId:handoff.lineageId,nextLegalAction:handoff.nextLegalAction,authorityIndexDigest:handoff.authorityIndexDigest,policyBindingDigest:handoff.policyBindingDigest,readinessCertificateDigest:handoff.readinessCertificateDigest};
   const d=sha(options,semantic);if(!d.ok)return d as Result<true>;
   if(d.value!==handoff.handoffDigest)return fail('HANDOFF_TAMPERED','Continuation handoff digest does not match its payload');
+  return{ok:true,value:true};
+}
+
+export function verifyLineageContinuityProof(proof:LineageContinuityProof,checkpoint:CanonicalContinuationCapsule,options:OperationOptions):Result<true>{
+  const semantic={intentDigest:proof.intentDigest,projectId:proof.projectId,lineageId:proof.lineageId,checkpointDigest:proof.checkpointDigest,handoffDigest:proof.handoffDigest,valid:proof.valid,mismatch:proof.mismatch};const d=sha(options,semantic);if(!d.ok)return d as Result<true>;
+  if(d.value!==proof.proofDigest)return fail('LINEAGE_PROOF_TAMPERED','Lineage continuity proof digest does not match its payload');
+  if(proof.projectId!==checkpoint.projectId||proof.lineageId!==checkpoint.lineageId||proof.checkpointDigest!==checkpoint.checkpointDigest)return fail('LINEAGE_PROOF_CHECKPOINT_MISMATCH','Lineage continuity proof is not bound to the canonical checkpoint');
+  if(proof.valid!==(proof.mismatch==='NONE'))return fail('LINEAGE_PROOF_STATE_INVALID','Lineage proof validity and mismatch classification disagree');
+  return{ok:true,value:true};
+}
+
+export function verifyResumeAuthorityBoundary(boundary:ResumeAuthorityBoundary,checkpoint:CanonicalContinuationCapsule,options:OperationOptions):Result<true>{
+  const semantic={intentDigest:boundary.intentDigest,checkpointDigest:boundary.checkpointDigest,handoffDigest:boundary.handoffDigest,canonicalNextAction:boundary.canonicalNextAction,requestedNextAction:boundary.requestedNextAction,authorized:boundary.authorized,reason:boundary.reason};const d=sha(options,semantic);if(!d.ok)return d as Result<true>;
+  if(d.value!==boundary.boundaryDigest)return fail('AUTHORITY_BOUNDARY_TAMPERED','Resume authority boundary digest does not match its payload');
+  if(boundary.checkpointDigest!==checkpoint.checkpointDigest||boundary.canonicalNextAction!==checkpoint.nextLegalAction)return fail('AUTHORITY_BOUNDARY_CHECKPOINT_MISMATCH','Resume authority boundary is not bound to the canonical checkpoint');
+  const shouldAuthorize=boundary.requestedNextAction===null||boundary.requestedNextAction===checkpoint.nextLegalAction;if(boundary.authorized!==shouldAuthorize)return fail('AUTHORITY_BOUNDARY_STATE_INVALID','Resume authority boundary authorization does not match the canonical action rule');
   return{ok:true,value:true};
 }
 
@@ -34,18 +51,18 @@ export function proveLineageContinuity(intent:ResumeIntentCapsule,checkpoint:Can
   else if(intent.expectedLineageId!==checkpoint.lineageId||handoff.lineageId!==checkpoint.lineageId)mismatch='LINEAGE';
   else if(intent.expectedCheckpointDigest!==checkpoint.checkpointDigest||handoff.checkpointDigest!==checkpoint.checkpointDigest)mismatch='CHECKPOINT';
   else if(handoff.authorityIndexDigest!==checkpoint.authorityIndex.indexDigest||handoff.policyBindingDigest!==checkpoint.policyBinding.bindingDigest)mismatch='HANDOFF';
-  const semantic={projectId:checkpoint.projectId,lineageId:checkpoint.lineageId,checkpointDigest:checkpoint.checkpointDigest,handoffDigest:handoff.handoffDigest,valid:mismatch==='NONE',mismatch};
+  const semantic={intentDigest:intent.intentDigest,projectId:checkpoint.projectId,lineageId:checkpoint.lineageId,checkpointDigest:checkpoint.checkpointDigest,handoffDigest:handoff.handoffDigest,valid:mismatch==='NONE',mismatch};
   const d=sha(options,semantic);if(!d.ok)return d;return{ok:true,value:deepFreeze({...semantic,proofDigest:d.value})};
 }
 
 export function enforceResumeAuthorityBoundary(intent:ResumeIntentCapsule,checkpoint:CanonicalContinuationCapsule,handoff:ContinuationHandoffContract,options:OperationOptions):Result<ResumeAuthorityBoundary>{
-  const c=cancelled(options);if(c)return c;
+  const c=cancelled(options);if(c)return c;const iv=verifyResumeIntentCapsule(intent,options);if(!iv.ok)return iv as Result<ResumeAuthorityBoundary>;const cv=verifyCanonicalContinuationCapsule(checkpoint,{digest:options.digest,cancellation:options.cancellation});if(!cv.ok)return{ok:false,diagnostics:cv.diagnostics};const hv=verifyContinuationHandoff(handoff,options);if(!hv.ok)return hv as Result<ResumeAuthorityBoundary>;
   const canonical=checkpoint.nextLegalAction;
-  const exactHandoff=handoff.nextLegalAction===canonical;
+  const exactHandoff=handoff.checkpointDigest===checkpoint.checkpointDigest&&handoff.nextLegalAction===canonical&&handoff.authorityIndexDigest===checkpoint.authorityIndex.indexDigest&&handoff.policyBindingDigest===checkpoint.policyBinding.bindingDigest;
   const requestedOk=intent.requestedNextAction===null||intent.requestedNextAction===canonical;
   const authorized=exactHandoff&&requestedOk;
   const reason=!exactHandoff?'HANDOFF_ACTION_DRIFT':!requestedOk?'REQUESTED_ACTION_NOT_CANONICAL':'CANONICAL_ACTION_ONLY';
-  const semantic={canonicalNextAction:canonical,requestedNextAction:intent.requestedNextAction,authorized,reason};const d=sha(options,semantic);if(!d.ok)return d;
+  const semantic={intentDigest:intent.intentDigest,checkpointDigest:checkpoint.checkpointDigest,handoffDigest:handoff.handoffDigest,canonicalNextAction:canonical,requestedNextAction:intent.requestedNextAction,authorized,reason};const d=sha(options,semantic);if(!d.ok)return d;
   return{ok:true,value:deepFreeze({...semantic,boundaryDigest:d.value})};
 }
 
