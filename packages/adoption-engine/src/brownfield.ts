@@ -134,6 +134,7 @@ export function classifyReversibility(mechanism:'DELETE_GENERATED'|'ALIAS_RESTOR
 }
 
 export function evaluateDestructivePromotion(reversibility:ReversibilityIndex,migrationRollbackEvidence=false):Result<Readonly<{admitted:true;reversibility:ReversibilityIndex}>> {
+  if(!['REVERSIBLE_BY_DELETE','REVERSIBLE_BY_ALIAS_RESTORE','REVERSIBLE_BY_TRANSACTION_ROLLBACK','REQUIRES_MIGRATION_ROLLBACK','IRREVERSIBILITY_UNKNOWN'].includes(reversibility))return fail('REVERSIBILITY_INDEX_UNSUPPORTED','Unsupported reversibility index');
   if(reversibility==='IRREVERSIBILITY_UNKNOWN')return fail('IRREVERSIBILITY_BLOCKS_PROMOTION','Unknown irreversibility blocks destructive promotion');
   if(reversibility==='REQUIRES_MIGRATION_ROLLBACK'&&!migrationRollbackEvidence)return fail('MIGRATION_ROLLBACK_EVIDENCE_REQUIRED','Migration rollback evidence is required for destructive promotion');
   return {ok:true,value:deepFreeze({admitted:true,reversibility})};

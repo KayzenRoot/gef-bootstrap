@@ -32,7 +32,8 @@ export function validateAdoptionIntentCapsule(capsule:AdoptionIntentCapsule,curr
   return {ok:true,value:capsule};
 }
 
-export function invalidateAdoptionAdmission(reason:'PROJECT_BINDING_CHANGED'|'SOURCE_FINGERPRINT_CHANGED'|'PROFILE_BINDING_CHANGED'|'POLICY_VERSION_CHANGED',unsafe=false):Readonly<{reason:string;nextState:'OBSERVED'|'BLOCKED'}> {return deepFreeze({reason,nextState:unsafe?'BLOCKED':'OBSERVED'});}
+const INVALIDATION_REASONS=new Set(['PROJECT_BINDING_CHANGED','SOURCE_FINGERPRINT_CHANGED','PROFILE_BINDING_CHANGED','POLICY_VERSION_CHANGED']);
+export function invalidateAdoptionAdmission(reason:string,unsafe=false):Result<Readonly<{reason:string;nextState:'OBSERVED'|'BLOCKED'}>> {if(!INVALIDATION_REASONS.has(reason))return fail('ADOPTION_INVALIDATION_REASON_UNSUPPORTED','Unsupported adoption invalidation reason');return {ok:true,value:deepFreeze({reason,nextState:unsafe?'BLOCKED':'OBSERVED'})};}
 
 export function validateAdoptionTransition(from: AdoptionState, to: AdoptionState): Result<Readonly<{from:AdoptionState;to:AdoptionState}>> {
   if (!(TRANSITIONS[from] ?? []).includes(to)) return fail('UNSUPPORTED_GOVERNANCE_TRANSITION',`Transition ${from} -> ${to} is not admitted`);
