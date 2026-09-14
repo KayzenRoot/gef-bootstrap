@@ -23,16 +23,17 @@ export function enforceGuardrailMembrane(receipt: PolicyDecisionReceipt, node: W
 
 export function issueMutationCapabilityLease(projection: GuardrailEnforcementProjection, policyFingerprint: string, checkpointIdentity: string, satisfiedObligationIds: readonly string[], nonce: string, options: OperationOptions): Result<MutationCapabilityLease> {
   if (!projection.allowed) return fail('MUTATION_LEASE_BLOCKED', 'Guardrail membrane did not authorize mutation', projection.nodeId);
-  if (!policyFingerprint.startsWith('sha256:') || !checkpointIdentity.trim() || !validId(nonce)) return fail('MUTATION_LEASE_BINDING_INVALID', 'Lease requires policy fingerprint, checkpoint identity and stable nonce', projection.nodeId);
+  if (!/^sha256:[a-f0-9]{64}$/i.test(policyFingerprint) || !checkpointIdentity.trim() || !validId(nonce)) return fail('MUTATION_LEASE_BINDING_INVALID', 'Lease requires exact SHA-256 policy fingerprint, checkpoint identity and stable nonce', projection.nodeId);
   if (!isSubset(projection.obligationIds, satisfiedObligationIds)) return fail('MUTATION_OBLIGATIONS_UNSATISFIED', 'All policy obligations must be satisfied before mutation lease issuance', projection.nodeId);
   const semantic = { nodeId:projection.nodeId, operation:projection.operation, mutationDomains:projection.mutationDomains, receiptDigest:projection.receiptDigest, policyFingerprint, checkpointIdentity, obligationIds:projection.obligationIds, nonce } as const;
   const d=sha(options,semantic); if(!d.ok)return d;
   return {ok:true,value:deepFreeze({leaseId:`mcl:${d.value.slice(7,39)}`,...semantic})};
 }
 
-export function checkPolicyToctou(lease: MutationCapabilityLease, currentPolicyFingerprint: string, currentReceiptDigest: string, node: WorkNode, operation: string): Result<true> {
+export function checkPolicyToctou(lease: MutationCapabilityLease, currentPolicyFingerprint: string, currentReceiptDigest: string, currentCheckpointIdentity: string, node: WorkNode, operation: string): Result<true> {
   if (lease.policyFingerprint !== currentPolicyFingerprint) return fail('POLICY_TOCTOU_FINGERPRINT_DRIFT','Policy fingerprint changed before mutation',node.instructionId);
   if (lease.receiptDigest !== currentReceiptDigest) return fail('POLICY_TOCTOU_RECEIPT_DRIFT','Policy decision receipt changed before mutation',node.instructionId);
+  if (lease.checkpointIdentity !== currentCheckpointIdentity) return fail('POLICY_TOCTOU_CHECKPOINT_DRIFT','Checkpoint identity changed before mutation',node.instructionId);
   if (lease.nodeId !== node.instructionId || lease.operation !== operation || !sameStrings(lease.mutationDomains,node.mutationDomains)) return fail('POLICY_TOCTOU_OPERATION_DRIFT','Execution node/operation binding changed before mutation',node.instructionId);
   return {ok:true,value:true};
 }
