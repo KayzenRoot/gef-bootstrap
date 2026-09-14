@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+test('policy-guardrail-engine import is startup-pure',async()=>{const cwd=process.cwd();const key='GEF_M16_PURITY_SENTINEL';const before=process.env[key];process.env[key]='stable';const mod=await import('../packages/policy-guardrail-engine/dist/public.js');assert.equal(typeof mod.evaluatePolicies,'function');assert.equal(typeof mod.enforceGuardrailMembrane,'function');assert.equal(typeof mod.checkPolicyToctou,'function');assert.equal(typeof mod.detectPolicyRegression,'function');assert.equal(process.cwd(),cwd);assert.equal(process.env[key],'stable');if(before===undefined)delete process.env[key];else process.env[key]=before;});
+
+test('ordinary M16 API use needs no filesystem network or process execution',async()=>{const{createPolicyAuthorityCapsule,computePolicySemanticFingerprint}=await import('../packages/policy-guardrail-engine/dist/public.js');const digest={algorithm:'sha256',digest:v=>createHash('sha256').update(v).digest('hex')};const p=createPolicyAuthorityCapsule({policyId:'p',version:'1',owner:'o',authorityRef:'a',precedenceDomain:'D',domains:['D'],appliesToOperations:[],appliesToNodeIds:[],requiredFacts:[],denyOperations:[],obligations:[],evidenceRefs:[],reviewTrigger:'x',status:'ACTIVE'},{digest});assert.equal(p.ok,true);assert.equal(computePolicySemanticFingerprint([p.value],[],{digest}).ok,true);});
