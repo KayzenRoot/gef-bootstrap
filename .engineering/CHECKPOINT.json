@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "project": "GEF Bootstrap",
-  "status": "READY_FOR_GBS_M08_S05",
+  "status": "READY_FOR_GBS_M08_MODULE_GATE",
   "phase": "PRODUCTION_CONSTRUCTION",
   "completedModules": ["GBS-M00", "GBS-M01", "GBS-M02", "GBS-M03", "GBS-M04", "GBS-M05", "GBS-M06", "GBS-M07"],
   "activeModule": "GBS-M08_PROJECT_PROFILES",
-  "activeModuleStatus": "PLANNING_RELEASED",
-  "m08PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN","S05":"PLANNED"},
+  "activeModuleStatus": "PLANNING_COMPLETE_GATE_PENDING",
+  "m08PlanningSessions": {"S01":"FROZEN","S02":"FROZEN","S03":"FROZEN","S04":"FROZEN","S05":"FROZEN"},
   "activeWorkOrder": null,
   "activeWorkOrderStatus": null,
   "lastCompletedWorkOrder": "GBS-WO-M07-001",
@@ -19,6 +19,6 @@
   "m07Weight": 14,
   "m07EarnedWeight": 14,
   "denominatorChanged": false,
-  "nextPlanningStage": "PLAN_GBS_M08_S05_PROFILE_INHERITANCE",
-  "stopState": "READY_FOR_GBS_M08_S05"
+  "nextPlanningStage": "EVALUATE_GBS_M08_MODULE_GATE",
+  "stopState": "READY_FOR_GBS_M08_MODULE_GATE"
 }
