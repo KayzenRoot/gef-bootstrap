@@ -1,0 +1,39 @@
+name: M10 Planning Workspace
+on:
+  pull_request:
+    paths:
+      - 'packages/planning-workspace/**'
+      - 'tests/m10-planning-workspace.test.mjs'
+      - '.engineering/M10-MODULE-GATE.md'
+      - '.engineering/work-orders/GBS-WO-M10-001.md'
+      - 'planning/modules/area-c-source-pack-and-planning/m10-planning-workspace/**'
+      - 'package.json'
+      - '.github/workflows/m10-platform.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: node --test tests/m10-planning-workspace.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
