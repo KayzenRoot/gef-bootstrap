@@ -1,6 +1,6 @@
 # GBS-WO-M20-001 — Implement Response Contract
 
-Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
+Status: `MODULE_DONE`
 Risk: `MEDIUM`
 Assurance intensity: `STANDARD_PLUS`
 Module: `GBS-M20 — Response Contract`
@@ -13,64 +13,60 @@ Admission PR: `#214`
 Admission reviewed head: `a54e11d45ebfce1273049103a473354df2fccbae`
 Admission semantic audit: `5203729708`
 Admission merge / sole legal execution base: `9866f49a664ec761cdf9fc379739f41e4db7fcf7`
+Admission binding merge: `7de43c317bc49e63f8da4e8af5a3ba71879aa1b5`
+Implementation PR: `#216`
+Implementation reviewed head: `14a6388ea5070152f5a374b85fe39ca3f839eb62`
+Implementation reviewed tree: `1c298a03df48528c4c902748d8cd7360c209df92`
+Implementation semantic audit: `5204042557`
+Implementation merge: `f5cf8f177137a5c9c05efc0cede21328e8624c7e`
+Evidence: `.engineering/evidence/GBS-WO-M20-001-EVIDENCE.md`
 
 ## Objective
 Implement a deterministic, authority-bounded response contract that projects current governed truth to machine and human consumers without manufacturing source authority, progress, ETA, project status, confidence, evidence or success.
 
-## Required implementation
-Implement all 25 frozen M20 mechanisms:
+## Delivered implementation
+All 25 frozen M20 mechanisms are implemented:
 - RCC20, RAB20, RSE20, SBFC20, RPI20;
 - DMC20, MOM20, BAW20, CE20, UMA20;
 - RVA20, BPS20, NNAC20, CPL20, SCW20;
 - MSR20, SDM20, SFO20, RRB20, RSG20;
 - MRE20, HRP20, RIR20, RCG20, SRS20.
 
-## Architecture constraints
-1. TypeScript/Node, library-first, deterministic pure functions where possible.
-2. No direct filesystem/network/Git/provider/process access in semantic core.
-3. Response inputs are explicit injected verified projections; conversation memory alone is never authority.
-4. M20 may project progress/ETA/status metrics only as delegated owner-bound claims; it must not calculate them.
-5. Missing baselines produce typed `NOT_YET_BASELINED` or equivalent, never guessed numeric/date values.
+## Preserved architecture constraints
+1. TypeScript/Node, library-first and deterministic pure functions are used for semantic logic.
+2. Semantic core owns no direct filesystem/network/Git/provider/process access.
+3. Governed fields require explicit verified source-bound claims; conversation memory alone is not authority.
+4. M20 projects delegated progress/ETA/status metrics but never computes them.
+5. Missing baselines remain explicit unavailable states such as `NOT_YET_BASELINED`.
 6. Recovery/conflict/blocking conditions outrank generic success.
-7. Next necessary action is canonical/singular when known and cannot be replaced by model preference.
-8. Compactness/dedup cannot erase mandatory truth or distinct authority/conflict semantics.
-9. Portable/public response projections exclude secret-like values and private locator material.
-10. Human projection cannot introduce material claims absent from verified machine semantics.
-11. Stale source/checkpoint/resume/registry/delegated-claim bindings block response emission/reuse.
-12. Unsupported schema/profile/capability returns typed incompatibility rather than semantic guessing.
-13. Deterministic injected SHA-256 only; no fallback hash.
-14. Bounded/cancellable operations where work can scale; startup-pure imports and ordinary semantic APIs.
+7. Next necessary action remains singular and authority-bound.
+8. Compactness/dedup cannot erase mandatory safety truth or distinct authority/conflict semantics.
+9. Portable projections reject secret-like/private locator material, including structured text metric surfaces.
+10. Human projection is derived from verified machine semantics and cannot add material authority.
+11. Stale source/checkpoint/resume/registry/field/metric/verdict/next-action/blocker/conflict bindings fail closed.
+12. Unsupported schema/profile/capability remains typed incompatibility.
+13. SHA-256 is injected and validated; no fallback hash is used.
+14. Scalable operations are bounded/cancellable and package startup remains pure.
 
-## Expected package surface
-- `packages/response-contract/package.json`
-- `packages/response-contract/tsconfig.json`
-- `packages/response-contract/src/types.ts`
-- bounded S01-S05 implementation units and `src/public.ts`
-- no direct CLI, rendering-channel or artifact-generation ownership.
+## Correction 01 hardening
+Semantic review before acceptance found and closed trust-boundary gaps around provenance binding equality, metric-ownership matrix tampering, structured metric leakage, compactness forged claims and incomplete stale-binding revalidation. Dedicated correction tests are part of the focused matrix.
 
-## Required proof families
-- response envelope construction/verification and authority-boundary tests;
-- source-bound claim and provenance-index tamper tests;
-- delegated metric ownership/baseline/confidence/no-fabrication tests;
-- unavailable metric algebra tests;
-- verdict precedence, blockers, next action and source-conflict tests;
-- minimum-sufficient response, semantic dedup and mandatory-field retention tests;
-- stable ordering and permutation determinism;
-- redaction/secret/private-path and size-guard tests;
-- machine/human semantic equivalence and extra-claim rejection;
-- integrity receipt, compatibility and stale-response tests;
-- M17/M18/M19 handoff binding/mix-and-match tests;
-- cancellation/digest failure/startup-purity tests;
-- Ubuntu/Windows/macOS focused matrix;
-- full repository regression and dependency audit.
+## Final proof
+- reviewed head: `14a6388ea5070152f5a374b85fe39ca3f839eb62`
+- reviewed tree: `1c298a03df48528c4c902748d8cd7360c209df92`
+- focused: `75 / 75 PASS` on Ubuntu/Windows/macOS
+- full repository regression: `759 / 759 PASS`
+- dependency audit: `0 vulnerabilities`
+- Security CodeQL: `PASS`
+- triggered exact-head workflows: `17 / 17 SUCCESS`
+- semantic verdict: `APPROVED`
+- unresolved CRITICAL: `0`
+- unresolved HIGH: `0`
 
-## Out of scope
-Progress calculation, ETA estimation, project-status computation, evidence/proof generation, telemetry collection, artifact generation, operator presentation styling, Git/provider mutation and generic policy ownership.
+## Scope boundary preserved
+Progress calculation, ETA estimation, project-status computation, evidence/proof generation, telemetry collection, artifact generation, operator presentation styling, Git/provider mutation and generic policy ownership remain outside M20.
 
-## Evidence and acceptance
-Exact admitted base/head/tree, focused test count, platform matrix, full regression count, dependency audit, Security CodeQL when triggered, semantic review, zero unresolved CRITICAL/HIGH, implementation merge and separate Evidence Bundle/MODULE_DONE promotion.
+## Credit rule outcome
+This implementation earns `13 / 13` only after the separate MODULE_DONE promotion PR carrying this Evidence Bundle is audited and merged. No denominator change is permitted by this Work Order closure.
 
-## Admission binding
-PR #214 passed exact-head semantic review and merged as `9866f49a664ec761cdf9fc379739f41e4db7fcf7`. This Work Order is now admitted. Implementation branches must descend from that admission merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
-
-STOP CONDITION: `GBS_WO_M20_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
+STOP CONDITION: `GBS_WO_M20_001_MODULE_DONE_PROMOTION_CANDIDATE`.
