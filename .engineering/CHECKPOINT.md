@@ -8,8 +8,8 @@ Status: `GBS_M19_PLANNING_FROZEN`
 - Active module: `GBS-M19 — Project Registry`
 - Active module status: `PLANNING_FROZEN_WORK_ORDER_COMPILED_NOT_ADMITTED`
 - Active Work Order: `GBS-WO-M19-001`
-- M19 planning sessions: `4 / 4 FROZEN_CANDIDATE`
-- M19 planning gate: `.engineering/gates/M19-PLANNING-GATE.md`
+- M19 planning sessions: `4 / 4 FROZEN`
+- M19 planning gate: `.engineering/gates/M19-PLANNING-GATE.md` (`PASSED`)
 - M19 assurance intensity: `STANDARD_PLUS`
 - M19 required mechanisms: `32` total (`29` M19-native + `3` promoted existing technologies)
 - Production: `339 / 1088 = 31.16%`
