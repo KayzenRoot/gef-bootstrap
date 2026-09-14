@@ -11,7 +11,7 @@ export interface DigestPort { algorithm: 'sha256'; digest(input: string): string
 export interface CancellationPort { isCancelled(): boolean; }
 export interface OperationOptions { digest: DigestPort; cancellation?: CancellationPort; maxEntries?: number; maxEdges?: number; maxDepth?: number; }
 
-export interface Diagnostic { code: string; message: string; subject?: string; }
+export interface Diagnostic { code: string; message: string; subject?: string | undefined; }
 export type Result<T> = { ok: true; value: T } | { ok: false; diagnostics: readonly Diagnostic[] };
 
 export type SourceKind = 'DOCUMENT' | 'SECTION' | 'FACT' | 'DEPENDENCY_SET' | 'TEMPLATE' | 'ALIAS' | 'DORMANT';
@@ -30,8 +30,8 @@ export interface SourceEntryInput {
   template?: { templateId: string; version: string; digest?: string };
 }
 
-export interface RequirementRule { classId: string; state: 'REQUIRED' | 'CONDITIONAL' | 'NOT_APPLICABLE'; witness?: string; }
-export interface RequirementResolution { classId: string; state: RequiredState; entryIds: readonly string[]; witness?: string; }
+export interface RequirementRule { classId: string; state: 'REQUIRED' | 'CONDITIONAL' | 'NOT_APPLICABLE'; witness?: string | undefined; }
+export interface RequirementResolution { classId: string; state: RequiredState; entryIds: readonly string[]; witness?: string | undefined; }
 
 export type Predicate =
   | { op: 'FACT_EQ'; fact: string; value: string | boolean | number }
@@ -84,7 +84,7 @@ function digest(options: OperationOptions, value: unknown): Result<string> {
     return { ok: true, value: `sha256:${out.toLowerCase()}` };
   } catch { return fail('DIGEST_CAPABILITY_FAILURE', 'Digest capability failed'); }
 }
-function frozen<T>(value: T): T { if (value && typeof value === 'object') { Object.freeze(value); for (const v of Object.values(value as object)) frozen(v); } return value; }
+function frozen<T>(value: T): T { if (value && typeof value === 'object') { Object.freeze(value); for (const v of Object.values(value as Record<string, unknown>)) frozen(v); } return value; }
 
 function validateEntry(entry: SourceEntryInput): Diagnostic[] {
   const d: Diagnostic[] = [];
