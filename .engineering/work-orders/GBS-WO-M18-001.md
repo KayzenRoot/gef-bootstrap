@@ -1,6 +1,6 @@
 # GBS-WO-M18-001 — Implement Resume Engine
 
-Status: `ADMITTED_WAITING_FOR_M17`
+Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
 Risk: `ELEVATED`
 Module: `GBS-M18 — Resume Engine`
 Canonical package: `packages/resume-engine`
@@ -20,6 +20,6 @@ Resume derives from canonical checkpoint and authority bindings, never conversat
 Exact admitted base/head/tree, cold/warm resume, drift, lineage, orphan, budget and conversation-independence tests; platform matrix; full regression; audit/security; semantic review; zero unresolved HIGH/CRITICAL; separate MODULE_DONE promotion.
 
 ## Admission binding
-The M14-M18 train is admitted by PR #191 / merge `54e1bdf6555b6170cc288617370592a072d6cf95`. M16 is MODULE_DONE. M18 is now blocked only by M17; it becomes the legal active stage only after M17 receives its own MODULE_DONE promotion.
+The M14-M18 train is admitted by PR #191 / merge `54e1bdf6555b6170cc288617370592a072d6cf95`. M16 and M17 are MODULE_DONE. All upstream dependency gates for M18 are satisfied; M18 is now the legal active implementation stage and must descend from the promoted reviewed `main` descendant that preserves the admitted contracts.
 
-STOP CONDITION: `GBS_WO_M18_001_ADMITTED_WAITING_FOR_M17_MODULE_DONE`.
+STOP CONDITION: `GBS_WO_M18_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
