@@ -2,6 +2,11 @@ import { isCanonicalProjectId } from '@gef-bootstrap/project-identity';
 import type { OperationOptions, ProjectRegistryEntry, ProjectRegistryEntryInput, RegistryAuthorityBoundary, RegistryIdentityEnvelope, RegistryIdentityEnvelopeInput, RegistryMutationIntent, RegistryMutationIntentInput, RegistryProvenanceChain, Result } from './types.js';
 import { cancelled, deepFreeze, fail, isSha256, secretLike, sha, sortedUnique, validId, validOpaqueRef, validateRefs } from './utils.js';
 
+const REGISTRY_STATES=new Set(['ACTIVE','STALE','QUARANTINED','TOMBSTONED','UNKNOWN']);
+const MUTATION_KINDS=new Set(['ADD','UPDATE','TOMBSTONE']);
+function validRegistryState(value:unknown):value is ProjectRegistryEntry['state']{return typeof value==='string'&&REGISTRY_STATES.has(value);}
+function validMutationKind(value:unknown):value is RegistryMutationIntent['kind']{return typeof value==='string'&&MUTATION_KINDS.has(value);}
+
 export function createRegistryIdentityEnvelope(input:RegistryIdentityEnvelopeInput,options:OperationOptions):Result<RegistryIdentityEnvelope>{
  const c=cancelled(options);if(c)return c;
  if(!isCanonicalProjectId(input.projectId))return fail('REGISTRY_PROJECT_ID_INVALID','Project ID must be the canonical M03 lowercase UUIDv4');
@@ -25,6 +30,7 @@ export function createProjectRegistryEntry(input:ProjectRegistryEntryInput,optio
  const c=cancelled(options);if(c)return c;
  const iv=verifyRegistryIdentityEnvelope(input.identity,options);if(!iv.ok)return iv as Result<ProjectRegistryEntry>;if(!iv.value)return fail('REGISTRY_IDENTITY_ENVELOPE_TAMPERED','Identity envelope digest mismatch');
  const pv=verifyRegistryProvenanceChain(input.provenance,options);if(!pv.ok)return pv as Result<ProjectRegistryEntry>;if(!pv.value)return fail('REGISTRY_PROVENANCE_TAMPERED','Provenance chain digest mismatch');
+ if(!validRegistryState(input.state))return fail('REGISTRY_STATE_INVALID','Registry entry state is invalid');
  if(input.checkpointDigest!==null&&!isSha256(input.checkpointDigest))return fail('REGISTRY_CHECKPOINT_DIGEST_INVALID','Checkpoint binding must be null or SHA-256');
  if(!validateRefs(input.aliases)||!validateRefs(input.metadataRefs)||!validateRefs(input.knowledgeRefs))return fail('REGISTRY_REFERENCE_INVALID','Aliases and metadata/knowledge references must be unique bounded opaque identifiers');
  if([...input.aliases,...input.metadataRefs,...input.knowledgeRefs].some(secretLike))return fail('REGISTRY_SECRET_LIKE_REFERENCE','Portable registry references cannot use secret-like identifiers');
@@ -34,9 +40,10 @@ export function createProjectRegistryEntry(input:ProjectRegistryEntryInput,optio
 }
 
 export function verifyProjectRegistryEntry(value:ProjectRegistryEntry,options:OperationOptions):Result<boolean>{
- if(!isCanonicalProjectId(value.projectId)||!validId(value.lineageId)||!isSha256(value.repositoryIdentityDigest)||!isSha256(value.sourceIdentityDigest)||!isSha256(value.identityEnvelopeDigest)||!isSha256(value.provenanceDigest)||!isSha256(value.entryDigest))return{ok:true,value:false};
+ if(!isCanonicalProjectId(value.projectId)||!validId(value.lineageId)||!validRegistryState(value.state)||!isSha256(value.repositoryIdentityDigest)||!isSha256(value.sourceIdentityDigest)||!isSha256(value.identityEnvelopeDigest)||!isSha256(value.provenanceDigest)||!isSha256(value.entryDigest))return{ok:true,value:false};
  if(value.checkpointDigest!==null&&!isSha256(value.checkpointDigest))return{ok:true,value:false};
- if(!validateRefs(value.aliases)||!validateRefs(value.metadataRefs)||!validateRefs(value.knowledgeRefs)||value.provenanceSourceDigests.length===0||value.provenanceSourceDigests.some(x=>!isSha256(x)))return{ok:true,value:false};
+ if(!validateRefs(value.aliases)||!validateRefs(value.metadataRefs)||!validateRefs(value.knowledgeRefs)||[...value.aliases,...value.metadataRefs,...value.knowledgeRefs].some(secretLike)||value.provenanceSourceDigests.length===0||value.provenanceSourceDigests.some(x=>!isSha256(x)))return{ok:true,value:false};
+ if(value.privateLocatorRef!==null&&(!validOpaqueRef(value.privateLocatorRef)||secretLike(value.privateLocatorRef)))return{ok:true,value:false};
  const identity=createRegistryIdentityEnvelope({projectId:value.projectId,lineageId:value.lineageId,repositoryIdentityDigest:value.repositoryIdentityDigest,sourceIdentityDigest:value.sourceIdentityDigest},options);if(!identity.ok||identity.value.envelopeDigest!==value.identityEnvelopeDigest)return{ok:true,value:false};
  const provenance=createRegistryProvenanceChain(value.provenanceSourceDigests,options);if(!provenance.ok||provenance.value.chainDigest!==value.provenanceDigest)return{ok:true,value:false};
  const core={projectId:value.projectId,lineageId:value.lineageId,repositoryIdentityDigest:value.repositoryIdentityDigest,sourceIdentityDigest:value.sourceIdentityDigest,identityEnvelopeDigest:value.identityEnvelopeDigest,checkpointDigest:value.checkpointDigest,aliases:sortedUnique(value.aliases),metadataRefs:sortedUnique(value.metadataRefs),knowledgeRefs:sortedUnique(value.knowledgeRefs),state:value.state,provenanceDigest:value.provenanceDigest,provenanceSourceDigests:sortedUnique(value.provenanceSourceDigests),privateLocatorRef:value.privateLocatorRef};
@@ -51,7 +58,7 @@ export function buildRegistryAuthorityBoundary(entry:ProjectRegistryEntry,option
 
 export function createRegistryMutationIntent(input:RegistryMutationIntentInput,options:OperationOptions):Result<RegistryMutationIntent>{
  const c=cancelled(options);if(c)return c;
- if(!validId(input.mutationId)||!isCanonicalProjectId(input.projectId)||!isSha256(input.expectedVersion))return fail('REGISTRY_MUTATION_INTENT_INVALID','Mutation identity, project identity or expected version is invalid');
+ if(!validId(input.mutationId)||!validMutationKind(input.kind)||!isCanonicalProjectId(input.projectId)||!isSha256(input.expectedVersion))return fail('REGISTRY_MUTATION_INTENT_INVALID','Mutation identity, kind, project identity or expected version is invalid');
  if(input.kind==='TOMBSTONE'){if(input.proposedEntryDigest!==null)return fail('REGISTRY_TOMBSTONE_PAYLOAD_FORBIDDEN','Tombstone intent cannot carry a replacement entry');}
  else if(input.proposedEntryDigest===null||!isSha256(input.proposedEntryDigest))return fail('REGISTRY_MUTATION_ENTRY_REQUIRED','ADD/UPDATE requires an exact proposed entry digest');
  const core={mutationId:input.mutationId,kind:input.kind,expectedVersion:input.expectedVersion,projectId:input.projectId,proposedEntryDigest:input.proposedEntryDigest};const d=sha(options,core);if(!d.ok)return d;return{ok:true,value:deepFreeze({...core,intentDigest:d.value})};
