@@ -8,6 +8,7 @@ import type {
   AtomicIncrement,
   BranchSuppressionResult,
   EvidenceSlot,
+  ExecutableInstruction,
   ExecutableWorkDag,
   Instruction,
   OperationOptions,
@@ -31,11 +32,13 @@ import {
 
 /**
  * Compile instructions into a deterministic topological work DAG.
- * Duplicate nodes, unknown dependencies and cycles fail closed.
+ * Duplicate nodes, unknown dependencies and cycles fail closed, as do nodes
+ * missing preconditions, mutation specifications or evidence outputs — the
+ * executor must never infer what the pack does not declare.
  * Traversal is bounded and cancellation-aware; ties break by code point.
  */
 export function computeExecutableWorkDag(
-  instructions: readonly Instruction[],
+  instructions: readonly ExecutableInstruction[],
   options: OperationOptions,
 ): Result<ExecutableWorkDag> {
   const c = cancelled(options);
@@ -54,12 +57,33 @@ export function computeExecutableWorkDag(
     );
   }
 
-  const byId = new Map<string, Instruction>();
+  const byId = new Map<string, ExecutableInstruction>();
   for (const instruction of instructions) {
     if (byId.has(instruction.instructionId)) {
       return fail(
         'PACK_GRAPH_DUPLICATE_NODE',
         `Duplicate work node: ${instruction.instructionId}`,
+        instruction.instructionId,
+      );
+    }
+    if (!Array.isArray(instruction.preconditions) || instruction.preconditions.length === 0) {
+      return fail(
+        'PACK_NODE_PRECONDITION_MISSING',
+        `Work node ${instruction.instructionId} declares no preconditions`,
+        instruction.instructionId,
+      );
+    }
+    if (!instruction.mutationSpec || instruction.mutationSpec.trim().length === 0) {
+      return fail(
+        'PACK_NODE_MUTATION_SPEC_MISSING',
+        `Work node ${instruction.instructionId} declares no mutation specification`,
+        instruction.instructionId,
+      );
+    }
+    if (!Array.isArray(instruction.evidenceOutputs) || instruction.evidenceOutputs.length === 0) {
+      return fail(
+        'PACK_NODE_EVIDENCE_MISSING',
+        `Work node ${instruction.instructionId} declares no evidence outputs`,
         instruction.instructionId,
       );
     }
@@ -140,16 +164,23 @@ export function computeExecutableWorkDag(
     );
   }
 
-  const nodes: WorkNode[] = instructions.map(instruction => ({
-    ...instruction,
-    targetFiles: [...instruction.targetFiles],
-    dependsOn: [...instruction.dependsOn].sort(compareCodePoint),
-    mutationDomains: [...instruction.mutationDomains],
-    validationIds: [...instruction.validationIds],
-    provenanceRefs: [...instruction.provenanceRefs],
-    wave: waveOf.get(instruction.instructionId) ?? 0,
-    critical: false,
-  }));
+  const nodes: WorkNode[] = instructions.map(instruction => {
+    const mutating = instruction.mutationDomains.length > 0;
+    return {
+      ...instruction,
+      targetFiles: [...instruction.targetFiles],
+      dependsOn: [...instruction.dependsOn].sort(compareCodePoint),
+      mutationDomains: [...instruction.mutationDomains],
+      validationIds: [...instruction.validationIds],
+      provenanceRefs: [...instruction.provenanceRefs],
+      preconditions: [...instruction.preconditions],
+      evidenceOutputs: [...instruction.evidenceOutputs],
+      wave: waveOf.get(instruction.instructionId) ?? 0,
+      critical: false,
+      rollbackHook: mutating ? (instruction.rollbackPlan ?? 'pending:rrp') : 'none:read-only',
+      readinessRef: mutating ? `rrp:${instruction.instructionId}` : 'rrp:not-required',
+    };
+  });
   nodes.sort((a, b) => a.wave - b.wave || compareCodePoint(a.instructionId, b.instructionId));
   const order = nodes.map(n => n.instructionId);
   const frozenWaves = waves.map(w => Object.freeze([...w]) as readonly string[]);

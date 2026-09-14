@@ -37,6 +37,7 @@ test('ordinary execution-pack-compiler API use requires no filesystem network or
       {
         instructionId: 'a', objective: 'first', targetFiles: [], dependsOn: [],
         mutationDomains: [], validationIds: [], provenanceRefs: [],
+        preconditions: ['pack-valid'], mutationSpec: 'read-only', evidenceOutputs: ['ev:a'],
       },
     ],
     { digest },

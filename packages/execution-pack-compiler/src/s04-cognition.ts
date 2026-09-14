@@ -9,6 +9,7 @@ import type {
   BudgetConsumption,
   CognitionBudget,
   CognitionBudgetState,
+  NegativeSearchEntry,
   ReadOnceConsumption,
   ReadOnceContextIndex,
   Result,
@@ -81,8 +82,9 @@ export function consumeCognitionBudget(
 // ─── Tool Invocation Blueprint (TIB) ──────────────────────────────────────────
 
 /**
- * Preselect permitted tool classes with inputs and fallback path.
- * Output order is deterministic (by tool, purpose, node refs), never input order.
+ * Preselect permitted tool classes with concrete inputs, expected outputs
+ * and fallback path. Every invocation must declare all three; anything less
+ * fails closed. Output order is deterministic, never input order.
  */
 export function buildToolInvocationBlueprint(
   invocations: readonly ToolInvocation[],
@@ -98,12 +100,36 @@ export function buildToolInvocationBlueprint(
         invocation.tool,
       );
     }
+    if (!Array.isArray(invocation.inputs) || invocation.inputs.length === 0) {
+      return fail(
+        'PACK_TOOL_BLUEPRINT_INVALID',
+        `Tool invocation for ${invocation.tool} declares no concrete inputs`,
+        invocation.tool,
+      );
+    }
+    if (!Array.isArray(invocation.expectedOutputs) || invocation.expectedOutputs.length === 0) {
+      return fail(
+        'PACK_TOOL_BLUEPRINT_INVALID',
+        `Tool invocation for ${invocation.tool} declares no expected outputs`,
+        invocation.tool,
+      );
+    }
+    if (!invocation.fallbackPath || invocation.fallbackPath.trim().length === 0) {
+      return fail(
+        'PACK_TOOL_BLUEPRINT_INVALID',
+        `Tool invocation for ${invocation.tool} declares no fallback path`,
+        invocation.tool,
+      );
+    }
   }
   const blueprint = [...invocations]
     .map(invocation => ({
       tool: invocation.tool,
       purpose: invocation.purpose,
       afterNodeIds: sortedStrings(invocation.afterNodeIds),
+      inputs: sortedStrings(invocation.inputs),
+      expectedOutputs: sortedStrings(invocation.expectedOutputs),
+      fallbackPath: invocation.fallbackPath,
     }))
     .sort(
       (a, b) =>
@@ -118,12 +144,18 @@ export function buildToolInvocationBlueprint(
 
 /**
  * Build direct pointers into TCC units so the executor never rescans
- * already-consumed context. Consumption is tracked explicitly: the first
- * consume is fresh, repeats are marked reused without rereading.
+ * already-consumed context. The index is bound to the active context/TCC
+ * identity; consuming it under another identity fails closed.
+ * Consumption is tracked explicitly: the first consume is fresh, repeats
+ * are marked reused without rereading.
  */
 export function buildReadOnceContextIndex(
   entries: Readonly<Record<string, readonly string[]>>,
+  contextIdentity: string,
 ): Result<ReadOnceContextIndex> {
+  if (!contextIdentity || contextIdentity.trim().length === 0) {
+    return fail('PACK_ROCI_INVALID', 'Read-once index requires the active context identity');
+  }
   const keys = Object.keys(entries);
   if (keys.length === 0) {
     return fail('PACK_ROCI_INVALID', 'Read-once index requires at least one entry');
@@ -138,7 +170,25 @@ export function buildReadOnceContextIndex(
     const value = entries[key];
     frozenEntries[key] = Object.freeze([...(value ?? [])]);
   }
-  return { ok: true, value: deepFreeze({ entries: frozenEntries }) };
+  return { ok: true, value: deepFreeze({ contextIdentity, entries: frozenEntries }) };
+}
+
+/**
+ * Verify an index belongs to the active context before any consume.
+ * Cross-context reuse fails closed instead of leaking foreign context.
+ */
+export function validateReadOnceContextBinding(
+  index: ReadOnceContextIndex,
+  contextIdentity: string,
+): Result<ReadOnceContextIndex> {
+  if (index.contextIdentity !== contextIdentity) {
+    return fail(
+      'PACK_ROCI_CONTEXT_MISMATCH',
+      `Read-once index bound to ${index.contextIdentity} cannot serve context ${contextIdentity}`,
+      contextIdentity,
+    );
+  }
+  return { ok: true, value: index };
 }
 
 /** Consume one index entry; repeats return the same value flagged as reused. */
@@ -161,30 +211,57 @@ export function consumeReadOnce(
 
 // ─── Negative Search Ledger (NSL) ─────────────────────────────────────────────
 
-/** Normalize a ledger query so equivalent searches share one entry. */
+/** Normalize a ledger query so equivalent searches share one identity. */
 export function normalizeLedgerQuery(query: string): string {
   return query.trim().replace(/\s+/g, ' ');
 }
 
-/**
- * Record a validity-bound known absence so executors never repeat a failed
- * search. Total function: recording is monotonic and order-independent.
- */
-export function recordNegativeSearch(
-  ledger: readonly string[],
-  query: string,
-): readonly string[] {
-  const normalized = normalizeLedgerQuery(query);
-  if (normalized.length === 0) return ledger;
-  return Object.freeze(sortedStrings([...new Set([...ledger, normalized])]));
+function ledgerSortKey(entry: NegativeSearchEntry): string {
+  return JSON.stringify([entry.query, entry.fingerprint, entry.contextIdentity]);
 }
 
-/** Reuse a proven-negative result instead of re-searching. Total function. */
-export function checkNegativeSearch(
-  ledger: readonly string[],
+/**
+ * Record a validity-bound known absence: the query identity plus the
+ * source/context fingerprint under which the absence was proven. Recording
+ * is monotonic and order-independent; a stale entry never overwrites a
+ * fresher proof for the same query.
+ */
+export function recordNegativeSearch(
+  ledger: readonly NegativeSearchEntry[],
   query: string,
+  fingerprint: string,
+  contextIdentity: string,
+): readonly NegativeSearchEntry[] {
+  const normalized = normalizeLedgerQuery(query);
+  if (normalized.length === 0) return ledger;
+  const candidate: NegativeSearchEntry = {
+    query: normalized,
+    fingerprint,
+    contextIdentity,
+  };
+  if (ledger.some(e => ledgerSortKey(e) === ledgerSortKey(candidate))) return ledger;
+  return Object.freeze(
+    [...ledger, candidate].sort((a, b) => compareCodePoint(ledgerSortKey(a), ledgerSortKey(b))),
+  );
+}
+
+/**
+ * Reuse a proven-negative result instead of re-searching — but only when the
+ * entry was proven under the current fingerprint and context. Stale entries
+ * do not suppress a new search; they simply report absence of proof.
+ */
+export function checkNegativeSearch(
+  ledger: readonly NegativeSearchEntry[],
+  query: string,
+  fingerprint: string,
+  contextIdentity: string,
 ): { knownAbsent: boolean } {
-  return { knownAbsent: ledger.includes(normalizeLedgerQuery(query)) };
+  const normalized = normalizeLedgerQuery(query);
+  return {
+    knownAbsent: ledger.some(
+      e => e.query === normalized && e.fingerprint === fingerprint && e.contextIdentity === contextIdentity,
+    ),
+  };
 }
 
 // ─── Ambiguity Escalation Trigger (AET) ───────────────────────────────────────

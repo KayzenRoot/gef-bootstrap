@@ -6,15 +6,16 @@
 
 import type {
   Binding,
+  ExecutableInstruction,
+  ExecutionPack,
   ExecutionPackEnvelope,
   ExecutorCapabilityContract,
   ExecutorCapabilityOffer,
-  Instruction,
   OperationOptions,
-  PromptChecklist,
   PromptCompletenessCertificate,
   ProvenanceEntry,
   Result,
+  RollbackProof,
 } from './types.js';
 import { compareCodePoint, deepFreeze, fail, cancelled, sha, sortedStrings, validId } from './utils.js';
 
@@ -32,11 +33,12 @@ function validateBindingPresence(input: Binding, subject: string): string | null
 // ─── Execution Pack Envelope (EPE) ────────────────────────────────────────────
 
 /**
- * Create the versioned immutable pack envelope binding
- * task/context/policy/profile/project/capability exactly.
+ * Create the versioned immutable pack envelope binding the actual M14 task
+ * identity in addition to context/policy/profile/project/capability.
+ * A pack without task identity is unaddressable and invalid.
  */
 export function createExecutionPackEnvelope(
-  input: Binding & { packId: string; contextIdentity: string },
+  input: Binding & { packId: string; taskIdentity: string; contextIdentity: string },
   options: OperationOptions,
 ): Result<ExecutionPackEnvelope> {
   const c = cancelled(options);
@@ -44,6 +46,13 @@ export function createExecutionPackEnvelope(
 
   if (!validId(input.packId)) {
     return fail('PACK_BINDING_INVALID', 'packId is invalid or empty', input.packId);
+  }
+  if (!input.taskIdentity || input.taskIdentity.trim().length === 0) {
+    return fail(
+      'PACK_TASK_IDENTITY_MISSING',
+      'EPE requires the admitted M14 task identity (TIE semantic identity)',
+      input.packId,
+    );
   }
   if (!input.contextIdentity) {
     return fail('PACK_BINDING_INVALID', 'contextIdentity is required', input.packId);
@@ -55,6 +64,7 @@ export function createExecutionPackEnvelope(
 
   const digestResult = sha(options, {
     packId: input.packId,
+    taskIdentity: input.taskIdentity,
     projectId: input.projectId,
     sourcePackIdentity: input.sourcePackIdentity,
     profileIdentity: input.profileIdentity,
@@ -70,6 +80,7 @@ export function createExecutionPackEnvelope(
     ok: true,
     value: deepFreeze({
       packId: input.packId,
+      taskIdentity: input.taskIdentity,
       projectId: input.projectId,
       sourcePackIdentity: input.sourcePackIdentity,
       profileIdentity: input.profileIdentity,
@@ -85,13 +96,8 @@ export function createExecutionPackEnvelope(
 
 // ─── Instruction Provenance Map (IPM) ─────────────────────────────────────────
 
-/**
- * Map every imperative to its authority source or approved decision.
- * An instruction without at least one authority or decision ref is invalid;
- * refs to unknown instructions fail closed instead of being silently dropped.
- */
 export function buildInstructionProvenanceMap(
-  instructions: readonly Instruction[],
+  instructions: readonly ExecutableInstruction[],
   entries: readonly ProvenanceEntry[],
 ): Result<readonly ProvenanceEntry[]> {
   const known = new Set(instructions.map(i => i.instructionId));
@@ -146,8 +152,10 @@ export function buildInstructionProvenanceMap(
 // ─── Executor Capability Contract (ECC) ───────────────────────────────────────
 
 /**
- * Validate that the offered executor capability satisfies the pack's required
- * contract. Identity mismatch or any missing capability/tool fails closed.
+ * Validate the executor offer against every required ECC dimension:
+ * identity, capabilities, tools, mutation permissions, disallowed
+ * (forbidden/unavailable) capabilities, sandbox assumptions and parallelism
+ * limits. Any violated dimension fails closed.
  */
 export function validateExecutorCapabilityContract(
   required: ExecutorCapabilityContract,
@@ -173,8 +181,49 @@ export function validateExecutorCapabilityContract(
       return fail('PACK_CAPABILITY_MISSING', `Missing required tool: ${tool}`, tool);
     }
   }
+  for (const permission of required.requiredMutationPermissions) {
+    if (!offer.mutationPermissions.includes(permission)) {
+      return fail(
+        'PACK_CAPABILITY_MISSING',
+        `Missing required mutation permission: ${permission}`,
+        permission,
+      );
+    }
+  }
+  const disallowed = [...required.forbiddenCapabilities, ...required.unavailableCapabilities];
+  const offeredSurfaces = [...offer.capabilities, ...offer.tools, ...offer.mutationPermissions];
+  for (const banned of disallowed) {
+    if (offeredSurfaces.includes(banned)) {
+      return fail(
+        'PACK_FORBIDDEN_CAPABILITY_OFFERED',
+        `Offered surface includes disallowed capability: ${banned}`,
+        banned,
+      );
+    }
+  }
+  for (const assumption of required.sandboxAssumptions) {
+    if (!offer.sandboxCapabilities.includes(assumption)) {
+      return fail(
+        'PACK_SANDBOX_MISMATCH',
+        `Sandbox assumption not satisfied: ${assumption}`,
+        assumption,
+      );
+    }
+  }
   if (!Number.isInteger(required.maxParallelism) || required.maxParallelism < 1) {
     return fail('PACK_CAPABILITY_MISSING', 'Required maxParallelism must be a positive integer');
+  }
+  if (offer.maxParallelism !== undefined) {
+    if (!Number.isInteger(offer.maxParallelism) || offer.maxParallelism < 1) {
+      return fail('PACK_CAPABILITY_MISSING', 'Offered maxParallelism must be a positive integer');
+    }
+    if (offer.maxParallelism > required.maxParallelism) {
+      return fail(
+        'PACK_PARALLELISM_EXCEEDED',
+        `Offered parallelism ${offer.maxParallelism} exceeds allowed ${required.maxParallelism}`,
+        String(offer.maxParallelism),
+      );
+    }
   }
   return {
     ok: true,
@@ -182,53 +231,67 @@ export function validateExecutorCapabilityContract(
       capabilityIdentity: offer.capabilityIdentity,
       capabilities: sortedStrings(offer.capabilities),
       tools: sortedStrings(offer.tools),
+      mutationPermissions: sortedStrings(offer.mutationPermissions),
+      sandboxCapabilities: sortedStrings(offer.sandboxCapabilities),
+      ...(offer.maxParallelism === undefined ? {} : { maxParallelism: offer.maxParallelism }),
     }),
   };
 }
 
 // ─── Prompt Completeness Certificate (PCC) ────────────────────────────────────
 
-const CHECKLIST_LABELS: Readonly<Record<keyof PromptChecklist, string>> = {
-  objective: 'objective',
-  workGraph: 'workGraph',
-  validations: 'validations',
-  rollback: 'rollback',
-  evidenceSlots: 'evidenceSlots',
-  stopCondition: 'stopCondition',
-  noDiscoveryBoundary: 'noDiscoveryBoundary',
-};
-
-/** Issue the deterministic readiness summary. Any unchecked item fails closed. */
+/**
+ * Derive the readiness certificate from the compiled pack itself — never from
+ * caller assertions. Any mandatory section absent or empty fails closed, so
+ * the certificate cannot self-certify missing fields.
+ */
 export function issuePromptCompletenessCertificate(
-  packId: string,
-  checklist: PromptChecklist,
+  pack: ExecutionPack,
 ): Result<PromptCompletenessCertificate> {
-  if (!validId(packId)) {
-    return fail('PACK_BINDING_INVALID', 'packId is invalid or empty', packId);
+  if (!validId(pack.packId)) {
+    return fail('PACK_BINDING_INVALID', 'packId is invalid or empty', pack.packId);
   }
-  const missing = (Object.keys(CHECKLIST_LABELS) as Array<keyof PromptChecklist>)
-    .filter(key => checklist[key] !== true)
-    .map(key => CHECKLIST_LABELS[key])
-    .sort(compareCodePoint);
+  const missing: string[] = [];
+  if (!pack.objective || pack.objective.trim().length === 0) missing.push('objective');
+  if (pack.constraints.length === 0) missing.push('constraints');
+  if (pack.allowedMutations.length === 0) missing.push('allowedMutations');
+  if (pack.forbiddenMutations.length === 0) missing.push('forbiddenMutations');
+  if (pack.instructions.length === 0 || pack.workDag.length === 0) missing.push('workGraph');
+  if (pack.validations.length === 0) missing.push('validations');
+  if (pack.proofObligations.length === 0) missing.push('proofObligations');
+  if (!pack.stopCondition || pack.stopCondition.trim().length === 0) missing.push('stopCondition');
+  if (!pack.handbackSchema || pack.handbackSchema.trim().length === 0) missing.push('handback');
+  if (pack.evidenceSlots.length === 0) missing.push('evidenceSlots');
+  if (pack.noDiscoveryBoundary.length === 0) missing.push('noDiscoveryBoundary');
+
+  const mutating = pack.instructions.filter(i => i.mutationDomains.length > 0);
+  const proven = new Set(pack.rollbackProofs.map((p: RollbackProof) => p.instructionId));
+  const unproven = mutating.filter(i => !proven.has(i.instructionId));
+  if (unproven.length > 0) missing.push('rollback');
+
+  const provenanced = new Set(pack.provenanceMap.map(p => p.instructionId));
+  const orphaned = pack.instructions.filter(i => {
+    const entry = pack.provenanceMap.find(p => p.instructionId === i.instructionId);
+    return !provenanced.has(i.instructionId) || entry === undefined ||
+      (entry.authorityRefs.length === 0 && entry.decisionRefs.length === 0);
+  });
+  if (orphaned.length > 0) missing.push('provenance');
+
   if (missing.length > 0) {
     return fail(
       'PACK_COMPLETENESS_FAILED',
-      `Prompt completeness failed; missing: ${missing.join(', ')}`,
-      packId,
+      `Prompt completeness failed; missing: ${missing.sort(compareCodePoint).join(', ')}`,
+      pack.packId,
     );
   }
   return {
     ok: true,
-    value: deepFreeze({ packId, complete: true as const, missingItems: [] }),
+    value: deepFreeze({ packId: pack.packId, complete: true as const, missingItems: [] }),
   };
 }
 
 // ─── No-Discovery Boundary (NDB) ─────────────────────────────────────────────
 
-/**
- * Enforce the no-discovery boundary: planned executor topics must not overlap
- * the forbidden set. Overlap fails closed; uncertainty returns to the compiler.
- */
 export function checkNoDiscoveryBoundary(
   topics: readonly string[],
   boundary: readonly string[],

@@ -4,7 +4,7 @@
 // compileExecutionPack orchestrator.
 // No filesystem/network/Git/provider mutation.
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// ─── Types (including reused M14 contract types) ──────────────────────────────
 export type * from './types.js';
 export { DIAGNOSTIC_CODES } from './types.js';
 export type { DiagnosticCode } from './types.js';
@@ -43,6 +43,7 @@ export {
   consumeCognitionBudget,
   buildToolInvocationBlueprint,
   buildReadOnceContextIndex,
+  validateReadOnceContextBinding,
   consumeReadOnce,
   normalizeLedgerQuery,
   recordNegativeSearch,
@@ -52,7 +53,11 @@ export {
 
 // ─── S05 – Pack Receipt & Regression ──────────────────────────────────────────
 export {
+  buildPackDigestInput,
   computePackSemanticDigest,
+  computeWorkGraphDigest,
+  computeToolPlanDigest,
+  computeValidationPlanDigest,
   buildExecutionPackReceipt,
   statusForDiagnosticCode,
   checkPreInvocationDrift,
