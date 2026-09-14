@@ -11,11 +11,8 @@ import type {
   InvalidationNode,
   ContextRegressionSentinelResult,
   RegressionFinding,
-  RegressionKind,
   ExecutionHandoffContract,
   ReceiptValidity,
-  AuthorityBoundContextUnit,
-  ExclusionEntry,
   OperationOptions,
   Result,
 } from './types.js';
@@ -25,7 +22,6 @@ import {
   cancelled,
   sha,
   deepFreeze,
-  canonical,
 } from './utils.js';
 
 // ─── Context Semantic Digest (CSD) ────────────────────────────────────────────
@@ -42,7 +38,6 @@ export function computeContextSemanticDigest(
   const c = cancelled(options);
   if (c) return c;
 
-  // Normalize: sort all set-like collections for order-independence
   const normalizedInput = {
     taskIdentity: input.taskIdentity,
     selectedUnitIdentities: [...input.selectedUnitIdentities].sort(compareCodePoint),
@@ -52,7 +47,6 @@ export function computeContextSemanticDigest(
     projectId: input.projectId,
     sourcePackIdentity: input.sourcePackIdentity,
     policyVersion: input.policyVersion,
-    // Deliberately exclude: timestamps, paths, insertion order
   };
 
   return sha(options, normalizedInput);
@@ -60,10 +54,7 @@ export function computeContextSemanticDigest(
 
 // ─── Task Context Capsule (TCC) ───────────────────────────────────────────────
 
-/**
- * Build an immutable Task Context Capsule.
- * Only SUFFICIENT TCCs may be consumed by M15.
- */
+/** Build an immutable Task Context Capsule. Only SUFFICIENT TCCs may reach M15. */
 export function buildTaskContextCapsule(
   input: TaskContextCapsuleInput,
   options: OperationOptions,
@@ -71,7 +62,23 @@ export function buildTaskContextCapsule(
   const c = cancelled(options);
   if (c) return c;
 
-  // Validate: cross-project contamination is forbidden
+  const tie = input.taskIntentEnvelope;
+  if (tie.projectId !== input.projectId) {
+    return fail('CROSS_PROJECT_CONTEXT_FORBIDDEN', 'Project mismatch between TIE and capsule', tie.taskId);
+  }
+  if (tie.sourcePackIdentity !== input.sourcePackIdentity) {
+    return fail('CONTEXT_UNIT_STALE', 'Source-pack mismatch between TIE and capsule', tie.taskId);
+  }
+  if (tie.profileIdentity !== input.profileIdentity || tie.profileDigest !== input.profileDigest) {
+    return fail('TASK_CONTEXT_BINDING_STALE', 'Profile binding mismatch between TIE and capsule', tie.taskId);
+  }
+  if (tie.policyVersion !== input.policyVersion) {
+    return fail('TASK_CONTEXT_BINDING_STALE', 'Policy version mismatch between TIE and capsule', tie.taskId);
+  }
+  if (tie.checkpointIdentity !== input.checkpointIdentity) {
+    return fail('TASK_CONTEXT_BINDING_STALE', 'Checkpoint mismatch between TIE and capsule', tie.taskId);
+  }
+
   for (const unit of input.selectedUnits) {
     if (unit.projectId !== input.projectId) {
       return fail('CROSS_PROJECT_CONTEXT_FORBIDDEN',
@@ -79,24 +86,21 @@ export function buildTaskContextCapsule(
         unit.unitId);
     }
     if (unit.sourcePackIdentity !== input.sourcePackIdentity) {
-      return fail('CONTEXT_UNIT_STALE',
-        `Unit ${unit.unitId} source pack mismatch`, unit.unitId);
+      return fail('CONTEXT_UNIT_STALE', `Unit ${unit.unitId} source pack mismatch`, unit.unitId);
+    }
+    if (unit.profileIdentity !== input.profileIdentity || unit.profileDigest !== input.profileDigest) {
+      return fail('TASK_CONTEXT_BINDING_STALE', `Unit ${unit.unitId} profile binding mismatch`, unit.unitId);
+    }
+    if (unit.policyVersion !== input.policyVersion) {
+      return fail('TASK_CONTEXT_BINDING_STALE', `Unit ${unit.unitId} policy binding mismatch`, unit.unitId);
+    }
+    if (unit.checkpointIdentity !== input.checkpointIdentity) {
+      return fail('TASK_CONTEXT_BINDING_STALE', `Unit ${unit.unitId} checkpoint binding mismatch`, unit.unitId);
     }
   }
 
-  // Validate profile/policy alignment
-  if (input.taskIntentEnvelope.profileIdentity !== input.profileIdentity) {
-    return fail('TASK_CONTEXT_BINDING_STALE',
-      'Profile identity mismatch between TIE and capsule', input.taskIntentEnvelope.taskId);
-  }
-  if (input.taskIntentEnvelope.policyVersion !== input.policyVersion) {
-    return fail('TASK_CONTEXT_BINDING_STALE',
-      'Policy version mismatch between TIE and capsule', input.taskIntentEnvelope.taskId);
-  }
-
-  // Compute Context Semantic Digest
   const digestInput: ContextSemanticDigestInput = {
-    taskIdentity: input.taskIntentEnvelope.semanticIdentity,
+    taskIdentity: tie.semanticIdentity,
     selectedUnitIdentities: input.selectedUnits.map(u => u.semanticIdentity),
     authorityProofRefs: input.authorityProofs.map(p => p.proofRef),
     sufficiencyProofIdentity: input.sufficiencyProof.semanticIdentity,
@@ -109,10 +113,8 @@ export function buildTaskContextCapsule(
   const digestResult = computeContextSemanticDigest(digestInput, options);
   if (!digestResult.ok) return digestResult;
 
-  const compiledAtMs = Date.now();
-
   const capsule: TaskContextCapsule = deepFreeze({
-    taskIntentEnvelope: input.taskIntentEnvelope,
+    taskIntentEnvelope: tie,
     projectId: input.projectId,
     sourcePackIdentity: input.sourcePackIdentity,
     profileIdentity: input.profileIdentity,
@@ -126,7 +128,7 @@ export function buildTaskContextCapsule(
     exclusions: [...input.exclusions].sort((a, b) => compareCodePoint(a.unitId, b.unitId)),
     validity: input.validity,
     semanticDigest: digestResult.value,
-    compiledAtMs,
+    compiledAtMs: Date.now(),
   });
 
   return { ok: true, value: capsule };
@@ -139,11 +141,6 @@ export interface FingerprintBinding {
   readonly fingerprint: string;
 }
 
-/**
- * Compute the Selective Context Invalidation Graph.
- * Invalidates only portions whose bound fingerprints changed.
- * Conservatively widens when dependency knowledge is incomplete.
- */
 export function computeSelectiveContextInvalidationGraph(
   capsule: TaskContextCapsule,
   currentFingerprints: readonly FingerprintBinding[],
@@ -163,20 +160,17 @@ export function computeSelectiveContextInvalidationGraph(
     let reason: string | undefined;
 
     if (currentFp === undefined) {
-      // Source no longer exists → invalidate conservatively
       invalidated = true;
       reason = `Unit ${unit.unitId} no longer exists in current source`;
     } else if (currentFp !== unit.sourceFingerprint) {
       invalidated = true;
       reason = `Source fingerprint changed for unit ${unit.unitId}`;
     } else if (!dependencyKnowledgeComplete) {
-      // Incomplete dependency knowledge → conservative expansion
       invalidated = true;
       reason = 'Incomplete dependency knowledge; conservative invalidation applied';
     }
 
     if (invalidated) invalidatedCount++;
-
     nodes.push({
       unitId: unit.unitId,
       dependsOnFingerprints: [unit.sourceFingerprint],
@@ -185,17 +179,15 @@ export function computeSelectiveContextInvalidationGraph(
     });
   }
 
-  // Conservative expansion: if dependency knowledge incomplete, mark ALL as invalidated
-  const conservativeExpansion = !dependencyKnowledgeComplete;
-
-  const result: SelectiveContextInvalidationGraph = deepFreeze({
-    capsuleIdentity: capsule.semanticDigest,
-    nodes,
-    invalidatedCount,
-    conservativeExpansion,
-  });
-
-  return { ok: true, value: result };
+  return {
+    ok: true,
+    value: deepFreeze({
+      capsuleIdentity: capsule.semanticDigest,
+      nodes,
+      invalidatedCount,
+      conservativeExpansion: !dependencyKnowledgeComplete,
+    }),
+  };
 }
 
 // ─── Context Regression Sentinel (CRS) ────────────────────────────────────────
@@ -208,11 +200,6 @@ export interface PreviousCapsuleSnapshot {
   readonly aperture: string;
 }
 
-/**
- * Detect context regressions between two capsule generations.
- * Detects: authority downgrade, lost coverage, new conflicts, stale aliases,
- *          dependency growth, unsafe aperture shrinkage.
- */
 export function detectContextRegression(
   previous: PreviousCapsuleSnapshot,
   current: TaskContextCapsule,
@@ -222,8 +209,6 @@ export function detectContextRegression(
   if (c) return c;
 
   const regressions: RegressionFinding[] = [];
-
-  // Check for lost obligation coverage
   if (previous.coverageState === 'COVERED' && current.sufficiencyProof.coverageLattice.overallCoverage !== 'COVERED') {
     regressions.push({
       kind: 'LOST_OBLIGATION_COVERAGE',
@@ -231,24 +216,18 @@ export function detectContextRegression(
     });
   }
 
-  // Check for new conflicts
   const previousConflicts = new Set(
-    previous.authorityProofStates.filter(p => p.conflictState === 'CONFLICT').map(p => p.domain)
+    previous.authorityProofStates.filter(p => p.conflictState === 'CONFLICT').map(p => p.domain),
   );
   const currentConflicts = new Set(
-    current.authorityProofs.filter(p => p.conflictState === 'CONFLICT').map(p => p.domain)
+    current.authorityProofs.filter(p => p.conflictState === 'CONFLICT').map(p => p.domain),
   );
   for (const domain of currentConflicts) {
     if (!previousConflicts.has(domain)) {
-      regressions.push({
-        kind: 'NEW_CONFLICT',
-        domain,
-        detail: `New authority conflict appeared in domain ${domain}`,
-      });
+      regressions.push({ kind: 'NEW_CONFLICT', domain, detail: `New authority conflict appeared in domain ${domain}` });
     }
   }
 
-  // Check for authority downgrade (fewer proofs with RESOLVED state)
   const previousResolved = previous.authorityProofStates.filter(p => p.conflictState === 'RESOLVED').length;
   const currentResolved = current.authorityProofs.filter(p => p.conflictState === 'RESOLVED').length;
   if (currentResolved < previousResolved) {
@@ -258,7 +237,6 @@ export function detectContextRegression(
     });
   }
 
-  // Check for unsafe aperture shrinkage (fewer units without sufficiency improvement)
   const prevUnitCount = previous.selectedUnitIdentities.length;
   const currUnitCount = current.selectedUnits.length;
   if (currUnitCount < prevUnitCount && current.sufficiencyProof.sufficiencyState !== 'SUFFICIENT') {
@@ -268,11 +246,7 @@ export function detectContextRegression(
     });
   }
 
-  // Check for dependency growth (closure incomplete where previously complete)
-  if (
-    !current.sufficiencyProof.dependencyKnowledgeComplete &&
-    previous.coverageState === 'COVERED'
-  ) {
+  if (!current.sufficiencyProof.dependencyKnowledgeComplete && previous.coverageState === 'COVERED') {
     regressions.push({
       kind: 'DEPENDENCY_GROWTH',
       detail: 'Dependency knowledge is now incomplete, potentially leaving gaps',
@@ -280,26 +254,22 @@ export function detectContextRegression(
   }
 
   const sortedRegressions = [...regressions].sort((a, b) =>
-    compareCodePoint(a.kind, b.kind) || compareCodePoint(a.detail, b.detail)
+    compareCodePoint(a.kind, b.kind) || compareCodePoint(a.detail, b.detail),
   );
 
-  const result: ContextRegressionSentinelResult = deepFreeze({
-    previousDigest: previous.semanticDigest,
-    currentDigest: current.semanticDigest,
-    regressions: sortedRegressions,
-    hasRegression: sortedRegressions.length > 0,
-  });
-
-  return { ok: true, value: result };
+  return {
+    ok: true,
+    value: deepFreeze({
+      previousDigest: previous.semanticDigest,
+      currentDigest: current.semanticDigest,
+      regressions: sortedRegressions,
+      hasRegression: sortedRegressions.length > 0,
+    }),
+  };
 }
 
 // ─── Execution Handoff Contract (EHC) ─────────────────────────────────────────
 
-/**
- * Build the Execution Handoff Contract.
- * M15 may consume only SUFFICIENT non-stale TCCs.
- * M15 cannot silently add authority-bearing context.
- */
 export function buildExecutionHandoffContract(
   capsule: TaskContextCapsule,
   invalidationGraph: SelectiveContextInvalidationGraph,
@@ -309,49 +279,46 @@ export function buildExecutionHandoffContract(
   if (c) return c;
 
   const blockerCodes: string[] = [];
-
-  // Check validity state
-  if (capsule.validity !== 'VALID') {
-    blockerCodes.push(`CAPSULE_VALIDITY_${capsule.validity}`);
-  }
-
-  // Check sufficiency
+  if (capsule.validity !== 'VALID') blockerCodes.push(`CAPSULE_VALIDITY_${capsule.validity}`);
   if (capsule.sufficiencyProof.sufficiencyState !== 'SUFFICIENT') {
     blockerCodes.push(`SUFFICIENCY_${capsule.sufficiencyProof.sufficiencyState}`);
   }
-
-  // Check for invalidated units
   if (invalidationGraph.invalidatedCount > 0) {
     blockerCodes.push(`INVALIDATED_UNITS_${invalidationGraph.invalidatedCount}`);
   }
+  if (invalidationGraph.conservativeExpansion) blockerCodes.push('CONSERVATIVE_INVALIDATION_APPLIED');
 
-  // Check for conservative expansion (incomplete dep knowledge)
-  if (invalidationGraph.conservativeExpansion) {
-    blockerCodes.push('CONSERVATIVE_INVALIDATION_APPLIED');
+  // Internal exact-binding consistency is mandatory even when the capsule claims VALID.
+  const tie = capsule.taskIntentEnvelope;
+  if (tie.projectId !== capsule.projectId) blockerCodes.push('BINDING_PROJECT_MISMATCH');
+  if (tie.sourcePackIdentity !== capsule.sourcePackIdentity) blockerCodes.push('BINDING_SOURCE_PACK_MISMATCH');
+  if (tie.profileIdentity !== capsule.profileIdentity || tie.profileDigest !== capsule.profileDigest) {
+    blockerCodes.push('BINDING_PROFILE_MISMATCH');
   }
+  if (tie.policyVersion !== capsule.policyVersion) blockerCodes.push('BINDING_POLICY_MISMATCH');
+  if (tie.checkpointIdentity !== capsule.checkpointIdentity) blockerCodes.push('BINDING_CHECKPOINT_MISMATCH');
 
-  const sortedBlockers = [...blockerCodes].sort(compareCodePoint);
+  const sortedBlockers = [...new Set(blockerCodes)].sort(compareCodePoint);
   const readyForM15Consumption = sortedBlockers.length === 0;
-
   const handoffPayload = {
     capsuleSemanticDigest: capsule.semanticDigest,
     capsuleValidity: capsule.validity,
     readyForM15Consumption,
     blockerCodes: sortedBlockers,
   };
-
   const digestResult = sha(options, handoffPayload);
   if (!digestResult.ok) return digestResult;
 
-  const contract: ExecutionHandoffContract = deepFreeze({
-    capsuleSemanticDigest: capsule.semanticDigest,
-    capsuleValidity: capsule.validity,
-    readyForM15Consumption,
-    blockerCodes: sortedBlockers,
-    handoffIdentity: digestResult.value,
-  });
-
-  return { ok: true, value: contract };
+  return {
+    ok: true,
+    value: deepFreeze({
+      capsuleSemanticDigest: capsule.semanticDigest,
+      capsuleValidity: capsule.validity,
+      readyForM15Consumption,
+      blockerCodes: sortedBlockers,
+      handoffIdentity: digestResult.value,
+    }),
+  };
 }
 
 // ─── Receipt validity evaluation ─────────────────────────────────────────────
@@ -359,38 +326,50 @@ export function buildExecutionHandoffContract(
 export interface ValidityEvalInput {
   readonly projectId: string;
   readonly sourcePackIdentity: string;
+  readonly profileIdentity: string;
+  readonly profileDigest: string;
   readonly policyVersion: string;
+  readonly checkpointIdentity: string;
   readonly capsule: TaskContextCapsule;
   readonly currentFingerprints: readonly FingerprintBinding[];
   readonly supportedPolicies: readonly string[];
 }
 
-/**
- * Evaluate the current validity of a Task Context Capsule.
- * States: VALID, STALE, PARTIAL, BLOCKED, PROJECT_MISMATCH, SOURCE_PACK_MISMATCH,
- *         POLICY_UNSUPPORTED, INDETERMINATE.
- */
-export function evaluateCapsuleValidity(
-  input: ValidityEvalInput,
-): ReceiptValidity {
-  const { projectId, sourcePackIdentity, policyVersion, capsule, currentFingerprints, supportedPolicies } = input;
+/** Evaluate exact current binding/fingerprint validity. Unknown evidence fails closed. */
+export function evaluateCapsuleValidity(input: ValidityEvalInput): ReceiptValidity {
+  const {
+    projectId,
+    sourcePackIdentity,
+    profileIdentity,
+    profileDigest,
+    policyVersion,
+    checkpointIdentity,
+    capsule,
+    currentFingerprints,
+    supportedPolicies,
+  } = input;
 
+  if (!projectId || !sourcePackIdentity || !profileIdentity || !profileDigest || !policyVersion || !checkpointIdentity) {
+    return 'INDETERMINATE';
+  }
   if (capsule.projectId !== projectId) return 'PROJECT_MISMATCH';
   if (capsule.sourcePackIdentity !== sourcePackIdentity) return 'SOURCE_PACK_MISMATCH';
-  if (!supportedPolicies.includes(policyVersion)) return 'POLICY_UNSUPPORTED';
+  if (capsule.profileIdentity !== profileIdentity || capsule.profileDigest !== profileDigest) return 'STALE';
+  if (capsule.checkpointIdentity !== checkpointIdentity) return 'STALE';
+  if (capsule.policyVersion !== policyVersion || !supportedPolicies.includes(policyVersion)) return 'POLICY_UNSUPPORTED';
 
   if (capsule.sufficiencyProof.sufficiencyState === 'BLOCKED') return 'BLOCKED';
   if (capsule.sufficiencyProof.sufficiencyState === 'INDETERMINATE') return 'INDETERMINATE';
+  if (capsule.sufficiencyProof.sufficiencyState !== 'SUFFICIENT') return 'PARTIAL';
 
   const fpMap = new Map(currentFingerprints.map(f => [f.unitId, f.fingerprint]));
   let staleCount = 0;
-  let totalUnits = capsule.selectedUnits.length;
+  const totalUnits = capsule.selectedUnits.length;
+  if (totalUnits > 0 && currentFingerprints.length === 0) return 'INDETERMINATE';
 
   for (const unit of capsule.selectedUnits) {
     const currentFp = fpMap.get(unit.unitId);
-    if (currentFp === undefined || currentFp !== unit.sourceFingerprint) {
-      staleCount++;
-    }
+    if (currentFp === undefined || currentFp !== unit.sourceFingerprint) staleCount++;
   }
 
   if (staleCount === 0) return 'VALID';
