@@ -1,32 +1,28 @@
 # Checkpoint
 
-Status: `GBS_M18_MODULE_DONE`
+Status: `GBS_M19_PLANNING_FROZEN`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
 - Completed modules: `GBS-M00` through `GBS-M18`
 - Active module: `GBS-M19 — Project Registry`
-- Active module status: `PLANNING_REQUIRED`
-- Active Work Order: `NONE`
-- M18 status: `MODULE_DONE`
-- M18 implementation PR: `#206`
-- M18 reviewed head: `a7303b2f6ec36a6792f416a8db7bd72662fdf575`
-- M18 reviewed tree: `199f68199d5dbf76eea24ad1c777b35fc7a00a2d`
-- M18 semantic audit: `5203118861`
-- M18 implementation merge: `424ab545bc22dccad93a2bbecfbb5ab99dcdd335`
-- M18 evidence: `.engineering/evidence/GBS-WO-M18-001-EVIDENCE.md`
+- Active module status: `PLANNING_FROZEN_WORK_ORDER_COMPILED_NOT_ADMITTED`
+- Active Work Order: `GBS-WO-M19-001`
+- M19 planning sessions: `4 / 4 FROZEN_CANDIDATE`
+- M19 planning gate: `.engineering/gates/M19-PLANNING-GATE.md`
+- M19 assurance intensity: `STANDARD_PLUS`
 - Production: `339 / 1088 = 31.16%`
 - Remaining: `749 / 1088 = 68.84%`
-- M18 earned: `18 / 18`
+- M19 earned: `0 / 14`
 - Denominator change: `NONE`
-- Next legal stage: `PLAN_AND_FREEZE_GBS_M19`
+- Next legal stage: `AUDIT_AND_ADMIT_GBS_M19`
 
-## M18 outcome
-M18 delivers the Resume Engine across S01-S04 with exact resume intent and lineage binding, canonical authority boundaries, conversation-independent continuation, minimum sufficient rehydration, validity-bound hot/negative caches, deterministic read planning, project/lineage/checkpoint/policy/authority/claim drift detection, delta rehydration, stale/orphan work quarantine, fail-closed safe re-entry, tamper-resistant receipts, continuity-loss detection, efficiency evidence and a safe handback that emits only the canonical next action for a verified `READY` state.
+## M19 planning outcome
+M19 is frozen as a bounded Project Registry module. It owns persistent registry/index semantics for known projects, deterministic exact-match routing, collision preservation, validity-bound knowledge reuse, semantic CAS/fencing, split-brain detection, stale-entry quarantine, tombstone lineage, privacy-aware persistence, portability and a read-only handoff surface. It does not absorb canonical identity, discovery, filesystem safety, checkpoint/resume, progress/status, proof/integrity, Git/provider or telemetry ownership.
 
-Exact-head validation passed the M18 Ubuntu/Windows/macOS matrix, focused `55/55`, full regression `622/622`, dependency audit with `0 vulnerabilities`, Security CodeQL and every one of the `15` workflows triggered on the reviewed head. Final semantic review records `CRITICAL 0` and `HIGH 0`.
+The frozen design contains 29 first-class registry mechanisms across S01-S04. Existing Technology Ledger candidates for Repository Knowledge Map, Failure Fingerprint Memory and Negative Capability Cache are incorporated only within their validity-bound non-authoritative roles.
 
 ## Continuation contract
-The governed M14-M18 implementation train is complete. M19 is present in the frozen production backlog and Master Module Index, but no admitted M19 Work Order or frozen M19 session Source Pack exists in the current canonical repository. Therefore M19 implementation is not authorized. The next legal increment is to plan/freeze M19, compile its Work Order, audit/admit it, and only then implement it.
+Planning and Work Order compilation grant no implementation authority and no production credit. `GBS-WO-M19-001` remains `COMPILED_NOT_ADMITTED`. The next legal increment is exact-head planning audit followed by a separate admission promotion. Implementation may begin only after the canonical checkpoint and Work Order both say `ADMITTED_READY_FOR_IMPLEMENTATION`.
 
-STOP CONDITION: `GBS_M18_MODULE_DONE_READY_FOR_M19_PLANNING`.
+STOP CONDITION: `GBS_M19_PLANNING_FROZEN_READY_FOR_ADMISSION_AUDIT`.
