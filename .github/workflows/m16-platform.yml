@@ -1,0 +1,45 @@
+name: M16 Policy & Guardrail Engine
+on:
+  pull_request:
+    paths:
+      - 'packages/policy-guardrail-engine/**'
+      - 'tests/m16-*.mjs'
+      - '.engineering/work-orders/GBS-WO-M16-001.md'
+      - '.engineering/GBS-WO-M14-M18-ADMISSION.md'
+      - 'planning/modules/area-d-gef-v1/m16-policy-guardrail-engine/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/m16-platform.yml'
+permissions:
+  contents: read
+concurrency:
+  group: m16-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm run typecheck
+      - run: node --test tests/m16-policy-governance.test.mjs tests/m16-enforcement.test.mjs tests/m16-regression.test.mjs tests/m16-startup-purity.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm test
