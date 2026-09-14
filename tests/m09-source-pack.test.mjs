@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
+  AuthorityNeighborhoodCache,
   buildSourcePack,
   evaluateApplicability,
   evaluateRequirements,
@@ -9,7 +10,7 @@ import {
   resolveExactTemplate,
   computeDriftShockwave,
   evaluateIntegrity
-} from '../packages/source-pack/dist/public.js';
+} from '../packages/source-pack/dist/public-v2.js';
 
 const digest = { algorithm: 'sha256', digest(input) { return createHash('sha256').update(input).digest('hex'); } };
 const opts = { digest };
@@ -27,6 +28,7 @@ test('build is deterministic and order invariant', () => {
   assert.equal(a.value.semanticIdentity,b.value.semanticIdentity);
   assert.equal(a.value.integrityEpoch,b.value.integrityEpoch);
   assert.equal(a.value.constitutionFingerprint,b.value.constitutionFingerprint);
+  assert.deepEqual(a.value.integritySpine,b.value.integritySpine);
   assert.ok(Object.isFrozen(a.value));
 });
 
@@ -52,19 +54,36 @@ test('digest capability is mandatory and SHA-256 shaped', () => {
   assert.equal(bad.ok,false); assert.equal(bad.diagnostics[0].code,'DIGEST_RESULT_INVALID');
 });
 
-test('applicability returns ACTIVE INACTIVE UNKNOWN and witness facts', () => {
+test('applicability returns ACTIVE INACTIVE UNKNOWN CONTRADICTORY with witnesses', () => {
   const p = {op:'ALL',items:[{op:'FACT_EQ',fact:'mode',value:'NEW'},{op:'FACT_EQ',fact:'secure',value:true}]};
   const active = evaluateApplicability(p,{mode:'NEW',secure:true});
   assert.equal(active.state,'ACTIVE'); assert.deepEqual(active.facts.map(x=>x.key),['mode','secure']);
   assert.equal(evaluateApplicability(p,{mode:'OLD',secure:true}).state,'INACTIVE');
   assert.equal(evaluateApplicability(p,{mode:'NEW'}).state,'UNKNOWN');
+  assert.equal(evaluateApplicability(p,{mode:{conflict:true,values:['NEW','OLD']},secure:true}).state,'CONTRADICTORY');
 });
 
-test('required classes fail explicit rather than filename guessing', () => {
+test('required classes fail explicit and invalid binding remains typed', () => {
   const r = evaluateRequirements([{classId:'ARCH',state:'REQUIRED'},{classId:'UI',state:'NOT_APPLICABLE',witness:'profile:none'}],baseEntries);
   assert.equal(r[0].state,'MISSING_REQUIRED');
   assert.equal(r[1].state,'RESOLVED_NOT_APPLICABLE');
   assert.equal(r[1].witness,'profile:none');
+  const invalid = evaluateRequirements([{classId:'SCOPE',state:'REQUIRED'}],[{...baseEntries[1],bindingValid:false}]);
+  assert.equal(invalid[0].state,'INVALID_BINDING');
+});
+
+test('unadmitted aliases and active dormant pointers fail closed', () => {
+  const alias = buildSourcePack({projectId:'p',entries:[{id:'alias',kind:'ALIAS',domain:'SCOPE',locator:'legacy',fingerprint:'x',semanticKey:'SCOPE'}]},opts);
+  assert.equal(alias.ok,false); assert.equal(alias.diagnostics[0].code,'ALIAS_NOT_ADMITTED');
+  const dormant = buildSourcePack({projectId:'p',entries:[{id:'cold',kind:'DORMANT',domain:'SCOPE',locator:'cold',fingerprint:'x',semanticKey:'SCOPE',applicability:'ACTIVE'}]},opts);
+  assert.equal(dormant.ok,false); assert.equal(dormant.diagnostics[0].code,'DORMANT_ACTIVE_AUTHORITY_FORBIDDEN');
+});
+
+test('admitted aliases may participate without M09 admitting them', () => {
+  const entries = [{id:'alias',kind:'ALIAS',domain:'SCOPE',locator:'legacy',fingerprint:'x',semanticKey:'SCOPE',canonicality:'CANONICAL',applicability:'ACTIVE',aliasAdmission:{admitted:true,decisionId:'M13-DEC-1',targetClass:'SCOPE'}}];
+  const built = buildSourcePack({projectId:'p',entries,requirements:[{classId:'SCOPE',state:'REQUIRED'}]},opts);
+  assert.equal(built.ok,true);
+  assert.equal(resolveAuthority(entries,'SCOPE','SCOPE').value.selected,'alias');
 });
 
 test('authority is domain specific and explicit supersession wins', () => {
@@ -78,12 +97,24 @@ test('authority is domain specific and explicit supersession wins', () => {
   assert.deepEqual(r.value.governingRules,['D-0021','D-0055']);
 });
 
+test('dormant pointers are never authority even if caller bypasses builder', () => {
+  const r = resolveAuthority([{id:'cold',kind:'DORMANT',domain:'SCOPE',locator:'cold',fingerprint:'x',semanticKey:'x',canonicality:'CANONICAL',applicability:'ACTIVE'}],'x','SCOPE');
+  assert.equal(r.ok,false); assert.equal(r.diagnostics[0].code,'AUTHORITY_NOT_FOUND');
+});
+
 test('authority conflicts never use newest/path order', () => {
   const r = resolveAuthority([
     {id:'a',kind:'FACT',domain:'SCOPE',locator:'z',fingerprint:'1',semanticKey:'x',canonicality:'CANONICAL',applicability:'ACTIVE'},
     {id:'b',kind:'FACT',domain:'SCOPE',locator:'a',fingerprint:'2',semanticKey:'x',canonicality:'CANONICAL',applicability:'ACTIVE'}
   ],'x','SCOPE');
   assert.equal(r.ok,false); assert.equal(r.diagnostics[0].code,'AUTHORITY_CONFLICT');
+});
+
+test('authority neighborhood cache is disposable derived state', () => {
+  const cache = new AuthorityNeighborhoodCache();
+  const proof = {semanticKey:'x',domain:'SCOPE',considered:[{id:'a'}],selected:'a',governingRules:['D-0021']};
+  cache.set('x',proof); assert.equal(cache.size,1); assert.ok(Object.isFrozen(cache.get('x')));
+  cache.invalidate(['x']); assert.equal(cache.size,0);
 });
 
 test('exact template resolution refuses all fallback modes', () => {
