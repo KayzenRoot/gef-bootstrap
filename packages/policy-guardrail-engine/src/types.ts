@@ -5,6 +5,7 @@ export type GuardrailDecision = 'ALLOW' | 'ALLOW_WITH_OBLIGATIONS' | 'DENY' | 'B
 export type PolicyEffect = 'REQUIRE' | 'FORBID';
 export type ApplicabilityState = 'APPLIES' | 'DOES_NOT_APPLY' | 'UNKNOWN';
 export type WarrantEffect = 'WAIVE_OBLIGATION' | 'WAIVE_DENY';
+export type PolicyLifecycleStatus = 'ACTIVE' | 'REVOKED' | 'EXPIRED';
 
 export interface DigestPort { algorithm: 'sha256'; digest(input: string): string; }
 export interface CancellationPort { isCancelled(): boolean; }
@@ -34,10 +35,15 @@ export interface PolicyAuthorityInput {
   obligations: readonly PolicyObligation[];
   evidenceRefs: readonly string[];
   reviewTrigger: string;
-  status: 'ACTIVE' | 'REVOKED';
+  /** Explicit expiry/validity boundary. When omitted by legacy callers, reviewTrigger is promoted as the bound expiry reference. */
+  expiryRef?: string | undefined;
+  status: PolicyLifecycleStatus;
 }
 
-export interface PolicyAuthorityCapsule extends PolicyAuthorityInput { readonly semanticDigest: string; }
+export interface PolicyAuthorityCapsule extends PolicyAuthorityInput {
+  readonly expiryRef: string;
+  readonly semanticDigest: string;
+}
 
 export interface PolicyDomainEntry {
   readonly domain: string;
@@ -66,9 +72,14 @@ export interface ExceptionWarrantInput {
   permittedEffects: readonly WarrantEffect[];
   compensatingControls: readonly string[];
   reviewTrigger: string;
-  status: 'ACTIVE' | 'REVOKED';
+  /** Explicit expiry/validity boundary. When omitted by legacy callers, reviewTrigger is promoted as the bound expiry reference. */
+  expiryRef?: string | undefined;
+  status: PolicyLifecycleStatus;
 }
-export interface ExceptionWarrant extends ExceptionWarrantInput { readonly warrantDigest: string; }
+export interface ExceptionWarrant extends ExceptionWarrantInput {
+  readonly expiryRef: string;
+  readonly warrantDigest: string;
+}
 
 export interface PolicyOperation {
   readonly nodeId: string;
@@ -89,6 +100,7 @@ export interface PolicyEvaluationFragment {
   readonly denials: readonly string[];
   readonly unknowns: readonly string[];
   readonly exceptionWarrantIds: readonly string[];
+  readonly exceptionWarrantDigests?: readonly string[] | undefined;
 }
 
 export interface ObligationGraphNode { readonly obligationId: string; readonly dependsOn: readonly string[]; }
@@ -100,6 +112,7 @@ export interface PolicyJoinResult {
   readonly unknowns: readonly string[];
   readonly conflicts: readonly string[];
   readonly exceptionWarrantIds: readonly string[];
+  readonly exceptionWarrantDigests: readonly string[];
 }
 
 export interface PolicyDecisionReceipt {
@@ -113,6 +126,7 @@ export interface PolicyDecisionReceipt {
   readonly witnesses: ApplicabilityWitnessSet;
   readonly provenance: PolicyProvenanceChain;
   readonly exceptionWarrantIds: readonly string[];
+  readonly exceptionWarrantDigests: readonly string[];
   readonly mandatoryDomainCoverageComplete: boolean;
   readonly receiptDigest: string;
 }
@@ -173,6 +187,8 @@ export type PolicyRegressionKind =
 
 export interface ExceptionScopeSnapshot {
   readonly warrantId: string;
+  readonly warrantDigest: string;
+  readonly expiryRef: string;
   readonly domains: readonly string[];
   readonly nodeIds: readonly string[];
   readonly operations: readonly string[];
@@ -192,13 +208,16 @@ export interface GuardrailCoverageEntry {
   readonly domain: string;
   readonly policyIds: readonly string[];
   readonly obligationIds: readonly string[];
+  readonly operations: readonly string[];
 }
 export interface GuardrailCoverageMap { readonly entries: readonly GuardrailCoverageEntry[]; readonly uncoveredDomains: readonly string[]; }
 
 export interface ExceptionDebtEntry {
   readonly warrantId: string;
   readonly reviewTrigger: string;
+  readonly expiryRef: string;
   readonly compensatingControls: readonly string[];
+  readonly unresolvedCompensatingControls: readonly string[];
   readonly warrantDigest: string;
 }
 export interface ExceptionDebtRegister { readonly entries: readonly ExceptionDebtEntry[]; readonly registerDigest: string; }
