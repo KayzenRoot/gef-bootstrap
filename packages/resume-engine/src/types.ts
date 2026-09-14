@@ -3,7 +3,7 @@ import type { CanonicalContinuationCapsule, ContinuationHandoffContract, Continu
 export type ResumeStatus = 'READY' | 'EXPANSION_REQUIRED' | 'DRIFT_REQUIRES_REPLAN' | 'POLICY_BLOCKED' | 'LINEAGE_MISMATCH' | 'PROJECT_MISMATCH' | 'INDETERMINATE';
 export type ContextTemperature = 'HOT' | 'WARM' | 'COLD';
 export type DriftState = 'SAME' | 'CHANGED' | 'MISSING' | 'UNKNOWN';
-export type DriftDimension = 'CHECKPOINT' | 'POLICY' | 'AUTHORITY' | 'CLAIM';
+export type DriftDimension = 'PROJECT' | 'LINEAGE' | 'CHECKPOINT' | 'POLICY' | 'AUTHORITY' | 'CLAIM';
 
 export interface DigestPort { algorithm: 'sha256'; digest(input: string): string; }
 export interface CancellationPort { isCancelled(): boolean; }
@@ -97,6 +97,7 @@ export interface ResumeReceipt {
   readonly checkpointDigest: string;
   readonly handoffDigest: string;
   readonly nextAction: string | null;
+  readonly decisionDigest: string;
   readonly readPlanDigest: string;
   readonly driftVectorDigest: string;
   readonly orphanReportDigest: string;
