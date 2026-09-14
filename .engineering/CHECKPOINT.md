@@ -1,36 +1,37 @@
 # Checkpoint
 
-Status: `READY_FOR_GBS_WO_M13_001_EXECUTION`
+Status: `READY_FOR_GBS_M14_S01_PLANNING`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M12`
-- Active module: `GBS-M13 — GEF Adoption Engine`
-- Active module status: `READY`
-- M13-S01 through S05: `FROZEN`
-- M13 Module Gate: `PASSED`
-- M13 risk: `ELEVATED`
-- Implementation surface: `packages/adoption-engine`
-- Active Work Order: `GBS-WO-M13-001 — Implement GEF Adoption Engine`
-- Work Order admission: `.engineering/GBS-WO-M13-001-ADMISSION.md`
-- Admission status: `ADMITTED`
-- Compilation PR: `#180`
-- Compilation reviewed head: `121388130bdec5b0fe2dc9971c74bed399630da3`
-- Compilation semantic audit: `5195628554`
-- Compilation/source-lock base: `2894138dc8032d996fc93bbb7f76b4c7811ca869`
-- Execution-base rule: `MERGE_OF_PR_181`
-- Next legal stage: `EXECUTE_GBS_WO_M13_001`
-- Production: `226 / 1088 = 20.77%`
-- Remaining: `862 / 1088 = 79.23%`
-- M13 earned: `0 / 20`
+- Completed modules: `GBS-M00` through `GBS-M13`
+- Active module: `GBS-M14 — Task & Context Compiler`
+- Active module status: `PLANNING_READY`
+- Active Work Order: `NONE`
+- Previous Work Order: `GBS-WO-M13-001 — Implement GEF Adoption Engine`
+- M13 implementation PR: `#182`
+- M13 admitted execution base: `a1523b550988ca035ff95f86e71df7c63be9b928`
+- M13 reviewed implementation head: `3c5723df1b01ed35549c1b4e497e2b4b111405dc`
+- M13 semantic audit review: `5196460583`
+- M13 implementation merge: `29afa4fa0ae2c61b80ae464811014d1b2bd6517a`
+- M13 Evidence Bundle: `.engineering/evidence/GBS-WO-M13-001-EVIDENCE.md`
+- M13 status: `MODULE_DONE`
+- M13 earned: `20 / 20`
+- Production: `246 / 1088 = 22.61%`
+- Remaining: `842 / 1088 = 77.39%`
 - Denominator change: `NONE`
+- Next legal stage: `PLAN_GBS_M14_S01`
 
-## Admission outcome
-The compiled Work Order is promoted for execution through the immutable Admission Record. `2894138dc8032d996fc93bbb7f76b4c7811ca869` is the compilation/source-lock base. No implementation code is authorized before admission PR #181 is exact-head audited and merged. The implementation branch must be created from that admission merge commit, which then becomes the exact execution base recorded by the implementation Evidence Bundle and later checkpoint.
+## M13 promotion outcome
+`GBS-M13 — GEF Adoption Engine` is promoted to `MODULE_DONE` only after admitted implementation, exact-final-head CI, semantic audit, zero unresolved HIGH/CRITICAL findings and implementation merge. The exact evidence bindings are recorded in `.engineering/evidence/GBS-WO-M13-001-EVIDENCE.md`.
+
+The M13 package remains a deterministic read-only adoption/projection layer. It does not own direct writes, product intent, Scope/DoD redefinition, task-context compilation, execution-pack compilation, checkpoint/progress mutation, assurance or release acceptance.
 
 ## Continuation contract
-After this admission PR is exact-head audited and merged, the next legal action is implementation of `packages/adoption-engine` from the PR #181 merge plus focused/cross-module tests, security evidence and exact-final-head audit. No MODULE_DONE credit exists before implementation merge and separate promotion.
+The only released next stage is planning for `GBS-M14-S01` under `GBS-M14 — Task & Context Compiler`. The Master Module Index freezes M14 as a five-session module but does not yet freeze individual session titles; no title is invented by this checkpoint. No M14 implementation, Work Order compilation or production credit is authorized yet.
+
+A legacy accounting presentation in `.engineering/BACKLOG.md` still lags prior checkpoint promotions. Under Source Hierarchy, this checkpoint remains the higher-authority continuation source. Reconciliation of that historical presentation is a separate bounded documentation-consistency increment and does not alter the frozen denominator or earned evidence.
 
 Codex remains outside Bootstrap construction absent a separately governed exception/ADR.
 
-STOP CONDITION: `READY_FOR_GBS_WO_M13_001_EXECUTION`.
+STOP CONDITION: `READY_FOR_GBS_M14_S01_PLANNING`.
