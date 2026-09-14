@@ -28,7 +28,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm audit --audit-level=low
       - run: npm run typecheck
-      - run: node --test tests/m20-response-contract.test.mjs tests/m20-hardening.test.mjs tests/m20-startup-purity.test.mjs
+      - run: node --test tests/m20-response-contract.test.mjs tests/m20-hardening.test.mjs tests/m20-correction-01-high.test.mjs tests/m20-startup-purity.test.mjs
   regression:
     runs-on: ubuntu-latest
     steps:
