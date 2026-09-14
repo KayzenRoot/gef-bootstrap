@@ -1,6 +1,6 @@
 # GBS-M09-S03 — Conditional Documents
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Define deterministic activation of canonical sources that are required only under explicit project conditions. Conditional sources must never be loaded merely because a similarly named file exists.
