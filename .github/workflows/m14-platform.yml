@@ -1,0 +1,43 @@
+name: M14 Task & Context Compiler
+on:
+  pull_request:
+    paths:
+      - 'packages/task-context-compiler/**'
+      - 'tests/m14-*.mjs'
+      - '.engineering/M14-CANONICAL-EXECUTION-START.md'
+      - '.engineering/work-orders/GBS-WO-M14-001.md'
+      - '.engineering/GBS-WO-M14-M18-ADMISSION.md'
+      - 'planning/modules/area-d-gef-v1/m14-task-context-compiler/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/m14-platform.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm run typecheck
+      - run: node --test tests/m14-task-context-compiler.test.mjs tests/m14-startup-purity.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm test
