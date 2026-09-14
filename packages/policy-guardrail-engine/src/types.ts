@@ -184,7 +184,14 @@ export interface PolicyDecisionReceipt {
   readonly conflicts: readonly ConflictRecord[];
   readonly exceptionsApplied: readonly ExceptionApplication[];
   readonly provenance: readonly PolicyProvenanceLink[];
+  /**
+   * Sorted `"<policyId>:<semanticIdentity>"` bindings. The ID prefix is
+   * load-bearing: hashing bare fingerprint values would allow swapping
+   * fingerprints across IDs to evade TOCTOU. Never trust values alone.
+   */
   readonly policyFingerprints: readonly string[];
+  /** Exact policy-ID to fingerprint binding for TOCTOU revalidation. */
+  readonly policyFingerprintById: Readonly<Record<string, string>>;
   readonly policySetFingerprint: string;
   readonly digest: string;
 }
@@ -237,6 +244,8 @@ export interface MutationCapabilityLease {
   readonly mutationDomain: string;
   readonly operation: string;
   readonly policySetFingerprint: string;
+  /** Exact policy-ID to fingerprint binding sealed at lease time. */
+  readonly policyFingerprintById: Readonly<Record<string, string>>;
   readonly obligations: readonly Obligation[];
   readonly warrantIds: readonly string[];
   readonly warrantFingerprints: Readonly<Record<string, string>>;
@@ -331,6 +340,7 @@ export interface ContinuityPolicyBinding {
 export const DIAGNOSTIC_CODES = {
   POLICY_CAPSULE_INVALID: 'POLICY_CAPSULE_INVALID',
   POLICY_DECISION_INVALID: 'POLICY_DECISION_INVALID',
+  POLICY_LATTICE_INVALID: 'POLICY_LATTICE_INVALID',
   POLICY_PRECEDENCE_INCOMPARABLE: 'POLICY_PRECEDENCE_INCOMPARABLE',
   POLICY_WARRANT_INVALID: 'POLICY_WARRANT_INVALID',
   POLICY_WARRANT_EXHAUSTED: 'POLICY_WARRANT_EXHAUSTED',

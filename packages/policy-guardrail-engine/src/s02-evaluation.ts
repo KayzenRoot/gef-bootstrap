@@ -140,7 +140,12 @@ export function composeObligations(
 type DimensionVerdict = 'MATCH' | 'NO_MATCH' | 'IRRELEVANT';
 
 function dimensionVerdict(policySide: readonly string[], requestSide: readonly string[]): DimensionVerdict {
-  if (policySide.length === 0 || requestSide.length === 0) return 'IRRELEVANT';
+  // A policy that constrains nothing on this dimension is irrelevant.
+  // A policy that constrains this dimension while the request carries no
+  // evidence for it is NO_MATCH (fail closed): missing domain/operation
+  // evidence must never read as APPLICABLE.
+  if (policySide.length === 0) return 'IRRELEVANT';
+  if (requestSide.length === 0) return 'NO_MATCH';
   if (policySide.includes('*')) return 'MATCH';
   return requestSide.some(entry => policySide.includes(entry)) ? 'MATCH' : 'NO_MATCH';
 }
@@ -305,7 +310,72 @@ function combineDecisionsForJoin(
   return obligated ? 'ALLOW_WITH_OBLIGATIONS' : 'ALLOW';
 }
 
+// ─── Policy Domain Lattice validation (HIGH-5) ─────────────────────────────────
+
+/**
+ * Validate and consume the top-level lattice: non-empty, unique domains,
+ * non-empty duplicate-free orders, and every policy precedenceDomain must
+ * be declared. Input order never confers authority; the explicit lattice
+ * does. Invalid or incomplete lattices fail closed.
+ */
+export function validatePolicyDomainLattice(
+  lattice: DecidePolicyInput['lattice'],
+  policies: readonly PolicyAuthorityCapsule[],
+): Result<{ validated: true }> {
+  if (!lattice || !Array.isArray((lattice as { domains?: unknown }).domains)) {
+    return fail('POLICY_LATTICE_INVALID', 'Policy domain lattice requires a domains array');
+  }
+  const domains = (lattice as { domains: { domain: string; order: readonly string[] }[] }).domains;
+  if (domains.length === 0) {
+    return fail('POLICY_LATTICE_INVALID', 'Policy domain lattice must declare at least one domain');
+  }
+  const seenDomains = new Set<string>();
+  for (const entry of domains) {
+    if (!entry || typeof entry.domain !== 'string' || entry.domain.trim().length === 0) {
+      return fail('POLICY_LATTICE_INVALID', 'Lattice domain entry requires a non-empty domain');
+    }
+    if (seenDomains.has(entry.domain)) {
+      return fail('POLICY_LATTICE_INVALID', `Duplicate lattice domain: ${entry.domain}`, entry.domain);
+    }
+    seenDomains.add(entry.domain);
+    if (!Array.isArray(entry.order) || entry.order.length === 0) {
+      return fail('POLICY_LATTICE_INVALID', `Lattice domain ${entry.domain} requires a non-empty order`, entry.domain);
+    }
+    const seenOrder = new Set<string>();
+    for (const id of entry.order) {
+      if (typeof id !== 'string' || id.trim().length === 0) {
+        return fail('POLICY_LATTICE_INVALID', `Lattice domain ${entry.domain} carries an empty policy id`, entry.domain);
+      }
+      if (seenOrder.has(id)) {
+        return fail('POLICY_LATTICE_INVALID', `Duplicate policy ${id} in lattice domain ${entry.domain}`, id);
+      }
+      seenOrder.add(id);
+    }
+  }
+  for (const policy of policies) {
+    if (!seenDomains.has(policy.precedenceDomain)) {
+      return fail(
+        'POLICY_LATTICE_INVALID',
+        `Policy ${policy.policyId} precedence domain ${policy.precedenceDomain} is not declared in the lattice`,
+        policy.policyId,
+      );
+    }
+  }
+  return { ok: true, value: deepFreeze({ validated: true as const }) };
+}
+
+/** Bound `"<policyId>:<fingerprint>"` entries, sorted for determinism. */
+export function bindPolicyFingerprints(
+  byId: Readonly<Record<string, string>>,
+): readonly string[] {
+  return Object.entries(byId)
+    .sort((a, b) => compareCodePoint(a[0], b[0]))
+    .map(([id, fp]) => `${id}:${fp}`);
+}
+
 // ─── Policy Decision Receipt (PDR) ────────────────────────────────────────────
+
+const FINGERPRINT_RE = /^sha256:[0-9a-f]{64}$/;
 
 /** Issue the deterministic receipt binding inputs, outcome and provenance. */
 export function issuePolicyDecisionReceipt(
@@ -320,7 +390,7 @@ export function issuePolicyDecisionReceipt(
     conflicts: PolicyJoinResult['conflicts'];
     exceptionsApplied: PolicyDecisionReceipt['exceptionsApplied'];
     provenance: readonly { sourceRef: string; policyId: string; decisionRef: string }[];
-    policyFingerprints: readonly string[];
+    policyFingerprints: Readonly<Record<string, string>>;
   },
   options: OperationOptions,
 ): Result<PolicyDecisionReceipt> {
@@ -336,9 +406,20 @@ export function issuePolicyDecisionReceipt(
   if (!input.policyVersion || input.policyVersion.trim().length === 0) {
     return fail('POLICY_RECEIPT_INVALID', 'PDR requires the policy version');
   }
+  const bindingIds = Object.keys(input.policyFingerprints).sort(compareCodePoint);
+  if (bindingIds.length === 0) {
+    return fail('POLICY_RECEIPT_INVALID', 'PDR requires at least one bound policy fingerprint');
+  }
+  for (const id of bindingIds) {
+    const fp = input.policyFingerprints[id];
+    if (typeof fp !== 'string' || !FINGERPRINT_RE.test(fp)) {
+      return fail('POLICY_RECEIPT_INVALID', `PDR policy ${id} carries an invalid fingerprint`, id);
+    }
+  }
 
+  const bound = bindPolicyFingerprints(input.policyFingerprints);
   const setFingerprint = sha(options, {
-    policies: sortedStrings(input.policyFingerprints),
+    policies: bound,
   });
   if (!setFingerprint.ok) return setFingerprint;
 
@@ -349,7 +430,13 @@ export function issuePolicyDecisionReceipt(
     decision: input.decision,
     obligations: sortedStrings(
       input.obligations.map(o =>
-        JSON.stringify({ id: o.obligationId, statement: o.statement, mandatory: o.mandatory }),
+        JSON.stringify({
+          id: o.obligationId,
+          statement: o.statement,
+          mandatory: o.mandatory,
+          dependsOn: [...o.dependsOn].sort(compareCodePoint),
+          conflictsWith: [...o.conflictsWith].sort(compareCodePoint),
+        }),
       ),
     ),
     denials: sortedStrings(input.denials),
@@ -357,10 +444,13 @@ export function issuePolicyDecisionReceipt(
     conflicts: sortedStrings(input.conflicts.map(k => JSON.stringify({ ...k }))),
     exceptions: sortedStrings(input.exceptionsApplied.map(e => JSON.stringify({ ...e }))),
     provenance: sortedStrings(input.provenance.map(p => JSON.stringify({ ...p }))),
-    policyFingerprints: sortedStrings(input.policyFingerprints),
+    policyFingerprints: bound,
+    policySetFingerprint: setFingerprint.value,
   });
   if (!digest.ok) return digest;
 
+  const byId: Record<string, string> = {};
+  for (const id of bindingIds) byId[id] = input.policyFingerprints[id] as string;
   return {
     ok: true,
     value: deepFreeze({
@@ -374,11 +464,60 @@ export function issuePolicyDecisionReceipt(
       conflicts: [...input.conflicts],
       exceptionsApplied: [...input.exceptionsApplied],
       provenance: [...input.provenance],
-      policyFingerprints: sortedStrings(input.policyFingerprints),
+      policyFingerprints: bound,
+      policyFingerprintById: byId,
       policySetFingerprint: setFingerprint.value,
       digest: digest.value,
     }),
   };
+}
+
+/**
+ * Independently re-verify a PDR seal: recompute the bound set fingerprint
+ * and the full semantic digest from the receipt payload. A tampered PDR
+ * that keeps a stale digest fails closed. Returns the receipt on success.
+ */
+export function verifyPolicyDecisionReceipt(
+  receipt: PolicyDecisionReceipt,
+  options: OperationOptions,
+): Result<{ verified: true }> {
+  const c = cancelled(options);
+  if (c) return c;
+  const byId = (receipt as { policyFingerprintById?: Readonly<Record<string, string>> }).policyFingerprintById;
+  if (!byId || typeof byId !== 'object' || Object.keys(byId).length === 0) {
+    return fail('POLICY_RECEIPT_INVALID', 'PDR carries no ID-bound policy fingerprints');
+  }
+  // Bound array must exactly match the map: no swapped, dropped or
+  // injected entries survive.
+  const expectedBound = bindPolicyFingerprints(byId);
+  const actualBound = [...receipt.policyFingerprints].sort(compareCodePoint);
+  if (JSON.stringify(actualBound) !== JSON.stringify(expectedBound)) {
+    return fail('POLICY_RECEIPT_INVALID', 'PDR policy fingerprint bindings do not match the bound map');
+  }
+  const recomputed = issuePolicyDecisionReceipt(
+    {
+      packIdentity: receipt.packIdentity,
+      taskIdentity: receipt.taskIdentity,
+      policyVersion: receipt.policyVersion,
+      decision: receipt.decision,
+      obligations: [...receipt.obligations],
+      denials: [...receipt.denials],
+      unknowns: [...receipt.unknowns],
+      conflicts: [...receipt.conflicts],
+      exceptionsApplied: [...receipt.exceptionsApplied],
+      provenance: [...receipt.provenance],
+      policyFingerprints: { ...byId },
+    },
+    options,
+  );
+  if (!recomputed.ok) return recomputed;
+  if (recomputed.value.policySetFingerprint !== receipt.policySetFingerprint) {
+    return fail('POLICY_RECEIPT_INVALID', 'PDR policy-set fingerprint drifted from its sealed value');
+  }
+  if (recomputed.value.digest !== receipt.digest) {
+    return fail('POLICY_RECEIPT_INVALID', 'PDR digest does not match its sealed payload; tampering suspected');
+  }
+  return { ok: true, value: deepFreeze({ verified: true as const }) };
 }
 
 // ─── Guardrail Short-Circuit Firewall (GSF) ───────────────────────────────────
@@ -426,6 +565,20 @@ export function decidePolicy(
 ): Result<PolicyDecisionReceipt> {
   const c = cancelled(options);
   if (c) return c;
+
+  // Duplicate policy IDs make input order authoritative (Map last-write).
+  // Reject instead: authority comes only from the lattice, never position.
+  const seenIds = new Set<string>();
+  for (const policy of input.policies) {
+    if (seenIds.has(policy.policyId)) {
+      return fail('POLICY_CAPSULE_INVALID', `Duplicate policy ID: ${policy.policyId}`, policy.policyId);
+    }
+    seenIds.add(policy.policyId);
+  }
+  // Top-level lattice is validated and consumed: invalid or incomplete
+  // lattices fail closed instead of being ignored.
+  const latticeCheck = validatePolicyDomainLattice(input.lattice, input.policies);
+  if (!latticeCheck.ok) return latticeCheck;
 
   const policiesById = new Map(input.policies.map(p => [p.policyId, p]));
   const witnessSet = buildApplicabilityWitnessSet(input.policies, input.request, input.supportedSchemas);
@@ -504,11 +657,12 @@ export function decidePolicy(
     return { ok: false, diagnostics: obligationClosure.diagnostics };
   }
 
-  const policyFingerprints = sortedStrings(
-    assessments
-      .map(a => policiesById.get(a.policyId)?.semanticIdentity)
-      .filter((fp): fp is string => typeof fp === 'string'),
-  );
+  // Bind every input policy ID to its fingerprint, not just assessed
+  // values: swapping fingerprints across IDs must change the seal.
+  const fingerprintById: Record<string, string> = {};
+  for (const policy of [...input.policies].sort((a, b) => compareCodePoint(a.policyId, b.policyId))) {
+    fingerprintById[policy.policyId] = policy.semanticIdentity;
+  }
 
   return issuePolicyDecisionReceipt(
     {
@@ -526,7 +680,7 @@ export function decidePolicy(
         policyId: a.policyId,
         decisionRef: join.decision,
       })),
-      policyFingerprints,
+      policyFingerprints: fingerprintById,
     },
     options,
   );

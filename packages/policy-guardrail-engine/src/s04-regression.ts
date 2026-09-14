@@ -31,9 +31,14 @@ import {
 
 /**
  * Deterministic SHA-256 over normalized effective policy semantics —
- * identity, version, owner, domains, applicability, effect and obligations.
+ * identity, version, owner plus provenance, domains, applicability, effect,
+ * obligations with full graph semantics, evidence, review and schema.
  * Order-independent; any semantic change alters the fingerprint. Timestamps
  * and path order never contribute.
+ *
+ * HIGH-6 closure: owner provenance, evidence fingerprint, review trigger
+ * and obligation dependsOn/conflictsWith are sealed. Changing any of them
+ * changes the fingerprint.
  */
 export function computePolicySemanticFingerprint(
   policies: readonly PolicyAuthorityCapsule[],
@@ -48,6 +53,7 @@ export function computePolicySemanticFingerprint(
           policyId: p.policyId,
           version: p.version,
           ownerAuthority: p.ownerAuthority,
+          ownerProvenance: p.ownerProvenance,
           precedenceDomain: p.precedenceDomain,
           scopeDomains: [...p.scopeDomains].sort(compareCodePoint),
           applicability: {
@@ -62,7 +68,11 @@ export function computePolicySemanticFingerprint(
               id: o.obligationId,
               statement: o.statement,
               mandatory: o.mandatory,
+              dependsOn: [...o.dependsOn].sort(compareCodePoint),
+              conflictsWith: [...o.conflictsWith].sort(compareCodePoint),
             })),
+          evidenceFingerprint: p.evidenceFingerprint,
+          reviewTrigger: p.reviewTrigger,
           schemaVersion: p.schemaVersion,
         }),
       ),
@@ -163,11 +173,27 @@ export function detectPolicyRegression(
   for (const [warrantId, prev] of [...prevWarrants.entries()].sort((a, b) => compareCodePoint(a[0], b[0]))) {
     const curr = currWarrants.get(warrantId);
     if (curr === undefined) continue;
+    // Set-based scope comparison: any added element, any target-policy
+    // change, or any maxUses increase is a broadening, even at identical
+    // cardinality. Length-only checks miss same-size substitutions.
+    const prevTargets = new Set(prev.targetPolicyIds);
+    const currTargets = new Set(curr.targetPolicyIds);
+    const targetChanged =
+      prevTargets.size !== currTargets.size || [...currTargets].some(id => !prevTargets.has(id));
+    const setBroadened = (
+      prevSet: readonly string[],
+      currSet: readonly string[],
+    ): boolean => {
+      const before = new Set(prevSet);
+      return currSet.some(entry => !before.has(entry));
+    };
     const broader =
-      curr.targetDomains.length > prev.targetDomains.length ||
-      curr.scopeNodeIds.length > prev.scopeNodeIds.length ||
-      curr.scopeMutationDomains.length > prev.scopeMutationDomains.length ||
-      curr.targetObligations.length > prev.targetObligations.length;
+      targetChanged ||
+      setBroadened(prev.targetDomains, curr.targetDomains) ||
+      setBroadened(prev.scopeNodeIds, curr.scopeNodeIds) ||
+      setBroadened(prev.scopeMutationDomains, curr.scopeMutationDomains) ||
+      setBroadened(prev.targetObligations, curr.targetObligations) ||
+      curr.maxUses > prev.maxUses;
     if (broader) {
       const kind: RegressionKind = 'BROADER_EXCEPTION_SCOPE';
       findings.push({

@@ -186,14 +186,19 @@ function warrant(id, overrides = {}) {
   return result.value;
 }
 
-function decideFor(policies, mandatory = ['SCOPE']) {
+function decideFor(policies, mandatory = ['SCOPE'], packRef = null) {
+  // Bind the PDR exactly to the candidate M15 pack when available; the
+  // hardcoded fallback preserves the legacy shape for unit-only callers.
+  const binding = packRef
+    ? { packId: packRef.packId, taskIdentity: packRef.taskIdentity, policyVersion: packRef.policyVersion }
+    : { packId: 'pack-001', taskIdentity: 'task-1', policyVersion: '1.0.0' };
   const result = decidePolicy({
     request: { domains: ['SCOPE'], operations: [] },
     policies,
     lattice: { domains: [{ domain: 'domain-scope', order: policies.map(p => p.policyId) }] },
     mandatoryDomains: mandatory,
     supportedSchemas: ['v1'],
-    packBinding: { packId: 'pack-001', taskIdentity: 'task-1', policyVersion: '1.0.0' },
+    packBinding: binding,
   }, opts);
   assert.equal(result.ok, true);
   return result.value;
@@ -203,7 +208,7 @@ function decideFor(policies, mandatory = ['SCOPE']) {
 
 test('GEM projects a valid PDR onto exact pack nodes and domains', () => {
   const { pack, receipt } = compilePack();
-  const pdr = decideFor([pac('pol-guard-a'), pac('pol-guard-b')]);
+  const pdr = decideFor([pac('pol-guard-a'), pac('pol-guard-b')], ['SCOPE'], pack);
   assert.equal(pdr.decision, 'ALLOW');
   const projected = projectDecisionToNodes({
     receipt: pdr,
@@ -213,7 +218,7 @@ test('GEM projects a valid PDR onto exact pack nodes and domains', () => {
       { nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts' },
       { nodeId: 'b', mutationDomain: 'dom-b', operation: 'write:src/b.ts' },
     ],
-  });
+  }, opts);
   assert.equal(projected.ok, true);
   assert.equal(projected.value.length, 2);
   assert.equal(projected.value[0].policySetFingerprint, pdr.policySetFingerprint);
@@ -222,18 +227,18 @@ test('GEM projects a valid PDR onto exact pack nodes and domains', () => {
 
 test('GEM rejects unknown nodes, undeclared mutations and broadened domains', () => {
   const { pack, receipt } = compilePack();
-  const pdr = decideFor([pac('pol-guard-a'), pac('pol-guard-b')]);
+  const pdr = decideFor([pac('pol-guard-a'), pac('pol-guard-b')], ['SCOPE'], pack);
   assert.equal(failCode(projectDecisionToNodes({
     receipt: pdr, pack, trustedPackReceipt: receipt,
     operations: [{ nodeId: 'ghost', mutationDomain: 'dom-a', operation: 'write:x' }],
-  })), 'POLICY_GEM_UNKNOWN_NODE');
+  }, opts)), 'POLICY_GEM_UNKNOWN_NODE');
   assert.equal(failCode(projectDecisionToNodes({
     receipt: pdr, pack, trustedPackReceipt: receipt,
     operations: [{ nodeId: 'a', mutationDomain: 'dom-evil', operation: 'write:x' }],
-  })), 'POLICY_GEM_UNDECLARED_MUTATION');
+  }, opts)), 'POLICY_GEM_UNDECLARED_MUTATION');
 
-  // Node declares a domain outside pack.allowedMutations: broadening forbidden.
-  // The receipt still matches the pack digest here, so the domain check fires.
+  // Tampered node that broadens the sealed payload fails at independent
+  // seal re-verification before domain checks are even reached.
   const broadened = {
     ...pack,
     workDag: pack.workDag.map(n => (n.instructionId === 'a'
@@ -243,16 +248,26 @@ test('GEM rejects unknown nodes, undeclared mutations and broadened domains', ()
   assert.equal(failCode(projectDecisionToNodes({
     receipt: pdr, pack: broadened, trustedPackReceipt: receipt,
     operations: [{ nodeId: 'a', mutationDomain: 'dom-evil', operation: 'write:x' }],
-  })), 'POLICY_GEM_DOMAIN_NOT_PERMITTED');
+  }, opts)), 'POLICY_GEM_PACK_RECEIPT_INVALID');
 });
 
 test('GEM requires the node policy to be bound to the effective decision', () => {
   const { pack, receipt } = compilePack();
-  const pdr = decideFor([pac('pol-unrelated')]);
+  // Unrelated policy still bound to this pack so the test reaches the
+  // policy-binding gate instead of the pack-binding gate.
+  const unrelated = pac('pol-unrelated');
+  const pdr = decidePolicy({
+    request: { domains: ['SCOPE'], operations: [] },
+    policies: [unrelated],
+    lattice: { domains: [{ domain: 'domain-scope', order: ['pol-unrelated'] }] },
+    mandatoryDomains: [],
+    supportedSchemas: ['v1'],
+    packBinding: { packId: pack.packId, taskIdentity: pack.taskIdentity, policyVersion: pack.policyVersion },
+  }, opts).value;
   assert.equal(failCode(projectDecisionToNodes({
     receipt: pdr, pack, trustedPackReceipt: receipt,
     operations: [{ nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts' }],
-  })), 'POLICY_GEM_POLICY_NOT_BOUND');
+  }, opts)), 'POLICY_GEM_POLICY_NOT_BOUND');
 });
 
 test('GEM cannot turn an invalid or stale M15 pack into executable work', () => {
@@ -263,30 +278,31 @@ test('GEM cannot turn an invalid or stale M15 pack into executable work', () => 
     lattice: { domains: [{ domain: 'domain-scope', order: ['pol-guard-a', 'pol-guard-b'] }] },
     mandatoryDomains: ['SCOPE'],
     supportedSchemas: ['v1'],
-    packBinding: { packId: 'pack-001', taskIdentity: 'task-1', policyVersion: '1.0.0' },
+    packBinding: { packId: pack.packId, taskIdentity: pack.taskIdentity, policyVersion: pack.policyVersion },
   }, opts).value;
   const op = [{ nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts' }];
   assert.equal(failCode(projectDecisionToNodes({
     receipt: pdr, pack, trustedPackReceipt: { ...receipt, status: 'BLOCKED', replayable: false, diagnostics: ['x'] },
     operations: op,
-  })), 'POLICY_GEM_PACK_RECEIPT_INVALID');
+  }, opts)), 'POLICY_GEM_PACK_RECEIPT_INVALID');
   assert.equal(failCode(projectDecisionToNodes({
     receipt: pdr, pack, trustedPackReceipt: { ...receipt, semanticDigest: `sha256:${'0'.repeat(64)}` },
     operations: op,
-  })), 'POLICY_GEM_PACK_RECEIPT_INVALID');
+  }, opts)), 'POLICY_GEM_PACK_RECEIPT_INVALID');
 });
 
 // ─── MCL + PTS + authorizeMutation ────────────────────────────────────────────
 
 function leasedProjection() {
   const { pack, receipt } = compilePack();
-  const pdr = decideFor([pac('pol-guard-a'), pac('pol-guard-b')]);
+  const policies = [pac('pol-guard-a'), pac('pol-guard-b')];
+  const pdr = decideFor(policies, ['SCOPE'], pack);
   const projected = projectDecisionToNodes({
     receipt: pdr, pack, trustedPackReceipt: receipt,
     operations: [{ nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts' }],
-  });
+  }, opts);
   assert.equal(projected.ok, true);
-  return { pack, receipt, pdr, projection: projected.value[0] };
+  return { pack, receipt, pdr, projection: projected.value[0], policies };
 }
 
 function currentFingerprints(policies) {
@@ -296,10 +312,9 @@ function currentFingerprints(policies) {
 }
 
 test('lease issuance, TOCTOU revalidation and full authorization', () => {
-  const { pack, pdr, projection } = leasedProjection();
-  const policies = [pac('pol-guard-a'), pac('pol-guard-b')];
+  const { pack, pdr, projection, policies } = leasedProjection();
   const lease = issueMutationLease({
-    projection, projectId: 'proj-gef', packId: pack.packId,
+    projection, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest,
     reviewTrigger: 'review:mutation',
   }, opts);
@@ -323,10 +338,9 @@ test('lease issuance, TOCTOU revalidation and full authorization', () => {
 });
 
 test('lease reuse on another node, domain or project fails closed', () => {
-  const { pack, pdr, projection } = leasedProjection();
-  const policies = [pac('pol-guard-a'), pac('pol-guard-b')];
+  const { pack, pdr, projection, policies } = leasedProjection();
   const lease = issueMutationLease({
-    projection, projectId: 'proj-gef', packId: pack.packId,
+    projection, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest,
     reviewTrigger: 'review:mutation',
   }, opts).value;
@@ -349,10 +363,9 @@ test('lease reuse on another node, domain or project fails closed', () => {
 });
 
 test('TOCTOU: fingerprint change after decision invalidates the lease', () => {
-  const { pack, pdr, projection } = leasedProjection();
-  const policies = [pac('pol-guard-a'), pac('pol-guard-b')];
+  const { pack, pdr, projection, policies } = leasedProjection();
   const lease = issueMutationLease({
-    projection, projectId: 'proj-gef', packId: pack.packId,
+    projection, receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest,
     reviewTrigger: 'review:mutation',
   }, opts).value;
@@ -375,15 +388,15 @@ test('TOCTOU: fingerprint change after decision invalidates the lease', () => {
 
 test('no lease issues against a denying decision', () => {
   const { pack, receipt } = compilePack();
-  const pdr = decideFor([pac('pol-guard-a', { effectOnMatch: 'DENY' }), pac('pol-guard-b')]);
+  const pdr = decideFor([pac('pol-guard-a', { effectOnMatch: 'DENY' }), pac('pol-guard-b')], ['SCOPE'], pack);
   assert.equal(pdr.decision, 'DENY');
   const projected = projectDecisionToNodes({
     receipt: pdr, pack, trustedPackReceipt: receipt,
     operations: [{ nodeId: 'a', mutationDomain: 'dom-a', operation: 'write:src/a.ts' }],
-  });
+  }, opts);
   assert.equal(projected.ok, true);
   assert.equal(failCode(issueMutationLease({
-    projection: projected.value[0], projectId: 'proj-gef', packId: pack.packId,
+    projection: projected.value[0], receipt: pdr, projectId: 'proj-gef', packId: pack.packId,
     packDigest: pack.semanticDigest, decisionDigest: pdr.digest, reviewTrigger: 'review:mutation',
   }, opts)), 'POLICY_LEASE_DECISION_NOT_PERMISSIVE');
 });
@@ -431,12 +444,14 @@ test('exception application relaxes only named obligations and preserves debt', 
   const cap = { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] };
   const byId = new Map([['pol-guard-a', pac('pol-guard-a')]]);
   assert.equal(checkExceptionBlastRadius(warrant('w-1'), byId, cap, 0).ok, true);
-  const applied = applyExceptionWarrant(pdr, warrant('w-1'), cap);
+  const applied = applyExceptionWarrant(pdr, warrant('w-1'), cap, opts);
   assert.equal(applied.ok, true);
   assert.deepEqual(applied.value.receipt.obligations.map(o => o.obligationId), ['keep-me']);
   assert.deepEqual(applied.value.receipt.exceptionsApplied[0].relaxedObligations, ['audit-log']);
   assert.equal(applied.value.debt.status, 'ACTIVE');
   assert.deepEqual(applied.value.debt.compensatingControls, ['extra-review']);
+  // Resealed: the mutated receipt carries a fresh digest, never the original.
+  assert.notEqual(applied.value.receipt.digest, pdr.digest);
 });
 
 // ─── FDM ──────────────────────────────────────────────────────────────────────

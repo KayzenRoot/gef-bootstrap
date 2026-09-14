@@ -27,6 +27,9 @@ export {
   buildApplicabilityWitnessSet,
   joinPolicyAssessments,
   issuePolicyDecisionReceipt,
+  verifyPolicyDecisionReceipt,
+  validatePolicyDomainLattice,
+  bindPolicyFingerprints,
   applyShortCircuitFirewall,
   decidePolicy,
 } from './s02-evaluation.js';
