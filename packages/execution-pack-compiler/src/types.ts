@@ -311,11 +311,41 @@ export interface PackSemanticDigestInput {
   readonly waves: readonly (readonly string[])[];
   /** Canonical JSON per validation, order-independent. */
   readonly validationPayloads: readonly string[];
-  readonly guardrailPolicyIds: readonly string[];
+  /**
+   * Canonical JSON per guardrail node-to-policy mapping
+   * ({nodeId, policyIds}), order-independent. Reassigning the same policy
+   * IDs to different nodes changes the digest — flat policy ID lists are
+   * never sufficient sealing.
+   */
+  readonly guardrailMappingPayloads: readonly string[];
   /** Canonical JSON per tool invocation, order-independent. */
   readonly toolPayloads: readonly string[];
   /** Entropy-reduced prompt lines; order is semantic and preserved. */
   readonly reducedPrompt: readonly string[];
+  readonly noDiscoveryBoundary: readonly string[];
+  /** Active context/TCC identity bound to the read-once index. */
+  readonly readOnceIdentity: string;
+  /** Canonical JSON per read-once entry ({key, values}), order-independent. */
+  readonly readOncePayloads: readonly string[];
+  /** Canonical JSON per negative-search entry, order-independent. */
+  readonly negativeSearchPayloads: readonly string[];
+  /** Canonical JSON of the cognition budget limits. */
+  readonly cognitionBudgetPayload: string;
+  /** Canonical JSON per provenance entry, order-independent. */
+  readonly provenancePayloads: readonly string[];
+  /** Canonical JSON per rollback proof, order-independent. */
+  readonly rollbackPayloads: readonly string[];
+  readonly evidenceSlotIds: readonly string[];
+  /** Canonical JSON of the prompt completeness certificate assertions. */
+  readonly completenessPayload: string;
+}
+
+/** The four digests sealing one pack, recomputed as a unit. */
+export interface SealedDigests {
+  readonly graphDigest: string;
+  readonly toolPlanDigest: string;
+  readonly validationPlanDigest: string;
+  readonly semanticDigest: string;
 }
 
 export interface DriftCheckInput {
@@ -358,6 +388,8 @@ export interface ExecutionPack extends Binding {
   cognitionBudget: CognitionBudget;
   noDiscoveryBoundary: readonly string[];
   guardrailBindings: readonly string[];
+  /** First-class Guardrail Binding Table: canonical node-to-policy mapping. */
+  guardrailTable: readonly GuardrailBinding[];
   evidenceSlots: readonly string[];
   rollbackProofs: readonly RollbackProof[];
   reducedPrompt: readonly string[];
@@ -476,6 +508,7 @@ export const DIAGNOSTIC_CODES = {
   PACK_RECEIPT_INVALID: 'PACK_RECEIPT_INVALID',
   PACK_REPLAY_REJECTED: 'PACK_REPLAY_REJECTED',
   PACK_ENTROPY_OBLIGATION_MISSING: 'PACK_ENTROPY_OBLIGATION_MISSING',
+  PACK_TRUST_ANCHOR_MISSING: 'PACK_TRUST_ANCHOR_MISSING',
   DIGEST_CAPABILITY_INVALID: 'DIGEST_CAPABILITY_INVALID',
   DIGEST_RESULT_INVALID: 'DIGEST_RESULT_INVALID',
   DIGEST_CAPABILITY_FAILURE: 'DIGEST_CAPABILITY_FAILURE',

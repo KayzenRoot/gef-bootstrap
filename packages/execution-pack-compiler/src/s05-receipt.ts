@@ -9,14 +9,17 @@ import type {
   DriftCheckInput,
   EntropyReductionResult,
   ExecutionPack,
+  GuardrailBinding,
   OperationOptions,
   PackReceipt,
   PackSemanticDigestInput,
   PackStatus,
   ReplayEvaluation,
   Result,
+  SealedDigests,
   ToolInvocation,
   ValidationRequirement,
+  WorkNode,
 } from './types.js';
 import {
   cancelled,
@@ -37,7 +40,11 @@ function payloadOf(value: unknown): string {
 }
 
 /**
- * Rebuild the digest input from a sealed pack. Used both at seal time and by
+ * Rebuild the digest input from a sealed pack. Seals every first-class M15
+ * control: pack sections, instruction/graph/validation/tool payloads, the
+ * canonical guardrail node-to-policy mapping, NDB, bound ROCI, validity-bound
+ * NSL, cognition budget, provenance, rollback proofs, evidence slots and the
+ * completeness certificate assertions. Used both at seal time and by
  * PIDS/PRC for independent re-verification, so stored digests are never
  * trusted without recomputation.
  */
@@ -66,9 +73,30 @@ export function buildPackDigestInput(pack: ExecutionPack): PackSemanticDigestInp
     criticalPath: [...pack.criticalPath],
     waves: pack.safeParallelWaves.map(w => sortedStrings(w)),
     validationPayloads: sortedStrings(pack.validations.map(v => payloadOf({ ...v }))),
-    guardrailPolicyIds: sortedStrings(pack.guardrailBindings),
+    guardrailMappingPayloads: sortedStrings(
+      pack.guardrailTable.map(g => payloadOf({
+        nodeId: g.nodeId,
+        policyIds: sortedStrings(g.policyIds),
+      } as GuardrailBinding)),
+    ),
     toolPayloads: sortedStrings(pack.toolBlueprint.map(t => payloadOf({ ...t }))),
     reducedPrompt: [...pack.reducedPrompt],
+    noDiscoveryBoundary: sortedStrings(pack.noDiscoveryBoundary),
+    readOnceIdentity: pack.readOnceIndex.contextIdentity,
+    readOncePayloads: sortedStrings(
+      Object.keys(pack.readOnceIndex.entries)
+        .sort(compareCodePoint)
+        .map(key => payloadOf({
+          key,
+          values: sortedStrings(pack.readOnceIndex.entries[key] ?? []),
+        })),
+    ),
+    negativeSearchPayloads: sortedStrings(pack.negativeSearchLedger.map(e => payloadOf({ ...e }))),
+    cognitionBudgetPayload: payloadOf({ ...pack.cognitionBudget }),
+    provenancePayloads: sortedStrings(pack.provenanceMap.map(p => payloadOf({ ...p }))),
+    rollbackPayloads: sortedStrings(pack.rollbackProofs.map(r => payloadOf({ ...r }))),
+    evidenceSlotIds: sortedStrings(pack.evidenceSlots),
+    completenessPayload: payloadOf({ ...pack.completenessCertificate }),
   };
 }
 
@@ -110,22 +138,37 @@ export function computePackSemanticDigest(
     criticalPath: [...input.criticalPath],
     waves: input.waves.map(w => sortedStrings(w)),
     validationPayloads: sortedStrings(input.validationPayloads),
-    guardrailPolicyIds: sortedStrings(input.guardrailPolicyIds),
+    guardrailMappingPayloads: sortedStrings(input.guardrailMappingPayloads),
     toolPayloads: sortedStrings(input.toolPayloads),
     reducedPrompt: [...input.reducedPrompt],
+    noDiscoveryBoundary: sortedStrings(input.noDiscoveryBoundary),
+    readOnceIdentity: input.readOnceIdentity,
+    readOncePayloads: sortedStrings(input.readOncePayloads),
+    negativeSearchPayloads: sortedStrings(input.negativeSearchPayloads),
+    cognitionBudgetPayload: input.cognitionBudgetPayload,
+    provenancePayloads: sortedStrings(input.provenancePayloads),
+    rollbackPayloads: sortedStrings(input.rollbackPayloads),
+    evidenceSlotIds: sortedStrings(input.evidenceSlotIds),
+    completenessPayload: input.completenessPayload,
   };
   return sha(options, normalized);
 }
 
-/** Digest over the executable work graph (order, waves, critical path). */
+/**
+ * Digest over the semantic executable graph: full work-node payloads
+ * (preconditions, mutationSpec, validation references, rollback hook and
+ * readiness reference, evidence outputs) plus waves and critical path.
+ * Semantics, not bare topology — changing what a node declares changes
+ * the digest even when order is untouched.
+ */
 export function computeWorkGraphDigest(
-  input: { nodeIds: readonly string[]; waves: readonly (readonly string[])[]; criticalPath: readonly string[] },
+  input: { nodes: readonly WorkNode[]; waves: readonly (readonly string[])[]; criticalPath: readonly string[] },
   options: OperationOptions,
 ): Result<string> {
   const c = cancelled(options);
   if (c) return c;
   return sha(options, {
-    nodeIds: sortedStrings(input.nodeIds),
+    nodes: sortedStrings(input.nodes.map(n => payloadOf({ ...n }))),
     waves: input.waves.map(w => sortedStrings(w)),
     criticalPath: [...input.criticalPath],
   });
@@ -153,6 +196,63 @@ export function computeValidationPlanDigest(
   return sha(options, {
     validations: sortedStrings(validations.map(v => payloadOf({ ...v }))),
   });
+}
+
+// ─── Shared receipt-rooted verification primitives ────────────────────────────
+// PIDS and PRC both verify through these primitives so the two mechanisms
+// cannot drift apart into duplicate weaker paths.
+
+/**
+ * Recompute all four sealed digests from a candidate pack payload as one
+ * unit. Never trusts stored digest fields.
+ */
+export function computeSealedDigests(
+  pack: ExecutionPack,
+  options: OperationOptions,
+): Result<SealedDigests> {
+  const graphDigest = computeWorkGraphDigest(
+    {
+      nodes: pack.workDag.map(n => ({ ...n })),
+      waves: pack.safeParallelWaves.map(w => [...w]),
+      criticalPath: [...pack.criticalPath],
+    },
+    options,
+  );
+  if (!graphDigest.ok) return graphDigest;
+  const toolDigest = computeToolPlanDigest(
+    pack.toolBlueprint.map(t => ({ ...t })),
+    options,
+  );
+  if (!toolDigest.ok) return toolDigest;
+  const validationDigest = computeValidationPlanDigest(
+    pack.validations.map(v => ({ ...v })),
+    options,
+  );
+  if (!validationDigest.ok) return validationDigest;
+  const semanticDigest = computePackSemanticDigest(buildPackDigestInput(pack), options);
+  if (!semanticDigest.ok) return semanticDigest;
+  return {
+    ok: true,
+    value: deepFreeze({
+      graphDigest: graphDigest.value,
+      toolPlanDigest: toolDigest.value,
+      validationPlanDigest: validationDigest.value,
+      semanticDigest: semanticDigest.value,
+    }),
+  };
+}
+
+/** Names of sealed digests where recomputed and trusted values diverge. */
+export function findSealedDigestDrift(
+  recomputed: SealedDigests,
+  trusted: SealedDigests,
+): readonly string[] {
+  const drift: string[] = [];
+  if (recomputed.graphDigest !== trusted.graphDigest) drift.push('graph');
+  if (recomputed.toolPlanDigest !== trusted.toolPlanDigest) drift.push('toolPlan');
+  if (recomputed.validationPlanDigest !== trusted.validationPlanDigest) drift.push('validationPlan');
+  if (recomputed.semanticDigest !== trusted.semanticDigest) drift.push('semantic');
+  return drift;
 }
 
 // ─── Execution Pack Receipt (EPR) ─────────────────────────────────────────────
@@ -286,6 +386,7 @@ export function statusForDiagnosticCode(code: string): PackStatus {
     case 'PACK_REPLAY_REJECTED':
     case 'PACK_ENTROPY_OBLIGATION_MISSING':
       return 'BLOCKED';
+    case 'PACK_TRUST_ANCHOR_MISSING':
     default:
       return 'INDETERMINATE';
   }
@@ -293,144 +394,103 @@ export function statusForDiagnosticCode(code: string): PackStatus {
 
 // ─── Pre-Invocation Drift Sentinel (PIDS) ─────────────────────────────────────
 
-function integrityReceipt(
-  pack: ExecutionPack,
+/**
+ * Build a non-VALID verdict receipt from the trusted anchor's own digests.
+ * The verdict never echoes candidate-carried digests as trusted evidence.
+ */
+function anchoredVerdict(
+  trusted: PackReceipt,
+  status: PackStatus,
   diagnostics: readonly string[],
-): PackReceipt {
-  const receipt = buildExecutionPackReceipt({
-    packId: pack.packId,
-    status: 'GRAPH_INVALID',
-    semanticDigest: pack.semanticDigest,
+): Result<PackReceipt> {
+  return buildExecutionPackReceipt({
+    packId: trusted.packId,
+    status,
+    semanticDigest: trusted.semanticDigest,
     diagnostics: [...diagnostics],
     replayable: false,
-    taskIdentity: pack.taskIdentity,
-    contextIdentity: pack.contextIdentity,
-    contextDigest: pack.contextDigest,
-    policyVersion: pack.policyVersion,
-    graphDigest: pack.graphDigest,
-    toolPlanDigest: pack.toolPlanDigest,
-    validationPlanDigest: pack.validationPlanDigest,
-    capabilityIdentity: pack.capabilityIdentity,
+    taskIdentity: trusted.taskIdentity,
+    contextIdentity: trusted.contextIdentity,
+    contextDigest: trusted.contextDigest,
+    policyVersion: trusted.policyVersion,
+    graphDigest: trusted.graphDigest,
+    toolPlanDigest: trusted.toolPlanDigest,
+    validationPlanDigest: trusted.validationPlanDigest,
+    capabilityIdentity: trusted.capabilityIdentity,
   });
-  if (!receipt.ok) {
-    return deepFreeze({
-      packId: pack.packId,
-      status: 'INDETERMINATE' as const,
-      semanticDigest: pack.semanticDigest,
-      diagnostics: [...diagnostics, 'INDETERMINATE: receipt sealing failed'],
-      replayable: false,
-      taskIdentity: pack.taskIdentity,
-      contextIdentity: pack.contextIdentity,
-      contextDigest: pack.contextDigest,
-      policyVersion: pack.policyVersion,
-      graphDigest: pack.graphDigest,
-      toolPlanDigest: pack.toolPlanDigest,
-      validationPlanDigest: pack.validationPlanDigest,
-      capabilityIdentity: pack.capabilityIdentity,
-    });
-  }
-  return receipt.value;
 }
 
 /**
- * Recheck bindings AND pack integrity immediately before execution. After the
- * binding comparison, every sealed digest (graph, tool plan, validation plan
- * and full PSD) is recomputed from the current pack payload: a tampered
- * instruction, validation, tool blueprint, guardrail, graph, stop condition
- * or handback field yields GRAPH_INVALID even when external bindings match.
+ * Recheck bindings AND pack integrity immediately before execution, rooted
+ * in the trusted Execution Pack Receipt — never in the candidate pack's own
+ * stored digests. Comparing recomputed identities only against
+ * candidatePack.semanticDigest would be self-authentication: a persisted
+ * pack whose payload and internal checksum were both altered would still be
+ * accepted. Here every recomputed identity must match the independent
+ * trusted receipt before VALID is returned.
+ *
+ * A missing trusted anchor (or a pack/anchor identity mismatch) never falls
+ * back to the candidate digest; it fails closed as INDETERMINATE.
  */
 export function checkPreInvocationDrift(
-  pack: ExecutionPack,
+  candidate: ExecutionPack,
+  trusted: PackReceipt | null | undefined,
   current: DriftCheckInput,
   options: OperationOptions,
 ): Result<PackReceipt> {
-  const drifts: string[] = [];
-  const bindings = current.currentBindings;
-  if (current.currentTaskIdentity !== pack.taskIdentity) drifts.push('taskIdentity');
-  if (bindings.projectId !== pack.projectId) drifts.push('projectId');
-  if (bindings.sourcePackIdentity !== pack.sourcePackIdentity) drifts.push('sourcePackIdentity');
-  if (bindings.profileIdentity !== pack.profileIdentity) drifts.push('profileIdentity');
-  if (bindings.profileDigest !== pack.profileDigest) drifts.push('profileDigest');
-  if (bindings.checkpointIdentity !== pack.checkpointIdentity) drifts.push('checkpointIdentity');
-  if (bindings.contextIdentity !== pack.contextIdentity) drifts.push('contextIdentity');
-  if (bindings.contextDigest !== pack.contextDigest) drifts.push('contextDigest');
+  if (trusted === null || trusted === undefined || trusted.packId !== candidate.packId) {
+    return fail(
+      'PACK_TRUST_ANCHOR_MISSING',
+      'Pre-invocation check requires the independent trusted receipt; candidate-carried digests are not a trust anchor',
+      candidate.packId,
+    );
+  }
 
-  const driftReceipt = (status: PackStatus, diagnostics: readonly string[]): Result<PackReceipt> => {
-    const receipt = buildExecutionPackReceipt({
-      packId: pack.packId,
-      status,
-      semanticDigest: pack.semanticDigest,
-      diagnostics: [...diagnostics],
-      replayable: status === 'VALID',
-      taskIdentity: pack.taskIdentity,
-      contextIdentity: pack.contextIdentity,
-      contextDigest: pack.contextDigest,
-      policyVersion: pack.policyVersion,
-      graphDigest: pack.graphDigest,
-      toolPlanDigest: pack.toolPlanDigest,
-      validationPlanDigest: pack.validationPlanDigest,
-      capabilityIdentity: pack.capabilityIdentity,
-    });
-    return receipt;
-  };
+  const drifts: string[] = [];
+  if (current.currentTaskIdentity !== trusted.taskIdentity) drifts.push('taskIdentity');
+  if (current.currentBindings.projectId !== candidate.projectId) drifts.push('projectId');
+  if (current.currentBindings.sourcePackIdentity !== candidate.sourcePackIdentity) {
+    drifts.push('sourcePackIdentity');
+  }
+  if (current.currentBindings.profileIdentity !== candidate.profileIdentity) drifts.push('profileIdentity');
+  if (current.currentBindings.profileDigest !== candidate.profileDigest) drifts.push('profileDigest');
+  if (current.currentBindings.checkpointIdentity !== candidate.checkpointIdentity) {
+    drifts.push('checkpointIdentity');
+  }
+  if (current.currentBindings.contextIdentity !== trusted.contextIdentity) drifts.push('contextIdentity');
+  if (current.currentBindings.contextDigest !== trusted.contextDigest) drifts.push('contextDigest');
 
   if (drifts.length > 0) {
-    return driftReceipt('STALE_CONTEXT', drifts.map(d => `STALE_CONTEXT: binding drift in ${d}`));
+    return anchoredVerdict(trusted, 'STALE_CONTEXT', drifts.map(d => `STALE_CONTEXT: binding drift in ${d}`));
   }
-  if (bindings.policyVersion !== pack.policyVersion) {
-    return driftReceipt('STALE_POLICY', ['STALE_POLICY: policyVersion drift']);
+  if (current.currentBindings.policyVersion !== trusted.policyVersion) {
+    return anchoredVerdict(trusted, 'STALE_POLICY', ['STALE_POLICY: policyVersion drift']);
   }
-  if (current.currentCapabilityIdentity !== pack.capabilityIdentity) {
-    return driftReceipt('CAPABILITY_MISMATCH', ['CAPABILITY_MISMATCH: executor capability drift']);
+  if (current.currentCapabilityIdentity !== trusted.capabilityIdentity) {
+    return anchoredVerdict(trusted, 'CAPABILITY_MISMATCH', ['CAPABILITY_MISMATCH: executor capability drift']);
   }
-  if (pack.workDag.length === 0 || pack.criticalPath.length === 0) {
-    return driftReceipt('GRAPH_INVALID', ['GRAPH_INVALID: pack carries no executable work graph']);
-  }
-
-  // Integrity re-verification: recompute every sealed digest from payload.
-  const graphDigest = computeWorkGraphDigest(
-    {
-      nodeIds: pack.workDag.map(n => n.instructionId),
-      waves: pack.safeParallelWaves.map(w => [...w]),
-      criticalPath: [...pack.criticalPath],
-    },
-    options,
-  );
-  if (!graphDigest.ok || graphDigest.value !== pack.graphDigest) {
-    return {
-      ok: true,
-      value: integrityReceipt(pack, ['GRAPH_INVALID: work graph integrity drift detected']),
-    };
-  }
-  const toolDigest = computeToolPlanDigest(
-    pack.toolBlueprint.map(t => ({ ...t })),
-    options,
-  );
-  if (!toolDigest.ok || toolDigest.value !== pack.toolPlanDigest) {
-    return {
-      ok: true,
-      value: integrityReceipt(pack, ['GRAPH_INVALID: tool plan integrity drift detected']),
-    };
-  }
-  const validationDigest = computeValidationPlanDigest(
-    pack.validations.map(v => ({ ...v })),
-    options,
-  );
-  if (!validationDigest.ok || validationDigest.value !== pack.validationPlanDigest) {
-    return {
-      ok: true,
-      value: integrityReceipt(pack, ['GRAPH_INVALID: validation plan integrity drift detected']),
-    };
-  }
-  const semanticDigest = computePackSemanticDigest(buildPackDigestInput(pack), options);
-  if (!semanticDigest.ok || semanticDigest.value !== pack.semanticDigest) {
-    return {
-      ok: true,
-      value: integrityReceipt(pack, ['GRAPH_INVALID: pack semantic digest drift detected']),
-    };
+  if (candidate.workDag.length === 0 || candidate.criticalPath.length === 0) {
+    return anchoredVerdict(trusted, 'GRAPH_INVALID', ['GRAPH_INVALID: pack carries no executable work graph']);
   }
 
-  return driftReceipt('VALID', []);
+  // Integrity re-verification against the trusted anchor.
+  const recomputed = computeSealedDigests(candidate, options);
+  if (!recomputed.ok) return recomputed;
+  const drift = findSealedDigestDrift(recomputed.value, {
+    graphDigest: trusted.graphDigest,
+    toolPlanDigest: trusted.toolPlanDigest,
+    validationPlanDigest: trusted.validationPlanDigest,
+    semanticDigest: trusted.semanticDigest,
+  });
+  if (drift.length > 0) {
+    return anchoredVerdict(
+      trusted,
+      'GRAPH_INVALID',
+      [`GRAPH_INVALID: sealed digest drift in ${drift.join(', ')} against the trusted receipt`],
+    );
+  }
+
+  return { ok: true, value: trusted };
 }
 
 // ─── Prompt Entropy Reducer (PER) ─────────────────────────────────────────────
@@ -478,42 +538,33 @@ export function reducePromptEntropy(
 // ─── Pack Replay Contract (PRC) ───────────────────────────────────────────────
 
 /**
- * Prove a replay candidate equivalent to the sealed execution pack from the
- * same admitted semantic inputs/bindings — never from a caller-provided
- * boolean. Bindings are compared field-by-field and the semantic digest is
- * recomputed from the candidate payload; any drift rejects replay.
+ * Prove a replay candidate equivalent to the trusted sealed semantics through
+ * the same receipt-rooted primitives as PIDS — never through a duplicate
+ * weaker path or a caller-provided boolean. The candidate payload digests
+ * are recomputed and compared against the trusted receipt; any drift,
+ * including binding drift (bindings are sealed inside the PSD), rejects
+ * replay deterministically.
  */
 export function evaluatePackReplay(
-  sealed: ExecutionPack,
+  trusted: PackReceipt,
   candidate: ExecutionPack,
   options: OperationOptions,
 ): ReplayEvaluation {
-  if (candidate.packId !== sealed.packId) {
+  if (candidate.packId !== trusted.packId) {
     return deepFreeze({ replayable: false, reason: 'REJECTED: pack identity mismatch' });
   }
-  const bindingPairs: ReadonlyArray<readonly [string, string, string]> = [
-    ['taskIdentity', candidate.taskIdentity, sealed.taskIdentity],
-    ['projectId', candidate.projectId, sealed.projectId],
-    ['sourcePackIdentity', candidate.sourcePackIdentity, sealed.sourcePackIdentity],
-    ['profileIdentity', candidate.profileIdentity, sealed.profileIdentity],
-    ['profileDigest', candidate.profileDigest, sealed.profileDigest],
-    ['policyVersion', candidate.policyVersion, sealed.policyVersion],
-    ['checkpointIdentity', candidate.checkpointIdentity, sealed.checkpointIdentity],
-    ['capabilityIdentity', candidate.capabilityIdentity, sealed.capabilityIdentity],
-    ['contextIdentity', candidate.contextIdentity, sealed.contextIdentity],
-    ['contextDigest', candidate.contextDigest, sealed.contextDigest],
-  ];
-  for (const [name, actual, expected] of bindingPairs) {
-    if (actual !== expected) {
-      return deepFreeze({ replayable: false, reason: `REJECTED: binding drift in ${name}` });
-    }
-  }
-  const recomputed = computePackSemanticDigest(buildPackDigestInput(candidate), options);
+  const recomputed = computeSealedDigests(candidate, options);
   if (!recomputed.ok) {
     return deepFreeze({ replayable: false, reason: 'REJECTED: digest recompute failed' });
   }
-  if (recomputed.value !== sealed.semanticDigest) {
-    return deepFreeze({ replayable: false, reason: 'REJECTED: semantic digest drift' });
+  const drift = findSealedDigestDrift(recomputed.value, {
+    graphDigest: trusted.graphDigest,
+    toolPlanDigest: trusted.toolPlanDigest,
+    validationPlanDigest: trusted.validationPlanDigest,
+    semanticDigest: trusted.semanticDigest,
+  });
+  if (drift.length > 0) {
+    return deepFreeze({ replayable: false, reason: `REJECTED: sealed digest drift in ${drift.join(', ')}` });
   }
-  return deepFreeze({ replayable: true, reason: 'ACCEPTED: identical semantic digest with valid bindings' });
+  return deepFreeze({ replayable: true, reason: 'ACCEPTED: identical sealed digests against the trusted receipt' });
 }

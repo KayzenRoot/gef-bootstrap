@@ -58,6 +58,8 @@ export {
   computeWorkGraphDigest,
   computeToolPlanDigest,
   computeValidationPlanDigest,
+  computeSealedDigests,
+  findSealedDigestDrift,
   buildExecutionPackReceipt,
   statusForDiagnosticCode,
   checkPreInvocationDrift,

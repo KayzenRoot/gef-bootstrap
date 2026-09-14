@@ -41,6 +41,7 @@ import {
   evaluateAmbiguityEscalation,
   buildPackDigestInput,
   computePackSemanticDigest,
+  computeSealedDigests,
   buildExecutionPackReceipt,
   statusForDiagnosticCode,
   checkPreInvocationDrift,
@@ -323,6 +324,11 @@ test('pack semantic digest is order independent over payloads', () => {
     workGraphPayloads: [...baseInput.workGraphPayloads].reverse(),
     validationPayloads: [...baseInput.validationPayloads].reverse(),
     toolPayloads: [...baseInput.toolPayloads].reverse(),
+    guardrailMappingPayloads: [...baseInput.guardrailMappingPayloads].reverse(),
+    provenancePayloads: [...baseInput.provenancePayloads].reverse(),
+    rollbackPayloads: [...baseInput.rollbackPayloads].reverse(),
+    readOncePayloads: [...baseInput.readOncePayloads].reverse(),
+    negativeSearchPayloads: [...baseInput.negativeSearchPayloads].reverse(),
   };
   const d1 = computePackSemanticDigest(baseInput, opts);
   const d2 = computePackSemanticDigest(reordered, opts);
@@ -774,6 +780,7 @@ test('PIDS reports each binding drift with the exact dimension', () => {
   const compiled = compileExecutionPack(makeValidInput(), opts);
   assert.equal(compiled.ok, true);
   const pack = compiled.value.pack;
+  const receipt = compiled.value.receipt;
   const fresh = currentBindingsOf(pack);
 
   const driftCases = [
@@ -785,27 +792,46 @@ test('PIDS reports each binding drift with the exact dimension', () => {
     [{ ...fresh, currentCapabilityIdentity: 'other-cap' }, 'CAPABILITY_MISMATCH'],
   ];
   for (const [current, expected] of driftCases) {
-    const receipt = checkPreInvocationDrift(pack, current, opts);
-    assert.equal(receipt.ok, true);
-    assert.equal(receipt.value.status, expected);
-    assert.equal(receipt.value.replayable, false);
+    const checked = checkPreInvocationDrift(pack, receipt, current, opts);
+    assert.equal(checked.ok, true);
+    assert.equal(checked.value.status, expected);
+    assert.equal(checked.value.replayable, false);
+    // Verdicts echo the trusted anchor digests, never candidate-carried ones.
+    assert.equal(checked.value.semanticDigest, receipt.semanticDigest);
   }
-  const valid = checkPreInvocationDrift(pack, fresh, opts);
+  const valid = checkPreInvocationDrift(pack, receipt, fresh, opts);
   assert.equal(valid.ok, true);
   assert.equal(valid.value.status, 'VALID');
   assert.equal(valid.value.replayable, true);
-  assert.equal(valid.value.semanticDigest, pack.semanticDigest);
+  assert.equal(valid.value.semanticDigest, receipt.semanticDigest);
+});
+
+test('PIDS without the trusted receipt fails closed, never falls back', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const pack = compiled.value.pack;
+  assert.equal(
+    failCode(checkPreInvocationDrift(pack, undefined, currentBindingsOf(pack), opts)),
+    'PACK_TRUST_ANCHOR_MISSING',
+  );
+  const foreign = { ...compiled.value.receipt, packId: 'pack-other' };
+  assert.equal(
+    failCode(checkPreInvocationDrift(pack, foreign, currentBindingsOf(pack), opts)),
+    'PACK_TRUST_ANCHOR_MISSING',
+  );
+  assert.equal(statusForDiagnosticCode('PACK_TRUST_ANCHOR_MISSING'), 'INDETERMINATE');
 });
 
 test('PIDS detects semantic tampering with unchanged external bindings', () => {
   const compiled = compileExecutionPack(makeValidInput(), opts);
   assert.equal(compiled.ok, true);
   const pack = compiled.value.pack;
+  const receipt = compiled.value.receipt;
   const tamperedInstruction = {
     ...pack,
     instructions: pack.instructions.map((ins, i) => (i === 0 ? { ...ins, objective: 'Tampered objective' } : ins)),
   };
-  const r1 = checkPreInvocationDrift(tamperedInstruction, currentBindingsOf(pack), opts);
+  const r1 = checkPreInvocationDrift(tamperedInstruction, receipt, currentBindingsOf(pack), opts);
   assert.equal(r1.ok, true);
   assert.equal(r1.value.status, 'GRAPH_INVALID');
 
@@ -813,14 +839,157 @@ test('PIDS detects semantic tampering with unchanged external bindings', () => {
     ...pack,
     validations: pack.validations.map((v, i) => (i === 0 ? { ...v, command: 'tampered-command' } : v)),
   };
-  const r2 = checkPreInvocationDrift(tamperedValidation, currentBindingsOf(pack), opts);
+  const r2 = checkPreInvocationDrift(tamperedValidation, receipt, currentBindingsOf(pack), opts);
   assert.equal(r2.ok, true);
   assert.equal(r2.value.status, 'GRAPH_INVALID');
 
   const tamperedStop = { ...pack, stopCondition: 'Tampered stop' };
-  const r3 = checkPreInvocationDrift(tamperedStop, currentBindingsOf(pack), opts);
+  const r3 = checkPreInvocationDrift(tamperedStop, receipt, currentBindingsOf(pack), opts);
   assert.equal(r3.ok, true);
   assert.equal(r3.value.status, 'GRAPH_INVALID');
+});
+
+// ─── Trust model: receipt-anchored verification ───────────────────────────────
+// The attacker model: a persisted pack whose semantic payload AND internal
+// digests were both recomputed/replaced consistently. The trusted EPR did not
+// change, so every case below must still reject.
+
+function resealPack(pack) {
+  const seals = computeSealedDigests(pack, opts);
+  assert.equal(seals.ok, true);
+  return { ...pack, ...seals.value };
+}
+
+function assertReceiptRejects(tampered, receipt, bindings) {
+  const checked = checkPreInvocationDrift(tampered, receipt, bindings, opts);
+  assert.equal(checked.ok, true);
+  assert.equal(checked.value.status, 'GRAPH_INVALID');
+  assert.equal(checked.value.replayable, false);
+}
+
+test('trust anchor: resealed payload tampering is still rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const pack = compiled.value.pack;
+  const receipt = compiled.value.receipt;
+  const evil = resealPack({
+    ...pack,
+    instructions: pack.instructions.map((ins, i) => (i === 0 ? { ...ins, objective: 'Attacker objective' } : ins)),
+  });
+  // Internally consistent, yet the trusted receipt did not move.
+  assert.equal(evil.semanticDigest !== receipt.semanticDigest, true);
+  assertReceiptRejects(evil, receipt, currentBindingsOf(pack));
+  const replayed = evaluatePackReplay(receipt, evil, opts);
+  assert.equal(replayed.replayable, false);
+});
+
+test('trust anchor: NDB tampering is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const evil = resealPack({ ...compiled.value.pack, noDiscoveryBoundary: ['evaded-boundary'] });
+  assertReceiptRejects(evil, compiled.value.receipt, currentBindingsOf(compiled.value.pack));
+});
+
+test('trust anchor: provenance ref tampering is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const evil = resealPack({
+    ...compiled.value.pack,
+    provenanceMap: compiled.value.pack.provenanceMap.map((p, i) => (
+      i === 0 ? { ...p, authorityRefs: ['forged-authority'] } : p
+    )),
+  });
+  assertReceiptRejects(evil, compiled.value.receipt, currentBindingsOf(compiled.value.pack));
+});
+
+test('trust anchor: GBT node-to-policy swap with identical flat policy set is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const pack = compiled.value.pack;
+  // Swap policy assignments between nodes a and b; flat ID set is unchanged.
+  const swappedTable = pack.guardrailTable.map(g => {
+    if (g.nodeId === 'a') return { nodeId: 'a', policyIds: ['pol-b'] };
+    if (g.nodeId === 'b') return { nodeId: 'b', policyIds: ['pol-a'] };
+    return { ...g };
+  });
+  const swapped = resealPack({ ...pack, guardrailTable: swappedTable });
+  assert.deepEqual(
+    [...swapped.guardrailBindings].sort(),
+    [...pack.guardrailBindings].sort(),
+    'flat policy set must be unchanged for this test',
+  );
+  assertReceiptRejects(swapped, compiled.value.receipt, currentBindingsOf(pack));
+});
+
+test('trust anchor: ROCI identity or entry tampering is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const pack = compiled.value.pack;
+  const evilIdentity = resealPack({
+    ...pack,
+    readOnceIndex: { contextIdentity: 'ctx-forged', entries: { ...pack.readOnceIndex.entries } },
+  });
+  assertReceiptRejects(evilIdentity, compiled.value.receipt, currentBindingsOf(pack));
+  const evilEntries = resealPack({
+    ...pack,
+    readOnceIndex: { contextIdentity: pack.readOnceIndex.contextIdentity, entries: { ctx: ['forged-unit'] } },
+  });
+  assertReceiptRejects(evilEntries, compiled.value.receipt, currentBindingsOf(pack));
+});
+
+test('trust anchor: NSL fingerprint and context tampering is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const pack = compiled.value.pack;
+  const evilFp = resealPack({
+    ...pack,
+    negativeSearchLedger: pack.negativeSearchLedger.map(e => ({ ...e, fingerprint: 'fp-forged' })),
+  });
+  assertReceiptRejects(evilFp, compiled.value.receipt, currentBindingsOf(pack));
+  const evilCtx = resealPack({
+    ...pack,
+    negativeSearchLedger: pack.negativeSearchLedger.map(e => ({ ...e, contextIdentity: 'ctx-forged' })),
+  });
+  assertReceiptRejects(evilCtx, compiled.value.receipt, currentBindingsOf(pack));
+});
+
+test('trust anchor: cognition budget tampering is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const evil = resealPack({
+    ...compiled.value.pack,
+    cognitionBudget: { maxReads: 9999, maxSearches: 9999, maxToolCalls: 9999, maxAmbiguityBranches: 9999 },
+  });
+  assertReceiptRejects(evil, compiled.value.receipt, currentBindingsOf(compiled.value.pack));
+});
+
+test('trust anchor: rollback proof tampering is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const evil = resealPack({
+    ...compiled.value.pack,
+    rollbackProofs: compiled.value.pack.rollbackProofs.map((r, i) => (
+      i === 0 ? { ...r, rollbackPlan: 'forged-rollback' } : r
+    )),
+  });
+  assertReceiptRejects(evil, compiled.value.receipt, currentBindingsOf(compiled.value.pack));
+});
+
+test('trust anchor: evidence slot tampering is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const evil = resealPack({ ...compiled.value.pack, evidenceSlots: ['pes-forged'] });
+  assertReceiptRejects(evil, compiled.value.receipt, currentBindingsOf(compiled.value.pack));
+});
+
+test('trust anchor: completeness certificate tampering is rejected', () => {
+  const compiled = compileExecutionPack(makeValidInput(), opts);
+  assert.equal(compiled.ok, true);
+  const evil = resealPack({
+    ...compiled.value.pack,
+    completenessCertificate: { packId: 'pack-001', complete: true, missingItems: ['objective'] },
+  });
+  assertReceiptRejects(evil, compiled.value.receipt, currentBindingsOf(compiled.value.pack));
 });
 
 test('VALID receipts cannot carry diagnostics', () => {
@@ -851,19 +1020,23 @@ test('entropy reducer preserves obligations and fails closed on dropped markers'
   assert.equal(failCode(compileDropped), 'PACK_ENTROPY_OBLIGATION_MISSING');
 });
 
-test('replay proves equivalence; changed replays are rejected with matching bindings', () => {
+test('replay proves equivalence against the trusted receipt; changed replays rejected', () => {
   const compiled = compileExecutionPack(makeValidInput(), opts);
   assert.equal(compiled.ok, true);
   const sealed = compiled.value.pack;
-  const identical = evaluatePackReplay(sealed, { ...sealed }, opts);
+  const receipt = compiled.value.receipt;
+  const identical = evaluatePackReplay(receipt, { ...sealed }, opts);
   assert.equal(identical.replayable, true);
   const tampered = {
     ...sealed,
     instructions: sealed.instructions.map((ins, i) => (i === 1 ? { ...ins, mutationSpec: 'mutation:evil' } : ins)),
   };
-  const changed = evaluatePackReplay(sealed, tampered, opts);
+  const changed = evaluatePackReplay(receipt, tampered, opts);
   assert.equal(changed.replayable, false);
   assert.match(changed.reason, /digest drift/);
+  const resealedEvil = resealPack(tampered);
+  const resealedReplay = evaluatePackReplay(receipt, resealedEvil, opts);
+  assert.equal(resealedReplay.replayable, false);
 });
 
 test('diagnostic codes map to terminal states, never silently VALID', () => {

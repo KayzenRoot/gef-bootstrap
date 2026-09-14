@@ -45,11 +45,7 @@ import {
 } from './s04-cognition.js';
 import {
   buildExecutionPackReceipt,
-  buildPackDigestInput,
-  computePackSemanticDigest,
-  computeToolPlanDigest,
-  computeValidationPlanDigest,
-  computeWorkGraphDigest,
+  computeSealedDigests,
   reducePromptEntropy,
 } from './s05-receipt.js';
 
@@ -278,6 +274,10 @@ export function compileExecutionPack(
     cognitionBudget: { ...budget.value.limits },
     noDiscoveryBoundary: sortedStrings(input.noDiscoveryBoundary),
     guardrailBindings: sortedStrings(guardrailTable.value.flatMap(g => [...g.policyIds])),
+    guardrailTable: guardrailTable.value.map(g => ({
+      nodeId: g.nodeId,
+      policyIds: [...g.policyIds],
+    })),
     evidenceSlots: sortedStrings(slotResults.map(s => s.slotId)),
     rollbackProofs: rollbacks.value.map(r => ({ ...r })),
     reducedPrompt: [...entropy.value.reduced],
@@ -292,56 +292,43 @@ export function compileExecutionPack(
   const certificate = issuePromptCompletenessCertificate(assembled);
   if (!certificate.ok) return certificate;
 
-  // ── S05: sub-digests, semantic digest, sealed receipt ──
-  const graphDigest = computeWorkGraphDigest(
+  // ── S05: sealed digests recomputed as one unit, sealed receipt ──
+  const seals = computeSealedDigests(
     {
-      nodeIds: dag.value.order,
-      waves: waves.value.map(w => [...w]),
-      criticalPath: [...criticalPath.value],
+      ...assembled,
+      graphDigest: '',
+      toolPlanDigest: '',
+      validationPlanDigest: '',
+      semanticDigest: '',
     },
     options,
   );
-  if (!graphDigest.ok) return graphDigest;
-
-  const toolDigest = computeToolPlanDigest(
-    blueprint.value.map(t => ({ ...t })),
-    options,
-  );
-  if (!toolDigest.ok) return toolDigest;
-
-  const validationDigest = computeValidationPlanDigest(
-    input.validations.map(v => ({ ...v })),
-    options,
-  );
-  if (!validationDigest.ok) return validationDigest;
+  if (!seals.ok) return seals;
 
   const pack: ExecutionPack = deepFreeze({
     ...assembled,
-    graphDigest: graphDigest.value,
-    toolPlanDigest: toolDigest.value,
-    validationPlanDigest: validationDigest.value,
+    graphDigest: seals.value.graphDigest,
+    toolPlanDigest: seals.value.toolPlanDigest,
+    validationPlanDigest: seals.value.validationPlanDigest,
     semanticDigest: '',
     completenessCertificate: { ...certificate.value },
   });
 
-  const digest = computePackSemanticDigest(buildPackDigestInput(pack), options);
-  if (!digest.ok) return digest;
-
-  const sealed: ExecutionPack = deepFreeze({ ...pack, semanticDigest: digest.value });
+  const sealed: ExecutionPack = deepFreeze({ ...pack, semanticDigest: seals.value.semanticDigest });
 
   const receipt = buildExecutionPackReceipt({
     packId,
     status: 'VALID',
-    semanticDigest: digest.value,
+    semanticDigest: seals.value.semanticDigest,
     diagnostics: [],
     replayable: true,
     taskIdentity,
     contextIdentity,
     contextDigest,
     policyVersion: bindings.policyVersion,
-    graphDigest: graphDigest.value,
-    toolPlanDigest: toolDigest.value,
-    validationPlanDigest: validationDigest.value,
+    graphDigest: seals.value.graphDigest,
+    toolPlanDigest: seals.value.toolPlanDigest,
+    validationPlanDigest: seals.value.validationPlanDigest,
     capabilityIdentity: bindings.capabilityIdentity,
   });
   if (!receipt.ok) return receipt;
