@@ -1,7 +1,14 @@
 # GBS-WO-M08-001 — Implement Project Profiles
 
-Status: `COMPILED_PENDING_ADMISSION`
+Status: `ADMITTED`
 Risk: `STANDARD`
+
+## ADMISSION EVIDENCE
+- Compilation PR: `#158`
+- Compiled reviewed head: `d813e58960ce442b1d35de38b2fdb6c5d8b9bc73`
+- Compilation review: `5193051986`
+- Compilation merge: `274facd3e03d02f4ddb65afd3b5a419348ca8d66`
+- Exact implementation base: the merge SHA of the separate admission checkpoint that activates this Work Order.
 
 ## OBJECTIVE
 Implement M08 Project Profiles as a pure deterministic package at `packages/project-profiles` from frozen S01-S05 and the approved M08 Module Gate.
@@ -41,4 +48,4 @@ Unit/adversarial validation, selection, digest/order, typed bindings, inheritanc
 Português brasileiro with admitted base, exact head/tree, changed files, AC mapping, checks, severity findings, corrections, residual ownership, verdict and Checkpoint Delta.
 
 ## STOP CONDITION
-Stop at `COMPILED_PENDING_ADMISSION`. Separate admission must bind exact implementation base before code changes. MODULE_DONE remains blocked until exact-head implementation audit and merge.
+After the separate admission checkpoint merge: `READY_FOR_GBS_WO_M08_001`. Before that merge, implementation remains blocked. MODULE_DONE remains blocked until exact-head implementation audit and merge.
