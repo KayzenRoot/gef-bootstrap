@@ -1,0 +1,27 @@
+name: m09-platform
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/source-pack/**"
+      - "tests/m09-*.mjs"
+      - ".github/workflows/m09-platform.yml"
+      - "package.json"
+      - "package-lock.json"
+jobs:
+  source-pack:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm run build
+      - run: node --test tests/m09-source-pack.test.mjs tests/m09-startup-purity.test.mjs
