@@ -1,6 +1,6 @@
 # GBS-M09-S05 — Source Pack Integrity
 
-Status: `FROZEN_CANDIDATE`
+Status: `FROZEN`
 
 ## Purpose
 Freeze integrity, invalidation and conformance semantics for Source Packs. Integrity means that the pack can prove what canonical state it represents and detect relevant drift. It does not mean the pack itself becomes canonical truth.
