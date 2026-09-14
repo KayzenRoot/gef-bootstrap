@@ -1,6 +1,6 @@
 # GBS-WO-M20-001 — Implement Response Contract
 
-Status: `ADMISSION_CANDIDATE`
+Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
 Risk: `MEDIUM`
 Assurance intensity: `STANDARD_PLUS`
 Module: `GBS-M20 — Response Contract`
@@ -10,6 +10,9 @@ Planning gate: `.engineering/gates/M20-PLANNING-GATE.md` (`PASSED`)
 Planning freeze PR: `#213`
 Planning freeze merge: `2c65f7cd1bd4f9015878acbe449118d9a873a88f`
 Admission PR: `#214`
+Admission reviewed head: `a54e11d45ebfce1273049103a473354df2fccbae`
+Admission semantic audit: `5203729708`
+Admission merge / sole legal execution base: `9866f49a664ec761cdf9fc379739f41e4db7fcf7`
 
 ## Objective
 Implement a deterministic, authority-bounded response contract that projects current governed truth to machine and human consumers without manufacturing source authority, progress, ETA, project status, confidence, evidence or success.
@@ -67,7 +70,7 @@ Progress calculation, ETA estimation, project-status computation, evidence/proof
 ## Evidence and acceptance
 Exact admitted base/head/tree, focused test count, platform matrix, full regression count, dependency audit, Security CodeQL when triggered, semantic review, zero unresolved CRITICAL/HIGH, implementation merge and separate Evidence Bundle/MODULE_DONE promotion.
 
-## Admission rule
-PR #214 is the admission candidate. It grants no execution authority until exact-head audit succeeds, #214 merges, and a post-merge binding records the real admission merge SHA as the sole legal M20 execution base. Only that binding may change this status to `ADMITTED_READY_FOR_IMPLEMENTATION`.
+## Admission binding
+PR #214 passed exact-head semantic review and merged as `9866f49a664ec761cdf9fc379739f41e4db7fcf7`. This Work Order is now admitted. Implementation branches must descend from that admission merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
 
-STOP CONDITION: `GBS_WO_M20_001_ADMISSION_CANDIDATE`.
+STOP CONDITION: `GBS_WO_M20_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
