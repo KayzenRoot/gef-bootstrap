@@ -1,6 +1,6 @@
 # GBS-WO-M19-001 — Implement Project Registry
 
-Status: `ADMISSION_CANDIDATE`
+Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
 Risk: `MEDIUM`
 Assurance intensity: `STANDARD_PLUS`
 Module: `GBS-M19 — Project Registry`
@@ -10,6 +10,9 @@ Planning gate: `.engineering/gates/M19-PLANNING-GATE.md` (`PASSED`)
 Planning freeze PR: `#208`
 Planning freeze merge: `074a45b1cfda7400dd87e7941218f390570d594a`
 Admission PR: `#209`
+Admission reviewed head: `f255c78ee9fca2a83fe9ea90470918e3a9b43aa8`
+Admission semantic audit: `5203267235`
+Admission merge / sole legal execution base: `ab2de11ee0e285e16b220ea5f788692ed018021a`
 
 ## Objective
 Implement a deterministic, persistent, collision-safe project registry that indexes known projects for routing/resume efficiency while remaining subordinate to canonical M03 identity and M17/M18 continuation truth.
@@ -68,7 +71,7 @@ Broad repository discovery, canonical identity transition, filesystem safety eng
 ## Evidence and acceptance
 Exact admitted base/head/tree, focused test count, platform matrix, full regression count, dependency audit, Security CodeQL when triggered, semantic review, zero unresolved CRITICAL/HIGH, implementation merge and separate Evidence Bundle/MODULE_DONE promotion.
 
-## Admission rule
-PR #209 is the admission candidate. It grants no execution authority until exact-head audit succeeds, #209 merges, and a post-merge binding records the real admission merge SHA as the sole legal M19 execution base. Only that binding may change this status to `ADMITTED_READY_FOR_IMPLEMENTATION`.
+## Admission binding
+PR #209 passed exact-head semantic review and merged as `ab2de11ee0e285e16b220ea5f788692ed018021a`. This Work Order is now admitted. Implementation branches must descend from that admission merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
 
-STOP CONDITION: `GBS_WO_M19_001_ADMISSION_CANDIDATE`.
+STOP CONDITION: `GBS_WO_M19_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
