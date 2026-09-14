@@ -39,11 +39,13 @@ export {
 export {
   projectDecisionToNodes,
   verifyVerifiedProjection,
+  verifyAppliedExceptionAuthorization,
   issueMutationLease,
   issueVerifiedMutationLease,
   checkExceptionBlastRadius,
   verifyBlastRadiusCap,
   applyExceptionWarrant,
+  applyVerifiedException,
   revalidateLeaseAtMutation,
   evaluateFailClosedDegradation,
   authorizeMutation,

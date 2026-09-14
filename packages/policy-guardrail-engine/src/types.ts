@@ -271,6 +271,25 @@ export interface VerifiedEnforcementProjection extends EnforcementProjection {
   readonly projectionDigest: string;
 }
 
+/**
+ * First-class sealed exception authorization emitted by verified exception
+ * application and consumed by lease issuance. Binds the exact warrant
+ * identity/fingerprint, use bound, relaxed obligations, compensating
+ * controls and review trigger under a deterministic digest. Lease issuance
+ * derives warrant state from these artifacts — never from raw caller
+ * warrant fields — so an exception can never be omitted from its lease.
+ */
+export interface AppliedExceptionAuthorization {
+  readonly warrantId: string;
+  readonly warrantFingerprint: string;
+  readonly maxUses: number;
+  readonly useCountAtApplication: number;
+  readonly relaxedObligations: readonly string[];
+  readonly compensatingControls: readonly string[];
+  readonly reviewTrigger: string;
+  readonly authorizationDigest: string;
+}
+
 export interface MutationCapabilityLease {
   readonly leaseId: string;
   readonly projectId: string;
@@ -286,6 +305,8 @@ export interface MutationCapabilityLease {
   /** Seal of the verified GEM projection this lease was issued from. */
   readonly projectionDigest: string;
   readonly obligations: readonly Obligation[];
+  /** Sealed exception authorizations exact-derived from the PDR. */
+  readonly exceptionAuthorizations: readonly AppliedExceptionAuthorization[];
   readonly warrantIds: readonly string[];
   readonly warrantFingerprints: Readonly<Record<string, string>>;
   readonly warrantLimits: Readonly<Record<string, number>>;
@@ -318,6 +339,8 @@ export interface BlastRadiusCap {
   readonly obligations: readonly string[];
   readonly useCount: number;
   readonly maxUses: number;
+  /** Bound target-policy fingerprints the cap was derived against. */
+  readonly policySetFingerprint: string;
   readonly affectedSetFingerprint: string;
   readonly capDigest: string;
 }
@@ -325,6 +348,8 @@ export interface BlastRadiusCap {
 export interface WarrantApplication {
   readonly receipt: PolicyDecisionReceipt;
   readonly debt: ExceptionDebtEntry;
+  /** Sealed authorization for the applied exception, consumed by leases. */
+  readonly exceptionAuthorization: AppliedExceptionAuthorization;
 }
 
 export type DependencyState = 'AVAILABLE' | 'UNAVAILABLE' | 'STALE' | 'UNSUPPORTED' | 'INDETERMINATE';
@@ -358,7 +383,11 @@ export interface RegressionFinding {
   readonly detail: string;
 }
 
-export type CoverageValidity = 'VALID' | 'UNSUPPORTED_SCHEMA' | 'NO_APPLICABLE_POLICY';
+export type CoverageValidity =
+  | 'VALID'
+  | 'UNSUPPORTED_SCHEMA'
+  | 'NO_APPLICABLE_POLICY'
+  | 'INDETERMINATE';
 
 export interface CoverageEntry {
   readonly operation: string;

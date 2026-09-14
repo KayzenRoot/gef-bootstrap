@@ -280,11 +280,16 @@ test('HIGH-B: forged cap with exactly matching sets is rejected without seal', (
   });
   const pdr = decideBound([obligated], pack, []);
   const w = warrant('w-1');
+  const derivationForged = {
+    policiesById: new Map([['pol-guard-a', obligated]]),
+    maxAffected: { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log'] },
+    currentUses: 0,
+  };
   // Exact structural match, but never issued by checkExceptionBlastRadius.
   const forgedCap = {
     nodeIds: [...w.scopeNodeIds], mutationDomains: [...w.scopeMutationDomains], obligations: [...w.targetObligations],
   };
-  assert.equal(failCode(applyExceptionWarrant(pdr, w, forgedCap, opts)), 'POLICY_CAP_INVALID');
+  assert.equal(failCode(applyExceptionWarrant(pdr, w, forgedCap, derivationForged, opts)), 'POLICY_CAP_INVALID');
 });
 
 test('HIGH-B: mutated sealed cap fields each fail; genuine cap reseals', () => {
@@ -297,13 +302,14 @@ test('HIGH-B: mutated sealed cap fields each fail; genuine cap reseals', () => {
   const { pack } = compilePack();
   const pdr = decideBound([obligated], pack, []);
   const byId = new Map([['pol-guard-a', obligated]]);
+  const maxAffected = { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] };
   const sealed = checkExceptionBlastRadius(
-    warrant('w-1'), byId,
-    { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] }, 0, opts,
+    warrant('w-1'), byId, maxAffected, 0, opts,
   );
   assert.equal(sealed.ok, true);
   const cap = sealed.value;
   const w = warrant('w-1');
+  const derivation = { policiesById: byId, maxAffected, currentUses: 0 };
   const mutants = [
     { ...cap, warrantFingerprint: `sha256:${'0'.repeat(64)}` },
     { ...cap, targetPolicyIds: ['pol-other'] },
@@ -312,9 +318,9 @@ test('HIGH-B: mutated sealed cap fields each fail; genuine cap reseals', () => {
     { ...cap, nodeIds: ['b'], capDigest: cap.capDigest },
   ];
   for (const mutant of mutants) {
-    assert.equal(applyExceptionWarrant(pdr, w, mutant, opts).ok, false);
+    assert.equal(applyExceptionWarrant(pdr, w, mutant, derivation, opts).ok, false);
   }
-  const genuine = applyExceptionWarrant(pdr, w, cap, opts);
+  const genuine = applyExceptionWarrant(pdr, w, cap, derivation, opts);
   assert.equal(genuine.ok, true);
   assert.notEqual(genuine.value.receipt.digest, pdr.digest);
   assert.equal(genuine.value.debt.status, 'ACTIVE');

@@ -6,6 +6,7 @@
 // network/provider state or credentials.
 
 import type {
+  AppliedExceptionAuthorization,
   BlastRadiusCap,
   EnforcementProjection,
   ExceptionDebtEntry,
@@ -135,6 +136,71 @@ export function verifyVerifiedProjection(
   if (!recomputed.ok) return recomputed;
   if (recomputed.value !== projection.projectionDigest) {
     return fail('POLICY_PROJECTION_INVALID', 'Projection digest does not match its sealed fields', projection.nodeId);
+  }
+  return { ok: true, value: deepFreeze({ verified: true as const }) };
+}
+
+/** Deterministic seal over one applied exception authorization. */
+function computeExceptionAuthorizationDigest(
+  fields: {
+    warrantId: string;
+    warrantFingerprint: string;
+    maxUses: number;
+    useCountAtApplication: number;
+    relaxedObligations: readonly string[];
+    compensatingControls: readonly string[];
+    reviewTrigger: string;
+  },
+  options: OperationOptions,
+): Result<string> {
+  return sha(options, {
+    warrantId: fields.warrantId,
+    warrantFingerprint: fields.warrantFingerprint,
+    maxUses: fields.maxUses,
+    useCountAtApplication: fields.useCountAtApplication,
+    relaxedObligations: sortedStrings(fields.relaxedObligations),
+    compensatingControls: sortedStrings(fields.compensatingControls),
+    reviewTrigger: fields.reviewTrigger,
+  });
+}
+
+/**
+ * Independently verify a sealed applied-exception authorization.
+ * Recomputes the digest from its own fields; stale-field tampering fails.
+ */
+export function verifyAppliedExceptionAuthorization(
+  authorization: AppliedExceptionAuthorization,
+  options: OperationOptions,
+): Result<{ verified: true }> {
+  const c = cancelled(options);
+  if (c) return c;
+  if (!authorization || typeof authorization.warrantId !== 'string' || authorization.warrantId.trim().length === 0) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', 'Exception authorization requires a warrant identity');
+  }
+  if (typeof authorization.warrantFingerprint !== 'string' || !/^sha256:[0-9a-f]{64}$/.test(authorization.warrantFingerprint)) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', `Exception authorization for ${authorization.warrantId} carries an invalid warrant fingerprint`, authorization.warrantId);
+  }
+  if (!Number.isInteger(authorization.maxUses) || authorization.maxUses < 1) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', `Exception authorization for ${authorization.warrantId} carries an invalid use bound`, authorization.warrantId);
+  }
+  if (!Number.isInteger(authorization.useCountAtApplication) || authorization.useCountAtApplication < 0 || authorization.useCountAtApplication >= authorization.maxUses) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', `Exception authorization for ${authorization.warrantId} carries an out-of-bound use count`, authorization.warrantId);
+  }
+  const recomputed = computeExceptionAuthorizationDigest(
+    {
+      warrantId: authorization.warrantId,
+      warrantFingerprint: authorization.warrantFingerprint,
+      maxUses: authorization.maxUses,
+      useCountAtApplication: authorization.useCountAtApplication,
+      relaxedObligations: [...authorization.relaxedObligations],
+      compensatingControls: [...authorization.compensatingControls],
+      reviewTrigger: authorization.reviewTrigger,
+    },
+    options,
+  );
+  if (!recomputed.ok) return recomputed;
+  if (recomputed.value !== authorization.authorizationDigest) {
+    return fail('POLICY_LEASE_DECISION_NOT_PERMISSIVE', `Exception authorization digest drifted for ${authorization.warrantId}`, authorization.warrantId);
   }
   return { ok: true, value: deepFreeze({ verified: true as const }) };
 }
@@ -373,6 +439,7 @@ export function issueMutationLease(
     packDigest: string;
     decisionDigest: string;
     obligations?: readonly Obligation[] | undefined;
+    exceptionAuthorizations?: readonly AppliedExceptionAuthorization[] | undefined;
     warrantIds?: readonly string[] | undefined;
     warrantFingerprints?: Readonly<Record<string, string>> | undefined;
     warrantLimits?: Readonly<Record<string, number>> | undefined;
@@ -516,21 +583,104 @@ export function issueMutationLease(
     return fail('POLICY_GEM_POLICY_NOT_BOUND', `Node ${verifiedProjection.nodeId} has no guardrail policy bound to the effective decision`, verifiedProjection.nodeId);
   }
 
-  const obligations = input.obligations ?? input.projection.obligations;
-  const warrantIds = sortedStrings(input.warrantIds ?? []);
-  const warrantFingerprints: Record<string, string> = {};
-  const warrantLimits: Record<string, number> = {};
-  for (const id of warrantIds) {
-    warrantFingerprints[id] = input.warrantFingerprints?.[id] ?? '';
-    const limit = input.warrantLimits?.[id];
-    if (limit === undefined || !Number.isInteger(limit) || limit < 1) {
+  // HIGH-F: lease obligations derive exactly from the verified
+  // projection. A caller-supplied override is accepted only as a
+  // compatibility echo: it must canonically equal the verified
+  // obligations, otherwise any omission, addition or semantic change
+  // fails closed. An ALLOW_WITH_OBLIGATIONS lease can never shed controls.
+  const canonicalObligation = (o: Obligation): string =>
+    JSON.stringify({
+      id: o.obligationId,
+      statement: o.statement,
+      mandatory: o.mandatory,
+      dependsOn: [...o.dependsOn].sort(compareCodePoint),
+      conflictsWith: [...o.conflictsWith].sort(compareCodePoint),
+    });
+  const verifiedObligations = sortedStrings(verifiedProjection.obligations.map(canonicalObligation));
+  if (input.obligations !== undefined) {
+    const supplied = sortedStrings([...input.obligations].map(canonicalObligation));
+    if (JSON.stringify(supplied) !== JSON.stringify(verifiedObligations)) {
       return fail(
         'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
-        `Leased warrant ${id} requires a positive use limit`,
-        id,
+        'Caller-supplied lease obligations do not exactly match the verified projection obligations',
+        verifiedProjection.nodeId,
       );
     }
-    warrantLimits[id] = limit;
+  }
+  const obligations = [...verifiedProjection.obligations];
+
+  // HIGH-G: exception authorization derives exactly from the sealed PDR.
+  // For every exceptionsApplied entry the lease must carry the exact
+  // sealed AppliedExceptionAuthorization emitted by verified exception
+  // application. Missing, extra or mismatched bindings fail closed; raw
+  // caller warrant fields never create exception authority.
+  if (input.warrantIds !== undefined || input.warrantFingerprints !== undefined || input.warrantLimits !== undefined) {
+    return fail(
+      'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
+      'Lease warrant state derives only from sealed exception authorizations, not raw caller warrant fields',
+      verifiedProjection.nodeId,
+    );
+  }
+  const suppliedAuthorizations = [...(input.exceptionAuthorizations ?? [])];
+  const pdrExceptions = [...input.receipt.exceptionsApplied].sort((a, b) => compareCodePoint(a.warrantId, b.warrantId));
+  const orderedAuthorizations = [...suppliedAuthorizations].sort((a, b) => compareCodePoint(a.warrantId, b.warrantId));
+  if (pdrExceptions.length !== orderedAuthorizations.length) {
+    return fail(
+      'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
+      `Sealed PDR carries ${pdrExceptions.length} applied exception(s) but lease supplies ${orderedAuthorizations.length} authorization(s)`,
+      verifiedProjection.nodeId,
+    );
+  }
+  const seenAuthorizationIds = new Set<string>();
+  for (const authorization of orderedAuthorizations) {
+    if (seenAuthorizationIds.has(authorization.warrantId)) {
+      return fail(
+        'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
+        `Duplicate exception authorization for ${authorization.warrantId}`,
+        authorization.warrantId,
+      );
+    }
+    seenAuthorizationIds.add(authorization.warrantId);
+    const authorizationCheck = verifyAppliedExceptionAuthorization(authorization, options);
+    if (!authorizationCheck.ok) return authorizationCheck;
+  }
+  for (const applied of pdrExceptions) {
+    const authorization = orderedAuthorizations.find(a => a.warrantId === applied.warrantId);
+    if (authorization === undefined) {
+      return fail(
+        'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
+        `Applied exception ${applied.warrantId} has no sealed lease authorization; omitting it is rejected`,
+        applied.warrantId,
+      );
+    }
+    if (JSON.stringify(sortedStrings(authorization.relaxedObligations)) !== JSON.stringify(sortedStrings(applied.relaxedObligations))) {
+      return fail(
+        'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
+        `Exception authorization for ${applied.warrantId} does not match the sealed PDR application`,
+        applied.warrantId,
+      );
+    }
+    if (JSON.stringify(sortedStrings(authorization.compensatingControls)) !== JSON.stringify(sortedStrings(applied.compensatingControls))) {
+      return fail(
+        'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
+        `Exception authorization controls for ${applied.warrantId} do not match the sealed PDR`,
+        applied.warrantId,
+      );
+    }
+    if (authorization.reviewTrigger !== applied.reviewTrigger) {
+      return fail(
+        'POLICY_LEASE_DECISION_NOT_PERMISSIVE',
+        `Exception authorization review trigger for ${applied.warrantId} does not match the sealed PDR`,
+        applied.warrantId,
+      );
+    }
+  }
+  const warrantIds = orderedAuthorizations.map(a => a.warrantId);
+  const warrantFingerprints: Record<string, string> = {};
+  const warrantLimits: Record<string, number> = {};
+  for (const authorization of orderedAuthorizations) {
+    warrantFingerprints[authorization.warrantId] = authorization.warrantFingerprint;
+    warrantLimits[authorization.warrantId] = authorization.maxUses;
   }
 
   const policyById: Record<string, string> = { ...input.receipt.policyFingerprintById };
@@ -545,14 +695,18 @@ export function issueMutationLease(
     policySetFingerprint: verifiedProjection.policySetFingerprint,
     projectionDigest: verifiedProjection.projectionDigest,
     policyBindings: bindPolicyFingerprints(policyById),
-    obligations: sortedStrings(
-      obligations.map(o =>
+    obligations: verifiedObligations,
+    exceptionAuthorizations: sortedStrings(
+      orderedAuthorizations.map(a =>
         JSON.stringify({
-          id: o.obligationId,
-          statement: o.statement,
-          mandatory: o.mandatory,
-          dependsOn: [...o.dependsOn].sort(compareCodePoint),
-          conflictsWith: [...o.conflictsWith].sort(compareCodePoint),
+          warrantId: a.warrantId,
+          warrantFingerprint: a.warrantFingerprint,
+          maxUses: a.maxUses,
+          useCountAtApplication: a.useCountAtApplication,
+          relaxedObligations: sortedStrings(a.relaxedObligations),
+          compensatingControls: sortedStrings(a.compensatingControls),
+          reviewTrigger: a.reviewTrigger,
+          authorizationDigest: a.authorizationDigest,
         }),
       ),
     ),
@@ -577,7 +731,8 @@ export function issueMutationLease(
       policySetFingerprint: verifiedProjection.policySetFingerprint,
       policyFingerprintById: policyById,
       projectionDigest: verifiedProjection.projectionDigest,
-      obligations: [...obligations],
+      obligations,
+      exceptionAuthorizations: [...orderedAuthorizations],
       warrantIds,
       warrantFingerprints,
       warrantLimits,
@@ -601,9 +756,7 @@ export function issueVerifiedMutationLease(
     projectId: string;
     reviewTrigger: string;
     obligations?: readonly Obligation[] | undefined;
-    warrantIds?: readonly string[] | undefined;
-    warrantFingerprints?: Readonly<Record<string, string>> | undefined;
-    warrantLimits?: Readonly<Record<string, number>> | undefined;
+    exceptionAuthorizations?: readonly AppliedExceptionAuthorization[] | undefined;
   },
   options: OperationOptions,
 ): Result<{ lease: MutationCapabilityLease; projection: VerifiedEnforcementProjection }> {
@@ -634,9 +787,7 @@ export function issueVerifiedMutationLease(
       packDigest: projection.packDigest,
       decisionDigest: input.receipt.digest,
       ...(input.obligations === undefined ? {} : { obligations: input.obligations }),
-      ...(input.warrantIds === undefined ? {} : { warrantIds: input.warrantIds }),
-      ...(input.warrantFingerprints === undefined ? {} : { warrantFingerprints: input.warrantFingerprints }),
-      ...(input.warrantLimits === undefined ? {} : { warrantLimits: input.warrantLimits }),
+      ...(input.exceptionAuthorizations === undefined ? {} : { exceptionAuthorizations: input.exceptionAuthorizations }),
       reviewTrigger: input.reviewTrigger,
     },
     options,
@@ -759,11 +910,24 @@ export function checkExceptionBlastRadius(
   };
   const affectedSetFingerprint = computeAffectedSetFingerprint(sealedSets, options);
   if (!affectedSetFingerprint.ok) return affectedSetFingerprint;
+  // HIGH-H: bind the cap to the exact target-policy semantics, not only
+  // warrant strings. Policy drift after issuance invalidates the cap.
+  const targetBindings: Record<string, string> = {};
+  for (const policyId of sortedStrings(warrant.targetPolicyIds)) {
+    const policy = policiesById.get(policyId);
+    if (policy === undefined) {
+      return fail('POLICY_WARRANT_SCOPE_EXCEEDED', `Warrant ${warrant.warrantId} targets unknown policy ${policyId}`, policyId);
+    }
+    targetBindings[policyId] = policy.semanticIdentity;
+  }
+  const policySetFingerprint = sha(options, { policies: bindPolicyFingerprints(targetBindings) });
+  if (!policySetFingerprint.ok) return policySetFingerprint;
   const capDigest = sha(options, {
     warrantId: warrant.warrantId,
     warrantFingerprint: warrant.semanticFingerprint,
     targetPolicyIds: sortedStrings(warrant.targetPolicyIds),
     precedenceDomain,
+    policySetFingerprint: policySetFingerprint.value,
     affectedSetFingerprint: affectedSetFingerprint.value,
     useCount: currentUses,
     maxUses: warrant.maxUses,
@@ -781,6 +945,7 @@ export function checkExceptionBlastRadius(
       obligations: sealedSets.obligations,
       useCount: currentUses,
       maxUses: warrant.maxUses,
+      policySetFingerprint: policySetFingerprint.value,
       affectedSetFingerprint: affectedSetFingerprint.value,
       capDigest: capDigest.value,
     }),
@@ -823,11 +988,15 @@ export function verifyBlastRadiusCap(
   if (affectedSetFingerprint.value !== cap.affectedSetFingerprint) {
     return fail('POLICY_CAP_INVALID', `Cap affected-set fingerprint drifted for ${warrant.warrantId}`, warrant.warrantId);
   }
+  if (typeof cap.policySetFingerprint !== 'string' || !/^sha256:[0-9a-f]{64}$/.test(cap.policySetFingerprint)) {
+    return fail('POLICY_CAP_INVALID', `Cap policy-set binding missing for ${warrant.warrantId}`, warrant.warrantId);
+  }
   const capDigest = sha(options, {
     warrantId: cap.warrantId,
     warrantFingerprint: cap.warrantFingerprint,
     targetPolicyIds: sortedStrings(cap.targetPolicyIds),
     precedenceDomain: cap.precedenceDomain,
+    policySetFingerprint: cap.policySetFingerprint,
     affectedSetFingerprint: cap.affectedSetFingerprint,
     useCount: cap.useCount,
     maxUses: cap.maxUses,
@@ -859,20 +1028,59 @@ export function verifyBlastRadiusCap(
  * ignored. Every warrant scope element must fit inside the cap, and the
  * exception-mutated PDR is resealed with a fresh digest so the old digest
  * can never authorize the relaxed semantics.
+ *
+ * HIGH-H closure: cap self-consistency is never proof of derivation. The
+ * caller supplies the trusted derivation context (policies, affected-set
+ * authority, use state); the expected cap is re-derived inside this path
+ * and the supplied cap must exactly equal it. A fully self-consistent
+ * forged cap computed without `checkExceptionBlastRadius` still fails
+ * whenever the trusted context forbids the warrant (cross-domain,
+ * out-of-affected-set, drifted policy fingerprints or use count).
  */
 export function applyExceptionWarrant(
   receipt: PolicyDecisionReceipt,
   warrant: ExceptionWarrant,
   cap: BlastRadiusCap,
+  derivation: {
+    policiesById: ReadonlyMap<string, PolicyAuthorityCapsule>;
+    maxAffected: { nodeIds: readonly string[]; mutationDomains: readonly string[]; obligations: readonly string[] };
+    currentUses: number;
+  },
   options: OperationOptions,
 ): Result<WarrantApplication> {
   const c = cancelled(options);
   if (c) return c;
+  if (!derivation || !derivation.policiesById || !derivation.maxAffected || !Number.isInteger(derivation.currentUses)) {
+    return fail('POLICY_CAP_INVALID', 'Exception application requires the trusted derivation context', warrant.warrantId);
+  }
   // HIGH-B: independently verify the sealed cap and its exact
   // warrant/context binding before use. A plain structural object with
   // identical sets carries no seal and fails here.
   const capCheck = verifyBlastRadiusCap(cap, warrant, options);
   if (!capCheck.ok) return capCheck;
+  // HIGH-H: re-derive the expected cap from the trusted context and
+  // require exact equality. Self-consistent forgery without derivation
+  // fails here.
+  const derived = checkExceptionBlastRadius(warrant, derivation.policiesById, derivation.maxAffected, derivation.currentUses, options);
+  if (!derived.ok) return derived;
+  const expected = derived.value;
+  if (
+    expected.capDigest !== cap.capDigest ||
+    expected.affectedSetFingerprint !== cap.affectedSetFingerprint ||
+    expected.policySetFingerprint !== cap.policySetFingerprint ||
+    expected.useCount !== cap.useCount ||
+    JSON.stringify(sortedStrings(expected.targetPolicyIds)) !== JSON.stringify(sortedStrings(cap.targetPolicyIds)) ||
+    expected.precedenceDomain !== cap.precedenceDomain ||
+    JSON.stringify(expected.nodeIds) !== JSON.stringify(sortedStrings(cap.nodeIds)) ||
+    JSON.stringify(expected.mutationDomains) !== JSON.stringify(sortedStrings(cap.mutationDomains)) ||
+    JSON.stringify(expected.obligations) !== JSON.stringify(sortedStrings(cap.obligations))
+  ) {
+    return fail(
+      'POLICY_CAP_INVALID',
+      `Cap for ${warrant.warrantId} does not match derivation under the trusted policy/affected-set/use context`,
+      warrant.warrantId,
+    );
+  }
   // Enforce the cap: forged or reused caps that do not cover the warrant
   // scope fail closed.
   const capNodes = new Set(cap.nodeIds);
@@ -925,6 +1133,30 @@ export function applyExceptionWarrant(
     compensatingControls: [...warrant.compensatingControls],
     reviewTrigger: warrant.reviewTrigger,
   };
+  // HIGH-G: emit the sealed exception authorization consumed by leases.
+  const authorizationDigest = computeExceptionAuthorizationDigest(
+    {
+      warrantId: warrant.warrantId,
+      warrantFingerprint: warrant.semanticFingerprint,
+      maxUses: warrant.maxUses,
+      useCountAtApplication: derivation.currentUses,
+      relaxedObligations: relaxedIds,
+      compensatingControls: [...warrant.compensatingControls],
+      reviewTrigger: warrant.reviewTrigger,
+    },
+    options,
+  );
+  if (!authorizationDigest.ok) return authorizationDigest;
+  const exceptionAuthorization: AppliedExceptionAuthorization = deepFreeze({
+    warrantId: warrant.warrantId,
+    warrantFingerprint: warrant.semanticFingerprint,
+    maxUses: warrant.maxUses,
+    useCountAtApplication: derivation.currentUses,
+    relaxedObligations: relaxedIds,
+    compensatingControls: [...warrant.compensatingControls],
+    reviewTrigger: warrant.reviewTrigger,
+    authorizationDigest: authorizationDigest.value,
+  });
   // Reseal the mutated PDR: the relaxed receipt carries a fresh digest
   // bound to the new obligations and the recorded exception application.
   // Decision evidence (request, witnesses, mandatory resolution, schemas,
@@ -960,8 +1192,33 @@ export function applyExceptionWarrant(
     value: deepFreeze({
       receipt: resealed.value,
       debt,
+      exceptionAuthorization,
     }),
   };
+}
+
+/**
+ * High-level verified exception path: receives trusted policies plus the
+ * affected-set/use inputs, derives the sealed cap internally and applies
+ * it. No caller-authored cap ever becomes authority on this path.
+ */
+export function applyVerifiedException(
+  receipt: PolicyDecisionReceipt,
+  warrant: ExceptionWarrant,
+  trustedContext: {
+    policiesById: ReadonlyMap<string, PolicyAuthorityCapsule>;
+    maxAffected: { nodeIds: readonly string[]; mutationDomains: readonly string[]; obligations: readonly string[] };
+    currentUses: number;
+  },
+  options: OperationOptions,
+): Result<WarrantApplication> {
+  const c = cancelled(options);
+  if (c) return c;
+  const derived = checkExceptionBlastRadius(
+    warrant, trustedContext.policiesById, trustedContext.maxAffected, trustedContext.currentUses, options,
+  );
+  if (!derived.ok) return derived;
+  return applyExceptionWarrant(receipt, warrant, derived.value, trustedContext, options);
 }
 
 // ─── Policy TOCTOU Sentinel (PTS) ─────────────────────────────────────────────

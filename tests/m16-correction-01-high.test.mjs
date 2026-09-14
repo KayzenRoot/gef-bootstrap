@@ -337,11 +337,14 @@ test('HIGH-3: forged or reused EBRC cap fails exception application', () => {
     ],
   });
   const pdr = decideBound([obligated], pack, []);
+  const byIdForged = new Map([['pol-guard-a', obligated]]);
+  const maxForged = { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log'] };
+  const derivationForged = { policiesById: byIdForged, maxAffected: maxForged, currentUses: 0 };
   // Plain structural objects carry no seal and fail closed.
   const forgedCap = { nodeIds: ['other-node'], mutationDomains: ['dom-a'], obligations: ['audit-log'] };
-  assert.equal(failCode(applyExceptionWarrant(pdr, warrant('w-1'), forgedCap, opts)), 'POLICY_CAP_INVALID');
+  assert.equal(failCode(applyExceptionWarrant(pdr, warrant('w-1'), forgedCap, derivationForged, opts)), 'POLICY_CAP_INVALID');
   const reusedCap = { nodeIds: ['a'], mutationDomains: ['other-domain'], obligations: ['audit-log'] };
-  assert.equal(failCode(applyExceptionWarrant(pdr, warrant('w-1'), reusedCap, opts)), 'POLICY_CAP_INVALID');
+  assert.equal(failCode(applyExceptionWarrant(pdr, warrant('w-1'), reusedCap, derivationForged, opts)), 'POLICY_CAP_INVALID');
 });
 
 test('HIGH-3: exception-mutated PDR is resealed with a fresh digest', () => {
@@ -354,12 +357,12 @@ test('HIGH-3: exception-mutated PDR is resealed with a fresh digest', () => {
   });
   const pdr = decideBound([obligated], pack, []);
   const byId = new Map([['pol-guard-a', obligated]]);
+  const maxAffected = { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] };
   const sealed = checkExceptionBlastRadius(
-    warrant('w-1'), byId,
-    { nodeIds: ['a'], mutationDomains: ['dom-a'], obligations: ['audit-log', 'keep-me'] }, 0, opts,
+    warrant('w-1'), byId, maxAffected, 0, opts,
   );
   assert.equal(sealed.ok, true);
-  const applied = applyExceptionWarrant(pdr, warrant('w-1'), sealed.value, opts);
+  const applied = applyExceptionWarrant(pdr, warrant('w-1'), sealed.value, { policiesById: byId, maxAffected, currentUses: 0 }, opts);
   assert.equal(applied.ok, true);
   assert.notEqual(applied.value.receipt.digest, pdr.digest);
   assert.equal(verifyPolicyDecisionReceipt(applied.value.receipt, opts).ok, true);

@@ -258,19 +258,34 @@ function policyCoversOperation(
  * can cover. Syntactically matching policies with unsupported, stale or
  * unadmitted schemas are listed as excluded with an explicit validity
  * state and never set covered=true.
+ *
+ * HIGH-I closure: the validity context is mandatory and fail-closed.
+ * Omitting supportedSchemas yields no coverage with explicit
+ * INDETERMINATE validity — never a permissive pass.
  */
 export function buildGuardrailCoverageMap(
   protectedOperations: readonly { operation: string; domain: string; nodeId?: string | undefined }[],
   policies: readonly PolicyAuthorityCapsule[],
-  supportedSchemas?: readonly string[] | undefined,
+  supportedSchemas: readonly string[],
 ): CoverageMap {
   const orderedPolicies = [...policies].sort((a, b) => compareCodePoint(a.policyId, b.policyId));
-  const admitted = supportedSchemas === undefined ? null : new Set(supportedSchemas);
+  const contextMissing = !Array.isArray(supportedSchemas);
+  const admitted = contextMissing ? new Set<string>() : new Set(supportedSchemas);
   const entries: CoverageEntry[] = protectedOperations.map(op => {
     const syntacticallyCovering = orderedPolicies.filter(p => policyCoversOperation(p, op.operation, op.domain));
-    const covering = admitted === null
-      ? syntacticallyCovering
-      : syntacticallyCovering.filter(p => admitted.has(p.schemaVersion));
+    if (contextMissing) {
+      return deepFreeze({
+        operation: op.operation,
+        domain: op.domain,
+        ...(op.nodeId === undefined ? {} : { nodeId: op.nodeId }),
+        policyIds: [],
+        obligationIds: [],
+        covered: false,
+        validity: 'INDETERMINATE' as const,
+        excludedPolicyIds: sortedStrings(syntacticallyCovering.map(p => p.policyId)),
+      });
+    }
+    const covering = syntacticallyCovering.filter(p => admitted.has(p.schemaVersion));
     const excludedPolicyIds = sortedStrings(
       syntacticallyCovering.filter(p => !covering.includes(p)).map(p => p.policyId),
     );

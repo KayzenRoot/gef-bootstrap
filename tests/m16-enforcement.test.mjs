@@ -449,7 +449,8 @@ test('exception application relaxes only named obligations and preserves debt', 
   const byId = new Map([['pol-guard-a', pac('pol-guard-a')]]);
   const sealed = checkExceptionBlastRadius(warrant('w-1'), byId, maxAffected, 0, opts);
   assert.equal(sealed.ok, true);
-  const applied = applyExceptionWarrant(pdr, warrant('w-1'), sealed.value, opts);
+  const derivation = { policiesById: byId, maxAffected, currentUses: 0 };
+  const applied = applyExceptionWarrant(pdr, warrant('w-1'), sealed.value, derivation, opts);
   assert.equal(applied.ok, true);
   assert.deepEqual(applied.value.receipt.obligations.map(o => o.obligationId), ['keep-me']);
   assert.deepEqual(applied.value.receipt.exceptionsApplied[0].relaxedObligations, ['audit-log']);
