@@ -1,1 +1,1 @@
-{"name":"@gef-bootstrap/source-pack","version":"0.0.0","private":true,"type":"module","exports":{".":{"types":"./dist/public.d.ts","import":"./dist/public.js"}},"types":"./dist/public.d.ts"}
+{"name":"@gef-bootstrap/source-pack","version":"0.0.0","private":true,"type":"module","exports":{".":{"types":"./dist/public-v2.d.ts","import":"./dist/public-v2.js"}},"types":"./dist/public-v2.d.ts"}
