@@ -1,6 +1,6 @@
 # GBS-WO-M24-001 — Implement Evidence Engine
 
-Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
+Status: `IMPLEMENTED_PENDING_EXACT_HEAD_AUDIT`
 Risk: `HIGH`
 Assurance intensity: `MAX_ASSURANCE`
 Module: `GBS-M24 — Evidence Engine`
@@ -17,6 +17,8 @@ Admission reviewed head: `eb54c49d89bfe064404d388151f9358d09a96d17`
 Admission reviewed tree: `9775ecfb678fdc524e9fc4fd835e330b21896c4e`
 Admission semantic audit: `5212787159`
 Admission merge / sole legal execution base: `b77372aae24ccbd2e35c202cab03608cb8f8d5de`
+Implementation PR: `#237`
+Correction delta: `.engineering/evidence/GBS-WO-M24-001-CORRECTION-DELTA.md`
 
 ## OBJECTIVE
 Implement the provider-neutral Evidence Engine frozen in M24 S01-S04. The engine must validate machine evidence against exact producer authority rooted in already-governed external canonical authority, exact governed subject state and current validity dependencies; emit immutable evidence receipts; preserve stale/conflict/invalidation truth; provide an exact M21 acceptance handoff; and provide evidence context to future proof/assurance modules without assuming their authority.
@@ -83,10 +85,22 @@ Implementation must explicitly defend against producer spoofing, evidence-kind e
 - dedicated exact-head semantic security/integrity review;
 - unresolved CRITICAL `0`, HIGH `0`.
 
+## IMPLEMENTATION RECORD
+- implementation branch: `gbs-wo-m24-001-evidence-engine`;
+- implementation PR: `#237`;
+- package: `packages/evidence-engine`;
+- frozen mechanisms materialized: `32 / 32`;
+- MAX_ASSURANCE CI workflow: `.github/workflows/m24-platform.yml`;
+- focused test surfaces: `tests/m24-evidence-engine.test.mjs` + `tests/m24-startup-purity.test.mjs`;
+- correction/hardening record: `.engineering/evidence/GBS-WO-M24-001-CORRECTION-DELTA.md`;
+- current verdict candidate: `IMPLEMENTED_PENDING_EXACT_HEAD_AUDIT`.
+
+The implementation record intentionally does not embed a reviewed head/tree or final test count because this Work Order update changes the PR head. Those identities and final counts must come from the new immutable exact head after CI and semantic/security audit.
+
 ## EXECUTION BASE
 The sole legal implementation base is admission merge `b77372aae24ccbd2e35c202cab03608cb8f8d5de`. Implementation branches must descend from it or a reviewed `main` descendant preserving this exact admitted contract. Any change to frozen scope/authority/threat model requires governed re-planning/re-admission.
 
 ## CREDIT RULE
-M24 remains `0 / 20` until implementation is merged from exact approved evidence and a separate Evidence Bundle/MODULE_DONE promotion passes. Admission grants execution authority only, never production credit.
+M24 remains `0 / 20` until implementation is merged from exact approved evidence and a separate Evidence Bundle/MODULE_DONE promotion passes. Implementation/CI/review alone never awards production credit.
 
-STOP CONDITION: `GBS_WO_M24_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
+STOP CONDITION: `GBS_WO_M24_001_IMPLEMENTED_PENDING_EXACT_HEAD_AUDIT`.
