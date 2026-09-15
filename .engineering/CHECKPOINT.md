@@ -15,7 +15,7 @@ Status: `GBS_M21_ADMISSION_CANDIDATE`
 - M21 planning reviewed tree: `fb1aea33833fa593b37b4848c0d19858b4056849`
 - M21 planning semantic audit: `5205201788`
 - M21 planning freeze merge: `2b7531c62c438ac9cf8c3382b39621e13be05b8f`
-- M21 admission PR: `PENDING`
+- M21 admission PR: `#219`
 - M21 assurance intensity: `HIGH_ASSURANCE`
 - M21 required mechanisms: `32`
 - Production: `366 / 1088 = 33.64%`
@@ -25,8 +25,8 @@ Status: `GBS_M21_ADMISSION_CANDIDATE`
 - Next legal stage: `REVIEW_AND_MERGE_GBS_M21_ADMISSION`
 
 ## Admission contract
-The active admission candidate authorizes nothing by branch or PR existence. Exact-head semantic review must confirm the frozen Source Pack, the 32-mechanism Work Order, HIGH_ASSURANCE proof families, ownership boundaries, checkpoint agreement and absence of production code/credit changes.
+PR #219 is the sole active admission candidate for the frozen M21 Work Order. The candidate grants no implementation authority by branch or PR existence. Exact-head semantic review must confirm the frozen Source Pack, the 32-mechanism Work Order, HIGH_ASSURANCE proof families, ownership boundaries, checkpoint agreement and absence of production code/credit changes.
 
-If the admission candidate passes audit and merges, its actual merge SHA must be recorded by a separate post-merge execution-base binding. Only that binding may set M21 to `ADMITTED_READY_FOR_IMPLEMENTATION` and release production-code implementation.
+If #219 passes audit and merges, its actual merge SHA must be recorded by a separate post-merge execution-base binding. Only that binding may set M21 to `ADMITTED_READY_FOR_IMPLEMENTATION` and release production-code implementation.
 
 STOP CONDITION: `GBS_M21_ADMISSION_CANDIDATE_READY_FOR_EXACT_HEAD_REVIEW`.
