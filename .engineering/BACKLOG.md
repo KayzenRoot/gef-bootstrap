@@ -38,7 +38,7 @@ This backlog is the canonical weighted production denominator for the single com
 | M18 Resume Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | MODULE_DONE |
 | M19 Project Registry | PRODUCT_INCLUDED | 4 | 3 | 4 | 3 | 14 | MODULE_DONE |
 | M20 Response Contract | PRODUCT_INCLUDED | 3 | 3 | 4 | 3 | 13 | MODULE_DONE |
-| M21 Progress Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | PLANNED |
+| M21 Progress Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | MODULE_DONE |
 | M22 Estimation Engine | PRODUCT_INCLUDED | 4 | 3 | 4 | 4 | 15 | PLANNED |
 | M23 Project Status Engine | PRODUCT_INCLUDED | 3 | 3 | 4 | 3 | 13 | PLANNED |
 | M24 Evidence Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
@@ -92,20 +92,20 @@ This backlog is the canonical weighted production denominator for the single com
 | M41 UGAS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 
 ## Current audited production position
-Approved MODULE_DONE evidence exists for M00-M20. M21 remains `PLANNED` with zero earned weight and no implementation authority until its HIGH_ASSURANCE Source Pack/Work Order is compiled, audited and admitted.
+Approved MODULE_DONE evidence exists for M00-M21. M22 remains `PLANNED` with zero earned weight and no implementation authority until its ELEVATED Source Pack/Work Order is compiled, audited and admitted.
 
 ```text
 TOTAL_WEIGHT   = 1088
-EARNED_WEIGHT  = 366
-REMAINING      = 722
-COMPLETION     = 366 / 1088 = 33.639705...%
+EARNED_WEIGHT  = 384
+REMAINING      = 704
+COMPLETION     = 384 / 1088 = 35.294117...%
 ```
 
 Canonical rounded values:
-- `overallCompletion`: `33.64%`;
-- `remainingCompletion`: `66.36%`;
-- `earnedWeight`: `366`;
-- `remainingWeight`: `722`.
+- `overallCompletion`: `35.29%`;
+- `remainingCompletion`: `64.71%`;
+- `earnedWeight`: `384`;
+- `remainingWeight`: `704`.
 
 Current progression authority is `.engineering/CHECKPOINT.md` + `.engineering/CHECKPOINT.json`. Evidence remains bound to each accepted module's reviewed head/merge and evidence record. Selected historical bindings retained below are descriptive audit history, not a substitute for the current checkpoint:
 - M03: PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc`, run `34727238254`.
@@ -120,6 +120,7 @@ Current progression authority is `.engineering/CHECKPOINT.md` + `.engineering/CH
 - M18: evidence `.engineering/evidence/GBS-WO-M18-001-EVIDENCE.md`, reviewed head `a7303b2f6ec36a6792f416a8db7bd72662fdf575`, tree `199f68199d5dbf76eea24ad1c777b35fc7a00a2d`, implementation merge `424ab545bc22dccad93a2bbecfbb5ab99dcdd335`, semantic audit `5203118861`.
 - M19: evidence `.engineering/evidence/GBS-WO-M19-001-EVIDENCE.md`, reviewed head `0682d7f33427ee9e07368a300afc13f516cd6a66`, tree `48613e9babfd82f65659ef770138f83515a0ddd7`, implementation merge `e525a3cbe24dd27bca6ddd9f2eeaa5f1e766957f`, semantic audit `5203667272`.
 - M20: evidence `.engineering/evidence/GBS-WO-M20-001-EVIDENCE.md`, reviewed head `14a6388ea5070152f5a374b85fe39ca3f839eb62`, tree `1c298a03df48528c4c902748d8cd7360c209df92`, implementation merge `f5cf8f177137a5c9c05efc0cede21328e8624c7e`, semantic audit `5204042557`.
+- M21: evidence `.engineering/evidence/GBS-WO-M21-001-EVIDENCE.md`, reviewed head `8df2af7504381aa4d4f15137f40b25bab2cb01bd`, tree `1879d8c0bbcc112cff3ee83dfd95bdddb1361f22`, implementation merge `0c2de889238771b140b4190da0ba776c0b8784ff`, semantic audit `5205406352`.
 
 ## ETA rule
 ETA remains `NOT_YET_RELIABLE`. Weights are production burden, not days. M22/M45 own mature estimation; M63 owns quantitative executor-performance thresholds.
