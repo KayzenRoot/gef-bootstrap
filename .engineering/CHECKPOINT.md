@@ -1,38 +1,40 @@
 # Checkpoint
 
-Status: `GBS_M21_ADMITTED_READY_FOR_IMPLEMENTATION`
+Status: `GBS_M21_MODULE_DONE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M20`
-- Active module: `GBS-M21 — Progress Engine`
-- Active module status: `ADMITTED_READY_FOR_IMPLEMENTATION`
-- Active Work Order: `GBS-WO-M21-001`
-- M21 planning sessions: `4 / 4 FROZEN`
-- M21 planning gate: `.engineering/gates/M21-PLANNING-GATE.md` (`PASSED`)
-- M21 planning freeze PR: `#218`
-- M21 planning reviewed head: `a2503f885020975907f3cec06cabf474beeacecf`
-- M21 planning reviewed tree: `fb1aea33833fa593b37b4848c0d19858b4056849`
-- M21 planning semantic audit: `5205201788`
-- M21 planning freeze merge: `2b7531c62c438ac9cf8c3382b39621e13be05b8f`
-- M21 admission PR: `#219`
-- M21 admission reviewed head: `882051eeea5ccc8f4494e680e7992f4018d02f81`
-- M21 admission reviewed tree: `50a8677d85fda6efe8fbf254dfe615973989c20b`
-- M21 admission semantic audit: `5205215396`
-- M21 admission merge / legal execution base: `4d037111084d3f119ead388cbb6860b44e5a4071`
+- Completed modules: `GBS-M00` through `GBS-M21`
+- Active module: `GBS-M22 — Estimation Engine`
+- Active module status: `PLANNING_REQUIRED`
+- Active Work Order: `NONE`
+- M21 status: `MODULE_DONE`
 - M21 assurance intensity: `HIGH_ASSURANCE`
-- M21 required mechanisms: `32`
-- Production: `366 / 1088 = 33.64%`
-- Remaining: `722 / 1088 = 66.36%`
-- M21 earned: `0 / 18`
+- M21 required mechanisms: `32 / 32`
+- M21 implementation PR: `#221`
+- M21 reviewed head: `8df2af7504381aa4d4f15137f40b25bab2cb01bd`
+- M21 reviewed tree: `1879d8c0bbcc112cff3ee83dfd95bdddb1361f22`
+- M21 semantic audit: `5205406352`
+- M21 implementation merge: `0c2de889238771b140b4190da0ba776c0b8784ff`
+- M21 evidence: `.engineering/evidence/GBS-WO-M21-001-EVIDENCE.md`
+- M21 focused validation: `76 / 76 PASS` on Ubuntu/Windows/macOS
+- Full repository regression: `835 / 835 PASS`
+- Dependency audit: `0 vulnerabilities`
+- Exact-head workflows: `18 / 18 PASS`
+- Production: `384 / 1088 = 35.29%`
+- Remaining: `704 / 1088 = 64.71%`
+- M21 earned: `18 / 18`
 - Denominator change: `NONE`
-- Next legal stage: `IMPLEMENT_GBS_M21`
+- M22 frozen weight: `15`
+- M22 assurance intensity: `ELEVATED`
+- Next legal stage: `PLAN_AND_FREEZE_GBS_M22`
 
-## Admission outcome
-M21 planning and admission are complete. The frozen Progress Engine may now be implemented only within `GBS-WO-M21-001`, preserving exact credit conservation, denominator epochs, anti-double-counting, completeness, invalidation/retraction, progress regression, split-brain detection, integrity receipts and read-only downstream handoffs.
+## M21 outcome
+M21 now provides the canonical evidence-bound Progress Engine. It derives exact project/module/area/phase progress from explicit denominator units, preserves denominator provenance, prevents duplicate credit, exposes completeness instead of optimistic omission, supports explicit partial allocations, retracts stale credit, preserves legitimate progress regressions, detects split-brain states, and emits integrity-bound snapshots/receipts and read-only owner-safe handoffs.
 
-HIGH_ASSURANCE remains mandatory during implementation. Property-based conservation tests, independent oracle fixtures, graph/cycle/diamond attacks, denominator epoch mix-and-match, selective invalidation, retraction/replay, regression receipts, snapshot/handoff tamper tests, three-OS CI, full regression, dependency audit and CodeQL where triggered are acceptance gates, not optional enhancements.
+HIGH_ASSURANCE Corrections 01-04 closed subset-completeness, epoch-transition, receipt mix-and-match, query/policy binding, project-only handoff, self-authority, order-invariance, regression-continuity and forged evidence-owner attack surfaces. Exact-head semantic review records CRITICAL `0` and HIGH `0`.
 
-Admission grants execution authority only. Production credit remains zero until implementation, exact-head evidence/audit, implementation merge and separate MODULE_DONE promotion complete.
+## Continuation contract
+M22 is frozen in the production Backlog as `GBS-M22 — Estimation Engine`, class `PRODUCT_INCLUDED`, weight `15`, therefore assurance intensity `ELEVATED`. The Master Module Index defines `5` planning sessions. No M22 Source Pack has been frozen and no M22 Work Order exists yet. M21 completion releases only M22 planning/freeze authority; implementation remains forbidden until M22 planning, audit, admission and execution-base binding complete.
 
-STOP CONDITION: `GBS_M21_ADMITTED_READY_FOR_IMPLEMENTATION`.
+STOP CONDITION: `GBS_M21_MODULE_DONE_READY_FOR_M22_PLANNING`.
