@@ -12,7 +12,7 @@ Work Order: `.engineering/work-orders/GBS-WO-M21-001.md`
 Frozen weight: `18`
 Assurance intensity: `HIGH_ASSURANCE`
 Frozen mechanisms: `32`
-Admission PR: `PENDING`
+Admission PR: `#219`
 
 ## Admission scope
 Admission, if approved, authorizes only the bounded implementation of the 32 M21 mechanisms frozen in S01-S04 and compiled into `GBS-WO-M21-001`.
@@ -24,7 +24,7 @@ Admission grants no production credit and does not authorize M21 to define scope
 M12, M17 and M20 are already MODULE_DONE and provide the applicable upstream scope/DoD, checkpoint and delegated-response boundaries. M22/M23/M24/M25/M27/M43/M45 remain separate future owners. Until those modules exist, M21 may consume only explicit injected owner-labeled projections/fixtures matching the frozen contracts; it must never simulate or absorb their authority.
 
 ## HIGH_ASSURANCE admission requirements
-- exact-head semantic review of the admission PR;
+- exact-head semantic review of PR #219;
 - planning gate, Source Pack and Work Order remain mutually consistent;
 - CHECKPOINT.md and CHECKPOINT.json agree;
 - no production code changes in the admission PR;
@@ -32,10 +32,10 @@ M12, M17 and M20 are already MODULE_DONE and provide the applicable upstream sco
 - all 32 mechanism obligations preserved;
 - property/oracle/adversarial requirements remain mandatory;
 - CRITICAL 0 / HIGH 0;
-- admission merge becomes the admission decision event;
-- a post-merge binding records the real admission merge SHA before implementation authority exists.
+- #219 merge becomes the admission decision event;
+- a post-merge binding records the real #219 merge SHA before implementation authority exists.
 
 ## Execution-base rule
-The admission PR itself is not execution authority. After it merges, a separate binding promotion must record the exact merge SHA and change the Work Order/checkpoint to `ADMITTED_READY_FOR_IMPLEMENTATION`. Until that binding merges, M21 production-code implementation remains forbidden.
+PR #219 itself is not execution authority. After it merges, a separate binding promotion must record the exact merge SHA and change the Work Order/checkpoint to `ADMITTED_READY_FOR_IMPLEMENTATION`. Until that binding merges, M21 production-code implementation remains forbidden.
 
-STOP CONDITION: `GBS_WO_M21_001_ADMISSION_CANDIDATE`.
+STOP CONDITION: `GBS_WO_M21_001_ADMISSION_CANDIDATE_PR_219`.
