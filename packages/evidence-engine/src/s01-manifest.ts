@@ -1,7 +1,6 @@
-import type{AuthorityRoot,AuthorityRootInput,AuthorityRootSet,EvidenceAuthorityBoundary,EvidenceBindingLedger,EvidenceClaimMapping,EvidenceClaimMappingEntry,EvidenceIntentCapsule,EvidenceIntentInput,EvidenceKind,EvidencePrivacyMembrane as Never,EvidenceReference,MachineEvidenceItem,MachineEvidenceItemInput,MachineEvidenceManifest,OperationOptions,PrivacyDecision,ProducerAuthorityDecision,ProducerAuthorityEntry,ProducerAuthorityEntryInput,Result,SourceAuthorityIndex,SubjectStateBinding,SubjectStateBindingInput}from'./types.js';
-import{EVIDENCE_KINDS,Guard,compareCodePoint,deepFreeze,digestValue,everySha,fail,isEvidenceKind,isSha256,ok,scopeAllows,sortedUnique,stableStringify,validId,validPortableRef}from'./utils.js';
+import type{AuthorityRoot,AuthorityRootInput,AuthorityRootSet,EvidenceAuthorityBoundary,EvidenceBindingLedger,EvidenceClaimMapping,EvidenceClaimMappingEntry,EvidenceIntentCapsule,EvidenceIntentInput,EvidenceKind,EvidenceReference,MachineEvidenceItem,MachineEvidenceItemInput,MachineEvidenceManifest,OperationOptions,PrivacyDecision,ProducerAuthorityDecision,ProducerAuthorityEntry,ProducerAuthorityEntryInput,Result,SourceAuthorityIndex,SubjectStateBinding,SubjectStateBindingInput}from'./types.js';
+import{Guard,compareCodePoint,deepFreeze,digestValue,everySha,fail,isEvidenceKind,isSha256,ok,scopeAllows,sortedUnique,stableStringify,validId,validPortableRef}from'./utils.js';
 
-type _Never=Never;
 const ROOT_CLASSES=new Set(['CHECKPOINT','DECISION','POLICY','CONTRACT','MODULE_GOVERNANCE','EXTERNAL_CANONICAL']);
 const ROOT_OWNERS=new Set(['M11_DECISION','M16_POLICY','M17_CHECKPOINT','MODULE_GOVERNANCE','EXTERNAL_CANONICAL']);
 const claimPrefixValid=(v:string)=>v==='*'||/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,191}$/.test(v);
