@@ -7,7 +7,7 @@ Assurance intensity: `ELEVATED`
 Freeze deterministic empirical throughput modeling from admitted progress/time observations without pretending production weight is intrinsically temporal or allowing outliers/ordering to manufacture precision.
 
 ## Technologies
-- **Temporal Progress Sample (TPS22)**: exact before/after M21 progress identities plus elapsed-duration observation, denominator compatibility and source binding.
+- **Temporal Progress Sample (TPS22)**: exact before/after M21 progress identities plus positive safe-integer elapsed milliseconds, denominator compatibility and source binding.
 - **Sample Normalization Witness (SNW22)**: canonicalizes units/order, rejects zero-duration positive-work impossibilities, detects duplicate/replayed samples and records exclusions.
 - **Throughput Window (TPW22)**: bounded, lineage/epoch-bound sample window preserving immutable observation identities and explicit window policy.
 - **Robust Throughput Estimator (RTE22)**: deterministic robust center/range over accepted throughput samples using frozen integer/rational arithmetic and deterministic nearest-rank statistics, not floating authority.
@@ -15,7 +15,16 @@ Freeze deterministic empirical throughput modeling from admitted progress/time o
 - **Duration Projection Kernel (DPK22)**: converts remaining work through the admitted empirical throughput model into a duration distribution/range only when BSG22 says estimation is available.
 
 ## Canonical estimation principle
-Observed throughput is derived from actual progress delta divided by explicit elapsed duration. Duration projection is then based on current remaining work divided by an admitted throughput model. Weight affects ETA only through empirically observed throughput history.
+Observed throughput is derived from actual progress delta divided by explicit elapsed milliseconds. Duration projection is then based on current remaining work divided by an admitted throughput model. Weight affects ETA only through empirically observed throughput history.
+
+## Frozen robust model policy
+- Each accepted sample carries an exact positive work delta and positive integer elapsed milliseconds.
+- Canonical sample throughput is represented as an unreduced or reduced exact rational work-per-millisecond value with deterministic digest.
+- Accepted samples are ordered by exact cross-multiplication, never floating-point conversion.
+- Robust model uses deterministic nearest-rank quartiles over the sorted sample throughput set: lower `Q1`, base `Q2/median`, upper `Q3` throughput.
+- Duration interval reverses throughput direction: faster `Q3` yields lower duration bound, median yields base duration, slower `Q1` yields upper duration bound.
+- Duration conversion rounds conservatively to whole milliseconds: lower/base/upper projected duration use deterministic integer ceiling where fractional milliseconds remain, preventing optimistic truncation.
+- No sample is silently removed as an outlier. Exclusion requires explicit frozen policy/reason and remains visible in the normalization witness.
 
 ## Invariants
 1. All canonical progress and throughput math is exact integer/rational; binary floating point cannot decide model authority.
@@ -28,14 +37,18 @@ Observed throughput is derived from actual progress delta divided by explicit el
 8. Sample windows are bounded/cancellable and expose excluded/outlier samples rather than silently deleting them.
 9. Remaining-work identity comes from M21 and cannot be locally recomputed from narrative/project activity.
 10. Zero remaining work may produce zero remaining duration only on a current COMPLETE project baseline, not on incomplete/stale state.
+11. Q1/Q2/Q3 selection uses exact throughput ordering and cannot depend on locale, platform or floating rounding.
+12. Conservative duration rounding cannot shorten the canonical bound below the exact rational projection.
 
 ## ELEVATED obligations
 - independent arithmetic-oracle fixtures;
-- deterministic nearest-rank/median boundary tests;
+- deterministic nearest-rank quartile/median boundary tests for odd/even sample counts;
 - duplicate/replay attacks;
 - outlier and sparse-window tests;
 - denominator mutation samples;
 - zero/negative/impossible-duration attacks;
+- exact cross-multiplication ordering tests with close ratios;
+- conservative integer-ceiling duration tests;
 - permutation invariance and bounded-window stress tests.
 
 STOP CONDITION: `M22_S02_FROZEN`.
