@@ -1,6 +1,6 @@
 # GBS-WO-M21-001 — Admission Record
 
-Status: `ADMITTED`
+Status: `MODULE_DONE`
 Module: `GBS-M21 — Progress Engine`
 Planning freeze PR: `#218`
 Planning reviewed head: `a2503f885020975907f3cec06cabf474beeacecf`
@@ -17,20 +17,31 @@ Admission reviewed head: `882051eeea5ccc8f4494e680e7992f4018d02f81`
 Admission reviewed tree: `50a8677d85fda6efe8fbf254dfe615973989c20b`
 Admission semantic audit: `5205215396`
 Admission merge / sole legal execution base: `4d037111084d3f119ead388cbb6860b44e5a4071`
+Admission binding PR: `#220`
+Admission binding merge: `fbba60d62f51dc09267ec320b991f9e1ccab643a`
+Implementation PR: `#221`
+Implementation reviewed head: `8df2af7504381aa4d4f15137f40b25bab2cb01bd`
+Implementation reviewed tree: `1879d8c0bbcc112cff3ee83dfd95bdddb1361f22`
+Implementation semantic audit: `5205406352`
+Implementation merge: `0c2de889238771b140b4190da0ba776c0b8784ff`
+Evidence: `.engineering/evidence/GBS-WO-M21-001-EVIDENCE.md`
 
-## Admission scope
-Admission authorizes only the bounded implementation of the 32 M21 mechanisms frozen in S01-S04 and compiled into `GBS-WO-M21-001`.
+## Admission scope outcome
+The admitted 32-mechanism M21 scope was implemented and hardened without expanding Progress Engine ownership. Exact integer/rational progress authority, anti-double-counting, explicit completeness, denominator epochs, invalidation/retraction, progress regression, integrity receipts and read-only downstream handoffs remain within the frozen boundary.
 
 ## Preserved restrictions
-Admission grants no production credit and does not authorize M21 to define scope/DoD, promote checkpoints, format operator responses, estimate ETA, compute overall project status, decide evidence/proof sufficiency, collect telemetry, generate benchmark baselines, mutate Git/provider state or weaken HIGH_ASSURANCE proof requirements.
+M21 does not define scope/DoD, promote checkpoints, format operator responses, estimate ETA, compute overall project status, decide underlying evidence/proof sufficiency, collect telemetry, generate benchmark baselines or mutate Git/provider state. M22/M23/M24/M25/M27/M43/M45 retain their separate ownership.
 
-## Dependency and future-owner contract
-M12, M17 and M20 are MODULE_DONE and provide applicable upstream scope/DoD, checkpoint and delegated-response boundaries. M22/M23/M24/M25/M27/M43/M45 remain separate future owners. M21 may consume only explicit injected owner-labeled projections/fixtures matching the frozen contracts and must never simulate or absorb their authority.
+## HIGH_ASSURANCE closure
+- focused M21 validation: `76/76` on Ubuntu, Windows and macOS;
+- full repository regression: `835/835`;
+- dependency audit: `0 vulnerabilities`;
+- Security CodeQL: `PASS`;
+- exact-head workflows: `18/18 PASS`;
+- semantic audit: CRITICAL `0`, HIGH `0`;
+- Corrections 01-04 closed the discovered integrity/authority attack surfaces before merge.
 
-## Exact execution-base rule
-PR #219 passed exact-head semantic review with CRITICAL 0 / HIGH 0 and merged as `4d037111084d3f119ead388cbb6860b44e5a4071`. That merge is the sole legal M21 admission base. Implementation branches must descend from it or a reviewed `main` descendant preserving the admitted contract. Earlier candidate branch states are non-authoritative.
+## Credit outcome
+The separate evidence-backed promotion grants the frozen `18 / 18` M21 production weight. Denominator remains `1088` and no planning/PR activity is credited independently.
 
-## Credit rule
-Admission grants execution authority only. M21 remains `0 / 18` until implementation, HIGH_ASSURANCE evidence, exact-head semantic review, implementation merge and separate MODULE_DONE promotion complete.
-
-STOP CONDITION: `GBS_WO_M21_001_ADMITTED_READY_FOR_IMPLEMENTATION_BINDING`.
+STOP CONDITION: `GBS_WO_M21_001_MODULE_DONE`.
