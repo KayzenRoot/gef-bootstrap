@@ -1,12 +1,22 @@
 # GBS-WO-M24-001 — Implement Evidence Engine
 
-Status: `COMPILED_NOT_ADMITTED`
+Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
 Risk: `HIGH`
 Assurance intensity: `MAX_ASSURANCE`
 Module: `GBS-M24 — Evidence Engine`
 Canonical package: `packages/evidence-engine`
 Canonical weight: `20`
 Planning gate: `.engineering/gates/M24-PLANNING-GATE.md` (`PASSED`)
+Planning freeze PR: `#234`
+Planning reviewed head: `8dd4e01fda63e2b7dc675f50ddf9fa642a31390e`
+Planning reviewed tree: `80fed9df828d96329151ca9a6609bd53def2ae65`
+Planning semantic audit: `5212775762`
+Planning freeze merge: `997b52458d5a6e352f425a9f91dc2652d8b49d92`
+Admission PR: `#235`
+Admission reviewed head: `eb54c49d89bfe064404d388151f9358d09a96d17`
+Admission reviewed tree: `9775ecfb678fdc524e9fc4fd835e330b21896c4e`
+Admission semantic audit: `5212787159`
+Admission merge / sole legal execution base: `b77372aae24ccbd2e35c202cab03608cb8f8d5de`
 
 ## OBJECTIVE
 Implement the provider-neutral Evidence Engine frozen in M24 S01-S04. The engine must validate machine evidence against exact producer authority rooted in already-governed external canonical authority, exact governed subject state and current validity dependencies; emit immutable evidence receipts; preserve stale/conflict/invalidation truth; provide an exact M21 acceptance handoff; and provide evidence context to future proof/assurance modules without assuming their authority.
@@ -73,10 +83,10 @@ Implementation must explicitly defend against producer spoofing, evidence-kind e
 - dedicated exact-head semantic security/integrity review;
 - unresolved CRITICAL `0`, HIGH `0`.
 
-## ADMISSION RULE
-This Work Order grants no implementation authority while `COMPILED_NOT_ADMITTED`. Implementation is legal only after the M24 planning PR passes exact-head semantic audit, merges, a separate admission PR passes audit/merges, and a post-merge binding records the admission merge SHA as the sole legal execution base.
+## EXECUTION BASE
+The sole legal implementation base is admission merge `b77372aae24ccbd2e35c202cab03608cb8f8d5de`. Implementation branches must descend from it or a reviewed `main` descendant preserving this exact admitted contract. Any change to frozen scope/authority/threat model requires governed re-planning/re-admission.
 
 ## CREDIT RULE
-M24 remains `0 / 20` until implementation is merged from exact approved evidence and a separate Evidence Bundle/MODULE_DONE promotion passes. Planning/admission/PR count earns no production credit.
+M24 remains `0 / 20` until implementation is merged from exact approved evidence and a separate Evidence Bundle/MODULE_DONE promotion passes. Admission grants execution authority only, never production credit.
 
-STOP CONDITION: `GBS_WO_M24_001_COMPILED_NOT_ADMITTED`.
+STOP CONDITION: `GBS_WO_M24_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
