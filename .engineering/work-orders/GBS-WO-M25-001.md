@@ -1,6 +1,6 @@
 # GBS-WO-M25-001 — Implement Proof Graph
 
-Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
+Status: `IMPLEMENTED_PENDING_EXACT_HEAD_AUDIT`
 Risk: `HIGH`
 Assurance intensity: `MAX_ASSURANCE`
 Module: `GBS-M25 — Proof Graph`
@@ -16,7 +16,11 @@ Admission PR: `#240`
 Admission reviewed head: `001353587f8784d70502ef80cef3af686980a26a`
 Admission reviewed tree: `f55f178361b4a584e1ee2281c5db193dcd9cb117`
 Admission review: `5213839166`
-Admission merge / execution base: `2a9eba4ca11cec9463cb501ec7f64b26f1d96825`
+Admission merge / admitted execution base: `2a9eba4ca11cec9463cb501ec7f64b26f1d96825`
+Admission binding PR: `#241`
+Admission binding merge: `e00aa192902cd93323121357ecc6308c573c21be`
+Implementation PR: `#242`
+Correction delta: `.engineering/evidence/GBS-WO-M25-001-CORRECTION-DELTA.md`
 
 ## OBJECTIVE
 Implement the deterministic provider-neutral proof graph frozen in M25 S01-S05. It evaluates owner-declared proof obligations from current M24 evidence facts and nested proof dependencies, preserves exact proof states, supports validity-bound carry-forward, selectively invalidates affected proof descendants and emits read-only downstream context.
@@ -30,30 +34,21 @@ All 42 frozen mechanisms:
 - S05: CIG25, PIV25, TIS25, UDW25, RCP25, PSC25, PIR25, PRG25, PSW25, DPH25.
 
 ## CORE CONTRACTS
-- proof states: `PROVEN | UNPROVEN | STALE | CONFLICT | INDETERMINATE | TRUNCATED`;
-- canonical claim meaning/ownership remains upstream;
-- M24 evidence validity/acceptance remains authoritative and is consumed with current provenance;
-- expressions are owner-declared `ALL | ANY | AT_LEAST`;
-- selected support is explicit and recomputable;
-- duplicate semantic support counts once;
-- cycles/namespace divergence remain explicit invalid graph state;
-- fingerprints bind declared relevant validity inputs;
-- full reuse requires current relevant claim/obligation/policy/evidence/dependency inputs;
-- partial reuse reevaluates affected ancestors;
-- targeted invalidation requires complete dependency knowledge, otherwise impact widens;
-- reopen projection is read-only;
-- proof snapshots bind graph, results, support, fingerprints, M24 context and predecessor identity;
-- history duplicate/divergent/truncated state remains visible;
-- DPH25 grants no DoD/progress/status/checkpoint/assurance authority;
-- semantic core is deterministic, startup-pure, bounded/cancellable and uses injected domain-separated SHA-256.
+Proof states are `PROVEN | UNPROVEN | STALE | CONFLICT | INDETERMINATE | TRUNCATED`. Canonical claim meaning/ownership remains upstream. M24 evidence validity remains authoritative and is consumed through recomputable provenance. Sufficiency expressions remain owner-declared `ALL | ANY | AT_LEAST`. Replay cannot add support. Cycles and namespace divergence fail closed. Full carry-forward is validity/source-authority bound; partial reuse forces affected ancestor recomputation. Invalidation is targeted only with complete knowledge and otherwise widens. Snapshot/history are independently recomputable. DPH25 has no DoD/progress/status/checkpoint/assurance authority. Core semantics remain deterministic, startup-pure, bounded/cancellable and use injected domain-separated SHA-256.
 
-## REQUIRED EVIDENCE
-Implementation acceptance requires registry coverage of all 42 IDs, M24 provenance integration, ALL/ANY/AT_LEAST and nested/diamond/cycle graphs, duplicate/replay support, all M24 evidence states, fingerprint current/stale/conflict/indeterminate behavior, full/partial/recompute carry-forward, targeted/widened invalidation, snapshot/history recomputation, bounded/cancellable large graphs, startup purity, Ubuntu/Windows/macOS focused CI, full regression, `npm audit --audit-level=low`, Security CodeQL and exact-head MAX_ASSURANCE semantic/integrity review with CRITICAL `0`, HIGH `0`.
+## IMPLEMENTATION STATE
+- package/workspace/lockfile wiring complete;
+- 42/42 mechanism registry complete;
+- M24 provenance recomputation implemented;
+- graph/sufficiency/fingerprint/carry-forward/invalidation/snapshot/history/handoff implemented;
+- source-authority drift bound into evaluation, snapshot and carry-forward compatibility;
+- focused test matrix and full regression implemented;
+- first CI type error and carry-forward source-authority HIGH finding are closed in the Correction Delta.
 
-## EXECUTION BASE
-The admitted implementation base is `2a9eba4ca11cec9463cb501ec7f64b26f1d96825`. Implementation branches must descend from this merge or a reviewed main descendant preserving the admitted contract.
+## REQUIRED FINAL EVIDENCE
+Before merge the exact final head must pass focused Ubuntu/Windows/macOS tests, full repository regression, `npm audit --audit-level=low`, Security CodeQL and dedicated MAX_ASSURANCE semantic/integrity review with unresolved CRITICAL `0` and HIGH `0`.
 
 ## CREDIT RULE
-Admission grants execution authority only. M25 remains `0 / 20`; production remains `432 / 1088 = 39.71%` until implementation is merged from approved evidence and separately promoted MODULE_DONE.
+Implementation/audit work grants no production credit. M25 remains `0 / 20`; production remains `432 / 1088 = 39.71%` until approved implementation merge and separate Evidence Bundle + MODULE_DONE promotion.
 
-STOP CONDITION: `GBS_WO_M25_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
+STOP CONDITION: `GBS_WO_M25_001_IMPLEMENTED_PENDING_EXACT_HEAD_AUDIT`.
