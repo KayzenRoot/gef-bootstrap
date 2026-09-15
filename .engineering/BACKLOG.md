@@ -40,7 +40,7 @@ This backlog is the canonical weighted production denominator for the single com
 | M20 Response Contract | PRODUCT_INCLUDED | 3 | 3 | 4 | 3 | 13 | MODULE_DONE |
 | M21 Progress Engine | CORE_REQUIRED | 4 | 4 | 5 | 5 | 18 | MODULE_DONE |
 | M22 Estimation Engine | PRODUCT_INCLUDED | 4 | 3 | 4 | 4 | 15 | MODULE_DONE |
-| M23 Project Status Engine | PRODUCT_INCLUDED | 3 | 3 | 4 | 3 | 13 | PLANNED |
+| M23 Project Status Engine | PRODUCT_INCLUDED | 3 | 3 | 4 | 3 | 13 | MODULE_DONE |
 | M24 Evidence Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
 | M25 Proof Graph | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
 | M26 HEDS Delta Review | CORE_REQUIRED | 5 | 4 | 5 | 5 | 19 | PLANNED |
@@ -92,20 +92,20 @@ This backlog is the canonical weighted production denominator for the single com
 | M41 UGAS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 
 ## Current audited production position
-Approved MODULE_DONE evidence exists for M00-M22. M23 remains `PLANNED` with zero earned weight and no implementation authority until its STANDARD_PLUS Source Pack/Work Order is compiled, audited and admitted.
+Approved MODULE_DONE evidence exists for M00-M23. M24 is the next active production module at `PLANNING_REQUIRED`; it has zero earned weight and no implementation authority until its MAX_ASSURANCE Source Pack/Work Order is planned, audited, admitted and execution-base bound.
 
 ```text
 TOTAL_WEIGHT   = 1088
-EARNED_WEIGHT  = 399
-REMAINING      = 689
-COMPLETION     = 399 / 1088 = 36.672794...%
+EARNED_WEIGHT  = 412
+REMAINING      = 676
+COMPLETION     = 412 / 1088 = 37.867647...%
 ```
 
 Canonical rounded values:
-- `overallCompletion`: `36.67%`;
-- `remainingCompletion`: `63.33%`;
-- `earnedWeight`: `399`;
-- `remainingWeight`: `689`.
+- `overallCompletion`: `37.87%`;
+- `remainingCompletion`: `62.13%`;
+- `earnedWeight`: `412`;
+- `remainingWeight`: `676`.
 
 Current progression authority is `.engineering/CHECKPOINT.md` + `.engineering/CHECKPOINT.json`. Evidence remains bound to each accepted module's reviewed head/merge and evidence record. Selected historical bindings retained below are descriptive audit history, not a substitute for the current checkpoint:
 - M03: PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc`, run `34727238254`.
@@ -122,9 +122,10 @@ Current progression authority is `.engineering/CHECKPOINT.md` + `.engineering/CH
 - M20: evidence `.engineering/evidence/GBS-WO-M20-001-EVIDENCE.md`, reviewed head `14a6388ea5070152f5a374b85fe39ca3f839eb62`, tree `1c298a03df48528c4c902748d8cd7360c209df92`, implementation merge `f5cf8f177137a5c9c05efc0cede21328e8624c7e`, semantic audit `5204042557`.
 - M21: evidence `.engineering/evidence/GBS-WO-M21-001-EVIDENCE.md`, reviewed head `8df2af7504381aa4d4f15137f40b25bab2cb01bd`, tree `1879d8c0bbcc112cff3ee83dfd95bdddb1361f22`, implementation merge `0c2de889238771b140b4190da0ba776c0b8784ff`, semantic audit `5205406352`.
 - M22: evidence `.engineering/evidence/GBS-WO-M22-001-EVIDENCE.md`, reviewed head `efc1cf1640bac4356dd7e0e79458f0243ec0398d`, tree `e842a08a8e6a4f9edd7a08948f7ceb347076dd0e`, implementation merge `48548157573cf221e7105d82a0b2f8189588d1d6`, semantic audit `5210169322`.
+- M23: evidence `.engineering/evidence/GBS-WO-M23-001-EVIDENCE.md`, reviewed head `0509c337aeb77b1dd2d18d1f3408a595dbc09207`, tree `e9504ba3207f17253dd08a088b2465a7b40741fd`, implementation merge `e32b9c9cd30a72a884c307372c12c870c879bf7b`, semantic audit `5212599068`.
 
 ## ETA rule
-Backlog weights remain production burden, not time. M22 now owns empirical ETA/forecast estimation from admitted progress/time evidence; this backlog never converts weights into dates. M45 owns benchmark baselines and M63 owns quantitative executor-performance thresholds.
+Backlog weights remain production burden, not time. M22 owns empirical ETA/forecast estimation from admitted progress/time evidence; this backlog never converts weights into dates. M45 owns benchmark baselines and M63 owns quantitative executor-performance thresholds.
 
 ## Frozen decisions
 - 61 release-blocking weights remain accepted and unchanged.

@@ -1,6 +1,6 @@
 # GBS-WO-M23-001 - Admission Record
 
-Status: `ADMITTED`
+Status: `MODULE_DONE`
 Module: `GBS-M23 - Project Status Engine`
 Work Order: `.engineering/work-orders/GBS-WO-M23-001.md`
 Frozen weight: `13`
@@ -17,36 +17,43 @@ Admission reviewed head: `c4a55d7a00ccabbb46be452b1460296af97682dc`
 Admission reviewed tree: `91bc79120abc784ce97b61d3138691467af366ad`
 Admission semantic audit: `5211413037`
 Admission merge / sole legal execution base: `14db2ce8f5c7753978b5e7d8a40bcfbcb36f8d89`
+Admission binding merge: `3bee2f2f1880fe89d25d186d706df002fb25bb08`
+Implementation PR: `#232`
+Implementation reviewed head: `0509c337aeb77b1dd2d18d1f3408a595dbc09207`
+Implementation reviewed tree: `e9504ba3207f17253dd08a088b2465a7b40741fd`
+Implementation semantic audit: `5212599068`
+Implementation merge: `e32b9c9cd30a72a884c307372c12c870c879bf7b`
+Evidence: `.engineering/evidence/GBS-WO-M23-001-EVIDENCE.md`
 
 ## Admission scope
-Admission authorizes only the bounded implementation of the 30 M23 mechanisms frozen in S01-S05 and compiled into `GBS-WO-M23-001`.
+Admission authorized only the bounded implementation of the 30 M23 mechanisms frozen in S01-S05 and compiled into `GBS-WO-M23-001`.
 
 ## Preserved restrictions
-Admission grants no production credit and does not authorize M23 to promote checkpoints, calculate resume/re-entry truth, calculate progress, recalculate ETA/forecast, accept evidence/proof/assurance truth, collect telemetry, generate benchmark baselines, own executor-performance modeling, mutate Git/provider state or format operator presentation.
+M23 does not promote checkpoints, calculate resume/re-entry truth, calculate progress, recalculate ETA/forecast, accept future evidence/proof/assurance truth, collect telemetry, generate benchmark baselines, own executor-performance modeling, mutate Git/provider state or format operator presentation.
 
-## Frozen status guarantees
+## Frozen status guarantees — VERIFIED
 - lifecycle, schedule health and continuation readiness remain separate dimensions;
 - M17/M18/M21/M22 inputs remain verified read-only owner-bound facts;
-- generic injected completion/condition facts use only `EXTERNAL_CANONICAL | M27_ASSURANCE` owner labels, with only `EXTERNAL_CANONICAL` executable until M27 exists;
-- generic inputs cannot impersonate native M17/M18/M21/M22 owners;
+- generic injected completion/condition facts cannot impersonate native upstream owners;
 - `100%` progress alone never authorizes `COMPLETE`;
-- current `COMPLETE` yields readiness `NOT_APPLICABLE` unless a stronger reopen/recovery/blocker/conflict fact applies;
+- current `COMPLETE` yields readiness `NOT_APPLICABLE` unless stronger canonical facts apply;
 - blocker omission is not blocker resolution;
-- stale last-known active blockers remain conservatively constraining until valid resolution;
-- M17 next legal action remains read-only and cannot be replaced by M23;
+- stale last-known blockers remain constraining until exact resolution;
+- M17 next legal action remains read-only;
 - schedule risk cannot create lifecycle blockers or rewrite progress;
 - COMPLETE reopen requires explicit SRW23 authority;
 - transition/reopen history is immutable, replay-safe, split-brain-aware and explicitly bounded/truncated;
-- snapshots/receipts/handoffs are deterministic, owner-bound and independently verifiable;
+- snapshots/receipts/handoffs bind exact material source identity and are independently verifiable;
 - semantic core remains startup-pure, bounded/cancellable and SHA-256 injected fail-closed.
 
-## STANDARD_PLUS execution obligations
-Implementation must prove source/owner spoof rejection, mandatory/optional source availability, exact lifecycle precedence, false-completion resistance, completion owner allowlists, blocker omission/replay/stale-resolution behavior, recovery/blocking/warning/conflict precedence, M17/M18 next-action consistency, completed-project readiness semantics, deadline-boundary classification, dimension independence, COMPLETE reopen authority, transition replay/split-brain/truncation, snapshot/handoff tamper resistance, startup purity, three-OS focused CI, full regression, dependency audit and exact-head semantic review with CRITICAL `0` and HIGH `0`.
+## STANDARD_PLUS execution result
+Exact implementation head `0509c337aeb77b1dd2d18d1f3408a595dbc09207` passed the focused Ubuntu/Windows/macOS matrix (`51 / 51` each), full regression (`922 / 922`), strict typecheck, dependency audit with zero vulnerabilities, Security CodeQL and exact-head semantic review with CRITICAL `0` / HIGH `0`.
 
-## Exact execution-base rule
-PR #230 passed exact-head semantic audit with CRITICAL `0` / HIGH `0` and merged as `14db2ce8f5c7753978b5e7d8a40bcfbcb36f8d89`. That merge is the sole legal M23 execution base. Implementation branches must descend from it or a reviewed `main` descendant preserving this admitted contract. Earlier candidate states are non-authoritative.
+The review-driven S05 correction is recorded in `.engineering/evidence/GBS-WO-M23-001-CORRECTION-DELTA.md` and was closed before merge.
 
-## Credit rule
-Admission grants execution authority only. M23 remains `0 / 13` until implementation, STANDARD_PLUS evidence, exact-head semantic review, implementation merge and separate MODULE_DONE promotion complete.
+## Credit rule closure
+Implementation merge `e32b9c9cd30a72a884c307372c12c870c879bf7b` plus the approved Evidence Bundle satisfy the prerequisites for the separate M23 MODULE_DONE promotion. The promotion grants exactly `13 / 13` M23 weight and changes no denominator.
 
-STOP CONDITION: `GBS_WO_M23_001_ADMITTED_READY_FOR_IMPLEMENTATION_BINDING`.
+M24 receives no implementation authority from this record; after M23 promotion it is only `PLANNING_REQUIRED`.
+
+STOP CONDITION: `GBS_WO_M23_001_MODULE_DONE`.
