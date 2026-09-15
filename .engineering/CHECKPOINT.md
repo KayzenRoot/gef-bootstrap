@@ -1,29 +1,32 @@
 # Checkpoint
 
-Status: `GBS_M21_PLANNING_FROZEN`
+Status: `GBS_M21_ADMISSION_CANDIDATE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
 - Completed modules: `GBS-M00` through `GBS-M20`
 - Active module: `GBS-M21 — Progress Engine`
-- Active module status: `PLANNING_FROZEN_WORK_ORDER_COMPILED_NOT_ADMITTED`
+- Active module status: `ADMISSION_CANDIDATE`
 - Active Work Order: `GBS-WO-M21-001`
 - M21 planning sessions: `4 / 4 FROZEN`
 - M21 planning gate: `.engineering/gates/M21-PLANNING-GATE.md` (`PASSED`)
+- M21 planning freeze PR: `#218`
+- M21 planning reviewed head: `a2503f885020975907f3cec06cabf474beeacecf`
+- M21 planning reviewed tree: `fb1aea33833fa593b37b4848c0d19858b4056849`
+- M21 planning semantic audit: `5205201788`
+- M21 planning freeze merge: `2b7531c62c438ac9cf8c3382b39621e13be05b8f`
+- M21 admission PR: `#219`
 - M21 assurance intensity: `HIGH_ASSURANCE`
 - M21 required mechanisms: `32`
 - Production: `366 / 1088 = 33.64%`
 - Remaining: `722 / 1088 = 66.36%`
 - M21 earned: `0 / 18`
 - Denominator change: `NONE`
-- Next legal stage: `AUDIT_AND_ADMIT_GBS_M21`
+- Next legal stage: `REVIEW_AND_MERGE_GBS_M21_ADMISSION`
 
-## M21 planning outcome
-M21 is frozen as the canonical Progress Engine over explicit approved denominator units and externally supplied accepted evidence/proof-state bindings. It owns exact weighted progress math, hierarchical rollups, anti-double-counting, partial-credit algebra, completeness, invalidation/retraction, denominator epochs, split-brain detection, progress regression receipts, integrity snapshots and read-only handoffs to M20/M22/M23.
+## Admission contract
+PR #219 is the sole active admission candidate for the frozen M21 Work Order. The candidate grants no implementation authority by branch or PR existence. Exact-head semantic review must confirm the frozen Source Pack, the 32-mechanism Work Order, HIGH_ASSURANCE proof families, ownership boundaries, checkpoint agreement and absence of production code/credit changes.
 
-HIGH_ASSURANCE requirements include randomized conservation/property tests, independent calculation-oracle fixtures, graph/cycle/diamond attacks, epoch mix-and-match rejection, stale-credit retraction, split-brain progress handling and proof that legitimate progress can decrease when validity is lost.
+If #219 passes audit and merges, its actual merge SHA must be recorded by a separate post-merge execution-base binding. Only that binding may set M21 to `ADMITTED_READY_FOR_IMPLEMENTATION` and release production-code implementation.
 
-## Continuation contract
-Planning and Work Order compilation grant no implementation authority and no production credit. `GBS-WO-M21-001` remains `COMPILED_NOT_ADMITTED`. The next legal increment is exact-head planning audit followed by a separate admission promotion and post-merge execution-base binding.
-
-STOP CONDITION: `GBS_M21_PLANNING_FROZEN_READY_FOR_ADMISSION_AUDIT`.
+STOP CONDITION: `GBS_M21_ADMISSION_CANDIDATE_READY_FOR_EXACT_HEAD_REVIEW`.
