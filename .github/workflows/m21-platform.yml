@@ -28,7 +28,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm audit --audit-level=low
       - run: npm run typecheck
-      - run: node --test tests/m21-progress-engine.test.mjs tests/m21-high-assurance.test.mjs tests/m21-startup-purity.test.mjs
+      - run: node --test tests/m21-progress-engine.test.mjs tests/m21-high-assurance.test.mjs tests/m21-correction-02-high.test.mjs tests/m21-startup-purity.test.mjs
   regression:
     runs-on: ubuntu-latest
     steps:
