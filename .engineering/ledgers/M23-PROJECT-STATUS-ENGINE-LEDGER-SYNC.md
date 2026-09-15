@@ -22,15 +22,20 @@ Total frozen M23 mechanisms: `30`.
 - M18 remains resume/re-entry and drift owner.
 - M21 remains progress/completeness owner.
 - M22 remains ETA/forecast/deadline-comparison/confidence owner.
-- M24/M25/M27 remain evidence/proof/assurance owners and may later supply explicit completion acceptance through a contract.
+- M24/M25/M27 remain evidence/proof/assurance owners; M27 may later supply completion acceptance through the frozen forward-compatible owner label.
 - M43/M45/M63 remain telemetry, benchmark and executor-performance owners.
 - M20/M47 remain machine/human response and operator-presentation owners.
 - M29+ remain Git/provider mutation owners.
 
-Until future evidence/assurance owners exist, completion acceptance may only be an explicit injected canonical owner-labeled input permitted by the Work Order. M23 must never impersonate those owners or derive acceptance from progress alone.
+## Frozen injected owner vocabulary
+- Completion outcome: `EXTERNAL_CANONICAL | M27_ASSURANCE`.
+- Explicit external status condition: `EXTERNAL_CANONICAL | M27_ASSURANCE`.
+- Until M27 exists, only `EXTERNAL_CANONICAL` is executable.
+- Native M17/M18/M21/M22 facts must arrive only through verified native contracts. Generic injected inputs cannot claim those owner identities.
 
 ## Core truth rules
 - lifecycle, schedule health and continuation readiness are separate dimensions;
+- continuation readiness includes `NOT_APPLICABLE` for a currently complete project when no stronger reopen/recovery/blocker/conflict condition applies;
 - `100%` progress means no current M21 remaining progress, not accepted completion;
 - `COMPLETE` requires current accepted completion authority plus full complete M21 progress and no dominating blocker/recovery/conflict;
 - deadlines never create lifecycle blockers;
@@ -45,6 +50,6 @@ Until future evidence/assurance owners exist, completion acceptance may only be 
 No Technology Ledger item is promoted merely to increase mechanism count. The 30 mechanisms above are module-local controls justified by authority separation, false-completion prevention, blocker integrity, next-action safety, schedule independence and immutable status history.
 
 ## STANDARD_PLUS emphasis
-M23 requires tight ownership boundaries, deterministic precedence, explicit failure/unknown states, adversarial source-binding tests, completion/reopen tests, blocker omission/replay tests, status-dimension independence, snapshot/receipt tamper tests, bounded history, platform matrix, full regression and semantic exact-head audit.
+M23 requires tight ownership boundaries, deterministic precedence, explicit failure/unknown/not-applicable states, adversarial source-binding and owner-spoof tests, completion/reopen tests, blocker omission/replay tests, status-dimension independence, snapshot/receipt tamper tests, bounded history, platform matrix, full regression and semantic exact-head audit.
 
 STOP CONDITION: `M23_LEDGER_SYNC_FROZEN`.
