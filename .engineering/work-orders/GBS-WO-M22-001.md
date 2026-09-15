@@ -1,12 +1,22 @@
 # GBS-WO-M22-001 — Implement Estimation Engine
 
-Status: `COMPILED_NOT_ADMITTED`
+Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
 Risk: `MEDIUM`
 Assurance intensity: `ELEVATED`
 Module: `GBS-M22 — Estimation Engine`
 Canonical package: `packages/estimation-engine`
 Canonical weight: `15`
 Planning gate: `.engineering/gates/M22-PLANNING-GATE.md` (`PASSED`)
+Planning freeze PR: `#223`
+Planning reviewed head: `5a38baadde66afb9af56cc11c29707908571c276`
+Planning reviewed tree: `492cc5796a997f5c0d2d0d5c7243c3ee0fa3ed7f`
+Planning semantic audit: `5205471859`
+Planning freeze merge: `e205c45a5ae3cfd7faa7404fd13a8284a4f2a649`
+Admission PR: `#224`
+Admission reviewed head: `bea5d53195f29bca7e8b58a4b1903fa6387485ff`
+Admission reviewed tree: `a965b400a3d02a39c5881adff77a9890abd3153e`
+Admission semantic audit: `5205732573`
+Admission merge / sole legal execution base: `5c0b854f81a43afc608e32063a3e70d70cf73ac9`
 
 ## Objective
 Implement a deterministic, uncertainty-aware Estimation Engine that derives ETA/forecast ranges from admitted M21 progress history and explicit temporal observations without treating production weight as time, fabricating missing baselines, fitting forecasts to desired dates or absorbing progress/status/telemetry ownership.
@@ -74,7 +84,7 @@ Progress calculation, overall project-status calculation, evidence/proof accepta
 ## Evidence and acceptance
 Exact admitted base/head/tree; focused test count; arithmetic-oracle evidence; three-OS matrix; full regression; dependency audit; CodeQL when triggered; semantic review; zero unresolved CRITICAL/HIGH; implementation merge; separate Evidence Bundle/MODULE_DONE promotion.
 
-## Admission rule
-This Work Order grants no implementation authority until a separate exact-head admission audit/merge binds the frozen Source Pack and a post-merge execution-base binding promotes Work Order/checkpoint to `ADMITTED_READY_FOR_IMPLEMENTATION`. Planning earns no production credit.
+## Admission binding
+PR #224 passed exact-head semantic review and merged as `5c0b854f81a43afc608e32063a3e70d70cf73ac9`. This Work Order is admitted. Implementation branches must descend from that merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
 
-STOP CONDITION: `GBS_WO_M22_001_COMPILED_NOT_ADMITTED`.
+STOP CONDITION: `GBS_WO_M22_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
