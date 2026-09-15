@@ -1,6 +1,6 @@
 # GBS-WO-M24-001 — Implement Evidence Engine
 
-Status: `IMPLEMENTED_PENDING_EXACT_HEAD_AUDIT`
+Status: `MODULE_DONE`
 Risk: `HIGH`
 Assurance intensity: `MAX_ASSURANCE`
 Module: `GBS-M24 — Evidence Engine`
@@ -18,89 +18,62 @@ Admission reviewed tree: `9775ecfb678fdc524e9fc4fd835e330b21896c4e`
 Admission semantic audit: `5212787159`
 Admission merge / sole legal execution base: `b77372aae24ccbd2e35c202cab03608cb8f8d5de`
 Implementation PR: `#237`
+Reviewed head: `f6ca835d70fe16ed98734aceb80e7e9bdc0e144f`
+Reviewed tree: `48730596fe346a49c4fbffd20172b4b85e194b3f`
+Exact-head semantic/security audit: `5213631406`
+Implementation merge: `9cd231caca8736cd3da2fea7e83d421d27be07a5`
+Evidence bundle: `.engineering/evidence/GBS-WO-M24-001-EVIDENCE.md`
 Correction delta: `.engineering/evidence/GBS-WO-M24-001-CORRECTION-DELTA.md`
 
-## OBJECTIVE
-Implement the provider-neutral Evidence Engine frozen in M24 S01-S04. The engine must validate machine evidence against exact producer authority rooted in already-governed external canonical authority, exact governed subject state and current validity dependencies; emit immutable evidence receipts; preserve stale/conflict/invalidation truth; provide an exact M21 acceptance handoff; and provide evidence context to future proof/assurance modules without assuming their authority.
+## OBJECTIVE — CLOSED
+Implement the provider-neutral Evidence Engine frozen in M24 S01-S04. The completed engine validates machine evidence against exact externally rooted producer authority and governed subject/dependency state, emits immutable evidence semantics, preserves stale/conflict/invalidation truth, projects exact M24 evidence acceptance to M21, and supplies recomputable evidence context to future proof/assurance modules without assuming their authority.
 
-## CONTEXT
-M23 is MODULE_DONE. Production remains `412 / 1088 = 37.87%`. M12 currently verifies that required SATISFIED DoD criteria contain evidence references but does not validate the evidence objects themselves. M21 already reserves `M24_EVIDENCE` as an accepted external evidence owner for progress eligibility. M25/M27 remain future proof/assurance owners.
-
-## REQUIRED IMPLEMENTATION
-All 32 frozen mechanisms:
+## IMPLEMENTED MECHANISMS
+All `32 / 32` frozen mechanisms are materialized:
 - S01: EIC24, EAB24, MEM24, SAI24, SSB24, ECM24, EBL24, EPM24;
 - S02: EVR24, EAR24, ERR24, ESR24, ECR24, ERS24, RPG24, EIR24;
 - S03: ESD24, XSB24, XRB24, DAB24, MSW24, PCE24, BIC24, CBB24;
 - S04: EVG24, EFG24, ECG24, OAG24, DID24, SBW24, EAC24, DPC24.
 
-## REQUIRED CONTRACTS
-1. Machine evidence items have stable IDs, explicit kind, producer authority, exact subject binding, source/attestation identity, validity binding, claim mapping and semantic digest.
-2. Producer owner strings alone are never authority; SAI24 must authorize producer + evidence kind/scope.
-3. SAI24 itself must bind an exact verified `AuthorityRootSet` from already-governed checkpoint/decision/policy/contract/module authority; caller-built, self-issued, stale or conflicting roots cannot authorize acceptance.
-4. M24 cannot mint/broaden/refresh its own trust root or use its own acceptance output as the sole root authority.
-5. M24 cannot accept its own synthetic acceptance as independent underlying evidence.
-6. MEM24 is deterministic under semantically equivalent ordering and rejects divergent duplicate IDs.
-7. EPM24 blocks raw secret/private-path/unbounded-log material from portable evidence semantics.
-8. Receipts are immutable and independently recomputable.
-9. Acceptance state is exactly `ACCEPTED | REJECTED | STALE | CONFLICT | UNKNOWN`.
-10. Receipt replay is idempotent/visible and cannot amplify evidence independence.
-11. Invalidation is targeted when dependency knowledge is complete and conservatively widened when incomplete.
-12. Semantic identities use injected domain-separated SHA-256; external object IDs remain typed opaque identities.
-13. Exact-head evidence binds exact governed source head/tree relationship where applicable; merge-ref/provider execution identities do not silently substitute source identity.
-14. Cross-project/lineage/revision/runtime/platform/policy reuse requires exact match or explicit owning compatibility witness.
-15. Mix-and-match/splice attacks fail closed even when individual fragments verify separately.
-16. EVG24 recomputes evidence validity from exact current authority-root/producer/subject/dependency inputs.
-17. Freshness is exactly `CURRENT | STALE | CONFLICT | INDETERMINATE` and dependency/state based.
-18. Set completeness is exactly `COMPLETE | PARTIAL | CONFLICT | INDETERMINATE | TRUNCATED` and never implies proof/assurance.
-19. EAC24 projects only M21-compatible M24-owned evidence acceptance and never weight/percentage/denominator/progress.
-20. DPC24 preserves accepted/rejected/stale/conflict/unknown evidence facts and unresolved gaps while explicitly denying proof/assurance authority.
-21. M12 criterion state remains read-only; M24 validates evidence refs but cannot rewrite DoD semantics.
-22. All scalable traversals are bounded/cancellable with explicit incomplete/truncated state.
-23. Semantic core is startup-pure with no ambient filesystem/network/process/provider/clock access.
+## CLOSED CONTRACT
+The accepted implementation preserves the frozen contract:
+1. stable machine evidence IDs, explicit kinds/producers/claims/exact subject identities;
+2. external trusted authority roots, never owner-string or M24 self-authority;
+3. producer/kind/claim scope bounds;
+4. canonical, order-independent manifests and conflict-preserving duplicate handling;
+5. privacy-safe evidence references;
+6. immutable and recomputable validation/decision receipts;
+7. acceptance states `ACCEPTED | REJECTED | STALE | CONFLICT | UNKNOWN`;
+8. visible/idempotent replay and explicit truncation;
+9. targeted invalidation with conservative widening when dependency knowledge is incomplete;
+10. typed semantic/external identity domains and exact source-head/tree/runtime/platform/policy binding;
+11. explicit trusted CBB24 authorization for non-exact compatibility translation;
+12. EVG24 full recomputation before authoritative acceptance;
+13. freshness `CURRENT | STALE | CONFLICT | INDETERMINATE`;
+14. set completeness `COMPLETE | PARTIAL | CONFLICT | INDETERMINATE | TRUNCATED` without proof/assurance upgrade;
+15. EAC24 M21 projection without weight/percentage/denominator/progress authority;
+16. DPC24 evidence-fact handoff without M25 proof or M27 assurance authority;
+17. M12 criterion state remains read-only;
+18. bounded/cancellable startup-pure semantic core with injected SHA-256.
 
-## MAX_ASSURANCE THREAT / FAILURE MODEL
-Implementation must explicitly defend against producer spoofing, evidence-kind escalation, caller-built/self-issued/stale/conflicting trust roots, root-scope escalation, forged/resealed payloads, cross-subject/head/tree splice, replay amplification, stale evidence resurrection, duplicate-ID split brain, invalidation narrowing under incomplete knowledge, digest-domain/algorithm confusion, exact-head/merge-ref confusion, self-attestation loops, raw secret/private-path leakage, truncation presented as completeness, authority bleed into M12/M21/M25/M27, malformed digest/provider capability and cancellation/budget failure.
+## REVIEW-DRIVEN HARDENING
+MAX_ASSURANCE inspection closed all identified HIGH-class contract shortcuts before merge, including trust-anchor enforcement, no bare-receipt authority, no first/newest-wins, intent/item binding, identity-domain enforcement, canonical full-object verification, BIC24/CBB24 separation, trusted compatibility authorization, EVG24 CBB enforcement and producer-chain trust. See the correction delta for the complete record.
 
-## REQUIRED EVIDENCE / TESTS
-- all 32 mechanism IDs represented and mapped to frozen sessions;
-- deterministic/property-style manifest, authority-index and evidence-set tests;
-- producer authority/kind matrix including unknown/spoofed owners;
-- authority-root self-issuance, staleness, conflict and scope-escalation fixtures;
-- malicious reseal/tamper fixtures at every material digest/receipt boundary;
-- exact project/lineage/work-order/module/head/tree/runtime/platform/policy mix tests;
-- provider merge-ref versus intended source-head tests;
-- replay/split-brain/invalidation/stale resurrection tests;
-- incomplete dependency conservative-widening tests;
-- privacy membrane secret/private path/log tests;
-- M12 integration without criterion-authority bleed;
-- M21 EAC24 exact compatibility and anti-weight/anti-progress tests;
-- DPC24 no-proof/no-assurance-authority tests;
-- bounded/cancellable stress with explicit truncation;
-- malformed digest/provider/capability failure injection;
-- startup-purity test;
-- focused Ubuntu/Windows/macOS CI;
-- full repository regression;
-- `npm audit --audit-level=low`;
-- Security CodeQL;
-- dedicated exact-head semantic security/integrity review;
-- unresolved CRITICAL `0`, HIGH `0`.
+## ACCEPTED EVIDENCE
+- focused M24: `38 / 38 PASS` on Ubuntu;
+- focused M24: `38 / 38 PASS` on Windows;
+- focused M24: `38 / 38 PASS` on macOS;
+- full repository regression: `961 / 961 PASS`;
+- CBB trusted-translation regression: `PASS`;
+- strict TypeScript: `PASS`;
+- `npm audit --audit-level=low`: `0 vulnerabilities`;
+- Security CodeQL: `PASS`;
+- exact-head workflows: `21 / 21 SUCCESS`;
+- semantic/security verdict: `APPROVED`;
+- CRITICAL: `0`;
+- HIGH: `0`.
 
-## IMPLEMENTATION RECORD
-- implementation branch: `gbs-wo-m24-001-evidence-engine`;
-- implementation PR: `#237`;
-- package: `packages/evidence-engine`;
-- frozen mechanisms materialized: `32 / 32`;
-- MAX_ASSURANCE CI workflow: `.github/workflows/m24-platform.yml`;
-- focused test surfaces: `tests/m24-evidence-engine.test.mjs` + `tests/m24-startup-purity.test.mjs`;
-- correction/hardening record: `.engineering/evidence/GBS-WO-M24-001-CORRECTION-DELTA.md`;
-- current verdict candidate: `IMPLEMENTED_PENDING_EXACT_HEAD_AUDIT`.
+## CREDIT RULE — SATISFIED BY SEPARATE PROMOTION
+Implementation merge alone awarded no production credit. The separate evidence/governance promotion closes this Work Order at `MODULE_DONE` and grants exactly `20 / 20` when its promotion PR merges. Denominator remains `1088`; resulting production becomes `432 / 1088 = 39.71%`.
 
-The implementation record intentionally does not embed a reviewed head/tree or final test count because this Work Order update changes the PR head. Those identities and final counts must come from the new immutable exact head after CI and semantic/security audit.
-
-## EXECUTION BASE
-The sole legal implementation base is admission merge `b77372aae24ccbd2e35c202cab03608cb8f8d5de`. Implementation branches must descend from it or a reviewed `main` descendant preserving this exact admitted contract. Any change to frozen scope/authority/threat model requires governed re-planning/re-admission.
-
-## CREDIT RULE
-M24 remains `0 / 20` until implementation is merged from exact approved evidence and a separate Evidence Bundle/MODULE_DONE promotion passes. Implementation/CI/review alone never awards production credit.
-
-STOP CONDITION: `GBS_WO_M24_001_IMPLEMENTED_PENDING_EXACT_HEAD_AUDIT`.
+STOP CONDITION: `GBS_WO_M24_001_MODULE_DONE`.

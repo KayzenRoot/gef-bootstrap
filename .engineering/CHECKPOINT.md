@@ -1,41 +1,22 @@
 # Checkpoint
 
-Status: `GBS_M24_ADMITTED_READY_FOR_IMPLEMENTATION`
+Status: `GBS_M24_MODULE_DONE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M23`
-- Active module: `GBS-M24 — Evidence Engine`
-- Active module status: `ADMITTED_READY_FOR_IMPLEMENTATION`
-- Active Work Order: `GBS-WO-M24-001`
+- Completed modules: `GBS-M00` through `GBS-M24`
+- Active module: `GBS-M25 — Proof Graph`
+- Active module status: `PLANNING_REQUIRED`
+- Active Work Order: `NONE`
 
-## M23 accepted evidence
-- M23 status: `MODULE_DONE`
-- M23 implementation PR: `#232`
-- M23 reviewed head: `0509c337aeb77b1dd2d18d1f3408a595dbc09207`
-- M23 reviewed tree: `e9504ba3207f17253dd08a088b2465a7b40741fd`
-- M23 implementation semantic audit: `5212599068`
-- M23 implementation merge: `e32b9c9cd30a72a884c307372c12c870c879bf7b`
-- M23 evidence: `.engineering/evidence/GBS-WO-M23-001-EVIDENCE.md`
-- M23 promotion PR: `#233`
-- M23 promotion semantic audit: `5212680985`
-- M23 promotion merge: `925c9f2390ba20fc4b8a3113e83e1519ee07c17a`
-- M23 earned: `13 / 13`
-
-## Production position
-- Production: `412 / 1088 = 37.87%`
-- Remaining: `676 / 1088 = 62.13%`
-- Denominator change: `NONE`
-
-## M24 planning/admission identity
-- M24 module: `GBS-M24 — Evidence Engine`
+## M24 accepted evidence
+- M24 status: `MODULE_DONE`
 - M24 class: `CORE_REQUIRED`
 - M24 frozen weight: `20`
 - M24 assurance intensity: `MAX_ASSURANCE`
 - M24 planning sessions: `4 / 4 FROZEN`
-- M24 planning gate: `.engineering/gates/M24-PLANNING-GATE.md` (`PASSED`)
-- M24 ledger sync: `.engineering/ledgers/M24-EVIDENCE-ENGINE-LEDGER-SYNC.md` (`FROZEN`)
 - M24 required mechanisms: `32`
+- M24 planning gate: `.engineering/gates/M24-PLANNING-GATE.md` (`PASSED`)
 - M24 planning freeze PR: `#234`
 - M24 planning reviewed head: `8dd4e01fda63e2b7dc675f50ddf9fa642a31390e`
 - M24 planning reviewed tree: `80fed9df828d96329151ca9a6609bd53def2ae65`
@@ -45,20 +26,46 @@ Status: `GBS_M24_ADMITTED_READY_FOR_IMPLEMENTATION`
 - M24 admission reviewed head: `eb54c49d89bfe064404d388151f9358d09a96d17`
 - M24 admission reviewed tree: `9775ecfb678fdc524e9fc4fd835e330b21896c4e`
 - M24 admission semantic audit: `5212787159`
-- M24 admission merge / sole legal execution base: `b77372aae24ccbd2e35c202cab03608cb8f8d5de`
-- M24 Work Order: `GBS-WO-M24-001`
-- M24 Work Order status: `ADMITTED_READY_FOR_IMPLEMENTATION`
-- M24 earned: `0 / 20`
-- Next legal stage: `IMPLEMENT_GBS_M24`
+- M24 legal execution base: `b77372aae24ccbd2e35c202cab03608cb8f8d5de`
+- M24 implementation PR: `#237`
+- M24 reviewed head: `f6ca835d70fe16ed98734aceb80e7e9bdc0e144f`
+- M24 reviewed tree: `48730596fe346a49c4fbffd20172b4b85e194b3f`
+- M24 implementation semantic/security audit: `5213631406`
+- M24 implementation merge: `9cd231caca8736cd3da2fea7e83d421d27be07a5`
+- M24 evidence: `.engineering/evidence/GBS-WO-M24-001-EVIDENCE.md`
+- M24 correction delta: `.engineering/evidence/GBS-WO-M24-001-CORRECTION-DELTA.md`
+- M24 focused tests: `38 / 38 PASS` on Ubuntu, Windows and macOS
+- M24 full repository regression: `961 / 961 PASS`
+- M24 dependency audit: `0 vulnerabilities`
+- M24 Security CodeQL: `PASS`
+- M24 exact-head workflows: `21 / 21 SUCCESS`
+- M24 CRITICAL findings: `0`
+- M24 HIGH findings: `0`
+- M24 earned: `20 / 20`
 
-## M24 admitted contract
-M24 is admitted as the provider-neutral evidence trust boundary. Implementation must preserve an external canonical trust root for producer authority, exact subject/revision binding, immutable receipt/invalidation history, typed digest domains, dependency-based freshness and strict separation between evidence acceptance, proof sufficiency, assurance and progress.
+## Production position
+- Production: `432 / 1088 = 39.71%`
+- Remaining: `656 / 1088 = 60.29%`
+- Denominator change: `NONE`
 
-`M24_EVIDENCE` may label an acceptance projection to M21 but cannot calculate weight/progress. M24 cannot rewrite M12 criterion state, decide M25 proof sufficiency or decide M27 assurance. Evidence set completeness is never equivalent to claim proven or assurance passed.
+## M25 activation boundary
+- M25 module: `GBS-M25 — Proof Graph`
+- M25 class: `CORE_REQUIRED`
+- M25 frozen weight: `20`
+- M25 assurance intensity: `MAX_ASSURANCE`
+- M25 canonical planning sessions: `5`
+- M25 current planning state: `PLANNING_REQUIRED`
+- M25 current Work Order: `NONE`
+- M25 earned: `0 / 20`
+- M25 implementation authority: `NONE`
+- next legal stage: `PLAN_AND_FREEZE_GBS_M25`
 
-MAX_ASSURANCE requires property/determinism coverage, trust-root and producer adversarial matrices, exact-head/merge-ref and cross-binding attacks, replay/stale/split-brain/invalidation testing, privacy/truncation tests, three-OS CI, full regression, dependency audit, CodeQL and dedicated exact-head semantic security/integrity review with CRITICAL `0` / HIGH `0`.
+## M25 source boundary
+M25 is the proof-relationship/sufficiency owner. It may consume M24 DPC24 evidence facts and their recomputable provenance, but accepted evidence alone is never equivalent to a proven claim. M25 must preserve M12 DoD ownership, M21 progress/denominator ownership, M24 evidence-validity ownership and future M27 assurance ownership.
+
+Canonical planning skeleton already exists as five empty sessions under `planning/modules/area-g-evidence-and-review/m25-proof-graph/`: proof IDs, dependencies, fingerprints, carry-forward and invalidation. Planning must freeze those contracts before any M25 Work Order may be admitted.
 
 ## Credit rule
-Admission grants implementation authority only. M24 remains `0 / 20`; production remains `412 / 1088 = 37.87%` until implementation is independently evidenced, audited, merged and separately promoted MODULE_DONE.
+M25 remains `0 / 20`; production remains `432 / 1088 = 39.71%` throughout planning/admission. No planning artifact, mechanism count or Work Order compilation earns M25 production credit.
 
-STOP CONDITION: `GBS_M24_ADMITTED_READY_FOR_IMPLEMENTATION`.
+STOP CONDITION: `GBS_M24_MODULE_DONE_READY_FOR_M25_PLANNING`.
