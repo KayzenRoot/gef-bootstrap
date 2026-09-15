@@ -1,12 +1,18 @@
 # GBS-WO-M21-001 — Implement Progress Engine
 
-Status: `COMPILED_NOT_ADMITTED`
+Status: `ADMISSION_CANDIDATE`
 Risk: `HIGH`
 Assurance intensity: `HIGH_ASSURANCE`
 Module: `GBS-M21 — Progress Engine`
 Canonical package: `packages/progress-engine`
 Canonical weight: `18`
 Planning gate: `.engineering/gates/M21-PLANNING-GATE.md` (`PASSED`)
+Planning freeze PR: `#218`
+Planning reviewed head: `a2503f885020975907f3cec06cabf474beeacecf`
+Planning reviewed tree: `fb1aea33833fa593b37b4848c0d19858b4056849`
+Planning semantic audit: `5205201788`
+Planning freeze merge: `2b7531c62c438ac9cf8c3382b39621e13be05b8f`
+Admission PR: `PENDING`
 
 ## Objective
 Implement a deterministic, evidence-bound, reversible Progress Engine that computes exact project/module/area/phase progress from the approved denominator without intuitive credit, double counting, stale-credit retention or downstream ownership leakage.
@@ -72,6 +78,6 @@ Scope/DoD definition, checkpoint promotion, response formatting, ETA estimation,
 Exact admitted base/head/tree; focused and property-test counts; platform matrix; full regression; dependency audit; CodeQL when triggered; independent calculation-oracle evidence; semantic review; zero unresolved CRITICAL/HIGH; implementation merge; separate Evidence Bundle/MODULE_DONE promotion.
 
 ## Admission rule
-This Work Order grants no implementation authority until a separate exact-head admission audit/merge binds the frozen Source Pack and promotes both Work Order and checkpoint to `ADMITTED_READY_FOR_IMPLEMENTATION`. Planning earns no production credit.
+The admission PR is a candidate only. It grants no execution authority until exact-head audit succeeds, the admission PR merges, and a separate post-merge binding records the real admission merge SHA as the sole legal M21 execution base. Only that binding may change this status to `ADMITTED_READY_FOR_IMPLEMENTATION`.
 
-STOP CONDITION: `GBS_WO_M21_001_COMPILED_NOT_ADMITTED`.
+STOP CONDITION: `GBS_WO_M21_001_ADMISSION_CANDIDATE`.
