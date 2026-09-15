@@ -1,6 +1,6 @@
 # GBS-WO-M21-001 — Implement Progress Engine
 
-Status: `ADMISSION_CANDIDATE`
+Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
 Risk: `HIGH`
 Assurance intensity: `HIGH_ASSURANCE`
 Module: `GBS-M21 — Progress Engine`
@@ -13,6 +13,10 @@ Planning reviewed tree: `fb1aea33833fa593b37b4848c0d19858b4056849`
 Planning semantic audit: `5205201788`
 Planning freeze merge: `2b7531c62c438ac9cf8c3382b39621e13be05b8f`
 Admission PR: `#219`
+Admission reviewed head: `882051eeea5ccc8f4494e680e7992f4018d02f81`
+Admission reviewed tree: `50a8677d85fda6efe8fbf254dfe615973989c20b`
+Admission semantic audit: `5205215396`
+Admission merge / sole legal execution base: `4d037111084d3f119ead388cbb6860b44e5a4071`
 
 ## Objective
 Implement a deterministic, evidence-bound, reversible Progress Engine that computes exact project/module/area/phase progress from the approved denominator without intuitive credit, double counting, stale-credit retention or downstream ownership leakage.
@@ -77,7 +81,7 @@ Scope/DoD definition, checkpoint promotion, response formatting, ETA estimation,
 ## Evidence and acceptance
 Exact admitted base/head/tree; focused and property-test counts; platform matrix; full regression; dependency audit; CodeQL when triggered; independent calculation-oracle evidence; semantic review; zero unresolved CRITICAL/HIGH; implementation merge; separate Evidence Bundle/MODULE_DONE promotion.
 
-## Admission rule
-PR #219 is the admission candidate. It grants no execution authority until exact-head audit succeeds, #219 merges, and a post-merge binding records the real admission merge SHA as the sole legal M21 execution base. Only that binding may change this status to `ADMITTED_READY_FOR_IMPLEMENTATION`.
+## Admission binding
+PR #219 passed exact-head semantic review and merged as `4d037111084d3f119ead388cbb6860b44e5a4071`. This Work Order is now admitted. Implementation branches must descend from that admission merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
 
-STOP CONDITION: `GBS_WO_M21_001_ADMISSION_CANDIDATE_PR_219`.
+STOP CONDITION: `GBS_WO_M21_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
