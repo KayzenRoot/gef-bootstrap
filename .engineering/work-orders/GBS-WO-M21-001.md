@@ -12,7 +12,7 @@ Planning reviewed head: `a2503f885020975907f3cec06cabf474beeacecf`
 Planning reviewed tree: `fb1aea33833fa593b37b4848c0d19858b4056849`
 Planning semantic audit: `5205201788`
 Planning freeze merge: `2b7531c62c438ac9cf8c3382b39621e13be05b8f`
-Admission PR: `PENDING`
+Admission PR: `#219`
 
 ## Objective
 Implement a deterministic, evidence-bound, reversible Progress Engine that computes exact project/module/area/phase progress from the approved denominator without intuitive credit, double counting, stale-credit retention or downstream ownership leakage.
@@ -78,6 +78,6 @@ Scope/DoD definition, checkpoint promotion, response formatting, ETA estimation,
 Exact admitted base/head/tree; focused and property-test counts; platform matrix; full regression; dependency audit; CodeQL when triggered; independent calculation-oracle evidence; semantic review; zero unresolved CRITICAL/HIGH; implementation merge; separate Evidence Bundle/MODULE_DONE promotion.
 
 ## Admission rule
-The admission PR is a candidate only. It grants no execution authority until exact-head audit succeeds, the admission PR merges, and a separate post-merge binding records the real admission merge SHA as the sole legal M21 execution base. Only that binding may change this status to `ADMITTED_READY_FOR_IMPLEMENTATION`.
+PR #219 is the admission candidate. It grants no execution authority until exact-head audit succeeds, #219 merges, and a post-merge binding records the real admission merge SHA as the sole legal M21 execution base. Only that binding may change this status to `ADMITTED_READY_FOR_IMPLEMENTATION`.
 
-STOP CONDITION: `GBS_WO_M21_001_ADMISSION_CANDIDATE`.
+STOP CONDITION: `GBS_WO_M21_001_ADMISSION_CANDIDATE_PR_219`.
