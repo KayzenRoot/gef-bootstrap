@@ -1,12 +1,22 @@
 # GBS-WO-M23-001 - Implement Project Status Engine
 
-Status: `COMPILED_NOT_ADMITTED`
+Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
 Risk: `MEDIUM`
 Assurance intensity: `STANDARD_PLUS`
 Module: `GBS-M23 - Project Status Engine`
 Canonical package: `packages/project-status-engine`
 Canonical weight: `13`
 Planning gate: `.engineering/gates/M23-PLANNING-GATE.md` (`PASSED`)
+Planning freeze PR: `#229`
+Planning reviewed head: `1ad4c4075621fec2e008b73384b1b9efd693a867`
+Planning reviewed tree: `81ce2dc42e7594cb21da743739cfd4a8d8a7c67d`
+Planning semantic audit: `5211392448`
+Planning freeze merge: `c609d1b89aa320b75bf049752d6b8d8865f39cd1`
+Admission PR: `#230`
+Admission reviewed head: `c4a55d7a00ccabbb46be452b1460296af97682dc`
+Admission reviewed tree: `91bc79120abc784ce97b61d3138691467af366ad`
+Admission semantic audit: `5211413037`
+Admission merge / sole legal execution base: `14db2ce8f5c7753978b5e7d8a40bcfbcb36f8d89`
 
 ## OBJECTIVE
 Implement a deterministic, authority-bounded Project Status Engine that derives lifecycle status, schedule health and continuation readiness from verified read-only M17/M18/M21/M22 facts plus explicit canonical completion/condition inputs, without recalculating upstream truth or fabricating completion/blockers/actions.
@@ -132,7 +142,7 @@ STANDARD_PLUS proof families:
 ## REVIEW FORMAT
 Review in Brazilian Portuguese. Report exact base/head/tree, changed files, mechanism coverage, focused tests by OS, full regression, typecheck/audit/CodeQL, ownership findings, CRITICAL/HIGH counts, known risks and proposed Checkpoint Delta. `Completed` text without evidence is not proof.
 
-## STOP CONDITION
-This Work Order grants no implementation authority until a separate exact-head admission audit/merge binds the frozen Source Pack and a post-merge execution-base binding promotes it to `ADMITTED_READY_FOR_IMPLEMENTATION`.
+## Admission binding
+PR #230 passed exact-head semantic review and merged as `14db2ce8f5c7753978b5e7d8a40bcfbcb36f8d89`. This Work Order is admitted. Implementation branches must descend from that merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
 
-STOP CONDITION: `GBS_WO_M23_001_COMPILED_NOT_ADMITTED`.
+STOP CONDITION: `GBS_WO_M23_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
