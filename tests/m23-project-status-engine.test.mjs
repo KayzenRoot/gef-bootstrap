@@ -32,7 +32,7 @@ function checkpointFixture({claimStatus='ACTIVE',blockers=[],availableCapabiliti
  return{checkpoint,observedAuthorityIdentities,availableCapabilities,readiness,handoff};
 }
 
-function progressFixture(state='FULL'){
+function progressFixture(state='PARTIAL'){
  const units=[{unitId:'u-a',moduleId:'M23A',areaId:'area-f',phaseId:'construction',maxWeight:5},{unitId:'u-b',moduleId:'M23B',areaId:'area-f',phaseId:'construction',maxWeight:5}];
  const manifest=createDenominatorIntegrityManifest({projectId:PROJECT,lineageDigest:PROGRESS_LINEAGE,epochId:'epoch-1',scopeDigest:H('scope'),dodDigest:H('dod'),policyDigest:H('policy'),units},opts).value;
  const bs=units.map((u,i)=>createEvidenceAcceptanceBinding({unitId:u.unitId,owner:'M24_EVIDENCE',state:state==='FULL'?'ACCEPTED':state==='ZERO'?'REJECTED':i===0?'ACCEPTED':'REJECTED',sourceIdentityDigest:H(`src-${u.unitId}`),validityBindingDigest:H(`valid-${u.unitId}`)},opts).value);
