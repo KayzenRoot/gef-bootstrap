@@ -1,6 +1,6 @@
 # GBS-WO-M21-001 — Implement Progress Engine
 
-Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
+Status: `MODULE_DONE`
 Risk: `HIGH`
 Assurance intensity: `HIGH_ASSURANCE`
 Module: `GBS-M21 — Progress Engine`
@@ -17,71 +17,53 @@ Admission reviewed head: `882051eeea5ccc8f4494e680e7992f4018d02f81`
 Admission reviewed tree: `50a8677d85fda6efe8fbf254dfe615973989c20b`
 Admission semantic audit: `5205215396`
 Admission merge / sole legal execution base: `4d037111084d3f119ead388cbb6860b44e5a4071`
+Admission binding merge: `fbba60d62f51dc09267ec320b991f9e1ccab643a`
+Implementation PR: `#221`
+Implementation reviewed head: `8df2af7504381aa4d4f15137f40b25bab2cb01bd`
+Implementation reviewed tree: `1879d8c0bbcc112cff3ee83dfd95bdddb1361f22`
+Implementation semantic audit: `5205406352`
+Implementation merge: `0c2de889238771b140b4190da0ba776c0b8784ff`
+Evidence: `.engineering/evidence/GBS-WO-M21-001-EVIDENCE.md`
 
 ## Objective
 Implement a deterministic, evidence-bound, reversible Progress Engine that computes exact project/module/area/phase progress from the approved denominator without intuitive credit, double counting, stale-credit retention or downstream ownership leakage.
 
-## Required implementation
-Implement all 32 frozen M21 mechanisms:
+## Implemented scope
+All 32 frozen M21 mechanisms were implemented:
 - PBC21, DIM21, PAB21, CEG21, WCU21, SDB21, EAB21, DMW21;
 - WPV21, HPG21, ADCL21, PRE21, PCA21, PPP21, CCW21, PQP21;
 - PIV21, CRT21, PDS21, DDG21, SCQ21, CDG21, PSW21, PRR21;
 - PSC21, PIR21, PSD21, PCE21, DPMH21, EBH21, SPH21, PSS21.
 
-## Architecture constraints
-1. TypeScript/Node, library-first, startup-pure semantic core.
-2. No direct filesystem/network/Git/provider/process access in semantic logic.
-3. M21 consumes explicit canonical projections and accepted evidence/proof-state bindings; it never decides underlying evidence sufficiency.
-4. Canonical progress math uses exact integer/rational numerator/denominator representation, never binary floating point as credit authority.
-5. Atomic denominator units are unique; graph aliases/multiple paths cannot duplicate credit.
-6. Full module credit requires externally accepted completion/evidence state. Partial credit requires explicit allocated sub-units and accepted binding.
-7. Missing required denominator observations cannot be omitted to inflate completion.
-8. Optional tracks excluded from the production denominator cannot contribute to its numerator.
-9. Invalidated/stale/conflicted credit is retractable/quarantined and contributes zero active earned weight.
-10. Legitimate progress decreases are preserved and receipted rather than smoothed away.
-11. Denominator changes create a new epoch and require an explicit mutation witness with before/after completion impact.
-12. Split-brain/divergent progress states fail closed; no newest-wins policy.
-13. M21 does not own ETA (M22), project status (M23), evidence/proof decisions (M24/M25/M27), telemetry (M43), or benchmark baselines (M45).
-14. M20/M22/M23 handoffs are read-only, owner-labeled and integrity-bound.
-15. Traversals/queries are bounded and cancellable; incomplete dependency knowledge widens invalidation conservatively.
-16. Injected SHA-256 only; invalid/failing digest capability fails closed.
+## Architecture closure
+1. TypeScript/Node library-first semantic core is startup-pure.
+2. Semantic logic has no direct filesystem/network/Git/provider/process access.
+3. Progress is calculated from explicit canonical projections and accepted external evidence/proof bindings only.
+4. Canonical credit uses exact integer/rational numerator/denominator representation.
+5. Atomic units are unique and graph aliases/multiple paths cannot duplicate credit.
+6. Missing/invalid/stale/conflicted observations do not manufacture completion.
+7. Invalid credit is retractable/quarantined and legitimate regressions are preserved.
+8. Denominator changes require a new epoch plus explicit mutation witness.
+9. Split-brain states fail closed.
+10. M20/M22/M23 handoffs are owner-labeled, query-bound and integrity-bound.
+11. M21 cannot self-issue evidence acceptance, and public evidence-owner admission is limited to frozen external authority domains.
+12. Traversals/queries are bounded/cancellable and injected SHA-256 fails closed.
 
-## Expected package surface
-- `packages/progress-engine/package.json`
-- `packages/progress-engine/tsconfig.json`
-- `packages/progress-engine/src/types.ts`
-- bounded S01-S04 implementation units and `src/public.ts`
-- no CLI/rendering/provider ownership.
+## HIGH_ASSURANCE evidence
+- focused M21 suites: `76/76 PASS` on Ubuntu, Windows and macOS;
+- deterministic property/oracle coverage includes `160` randomized legal partitions;
+- full repository regression: `835/835 PASS`;
+- dependency audit: `0 vulnerabilities`;
+- Security CodeQL: `PASS`;
+- exact-head triggered workflows: `18/18 PASS`;
+- exact-head semantic audit: `5205406352`, CRITICAL `0`, HIGH `0`.
 
-## HIGH_ASSURANCE proof families
-- baseline/denominator/authority construction and tamper tests;
-- over-credit, negative weight, duplicate-unit and optional-track contamination attacks;
-- partial-credit explicit-allocation tests;
-- property-based numerator conservation across randomized legal partitions;
-- independent recomputation oracle fixtures;
-- hierarchical graph cycle/diamond/alias/double-count attacks;
-- exact fraction and presentation-rounding separation tests;
-- missing-unit/completeness tests;
-- denominator mutation/epoch compatibility and mix-and-match tests;
-- selective invalidation, conservative widening and stale-credit quarantine tests;
-- retraction transaction tamper/replay/idempotency tests;
-- progress split-brain and regression-receipt tests;
-- snapshot/integrity receipt independent recomputation;
-- M20 delegated metric, M22 baseline and M23 status handoff ownership tests;
-- stale snapshot/handoff binding tests;
-- cancellation/budget/digest failure/startup purity;
-- Ubuntu/Windows/macOS focused matrix;
-- full repository regression and dependency audit;
-- Security CodeQL when triggered;
-- exact-head semantic review with zero unresolved CRITICAL/HIGH.
+Corrections 01-04 are part of the accepted implementation and are documented in the Evidence Bundle.
 
-## Out of scope
-Scope/DoD definition, checkpoint promotion, response formatting, ETA estimation, project-status calculation, evidence/proof generation/acceptance, telemetry collection, benchmark generation, Git/provider mutation and operator presentation.
+## Ownership closure
+Scope/DoD definition, checkpoint promotion, response formatting, ETA estimation, project-status calculation, evidence/proof generation/acceptance truth, telemetry collection, benchmark generation, Git/provider mutation and operator presentation remain out of M21 scope.
 
-## Evidence and acceptance
-Exact admitted base/head/tree; focused and property-test counts; platform matrix; full regression; dependency audit; CodeQL when triggered; independent calculation-oracle evidence; semantic review; zero unresolved CRITICAL/HIGH; implementation merge; separate Evidence Bundle/MODULE_DONE promotion.
+## Production credit
+Evidence-backed MODULE_DONE promotion awards `18 / 18` M21 weight. The production denominator remains unchanged at `1088`.
 
-## Admission binding
-PR #219 passed exact-head semantic review and merged as `4d037111084d3f119ead388cbb6860b44e5a4071`. This Work Order is now admitted. Implementation branches must descend from that admission merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
-
-STOP CONDITION: `GBS_WO_M21_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
+STOP CONDITION: `GBS_WO_M21_001_MODULE_DONE`.
