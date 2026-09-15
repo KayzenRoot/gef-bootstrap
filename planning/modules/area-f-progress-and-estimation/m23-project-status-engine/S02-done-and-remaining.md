@@ -26,7 +26,7 @@ When multiple conditions apply, the first applicable rule wins:
 
 ## Completion rules
 1. `FULL_PROGRESS` is necessary but not sufficient for `COMPLETE`.
-2. Completion outcome authority must be external to M23 and explicit. Until M24/M25/M27 exist, only a canonical injected owner allowed by the Work Order may supply it; M23 must never simulate an assurance/evidence owner.
+2. Completion outcome authority must be external to M23 and explicit. Allowed owner labels are exactly those frozen in S01: `EXTERNAL_CANONICAL | M27_ASSURANCE`. Until M27 exists, only `EXTERNAL_CANONICAL` is executable; M23 must reject or treat as unsupported any attempt to simulate future `M27_ASSURANCE` authority.
 3. A rejected completion outcome keeps lifecycle at `AWAITING_ACCEPTANCE` unless a blocker/recovery/conflict dominates.
 4. A stale prior acceptance cannot authorize a fresh `COMPLETE` snapshot.
 5. A progress regression after prior completion requires the lifecycle to reopen when a valid reopen/invalidation witness exists; status is not monotonic.
@@ -41,6 +41,7 @@ When multiple conditions apply, the first applicable rule wins:
 6. Partial/stale/conflicting M21 completeness cannot be upgraded by M23.
 7. Reopening a completed status preserves the prior completed snapshot and emits a revision/transition record.
 8. Caller preference cannot choose lifecycle state.
+9. Generic injected completion facts cannot claim native M17/M18/M21/M22 ownership.
 
 ## STANDARD_PLUS obligations
 - exact `0`, partial and `1/1` boundary tests;
@@ -48,7 +49,7 @@ When multiple conditions apply, the first applicable rule wins:
 - blocker/recovery/conflict dominance tests;
 - zero-progress-but-active-work test;
 - progress regression after completion tests;
-- forged completion owner and stale-validity attacks;
+- forged completion owner, unsupported future-owner and stale-validity attacks;
 - deterministic resolver permutation tests.
 
 STOP CONDITION: `M23_S02_FROZEN`.
