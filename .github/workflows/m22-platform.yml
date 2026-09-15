@@ -28,7 +28,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm audit --audit-level=low
       - run: npm run typecheck
-      - run: node --test tests/m22-estimation-engine.test.mjs tests/m22-elevated.test.mjs tests/m22-correction-01-elevated.test.mjs tests/m22-correction-02-elevated.test.mjs tests/m22-startup-purity.test.mjs
+      - run: node --test tests/m22-estimation-engine.test.mjs tests/m22-elevated.test.mjs tests/m22-correction-01-elevated.test.mjs tests/m22-correction-02-elevated.test.mjs tests/m22-correction-03-elevated.test.mjs tests/m22-startup-purity.test.mjs
   regression:
     runs-on: ubuntu-latest
     steps:
