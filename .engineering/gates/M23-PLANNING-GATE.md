@@ -32,6 +32,8 @@ Total: `30` frozen mechanisms.
 - M24/M25/M27 remain evidence/proof/assurance owners.
 - M20/M47 remain presentation owners.
 - Full progress alone cannot authorize project completion.
+- Completion outcome owner is exactly `EXTERNAL_CANONICAL | M27_ASSURANCE`; until M27 exists only `EXTERNAL_CANONICAL` is executable.
+- Generic injected conditions use only `EXTERNAL_CANONICAL | M27_ASSURANCE`; they cannot impersonate native M17/M18/M21/M22 owners.
 - Missing ETA cannot create a lifecycle blocker.
 - Blocker omission cannot count as resolution.
 - Status history is immutable; reopen and split-brain semantics are explicit.
@@ -41,21 +43,23 @@ Lifecycle: `NOT_STARTED | IN_PROGRESS | AWAITING_ACCEPTANCE | BLOCKED | RECOVERY
 
 Schedule health: `NOT_APPLICABLE | UNKNOWN | ON_TRACK | AT_RISK | LATE`.
 
-Continuation readiness: `READY | WAITING | REPLAN_REQUIRED | BLOCKED | RECOVERY_REQUIRED | UNKNOWN | CONFLICT`.
+Continuation readiness: `NOT_APPLICABLE | READY | WAITING | REPLAN_REQUIRED | BLOCKED | RECOVERY_REQUIRED | UNKNOWN | CONFLICT`.
 
 ## Forbidden shortcuts
-`100% = COMPLETE`, deadline-driven blocker fabrication, direct ETA recalculation, progress recalculation, newest-wins status history, disappearing omitted blockers, implicit completion acceptance, ambient-clock status changes, M18 replacing M17 next action, UI wording changing canonical status, hidden conflict resolution, silent COMPLETE reopen, unbounded history scans and downstream upgrading of indeterminate/conflict truth.
+`100% = COMPLETE`, deadline-driven blocker fabrication, direct ETA recalculation, progress recalculation, newest-wins status history, disappearing omitted blockers, implicit completion acceptance, generic owner spoofing, ambient-clock status changes, M18 replacing M17 next action, UI wording changing canonical status, hidden conflict resolution, silent COMPLETE reopen, unbounded history scans and downstream upgrading of indeterminate/conflict truth.
 
 ## STANDARD_PLUS acceptance gate
 Implementation requires:
 - deterministic injected SHA-256 and startup purity;
 - exact M17/M21/M22 handoff verification and source binding;
+- explicit rejection of generic native-owner spoofing;
 - optional M18/M22 absence behavior where not applicable;
 - lifecycle precedence fixtures and exact progress boundaries;
 - false-completion and completion-owner spoofing tests;
 - blocker omission/replay/stale-resolution/conflict tests;
 - recovery/blocking/warning precedence tests;
 - next-action consistency and resume-drift tests;
+- completed-project `NOT_APPLICABLE` readiness tests;
 - exact deadline interval boundary tests;
 - schedule/lifecycle/readiness independence tests;
 - COMPLETE reopen witness tests;
