@@ -27,15 +27,22 @@ M23 exposes three distinct canonical dimensions. They must never be collapsed in
 `NOT_APPLICABLE | UNKNOWN | ON_TRACK | AT_RISK | LATE`
 
 ### Continuation readiness
-`READY | WAITING | REPLAN_REQUIRED | BLOCKED | RECOVERY_REQUIRED | UNKNOWN | CONFLICT`
+`NOT_APPLICABLE | READY | WAITING | REPLAN_REQUIRED | BLOCKED | RECOVERY_REQUIRED | UNKNOWN | CONFLICT`
+
+## Frozen injected-owner vocabulary
+Generic injected facts cannot impersonate native M17/M18/M21/M22 sources.
+- Completion outcome owner: `EXTERNAL_CANONICAL | M27_ASSURANCE`.
+- Explicit external status-condition owner: `EXTERNAL_CANONICAL | M27_ASSURANCE`.
+- M17/M18-derived blocker/readiness/recovery facts enter only through their verified native handoffs/contracts, never through a generic injected owner string.
+- `M27_ASSURANCE` is a forward-compatible owner label only; until M27 exists, M23 cannot simulate it. Current standalone completion/condition authority is `EXTERNAL_CANONICAL` with explicit source and validity bindings.
 
 ## Source rules
 1. M17 continuation/checkpoint truth is required for canonical lifecycle/readiness interpretation.
 2. M21 project progress truth is required for `NOT_STARTED`, `IN_PROGRESS`, `AWAITING_ACCEPTANCE` or `COMPLETE` derivation.
 3. M22 estimation truth is optional for lifecycle status and required only when schedule health is requested from forecast/deadline facts.
 4. M18 resume facts are optional unless a resume/re-entry decision exists for the same checkpoint lineage.
-5. Completion acceptance is an explicit owner-labeled canonical input; M21 `100%` alone never authorizes `COMPLETE`.
-6. Explicit status-condition facts may be supplied only by declared canonical owners and carry `WARNING`, `BLOCKING`, `RECOVERY` or `CONFLICT` classification plus source/validity identities.
+5. Completion acceptance is an explicit owner-labeled canonical input from the frozen completion-owner vocabulary; M21 `100%` alone never authorizes `COMPLETE`.
+6. Explicit external status-condition facts may only use the frozen external-condition owner vocabulary and carry `WARNING`, `BLOCKING`, `RECOVERY` or `CONFLICT` classification plus source/validity identities.
 7. All upstream handoffs are read-only and snapshot-bound.
 
 ## Invariants
@@ -49,9 +56,11 @@ M23 exposes three distinct canonical dimensions. They must never be collapsed in
 8. A resume handback from a different checkpoint cannot constrain current readiness.
 9. Presentation wording has no authority over canonical status identities.
 10. Semantic APIs are startup-pure and receive time only as explicit data.
+11. A generic injected fact cannot claim to be M17/M18/M21/M22 authority.
 
 ## STANDARD_PLUS obligations
 - owner spoofing and cross-lineage mix-and-match tests;
+- rejection of generic facts spoofing native M17/M18/M21/M22 owners;
 - M17/M21 mandatory-source absence and staleness tests;
 - optional M18/M22 absence tests;
 - 100%-progress-without-completion-authority tests;
