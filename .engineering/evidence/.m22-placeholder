@@ -1,0 +1,1 @@
+M22 implementation evidence is intentionally created only after exact-head CI, semantic audit, and implementation merge. This placeholder prevents no-op evidence claims and must be deleted before MODULE_DONE promotion.
