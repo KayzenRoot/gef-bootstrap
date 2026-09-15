@@ -1,0 +1,42 @@
+name: M23 Project Status Engine
+on:
+  pull_request:
+    paths:
+      - 'packages/project-status-engine/**'
+      - 'tests/m23-*.mjs'
+      - '.engineering/work-orders/GBS-WO-M23-001.md'
+      - '.engineering/GBS-WO-M23-ADMISSION.md'
+      - 'planning/modules/area-f-progress-and-estimation/m23-project-status-engine/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/m23-platform.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm run typecheck
+      - run: node --test tests/m23-project-status-engine.test.mjs tests/m23-startup-purity.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm test
