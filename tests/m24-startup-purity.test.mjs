@@ -1,0 +1,3 @@
+import test from'node:test';
+import assert from'node:assert/strict';
+test('evidence-engine import is startup-pure',async()=>{const originalNow=Date.now,originalFetch=globalThis.fetch;let touched=false;Date.now=()=>{touched=true;throw new Error('clock');};globalThis.fetch=async()=>{touched=true;throw new Error('network');};try{const mod=await import('../packages/evidence-engine/dist/public.js');assert.equal(Array.isArray(mod.M24_MECHANISMS),true);assert.equal(mod.M24_MECHANISMS.length,32);assert.equal(new Set(mod.M24_MECHANISMS).size,32);assert.equal(touched,false);}finally{Date.now=originalNow;globalThis.fetch=originalFetch;}});
