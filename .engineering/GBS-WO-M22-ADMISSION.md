@@ -1,6 +1,6 @@
 # GBS-WO-M22-001 — Admission Record
 
-Status: `ADMITTED`
+Status: `MODULE_DONE`
 Module: `GBS-M22 — Estimation Engine`
 Work Order: `.engineering/work-orders/GBS-WO-M22-001.md`
 Frozen weight: `15`
@@ -17,35 +17,40 @@ Admission reviewed head: `bea5d53195f29bca7e8b58a4b1903fa6387485ff`
 Admission reviewed tree: `a965b400a3d02a39c5881adff77a9890abd3153e`
 Admission semantic audit: `5205732573`
 Admission merge / sole legal execution base: `5c0b854f81a43afc608e32063a3e70d70cf73ac9`
+Implementation PR: `#227`
+Implementation reviewed head: `efc1cf1640bac4356dd7e0e79458f0243ec0398d`
+Implementation reviewed tree: `e842a08a8e6a4f9edd7a08948f7ceb347076dd0e`
+Implementation semantic audit: `5210169322`
+Implementation merge: `48548157573cf221e7105d82a0b2f8189588d1d6`
+Evidence: `.engineering/evidence/GBS-WO-M22-001-EVIDENCE.md`
 
 ## Admission scope
-Admission authorizes only the bounded implementation of the 30 M22 mechanisms frozen in S01-S05 and compiled into `GBS-WO-M22-001`.
+Admission authorized only the bounded implementation of the 30 M22 mechanisms frozen in S01-S05 and compiled into `GBS-WO-M22-001`.
 
 ## Preserved restrictions
-Admission grants no production credit and does not authorize M22 to calculate canonical progress, define project status, accept evidence/proof truth, collect telemetry, define benchmark baselines, own executor critical-path/performance modeling, mutate Git/provider state or format operator presentation.
+M22 does not calculate canonical progress, define project status, accept evidence/proof truth, collect telemetry, define benchmark baselines, own executor critical-path/performance modeling, mutate Git/provider state or format operator presentation.
 
-M22 must not treat production weight as time. A temporal forecast requires admitted empirical progress/time observations. Fewer than three independent valid samples remain `NOT_YET_BASELINED`. Temporal authority is explicit, owner-labeled and uses injected integer millisecond values; ambient system time is forbidden.
+M22 does not treat production weight as time. Temporal forecasting requires admitted empirical progress/time observations; insufficient baseline remains explicit. Temporal authority is owner-labeled and uses injected integer millisecond values; ambient system time is forbidden.
 
 ## Frozen estimation guarantees
 - read-only M21 project-level progress baseline;
 - exact integer/rational canonical arithmetic for progress, throughput and duration authority;
-- deterministic nearest-rank Q1/Q2/Q3 and robust center/range semantics;
+- deterministic robust throughput model;
 - duplicate/replay rejection and visible exclusions/outliers;
 - denominator-epoch compatibility and progress-regression preservation;
 - uncertainty-aware interval/scenario truth instead of scalar-only ETA;
 - deadline/target bias firewall;
-- objective confidence policy derived from sample sufficiency, dispersion and calibration history;
+- objective confidence policy derived from sufficiency, dispersion and calibration history;
 - immutable forecast history, explicit recalibration epochs and revision receipts;
+- replay/split-brain/branch-mix/truncation protection for revision/recalibration history;
 - M20/M23 handoffs that preserve unavailable/confidence states without downstream upgrading;
 - startup-pure, bounded/cancellable semantic core with injected fail-closed SHA-256.
 
-## ELEVATED execution obligations
-Implementation must prove baseline sufficiency/no-fabrication, owner spoofing rejection, cross-lineage/epoch mix-and-match rejection, arithmetic oracle agreement, permutation invariance, duplicate/replay resistance, sparse/outlier/high-dispersion behavior, uncertainty/scenario ordering, deadline-bias resistance, calibration drift/revision semantics, snapshot/handoff tamper resistance, startup purity, three-OS CI, full regression, dependency audit and exact-head semantic audit with CRITICAL `0` and HIGH `0`.
+## Completion evidence
+PR #227 passed the ELEVATED exact-head acceptance gate at `efc1cf1640bac4356dd7e0e79458f0243ec0398d` / tree `e842a08a8e6a4f9edd7a08948f7ceb347076dd0e`, including three-OS focused validation, full repository regression, dependency audit, strict typecheck, Security CodeQL and semantic audit `5210169322` with `CRITICAL 0` / `HIGH 0`. The implementation merged as `48548157573cf221e7105d82a0b2f8189588d1d6`.
 
-## Exact execution-base rule
-PR #224 passed exact-head semantic audit with CRITICAL `0` / HIGH `0` and merged as `5c0b854f81a43afc608e32063a3e70d70cf73ac9`. That merge is the sole legal M22 execution base. Implementation branches must descend from it or a reviewed `main` descendant preserving this admitted contract. Earlier candidate states are non-authoritative.
+The separate Evidence Bundle authorizes this MODULE_DONE promotion. M22 earns `15 / 15`; production becomes `399 / 1088 = 36.67%`. Denominator remains unchanged.
 
-## Credit rule
-Admission grants execution authority only. M22 remains `0 / 15` until implementation, ELEVATED evidence, exact-head semantic review, implementation merge and separate MODULE_DONE promotion complete.
+Only M23 planning authority is released. M23 implementation remains forbidden until its own Source Pack, planning gate, audit, Work Order admission and execution-base binding are complete.
 
-STOP CONDITION: `GBS_WO_M22_001_ADMITTED_READY_FOR_IMPLEMENTATION_BINDING`.
+STOP CONDITION: `GBS_WO_M22_001_MODULE_DONE`.

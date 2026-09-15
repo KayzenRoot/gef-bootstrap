@@ -1,6 +1,6 @@
 # GBS-WO-M22-001 — Implement Estimation Engine
 
-Status: `CORRECTION_APPLIED_AWAITING_EXACT_HEAD_CI_AND_REAUDIT`
+Status: `MODULE_DONE`
 Risk: `MEDIUM`
 Assurance intensity: `ELEVATED`
 Module: `GBS-M22 — Estimation Engine`
@@ -88,8 +88,19 @@ Exact admitted base/head/tree; focused test count; arithmetic-oracle evidence; t
 PR #224 passed exact-head semantic review and merged as `5c0b854f81a43afc608e32063a3e70d70cf73ac9`. This Work Order is admitted. Implementation branches must descend from that merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
 
 ## Review-driven correction delta
-The first implementation audit at head `5ae9b8a19ca6dae9d602164d16f9b45ce5487547` returned `CORRECTION REQUIRED` for S04 semantic coverage. The correction remains inside this Work Order/PR and does not alter the frozen Source Pack. It strengthens FRR22 with exact binding/model/calibration-epoch identities plus interval-impact receipts, and strengthens RPG22 with recalibration replay, split-brain, branch-mix, epoch-mix and explicit bounded-history truncation handling. Canonical record: `.engineering/evidence/GBS-WO-M22-001-CORRECTION-DELTA.md`.
+The first implementation audit at head `5ae9b8a19ca6dae9d602164d16f9b45ce5487547` returned `CORRECTION REQUIRED` for S04 semantic coverage. The correction remained inside this Work Order/PR and did not alter the frozen Source Pack. It strengthened FRR22 with exact binding/model/calibration-epoch identities plus interval-impact receipts, and strengthened RPG22 with recalibration replay, split-brain, branch-mix, epoch-mix and explicit bounded-history truncation handling. Canonical record: `.engineering/evidence/GBS-WO-M22-001-CORRECTION-DELTA.md`.
 
-No M22 production weight, checkpoint promotion, merge authority or M23 execution authority is granted until final exact-head CI and semantic re-audit are approved.
+## Final acceptance
+- Implementation PR: `#227`
+- Reviewed head: `efc1cf1640bac4356dd7e0e79458f0243ec0398d`
+- Reviewed tree: `e842a08a8e6a4f9edd7a08948f7ceb347076dd0e`
+- Exact-head semantic audit: `5210169322`
+- Final semantic findings: `CRITICAL 0`, `HIGH 0`
+- Implementation merge: `48548157573cf221e7105d82a0b2f8189588d1d6`
+- Evidence: `.engineering/evidence/GBS-WO-M22-001-EVIDENCE.md`
 
-STOP CONDITION: `GBS_WO_M22_001_CORRECTION_APPLIED_AWAITING_EXACT_HEAD_CI_AND_REAUDIT`.
+All frozen S01-S05 obligations and the Work Order acceptance contract are satisfied by the exact reviewed implementation/evidence set. The final correction delta strengthened revision/recalibration lineage and bounded-history integrity without weakening the frozen design or expanding M22 ownership.
+
+M22 earns `15 / 15` production weight only through this separate MODULE_DONE promotion. The next legal module is M23 planning; no M23 implementation authority is implied.
+
+STOP CONDITION: `GBS_WO_M22_001_MODULE_DONE`.
