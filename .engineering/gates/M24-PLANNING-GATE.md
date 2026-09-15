@@ -33,6 +33,9 @@ Total frozen mechanisms: `32`.
 - M27 remains assurance owner.
 - test/telemetry/benchmark/artifact modules remain underlying fact/producer owners for their domains.
 - M24 cannot accept its own synthetic assertion as independent underlying producer evidence.
+- SAI24 cannot self-authorize: every producer entry must descend from an exact verified external AuthorityRootSet drawn from already-governed checkpoint/decision/policy/contract/module sources.
+- M24 cannot mint, broaden, silently refresh or use its own output as the sole trust root for producer authority.
+- stale/conflicting/self-issued roots fail closed; conflicting roots are preserved as conflict, never newest-wins.
 
 ## Frozen evidence model
 Evidence acceptance state:
@@ -55,13 +58,14 @@ Completeness never equals proof sufficiency or assurance.
 - branch/tag/latest/recency cannot substitute exact subject identity.
 
 ## Forbidden shortcuts
-Self-attested PASS -> accepted evidence; owner string -> authority; file/PR existence -> proof; merged PR -> DONE; historical green -> current; newest-wins conflict resolution; replay -> independent support; truncation -> complete set; M24 completeness -> M25 proof; M24 acceptance -> M27 assurance; M24 acceptance -> earned weight; stale evidence resurrection without revalidation; raw secrets/logs in portable manifests; digest equality -> authority; cross-project/head/tree evidence transplant.
+Self-attested PASS -> accepted evidence; caller-built authority root -> trusted SAI; owner string -> authority; file/PR existence -> proof; merged PR -> DONE; historical green -> current; newest-wins conflict resolution; replay -> independent support; truncation -> complete set; M24 completeness -> M25 proof; M24 acceptance -> M27 assurance; M24 acceptance -> earned weight; stale evidence resurrection without revalidation; raw secrets/logs in portable manifests; digest equality -> authority; cross-project/head/tree evidence transplant.
 
 ## MAX_ASSURANCE acceptance gate
 Implementation requires:
 - explicit threat/failure model enforced in tests;
 - injected SHA-256 and domain-separated canonical semantic digests;
 - producer-authority/kind matrix and spoofing tests;
+- self-issued/stale/conflicting authority-root tests and root-scope escalation tests;
 - malicious reseal/tamper coverage across all digest/receipt boundaries;
 - cross-project/lineage/head/tree/work-order/runtime/platform/policy mix tests;
 - merge-ref versus source-head identity tests;
