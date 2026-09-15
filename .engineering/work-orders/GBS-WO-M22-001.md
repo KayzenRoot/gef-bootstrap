@@ -1,6 +1,6 @@
 # GBS-WO-M22-001 — Implement Estimation Engine
 
-Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
+Status: `CORRECTION_APPLIED_AWAITING_EXACT_HEAD_CI_AND_REAUDIT`
 Risk: `MEDIUM`
 Assurance intensity: `ELEVATED`
 Module: `GBS-M22 — Estimation Engine`
@@ -87,4 +87,9 @@ Exact admitted base/head/tree; focused test count; arithmetic-oracle evidence; t
 ## Admission binding
 PR #224 passed exact-head semantic review and merged as `5c0b854f81a43afc608e32063a3e70d70cf73ac9`. This Work Order is admitted. Implementation branches must descend from that merge or a reviewed `main` descendant preserving the admitted contract. No production credit is earned by admission.
 
-STOP CONDITION: `GBS_WO_M22_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
+## Review-driven correction delta
+The first implementation audit at head `5ae9b8a19ca6dae9d602164d16f9b45ce5487547` returned `CORRECTION REQUIRED` for S04 semantic coverage. The correction remains inside this Work Order/PR and does not alter the frozen Source Pack. It strengthens FRR22 with exact binding/model/calibration-epoch identities plus interval-impact receipts, and strengthens RPG22 with recalibration replay, split-brain, branch-mix, epoch-mix and explicit bounded-history truncation handling. Canonical record: `.engineering/evidence/GBS-WO-M22-001-CORRECTION-DELTA.md`.
+
+No M22 production weight, checkpoint promotion, merge authority or M23 execution authority is granted until final exact-head CI and semantic re-audit are approved.
+
+STOP CONDITION: `GBS_WO_M22_001_CORRECTION_APPLIED_AWAITING_EXACT_HEAD_CI_AND_REAUDIT`.
