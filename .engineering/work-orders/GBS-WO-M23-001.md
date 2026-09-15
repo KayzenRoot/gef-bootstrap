@@ -46,23 +46,25 @@ Checkpoint promotion/mutation, resume/re-entry calculation, progress calculation
 5. M23 must verify upstream ownership/binding and never recalculate M21/M22 truth.
 6. `100%` progress without current accepted completion authority resolves to `AWAITING_ACCEPTANCE`, not `COMPLETE`.
 7. `COMPLETE` is impossible while blocker/recovery/conflict dominates.
-8. Completion owner spoofing, stale acceptance and cross-lineage completion facts fail closed.
-9. Blocker omission is not resolution; resolution requires current authoritative supersession.
-10. Stale last-known active blockers remain conservatively constraining until resolved.
-11. M17 next legal action is read-only. M23 cannot invent or substitute another action.
-12. Same-checkpoint M18 action/resume drift can constrain readiness but cannot rewrite M17.
-13. Schedule health uses M22 deadline deltas exactly as supplied: conservative bound on/before deadline => ON_TRACK; optimistic bound after deadline => LATE; otherwise AT_RISK.
-14. Missing/unavailable forecast when schedule health is requested => UNKNOWN, not BLOCKED.
-15. Deadline/schedule state cannot change progress, lifecycle blocker truth or completion authority.
-16. Status snapshots and history are immutable.
-17. `COMPLETE -> non-COMPLETE` requires explicit SRW23 reopen/invalidation authority.
-18. Transition/reopen replay is idempotent; divergent same-predecessor histories expose split-brain/conflict.
-19. Bounded history truncation is explicit and never masquerades as complete history.
-20. Snapshot reuse fails closed on mandatory-source staleness/mismatch and applicable optional-source material conflict.
-21. M20 handoff is owner-bound and cannot be upgraded by presentation code.
-22. Semantic logic is startup-pure and cannot access filesystem/network/Git/provider/process/system clock directly.
-23. SHA-256 is injected and invalid/failing digest capability fails closed.
-24. Scalable/history operations are bounded and cancellable.
+8. Completion outcome owner is exactly `EXTERNAL_CANONICAL | M27_ASSURANCE`; explicit external status-condition owner is exactly `EXTERNAL_CANONICAL | M27_ASSURANCE`. Until M27 exists, only `EXTERNAL_CANONICAL` is executable. Generic inputs claiming native M17/M18/M21/M22 identity must be rejected.
+9. Completion owner spoofing, stale acceptance, unsupported future-owner use and cross-lineage completion facts fail closed.
+10. Blocker omission is not resolution; resolution requires current authoritative supersession.
+11. Stale last-known active blockers remain conservatively constraining until resolved.
+12. M17 next legal action is read-only. M23 cannot invent or substitute another action.
+13. Same-checkpoint M18 action/resume drift can constrain readiness but cannot rewrite M17.
+14. Current lifecycle `COMPLETE` yields continuation readiness `NOT_APPLICABLE` unless a higher-priority reopen/recovery/blocker/conflict condition applies.
+15. Schedule health uses M22 deadline deltas exactly as supplied: conservative bound on/before deadline => ON_TRACK; optimistic bound after deadline => LATE; otherwise AT_RISK.
+16. Missing/unavailable forecast when schedule health is requested => UNKNOWN, not BLOCKED.
+17. Deadline/schedule state cannot change progress, lifecycle blocker truth or completion authority.
+18. Status snapshots and history are immutable.
+19. `COMPLETE -> non-COMPLETE` requires explicit SRW23 reopen/invalidation authority.
+20. Transition/reopen replay is idempotent; divergent same-predecessor histories expose split-brain/conflict.
+21. Bounded history truncation is explicit and never masquerades as complete history.
+22. Snapshot reuse fails closed on mandatory-source staleness/mismatch and applicable optional-source material conflict.
+23. M20 handoff is owner-bound and cannot be upgraded by presentation code.
+24. Semantic logic is startup-pure and cannot access filesystem/network/Git/provider/process/system clock directly.
+25. SHA-256 is injected and invalid/failing digest capability fails closed.
+26. Scalable/history operations are bounded and cancellable.
 
 ## ARCHITECTURE RULES
 - TypeScript/Node, library-first, thin/public API boundary.
@@ -70,6 +72,7 @@ Checkpoint promotion/mutation, resume/re-entry calculation, progress calculation
 - Reuse existing M17/M18/M21/M22 public contract types where dependency direction remains legal; otherwise define narrow read-only adapter types without duplicating upstream authority.
 - Canonical identities are digest-bound and deterministic under semantically equivalent input permutation.
 - Human wording is never part of canonical status authority.
+- Forward-compatible owner labels do not grant runtime authority before their owner module exists.
 
 ## CONSTRAINTS
 - Do not alter the frozen M23 Source Pack during implementation unless a separate reviewed planning correction is required.
@@ -77,11 +80,14 @@ Checkpoint promotion/mutation, resume/re-entry calculation, progress calculation
 - Do not create evidence/assurance behavior belonging to M24/M25/M27.
 - Do not use ambient Date/time in semantic decisions.
 - Do not give M23 provider mutation capability.
+- Do not accept generic injected facts that impersonate native upstream owner labels.
 
 ## ACCEPTANCE CRITERIA
 - all 30 mechanisms implemented and publicly reachable as appropriate;
 - canonical lifecycle/schedule/readiness states match frozen precedence and independence rules;
 - no false completion at 100% progress;
+- exact injected-owner allowlists enforced, including unsupported future-owner behavior;
+- completed-project readiness resolves to `NOT_APPLICABLE` when appropriate;
 - blocker/recovery/conflict resolution semantics proven;
 - M17/M18 next-action consistency proven;
 - exact M22 deadline-boundary interpretation proven;
@@ -94,11 +100,13 @@ Checkpoint promotion/mutation, resume/re-entry calculation, progress calculation
 ## TESTS
 STANDARD_PLUS proof families:
 - authority/source owner spoofing and cross-lineage mix-and-match;
+- generic native-owner impersonation and unsupported `M27_ASSURANCE` pre-owner behavior;
 - mandatory/optional source availability and freshness;
 - exact lifecycle precedence and progress boundary fixtures;
 - 100%-without-acceptance, rejected/stale acceptance and forged completion owner;
 - blocker omission, replay, stale resolution, warning/blocking/recovery/conflict precedence;
 - next action mismatch, resume drift and readiness precedence;
+- completed-project `NOT_APPLICABLE` readiness;
 - deadline delta exact zero/straddle/late/on-track fixtures;
 - schedule/lifecycle/readiness independence metamorphic tests;
 - COMPLETE reopen witness and forbidden silent reopen tests;
