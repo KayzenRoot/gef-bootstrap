@@ -33,15 +33,15 @@ export interface ProgressGraphNode{readonly nodeId:string;readonly kind:'PROJECT
 export interface ProgressGraphEdge{readonly parentNodeId:string;readonly childNodeId:string;readonly edgeDigest:string;}
 export interface HierarchicalProgressGraph{readonly projectId:string;readonly nodes:readonly ProgressGraphNode[];readonly edges:readonly ProgressGraphEdge[];readonly graphDigest:string;}
 export interface AntiDoubleCountLedger{readonly requestedUnitIds:readonly string[];readonly uniqueUnitIds:readonly string[];readonly duplicateUnitIds:readonly string[];readonly ledgerDigest:string;}
-export interface ProgressRollup{readonly query:ProgressQuery;readonly exact:ExactFraction;readonly completeness:CoverageCompletenessWitness;readonly antiDoubleCount:AntiDoubleCountLedger;readonly rollupDigest:string;}
+export interface ProgressRollup{readonly manifestDigest:string;readonly query:ProgressQuery;readonly exact:ExactFraction;readonly completeness:CoverageCompletenessWitness;readonly antiDoubleCount:AntiDoubleCountLedger;readonly rollupDigest:string;}
 export interface PartialCreditAllocation{readonly parentId:string;readonly parentMaxWeight:number;readonly allocations:readonly {readonly unitId:string;readonly maxWeight:number;}[];readonly allocatedWeight:number;readonly remainingWeight:number;readonly allocationDigest:string;}
-export interface PresentationPercentage{readonly text:string;readonly decimals:number;readonly roundingMode:RoundingMode;readonly projectionDigest:string;}
+export interface PresentationPercentage{readonly numerator:number;readonly denominator:number;readonly text:string;readonly decimals:number;readonly roundingMode:RoundingMode;readonly projectionDigest:string;}
 
 export interface CreditDependencyEntry{readonly unitId:string;readonly dependencyDigests:readonly string[];readonly entryDigest:string;}
 export interface CreditDependencyGraph{readonly entries:readonly CreditDependencyEntry[];readonly completeKnowledge:boolean;readonly graphDigest:string;}
 export interface ProgressInvalidationVector{readonly dependencyGraphDigest:string;readonly changedBindingDigests:readonly string[];readonly affectedUnitIds:readonly string[];readonly widened:boolean;readonly reasonCodes:readonly string[];readonly vectorDigest:string;}
 export interface StaleCreditQuarantineEntry{readonly unitId:string;readonly priorCreditDigest:string;readonly reasonCodes:readonly string[];readonly entryDigest:string;}
-export interface StaleCreditQuarantine{readonly entries:readonly StaleCreditQuarantineEntry[];readonly quarantineDigest:string;}
+export interface StaleCreditQuarantine{readonly invalidationVectorDigest:string;readonly entries:readonly StaleCreditQuarantineEntry[];readonly quarantineDigest:string;}
 export interface CreditRetractionTransaction{readonly invalidationVectorDigest:string;readonly beforeVectorDigest:string;readonly afterVectorDigest:string;readonly retractedUnitIds:readonly string[];readonly beforeExact:ExactFraction;readonly afterExact:ExactFraction;readonly transactionDigest:string;}
 export interface ProgressBindingObservation{readonly projectId:string;readonly lineageDigest:string;readonly manifestDigest:string;readonly epochId:string;readonly scopeDigest:string;readonly dodDigest:string;readonly evidenceSetDigest:string;}
 export interface ProgressDriftReport{readonly snapshotDigest:string;readonly state:DriftState;readonly staleSubjects:readonly string[];readonly reportDigest:string;}
