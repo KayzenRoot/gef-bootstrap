@@ -29,7 +29,7 @@ export interface EstimationBindingManifest{readonly baselineAdmissionDigest:stri
 export interface TemporalProgressSample{readonly sampleId:string;readonly projectId:string;readonly lineageDigest:string;readonly epochId:string;readonly fromSnapshotDigest:string;readonly toSnapshotDigest:string;readonly observationDigest:string;readonly workDelta:ExactRational;readonly elapsedMs:number;readonly throughput:ExactRational;readonly sampleDigest:string;}
 export interface SampleNormalizationWitness{readonly acceptedSampleDigests:readonly string[];readonly duplicateSampleDigests:readonly string[];readonly excluded:readonly {readonly sampleDigest:string;readonly reason:string;}[];readonly witnessDigest:string;}
 export interface ThroughputWindow{readonly projectId:string;readonly lineageDigest:string;readonly epochId:string;readonly sampleDigests:readonly string[];readonly windowPolicyDigest:string;readonly windowDigest:string;}
-export interface ThroughputModel{readonly windowDigest:string;readonly sampleCount:number;readonly q1:ExactRational;readonly median:ExactRational;readonly q3:ExactRational;readonly modelDigest:string;}
+export interface ThroughputModel{readonly windowDigest:string;readonly sufficiencyGateDigest:string;readonly sampleCount:number;readonly q1:ExactRational;readonly median:ExactRational;readonly q3:ExactRational;readonly modelDigest:string;}
 export interface RemainingWorkVector{readonly snapshotDigest:string;readonly remaining:ExactRational;readonly vectorDigest:string;}
 export interface DurationProjection{readonly modelDigest:string;readonly remainingWorkDigest:string;readonly lowerMs:number;readonly baseMs:number;readonly upperMs:number;readonly projectionDigest:string;}
 
