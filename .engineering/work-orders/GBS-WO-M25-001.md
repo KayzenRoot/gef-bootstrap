@@ -7,6 +7,7 @@ Module: `GBS-M25 — Proof Graph`
 Canonical package: `packages/proof-graph`
 Canonical weight: `20`
 Planning gate: `.engineering/gates/M25-PLANNING-GATE.md` (`PASSED`)
+Planning freeze PR: `#239`
 
 ## OBJECTIVE
 Implement the deterministic provider-neutral proof graph frozen in M25 S01-S05. The package must evaluate owner-declared proof obligations from current M24 evidence facts and nested proof dependencies, preserve exact proof states, support validity-bound carry-forward, selectively invalidate affected proof descendants and emit read-only downstream context without taking over upstream or assurance authority.
