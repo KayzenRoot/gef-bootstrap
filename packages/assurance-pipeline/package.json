@@ -1,0 +1,1 @@
+{"name":"@gef-bootstrap/assurance-pipeline","version":"0.0.0","private":true,"type":"module","exports":{".":{"types":"./dist/public.d.ts","import":"./dist/public.js"}},"types":"./dist/public.d.ts","dependencies":{"@gef-bootstrap/evidence-engine":"0.0.0","@gef-bootstrap/proof-graph":"0.0.0","@gef-bootstrap/heds-delta-review":"0.0.0"}}
