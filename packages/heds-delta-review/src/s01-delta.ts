@@ -39,7 +39,11 @@ function deltaEntry(subjectId:string,before:ReviewSourceProjection|undefined,aft
  const semanticChanged=before===undefined||after===undefined||before.semanticDigest!==after.semanticDigest;
  const authorityChanged=before===undefined||after===undefined||before.ownerId!==after.ownerId||before.sourceId!==after.sourceId;
  const validityChanged=before===undefined||after===undefined||before.validityBindingDigest!==after.validityBindingDigest;
- const changedDependencyDigests=symmetric(before?.dependencyDigests??[],after?.dependencyDigests??[]);
+ const changed=new Set(symmetric(before?.dependencyDigests??[],after?.dependencyDigests??[]));
+ if(semanticChanged){if(before)changed.add(before.semanticDigest);if(after)changed.add(after.semanticDigest);}
+ if(validityChanged){if(before)changed.add(before.validityBindingDigest);if(after)changed.add(after.validityBindingDigest);}
+ if(authorityChanged){if(before)changed.add(before.projectionDigest);if(after)changed.add(after.projectionDigest);}
+ const changedDependencyDigests=sortedUnique([...changed]);
  let changeClass:'ADDED'|'REMOVED'|'MODIFIED'|'UNCHANGED';
  if(!before&&after)changeClass='ADDED';else if(before&&!after)changeClass='REMOVED';else if(semanticChanged||authorityChanged||validityChanged||changedDependencyDigests.length>0)changeClass='MODIFIED';else changeClass='UNCHANGED';
  const body={subjectId,changeClass,beforeProjectionDigest:before?.projectionDigest??null,afterProjectionDigest:after?.projectionDigest??null,semanticChanged,authorityChanged,validityChanged,changedDependencyDigests};const d=digestValue(options,'SDL26',body);return d.ok?ok(deepFreeze({...body,deltaDigest:d.value})):d;
