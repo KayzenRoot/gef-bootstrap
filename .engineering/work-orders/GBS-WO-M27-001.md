@@ -1,6 +1,6 @@
 # GBS-WO-M27-001 — Implement Assurance Pipeline
 
-Status: `COMPILED_NOT_ADMITTED`
+Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
 Risk: `HIGH`
 Assurance intensity: `MAX_ASSURANCE`
 Module: `GBS-M27 — Assurance Pipeline`
@@ -13,6 +13,12 @@ Planning reviewed head: `e1b5972d8888a47da1f4ffecaeb940650945bdae`
 Planning reviewed tree: `269792e3656b268d54d2ebd841fbe26dede7ba6d`
 Planning review: `5223019733`
 Planning merge / legal planning base: `80c1374198ed60769b71c8bc69364066edb90e17`
+Work Order compilation PR/review/merge: `#251` / `5223065797` / `aa2be84aa0e3d64a8112c68baaa3a8e491dc6770`
+Admission PR: `#252`
+Admission reviewed head: `c43e88b673dcc844f56ff130bf871bfbaf551924`
+Admission reviewed tree: `77ddb16f4741e387dbe021ae98b68aff9235063b`
+Admission review: `5223088320`
+Admission merge / execution base: `ccad870e757c4c30e7580768584038098d8466af`
 
 ## OBJECTIVE
 Implement the deterministic provider-neutral assurance pipeline frozen in M27 S01-S05. M27 derives a monotonic assurance floor from canonical risk facts, compiles exact assurance obligations, admits current M24/M25/M26 truth read-only, enforces required validation/security/platform/exact-candidate gates, and emits an independently recomputable assurance verdict/history plus read-only downstream handoff.
@@ -61,7 +67,10 @@ MAX_ASSURANCE acceptance requires registry `40/40`; assurance-class monotonicity
 ## OUT OF SCOPE
 Concrete test selection/reuse is M28; Git/head operations M29; CI orchestration M32; evidence acceptance M24; proof decisions M25; semantic findings/review M26; security control ownership M34/M35/M58; checkpoint/progress/status M17/M21/M23; release/final acceptance M33/M62; durable audit storage M44.
 
-## CREDIT RULE
-Compilation grants no implementation authority and no production credit. M27 remains `0 / 20`; production remains `471 / 1088 = 43.29%` until approved implementation evidence, implementation merge and separate MODULE_DONE promotion.
+## EXECUTION BASE
+The admitted implementation base is `ccad870e757c4c30e7580768584038098d8466af`. Implementation branches must descend from this merge or a reviewed main descendant preserving the admitted contract.
 
-STOP CONDITION: `GBS_WO_M27_001_COMPILED_NOT_ADMITTED`.
+## CREDIT RULE
+Admission grants execution authority only. M27 remains `0 / 20`; production remains `471 / 1088 = 43.29%` until approved implementation evidence, implementation merge and separate MODULE_DONE promotion.
+
+STOP CONDITION: `GBS_WO_M27_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
