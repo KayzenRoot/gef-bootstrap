@@ -1,0 +1,1 @@
+import test from'node:test';import assert from'node:assert/strict';import{platformRelevant}from'../packages/test-impact-engine/dist/public.js';test('unconstrained tests remain relevant on unknown platform',()=>{assert.equal(platformRelevant({id:'t',fingerprint:'x',sources:[]},'unknown'),true)});
