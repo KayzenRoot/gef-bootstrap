@@ -44,7 +44,7 @@ This backlog is the canonical weighted production denominator for the single com
 | M24 Evidence Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
 | M25 Proof Graph | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
 | M26 HEDS Delta Review | CORE_REQUIRED | 5 | 4 | 5 | 5 | 19 | MODULE_DONE |
-| M27 Assurance Pipeline | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
+| M27 Assurance Pipeline | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | MODULE_DONE |
 | M28 Test Impact Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
 | M29 Git Engine | CORE_REQUIRED | 5 | 5 | 5 | 5 | 20 | PLANNED |
 | M30 GitHub Bootstrap | PRODUCT_INCLUDED | 4 | 4 | 5 | 4 | 17 | PLANNED |
@@ -92,20 +92,20 @@ This backlog is the canonical weighted production denominator for the single com
 | M41 UGAS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 
 ## Current audited production position
-Approved MODULE_DONE evidence exists for M00-M26. M27 is the next active production module at `PLANNING_REQUIRED`; it has zero earned weight and no implementation authority until its MAX_ASSURANCE Source Pack/Work Order is planned, audited, admitted and execution-base bound.
+Approved MODULE_DONE evidence exists for M00-M27. M28 is the next active production module at `PLANNING_REQUIRED`; it has zero earned weight and no implementation authority until its Source Pack/Work Order is planned, audited, admitted and execution-base bound.
 
 ```text
 TOTAL_WEIGHT   = 1088
-EARNED_WEIGHT  = 471
-REMAINING      = 617
-COMPLETION     = 471 / 1088 = 43.290441...%
+EARNED_WEIGHT  = 491
+REMAINING      = 597
+COMPLETION     = 491 / 1088 = 45.128676...%
 ```
 
 Canonical rounded values:
-- `overallCompletion`: `43.29%`;
-- `remainingCompletion`: `56.71%`;
-- `earnedWeight`: `471`;
-- `remainingWeight`: `617`.
+- `overallCompletion`: `45.13%`;
+- `remainingCompletion`: `54.87%`;
+- `earnedWeight`: `491`;
+- `remainingWeight`: `597`.
 
 Current progression authority is `.engineering/CHECKPOINT.md` + `.engineering/CHECKPOINT.json`. Evidence remains bound to each accepted module's reviewed head/merge and evidence record. Selected historical bindings retained below are descriptive audit history, not a substitute for the current checkpoint:
 - M03: PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc`, run `34727238254`.
@@ -126,6 +126,7 @@ Current progression authority is `.engineering/CHECKPOINT.md` + `.engineering/CH
 - M24: evidence `.engineering/evidence/GBS-WO-M24-001-EVIDENCE.md`, reviewed head `f6ca835d70fe16ed98734aceb80e7e9bdc0e144f`, tree `48730596fe346a49c4fbffd20172b4b85e194b3f`, implementation merge `9cd231caca8736cd3da2fea7e83d421d27be07a5`, semantic audit `5213631406`.
 - M25: evidence `.engineering/evidence/GBS-WO-M25-001-EVIDENCE.md`, reviewed head `b59614fe4d5fbc1865f5ea4e528ac1886c098709`, tree `6f6f9da0e4b0085ccbc1c707bb4ffcb8af4b6622`, implementation merge `9801479fb0bbeddfa1de8363d1bf22b62caf51f3`, semantic audit `5215786425`.
 - M26: evidence `.engineering/evidence/GBS-WO-M26-001-EVIDENCE.md`, reviewed head `a4dd6798790dfb1dd88a5980a6bf7a912f307449`, tree `3cd577392ee36a004a76a2239c4faa6b9c8d363b`, implementation merge `e657770e0b6ba24e928668807bb2249936844903`, semantic audit `5222641432`.
+- M27: evidence `.engineering/evidence/GBS-WO-M27-001-EVIDENCE.md`, reviewed head `71f18700de1b99f39a6febc7f358a6b98f224ad6`, tree `5c54c3270d7f57be7cadbd3ddc1fad4da2e556c3`, implementation merge `4c3fd74673ea803fb18d0d173772779d4e88698b`, semantic audit `5224201157`.
 
 ## ETA rule
 Backlog weights remain production burden, not time. M22 owns empirical ETA/forecast estimation from admitted progress/time evidence; this backlog never converts weights into dates. M45 owns benchmark baselines and M63 owns quantitative executor-performance thresholds.
