@@ -1,44 +1,49 @@
 # Checkpoint
 
-Status: `GBS_M33_MODULE_DONE`
+Status: `GBS_M40_MODULE_DONE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M33`
-- Active module: `GBS-M34 — Security Bootstrap`
+- Completed modules: `GBS-M00` through `GBS-M40`
+- Active module: `GBS-M41 — UGAS Adapter`
 - Active module status: `PLANNING_REQUIRED`
 - Active Work Order: `NONE`
 
 ## Production position
-- Production: `602 / 1088 = 55.33%`
-- Remaining: `486 / 1088 = 44.67%`
+- Production: `698 / 1088 = 64.15%`
+- Remaining: `390 / 1088 = 35.85%`
 - Denominator change: `NONE`
+- New release-blocking credit: `96` from M34-M38.
+- M39/M40: technically complete OPTIONAL_ADAPTER modules, zero denominator credit.
 
-## Area H accepted evidence
-- M29 Git Engine: `MODULE_DONE`, `20 / 20`
-- M30 GitHub Bootstrap: `MODULE_DONE`, `17 / 17`
-- M31 GitHub Governance: `MODULE_DONE`, `18 / 18`
-- M32 CI Bootstrap: `MODULE_DONE`, `17 / 17`
-- M33 Release Governance: `MODULE_DONE`, `19 / 19`
-- integrated implementation PR: `#261`
-- exact reviewed head: `7f72f19ee3653ceaf16be638acb8d05a045b311b`
-- technical audit: `5226481308`
-- implementation merge: `b6c8368d06bd0208ca3f7130bb5cbd813ae09c38`
-- Area H workflow run: `35132339575`, `SUCCESS`
-- focused verification: Ubuntu / Windows / macOS `SUCCESS`
-- full regression + npm audit: `SUCCESS`
+## Accepted M34-M40 evidence
+- M34 Security Bootstrap: `MODULE_DONE`, `20 / 20`
+- M35 Policy Safety: `MODULE_DONE`, `19 / 19`
+- M36 Recovery Engine: `MODULE_DONE`, `20 / 20`
+- M37 Integrity Engine: `MODULE_DONE`, `20 / 20`
+- M38 Capability Detection: `MODULE_DONE`, `17 / 17`
+- M39 UADS Adapter: `MODULE_DONE`, `OPTIONAL_ADAPTER`
+- M40 Hive Adapter: `MODULE_DONE`, `OPTIONAL_ADAPTER`
+- canonical planning sessions: `27 / 27 FROZEN`
+- Work Order: `GBS-WO-M34-M40-001`
+- implementation PR: `#263`
+- exact reviewed head: `88284ad8d61d2bec0ed641fb8c074e31c9480ab8`
+- technical audit: `5226619977`
+- implementation merge: `f940a969098211e29a157d38c7c631348558f87a`
+- focused workflow run: `35133594999`, Ubuntu/Windows/macOS + regression + npm audit `SUCCESS`
+- compatibility validation: `35133595222`, `SUCCESS`
 - CRITICAL/HIGH: `0 / 0`
-- evidence: `.engineering/evidence/GBS-M29-M33-EVIDENCE.md`
+- evidence: `.engineering/evidence/GBS-WO-M34-M40-001-EVIDENCE.md`
 
-## M34 next-module identity
-- module: `GBS-M34 — Security Bootstrap`
-- class: `CORE_REQUIRED`
+## M41 next-module identity
+- module: `GBS-M41 — UGAS Adapter`
+- class: `OPTIONAL_ADAPTER`
 - current status: `PLANNING_REQUIRED`
 - implementation authority: `NONE`
 
 ## Boundary
-Area H is closed. Git state and mutation planning are M29-owned; GitHub bootstrap M30-owned; GitHub policy authorization M31-owned; CI execution/evidence binding M32-owned; release authorization M33-owned. M34 begins Area I security and reliability and must be planned/frozen before implementation.
+Area I is closed. Area J capability detection plus UADS/Hive adapters are accepted through M40. Optional adapter completion never changes the release-blocking denominator. M41 must be planned/frozen before implementation.
 
-Next legal stage: `PLAN_GBS_M34`.
+Next legal stage: `PLAN_GBS_M41`.
 
-STOP CONDITION: `GBS_M33_MODULE_DONE`.
+STOP CONDITION: `GBS_M40_MODULE_DONE`.
