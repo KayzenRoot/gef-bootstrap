@@ -1,6 +1,6 @@
 # GBS-WO-M27-001 — Implement Assurance Pipeline
 
-Status: `ADMITTED_READY_FOR_IMPLEMENTATION`
+Status: `MODULE_DONE`
 Risk: `HIGH`
 Assurance intensity: `MAX_ASSURANCE`
 Module: `GBS-M27 — Assurance Pipeline`
@@ -19,6 +19,12 @@ Admission reviewed head: `c43e88b673dcc844f56ff130bf871bfbaf551924`
 Admission reviewed tree: `77ddb16f4741e387dbe021ae98b68aff9235063b`
 Admission review: `5223088320`
 Admission merge / execution base: `ccad870e757c4c30e7580768584038098d8466af`
+Implementation PR: `#254`
+Implementation reviewed head: `71f18700de1b99f39a6febc7f358a6b98f224ad6`
+Implementation reviewed tree: `5c54c3270d7f57be7cadbd3ddc1fad4da2e556c3`
+Implementation semantic/integrity audit: `5224201157`
+Implementation merge: `4c3fd74673ea803fb18d0d173772779d4e88698b`
+Evidence: `.engineering/evidence/GBS-WO-M27-001-EVIDENCE.md`
 
 ## OBJECTIVE
 Implement the deterministic provider-neutral assurance pipeline frozen in M27 S01-S05. M27 derives a monotonic assurance floor from canonical risk facts, compiles exact assurance obligations, admits current M24/M25/M26 truth read-only, enforces required validation/security/platform/exact-candidate gates, and emits an independently recomputable assurance verdict/history plus read-only downstream handoff.
@@ -70,7 +76,19 @@ Concrete test selection/reuse is M28; Git/head operations M29; CI orchestration 
 ## EXECUTION BASE
 The admitted implementation base is `ccad870e757c4c30e7580768584038098d8466af`. Implementation branches must descend from this merge or a reviewed main descendant preserving the admitted contract.
 
-## CREDIT RULE
-Admission grants execution authority only. M27 remains `0 / 20`; production remains `471 / 1088 = 43.29%` until approved implementation evidence, implementation merge and separate MODULE_DONE promotion.
+## ACCEPTED EVIDENCE
+- mechanisms: `40 / 40`;
+- focused tests: `27 / 27 PASS` on Ubuntu, Windows and macOS;
+- full regression: `1061 / 1061 PASS`;
+- typecheck: `PASS` on all three focused runners;
+- dependency audit: `0 vulnerabilities`;
+- CodeQL TypeScript: `PASS`;
+- unresolved CRITICAL: `0`;
+- unresolved HIGH: `0`;
+- implementation verdict: `APPROVED` on exact head `71f18700de1b99f39a6febc7f358a6b98f224ad6`;
+- implementation merge: `4c3fd74673ea803fb18d0d173772779d4e88698b`.
 
-STOP CONDITION: `GBS_WO_M27_001_ADMITTED_READY_FOR_IMPLEMENTATION`.
+## CREDIT RULE
+The implementation evidence is accepted. M27 receives `20 / 20` only when the separate MODULE_DONE promotion PR containing this Work Order transition, Evidence Bundle and canonical Checkpoint Delta is exact-head audited and merged. After that merge production becomes `491 / 1088 = 45.13%` and M28 becomes the next planning-only module.
+
+STOP CONDITION: `GBS_WO_M27_001_MODULE_DONE`.
