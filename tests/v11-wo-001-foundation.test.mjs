@@ -101,7 +101,7 @@ const baseCapsule = () => ({
   acceptanceCriteria: [{ id: 'AC-1', criterion: 'no change to V1.0.0 history', proofObligation: 'git verification' }],
   selectedTests: { ladderLevel: 'L1', tests: ['tests/x.test.mjs'], escalation: [{ trigger: 'unmapped file', escalateTo: 'L4' }], finalSweepRequired: false },
   proofReferences: [],
-  fingerprints: { canonicalization: 'stable-key-order + sorted arrays + sha256', capsuleFingerprint: sha('e') },
+  fingerprints: { canonicalization: 'stable-key-order + sorted arrays + sha256', capsuleFingerprint: sha('e'), inputs: [{ ref: 'README.md', fingerprint: sha('f') }] },
   invalidation: { driftClasses: ['NONE'], onDrift: 'RECOMPILE', expiresAt: null },
   stopCondition: 'GBS_V11_WO_001_READY_FOR_OBJECTIVE_AUDIT'
 });
@@ -167,6 +167,15 @@ test('proof reuse can never manufacture production credit', () => {
   const c = baseCapsule();
   c.proofReferences = [{ proofId: 'p1', state: 'REUSABLE', bindsTo: sha('f'), manufacturesProductionCredit: true }];
   assert.notDeepEqual(validate(schema, c), []);
+});
+
+test('fingerprint inputs are mandatory and non-empty', () => {
+  const missing = baseCapsule();
+  delete missing.fingerprints.inputs;
+  assert.notDeepEqual(validate(schema, missing), []);
+  const empty = baseCapsule();
+  empty.fingerprints.inputs = [];
+  assert.notDeepEqual(validate(schema, empty), []);
 });
 
 test('only REUSABLE is a valid suppressing proof state vocabulary', () => {
