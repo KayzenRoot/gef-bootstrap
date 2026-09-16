@@ -4,7 +4,7 @@ Status: `SOURCE_PACK_CLOSURE_SYNCED`
 
 Inventory and planning map for the single complete production target. Canonical module classification lives in `.engineering/SCOPE.md`; this index does not duplicate Scope authority.
 
-All session files currently exist as intentionally empty placeholders unless a session is already active. Empty means **PLANNED**, never approved or complete.
+Unplanned sessions may remain intentionally empty placeholders. Files marked `OWNER_DIRECTIVE_SEED_NOT_FROZEN` capture later owner decisions that future module planning MUST reconcile, but they are not frozen planning, implementation authority or earned progress.
 
 ## Counts
 - Areas: 16 (A–P)
@@ -58,6 +58,10 @@ All session files currently exist as intentionally empty placeholders unless a s
 - **GBS-M26 — HEDS Delta Review** — 5 sessions
 - **GBS-M27 — Assurance Pipeline** — 5 sessions
 - **GBS-M28 — Test Impact Engine** — 4 sessions
+  - S01 source/test/proof map and test identity
+  - S02 impacted-test selection and Test Proof Reuse Receipts
+  - S03 regression radius, Progressive Validation Ladder and failure-scoped retest
+  - S04 uncertainty widening and exact-head full-sweep boundary
 
 ## Area H — Git & GitHub
 - **GBS-M29 — Git Engine** — 4 sessions
@@ -111,20 +115,27 @@ All session files currently exist as intentionally empty placeholders unless a s
 
 ## Area P — Engineering Efficiency
 - **GBS-M63 — Executor Performance Engine** — 5 sessions
-  - S01 latency objectives and per-interaction budgets
-  - S02 repository discovery / file-I/O minimization
-  - S03 pre-resolved execution and reasoning-branch suppression
-  - S04 validation concurrency, critical path and wait reduction
+  - S01 latency/token/progress-density objectives and budgets
+  - S02 implementation seed tree, repository navigation and file-I/O minimization
+  - S03 pre-resolved execution, decision closure, work fusion and Marathon Execution Packs
+  - S04 validation reuse scheduling, concurrency, critical path and wait reduction
   - S05 performance benchmark, regression gates and optimization receipt
 
 ### M63 objective
-Make each governed executor interaction finish as quickly as safely possible while preserving correctness and assurance. This module owns executor wall-clock performance as a first-class objective and coordinates with M14 Context Compiler, M15 Execution Pack Compiler, M28 Test Impact, M43 Telemetry, M45 Baseline & Benchmark and M57 Performance Benchmarks.
+Make each governed executor interaction produce as much safe, accepted forward progress as practical while reducing rediscovery, file-I/O, repeated reasoning, test duplication and wait time. M63 owns executor-performance orchestration and the planning-to-implementation seed compiler for target repositories. It coordinates with M10 Planning Workspace, M11 Decision System, M13 Adoption Engine, M14 Context Compiler, M15 Execution Pack Compiler, M28 Test Impact, M43 Telemetry, M45 Baseline & Benchmark and M57 Performance Benchmarks.
+
+M63 does not reopen completed M10/M14/M15 ownership. It consumes their governed artifacts and compiles downstream acceleration projections such as Implementation Seed Tree, File Intent Capsule, Brownfield Patch Intent Capsule, Executor Navigation Map, Decision Closure Capsule, Execution Wave Fusion and Marathon Execution Pack.
+
+### Planning-to-execution acceleration directive
+`ADR-0002-PLANNING-TO-EXECUTION-ACCELERATION` is an approved Project Owner directive. Target-project planning is expected to prepare safe source/test skeletons and exact executor instructions where decisions are sufficiently resolved. Long prompts are acceptable when they increase Prompt Progress Density. Intermediate testing is impact-first and proof-preserving; final assurance remains exact-head and cannot be skipped.
+
+This directive does not change module count, session count or the frozen denominator. Future M28/M63 planning must reconcile `.engineering/EXECUTOR-ACCELERATION-CONTRACT.md` and `.engineering/ledgers/EXECUTOR-ACCELERATION-TECHNOLOGY-SYNC.md` before freeze.
 
 ### Brownfield adoption policy note
-Existing-project adoption is first-class, owned by GBS-M13 and exercised by later E2E/quality sessions. The bootstrap should deliver early token/time/review benefits incrementally without destructive rewrite or complete historical cleanup first.
+Existing-project adoption is first-class, owned by GBS-M13 and exercised by later E2E/quality sessions. The bootstrap should deliver early token/time/review benefits incrementally without destructive rewrite or complete historical cleanup first. Under ADR-0002, existing healthy source is represented by Brownfield Patch Intent Capsules rather than being overwritten during planning merely to create seeds.
 
 ### Stable-name migration note
 Legacy names for M01, M47, M49 and M62 remain valid historical references by stable ID. Canonical display names above follow the complete hybrid production model. Physical folder/file renames are deferred to governed repository migration when Architecture selects the safest path.
 
 ### Source Pack closure note
-The complete Source Pack closure audit reconciled this index with frozen Scope, Architecture, DoD, weighted Backlog Baseline and the hybrid constitutional model. Counts and stable IDs remain unchanged. The first legal production-construction target is M01 unless dependency analysis proves a narrower prerequisite slice in M02/M03/M04 is required first.
+The complete Source Pack closure audit reconciled this index with frozen Scope, Architecture, DoD, weighted Backlog Baseline and the hybrid constitutional model. Counts and stable IDs remain unchanged. Later explicit owner directives may refine planned future-module obligations without earning weight or silently reopening completed modules; such directives require their own canonical decision record and future planning reconciliation.
