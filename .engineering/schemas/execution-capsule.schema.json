@@ -44,7 +44,7 @@
     "base": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["repository", "branch", "headSha", "treeFingerprint"],
+      "required": ["repository", "branch", "headSha", "treeFingerprint", "productionBranchTouched"],
       "properties": {
         "repository": { "type": "string", "pattern": "^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$" },
         "branch": { "type": "string", "minLength": 1 },
@@ -52,7 +52,7 @@
         "treeFingerprint": { "$ref": "#/$defs/sha256" },
         "productionBranchTouched": {
           "const": false,
-          "description": "A capsule may never authorize mutation of the production branch."
+          "description": "Required fail-closed sentinel: a capsule may never authorize mutation of the production branch."
         }
       }
     },
@@ -70,7 +70,7 @@
     "navigation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["mustRead", "writeAllowed", "writeForbidden"],
+      "required": ["mustRead", "writeAllowed", "writeForbidden", "searchSuppressed"],
       "properties": {
         "mustRead": { "$ref": "#/$defs/sortedPathList" },
         "readIfTriggered": {
@@ -89,7 +89,7 @@
         "writeForbidden": { "$ref": "#/$defs/sortedPathList" },
         "searchSuppressed": {
           "const": true,
-          "description": "Repository-wide search is not the default task; expansion requires an explicit trigger."
+          "description": "Required fail-closed sentinel: repository-wide search is not the default task; expansion requires an explicit trigger."
         }
       }
     },
@@ -141,7 +141,7 @@
     "selectedTests": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["ladderLevel", "tests", "escalation"],
+      "required": ["ladderLevel", "tests", "escalation", "finalSweepRequired"],
       "properties": {
         "ladderLevel": {
           "enum": ["L0", "L1", "L2", "L3", "L4", "L5"],
@@ -164,7 +164,7 @@
         },
         "finalSweepRequired": {
           "type": "boolean",
-          "description": "Exact-head full assurance sweep required by assurance policy; selective runs cannot waive it."
+          "description": "Required assurance sentinel: exact-head full assurance sweep obligation must always be represented explicitly."
         }
       }
     },
@@ -174,7 +174,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["proofId", "state", "bindsTo"],
+        "required": ["proofId", "state", "bindsTo", "manufacturesProductionCredit"],
         "properties": {
           "proofId": { "type": "string", "minLength": 1 },
           "state": {
@@ -193,7 +193,7 @@
           "bindsTo": { "$ref": "#/$defs/sha256" },
           "manufacturesProductionCredit": {
             "const": false,
-            "description": "Proof reuse never manufactures production credit."
+            "description": "Required fail-closed sentinel: proof reuse never manufactures production credit."
           }
         }
       }
@@ -274,7 +274,7 @@
         "required": ["selectedTests"],
         "properties": { "selectedTests": { "properties": { "ladderLevel": { "const": "L5" } } } }
       },
-      "then": { "properties": { "selectedTests": { "properties": { "finalSweepRequired": { "const": true } } } } }
+      "then": { "properties": { "selectedTests": { "properties": { "finalSweepRequired": { "const": true } } } }
     }
   ],
   "examples": []
