@@ -8,6 +8,7 @@ Canonical package: `packages/heds-delta-review`
 Canonical weight: `19`
 Planning gate: `.engineering/gates/M26-PLANNING-GATE.md` (`PASSED`)
 Ledger sync: `.engineering/ledgers/M26-HEDS-DELTA-REVIEW-LEDGER-SYNC.md` (`FROZEN`)
+Planning freeze PR: `#244`
 
 ## OBJECTIVE
 Implement the deterministic provider-neutral HEDS semantic delta-review engine frozen in M26 S01-S05. It compares exact canonical baseline/candidate semantic projections, validates source/proof context, narrows review to changed or invalidated semantic closure, records immutable findings and gates, and emits an independently recomputable HEDS verdict plus read-only downstream handoff.
