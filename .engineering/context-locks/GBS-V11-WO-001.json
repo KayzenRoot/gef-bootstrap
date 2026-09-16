@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-WO-001",
+  "title": "Release Foundation and Compatibility Lock",
+  "releaseLine": "1.1.x",
+  "assurance": "STANDARD",
+  "baseRef": "release/1.1",
+  "baseSha": "331414660a195716471ce3b150ff6d20c3dcec51",
+  "workBranch": "feat/1.1/wo-001-release-foundation",
+  "workBranchHeadAtContextLock": "24afe237ae356f6c14cc99c9b035442ed91d631d",
+  "productionRef": "main",
+  "productionShaAtContextLock": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "v100TagTarget": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+  "ancestryVerified": {
+    "release_1_1_is_ancestor_of_work_branch": true,
+    "mergeBase": "331414660a195716471ce3b150ff6d20c3dcec51",
+    "expectedLineageFromWorkOrder": "331414660a195716471ce3b150ff6d20c3dcec51",
+    "matches": true
+  },
+  "toolchain": {
+    "node": "v24.18.0",
+    "npm": "11.16.0",
+    "git": "git version 2.55.0.windows.3",
+    "platform": "win32"
+  },
+  "lockedSources": [
+    { "path": ".engineering/CHECKPOINT.md", "sha256": "f08cbc81b02cfc5f87b66ee7c43aac93d1c64834cf567eedcf81a20953260368" },
+    { "path": ".engineering/CHECKPOINT.json", "sha256": "a849b395990aac52f41416980ddd998a6d26eb647d829e6f6f25437da24486d2" },
+    { "path": ".engineering/DECISIONS-LEDGER.md", "sha256": "007dd7cc33bb727f376a4b00da6a029aeb15bf7336e2228511c563deff6620fb" },
+    { "path": ".engineering/SCOPE.md", "sha256": "7f784267c595bf9cff4b7b081b6d6743627e7fd7721b3072283d4f11c97c544c" },
+    { "path": ".engineering/DEFINITION-OF-DONE.md", "sha256": "f8e8a8b5b433a3b6a66d16c05816ad0def4fa3dcc0f58c3a2ace72368ba5f65e" },
+    { "path": ".engineering/ARCHITECTURE.md", "sha256": "9f9f26c04a67feec79c362b87a538e5532b3f20f0877411ce85ad064b53325b7" },
+    { "path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md", "sha256": "189701e1bfd1dd4239145581e9023fda4ff0f9511408c963e5062b739bf4fb78" },
+    { "path": ".engineering/releases/V1.1-SCOPE.md", "sha256": "1d81cf83b2fb817660daed18aa7e709a244f14add58829306b207dfbc1ee54ca" },
+    { "path": ".engineering/releases/V1.1-RELEASE-PLAN.md", "sha256": "1b8b95cce9b802865b8b6823725cab4c2dae0fd6a898782ee50924f1c403a163" },
+    { "path": ".engineering/work-orders/GBS-V11-WO-001.md", "sha256": "4e09745db17eae10dfaae00acf3922a6c726b89daf2e915d83ead13fecf9fb8b" },
+    { "path": "package.json", "sha256": "f83e63eb36645f90863ec23d2ee89cae3a78d24fc607e605b6cfef451448e761" },
+    { "path": "package-lock.json", "sha256": "681c73630913c31ca81067b80ef1bfc20c782489054dd3fd5f13f8e71f2eeb06" }
+  ],
+  "fingerprintAlgorithm": "sha256 over raw file bytes at baseSha 331414660a195716471ce3b150ff6d20c3dcec51",
+  "stalePolicy": "If canonical Scope, Definition of Done, Architecture, Decisions Ledger, V1.1 Scope or V1.1 Release Plan changes incompatibly after this compilation, mark Work Order GBS-V11-WO-001 STALE and stop for recompile/rebase.",
+  "staleIf": [
+    ".engineering/SCOPE.md changes compatibly -> revalidate",
+    ".engineering/DEFINITION-OF-DONE.md changes -> revalidate",
+    ".engineering/ARCHITECTURE.md changes -> revalidate",
+    ".engineering/DECISIONS-LEDGER.md changes -> revalidate (this WO appends)",
+    ".engineering/releases/V1.1-SCOPE.md changes -> revalidate",
+    ".engineering/releases/V1.1-RELEASE-PLAN.md changes -> revalidate",
+    "release/1.1 advances such that the locked contracts diverge"
+  ],
+  "invariants": [
+    "main is never modified by this Work Order",
+    "v1.0.0 tag is never moved, replaced or deleted",
+    ".engineering/CHECKPOINT.md and CHECKPOINT.json production state are never modified by this Work Order",
+    "V1.0.0 acceptance history is never rewritten",
+    "No package or release is published",
+    "No force-push and no history rewrite",
+    "No broad implementation belonging to WO-002..WO-010",
+    "Upgrade/migration design is preservation-first and fails closed",
+    "Incremental validation escalates when impact is uncertain",
+    "Proof reuse never manufactures production credit"
+  ],
+  "executor": "external-executor-per-ADR-0003-D3",
+  "codexAllowed": true,
+  "codexAuthorizedScope": "release/1.1 and subordinate branches only, under ADR-0003-D2 bounds",
+  "codexProhibited": ["main", "tag v1.0.0", "publication", "merge", "force-push", "history rewrite", "self-approval"],
+  "authorityNote": "ADR-0002-D8 and the prior context locks record codexAllowed=false for V1.0 lineage. ADR-0003-D2 grants a bounded, V1.1-only authorization after an explicit conflict report. This is a reported conflict resolution, not a silent policy change.",
+  "conflictsReported": [
+    {
+      "id": "C1",
+      "sources": ["ADR-0001", "ADR-0002-D8", ".engineering/ARCHITECTURE.md", ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md#16"],
+      "conflict": "Codex must not build this repository, yet V1.1-RELEASE-PLAN assigns WO-001..WO-010 to Codex execution",
+      "disposition": "resolved by ADR-0003-D2 (bounded, V1.1-only supersession)",
+      "severity": "HIGH",
+      "status": "RESOLVED_PENDING_AUDIT"
+    },
+    {
+      "id": "C2",
+      "sources": ["D-0004"],
+      "conflict": "GEF is not a standalone CLI product, yet V1.1-SCOPE NECESSARY #1 requires a production CLI",
+      "disposition": "resolved by ADR-0003-D4 (admission under D-0047 as a thin mechanical layer)",
+      "severity": "HIGH",
+      "status": "RESOLVED_PENDING_AUDIT"
+    },
+    {
+      "id": "C3",
+      "sources": [".engineering/ARCHITECTURE.md#A2"],
+      "conflict": "Frozen package boundaries (core/, git/, github/, assurance/, distribution/) differ from implemented package names; several packages have no package.json",
+      "disposition": "reported, not resolved; owner WO-002/WO-009 planning",
+      "severity": "MEDIUM",
+      "status": "OPEN_REPORTED"
+    },
+    {
+      "id": "C4",
+      "sources": [".engineering/ARCHITECTURE.md line 6"],
+      "conflict": "Architecture binds to GBS-CONSTITUTION-v1.1 while D-0043 establishes GBS-CONSTITUTION-v1.0",
+      "disposition": "reported, not resolved; owner Project Owner (constitutional version confirmation)",
+      "severity": "MEDIUM",
+      "status": "OPEN_REPORTED"
+    },
+    {
+      "id": "C5",
+      "sources": ["packages/*/src/index.mjs", "packages/security-reliability-integrations/src/index.js"],
+      "conflict": "Colliding exported names across packages: compatibility, redactSecrets, containedPath/normalizeRestrictedPath",
+      "disposition": "recorded as a composition constraint for WO-002 in the CLI architecture; not renamed (out of scope)",
+      "severity": "LOW",
+      "status": "OPEN_RECORDED"
+    },
+    {
+      "id": "C6",
+      "sources": ["package.json", "packages/cli/package.json"],
+      "conflict": "Workspace version 1.0.0 vs @gef-bootstrap/cli version 0.0.0; no bin entry exists anywhere",
+      "disposition": "recorded for WO-002 version-provenance reconciliation; not changed (out of scope)",
+      "severity": "LOW",
+      "status": "OPEN_RECORDED"
+    }
+  ],
+  "preflight": {
+    "repositoryIdentityConfirmed": true,
+    "workBranchDescendsFromRelease11": true,
+    "workingTreeCleanAtStart": true,
+    "contextLockLineageMatches": true,
+    "result": "PASS"
+  }
+}
