@@ -14,10 +14,13 @@ export function createHedsAuthorityBoundary(intent:HedsIntentCapsule,options:Ope
  const d=digestValue(options,'HAB26',body);return d.ok?ok(deepFreeze({...body,boundaryDigest:d.value})):d;
 }
 
-export function createSemanticStateIdentity(stateId:string,projectId:string,lineageId:string,coverageDigest:string,sourceProjectionDigests:readonly string[],options:OperationOptions):Result<SemanticStateIdentity>{
- if(![stateId,projectId,lineageId].every(validId)||!allSha([coverageDigest,...sourceProjectionDigests]))return fail('SSI26_INPUT_INVALID','Semantic state identity inputs are invalid.');
- const body={stateId,projectId,lineageId,coverageDigest,sourceProjectionDigests:sortedUnique(sourceProjectionDigests)};const d=digestValue(options,'SSI26',body);return d.ok?ok(deepFreeze({stateId,projectId,lineageId,coverageDigest,semanticDigest:d.value})):d;
+function createStateIdentity(kind:'BSI26'|'CSI26'|'SSI26',stateId:string,projectId:string,lineageId:string,coverageDigest:string,sourceProjectionDigests:readonly string[],options:OperationOptions):Result<SemanticStateIdentity>{
+ if(![stateId,projectId,lineageId].every(validId)||!allSha([coverageDigest,...sourceProjectionDigests]))return fail(`${kind}_INPUT_INVALID`,'Semantic state identity inputs are invalid.');
+ const body={stateId,projectId,lineageId,coverageDigest,sourceProjectionDigests:sortedUnique(sourceProjectionDigests)};const d=digestValue(options,kind,body);return d.ok?ok(deepFreeze({stateId,projectId,lineageId,coverageDigest,semanticDigest:d.value})):d;
 }
+export function createBaselineSemanticIdentity(stateId:string,projectId:string,lineageId:string,coverageDigest:string,sourceProjectionDigests:readonly string[],options:OperationOptions){return createStateIdentity('BSI26',stateId,projectId,lineageId,coverageDigest,sourceProjectionDigests,options);}
+export function createCandidateSemanticIdentity(stateId:string,projectId:string,lineageId:string,coverageDigest:string,sourceProjectionDigests:readonly string[],options:OperationOptions){return createStateIdentity('CSI26',stateId,projectId,lineageId,coverageDigest,sourceProjectionDigests,options);}
+export function createSemanticStateIdentity(stateId:string,projectId:string,lineageId:string,coverageDigest:string,sourceProjectionDigests:readonly string[],options:OperationOptions){return createStateIdentity('SSI26',stateId,projectId,lineageId,coverageDigest,sourceProjectionDigests,options);}
 
 export function sealReviewSourceProjection(input:ReviewSourceInput,options:OperationOptions):Result<ReviewSourceProjection>{
  if(![input.subjectId,input.sourceId,input.ownerId,input.projectId,input.lineageId].every(validId))return fail('RSP26_ID_INVALID','Review source identifiers are invalid.',input.subjectId);
@@ -30,28 +33,18 @@ export function createCrossLineageWitness(baseline:SemanticStateIdentity,candida
 }
 
 function mapSources(items:readonly ReviewSourceProjection[],side:string,guard:Guard):Result<Map<string,ReviewSourceProjection>>{
- const map=new Map<string,ReviewSourceProjection>();
- for(const item of items){const step=guard.step(`${side}:${item.subjectId}`);if(!step.ok)return step;const existing=map.get(item.subjectId);if(existing)return fail('DCI26_DUPLICATE_SUBJECT',`Duplicate ${side} subject projection.`,item.subjectId);map.set(item.subjectId,item);}return ok(map);
+ const map=new Map<string,ReviewSourceProjection>();for(const item of items){const step=guard.step(`${side}:${item.subjectId}`);if(!step.ok)return step;const existing=map.get(item.subjectId);if(existing)return fail('DCI26_DUPLICATE_SUBJECT',`Duplicate ${side} subject projection.`,item.subjectId);map.set(item.subjectId,item);}return ok(map);
 }
 function symmetric(a:readonly string[],b:readonly string[]){const aa=new Set(a),bb=new Set(b);return sortedUnique([...a.filter(x=>!bb.has(x)),...b.filter(x=>!aa.has(x))]);}
 function deltaEntry(subjectId:string,before:ReviewSourceProjection|undefined,after:ReviewSourceProjection|undefined,coverageComplete:boolean,options:OperationOptions):Result<SemanticDeltaEntry>{
  if(before&&!after&&!coverageComplete)return fail('DCI26_REMOVAL_UNPROVEN','Subject absence cannot be classified as REMOVED without complete comparison coverage.',subjectId);
- const semanticChanged=before===undefined||after===undefined||before.semanticDigest!==after.semanticDigest;
- const authorityChanged=before===undefined||after===undefined||before.ownerId!==after.ownerId||before.sourceId!==after.sourceId;
- const validityChanged=before===undefined||after===undefined||before.validityBindingDigest!==after.validityBindingDigest;
- const changed=new Set(symmetric(before?.dependencyDigests??[],after?.dependencyDigests??[]));
- if(semanticChanged){if(before)changed.add(before.semanticDigest);if(after)changed.add(after.semanticDigest);}
- if(validityChanged){if(before)changed.add(before.validityBindingDigest);if(after)changed.add(after.validityBindingDigest);}
- if(authorityChanged){if(before)changed.add(before.projectionDigest);if(after)changed.add(after.projectionDigest);}
- const changedDependencyDigests=sortedUnique([...changed]);let changeClass:'ADDED'|'REMOVED'|'MODIFIED'|'UNCHANGED';
+ const semanticChanged=before===undefined||after===undefined||before.semanticDigest!==after.semanticDigest;const authorityChanged=before===undefined||after===undefined||before.ownerId!==after.ownerId||before.sourceId!==after.sourceId;const validityChanged=before===undefined||after===undefined||before.validityBindingDigest!==after.validityBindingDigest;const changed=new Set(symmetric(before?.dependencyDigests??[],after?.dependencyDigests??[]));
+ if(semanticChanged){if(before)changed.add(before.semanticDigest);if(after)changed.add(after.semanticDigest);}if(validityChanged){if(before)changed.add(before.validityBindingDigest);if(after)changed.add(after.validityBindingDigest);}if(authorityChanged){if(before)changed.add(before.projectionDigest);if(after)changed.add(after.projectionDigest);}const changedDependencyDigests=sortedUnique([...changed]);let changeClass:'ADDED'|'REMOVED'|'MODIFIED'|'UNCHANGED';
  if(!before&&after)changeClass='ADDED';else if(before&&!after)changeClass='REMOVED';else if(semanticChanged||authorityChanged||validityChanged||changedDependencyDigests.length>0)changeClass='MODIFIED';else changeClass='UNCHANGED';
  const body={subjectId,changeClass,beforeProjectionDigest:before?.projectionDigest??null,afterProjectionDigest:after?.projectionDigest??null,semanticChanged,authorityChanged,validityChanged,changedDependencyDigests};const d=digestValue(options,'SDL26',body);return d.ok?ok(deepFreeze({...body,deltaDigest:d.value})):d;
 }
 
 export function createDeltaChangeInventory(baseline:SemanticStateIdentity,candidate:SemanticStateIdentity,baselineSources:readonly ReviewSourceProjection[],candidateSources:readonly ReviewSourceProjection[],coverageComplete:boolean,options:OperationOptions):Result<DeltaChangeInventory>{
- const lineage=createCrossLineageWitness(baseline,candidate,options);if(!lineage.ok)return lineage;if(!lineage.value.comparisonAdmissible)return fail('DCI26_LINEAGE_MISMATCH','Baseline and candidate are not in the same project lineage.');const guard=new Guard(options);
- const bm=mapSources(baselineSources,'baseline',guard);if(!bm.ok)return bm;const cm=mapSources(candidateSources,'candidate',guard);if(!cm.ok)return cm;
- const ids=sortedUnique([...bm.value.keys(),...cm.value.keys()]);const entries:SemanticDeltaEntry[]=[];
- for(const id of ids){const step=guard.step(`delta:${id}`);if(!step.ok)return step;const r=deltaEntry(id,bm.value.get(id),cm.value.get(id),coverageComplete,options);if(!r.ok)return r;entries.push(r.value);}
- entries.sort((a,b)=>compareCodePoint(a.subjectId,b.subjectId));const body={baselineIdentityDigest:baseline.semanticDigest,candidateIdentityDigest:candidate.semanticDigest,coverageComplete,entries};const d=digestValue(options,'DCI26',body);return d.ok?ok(deepFreeze({...body,inventoryDigest:d.value})):d;
+ const lineage=createCrossLineageWitness(baseline,candidate,options);if(!lineage.ok)return lineage;if(!lineage.value.comparisonAdmissible)return fail('DCI26_LINEAGE_MISMATCH','Baseline and candidate are not in the same project lineage.');const guard=new Guard(options);const bm=mapSources(baselineSources,'baseline',guard);if(!bm.ok)return bm;const cm=mapSources(candidateSources,'candidate',guard);if(!cm.ok)return cm;const ids=sortedUnique([...bm.value.keys(),...cm.value.keys()]);const entries:SemanticDeltaEntry[]=[];
+ for(const id of ids){const step=guard.step(`delta:${id}`);if(!step.ok)return step;const r=deltaEntry(id,bm.value.get(id),cm.value.get(id),coverageComplete,options);if(!r.ok)return r;entries.push(r.value);}entries.sort((a,b)=>compareCodePoint(a.subjectId,b.subjectId));const body={baselineIdentityDigest:baseline.semanticDigest,candidateIdentityDigest:candidate.semanticDigest,coverageComplete,entries};const d=digestValue(options,'DCI26',body);return d.ok?ok(deepFreeze({...body,inventoryDigest:d.value})):d;
 }
