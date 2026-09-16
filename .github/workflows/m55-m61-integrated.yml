@@ -1,0 +1,47 @@
+name: M55-M61 Integrated Assurance
+
+on:
+  pull_request:
+    paths:
+      - 'packages/m55-m61-quality/**'
+      - 'tests/m55-m61-quality.test.mjs'
+      - 'planning/modules/area-n-bootstrap-quality/m55-github-simulation/**'
+      - 'planning/modules/area-n-bootstrap-quality/m56-end-to-end-harness/**'
+      - 'planning/modules/area-n-bootstrap-quality/m57-performance-benchmarks/**'
+      - 'planning/modules/area-n-bootstrap-quality/m58-security-tests/**'
+      - 'planning/modules/area-o-documentation-and-closure/m59-user-documentation/**'
+      - 'planning/modules/area-o-documentation-and-closure/m60-engineering-documentation/**'
+      - 'planning/modules/area-o-documentation-and-closure/m61-operational-runbooks/**'
+      - '.engineering/**'
+      - '.github/workflows/m55-m61-integrated.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: node --test tests/m55-m61-quality.test.mjs
+
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
