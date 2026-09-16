@@ -30,10 +30,12 @@ export function navigationPlan(files=[]){
 export function executionWaves(tasks=[]){
  const byId=new Map(tasks.map(t=>[t.id,t]));
  if(byId.size!==tasks.length||tasks.some(t=>!t.id)) return {state:'INVALID',waves:[]};
- const remaining=new Set(byId.keys()),done=new Set(),waves=[];
+ const ids=new Set(byId.keys());
+ if(tasks.some(t=>!Array.isArray(t.deps??[])||(t.deps??[]).some(d=>!ids.has(d)))) return {state:'MISSING_DEPENDENCY',waves:[]};
+ const remaining=new Set(ids),done=new Set(),waves=[];
  while(remaining.size){
   const wave=[...remaining].filter(id=>(byId.get(id).deps??[]).every(d=>done.has(d))).sort();
-  if(!wave.length)return {state:'CYCLE_OR_MISSING_DEPENDENCY',waves};
+  if(!wave.length)return {state:'CYCLE',waves};
   waves.push(wave); for(const id of wave){remaining.delete(id);done.add(id);}
  }
  return {state:'READY',waves,criticalDepth:waves.length,digest:digest('EWF63',waves)};
