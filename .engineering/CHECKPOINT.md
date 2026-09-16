@@ -1,42 +1,44 @@
 # Checkpoint
 
-Status: `GBS_M28_MODULE_DONE`
+Status: `GBS_M33_MODULE_DONE`
 
 - Project: GEF Bootstrap
 - Phase: `PRODUCTION_CONSTRUCTION`
-- Completed modules: `GBS-M00` through `GBS-M28`
-- Active module: `GBS-M29 — Git Engine`
+- Completed modules: `GBS-M00` through `GBS-M33`
+- Active module: `GBS-M34 — Security Bootstrap`
 - Active module status: `PLANNING_REQUIRED`
 - Active Work Order: `NONE`
 
 ## Production position
-- Production: `511 / 1088 = 46.97%`
-- Remaining: `577 / 1088 = 53.03%`
+- Production: `602 / 1088 = 55.33%`
+- Remaining: `486 / 1088 = 44.67%`
 - Denominator change: `NONE`
 
-## M28 accepted evidence
-- status: `MODULE_DONE`
-- weight: `20 / 20`
-- assurance: `MAX_ASSURANCE`
-- required mechanisms: `32 / 32`
-- planning / Work Order / admission PRs: `#256 / #257 / #258`
-- implementation PR/review/merge: `#259` / `5226131329` / `7ea43bb46dd7d39a9e2f2567c20a68b95339a487`
-- reviewed head: `be263a3c5c0cd11cf47a55da88efab8f56a4e9bd`
-- exact-head workflows: `25 / 25 SUCCESS`
-- M28 workflow and Security CodeQL: `SUCCESS / SUCCESS`
+## Area H accepted evidence
+- M29 Git Engine: `MODULE_DONE`, `20 / 20`
+- M30 GitHub Bootstrap: `MODULE_DONE`, `17 / 17`
+- M31 GitHub Governance: `MODULE_DONE`, `18 / 18`
+- M32 CI Bootstrap: `MODULE_DONE`, `17 / 17`
+- M33 Release Governance: `MODULE_DONE`, `19 / 19`
+- integrated implementation PR: `#261`
+- exact reviewed head: `7f72f19ee3653ceaf16be638acb8d05a045b311b`
+- technical audit: `5226481308`
+- implementation merge: `b6c8368d06bd0208ca3f7130bb5cbd813ae09c38`
+- Area H workflow run: `35132339575`, `SUCCESS`
+- focused verification: Ubuntu / Windows / macOS `SUCCESS`
+- full regression + npm audit: `SUCCESS`
 - CRITICAL/HIGH: `0 / 0`
-- evidence: `.engineering/evidence/GBS-WO-M28-001-EVIDENCE.md`
+- evidence: `.engineering/evidence/GBS-M29-M33-EVIDENCE.md`
 
-## M29 next-module identity
-- module: `GBS-M29 — Git Engine`
+## M34 next-module identity
+- module: `GBS-M34 — Security Bootstrap`
 - class: `CORE_REQUIRED`
-- frozen denominator weight: `20`
-- current earned weight: `0 / 20`
 - current status: `PLANNING_REQUIRED`
+- implementation authority: `NONE`
 
 ## Boundary
-M28 is closed after exact-head CI and MAX_ASSURANCE audit. M29 owns Git repository state, branch lifecycle, commit semantics and dirty-tree safety. M30/M31 own GitHub bootstrap/governance, M32 owns CI bootstrap, and M33 owns release governance.
+Area H is closed. Git state and mutation planning are M29-owned; GitHub bootstrap M30-owned; GitHub policy authorization M31-owned; CI execution/evidence binding M32-owned; release authorization M33-owned. M34 begins Area I security and reliability and must be planned/frozen before implementation.
 
-Next legal stage: `PLAN_GBS_M29`.
+Next legal stage: `PLAN_GBS_M34`.
 
-STOP CONDITION: `GBS_M28_MODULE_DONE`.
+STOP CONDITION: `GBS_M33_MODULE_DONE`.
