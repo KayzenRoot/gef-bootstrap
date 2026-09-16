@@ -110,7 +110,7 @@ Canonical rounded values:
 Current progression authority is `.engineering/CHECKPOINT.md` + `.engineering/CHECKPOINT.json`. Evidence remains bound to each accepted module's reviewed head/merge and evidence record. Selected historical bindings retained below are descriptive audit history, not a substitute for the current checkpoint:
 - M03: PR #70, reviewed head `d536df4822be6cc58f7b62c4dcd6de0bdec2ca8a`, merge `aed42faedd275d4b8a313067b1b60f25bb442fcc`, run `34727238254`.
 - M04: PR #86, reviewed head `bc26829fa8f3043056b6d9b614c618767f02e6c7`, tree `46c80e056dde05ef108e9599485c33de844cec5a`, merge `67b4377a6df7a34874f751c13d1659b942eed859`, run `34730911026`.
-- M05: evidence `.engineering/evidence/GBS-WO-M05-001-EVIDENCE.md`, reviewed head `0eea9b410755410cb8ae2e34042e6ccb87fae4c6`, tree `d740f3ef4f6ed3ea4a322b8969d8eaf5f5befa65`, merge `3c93e4da5c12bd2ce5ed4ebfb8b809a256815c93`, run `34735379266`.
+- M05: PR #103, reviewed head `0eea9b410755410cb8ae2e34042e6ccb87fae4c6`, tree `d740f3ef4f6ed3ea4a322b8969d8eaf5f5befa65`, merge `3c93e4da5c12bd2ce5ed4ebfb8b809a256815c93`, run `34735379266`.
 - M06: PR #117, reviewed head `5ae4404db34447ad4d08eefc22ea0b0ad2ca89c2`, tree `e17b23c59f05785ab0cf1ccaebfd2608af3f3a70`, merge `7e92051e9a675f05bee27e830fd2486fce4a2bbd`, repository run `34750998852`, platform run `34750998868`.
 - M07: PR #133, reviewed head `a76bfc20a6a6300d6d98f42748bad01d77088716`, tree `f5b9b6ad95dafaea2300e2711160d8673909d864`, merge `60e3c0f2a0da69ce2a505212e30bc09a2ece3afd`, review `5191003371`, repository run `34762400016`, platform run `34762400076`.
 - M14: evidence `.engineering/evidence/GBS-WO-M14-001-EVIDENCE.md`, merge `294b7c0961d72a2d1c1217f647b3116feef20ee0`.
