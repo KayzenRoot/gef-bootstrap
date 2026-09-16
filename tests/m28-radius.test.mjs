@@ -1,0 +1,1 @@
+import test from'node:test';import assert from'node:assert/strict';import{deriveRegressionRadius}from'../packages/test-impact-engine/dist/public.js';test('regression radius is maximum required level',()=>{assert.equal(deriveRegressionRadius(['L1','L4','L2']),'L4');assert.equal(deriveRegressionRadius(['L5','L0']),'L5')});
