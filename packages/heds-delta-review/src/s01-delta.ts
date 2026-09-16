@@ -1,12 +1,12 @@
 import type{DeltaChangeInventory,HedsAuthorityBoundary,HedsIntentCapsule,HedsIntentInput,OperationOptions,Result,ReviewSourceInput,ReviewSourceProjection,SemanticDeltaEntry,SemanticStateIdentity,CrossLineageWitness}from'./types.js';
-import{allSha,compareCodePoint,deepFreeze,digestValue,fail,ok,sortedUnique,validId}from'./utils.js';
+import{allSha,compareCodePoint,deepFreeze,digestValue,fail,Guard,ok,sortedUnique,validId}from'./utils.js';
 
 function uniqueValid(values:readonly string[]){return values.length===new Set(values).size&&values.every(validId);}
 
 export function createHedsIntent(input:HedsIntentInput,options:OperationOptions):Result<HedsIntentCapsule>{
  if(![input.intentId,input.projectId,input.lineageId,input.baselineId,input.candidateId].every(validId)||!validId(input.purpose))return fail('HIC26_ID_INVALID','HEDS intent identifiers are invalid.');
  if(!/^sha256:[0-9a-f]{64}$/.test(input.reviewPolicyDigest)||!uniqueValid(input.requestedSubjectIds))return fail('HIC26_BINDING_INVALID','HEDS intent policy or requested subjects are invalid.');
- const body={...input,requestedSubjectIds:sortedUnique(input.requestedSubjectIds)};const d=digestValue(options,'HIC26',body);return d.ok?ok(deepFreeze({...body,intentDigest:d.value})):d;
+ const body={intentId:input.intentId,projectId:input.projectId,lineageId:input.lineageId,baselineId:input.baselineId,candidateId:input.candidateId,reviewPolicyDigest:input.reviewPolicyDigest,requestedSubjectIds:sortedUnique(input.requestedSubjectIds),purpose:input.purpose};const d=digestValue(options,'HIC26',body);return d.ok?ok(deepFreeze({...body,intentDigest:d.value})):d;
 }
 
 export function createHedsAuthorityBoundary(intent:HedsIntentCapsule,options:OperationOptions):Result<HedsAuthorityBoundary>{
@@ -22,16 +22,16 @@ export function createSemanticStateIdentity(stateId:string,projectId:string,line
 export function sealReviewSourceProjection(input:ReviewSourceInput,options:OperationOptions):Result<ReviewSourceProjection>{
  if(![input.subjectId,input.sourceId,input.ownerId,input.projectId,input.lineageId].every(validId))return fail('RSP26_ID_INVALID','Review source identifiers are invalid.',input.subjectId);
  if(!allSha([input.semanticDigest,input.validityBindingDigest,...input.dependencyDigests]))return fail('RSP26_DIGEST_INVALID','Review source semantic or validity bindings are invalid.',input.subjectId);
- const body={...input,dependencyDigests:sortedUnique(input.dependencyDigests)};const d=digestValue(options,'RSP26',body);return d.ok?ok(deepFreeze({...body,projectionDigest:d.value})):d;
+ const body={subjectId:input.subjectId,sourceId:input.sourceId,ownerId:input.ownerId,projectId:input.projectId,lineageId:input.lineageId,semanticDigest:input.semanticDigest,validityBindingDigest:input.validityBindingDigest,dependencyDigests:sortedUnique(input.dependencyDigests)};const d=digestValue(options,'RSP26',body);return d.ok?ok(deepFreeze({...body,projectionDigest:d.value})):d;
 }
 
 export function createCrossLineageWitness(baseline:SemanticStateIdentity,candidate:SemanticStateIdentity,options:OperationOptions):Result<CrossLineageWitness>{
  const body={projectMatch:baseline.projectId===candidate.projectId,lineageMatch:baseline.lineageId===candidate.lineageId};const comparisonAdmissible=body.projectMatch&&body.lineageMatch;const d=digestValue(options,'XLG26',{...body,comparisonAdmissible,baseline:baseline.semanticDigest,candidate:candidate.semanticDigest});return d.ok?ok(deepFreeze({...body,comparisonAdmissible,witnessDigest:d.value})):d;
 }
 
-function mapSources(items:readonly ReviewSourceProjection[],side:string):Result<Map<string,ReviewSourceProjection>>{
+function mapSources(items:readonly ReviewSourceProjection[],side:string,guard:Guard):Result<Map<string,ReviewSourceProjection>>{
  const map=new Map<string,ReviewSourceProjection>();
- for(const item of items){const existing=map.get(item.subjectId);if(existing)return fail('DCI26_DUPLICATE_SUBJECT',`Duplicate ${side} subject projection.`,item.subjectId);map.set(item.subjectId,item);}return ok(map);
+ for(const item of items){const step=guard.step(`${side}:${item.subjectId}`);if(!step.ok)return step;const existing=map.get(item.subjectId);if(existing)return fail('DCI26_DUPLICATE_SUBJECT',`Duplicate ${side} subject projection.`,item.subjectId);map.set(item.subjectId,item);}return ok(map);
 }
 function symmetric(a:readonly string[],b:readonly string[]){const aa=new Set(a),bb=new Set(b);return sortedUnique([...a.filter(x=>!bb.has(x)),...b.filter(x=>!aa.has(x))]);}
 function deltaEntry(subjectId:string,before:ReviewSourceProjection|undefined,after:ReviewSourceProjection|undefined,coverageComplete:boolean,options:OperationOptions):Result<SemanticDeltaEntry>{
@@ -43,16 +43,15 @@ function deltaEntry(subjectId:string,before:ReviewSourceProjection|undefined,aft
  if(semanticChanged){if(before)changed.add(before.semanticDigest);if(after)changed.add(after.semanticDigest);}
  if(validityChanged){if(before)changed.add(before.validityBindingDigest);if(after)changed.add(after.validityBindingDigest);}
  if(authorityChanged){if(before)changed.add(before.projectionDigest);if(after)changed.add(after.projectionDigest);}
- const changedDependencyDigests=sortedUnique([...changed]);
- let changeClass:'ADDED'|'REMOVED'|'MODIFIED'|'UNCHANGED';
+ const changedDependencyDigests=sortedUnique([...changed]);let changeClass:'ADDED'|'REMOVED'|'MODIFIED'|'UNCHANGED';
  if(!before&&after)changeClass='ADDED';else if(before&&!after)changeClass='REMOVED';else if(semanticChanged||authorityChanged||validityChanged||changedDependencyDigests.length>0)changeClass='MODIFIED';else changeClass='UNCHANGED';
  const body={subjectId,changeClass,beforeProjectionDigest:before?.projectionDigest??null,afterProjectionDigest:after?.projectionDigest??null,semanticChanged,authorityChanged,validityChanged,changedDependencyDigests};const d=digestValue(options,'SDL26',body);return d.ok?ok(deepFreeze({...body,deltaDigest:d.value})):d;
 }
 
 export function createDeltaChangeInventory(baseline:SemanticStateIdentity,candidate:SemanticStateIdentity,baselineSources:readonly ReviewSourceProjection[],candidateSources:readonly ReviewSourceProjection[],coverageComplete:boolean,options:OperationOptions):Result<DeltaChangeInventory>{
- const lineage=createCrossLineageWitness(baseline,candidate,options);if(!lineage.ok)return lineage;if(!lineage.value.comparisonAdmissible)return fail('DCI26_LINEAGE_MISMATCH','Baseline and candidate are not in the same project lineage.');
- const bm=mapSources(baselineSources,'baseline');if(!bm.ok)return bm;const cm=mapSources(candidateSources,'candidate');if(!cm.ok)return cm;
+ const lineage=createCrossLineageWitness(baseline,candidate,options);if(!lineage.ok)return lineage;if(!lineage.value.comparisonAdmissible)return fail('DCI26_LINEAGE_MISMATCH','Baseline and candidate are not in the same project lineage.');const guard=new Guard(options);
+ const bm=mapSources(baselineSources,'baseline',guard);if(!bm.ok)return bm;const cm=mapSources(candidateSources,'candidate',guard);if(!cm.ok)return cm;
  const ids=sortedUnique([...bm.value.keys(),...cm.value.keys()]);const entries:SemanticDeltaEntry[]=[];
- for(const id of ids){const r=deltaEntry(id,bm.value.get(id),cm.value.get(id),coverageComplete,options);if(!r.ok)return r;entries.push(r.value);}
+ for(const id of ids){const step=guard.step(`delta:${id}`);if(!step.ok)return step;const r=deltaEntry(id,bm.value.get(id),cm.value.get(id),coverageComplete,options);if(!r.ok)return r;entries.push(r.value);}
  entries.sort((a,b)=>compareCodePoint(a.subjectId,b.subjectId));const body={baselineIdentityDigest:baseline.semanticDigest,candidateIdentityDigest:candidate.semanticDigest,coverageComplete,entries};const d=digestValue(options,'DCI26',body);return d.ok?ok(deepFreeze({...body,inventoryDigest:d.value})):d;
 }
