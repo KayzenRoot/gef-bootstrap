@@ -292,7 +292,7 @@ test('context lock lineage matches the Work Order expectation', () => {
 
 test('context lock records the bounded executor authorization and its authority note', () => {
   assert.equal(lock.codexAllowed, true);
-  assert.ok(lock.authorityNote.includes('ADR-0003-D2'), 'authorization must cite its superseding decision');
+  assert.ok(lock.authorityNote.includes('ADR-0003-D3'), 'authorization must cite its superseding decision');
   assert.ok(lock.codexProhibited.includes('main'));
   assert.ok(lock.codexProhibited.includes('tag v1.0.0'));
 });
