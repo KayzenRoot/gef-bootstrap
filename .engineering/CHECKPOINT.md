@@ -43,6 +43,7 @@ Status: `GBS_M26_PLANNING_FROZEN`
 - planning gate: `.engineering/gates/M26-PLANNING-GATE.md` (`PASSED`)
 - ledger sync: `.engineering/ledgers/M26-HEDS-DELTA-REVIEW-LEDGER-SYNC.md` (`FROZEN`)
 - required mechanisms: `40`
+- planning PR: `#244`
 - Work Order: `.engineering/work-orders/GBS-WO-M26-001.md`
 - Work Order status: `COMPILED_NOT_ADMITTED`
 - canonical package: `packages/heds-delta-review`
