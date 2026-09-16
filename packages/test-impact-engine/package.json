@@ -1,0 +1,1 @@
+{"name":"@gef-bootstrap/test-impact-engine","version":"0.0.0","private":true,"type":"module","exports":{".":{"types":"./dist/public.d.ts","import":"./dist/public.js"}},"types":"./dist/public.d.ts"}
