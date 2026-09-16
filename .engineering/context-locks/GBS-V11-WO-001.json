@@ -60,27 +60,27 @@
     "Incremental validation escalates when impact is uncertain",
     "Proof reuse never manufactures production credit"
   ],
-  "executor": "external-executor-per-ADR-0003-D3",
+  "executor": "external-executor-transition-proposal-per-ADR-0003-D3",
   "codexAllowed": true,
-  "codexAuthorizedScope": "release/1.1 and subordinate branches only, under ADR-0003-D2 bounds",
+  "codexAuthorizedScope": "WO-001 transition/proposal increment only until ADR-0003-D3 passes objective audit and checkpoint promotion; after promotion, release/1.1 and subordinate branches are authorized under ADR-0003-D3 bounds",
   "codexProhibited": ["main", "tag v1.0.0", "publication", "merge", "force-push", "history rewrite", "self-approval"],
-  "authorityNote": "ADR-0002-D8 and the prior context locks record codexAllowed=false for V1.0 lineage. ADR-0003-D2 grants a bounded, V1.1-only authorization after an explicit conflict report. This is a reported conflict resolution, not a silent policy change.",
+  "authorityNote": "ADR-0002-D8 and prior context locks record codexAllowed=false for V1.0 lineage. ADR-0003-D3 is the proposed bounded V1.1-only supersession. Under D-0042 it does not become continuing authority for WO-002+ until objective audit and checkpoint promotion. WO-001 is the bounded transition/proposal increment and cannot self-promote that authority.",
   "conflictsReported": [
     {
       "id": "C1",
       "sources": ["ADR-0001", "ADR-0002-D8", ".engineering/ARCHITECTURE.md", ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md#16"],
       "conflict": "Codex must not build this repository, yet V1.1-RELEASE-PLAN assigns WO-001..WO-010 to Codex execution",
-      "disposition": "resolved by ADR-0003-D2 (bounded, V1.1-only supersession)",
+      "disposition": "proposed resolution by ADR-0003-D3 (bounded, V1.1-only supersession); continuing authority requires objective audit + checkpoint promotion under D-0042",
       "severity": "HIGH",
-      "status": "RESOLVED_PENDING_AUDIT"
+      "status": "RESOLVED_PENDING_AUDIT_AND_PROMOTION"
     },
     {
       "id": "C2",
       "sources": ["D-0004"],
       "conflict": "GEF is not a standalone CLI product, yet V1.1-SCOPE NECESSARY #1 requires a production CLI",
-      "disposition": "resolved by ADR-0003-D4 (admission under D-0047 as a thin mechanical layer)",
+      "disposition": "proposed resolution by ADR-0003-D4 (admission under D-0047 as a thin mechanical layer); effectiveness requires objective audit + checkpoint promotion under D-0042",
       "severity": "HIGH",
-      "status": "RESOLVED_PENDING_AUDIT"
+      "status": "RESOLVED_PENDING_AUDIT_AND_PROMOTION"
     },
     {
       "id": "C3",
