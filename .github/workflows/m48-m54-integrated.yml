@@ -1,0 +1,25 @@
+name: M48-M54 Integrated Assurance
+on:
+  pull_request:
+    paths: ['packages/m48-m54-maintenance/**','tests/m48-m54-maintenance.test.mjs','planning/modules/area-l-artifacts-and-ux/m48-help-system/**','planning/modules/area-m-distribution-and-maintenance/**','planning/modules/area-n-bootstrap-quality/m5[34]-*/**','.engineering/**','.github/workflows/m48-m54-integrated.yml']
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix: {os: [ubuntu-latest, windows-latest, macos-latest]}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: node --test tests/m48-m54-maintenance.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: 22, cache: npm}
+      - run: npm ci
+      - run: npm test
