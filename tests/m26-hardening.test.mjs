@@ -3,7 +3,7 @@ import assert from'node:assert/strict';
 import{createHash}from'node:crypto';
 import{
  createHedsIntent,sealReviewSourceProjection,createSourceCoverageManifest,createDeltaChangeInventory,createSemanticStateIdentity,
- createSemanticFinding,evaluateReviewGates,createHedsVerdictCapsule,verifyHedsVerdictCapsule,createHedsReplayGuard
+ createSemanticFinding,createHedsFindingRegister,evaluateReviewGates,createHedsVerdictCapsule,verifyHedsVerdictCapsule,createHedsReplayGuard
 }from'../packages/heds-delta-review/dist/public.js';
 const raw=s=>createHash('sha256').update(s).digest('hex');
 const sha=s=>`sha256:${raw(s)}`;
@@ -66,6 +66,25 @@ test('verdict integrity rejects label tamper even if attacker reuses original di
  const receipt=unwrap(verifyHedsVerdictCapsule(forged,gates,[],options));
  assert.equal(receipt.valid,false);
  assert.equal(receipt.expectedVerdict,'APPROVED');
+});
+
+test('HFR26 rejects silent disappearance of prior unresolved finding',()=>{
+ const prior=unwrap(createSemanticFinding({findingId:'FOPEN',subjectId:'A',severity:'HIGH',state:'OPEN',ruleId:'RULE',beforeSemanticDigest:sha('before'),afterSemanticDigest:sha('after'),evidenceDigests:[],proofDigests:[],supersedesFindingDigest:null},options));
+ const r=createHedsFindingRegister([], [prior], options);
+ assert.equal(r.ok,false);assert.equal(r.diagnostics[0].code,'HFR26_SILENT_DISAPPEARANCE');
+});
+
+test('HFR26 accepts explicit exact resolution lineage and retains predecessor history',()=>{
+ const prior=unwrap(createSemanticFinding({findingId:'FOPEN',subjectId:'A',severity:'HIGH',state:'OPEN',ruleId:'RULE',beforeSemanticDigest:sha('before'),afterSemanticDigest:sha('after'),evidenceDigests:[],proofDigests:[],supersedesFindingDigest:null},options));
+ const resolved=unwrap(createSemanticFinding({findingId:'FRESOLVED',subjectId:'A',severity:'HIGH',state:'RESOLVED',ruleId:'RULE',beforeSemanticDigest:sha('after'),afterSemanticDigest:sha('fixed'),evidenceDigests:[],proofDigests:[],supersedesFindingDigest:prior.findingDigest},options));
+ const reg=unwrap(createHedsFindingRegister([resolved],[prior],options));
+ assert.deepEqual(reg.currentFindingDigests,[resolved.findingDigest]);assert.deepEqual(reg.retainedFindingDigests,[prior.findingDigest]);
+});
+
+test('HFR26 rejects resolution lineage pointing to unknown finding',()=>{
+ const resolved=unwrap(createSemanticFinding({findingId:'FRESOLVED',subjectId:'A',severity:'HIGH',state:'RESOLVED',ruleId:'RULE',beforeSemanticDigest:sha('after'),afterSemanticDigest:sha('fixed'),evidenceDigests:[],proofDigests:[],supersedesFindingDigest:sha('unknown')},options));
+ const r=createHedsFindingRegister([resolved],[],options);
+ assert.equal(r.ok,false);assert.equal(r.diagnostics[0].code,'HFR26_LINEAGE_UNKNOWN');
 });
 
 test('replay history exposes explicit bounded truncation',()=>{
