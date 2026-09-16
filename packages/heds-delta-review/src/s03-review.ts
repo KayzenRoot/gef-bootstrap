@@ -7,11 +7,11 @@ export function createSemanticDeltaMatrix(inventory:DeltaChangeInventory,proofIn
  rows.sort((a,b)=>compareCodePoint(a.subjectId,b.subjectId));const body={inventoryDigest:inventory.inventoryDigest,rows};const d=digestValue(options,'SDM26',body);return d.ok?ok(deepFreeze({...body,matrixDigest:d.value})):d;
 }
 
-export function createImpactFrontier(matrix:SemanticDeltaMatrix,dependencies:DependencyProjection,allKnownSubjectIds:readonly string[],options:OperationOptions):Result<ImpactFrontier>{
- if(allKnownSubjectIds.some(x=>!validId(x)))return fail('IFP26_SUBJECT_INVALID','Known subject identifier is invalid.');const direct=new Set(matrix.rows.filter(r=>r.changeClass!=='UNCHANGED'||r.proofInvalidated).map(r=>r.subjectId));const affected=new Set(direct);const changedDependencyDigests=new Set<string>();
- // Subject IDs may also be declared as dependency identities by owner projections; resolve both exact subject edges and row digests.
- for(const row of matrix.rows)if(direct.has(row.subjectId)){changedDependencyDigests.add(row.subjectId);changedDependencyDigests.add(row.rowDigest);}
- let advanced=true;while(advanced){advanced=false;for(const edge of dependencies.reverseEdges){if(!affected.has(edge.dependencyDigest)&&!changedDependencyDigests.has(edge.dependencyDigest))continue;for(const subject of edge.subjectIds)if(!affected.has(subject)){affected.add(subject);changedDependencyDigests.add(subject);advanced=true;}}}
+export function createImpactFrontier(matrix:SemanticDeltaMatrix,inventory:DeltaChangeInventory,dependencies:DependencyProjection,allKnownSubjectIds:readonly string[],options:OperationOptions):Result<ImpactFrontier>{
+ if(allKnownSubjectIds.some(x=>!validId(x)))return fail('IFP26_SUBJECT_INVALID','Known subject identifier is invalid.');if(matrix.inventoryDigest!==inventory.inventoryDigest)return fail('IFP26_INVENTORY_MISMATCH','Delta matrix is not bound to the supplied inventory.');
+ const direct=new Set(matrix.rows.filter(r=>r.changeClass!=='UNCHANGED'||r.proofInvalidated).map(r=>r.subjectId));const affected=new Set(direct);const changedDependencyDigests=new Set<string>();
+ for(const entry of inventory.entries)if(direct.has(entry.subjectId))for(const digest of entry.changedDependencyDigests)changedDependencyDigests.add(digest);
+ let advanced=true;while(advanced){advanced=false;for(const edge of dependencies.reverseEdges){if(!changedDependencyDigests.has(edge.dependencyDigest))continue;for(const subject of edge.subjectIds)if(!affected.has(subject)){affected.add(subject);const nested=inventory.entries.find(e=>e.subjectId===subject);if(nested)for(const digest of nested.changedDependencyDigests)changedDependencyDigests.add(digest);advanced=true;}}}
  const widened=!dependencies.complete;if(widened)for(const id of allKnownSubjectIds)affected.add(id);const body={directlyImpactedSubjectIds:sortedUnique([...direct]),transitivelyImpactedSubjectIds:sortedUnique([...affected]),widened};const d=digestValue(options,'IFP26',body);return d.ok?ok(deepFreeze({...body,frontierDigest:d.value})):d;
 }
 
