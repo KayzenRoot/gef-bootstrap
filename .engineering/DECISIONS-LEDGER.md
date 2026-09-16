@@ -205,3 +205,31 @@ Status: `ACTIVE`
 ## D-0051 — Project Overview is frozen
 - Decision: `.engineering/PROJECT-OVERVIEW.md` is frozen as the canonical product overview derived from `GBS-CONSTITUTION-v1.0`, including mission, logical roles, universal/profile boundaries, platform boundary, minimum brownfield value, optimization measurement requirements and explicit non-goals. Detailed requirements, scope and architecture remain delegated to their ordered Source Pack stages.
 - Status: APPROVED
+
+## D-0052 — `main` is the latest PRODUCTION_APPROVED release channel
+- Decision: `main` is the currently production-approved release and the only branch permitted to represent production. V1.1 development occurs on `release/1.1` and subordinate branches and is integration-only until production acceptance. Promotion is exact-head and evidence-bound; release tags are immutable. A V1.0 defect is corrected on a `1.0.x` hotfix lineage and forward-ported into `release/1.1` where still applicable. Detailed contract: `ADR-0003-D1`/`D2`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0053 — External executor authority for this repository is bounded and V1.1-scoped
+- Decision: `ADR-0002-D8` (Codex must not build this repository) is superseded for the V1.1 release line only, by `ADR-0003-D3`, after an explicit conflict report. The external executor may work on `release/1.1` and subordinate branches under mandatory bounds: admitted Work Order required, no merge/tag/publish/force-push/history rewrite, no modification of V1.0.0 acceptance history or production checkpoint state, external objective audit, and no self-approval. The permanent implementation model remains an owner decision for V1.1 closure.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0054 — The V1.1 CLI is admitted as the thin mechanical layer of D-0047
+- Decision: The `gef` CLI surface admitted by `V1.1-SCOPE.md` NECESSARY #1 is the thin deterministic tooling layer contemplated by `D-0047`, not a reversal of `D-0004`. It is a transport/rendering surface over the application API, holds no business logic, and is never semantic authority for architecture, scope admission, requirements, risk acceptance or review verdicts. Admission carries a measurable-ROI obligation under the V1.1 benchmark protocol. Detailed contract: `ADR-0003-D4`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0055 — Distribution claims distinguish designed from proven
+- Decision: V1.1 may design an installable distribution model, but no publication, package registration, binary artifact or install command may be described as available until proven by release evidence. The source-workspace path remains the supported distribution until proven otherwise. Detailed contract: `ADR-0003-D5`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0056 — Execution Capsules are deterministic, fingerprinted and fail closed
+- Decision: The V1.1 Execution Capsule is a compiled, deterministic, fingerprinted projection of the existing acceleration mechanisms (`ENM`, `DCC`, `IST`/`FIC`/`BPIC`, validation ladder, `TPRR`, `SDS`), not a competing source of truth. Repeat compilation from identical inputs must be byte-identical. `certainty: INSUFFICIENT` cannot produce a compiled capsule. Drift invalidates by drift class with no optimistic continuation. Contract: `.engineering/releases/V1.1-EXECUTION-CAPSULE-CONTRACT.md`; schema: `urn:gef:schema:execution-capsule:1`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0057 — Incremental validation may narrow execution but never assurance or credit
+- Decision: Validation selection may reduce repeated intermediate work only when the selector can positively prove a test unaffected; uncertain impact widens or escalates and never narrows. Proof reuse requires valid lineage, fingerprints, dependency impact, configuration, toolchain, platform, fixture, policy and validity bindings, and may never manufacture production credit, participate in production accounting or waive a required exact-head sweep. Contract: `.engineering/releases/V1.1-INCREMENTAL-VALIDATION-PROOF-REUSE-CONTRACT.md`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0058 — Incomparable benchmark populations are reported as incomparable
+- Decision: Performance claims require matching population identity across workload, base state, toolchain, platform, assurance policy, cache/proof posture and measurement boundary. A mismatch forbids any speedup claim. Metrics distinguish MEASURED, ESTIMATED and UNAVAILABLE. A quality-gate failure voids an apparent gain. Contract: `.engineering/releases/V1.1-PERFORMANCE-BENCHMARK-PROTOCOL.md`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
