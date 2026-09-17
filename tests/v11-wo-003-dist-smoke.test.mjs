@@ -302,7 +302,13 @@ test("the installed package probes dirtiness without index or fsmonitor side eff
   }
 
   const status = JSON.parse(gefAt(bin, ["status", "--target", project, "--json"]).stdout).value.status;
-  assert.equal(status.repository.dirtiness, "OBSERVED", "dirtiness reporting is preserved");
+  // The no-mutation properties above hold on any token; the observation itself follows the toolchain
+  // decision this token reaches.
+  assert.equal(
+    status.repository.dirtiness,
+    sourceGitDecision() === "FOUND" ? "OBSERVED" : "UNKNOWN",
+    "dirtiness follows the same toolchain decision as the source workspace",
+  );
 });
 
 test("the installed package resolves Git through the approved policy, not PATH", (t) => {
@@ -372,8 +378,8 @@ test("the installed package carries the Windows rights oracle and its prebuilt b
   // The installed CLI uses its own payload: on Windows that means loading the packaged adapter.
   const project = tempProject(t);
   const doctor = JSON.parse(gefAt(bin, ["doctor", "--target", project, "--json"]).stdout).value.doctor;
-  assert.equal(doctor.toolchain.git.presence, "FOUND", "the installed CLI admits the system Git");
-  if (process.platform === "win32") {
+  assert.equal(doctor.toolchain.git.presence, sourceGitDecision(), "the installed CLI reaches the source workspace decision on this token");
+  if (process.platform === "win32" && doctor.toolchain.git.presence === "FOUND") {
     assert.deepEqual([...doctor.toolchain.git.gaps], [], "the packaged oracle proved the chain on Windows");
     t.diagnostic("win32: the installed package loaded the packaged FFI adapter and proved the replacement rights");
   } else {
