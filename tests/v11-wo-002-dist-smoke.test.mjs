@@ -108,11 +108,15 @@ test("DIST-SMOKE-01b: the packed payload carries README, LICENSE and the schema 
   // authority joined this list when the CLI began resolving its Git executable through it, and the
   // Koffi FFI runtime with its platform prebuilt joined it when the Windows rights oracle was
   // admitted (ADR-0004).
-  const hostPlatformPackage = `@koromix/koffi-${process.platform}-${process.arch}`;
+  // The declared bundled set is host-independent: the raw package manifest is the source of truth,
+  // and only what is actually present on the host can be packed.
   assert.deepEqual(
     [...(packedManifest.bundleDependencies ?? packedManifest.bundledDependencies ?? [])].sort(),
-    ["@gef-bootstrap/contracts", "@gef-bootstrap/kernel", "@gef-bootstrap/preflight", hostPlatformPackage, "koffi"].sort(),
+    [...(cliPackage.bundleDependencies ?? [])].sort(),
   );
+  for (const required of ["@gef-bootstrap/contracts", "@gef-bootstrap/kernel", "@gef-bootstrap/preflight", "koffi", "@koromix/koffi-win32-x64"]) {
+    assert.ok(cliPackage.bundleDependencies.includes(required), `${required} must be declared as bundled`);
+  }
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "kernel")), "the bundled runtime must be installed with the package");
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "contracts")));
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "preflight")), "the toolchain authority must travel with the package");

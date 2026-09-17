@@ -341,7 +341,8 @@ test("the installed package carries the Windows rights oracle and its prebuilt b
 
   const manifest = JSON.parse(readFileSync(join(cliDir, "vendor", "MANIFEST.json"), "utf8"));
   const natives = manifest.artifacts.filter((entry) => entry.kind === "native-runtime");
-  assert.equal(natives.length, 2, "the manifest records the runtime and one platform binary");
+  assert.equal(natives.length, 2, "the manifest records the runtime and the host platform binary");
+  assert.deepEqual(natives.map((entry) => entry.name).sort(), ["@koromix/" + hostPlatformPackage, "koffi"].sort());
   for (const entry of natives) assert.match(entry.version, /^\d+\.\d+\.\d+$/, `${entry.name} must carry its exact version`);
 
   // The declared dependency is an exact pin, not a range.
