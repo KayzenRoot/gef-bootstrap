@@ -274,6 +274,56 @@ test("an over-budget checkpoint cannot populate release or operator truth", (t) 
   assert.equal(status.operator.progress, null, "progress must never come from an over-budget document");
 });
 
+/** Every observation-limit code a diagnostic projection reports, wherever it scopes them. */
+function limitsOf(value) {
+  return [...(value.observationLimits ?? []), ...(value.repository?.observationLimits ?? [])];
+}
+
+test("an aliased Git directory is refused through the real process", (t) => {
+  const SENTINEL = "GEF-E2E-GIT-EXTERNAL-SENTINEL";
+  const project = tempProject(t, "gef-wo003-gitdir-");
+  const external = tempProject(t, "gef-wo003-gitdir-ext-");
+  mkdirSync(join(external, "refs", "heads"), { recursive: true });
+  writeFileSync(join(external, "HEAD"), "ref: refs/heads/leaked\n");
+  writeFileSync(join(external, "refs", "heads", "leaked"), SENTINEL);
+
+  // Junctions are unprivileged on Windows; directory symlinks are used elsewhere.
+  if (process.platform === "win32") symlinkSync(external, join(project, ".git"), "junction");
+  else symlinkSync(external, join(project, ".git"), "dir");
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", project, "--json"]);
+    assert.equal(result.code, 0, `${verb} must stay on the success path`);
+    assert.equal(`${result.stdout}${result.stderr}`.includes(SENTINEL), false, `${verb} must not expose aliased Git content`);
+    const value = JSON.parse(result.stdout).value[verb];
+    assert.ok(limitsOf(value).some((limit) => limit.startsWith("DIAGNOSTIC_ALIAS_REFUSED:.git")), `${verb} must record the alias refusal`);
+  }
+
+  const status = JSON.parse(gef(["status", "--target", project, "--json"]).stdout).value.status;
+  assert.equal(status.repository.dirtiness, "UNKNOWN", "an aliased Git directory cannot produce a usable state");
+  assert.equal(status.repository.verdict, null);
+});
+
+test("oversized Git metadata is refused through the real process", (t) => {
+  const PADDING = "GEF-E2E-GIT-PADDING-SENTINEL";
+  const project = tempProject(t, "gef-wo003-gitbig-");
+  mkdirSync(join(project, ".git"), { recursive: true });
+  writeFileSync(join(project, ".git", "HEAD"), PADDING.repeat(200));
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", project, "--json"]);
+    assert.equal(result.code, 0);
+    assert.equal(`${result.stdout}${result.stderr}`.includes(PADDING), false, `${verb} must not echo oversized metadata`);
+    const value = JSON.parse(result.stdout).value[verb];
+    assert.ok(limitsOf(value).some((limit) => limit.startsWith("DIAGNOSTIC_FILE_OVER_BUDGET:.git/HEAD")), `${verb} must record the over-budget refusal`);
+  }
+
+  const status = JSON.parse(gef(["status", "--target", project, "--json"]).stdout).value.status;
+  assert.equal(status.repository.dirtiness, "UNKNOWN");
+  assert.equal(status.repository.verdict, null);
+  assert.equal(status.operator.state, "UNOBSERVED", "no repository and no governance source means unobserved");
+});
+
 test("an invalid checkpoint never becomes production or operator truth", (t) => {
   const project = tempProject(t);
   mkdirSync(join(project, ".engineering"), { recursive: true });

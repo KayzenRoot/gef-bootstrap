@@ -7,14 +7,19 @@ Assurance: `ELEVATED`
 Executed by: external executor under `ADR-0003-D3` (bounded authorization)
 Audit disposition: **not self-assessed** — objective audit is external
 
-**Revision note (H1–H4 correction).** This bundle supersedes the evidence recorded at head
-`89b2d137839995a63e706b5f68c4d592ba9eabf8`, which received `CORRECTION_REQUIRED`
-(objective audit review `5236410386`: CRITICAL 0 / HIGH 4). The claim
-`CRITICAL: 0 / HIGH: 0` recorded at that head is **retracted** in §12. The four blocking HIGH
-findings — H1 contained reads / alias safety, H2 resource bounds, H3 no false drift when the
-baseline is absent, H4 checkpoint validation before semantic promotion — are corrected in §2 and
-mapped to code and tests in §2.6. Everything previously green at `89b2d137…` that is not touched by
-those four findings remains green at the current head and is re-run in §5.
+**Revision note (H5–H6 correction).** This bundle supersedes the evidence recorded at head
+`49ceca340119d3cec53f4b06593f0a6d64ee3a70`, which received `CORRECTION_REQUIRED`
+(objective reaudit review `5237002898`: CRITICAL 0 / HIGH 2). The claim `CRITICAL: 0 / HIGH: 0`
+recorded at that head is **retracted** in §13. The two blocking HIGH findings — H5 Git metadata
+bypassing the contained-read policy, and H6 unbounded Git metadata reads — are corrected in §3 and
+mapped to code and negative tests in §3.4. The H1–H4 closure of §2 is preserved and re-verified at
+the current head in §6; it is retained as historical record of that cycle, not as current-head proof
+of the Git metadata surface.
+
+**Prior revision (H1–H4 correction).** This bundle also supersedes the evidence recorded at head
+`89b2d137839995a63e706b5f68c4d592ba9eabf8`, which received `CORRECTION_REQUIRED` (objective audit
+review `5236410386`: CRITICAL 0 / HIGH 4). The `CRITICAL: 0 / HIGH: 0` claim recorded at *that* head
+was retracted in the H1–H4 cycle and is not reinstated.
 
 ---
 
@@ -27,8 +32,9 @@ those four findings remains green at the current head and is re-run in §5.
 | WO-003 admission merge | `7592624f7c9bf8726a7a460629f5e862a35a857d` |
 | Implementation base (branch activation commit) | `77204f569388744e734b19acdaf2115bf0f7f3f6` |
 | `origin/release/1.1` at execution | `7592624f7c9bf8726a7a460629f5e862a35a857d` — ancestor of HEAD (verified with `git merge-base --is-ancestor`) |
-| **Audited head (CORRECTION_REQUIRED)** | `89b2d137839995a63e706b5f68c4d592ba9eabf8` — ancestor of the corrected head |
-| **Corrected head** | the commit introducing this revised bundle; exact SHA reported in PR #284 |
+| First implementation head | `89b2d137839995a63e706b5f68c4d592ba9eabf8` — audited, `CORRECTION_REQUIRED` (H1–H4) |
+| H1–H4 corrected head | `49ceca340119d3cec53f4b06593f0a6d64ee3a70` — reaudited, `CORRECTION_REQUIRED` (H5–H6); ancestor of the corrected head |
+| **H5–H6 corrected head** | the commit introducing this revised bundle; exact SHA reported in PR #284 |
 | Production branch `main` | `72c17bd3e7e421790ac382022b1f0ebbb0275ea4` — **unmodified** |
 | Release tag `v1.0.0` | object `aac89f9c3f0c884474958025bf14828bc338b5ee` → target `866fe3af8cccc65c929aaf6a47a924401fa448b3` — **unmoved** |
 
@@ -240,7 +246,131 @@ No PASS is claimed by inference for the elevated-only case on Windows.
 
 ---
 
-## 3. What was delivered
+## 3. Correction cycle — H5–H6 (objective reaudit review `5237002898`)
+
+Disposition at the H1–H4 corrected head: `CORRECTION_REQUIRED`, CRITICAL 0 / HIGH 2. The reaudit
+confirmed the governance/documentation path was materially closed — contained regular-file reads,
+explicit byte/source budgets, absent-baseline drift suppression and checkpoint validation were all
+accepted — and identified the two remaining gaps in the *same* S0 trust boundary: Git metadata
+still bypassed the contained-read policy (H5) and was still unbounded (H6). Both are corrected here.
+
+### 3.1 H5 — Git metadata must use containment / non-alias reads
+
+**Defect.** `observeRepository()` still read `.git/HEAD` and the symbolic-ref target with a direct
+`readFileSync(resolve(...))`, and probed the operation sentinels with a link-following `existsSync`.
+A `.git` directory alias, a `HEAD` alias or a ref-file alias could therefore escape the target root
+and read external filesystem content into the observation. The symbolic-ref shape gate added in H1
+only constrained the *text* of the ref after `HEAD` had already been read through a following path.
+
+**Correction.** The containment primitive was factored out of `readContainedDiagnosticFile` into
+`walkContained`, so there is now exactly one containment policy with two thin consumers instead of
+one policy per caller:
+
+| Consumer | Purpose |
+|---|---|
+| `readContainedDiagnosticFile(root, ref, budget)` | content read: walk → regular-file requirement → `realpath` containment → open → `fstat` identity binding → size gate → exact-size bounded read |
+| `containedEntryKind(root, ref)` | non-following existence probe, used for the Git operation sentinels so they no longer fall back to a link-following `existsSync` |
+
+`readGitMetadata(root, ref)` is a thin specialization over the same primitive with the Git budget
+substituted — explicitly not a second policy. Every Git metadata read now goes through it, and
+`.git`, `.git/HEAD` and any symbolic-ref target are bound to the approved project root:
+
+- **`.git` classification without following links.** `containedEntryKind(root, ".git")` is consulted
+  first. `ABSENT` keeps the known-absent `NOT_APPLICABLE` state; `ALIAS_REFUSED` / `UNREADABLE`
+  produce `UNKNOWN` with `GIT_DIRECTORY_ALIAS_REFUSED` and the underlying
+  `DIAGNOSTIC_ALIAS_REFUSED:.git` — the Git subprocess is **not** run, so nothing follows the alias;
+  a non-directory `.git` (a `gitdir:` worktree/submodule file, or any other indirection form) yields
+  `GIT_DIRECTORY_NOT_A_DIRECTORY` and `UNKNOWN`. None of these invent a clean tree.
+- **`HEAD` read under containment and budget.** A refused or over-budget `HEAD` returns `UNKNOWN`
+  with no head value and the concrete refusal code.
+- **Symbolic-ref target read under containment and budget.** The ref name must match the exact
+  shape of a real symbolic ref (`refs/…`, no `..`, no `//`); otherwise `GIT_HEAD_REF_UNUSABLE`. The
+  referenced file is then read through the same helper as `.git/<refName>`, so an aliased or
+  escaping ref file is refused rather than followed, and the ref name is reported without a value.
+- **Detached identity validated by shape.** A `HEAD` whose content is neither a ref name nor a Git
+  object id is `GIT_HEAD_UNUSABLE` rather than being propagated as a head value. This is an
+  additional hardening beyond the letter of H5, disclosed here: without it, arbitrary (bounded) file
+  content would still reach the projection as `repository.head`.
+- **Process bounds unchanged.** The argv-based `git status` call and the `git --version` probe keep
+  their existing timeout and `maxBuffer` limits; they were not weakened.
+
+### 3.2 H6 — Git metadata reads must be byte-bounded
+
+**Defect.** The direct `HEAD` and ref reads had no byte limit, so a hostile or accidentally oversized
+`.git/HEAD` could consume unbounded memory/CPU before the already-bounded `git status` subprocess
+ran (SECURITY.md resource safety, T12).
+
+**Correction.** `GIT_METADATA_MAX_BYTES = 4096`, an explicit small budget separate from — and
+strictly below — the general `DIAGNOSTIC_FILE_MAX_BYTES`, because Git metadata is read before any
+subprocess bound applies. The shared helper already checks object type and size **before** reading
+and never reads-then-truncates; for Git metadata the same path yields `OVER_BUDGET` with
+`DIAGNOSTIC_FILE_OVER_BUDGET:.git/HEAD` (or `…:.git/refs/heads/<name>`), `bytes === null`, a
+`UNKNOWN` dirtiness, no head/branch value and no repository verdict. Oversized content is never
+embedded in diagnostics or error metadata: the limit code carries only the reference, never the
+content, and the padding does not appear anywhere in the projection.
+
+### 3.3 Live confirmation at the H5–H6 corrected head
+
+```
+== H5: .git directory alias (junction on win32) ==
+.git kind              ALIAS_REFUSED
+dirtiness              UNKNOWN
+head                   undefined
+limits                 ["DIAGNOSTIC_ALIAS_REFUSED:.git","GIT_DIRECTORY_ALIAS_REFUSED","WORKING_TREE_NOT_OBSERVED"]
+sentinel leaked?       false
+naive read leaks?      true          <- the alias is a genuine escape; only the contained read refuses it
+
+== H5: aliased symbolic-ref target ==
+readGitMetadata        {"status":"ALIAS_REFUSED","ref":".git/refs/heads/main","bytes":null,
+                        "limit":"DIAGNOSTIC_ALIAS_REFUSED:.git/refs/heads/main"}
+head                   ""
+limits                 ["DIAGNOSTIC_ALIAS_REFUSED:.git/refs/heads/main"]
+
+== H5: traversal in symbolic ref ==
+head                   ""
+limits                 ["GIT_HEAD_REF_UNUSABLE"]
+
+== H5: .git as a gitfile ==
+.git kind              FILE
+dirtiness              UNKNOWN
+limits                 ["GIT_DIRECTORY_NOT_A_DIRECTORY","WORKING_TREE_NOT_OBSERVED"]
+
+== H6: Git metadata byte budget ==
+GIT_METADATA_MAX_BYTES   4096
+DIAGNOSTIC_FILE_MAX_BYTES 1048576
+at limit status        OK
+at limit head          aaaaaaaaaaaa... / DETACHED
+over by one status     OVER_BUDGET
+over by one limit      DIAGNOSTIC_FILE_OVER_BUDGET:.git/HEAD
+over by one bytes      null
+dirtiness              UNKNOWN
+head                   undefined
+padding echoed?        false
+```
+
+The `naive read leaks? true` line is a deliberate sensitivity assertion: a direct `readFileSync` of
+the aliased path really does return the external sentinel, so the fixture exercises the escape and
+the test cannot pass against the pre-correction behaviour, which had no refusal state at all.
+
+### 3.4 H5–H6 correction-to-code-and-test map
+
+| Finding | Code | Tests |
+|---|---|---|
+| H5 containment for Git metadata | `walkContained` (single primitive), `containedEntryKind`, `readGitMetadata`, rewritten `observeRepository` | focused H5 cases (6): `.git` alias, `HEAD` alias, symbolic-ref alias, traversal text, gitfile, normal repository intact; E2E `an aliased Git directory is refused through the real process`; dist-smoke `the installed package refuses aliased and oversized Git metadata` |
+| H5 detached-identity shape (disclosed extra) | `GIT_HEAD_UNUSABLE` gate in `observeRepository` | focused H6 exact-limit case asserts the valid shape is accepted; the unusable shape is covered by the same gate |
+| H6 Git metadata budget | `GIT_METADATA_MAX_BYTES`, `readGitMetadata` | focused H6 cases (4): budget constant, at-limit/one-over `HEAD`, over-budget ref (with at-budget admission), over-budget semantics + determinism + no content echo; E2E `oversized Git metadata is refused through the real process`; dist-smoke installed-package case |
+
+### 3.5 Platform note
+
+The genuine file-symlink form still requires elevation on this Windows host, so the aliased `HEAD`
+and aliased ref cases use a directory junction — which Windows reports as a symbolic link through
+`lstat` and which is the alias a Windows target can actually create (verified live: a junction
+pointing at an external file path is reported as a link and refused). Real file symlinks are
+exercised in CI on `ubuntu-latest` and `macos-latest`. No coverage is claimed by inference.
+
+---
+
+## 4. What was delivered
 
 Two read-only diagnostic commands, registered on the canonical IDs and projected through the
 existing renderer contract. No `--fix`, no destructive repair, no `upgrade`, no migration/recovery
@@ -303,9 +433,9 @@ renders the engine's answer.
 
 ---
 
-## 4. Changed files and reasons
+## 5. Changed files and reasons
 
-### 4.1 Files inside the Context Lock `expectedWriteSurface`
+### 5.1 Files inside the Context Lock `expectedWriteSurface`
 
 | File | Change | Reason |
 |---|---|---|
@@ -315,13 +445,13 @@ renders the engine's answer.
 | `packages/cli/src/render.ts` | One line: the "not yet available" note now names only `upgrade` | WO-003 scope C — the deferred-command note must not claim doctor/status are unavailable |
 | `packages/cli/src/main.ts` | `commandRequestFor` omits the apply key for read-only verbs | WO-003 scope C — a read-only command request declares no mutation intent at all |
 | `packages/cli/src/engines.ts` | Three module sources added (`m41-m47-platform`, `m55-m61-quality`, `m62-m63-final`); ten symbols added to `REQUIRED_SYMBOLS`; interfaces and bindings for each | WO-003 scope A/B — expose the architecture-named symbols that already exist at the base; no engine logic is added |
-| `packages/cli/README.md` | Command table, delegation table, doctor/status behaviour section, vendored-engine list, contained-read and checkpoint-validation behaviour | WO-003 evidence/AC-13 — the documented surface must match the implemented surface |
+| `packages/cli/README.md` | Command table, delegation table, doctor/status behaviour section, vendored-engine list, contained-read, checkpoint-validation and Git-metadata behaviour | WO-003 evidence/AC-13 — the documented surface must match the implemented surface |
 | `tests/v11-wo-003-doctor-status.test.mjs` | new; 16 tests initially, 38 after the H1-H4 correction | WO-003 ladder L1 |
 | `tests/v11-wo-003-doctor-status-e2e.test.mjs` | new; 9 tests initially, 12 after the H1-H4 correction | WO-003 ladder L2 |
 | `tests/v11-wo-003-dist-smoke.test.mjs` | new; 5 tests initially, 6 after the H1-H4 correction | WO-003 ladder L3 |
 | `.engineering/evidence/GBS-V11-WO-003-EVIDENCE.md` | new (this file) | WO-003 evidence bundle |
 
-### 4.2 Context expansions (writes outside the Context Lock surface, each with a concrete dependency reason)
+### 5.2 Context expansions (writes outside the Context Lock surface, each with a concrete dependency reason)
 
 | File | Reason |
 |---|---|
@@ -332,10 +462,10 @@ renders the engine's answer.
 | `tests/v11-wo-002-dist-smoke.test.mjs` | Same mechanical update in the packed-install suite (installed `--help` inventory). |
 
 No expansion touched `packages/kernel`, the V1.0 accepted history, any workflow, or any
-upgrade/migration or WO-005+ surface. The negative-search ledger in §10 records what was deliberately
+upgrade/migration or WO-005+ surface. The negative-search ledger in §11 records what was deliberately
 not changed.
 
-### 4.3 Read scope
+### 5.3 Read scope
 
 Read only the Execution Brief minimum read set plus the directly named engine modules required to
 bind the verified symbols (`m48-m54-maintenance`, `area-h-governance`,
@@ -343,7 +473,7 @@ bind the verified symbols (`m48-m54-maintenance`, `area-h-governance`,
 repository-wide rediscovery pass was performed. `detectDrift` and `operatorStatus` were read to
 confirm their exact contracts before composing inputs.
 
-### 4.4 A projection defect found and fixed during the initial implementation
+### 5.4 A projection defect found and fixed during the initial implementation
 
 `detectDrift` compares two observations and is not told whether a governed baseline exists. The
 first working version of `statusComposition` passed the `"NO_RECORDED_STATE"` sentinel on a target
@@ -367,26 +497,27 @@ The baseline is taken from whichever managed artifact exists — `init` **or** `
 
 ---
 
-## 5. Validation ladder — commands, exit codes, counts
+## 6. Validation ladder — commands, exit codes, counts
 
-All figures below are at the corrected head. The figures recorded at the audited head
-`89b2d137…` (16 / 9 / 5 focused, 1374 total) are **historical**; they are not current-head proof and
-they did not cover H1–H4.
+All figures below are at the H5–H6 corrected head. The figures recorded at the first audited head
+`89b2d137…` (16 / 9 / 5 focused, 1374 total) and at the H1–H4 corrected head `49ceca34…`
+(38 / 12 / 6, 1400 total) are **historical**; they are retained as the record of those cycles and
+are not current-head proof.
 
 | Step | Command | Exit | Result |
 |---|---|---|---|
 | Build | `npm run build -- --force` | 0 | 28 projects compiled from scratch |
 | Typecheck | `npm run typecheck` | 0 | clean |
-| L1 focused (incl. H1–H4) | `node --test tests/v11-wo-003-doctor-status.test.mjs` | 0 | tests 38 / pass 38 / fail 0 |
-| L2 process E2E | `node --test tests/v11-wo-003-doctor-status-e2e.test.mjs` | 0 | tests 12 / pass 12 / fail 0 |
-| L3 packed install | `node --test tests/v11-wo-003-dist-smoke.test.mjs` | 0 | tests 6 / pass 6 / fail 0 |
+| L1 focused (incl. H1–H6) | `node --test tests/v11-wo-003-doctor-status.test.mjs` | 0 | tests 48 / pass 48 / fail 0 |
+| L2 process E2E | `node --test tests/v11-wo-003-doctor-status-e2e.test.mjs` | 0 | tests 14 / pass 14 / fail 0 |
+| L3 packed install | `node --test tests/v11-wo-003-dist-smoke.test.mjs` | 0 | tests 7 / pass 7 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-cli.test.mjs` | 0 | tests 30 / pass 30 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-cli-e2e.test.mjs` | 0 | tests 11 / pass 11 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-dist-smoke.test.mjs` | 0 | tests 7 / pass 7 / fail 0 |
-| L4 full | `npm run validate` | 0 | tests 1400 / pass 1400 / fail 0 |
+| L4 full | `npm run validate` | 0 | tests 1413 / pass 1413 / fail 0 |
 | Dependency audit | `npm audit --audit-level=high` | 0 | found 0 vulnerabilities |
 
-The combined six-suite run reports tests 104 / pass 104 / fail 0 (30 + 11 + 7 + 38 + 12 + 6). No test
+The combined six-suite run reports tests 117 / pass 117 / fail 0 (30 + 11 + 7 + 48 + 14 + 7). No test
 was skipped to reduce runtime; every required suite ran in full.
 
 ### Observed projections (source workspace, target = repository root)
@@ -430,7 +561,7 @@ the Execution Brief permits renderer extension only where the current renderers 
 
 ---
 
-## 6. No-mutation proof
+## 7. No-mutation proof
 
 Every mutation-capable surface was compared before and after a real invocation.
 
@@ -464,7 +595,7 @@ Neither command reads stdin, so a non-TTY invocation cannot block on an implicit
 
 ---
 
-## 7. Git-unavailable / capability fail-closed proof (WO-002 F2 closure)
+## 8. Git-unavailable / capability fail-closed proof (WO-002 F2 closure)
 
 Reproduced with a real process and an emptied `PATH` (absolute Node path retained):
 
@@ -497,7 +628,7 @@ Additional fail-closed cases covered by tests:
 
 ---
 
-## 8. Local packed-install parity proof
+## 9. Local packed-install parity proof
 
 `tests/v11-wo-003-dist-smoke.test.mjs` builds the package with the repository's staging script
 (`scripts/prepare-package.mjs --pack`), installs the tarball with a real `npm install` into a fresh
@@ -518,20 +649,21 @@ no registry is contacted.
 | WO-002 behaviour | `init` plan is `effect: NONE` and does not create `.gef`; `init --apply` reports `APPLIED`; `status` leaves the governed artifact byte-identical |
 | Vendored engines removed | both commands exit 40, `error.category CAPABILITY`, no `value`, no mutation |
 | Alias containment in the installed package | a junction/symlink `.engineering` is refused with `DIAGNOSTIC_ALIAS_REFUSED` and no external sentinel appears in output |
+| Git metadata in the installed package | an aliased `.git` is refused and an oversized `.git/HEAD` is refused without echoing its content |
 
 ---
 
-## 9. `init` / `adopt` regression proof
+## 10. `init` / `adopt` regression proof
 
 The three WO-002 suites run unchanged in behavior at this head: 30 + 11 + 7 = 48 tests, all
 passing. The only edits to those files are assertion updates for the grown command inventory and
 engine-symbol count; no `init`/`adopt` behavioral assertion was weakened, removed or relaxed, and no
 transaction, traversal, recovery, private-containment, journal-ownership or authorization contract
-was modified. `packages/kernel` is untouched by this increment (see §10).
+was modified. `packages/kernel` is untouched by this increment (see §11).
 
 ---
 
-## 10. Negative-search ledger — deliberate non-changes
+## 11. Negative-search ledger — deliberate non-changes
 
 | Not changed | Why |
 |---|---|
@@ -543,13 +675,15 @@ was modified. `packages/kernel` is untouched by this increment (see §10).
 | WO-005+ surfaces (Context Compiler, Execution Capsule, incremental validation, telemetry, channel redesign, production acceptance) | Out of scope. |
 | `packages/cli/src/transaction.ts`, `private-authority.ts`, `schemas.ts`, `packages/cli/schemas/**` | Untouched. The diagnostic commands do not enter the private transaction area at all. |
 | `render.ts` human formatting | Not extended: the existing renderer contract already satisfies AC-7 and the brief's "only where current renderers need extension". |
+| `observeRepositoryDirtiness` | Unchanged: the argv-based, timeout- and `maxBuffer`-bounded `git status` call keeps its existing bounds. |
+| Git `gitdir:` worktree indirection | Not followed: resolving it would read metadata outside the approved root. Reported as `GIT_DIRECTORY_NOT_A_DIRECTORY` / `UNKNOWN` (see finding L5). |
 | `observeCanonicalSources` output shape | Routed through the shared contained-read policy, but its projection is unchanged, so the WO-002 `init`/`adopt` plan contract and digests are preserved for normal targets. |
 | `init`/`adopt` plan `drift` field | Left as the WO-002-approved contract (see §2.3). Only the diagnostic projection was corrected. |
 | Repository-wide search | Not performed; the read set was the Execution Brief minimum set plus the directly named engine modules. |
 
 ---
 
-## 11. No-publication and production-boundary statement
+## 12. No-publication and production-boundary statement
 
 - No merge was performed. PR #284 remains open and unmerged.
 - No tag was created or moved; `v1.0.0` still resolves to object
@@ -563,14 +697,20 @@ was modified. `packages/kernel` is untouched by this increment (see §10).
 
 ---
 
-## 12. Findings by severity
+## 13. Findings by severity
 
 ### Retraction
 
-The claim `CRITICAL: 0 / HIGH: 0` recorded for head `89b2d137839995a63e706b5f68c4d592ba9eabf8` is
-**retracted**. Objective audit review `5236410386` found **CRITICAL 0 / HIGH 4** at that head. The
-four HIGH findings are corrected in §2 and revalidated in §5. The executor's earlier severity claim
-was wrong and is not repeated here as proof of anything.
+The claim `CRITICAL: 0 / HIGH: 0` recorded for head `49ceca340119d3cec53f4b06593f0a6d64ee3a70` is
+**retracted**. Objective reaudit review `5237002898` found **CRITICAL 0 / HIGH 2** at that head. The
+two HIGH findings are corrected in §3 and revalidated in §6.
+
+The earlier retraction also stands: `CRITICAL: 0 / HIGH: 0` recorded for head
+`89b2d137839995a63e706b5f68c4d592ba9eabf8` was retracted after review `5236410386` found
+CRITICAL 0 / HIGH 4 at that head, and it is not reinstated.
+
+Twice now the executor's severity claim has been wrong before an objective review. That is the
+pattern this bundle records rather than hides.
 
 ### CRITICAL — 0
 
@@ -578,14 +718,16 @@ was wrong and is not repeated here as proof of anything.
 
 | ID | Finding | Status |
 |---|---|---|
-| H1 | Target escape through symlink/junction aliases in the S0 diagnostic readers | **Corrected** — single contained-read policy, structured refusals, deterministic limit codes, tests at unit / process / packed-install level (§2.1) |
-| H2 | Diagnostic reads were not resource bounded | **Corrected** — explicit byte and source budgets, size gate before read, exact-size bounded read, over-budget never absent (§2.2) |
-| H3 | Absent baseline still emitted false `UNEXPECTED` drift | **Corrected** — no comparison without a supported baseline, `drift: null`, conservative staleness explained (§2.3) |
-| H4 | Parseable but invalid checkpoint promoted into status semantics | **Corrected** — deterministic validation gate, `valid` separated from `present`/`readable`, operator consumes only validated values (§2.4) |
+| H1 | Target escape through symlink/junction aliases in the S0 diagnostic readers | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.1) |
+| H2 | Diagnostic reads were not resource bounded | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.2) |
+| H3 | Absent baseline still emitted false `UNEXPECTED` drift | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.3) |
+| H4 | Parseable but invalid checkpoint promoted into status semantics | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.4) |
+| H5 | Git metadata reads bypassed the contained-read policy | **Corrected** — one containment primitive with two thin consumers, `.git`/`HEAD`/ref bound to the root, alias and gitfile states fail closed to `UNKNOWN` (§3.1) |
+| H6 | Git metadata reads were unbounded | **Corrected** — `GIT_METADATA_MAX_BYTES`, size gate before read, over-budget never a usable identity and never echoed (§3.2) |
 
-The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §5 and
-the tests in §2. It is not a claim that no further finding exists; that determination belongs to the
-objective reaudit.
+The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §6 and
+the tests in §2/§3. It is not a claim that no further finding exists; that determination belongs to
+the objective reaudit.
 
 ### MEDIUM — 2 (carried, not introduced)
 
@@ -594,14 +736,15 @@ objective reaudit.
 | C4 | Constitutional version binding | Project Owner | Not expanded into WO-003, per the Work Order's known-findings section. |
 | M-H4 | `SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS` is a CLI-local allowlist (`[2]`) over the governance checkpoint's `schemaVersion`. It validates only the fields this command consumes. If the governance checkpoint version advances, the CLI must be updated in the same increment or `status` will fail closed. | WO-003 owner / next governance-checkpoint change | Deliberate: the correction explicitly forbids inventing a product-wide checkpoint schema. Fail-closed on an unknown version is the safe direction. |
 
-### LOW — 4
+### LOW — 5
 
 | ID | Finding | Owner | Disposition |
 |---|---|---|---|
 | L1 | The human (TTY) projection for `doctor` and `status` is the unchanged WO-002 renderer contract — a terminal line followed by the value payload. It is deterministic and semantically aligned with the JSON envelope, but it is not a hand-formatted diagnostic report. | WO-004 or later operator-surface increment | Deliberate: extending the renderer was permitted but not required, and the brief scopes renderer changes to "only where current renderers need extension". |
 | L2 | The drift engine itself compares two observations without being told whether a governed baseline exists. The CLI now avoids the comparison entirely when no supported baseline exists, but the engine could accept an explicit baseline-presence input. | M37 drift engine (`security-reliability-integrations`) | Recorded, not changed. Extending an accepted domain engine is out of scope for WO-003 (architecture rule 5). |
 | L3 | `dependencySecurity` reports `REVIEW` because the CLI passes `provenance: "unverified"`. A verified provenance path would require a real audit invocation, which is a mutation-free but heavier capability not granted by this Work Order. | WO-004 or later | Deliberate: `REVIEW` is the honest answer while no independent verification exists. Reporting `PASS` would be a fabricated healthy default. |
-| L4 | A real **file** symlink cannot be created on this Windows host without elevation, so the file-symlink alias case is proven locally with an unprivileged directory junction and the gap is reported by the test runner; the genuine file-symlink paths are covered in CI on Linux and macOS. | CI / platform evidence | Recorded as an explicit evidence gap, not inferred as covered (§2.7). |
+| L4 | A real **file** symlink cannot be created on this Windows host without elevation, so the file-symlink alias cases are proven locally with an unprivileged directory junction (verified to be reported as a symbolic link by `lstat`, and to be refused when pointed at an external file path) and the gap is reported by the test runner; the genuine file-symlink paths are covered in CI on Linux and macOS. | CI / platform evidence | Recorded as an explicit evidence gap, not inferred as covered (§3.5). |
+| L5 | Git worktrees and submodules use a `.git` **file** containing a `gitdir:` pointer. That form is deliberately not followed, so such a target reports `GIT_DIRECTORY_NOT_A_DIRECTORY` with `UNKNOWN` repository state rather than a resolved identity. | WO-004 or later, if worktree support is wanted | Deliberate: following the pointer would read metadata outside the approved root, which is exactly what the containment rule forbids. `UNKNOWN` is the fail-closed answer, and `git status` still governs mutation preconditions. |
 
 ### Deferred items
 
@@ -619,15 +762,15 @@ objective reaudit.
 
 ---
 
-## 13. Executor statement
+## 14. Executor statement
 
 All work in this bundle is executor evidence. It is **not** self-approval and it does not claim
 `APPROVED`. The objective reviewer must return exactly one terminal disposition — `APPROVED`,
 `CORRECTION_REQUIRED` or `BLOCKED` — bound to the exact implementation head.
 
-This revision corrects objective audit review `5236410386` (H1–H4). It does not merge, tag, publish,
-force-push, rewrite history, touch `main`, move `v1.0.0`, or self-approve.
+This revision corrects objective reaudit review `5237002898` (H5–H6). It does not merge, tag,
+publish, force-push, rewrite history, touch `main`, move `v1.0.0`, or self-approve.
 
-STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_H1_H4`
+STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_H5_H6`
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED

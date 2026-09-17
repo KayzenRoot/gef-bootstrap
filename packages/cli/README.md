@@ -129,6 +129,17 @@ reimplemented in the CLI, and neither command writes anything.
   output: `DIAGNOSTIC_ALIAS_REFUSED:`, `DIAGNOSTIC_PATH_ESCAPE:`, `DIAGNOSTIC_NOT_REGULAR:`,
   `DIAGNOSTIC_FILE_OVER_BUDGET:`, `DIAGNOSTIC_PATH_UNREADABLE:`. Absence is a successful
   observation and is reported as absence, not as a limit.
+- **Git metadata is read through the same policy, under its own budget.** `.git`, `.git/HEAD` and
+  any symbolic-ref target are bound to the approved project root and read through the shared
+  containment primitive with the tighter `GIT_METADATA_MAX_BYTES` budget, because they are read
+  before any subprocess bound applies. A `.git` that is a symlink or junction is refused
+  (`GIT_DIRECTORY_ALIAS_REFUSED`); a `.git` that is a file or any other indirection form yields
+  `GIT_DIRECTORY_NOT_A_DIRECTORY`, never a clean repository; a symbolic ref whose text is not a
+  well-formed `refs/...` name is `GIT_HEAD_REF_UNUSABLE`; a `HEAD` whose content is not a ref name
+  or a Git object id is `GIT_HEAD_UNUSABLE`. Operation sentinels are probed with the same
+  non-following primitive. Every one of those states reports `UNKNOWN` and a `null` repository
+  verdict rather than inventing a clean tree. The argv-based `git status` and `git --version`
+  probes keep their existing timeout and output bounds.
 - **Checkpoint content is validated before it carries any meaning.** `.engineering/CHECKPOINT.json`
   is untrusted input, so presence, readability and validated authority are three separate fields.
   A document is accepted only when it is a non-array object, declares a supported `schemaVersion`,

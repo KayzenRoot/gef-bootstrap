@@ -20,7 +20,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { closeSync, existsSync, fstatSync, lstatSync, openSync, readFileSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { closeSync, fstatSync, lstatSync, openSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
@@ -142,6 +142,15 @@ export const DIAGNOSTIC_FILE_MAX_BYTES = 1024 * 1024;
 /** Maximum number of diagnostic source files one command may consider. */
 export const DIAGNOSTIC_SOURCE_MAX_FILES = 64;
 
+/**
+ * Byte budget for Git metadata (`.git/HEAD` and its symbolic-ref target).
+ *
+ * A Git ref file is a path or a hash, so a few hundred bytes is already generous; the budget is
+ * deliberately far below the general diagnostic budget because these files are read before any
+ * subprocess bound applies (SECURITY.md resource safety, T12).
+ */
+export const GIT_METADATA_MAX_BYTES = 4096;
+
 export type DiagnosticReadStatus = "OK" | "ABSENT" | "UNREADABLE" | "ALIAS_REFUSED" | "NOT_REGULAR" | "OVER_BUDGET";
 
 export interface DiagnosticReadOutcome {
@@ -164,31 +173,42 @@ function isContained(root: string, candidate: string): boolean {
   return candidate.startsWith(root.endsWith(sep) ? root : `${root}${sep}`);
 }
 
+type ContainedRefusalStatus = "ABSENT" | "UNREADABLE" | "ALIAS_REFUSED" | "NOT_REGULAR";
+
+type ContainedWalk =
+  | { readonly ok: true; readonly root: string; readonly candidate: string; readonly identity: string; readonly isFile: boolean; readonly isDirectory: boolean; readonly limit: null }
+  | { readonly ok: false; readonly status: ContainedRefusalStatus; readonly code: string; readonly limit: string };
+
 /**
- * Read one file inside the approved target root, or refuse with a structured reason.
+ * Resolve one reference inside the approved target root without following any link.
  *
- * The refusal is never silent and never degrades into "absent": a caller can distinguish an
- * absent path from an unreadable one, from an alias that was refused, from a link-like or
- * otherwise non-regular target, and from content over the admitted budget.
+ * This is the single containment primitive. Every S0 consumer — content reads and mere existence
+ * probes alike — goes through it, so there is exactly one containment policy rather than one per
+ * caller:
+ *
+ * 1. bind the approved root and reject an empty, NUL-containing or absolute reference;
+ * 2. reject lexical escape, so `..` traversal never leaves the root whatever the filesystem would
+ *    do afterwards;
+ * 3. inspect **every** component from the root to the final path with `lstat`, a non-following
+ *    primitive, refusing any link-like component (symlink, junction or reparse point as reported
+ *    by Node) regardless of where it would lead;
+ * 4. require every ancestor to be a directory and the final path to be a file or a directory.
+ *
+ * Node on Windows reports symlinks *and* directory junctions as symbolic links through `lstat`,
+ * which is the strongest portable non-following observation available.
  */
-export function readContainedDiagnosticFile(targetRoot: string, requestedRef: string, budget: number = DIAGNOSTIC_FILE_MAX_BYTES): DiagnosticReadOutcome {
-  const ref = requestedRef;
+function walkContained(targetRoot: string, requestedRef: string): ContainedWalk {
   if (requestedRef.length === 0 || requestedRef.includes("\0") || isAbsolute(requestedRef)) {
-    return readRefusal("ALIAS_REFUSED", ref, "DIAGNOSTIC_PATH_ESCAPE");
+    return { ok: false, status: "ALIAS_REFUSED", code: "DIAGNOSTIC_PATH_ESCAPE", limit: `DIAGNOSTIC_PATH_ESCAPE:${requestedRef}` };
   }
   const root = resolve(targetRoot);
   const candidate = resolve(root, requestedRef);
-  // Lexical containment first: no `..` traversal may leave the approved root, independently of
-  // what the filesystem would resolve afterwards.
-  if (!isContained(root, candidate)) return readRefusal("ALIAS_REFUSED", ref, "DIAGNOSTIC_PATH_ESCAPE");
-  if (candidate === root) return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+  const refuse = (status: ContainedRefusalStatus, code: string): ContainedWalk => ({ ok: false, status, code, limit: `${code}:${requestedRef}` });
+  if (!isContained(root, candidate)) return refuse("ALIAS_REFUSED", "DIAGNOSTIC_PATH_ESCAPE");
+  if (candidate === root) return refuse("NOT_REGULAR", "DIAGNOSTIC_NOT_REGULAR");
 
-  // Inspect every existing component from the root down to the final file, without following any
-  // link. A link-like ancestor or a link-like final target is refused even when its destination
-  // would be reachable.
   const parts = relative(root, candidate).split(sep).filter((part) => part.length > 0);
   let current = root;
-  let finalIdentity: string | null = null;
   for (let index = 0; index < parts.length; index += 1) {
     const part = parts[index];
     if (part === undefined) continue;
@@ -198,22 +218,51 @@ export function readContainedDiagnosticFile(targetRoot: string, requestedRef: st
       stats = lstatSync(current);
     } catch (cause: unknown) {
       const code = (cause as { readonly code?: unknown }).code;
-      if (code === "ENOENT" || code === "ENOTDIR") return readRefusal("ABSENT", ref, "DIAGNOSTIC_PATH_ABSENT");
-      return readRefusal("UNREADABLE", ref, "DIAGNOSTIC_PATH_UNREADABLE");
+      if (code === "ENOENT" || code === "ENOTDIR") return refuse("ABSENT", "DIAGNOSTIC_PATH_ABSENT");
+      return refuse("UNREADABLE", "DIAGNOSTIC_PATH_UNREADABLE");
     }
-    if (stats.isSymbolicLink()) return readRefusal("ALIAS_REFUSED", ref, "DIAGNOSTIC_ALIAS_REFUSED");
+    if (stats.isSymbolicLink()) return refuse("ALIAS_REFUSED", "DIAGNOSTIC_ALIAS_REFUSED");
     const isFinal = index === parts.length - 1;
     if (isFinal) {
-      if (!stats.isFile()) return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
-      finalIdentity = `${String(stats.dev)}:${String(stats.ino)}`;
-    } else if (!stats.isDirectory()) {
-      return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+      if (!stats.isFile() && !stats.isDirectory()) return refuse("NOT_REGULAR", "DIAGNOSTIC_NOT_REGULAR");
+      return { ok: true, root, candidate, identity: `${String(stats.dev)}:${String(stats.ino)}`, isFile: stats.isFile(), isDirectory: stats.isDirectory(), limit: null };
     }
+    if (!stats.isDirectory()) return refuse("NOT_REGULAR", "DIAGNOSTIC_NOT_REGULAR");
   }
-  if (finalIdentity === null) return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+  return refuse("NOT_REGULAR", "DIAGNOSTIC_NOT_REGULAR");
+}
+
+/**
+ * Classify one contained path without following any link.
+ *
+ * Used for existence probes over untrusted metadata (Git operation sentinels), so those probes
+ * share the containment policy instead of falling back to a link-following `existsSync`.
+ */
+export function containedEntryKind(targetRoot: string, requestedRef: string): "ABSENT" | "FILE" | "DIRECTORY" | "ALIAS_REFUSED" | "UNREADABLE" | "NOT_REGULAR" {
+  const walked = walkContained(targetRoot, requestedRef);
+  if (!walked.ok) return walked.status;
+  if (walked.isFile) return "FILE";
+  if (walked.isDirectory) return "DIRECTORY";
+  return "NOT_REGULAR";
+}
+
+/**
+ * Read one file inside the approved target root, or refuse with a structured reason.
+ *
+ * The refusal is never silent and never degrades into "absent": a caller can distinguish an
+ * absent path from an unreadable one, from an alias that was refused, from a link-like or
+ * otherwise non-regular target, and from content over the admitted budget.
+ */
+export function readContainedDiagnosticFile(targetRoot: string, requestedRef: string, budget: number = DIAGNOSTIC_FILE_MAX_BYTES): DiagnosticReadOutcome {
+  const ref = requestedRef;
+  const walked = walkContained(targetRoot, requestedRef);
+  if (!walked.ok) return readRefusal(walked.status, ref, walked.code);
+  if (!walked.isFile) return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+  const { root, candidate, identity: finalIdentity } = walked;
 
   // Physical containment: whatever the final path actually resolves to must still be inside the
-  // resolved root. This catches a redirect that the non-following walk above did not surface.
+  // resolved root. This catches a redirect that the non-following walk above did not surface,
+  // including a reparse form Node does not report as a symbolic link.
   try {
     const physicalRoot = realpathSync.native(root);
     const physicalCandidate = realpathSync.native(candidate);
@@ -262,6 +311,18 @@ export function readContainedDiagnosticFile(targetRoot: string, requestedRef: st
 /** The observation-limit codes of every refused read, in input order. */
 export function diagnosticReadLimits(outcomes: readonly DiagnosticReadOutcome[]): readonly string[] {
   return Object.freeze(outcomes.filter((outcome) => outcome.limit !== null).map((outcome) => outcome.limit as string));
+}
+
+/**
+ * Read one Git metadata file (`.git/HEAD` or a symbolic-ref target).
+ *
+ * This is a thin specialization, not a second policy: the reference is resolved and read by the
+ * same containment primitive as every other S0 read, with the Git metadata budget substituted.
+ * Git metadata is read before any subprocess bound applies, which is why it carries the tighter
+ * budget.
+ */
+export function readGitMetadata(targetRoot: string, relativeRef: string): DiagnosticReadOutcome {
+  return readContainedDiagnosticFile(targetRoot, relativeRef, GIT_METADATA_MAX_BYTES);
 }
 
 export function observeTarget(targetRef: string): TargetObservation {
@@ -365,43 +426,83 @@ export function observeRepositoryDirtiness(targetRef: string): DirtinessEvidence
 /**
  * Observe the target's local Git identity and working-tree state.
  *
- * Identity comes from `.git/HEAD` plus the well-known operation sentinels; dirtiness comes from
- * the deterministic `git status` read above. When `.git` exists but dirtiness cannot be proven,
- * the observation is reported as `UNKNOWN` and no engine verdict is fabricated from it — the
- * caller blocks mutation instead.
+ * Git metadata is untrusted input like any other S0 read: `.git`, `.git/HEAD` and any symbolic-ref
+ * target are bound to the approved project root, reached through the shared containment policy and
+ * read under an explicit byte budget. A `.git` that is a link-like or otherwise unsupported
+ * indirection form yields `UNKNOWN` — never a usable identity and never an assumed clean tree.
+ * Identity comes from `.git/HEAD` plus the well-known operation sentinels; dirtiness comes from the
+ * deterministic, argv-based, timeout- and output-bounded `git status` read above. When `.git`
+ * exists but dirtiness cannot be proven, the observation is reported as `UNKNOWN` and no engine
+ * verdict is fabricated from it — the caller blocks mutation instead.
  */
 export function observeRepository(targetRef: string): RepositoryObservation {
   const absolute = resolve(targetRef);
-  const gitDirectory = resolve(absolute, ".git");
-  if (!existsSync(gitDirectory)) {
+  // `.git` is classified without following any link, so a symlinked/junctioned Git directory is a
+  // refusal rather than a redirect to somewhere else on the filesystem.
+  const gitKind = containedEntryKind(absolute, ".git");
+  if (gitKind === "ABSENT") {
     // No repository: the state is known to be "absent", not unknown.
     return { input: {}, observationLimits: ["NO_LOCAL_GIT_DIRECTORY"], dirtiness: "NOT_APPLICABLE" };
   }
+  if (gitKind === "ALIAS_REFUSED" || gitKind === "UNREADABLE") {
+    return {
+      input: {},
+      observationLimits: [`DIAGNOSTIC_ALIAS_REFUSED:.git`, "GIT_DIRECTORY_ALIAS_REFUSED", "WORKING_TREE_NOT_OBSERVED"],
+      dirtiness: "UNKNOWN",
+    };
+  }
+  if (gitKind !== "DIRECTORY") {
+    // A gitfile (`gitdir:` worktree/submodule indirection) or any other non-directory form is not
+    // interpreted here, and its target is not read: the state is unavailable, not clean.
+    return { input: {}, observationLimits: ["GIT_DIRECTORY_NOT_A_DIRECTORY", "WORKING_TREE_NOT_OBSERVED"], dirtiness: "UNKNOWN" };
+  }
+
   let head = "";
   let branch = "";
   let headLimit: string | null = null;
-  try {
-    const contents = readFileSync(resolve(gitDirectory, "HEAD"), "utf8").trim();
-    if (contents.startsWith("ref:")) {
-      // The ref name is attacker-controlled file content. It is accepted only in the exact shape a
-      // real symbolic ref has, so `HEAD` cannot name a path outside the Git directory.
-      const refName = contents.slice(4).trim();
-      if (!/^refs\/[A-Za-z0-9._/-]+$/.test(refName) || refName.includes("..") || refName.includes("//")) {
-        headLimit = "GIT_HEAD_REF_UNUSABLE";
-      } else {
-        branch = refName.replace(/^refs\/heads\//, "");
-        const refFile = resolve(gitDirectory, refName);
-        head = existsSync(refFile) ? readFileSync(refFile, "utf8").trim() : "";
-      }
-    } else {
-      head = contents;
-      branch = "DETACHED";
+  const headOutcome = readGitMetadata(absolute, ".git/HEAD");
+  if (headOutcome.status !== "OK" || headOutcome.bytes === null) {
+    if (headOutcome.status === "ABSENT") {
+      return { input: {}, observationLimits: ["HEAD_UNREADABLE", "WORKING_TREE_NOT_OBSERVED"], dirtiness: "UNKNOWN" };
     }
-  } catch {
-    return { input: {}, observationLimits: ["HEAD_UNREADABLE", "WORKING_TREE_NOT_OBSERVED"], dirtiness: "UNKNOWN" };
+    // Over-budget or refused metadata is unavailable, and its content is never interpreted.
+    return {
+      input: {},
+      observationLimits: [headOutcome.limit ?? "HEAD_UNREADABLE", "WORKING_TREE_NOT_OBSERVED"],
+      dirtiness: "UNKNOWN",
+    };
   }
+  const contents = headOutcome.bytes.toString("utf8").trim();
+  if (contents.startsWith("ref:")) {
+    // The ref name is attacker-controlled file content. It is accepted only in the exact shape a
+    // real symbolic ref has, so `HEAD` cannot name a path outside the Git directory, and the
+    // referenced file is then read through the same contained and bounded policy.
+    const refName = contents.slice(4).trim();
+    if (!/^refs\/[A-Za-z0-9._/-]+$/.test(refName) || refName.includes("..") || refName.includes("//")) {
+      headLimit = "GIT_HEAD_REF_UNUSABLE";
+    } else {
+      branch = refName.replace(/^refs\/heads\//, "");
+      const refOutcome = readGitMetadata(absolute, `.git/${refName}`);
+      if (refOutcome.status === "ABSENT") {
+        head = "";
+      } else if (refOutcome.status !== "OK" || refOutcome.bytes === null) {
+        // A symbolic ref pointing at an alias, an escape or oversized content is refused rather
+        // than followed; the ref name is still reported, the value is not.
+        headLimit = refOutcome.limit ?? "GIT_REF_UNREADABLE";
+      } else {
+        head = refOutcome.bytes.toString("utf8").trim();
+      }
+    }
+  } else if (/^[0-9a-f]{40}([0-9a-f]{24})?$/i.test(contents)) {
+    head = contents;
+    branch = "DETACHED";
+  } else {
+    // Anything else is not a Git identity, so it is never propagated as one.
+    headLimit = "GIT_HEAD_UNUSABLE";
+  }
+
   const headLimits: readonly string[] = headLimit === null ? [] : [headLimit];
-  const operation = GIT_OPERATION_SENTINELS.find(([sentinel]) => existsSync(resolve(gitDirectory, sentinel)))?.[1];
+  const operation = GIT_OPERATION_SENTINELS.find(([sentinel]) => containedEntryKind(absolute, `.git/${sentinel}`) !== "ABSENT")?.[1];
   const evidence = observeRepositoryDirtiness(absolute);
   if (evidence.observation !== "OBSERVED") {
     return {

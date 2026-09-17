@@ -173,6 +173,35 @@ test("the installed package carries the contained-read hardening", (t) => {
   }
 });
 
+test("the installed package refuses aliased and oversized Git metadata", (t) => {
+  const { bin } = freshInstall(t, "git-metadata");
+  const SENTINEL = "GEF-PACKED-GIT-SENTINEL";
+
+  // Aliased Git directory.
+  const aliased = tempProject(t);
+  const external = mkdtempSync(join(tmpdir(), "gef-wo003-packed-git-ext-"));
+  t.after(() => rmSync(external, { recursive: true, force: true }));
+  mkdirSync(join(external, "refs", "heads"), { recursive: true });
+  writeFileSync(join(external, "HEAD"), "ref: refs/heads/leaked\n");
+  writeFileSync(join(external, "refs", "heads", "leaked"), SENTINEL);
+  if (process.platform === "win32") symlinkSync(external, join(aliased, ".git"), "junction");
+  else symlinkSync(external, join(aliased, ".git"), "dir");
+
+  const aliasStatus = gefAt(bin, ["status", "--target", aliased, "--json"]);
+  assert.equal(aliasStatus.code, 0);
+  assert.equal(aliasStatus.stdout.includes(SENTINEL), false, "the installed CLI must not expose aliased Git content");
+  assert.ok(JSON.parse(aliasStatus.stdout).value.status.repository.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_ALIAS_REFUSED:.git")));
+
+  // Oversized Git metadata.
+  const oversized = tempProject(t);
+  mkdirSync(join(oversized, ".git"), { recursive: true });
+  writeFileSync(join(oversized, ".git", "HEAD"), SENTINEL.repeat(300));
+  const bigStatus = gefAt(bin, ["status", "--target", oversized, "--json"]);
+  assert.equal(bigStatus.code, 0);
+  assert.equal(bigStatus.stdout.includes(SENTINEL), false, "the installed CLI must not echo oversized metadata");
+  assert.ok(JSON.parse(bigStatus.stdout).value.status.repository.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_FILE_OVER_BUDGET:.git/HEAD")));
+});
+
 test("the installed package fails closed when the vendored engines are missing", (t) => {
   const { cliDir, bin } = freshInstall(t, "broken-engines");
   rmSync(join(cliDir, "vendor"), { recursive: true, force: true });

@@ -17,18 +17,22 @@ import {
   CLI_COMMAND_IDS,
   DIAGNOSTIC_FILE_MAX_BYTES,
   DIAGNOSTIC_SOURCE_MAX_FILES,
+  GIT_METADATA_MAX_BYTES,
   HELP_INVENTORY,
   SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS,
   buildRegistry,
   cliRegistrations,
+  containedEntryKind,
   gitBinaryAvailable,
   loadEngines,
   observeDocumentation,
   observeGovernance,
   observeGovernanceFiles,
+  observeRepository,
   observeTarget,
   parseArgv,
   readContainedDiagnosticFile,
+  readGitMetadata,
   runCli,
   validateGovernanceCheckpoint,
 } from "../packages/cli/dist/index.js";
@@ -699,4 +703,209 @@ test("H4: an invalid checkpoint never becomes status semantics", async (t) => {
   assert.equal(JSON.stringify(status).includes("APPROVED"), false, "text in a file is not approval");
   assert.ok(status.observationLimits.some((limit) => limit.startsWith("GOVERNANCE_CHECKPOINT_SCHEMA_UNSUPPORTED")));
 });
+
+// =========================================================================
+// H5-H6 correction (objective reaudit review 5237002898)
+// =========================================================================
+
+/** A target whose `.git` metadata points at external content. */
+function poisonedRepo(t, tag) {
+  const root = mkdtempSync(join(tmpdir(), `gef-${tag}-`));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const external = mkdtempSync(join(tmpdir(), `gef-${tag}-ext-`));
+  t.after(() => rmSync(external, { recursive: true, force: true }));
+  mkdirSync(join(external, "refs", "heads"), { recursive: true });
+  writeFileSync(join(external, "HEAD"), "ref: refs/heads/leaked\n");
+  writeFileSync(join(external, "refs", "heads", "leaked"), SENTINEL);
+  return { root, external };
+}
+
+/** Initialise a real repository with one commit and return its true HEAD sha and branch. */
+function realRepo(t, tag) {
+  const root = mkdtempSync(join(tmpdir(), `gef-${tag}-`));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const git = (args) => spawnSync("git", ["-C", root, ...args], { encoding: "utf8", timeout: 30_000 });
+  git(["init", "-q"]);
+  git(["config", "user.email", "executor@example.invalid"]);
+  git(["config", "user.name", "GEF Executor"]);
+  writeFileSync(join(root, "README.md"), "readme\n");
+  git(["add", "."]);
+  git(["commit", "-qm", "seed"]);
+  return { root, head: git(["rev-parse", "HEAD"]).stdout.trim(), branch: git(["rev-parse", "--abbrev-ref", "HEAD"]).stdout.trim() };
+}
+
+// ------------------------------------------------------------------- H5
+
+test("H5: a `.git` directory alias is refused and never inspected", async (t) => {
+  const { root, external } = poisonedRepo(t, "h5-gitdir");
+  dirAlias(external, join(root, ".git"));
+
+  const observation = observeRepository(root);
+  assert.equal(observation.dirtiness, "UNKNOWN", "an aliased Git directory cannot yield a usable state");
+  assert.equal(observation.input["head"], undefined, "no head may be reported from an aliased Git directory");
+  assert.ok(observation.observationLimits.includes("GIT_DIRECTORY_ALIAS_REFUSED"));
+  assert.ok(observation.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_ALIAS_REFUSED:.git")));
+
+  for (const verb of ["doctor", "status"]) {
+    const captured = deps([verb, "--target", root, "--json"]);
+    assert.equal(await runCli(captured), 0);
+    const text = captured.out.join("");
+    assert.equal(text.includes(SENTINEL), false, `${verb} must not expose aliased Git content`);
+    assert.equal(text.includes(external), false, `${verb} must not expose the alias destination`);
+  }
+
+  // Sensitivity: the alias is a real escape — a direct read of the same path returns the sentinel.
+  assert.equal(readFileSync(join(root, ".git", "refs", "heads", "leaked"), "utf8"), SENTINEL);
+});
+
+test("H5: an aliased `.git/HEAD` is refused and its content never reaches output", async (t) => {
+  const { root, external } = poisonedRepo(t, "h5-head");
+  mkdirSync(join(root, ".git"), { recursive: true });
+  const alias = fileAlias(join(external, "HEAD"), join(root, ".git", "HEAD"));
+  if (alias.gap !== null) t.diagnostic(`H5 evidence gap on ${process.platform}: ${alias.gap}`);
+
+  const outcome = readGitMetadata(root, ".git/HEAD");
+  assert.equal(outcome.status, "ALIAS_REFUSED");
+  assert.equal(outcome.bytes, null, "no metadata content is returned for a refused alias");
+
+  const observation = observeRepository(root);
+  assert.equal(observation.dirtiness, "UNKNOWN");
+  assert.equal(observation.input["head"], undefined);
+  assert.ok(observation.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_ALIAS_REFUSED:.git/HEAD")));
+
+  const captured = deps(["status", "--target", root, "--json"]);
+  assert.equal(await runCli(captured), 0);
+  assert.equal(captured.out.join("").includes(SENTINEL), false);
+});
+
+test("H5: an aliased symbolic-ref target is refused, never followed", (t) => {
+  const { root, external } = poisonedRepo(t, "h5-ref");
+  mkdirSync(join(root, ".git", "refs", "heads"), { recursive: true });
+  writeFileSync(join(root, ".git", "HEAD"), "ref: refs/heads/main\n");
+  const alias = fileAlias(join(external, "refs", "heads", "leaked"), join(root, ".git", "refs", "heads", "main"));
+  if (alias.gap !== null) t.diagnostic(`H5 evidence gap on ${process.platform}: ${alias.gap}`);
+
+  const observation = observeRepository(root);
+  assert.equal(observation.input["head"], "", "an aliased ref yields no head value");
+  assert.ok(observation.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_ALIAS_REFUSED:.git/refs/heads/main")));
+  assert.equal(JSON.stringify(observation).includes(SENTINEL), false);
+});
+
+test("H5: a symbolic ref naming a traversal path is still rejected", (t) => {
+  const { root } = poisonedRepo(t, "h5-traverse");
+  const outside = mkdtempSync(join(tmpdir(), "gef-h5-out-"));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  writeFileSync(join(outside, "secret"), SENTINEL);
+
+  for (const refName of ["../../../../etc/passwd", "refs/heads/../../../secret", "refs//heads/main", "/etc/passwd", "refs/heads/x\\..\\..\\y"]) {
+    mkdirSync(join(root, ".git"), { recursive: true });
+    writeFileSync(join(root, ".git", "HEAD"), `ref: ${refName}\n`);
+    const observation = observeRepository(root);
+    assert.equal(observation.input["head"], "", `${refName} must not produce a head value`);
+    assert.ok(observation.observationLimits.includes("GIT_HEAD_REF_UNUSABLE"), `${refName} must be reported as unusable`);
+    assert.equal(JSON.stringify(observation).includes(SENTINEL), false);
+  }
+});
+
+test("H5: an unsupported `.git` indirection form is unavailable, not clean", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "gef-h5-gitfile-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  writeFileSync(join(root, ".git"), "gitdir: /elsewhere/.git/worktrees/x\n");
+
+  const observation = observeRepository(root);
+  assert.equal(observation.dirtiness, "UNKNOWN", "a gitfile must not be interpreted as a clean repository");
+  assert.equal(observation.input["head"], undefined);
+  assert.ok(observation.observationLimits.includes("GIT_DIRECTORY_NOT_A_DIRECTORY"));
+  assert.deepEqual(containedEntryKind(root, ".git"), "FILE");
+});
+
+test("H5: a normal contained repository still reports its real identity", (t) => {
+  const { root, head, branch } = realRepo(t, "h5-ok");
+  const observation = observeRepository(root);
+  assert.equal(observation.dirtiness, "OBSERVED");
+  assert.equal(observation.input["head"], head, "the real HEAD sha is unchanged");
+  assert.equal(observation.input["branch"], branch);
+  assert.deepEqual([...observation.observationLimits], []);
+  assert.deepEqual(containedEntryKind(root, ".git"), "DIRECTORY");
+  assert.equal(containedEntryKind(root, ".git/HEAD"), "FILE");
+  assert.equal(containedEntryKind(root, ".git/nope"), "ABSENT");
+});
+
+// ------------------------------------------------------------------- H6
+
+test("H6: the Git metadata budget is a small explicit constant", () => {
+  assert.equal(Number.isInteger(GIT_METADATA_MAX_BYTES), true);
+  assert.ok(GIT_METADATA_MAX_BYTES > 0 && GIT_METADATA_MAX_BYTES <= 64 * 1024);
+  assert.ok(GIT_METADATA_MAX_BYTES < DIAGNOSTIC_FILE_MAX_BYTES, "Git metadata carries the tighter budget");
+});
+
+test("H6: a HEAD exactly at the budget is interpreted by syntax, one byte over is refused", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "gef-h6-edge-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, ".git"), { recursive: true });
+  const sha = "a".repeat(40);
+
+  // Exactly at the budget, with a syntactically valid detached identity.
+  writeFileSync(join(root, ".git", "HEAD"), sha.padEnd(GIT_METADATA_MAX_BYTES, " "));
+  const atLimit = readGitMetadata(root, ".git/HEAD");
+  assert.equal(atLimit.status, "OK");
+  assert.equal(atLimit.bytes.length, GIT_METADATA_MAX_BYTES);
+  const detached = observeRepository(root);
+  assert.equal(detached.input["head"], sha, "an at-budget HEAD is interpreted by its syntax");
+  assert.equal(detached.input["branch"], "DETACHED");
+
+  // One byte over: refused before any semantic interpretation.
+  writeFileSync(join(root, ".git", "HEAD"), sha.padEnd(GIT_METADATA_MAX_BYTES + 1, " "));
+  const overLimit = readGitMetadata(root, ".git/HEAD");
+  assert.equal(overLimit.status, "OVER_BUDGET");
+  assert.equal(overLimit.bytes, null);
+  assert.equal(overLimit.limit, "DIAGNOSTIC_FILE_OVER_BUDGET:.git/HEAD");
+});
+
+test("H6: an over-budget symbolic-ref target is refused", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "gef-h6-ref-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, ".git", "refs", "heads"), { recursive: true });
+  writeFileSync(join(root, ".git", "HEAD"), "ref: refs/heads/main\n");
+  writeFileSync(join(root, ".git", "refs", "heads", "main"), "b".repeat(GIT_METADATA_MAX_BYTES + 1));
+
+  const observation = observeRepository(root);
+  assert.equal(observation.input["head"], "", "an over-budget ref yields no head value");
+  assert.ok(observation.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_FILE_OVER_BUDGET:.git/refs/heads/main")));
+
+  // At the budget the same file is admitted and interpreted.
+  writeFileSync(join(root, ".git", "refs", "heads", "main"), "c".repeat(GIT_METADATA_MAX_BYTES));
+  assert.equal(readGitMetadata(root, ".git/refs/heads/main").status, "OK");
+});
+
+test("H6: over-budget Git metadata never becomes repository semantics", async (t) => {
+  const PADDING = "GIT-METADATA-PADDING-SENTINEL";
+  const root = mkdtempSync(join(tmpdir(), "gef-h6-semantics-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  mkdirSync(join(root, ".git"), { recursive: true });
+  writeFileSync(join(root, ".git", "HEAD"), PADDING.repeat(Math.ceil((GIT_METADATA_MAX_BYTES + 1) / PADDING.length)));
+
+  const observation = observeRepository(root);
+  assert.equal(observation.dirtiness, "UNKNOWN", "over-budget metadata cannot yield a usable state");
+  assert.equal(observation.input["head"], undefined);
+  assert.equal(observation.input["branch"], undefined);
+  assert.equal(JSON.stringify(observation).includes(PADDING), false, "oversized content is never embedded in diagnostics");
+
+  for (const verb of ["doctor", "status"]) {
+    const captured = deps([verb, "--target", root, "--json"]);
+    assert.equal(await runCli(captured), 0);
+    assert.equal(captured.out.join("").includes(PADDING), false, `${verb} must not echo oversized metadata`);
+  }
+
+  // Deterministic: the same refusal twice, byte for byte.
+  const first = deps(["status", "--target", root, "--json"]);
+  const second = deps(["status", "--target", root, "--json"]);
+  assert.equal(await runCli(first), 0);
+  assert.equal(await runCli(second), 0);
+  const limits = (captured) => JSON.parse(captured.out.join("")).value.status.repository.observationLimits;
+  assert.deepEqual(limits(first), limits(second));
+  assert.ok(limits(first).includes("DIAGNOSTIC_FILE_OVER_BUDGET:.git/HEAD"), "the concrete Git metadata refusal is recorded");
+  assert.deepEqual(JSON.parse(first.out.join("")).value.status.repository.verdict, null, "no repository verdict is fabricated");
+});
+
 
