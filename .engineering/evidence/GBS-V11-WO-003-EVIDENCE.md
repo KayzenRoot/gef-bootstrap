@@ -1098,7 +1098,7 @@ reached.
 
 ### 8.4 A red CI round, its cause, and the fixture cleanup
 
-The first push of this cycle () turned **all 23 workflows red**. The failures were in the
+The first push of this cycle (bc9ae59) turned **all 23 workflows red**. The failures were in the
 three new H14 fixtures on Linux, with
 
 ```
@@ -1108,10 +1108,14 @@ Error: EACCES, Permission denied: /tmp/gef-h14-parent-...
 These fixtures deliberately make a directory non-writable to prove the refusal, and the cleanup hook
 then tried to delete that directory: removing an entry needs write authority on its directory, so the
 harness could not undo what the test had just proved. Windows does not gate deletion on the POSIX
-mode bits, which is why the same tests were green locally and red on . The cleanup now
+mode bits, which is why the same tests were green locally and red on ubuntu-latest. The cleanup now
 restores the mode bits level by level before removing, and the three tests are green on both
-platforms. The red round is recorded here rather than presented as if the green re-run had been the
-only outcome.
+platforms. A second round of the same origin surfaced two more fixture defects, both harness bugs:
+the ancestor fixture asserted the declared root was non-replaceable without ever making it so, and the
+prefix fixture placed the executable where the user-managed policy declares no candidate, so the
+admission was refused for a path reason instead of being admitted by the explicit policy. The product
+behaved identically throughout. Both red rounds are recorded here rather than presented as if the
+green re-run had been the only outcome.
 
 ### 8.5 Regression status
 
@@ -1546,5 +1550,8 @@ This revision corrects objective reaudit review `5239917392` (final H14). It doe
 publish, force-push, rewrite history, touch `main`, move `v1.0.0`, or self-approve.
 
 STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_H14_FINAL`
+
+The final head for this revision is `059ebc90d8341300477edc2fce9dfe8758edbd43`, whose exact-head
+assurance is 23 workflow runs / 89 check runs, all `success`.
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED
