@@ -1550,7 +1550,10 @@ test("H14-final: a caller-writable ancestor above the declared root is refused",
 
   // Liveness: the root entry can be replaced, because the directory holding it is writable.
   assert.equal(directoryIsReplaceable(parent), true, "the parent of the declared root must be replaceable for this fixture to be live");
-  if (process.platform !== "win32") assert.equal(directoryIsReplaceable(root), false, "the declared root itself is not writable");
+  if (process.platform !== "win32") {
+    chmodSync(root, 0o555);
+    assert.equal(directoryIsReplaceable(root), false, "the declared root itself is not writable once its mode says so");
+  }
 
   const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
   assert.equal(inspection.status, "UNAVAILABLE", "a replaceable ancestor above the declared root must refuse the executable");
@@ -1594,22 +1597,20 @@ test("H14-final: FOUND never coexists with an unproven directory chain", () => {
 });
 
 test("H14-final: a caller-replaceable root is unavailable under the default policy", (t) => {
-  // A Homebrew/local-style prefix owned by the current user: the executable is inside a declared
-  // root and is not group/other writable, but the caller can replace it, so the high-assurance
-  // default must not admit it. The explicit user-managed policy is the only way in.
-  const root = mkdtempSync(join(tmpdir(), "gef-h14f-prefix-"));
-  t.after(() => removeFixture(root));
-  const bin = join(root, "bin");
-  mkdirSync(bin, { recursive: true });
-  const candidate = process.platform === "win32" ? join(bin, "git.exe") : join(bin, "git");
-  writePayload(candidate, "A", join(root, "sentinel"));
-  // Non-writable executable, undecorated group/other bits: containment and mode are satisfied, and
-  // only replacement authority through the caller-writable prefix can refuse it.
+  // A Homebrew/local-style prefix owned by the current user: the executable sits inside a declared
+  // root and is not group/other writable, but the caller can replace the prefix, so the
+  // high-assurance default must not admit it. The explicit user-managed policy is the only way in.
+  const { root, candidate, policy: userManaged } = tempTrustPolicy(t, "gef-h14f-prefix-");
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14f-prefix-sent-")), "sentinel");
+  writePayload(candidate, "A", sentinel);
+  // Non-writable executable with clear group/other bits: only replacement authority can refuse it.
   chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
   assert.equal(canOpenForWritingForTest(candidate), false, "the executable must be non-writable for this fixture");
+  assert.equal(directoryIsReplaceable(root), true, "the caller-managed prefix must be replaceable to be live");
 
   const machine = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
   assert.equal(machine.status, "UNAVAILABLE", "a caller-replaceable prefix is not machine-trusted");
   assert.equal(machine.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
-  assert.equal(inspectAdmittedExecutable(candidate, userManagedGitTrustPolicy([{ root, rationale: "prefix" }])).status, "FOUND", "the explicit user-managed policy is the deliberate way in");
+  assert.equal(inspectAdmittedExecutable(candidate, userManaged).status, "FOUND", "the explicit user-managed policy is the deliberate way in");
+  assert.equal(existsSync(sentinel), false, "nothing was executed by the refused admission");
 });
