@@ -26,11 +26,19 @@ function run(command, args, options = {}) {
   return spawnSync(command, args, { encoding: "utf8", timeout: PACK_TIMEOUT_MS, ...options });
 }
 
-function npmCommand(argsString, options) {
-  // npm ships as a `.cmd` shim on Windows, which needs a shell; elsewhere argv is passed directly.
-  if (process.platform === "win32") return spawnSync(argsString, { encoding: "utf8", timeout: PACK_TIMEOUT_MS, shell: true, ...options });
-  const [command, ...args] = argsString.split(" ");
-  return run(command, args, options);
+/**
+ * Invoke npm.
+ *
+ * npm ships as a `.cmd` shim on Windows, which needs a shell, so on Windows the argv is joined
+ * and quoted. Elsewhere the arguments are passed directly as an argv array — never as a quoted
+ * string, which a shell-less spawn would treat as part of the path.
+ */
+function npmRun(args, options) {
+  if (process.platform === "win32") {
+    const command = ["npm", ...args].map((part) => (part.includes(" ") ? `"${part}"` : part)).join(" ");
+    return spawnSync(command, { encoding: "utf8", timeout: PACK_TIMEOUT_MS, shell: true, ...options });
+  }
+  return spawnSync("npm", args, { encoding: "utf8", timeout: PACK_TIMEOUT_MS, ...options });
 }
 
 function packCli(destination) {
@@ -50,9 +58,9 @@ function freshInstall(t) {
   const sandbox = mkdtempSync(join(tmpdir(), "gef-dist-"));
   t.after(() => rmSync(sandbox, { recursive: true, force: true }));
   const tarball = packCli(join(sandbox, "__tarball__"));
-  const init = npmCommand("npm init -y", { cwd: sandbox });
+  const init = npmRun(["init", "-y"], { cwd: sandbox });
   assert.equal(init.status, 0, `npm init must succeed: ${init.stderr}`);
-  const installed = npmCommand(`npm install --no-audit --no-fund "${tarball}"`, { cwd: sandbox });
+  const installed = npmRun(["install", "--no-audit", "--no-fund", tarball], { cwd: sandbox });
   assert.equal(installed.status, 0, `npm install must succeed: ${installed.stderr}`);
   const cliDir = join(sandbox, "node_modules", "@gef-bootstrap", "cli");
   return { sandbox, cliDir, bin: join(cliDir, "bin", "gef.mjs") };
@@ -218,7 +226,7 @@ test("DIST-SMOKE-04: no publication is performed or claimed", (t) => {
   const self = readFileSync(fileURLToPath(import.meta.url), "utf8");
   // This suite invokes only `npm init` and `npm install`; packaging goes through the
   // repository script, and no registry write is reachable from any of them.
-  const verbs = [...new Set([...self.matchAll(/npmCommand\(`npm ([a-z-]+)/g)].map((match) => match[1]))];
+  const verbs = [...new Set([...self.matchAll(/npmRun\(\["([a-z-]+)"/g)].map((match) => match[1]))];
   for (const verb of verbs) assert.ok(["init", "install"].includes(verb), `unexpected npm verb: ${verb}`);
-  assert.ok(!/npm (publish|adduser|login|token)/.test(self), "no registry verb may appear in this suite");
+  assert.ok(!/"(publish|adduser|login|token)"/.test(self), "no registry verb may appear in this suite");
 });
