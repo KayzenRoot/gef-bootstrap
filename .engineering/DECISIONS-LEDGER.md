@@ -233,3 +233,7 @@ Status: `ACTIVE`
 ## D-0058 — Incomparable benchmark populations are reported as incomparable
 - Decision: Performance claims require matching population identity across workload, base state, toolchain, platform, assurance policy, cache/proof posture and measurement boundary. A mismatch forbids any speedup claim. Metrics distinguish MEASURED, ESTIMATED and UNAVAILABLE. A quality-gate failure voids an apparent gain. Contract: `.engineering/releases/V1.1-PERFORMANCE-BENCHMARK-PROTOCOL.md`.
 - Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0059 — V1.1 foundation decisions are promoted after objective audit
+- Decision: The proposal states recorded by D-0052 through D-0058 are historical. Objective re-audit of `GBS-V11-WO-001` at exact head `989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635` returned `APPROVED` with CRITICAL=0/HIGH=0, and PR #279 merged that audited candidate into `release/1.1` as `c5890620a98f2b23c794d65234824ad2ea084036`. This governance increment performs the checkpoint-promotion step required by D-0042. On merge of the checkpoint-promotion PR into `release/1.1`, D-0052 through D-0058 and ADR-0003-D1 through D5 become effective for the V1.1 release line under their declared bounds. In particular, ADR-0003-D3 authorizes external-executor implementation only on `release/1.1` and subordinate branches, only for admitted Work Orders, and never authorizes merge/tag/publish/force-push/history rewrite or mutation of `main`/V1.0.0 accepted history.
+- Status: APPROVED
