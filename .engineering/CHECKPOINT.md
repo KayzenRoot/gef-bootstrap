@@ -62,4 +62,5 @@ GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
 Next legal V1.1 stage after this promotion merge: `GBS-V11-WO-002`.
 
-STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_WITH_V11_FOUNDATION_PROMOTED`.
+Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
+V1.1 STOP CONDITION: `GBS_V11_FOUNDATION_PROMOTED_READY_FOR_WO_002`.
