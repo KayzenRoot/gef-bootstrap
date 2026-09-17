@@ -12,6 +12,8 @@ import { delimiter, dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
+import { DEFAULT_GIT_TRUST_POLICY, createCliToolObservationPort, resolveGitToolWith } from "../packages/cli/dist/index.js";
+
 
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -51,6 +53,18 @@ function freshInstall(t, tag) {
   assert.equal(installed.status, 0, `npm install must succeed: ${installed.stderr}`);
   const cliDir = join(sandbox, "node_modules", "@gef-bootstrap", "cli");
   return { sandbox, cliDir, bin: join(cliDir, "bin", "gef.mjs") };
+}
+
+/**
+ * The decision the source workspace makes for the system Git on the current token.
+ *
+ * An assurance token that can itself replace the machine executable is refused by the
+ * high-assurance policy, so the installed package must be compared against this decision instead of
+ * against an assumption that Git is admitted on every machine.
+ */
+function sourceGitDecision() {
+  const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
+  return resolved === null ? "UNAVAILABLE" : "FOUND";
 }
 
 function gefAt(bin, args, env) {
@@ -136,7 +150,12 @@ test("the installed package exposes doctor and status with source-workspace sema
   assert.equal(doctorEnvelope.value.doctor.readOnly, true);
   assert.ok(Array.isArray(doctorEnvelope.value.doctor.findings));
   const gitFinding = doctorEnvelope.value.doctor.findings.find((finding) => finding.id === "toolchain.git");
-  assert.equal(gitFinding.state, "HEALTHY", "the packaged CLI can see a working Git binary in this environment");
+  const decision = sourceGitDecision();
+  assert.equal(
+    gitFinding.state,
+    decision === "FOUND" ? "HEALTHY" : "FINDING",
+    `the installed CLI must reach the same toolchain decision as the source workspace (${decision})`,
+  );
   assert.equal(doctorEnvelope.value.doctor.security.github.state, "REVIEW", "provider evidence is absent and reported as REVIEW");
 
   const status = gefAt(bin, ["status", "--target", project, "--json"]);
@@ -305,8 +324,8 @@ test("the installed package resolves Git through the approved policy, not PATH",
   }
 
   const doctor = JSON.parse(gefAt(bin, ["doctor", "--target", project, "--json"], env).stdout).value.doctor;
-  assert.equal(doctor.toolchain.git.presence, "FOUND", "the installed CLI resolves the approved Git");
-  assert.match(doctor.toolchain.git.executableIdentity, /^[0-9a-f]{64}$/);
+  assert.equal(doctor.toolchain.git.presence, sourceGitDecision(), "the installed CLI reaches the source workspace decision");
+  if (doctor.toolchain.git.presence === "FOUND") assert.match(doctor.toolchain.git.executableIdentity, /^[0-9a-f]{64}$/);
 });
 
 test("the installed package fails closed when the vendored engines are missing", (t) => {
