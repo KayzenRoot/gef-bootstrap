@@ -191,7 +191,9 @@ test("H5: authorization revoked before the commit barrier aborts with zero targe
   assert.equal(existsSync(join(root, TRANSACTION_PRIVATE_DIRECTORY, "tx-authz")), false, "staging must be cleaned up");
 
   // Abort evidence is still recorded for the transaction that did start.
-  const journals = existsSync(join(root, JOURNAL_DIRECTORY)) ? readdirSync(join(root, JOURNAL_DIRECTORY)) : [];
+  // The journal directory is invocation-created and carries its ownership marker beside the
+  // journal file itself.
+  const journals = (existsSync(join(root, JOURNAL_DIRECTORY)) ? readdirSync(join(root, JOURNAL_DIRECTORY)) : []).filter((name) => name.endsWith(".json"));
   assert.equal(journals.length, 1, "the aborted transaction must leave journal evidence");
   const recorded = JSON.parse(readFileSync(join(root, JOURNAL_DIRECTORY, journals[0]), "utf8"));
   assert.equal(recorded.transactionId, "tx-authz");

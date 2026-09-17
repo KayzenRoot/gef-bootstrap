@@ -129,17 +129,19 @@ test("H9: a staging directory replaced by an ordinary directory before cleanup s
   const staging = await area.claimStagingDirectory("tx-swap");
   assert.equal(staging.owned, true);
 
-  // Replace the owned directory with a *different ordinary* directory at the same path. A token
-  // comparison must catch this exactly like a symlink replacement.
+  // Replace the owned directory with a *different ordinary* directory at the same path. The
+  // refusal must not depend on the inode differing: Linux readily reuses the inode number of a
+  // just-removed directory, so the ownership marker is what makes the proof reliable.
   rmSync(staging.path, { recursive: true, force: true });
   mkdirSync(staging.path, { recursive: true });
   writeFileSync(join(staging.path, "user-content.txt"), SENTINEL);
-  const replacementIdentity = lstatSync(staging.path);
-  assert.notEqual(`${String(replacementIdentity.dev)}:${String(replacementIdentity.ino)}`, staging.identity);
 
   const report = await area.releaseOwnedDirectory(staging, []);
   assert.equal(report.removed, false, "an ordinary-directory replacement must not be removed");
-  assert.ok(report.refusals.includes("DIRECTORY_IDENTITY_CHANGED"), `expected an identity refusal, got ${report.refusals.join(",")}`);
+  assert.ok(
+    report.refusals.some((entry) => entry === "DIRECTORY_IDENTITY_CHANGED" || entry === "DIRECTORY_OWNERSHIP_LOST"),
+    `expected an ownership refusal, got ${report.refusals.join(",")}`,
+  );
   assert.equal(readFileSync(join(staging.path, "user-content.txt"), "utf8"), SENTINEL, "the replacement content survives byte for byte");
 });
 
@@ -311,7 +313,9 @@ test("H10: the normal journal lifecycle writes only to the file this transaction
   assert.equal(recorded.kind, "gef.cli.transaction-journal");
   assert.equal(recorded.transactionId, "tx-ok");
   assert.equal(recorded.phase, "FINISH");
-  assert.deepEqual(readdirSync(join(root, PRIVATE_DIRECTORY, "journal")), ["tx-ok.json"]);
+  // The journal directory is itself invocation-created, so it carries its ownership marker beside
+  // the single journal file this transaction owns.
+  assert.deepEqual(readdirSync(join(root, PRIVATE_DIRECTORY, "journal")).sort(), [".gef-owner", "tx-ok.json"]);
 });
 
 test("H10: valid journal evidence survives an aborted transaction when ownership is intact", async (t) => {

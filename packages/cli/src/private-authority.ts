@@ -26,10 +26,19 @@
 
 import { randomBytes } from "node:crypto";
 import { createHash } from "node:crypto";
-import { lstat, mkdir, open, readFile, realpath, rm, rmdir } from "node:fs/promises";
+import { lstat, mkdir, open, readFile, realpath, rm, rmdir, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 export const PRIVATE_DIRECTORY = ".gef-private";
+/**
+ * Ownership marker written inside every directory this invocation creates.
+ *
+ * `dev:ino` alone is not a reliable ownership proof: on Linux a removed directory or file can have
+ * its inode number reused immediately by a replacement, so a token comparison can pass for an
+ * object this invocation did not create. The marker carries a random token that a replacement
+ * cannot reproduce, which makes the ownership proof independent of inode reuse.
+ */
+export const OWNER_MARKER = ".gef-owner";
 export const PROBE_DIRECTORY = "probes";
 export const JOURNAL_SUBDIRECTORY = "journal";
 
@@ -101,6 +110,8 @@ export interface OwnedDirectory {
   readonly identity: string;
   /** True only when this invocation created the directory; a pre-existing directory is never owned. */
   readonly owned: boolean;
+  /** The ownership marker this invocation wrote, when it created the directory. */
+  readonly marker?: OwnedFile;
 }
 
 /** A file whose creation-time identity and content fingerprint this invocation recorded. */
@@ -120,6 +131,20 @@ export interface WriteReport {
   readonly detail?: string;
 }
 
+/**
+ * A journal file claimed exclusively by this invocation.
+ *
+ * The open handle keeps the original inode allocated, which is what makes replacement detection
+ * reliable: an unlinked-but-open inode cannot be reused, so the path entry can only still match the
+ * handle while it really refers to this file.
+ */
+export interface OwnedJournal {
+  readonly file: OwnedFile;
+  /** Writes the body to the owned file, refusing when the path no longer refers to it. */
+  write(body: string): Promise<WriteReport>;
+  close(): Promise<void>;
+}
+
 export interface PrivateArea {
   /** Absolute target root this authority is bound to. */
   readonly targetRoot: string;
@@ -130,9 +155,7 @@ export interface PrivateArea {
   /** Claims the staging directory for a transaction, recording whether this invocation created it. */
   claimStagingDirectory(transactionId: string): Promise<OwnedDirectory>;
   /** Exclusively creates the journal file for a transaction. Fails closed if the path exists. */
-  claimJournalFile(transactionId: string): Promise<OwnedFile>;
-  /** Rewrites an owned file through an identity-verified handle. Never follows a replacement. */
-  writeOwnedFile(owned: OwnedFile, body: string): Promise<WriteReport>;
+  claimJournalFile(transactionId: string): Promise<OwnedJournal>;
   /** Records ownership of a file this invocation just created. */
   captureOwnedFile(path: string, fingerprint: string): Promise<OwnedFile | undefined>;
   /** Removes an owned directory and its owned files after revalidating every identity. */
@@ -158,8 +181,25 @@ async function contentFingerprint(path: string): Promise<string | undefined> {
 export function createPrivateArea(targetRoot: string): PrivateArea {
   const root = resolve(targetRoot);
   let realRootCache: string | undefined;
-  /** Path -> identity token, recorded only for directories this invocation created. */
-  const created = new Map<string, string>();
+  /** Path -> ownership record, kept only for directories this invocation created. */
+  const created = new Map<string, { identity: string; marker: OwnedFile }>();
+
+  /** Write the ownership marker into a directory this invocation just created. */
+  const writeMarker = async (directory: string): Promise<OwnedFile> => {
+    const path = join(directory, OWNER_MARKER);
+    const token = randomBytes(16).toString("hex");
+    await writeFile(path, token, { flag: "wx" });
+    const owned = await captureOwnedFile(path, fingerprintOf(token));
+    if (owned === undefined) throw new PrivateAuthorityError("UNAVAILABLE", `ownership marker could not be recorded in ${directory}`);
+    return owned;
+  };
+
+  /** Verify that a directory still carries the ownership marker this invocation wrote. */
+  const markerIntact = async (marker: OwnedFile): Promise<boolean> => {
+    const identity = await identityOf(marker.path);
+    if (identity === undefined || identity.symbolicLink || identity.directory || identity.token !== marker.identity) return false;
+    return (await contentFingerprint(marker.path)) === marker.fingerprint;
+  };
 
   const realRoot = async (): Promise<string> => {
     if (realRootCache !== undefined) return realRootCache;
@@ -223,7 +263,7 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
       if (recheck === undefined || recheck.symbolicLink || !recheck.directory) {
         throw new PrivateAuthorityError("ALIAS_ANCESTOR", `${current} appeared as an alias or non-directory`);
       }
-      created.set(current, recheck.token);
+      created.set(current, { identity: recheck.token, marker: await writeMarker(current) });
     }
     await assertContainment(segments);
     return current;
@@ -236,9 +276,12 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
       const recorded = created.get(current);
       if (recorded === undefined) return;
       const identity = await identityOf(current);
-      // The directory must still be the exact object this invocation created. A token mismatch
-      // means an ordinary-directory or alias replacement, so it is left untouched.
-      if (identity === undefined || identity.symbolicLink || identity.token !== recorded) return;
+      // The directory must still be the exact object this invocation created. The identity token
+      // catches alias and ordinary-directory replacement, and the marker catches a replacement that
+      // reused the same inode number, which Linux does readily.
+      if (identity === undefined || identity.symbolicLink || identity.token !== recorded.identity) return;
+      if (!(await markerIntact(recorded.marker))) return;
+      await rm(recorded.marker.path, { force: true }).catch(() => undefined);
       try {
         await rmdir(current);
       } catch {
@@ -266,12 +309,17 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
     const directoryIdentity = await identityOf(owned.path);
     if (directoryIdentity === undefined) {
       // The directory is already gone; its created ancestors are still pruned, and the prune
-      // revalidates each recorded identity so a swapped ancestor is never removed.
+      // revalidates each recorded identity and marker so a swapped ancestor is never removed.
       await pruneCreatedAncestors(owned.path);
       return { removed: false, refusals: [] };
     }
     if (directoryIdentity.symbolicLink || directoryIdentity.token !== owned.identity) {
       return { removed: false, refusals: ["DIRECTORY_IDENTITY_CHANGED"] };
+    }
+    if (owned.marker === undefined || !(await markerIntact(owned.marker))) {
+      // The identity matched but the ownership marker did not: the inode number was reused by a
+      // replacement, or the marker was removed. Nothing is deleted.
+      return { removed: false, refusals: ["DIRECTORY_OWNERSHIP_LOST"] };
     }
     for (const file of files) {
       const identity = await identityOf(file.path);
@@ -291,6 +339,7 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
         refusals.push(`FILE_REMOVE_FAILED:${file.path}`);
       });
     }
+    await rm(owned.marker.path, { force: true }).catch(() => undefined);
     try {
       await rmdir(owned.path);
     } catch {
@@ -319,8 +368,9 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
         if (identity === undefined || identity.symbolicLink || !identity.directory) {
           throw new PrivateAuthorityError("UNAVAILABLE", "probe identity could not be recorded");
         }
-        created.set(candidate, identity.token);
-        return { path: candidate, identity: identity.token, owned: true };
+        const marker = await writeMarker(candidate);
+        created.set(candidate, { identity: identity.token, marker });
+        return { path: candidate, identity: identity.token, owned: true, marker };
       }
       throw new PrivateAuthorityError("UNAVAILABLE", "exhausted probe identity attempts");
     },
@@ -339,10 +389,13 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
       if (identity === undefined || identity.symbolicLink || !identity.directory) {
         throw new PrivateAuthorityError("UNAVAILABLE", "staging identity could not be recorded");
       }
-      return { path, identity: identity.token, owned: created.has(path) };
+      const record = created.get(path);
+      return record === undefined
+        ? { path, identity: identity.token, owned: false }
+        : { path, identity: identity.token, owned: true, marker: record.marker };
     },
 
-    async claimJournalFile(transactionId: string): Promise<OwnedFile> {
+    async claimJournalFile(transactionId: string): Promise<OwnedJournal> {
       const journalRoot = await ensureChain([PRIVATE_DIRECTORY, JOURNAL_SUBDIRECTORY]);
       const path = join(journalRoot, `${safeSegment(transactionId)}.json`);
       let handle;
@@ -355,40 +408,33 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
         if (code === "EEXIST") throw new PrivateAuthorityError("ALREADY_PRESENT", `journal file already exists at ${path}`);
         throw new PrivateAuthorityError("UNAVAILABLE", `journal file could not be created: ${code || "UNKNOWN"}`);
       }
-      try {
-        const info = await handle.stat();
-        return { path, identity: `${String(info.dev)}:${String(info.ino)}`, fingerprint: "" };
-      } finally {
-        await handle.close();
-      }
-    },
-
-    async writeOwnedFile(owned: OwnedFile, body: string): Promise<WriteReport> {
-      let handle;
-      try {
-        // `r+` never creates, and the handle is bound to an inode, so a path swapped after the open
-        // cannot redirect the write that follows.
-        handle = await open(owned.path, "r+");
-      } catch (cause: unknown) {
-        return { ok: false, detail: `OPEN_FAILED:${errorCode(cause) || "UNKNOWN"}` };
-      }
-      try {
-        const before = await handle.stat();
-        if (`${String(before.dev)}:${String(before.ino)}` !== owned.identity) {
-          return { ok: false, detail: "IDENTITY_CHANGED" };
-        }
-        await handle.truncate(0);
-        await handle.write(body, 0, "utf8");
-        const after = await handle.stat();
-        if (`${String(after.dev)}:${String(after.ino)}` !== owned.identity) {
-          return { ok: false, detail: "IDENTITY_CHANGED_AFTER_WRITE" };
-        }
-        return { ok: true };
-      } catch (cause: unknown) {
-        return { ok: false, detail: `WRITE_FAILED:${errorCode(cause) || "UNKNOWN"}` };
-      } finally {
-        await handle.close().catch(() => undefined);
-      }
+      const info = await handle.stat();
+      const file: OwnedFile = { path, identity: `${String(info.dev)}:${String(info.ino)}`, fingerprint: "" };
+      return {
+        file,
+        async write(body: string): Promise<WriteReport> {
+          // The open handle keeps this inode allocated, so the path entry can only still match the
+          // handle while it really refers to this file. A replacement therefore cannot reuse the
+          // inode number and is always detected.
+          const entry = await identityOf(file.path);
+          const descriptor = await handle.stat().catch(() => undefined);
+          if (descriptor === undefined) return { ok: false, detail: "HANDLE_LOST" };
+          const descriptorToken = `${String(descriptor.dev)}:${String(descriptor.ino)}`;
+          if (entry === undefined || entry.symbolicLink || entry.token !== descriptorToken) {
+            return { ok: false, detail: "IDENTITY_CHANGED" };
+          }
+          try {
+            await handle.truncate(0);
+            await handle.write(body, 0, "utf8");
+          } catch (cause: unknown) {
+            return { ok: false, detail: `WRITE_FAILED:${errorCode(cause) || "UNKNOWN"}` };
+          }
+          return { ok: true };
+        },
+        async close(): Promise<void> {
+          await handle.close().catch(() => undefined);
+        },
+      };
     },
 
     captureOwnedFile,

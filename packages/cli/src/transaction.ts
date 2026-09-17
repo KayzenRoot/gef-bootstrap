@@ -26,7 +26,7 @@ import { dirname, join, relative, sep } from "node:path";
 import { existsSync } from "node:fs";
 
 import { PrivateAuthorityError, createPrivateArea, fingerprintOf, measureCaseSemantics, PRIVATE_DIRECTORY, PROBE_DIRECTORY, safeSegment } from "./private-authority.js";
-import type { OwnedDirectory, OwnedFile, PrivateArea } from "./private-authority.js";
+import type { OwnedDirectory, OwnedFile, OwnedJournal, PrivateArea } from "./private-authority.js";
 
 import { loadEngines } from "./engines.js";
 
@@ -540,7 +540,7 @@ export const JOURNAL_DIRECTORY = `${PRIVATE_DIRECTORY}/journal`;
  *     symlink/reparse point between writes is refused rather than overwritten.
  */
 export function createJournalPort(privateArea: PrivateArea): TransactionJournalPort {
-  const claimed = new Map<string, OwnedFile>();
+  const claimed = new Map<string, OwnedJournal>();
 
   const journalError = (transactionId: string, detail: string, summary: string): GefError => ({
     schemaVersion: 1,
@@ -574,12 +574,17 @@ export function createJournalPort(privateArea: PrivateArea): TransactionJournalP
       }
       claimed.set(transactionId, owned);
     }
-    const written = await privateArea.writeOwnedFile(owned, body);
+    const written = await owned.write(body);
     if (!written.ok) {
       return {
         ok: false as const,
         error: journalError(transactionId, written.detail ?? "UNKNOWN", "Journal file is no longer the file this transaction owns; refusing to overwrite it"),
       };
+    }
+    if (phase === "FINISH" || phase === "ROLLBACK") {
+      // The lifecycle is complete: release the handle that kept the owned inode allocated.
+      claimed.delete(transactionId);
+      await owned.close();
     }
     return ok(true as const);
   };

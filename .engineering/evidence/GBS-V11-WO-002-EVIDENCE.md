@@ -51,9 +51,15 @@ were merely non-symlinks, regardless of whether the transaction created them.
   directory. A pre-existing staging path is returned with `owned: false`.
 - `releaseOwnedDirectory` refuses outright when `owned` is false (`PREEXISTING_DIRECTORY`) and never
   removes a pre-existing directory, even when it is empty.
-- The directory identity is revalidated at the destructive point. Because identity is `dev:ino`, an
-  **ordinary-directory replacement is detected exactly like a symlink replacement**
-  (`DIRECTORY_IDENTITY_CHANGED`).
+- The directory identity is revalidated at the destructive point, **together with an ownership
+  marker**: every directory this invocation creates receives a `.gef-owner` file holding a random
+  16-byte token whose identity and content fingerprint are recorded. `dev:ino` alone proved
+  insufficient — Linux readily reuses the inode number of a just-removed directory, so a
+  replacement could present the same token. The marker is a value a replacement cannot reproduce,
+  so an **ordinary-directory replacement is detected exactly like a symlink replacement**
+  (`DIRECTORY_IDENTITY_CHANGED` or `DIRECTORY_OWNERSHIP_LOST`). This was found by CI, not by
+  inspection: the first CI run at this revision failed three cases on Linux precisely because the
+  inode was reused.
 - `stage()` records the staged file's identity **and content fingerprint** the moment it creates it
   with `flag: "wx"`. Before unlinking, both are revalidated; a replaced file
   (`FILE_IDENTITY_CHANGED`) or an in-place content change (`FILE_CONTENT_CHANGED`) leaves the entry
@@ -75,7 +81,7 @@ were merely non-symlinks, regardless of whether the transaction created them.
 | pre-existing empty private tree | `…/.gef-private/probes` exists before the run and survives the entire transaction and cleanup; no probe residue is left inside it |
 | owned probe directory | pruned while the pre-existing parent and private root survive |
 | pre-existing empty staging directory | claimed with `owned: false`, refused with `PREEXISTING_DIRECTORY`, and still present afterwards |
-| ordinary-directory swap | the owned staging directory is replaced by a *different ordinary* directory holding user content: the identity tokens are asserted to differ, removal is refused with `DIRECTORY_IDENTITY_CHANGED`, and the replacement content survives **byte for byte** |
+| ordinary-directory swap | the owned staging directory is replaced by a *different ordinary* directory holding user content: removal is refused (`DIRECTORY_IDENTITY_CHANGED` or `DIRECTORY_OWNERSHIP_LOST` — the assertion deliberately does not depend on the inode differing, because Linux reuses it), and the replacement content survives **byte for byte** |
 | staged-file replacement | the staged file is replaced by a different regular file under the same name: refusal reported, replacement byte for byte intact, directory not removed |
 | staged-file in-place change | the same path with different content is refused as `FILE_CONTENT_CHANGED` and left intact |
 | created parent swapped | the created private root is swapped for another ordinary empty directory before pruning: `removed: false` and the swapped directory is untouched (device/inode compared) |
@@ -96,11 +102,14 @@ overwritten. Containment is not ownership.
   `ALREADY_PRESENT` **without a byte being changed**.
 - The file identity is recorded immediately after that exclusive creation
   (`fstat` on the creating handle).
-- Every later lifecycle write goes through `writeOwnedFile`, which opens the file and verifies the
-  **identity on the open descriptor** (`fstat`) before truncating, then verifies it again after
-  writing. The descriptor is bound to an inode, so a path swapped between the check and the write
-  cannot redirect it. A replaced file or a symlink/reparse replacement is refused with
-  `gef.integrity.journal_ownership_refused`.
+- The handle opened by that exclusive creation is **held for the whole lifecycle**, and every later
+  write goes through it. Holding the handle keeps the original inode allocated, which is what makes
+  replacement detection reliable rather than best-effort: an unlinked-but-open inode cannot be
+  reused, so the path entry can only still match the descriptor while it really refers to this file.
+  Each write compares the path entry's identity against the descriptor's, and refuses with
+  `gef.integrity.journal_ownership_refused` when they differ — which covers both a regular-file
+  replacement and a symlink/reparse replacement, regardless of inode reuse. The handle is released
+  when the lifecycle reaches its terminal phase.
 - The journal directory itself remains under the H7 containment and alias guarantees.
 - Because the kernel treats a failed journal write as a transaction abort, a refusal produces
   `ABORTED_STAGED_NO_TARGET_EFFECT` with no artifact promoted.
@@ -164,6 +173,7 @@ and authorization contracts were not weakened to make anything pass.
 | 2 | `npm run typecheck` | **0** | clean |
 | 3 | `npm run validate` | **0** | **1322 tests, 1322 pass, 0 fail, 0 skipped** |
 | 4 | `node --test …/v11-wo-002-ownership.test.mjs` | **0** | 15/15 (H9 and H10) |
+| 4b | first CI run at this revision, then the inode-reuse fix | — | 3 Linux cases failed on the inode-only proof; the ownership marker and the held journal handle close them. Reported rather than hidden: see §2. |
 | 5 | `node --test …/v11-wo-002-private-authority.test.mjs` | **0** | 9/9 |
 | 6 | `node --test …/v11-wo-002-command-binding.test.mjs` | **0** | 8/8 |
 | 7 | `node --test …/v11-wo-002-probe-safety.test.mjs` | **0** | 7/7 |
@@ -235,8 +245,11 @@ directory, and the staged file and journal file really are replaced before remov
   and does **not** claim `APPROVED`.
 - Local execution is `win32`. Alias cases use junctions here and symlinks on Linux/macOS; the
   ordinary-directory replacement cases need no alias primitive and run everywhere.
-- The ownership model adds one `lstat` per created entry and one open/`fstat` per journal write. That
-  is a deliberate correctness cost, not a claimed optimisation.
+- The ownership model adds one marker file per invocation-created private directory, one `lstat` per
+  created entry and one path/descriptor comparison per journal write. That is a deliberate
+  correctness cost, not a claimed optimisation.
+- An invocation-created private directory therefore leaves a `.gef-owner` marker beside its
+  contents while it exists; the marker is removed with the directory when it is pruned.
 - No performance improvement is claimed; token metrics are unavailable in this environment.
 - The compatibility matrix remains a skeleton; this WO asserts no compatibility.
 
