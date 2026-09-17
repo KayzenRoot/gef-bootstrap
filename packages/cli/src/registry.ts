@@ -714,6 +714,22 @@ function canOpenForWriting(path: string): boolean {
  * UNAVAILABLE.  therefore never coexists with .
  */
 function replacementAuthority(physical: string): string | null {
+  // Replacement authority on Windows is governed by two rights that are independent of generic
+  // write access: DELETE on the target object and FILE_DELETE_CHILD on the containing directory. A
+  // denied write-open proves neither. This was verified against the platform: a read-only file whose
+  // r+ open is refused can still be renamed, so the write-open probe is not evidence of
+  // non-replaceability and must not be treated as such.
+  //
+  // The supported runtime exposes no way to request DELETE or FILE_DELETE_CHILD access, so no
+  // OS-enforced probe for them exists, and Node exposes no security-descriptor API. A narrowed
+  // effective-rights oracle would need a native binding or a P/Invoke evaluator, which is an
+  // architecture and packaging decision above this Work Order. Until such an oracle exists, the
+  // high-assurance policy fails closed here rather than inferring trust from a path or from a
+  // failed generic write: no Windows candidate is admitted by MACHINE_NON_REPLACEABLE.
+  if (process.platform === "win32") return "replacement_rights_proof_unavailable";
+  // POSIX: replacement of a path entry is controlled by the directory that holds it, so the chain
+  // runs from the executable upward through every ancestor and terminates at the filesystem root —
+  // which has no parent and needs no further proof.
   const fsRoot = parse(physical).root;
   const chain: string[] = [];
   let current = dirname(physical);
@@ -725,13 +741,7 @@ function replacementAuthority(physical: string): string | null {
     current = parent;
   }
   for (const component of chain) {
-    // Both platforms answer with the effective-write primitive for directories. On Windows the
-    // runtime opens a directory through the backup-semantics path and asks for write access, so a
-    // denied open is the ACL itself refusing this process — the same proof the executable gets.
-    // On POSIX an open for writing on a directory is refused by directory semantics, so the
-    // effective-write bit is the primitive there.
-    const writable = process.platform === "win32" ? canOpenForWriting(component) : canAccessForWriting(component);
-    if (writable) return "physical_path_parent_replaceable_by_process";
+    if (canAccessForWriting(component)) return "physical_path_parent_replaceable_by_process";
   }
   return null;
 }
@@ -753,11 +763,11 @@ function permissionProofSupport(): PermissionProof {
 
 /** Whether this platform can check directory replacement authority without mutating anything. */
 function directoryProofSupport(): DirectoryProof {
-  // The component chain is proven on every supported platform: Windows uses the ACL-enforced
-  // write-open on each directory, POSIX the effective-write bit. UNAVAILABLE_ON_PLATFORM is kept
-  // for the projections where no chain was established (absent or refused targets) and never
+  // On POSIX the component chain is proven with the effective-write bit. On Windows neither DELETE
+  // nor FILE_DELETE_CHILD can be evaluated, so the chain is not proven there at all — and because
+  // the high-assurance policy refuses to admit a Windows candidate without it, this value never
   // accompanies FOUND.
-  return "EFFECTIVE_WRITE_PER_COMPONENT";
+  return process.platform === "win32" ? "UNAVAILABLE_ON_PLATFORM" : "EFFECTIVE_WRITE_PER_COMPONENT";
 }
 
 /**

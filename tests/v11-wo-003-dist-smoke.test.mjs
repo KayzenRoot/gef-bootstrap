@@ -12,6 +12,18 @@ import { delimiter, dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
+
+/**
+ * Whether this platform's high-assurance policy can admit a Git at all.
+ *
+ * Windows replacement authority is governed by DELETE on the target and FILE_DELETE_CHILD on its
+ * directory; the supported runtime exposes neither, so the machine policy fails closed there. The
+ * Git-backed cases below are therefore not exercisable on Windows and are reported as skipped with
+ * this reason rather than silently passing. The Windows product outcome itself is asserted by
+ * "the Windows high-assurance policy reports the Git toolchain as unavailable".
+ */
+const MACHINE_GIT_ADMITTED = process.platform !== "win32";
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CLI_PACKAGE_DIR = resolve(ROOT, "packages/cli");
 const cliPackage = JSON.parse(readFileSync(join(CLI_PACKAGE_DIR, "package.json"), "utf8"));
@@ -122,6 +134,12 @@ test("the packed payload vendors every engine doctor and status depend on", (t) 
 });
 
 test("the installed package exposes doctor and status with source-workspace semantics", (t) => {
+  if (!MACHINE_GIT_ADMITTED) {
+    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
+    t.skip("Git is not admitted on this platform");
+    return;
+  }
+
   const { bin } = freshInstall(t, "parity");
   const project = tempProject(t);
 
@@ -244,6 +262,12 @@ test("the installed package refuses aliased and oversized Git metadata", (t) => 
 });
 
 test("the installed package probes dirtiness without index or fsmonitor side effects", (t) => {
+  if (!MACHINE_GIT_ADMITTED) {
+    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
+    t.skip("Git is not admitted on this platform");
+    return;
+  }
+
   const { bin } = freshInstall(t, "git-side-effects");
   const project = tempProject(t);
   const git = (args) => spawnSync("git", ["-C", project, ...args], { encoding: "utf8", timeout: 60_000 });
@@ -282,6 +306,12 @@ test("the installed package probes dirtiness without index or fsmonitor side eff
 });
 
 test("the installed package resolves Git through the approved policy, not PATH", (t) => {
+  if (!MACHINE_GIT_ADMITTED) {
+    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
+    t.skip("Git is not admitted on this platform");
+    return;
+  }
+
   const { bin } = freshInstall(t, "trusted-git");
   const project = tempProject(t);
   const fakeDir = mkdtempSync(join(tmpdir(), "gef-packed-fake-git-"));
