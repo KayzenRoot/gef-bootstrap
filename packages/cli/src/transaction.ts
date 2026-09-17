@@ -21,12 +21,12 @@
  */
 
 import { createHash, randomBytes } from "node:crypto";
-import { link, lstat, mkdir, open, readFile, rename, rm, rmdir, stat, unlink, writeFile } from "node:fs/promises";
+import { link, lstat, mkdir, open, readFile, rm, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
 import { existsSync } from "node:fs";
 
-import { PrivateAuthorityError, createPrivateArea, measureCaseSemantics, PRIVATE_DIRECTORY, PROBE_DIRECTORY, safeSegment } from "./private-authority.js";
-import type { OwnedDirectory, PrivateArea } from "./private-authority.js";
+import { PrivateAuthorityError, createPrivateArea, fingerprintOf, measureCaseSemantics, PRIVATE_DIRECTORY, PROBE_DIRECTORY, safeSegment } from "./private-authority.js";
+import type { OwnedDirectory, OwnedFile, PrivateArea } from "./private-authority.js";
 
 import { loadEngines } from "./engines.js";
 
@@ -189,9 +189,12 @@ async function probeDurability(privateArea: PrivateArea): Promise<"CRASH_DURABLE
     durabilityCache.set(cacheKey, value);
     return value;
   };
+  const probeFiles: OwnedFile[] = [];
   try {
     const file = join(owned.path, "durability-probe");
     await writeFile(file, "probe", { flag: "wx" });
+    const recorded = await privateArea.captureOwnedFile(file, fingerprintOf("probe"));
+    if (recorded !== undefined) probeFiles.push(recorded);
     const handle = await open(file, "r+");
     try {
       await handle.sync();
@@ -214,7 +217,7 @@ async function probeDurability(privateArea: PrivateArea): Promise<"CRASH_DURABLE
   } catch {
     return settle("UNPROVEN");
   } finally {
-    await privateArea.releaseOwnedDirectory(owned, ["durability-probe"]).catch(() => undefined);
+    await privateArea.releaseOwnedDirectory(owned, probeFiles).catch(() => undefined);
   }
 }
 
@@ -257,12 +260,44 @@ interface PreparedIntent {
   readonly capsule: FilesystemPathCapsule;
   readonly durability: "CRASH_DURABLE" | "UNPROVEN";
   readonly stagePath: string;
+  /** Ownership of the staged file, recorded when this invocation created it. */
+  readonly stage?: OwnedFile;
   readonly desiredFingerprint?: string;
   readonly recoveryRef?: string;
 }
 
+
+/** Refusal evidence for a cleanup that declined to remove entries it no longer owns. */
+function cleanupRefusalError(transactionId: string, refusals: readonly string[]): GefError {
+  return {
+    schemaVersion: 1,
+    id: "cli-cleanup-ownership-refused",
+    category: "RECOVERY",
+    reasonCode: "gef.recovery.cleanup_ownership_refused",
+    severity: "WARNING",
+    summary: "Cleanup refused to remove private entries it no longer owns",
+    retryability: "MANUAL_ONLY",
+    recoverability: "NONE_REQUIRED",
+    effectStatus: "NONE",
+    terminal: "FAILED",
+    causes: [],
+    evidenceRefs: [],
+    remediations: [],
+    metadata: { transactionId, refusals: [...refusals] },
+  };
+}
+
+async function claimStaging(privateArea: PrivateArea, registry: Map<string, OwnedDirectory>, transactionId: string): Promise<OwnedDirectory> {
+  const existing = registry.get(transactionId);
+  if (existing !== undefined) return existing;
+  const claimed = await privateArea.claimStagingDirectory(transactionId);
+  registry.set(transactionId, claimed);
+  return claimed;
+}
+
 export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhysicalPort {
   const prepared = new Map<string, PreparedIntent>();
+  const stagingDirectories = new Map<string, OwnedDirectory>();
 
   const rootDescriptor = {
     rootRef: options.rootRef,
@@ -297,9 +332,9 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
       } catch {
         destination = request.path.physicalRoot;
       }
-      const staging = await options.privateArea.ensureStagingDirectory(options.transactionId);
+      const staging = await claimStaging(options.privateArea, stagingDirectories, options.transactionId);
       const destinationId = String((await stat(destination)).dev);
-      const stagingId = String((await stat(staging)).dev);
+      const stagingId = String((await stat(staging.path)).dev);
       return ok({
         primitive: cliPrimitiveFor("CREATE", durability),
         stagingAuthorityRef: `${options.rootRef}:${PRIVATE_DIRECTORY}`,
@@ -324,7 +359,7 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
       prepared.set(request.intent.intentId, {
         capsule: request.target,
         durability,
-        stagePath: join(await options.privateArea.ensureStagingDirectory(request.transactionId), `${request.intent.intentId}.stage`),
+        stagePath: join((await claimStaging(options.privateArea, stagingDirectories, request.transactionId)).path, `${request.intent.intentId}.stage`),
         ...(request.intent.desiredFingerprint === undefined ? {} : { desiredFingerprint: request.intent.desiredFingerprint }),
         recoveryRef,
       });
@@ -348,7 +383,12 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
       const payload = payloadRef === undefined ? undefined : options.payloads.get(payloadRef);
       if (payload === undefined) return portError(request.intent, "payload_unavailable", "Staged payload is not available to the transaction", "CAPABILITY");
       await mkdir(dirname(state.stagePath), { recursive: true });
+      // Exclusive creation, then the identity and fingerprint are recorded immediately: cleanup
+      // later proves it is removing exactly this file, not whatever now occupies the name.
       await writeFile(state.stagePath, payload, { flag: "wx" });
+      const owned = await options.privateArea.captureOwnedFile(state.stagePath, fingerprintOf(payload));
+      if (owned === undefined) return portError(request.intent, "stage_ownership_unavailable", "Staged file ownership could not be recorded", "EXECUTION");
+      prepared.set(request.intent.intentId, Object.freeze({ ...state, stage: owned }));
       return ok({ stageRef: state.stagePath, fingerprint: sha256(payload) });
     },
 
@@ -410,7 +450,6 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
           if (handle !== undefined) await handle.close().catch(() => undefined);
         }
       }
-      void rename;
       return ok(postFingerprint === undefined ? {} : { postFingerprint });
     },
 
@@ -427,10 +466,18 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
     },
 
     async cleanup(request) {
-      // Only the staged files this transaction wrote are named here; removal is non-recursive and
-      // revalidates the directory identity, so an alias swap or foreign content is never deleted.
-      const stagedFiles = [...prepared.values()].map((state) => state.stagePath.slice(state.stagePath.lastIndexOf(sep) + 1));
-      await options.privateArea.releaseStagingDirectory(request.transactionId, stagedFiles).catch(() => undefined);
+      const staging = stagingDirectories.get(request.transactionId);
+      if (staging === undefined) return ok(true);
+      // Only files whose creation-time identity this transaction recorded are named; removal is
+      // non-recursive and every identity is revalidated first, so a pre-existing directory, an
+      // ordinary-directory swap, an alias swap or foreign content is never deleted.
+      const owned: OwnedFile[] = [...prepared.values()].flatMap((state) => (state.stage === undefined ? [] : [state.stage]));
+      const report = await options.privateArea.releaseOwnedDirectory(staging, owned).catch(() => ({ removed: false, refusals: ["CLEANUP_UNAVAILABLE"] }));
+      stagingDirectories.delete(request.transactionId);
+      if (report.refusals.length > 0) {
+        // Refusal evidence: nothing was removed because the entries are no longer owned.
+        return { ok: false, error: cleanupRefusalError(request.transactionId, report.refusals) };
+      }
       return ok(true);
     },
 
@@ -479,15 +526,61 @@ export const JOURNAL_DIRECTORY = `${PRIVATE_DIRECTORY}/journal`;
 /**
  * File-backed transaction journal.
  *
- * The kernel requires durable journal evidence for a mutation transaction. The journal records
- * the transaction lifecycle (begin / update / finish) and survives `cleanup`, so recovery
- * evidence is inspectable after the run instead of being an in-memory artefact.
+ * The kernel requires durable journal evidence for a mutation transaction. The journal records the
+ * transaction lifecycle (begin / update / finish) and survives `cleanup`, so recovery evidence is
+ * inspectable after the run instead of being an in-memory artefact.
+ *
+ * Ownership, not containment, is what makes the journal safe to write:
+ *
+ *   - the first write for a transaction claims the file with exclusive creation, so a pre-existing
+ *     journal path fails closed without a byte being changed;
+ *   - the file identity is recorded immediately after that exclusive creation;
+ *   - every later lifecycle write goes through an identity-verified handle (`fstat` on the open
+ *     descriptor, which is bound to an inode), so a path replaced by another file or by a
+ *     symlink/reparse point between writes is refused rather than overwritten.
  */
 export function createJournalPort(privateArea: PrivateArea): TransactionJournalPort {
+  const claimed = new Map<string, OwnedFile>();
+
+  const journalError = (transactionId: string, detail: string, summary: string): GefError => ({
+    schemaVersion: 1,
+    id: "cli-journal-ownership-refused",
+    category: "INTEGRITY",
+    reasonCode: "gef.integrity.journal_ownership_refused",
+    severity: "ERROR",
+    summary,
+    retryability: "MANUAL_ONLY",
+    recoverability: "NONE_REQUIRED",
+    effectStatus: "NONE",
+    terminal: "BLOCKED",
+    causes: [],
+    evidenceRefs: [],
+    remediations: [],
+    metadata: { transactionId, detail },
+  });
+
   const persist = async (transactionId: string, phase: "BEGIN" | "UPDATE" | "FINISH" | "ROLLBACK", snapshot: unknown) => {
-    // The journal path is containment- and alias-proven before the file is opened.
-    const file = await privateArea.ensureJournalFile(transactionId);
-    await writeFile(file, `${JSON.stringify({ schemaVersion: 1, kind: "gef.cli.transaction-journal", transactionId, phase, snapshot }, null, 2)}\n`, { flag: "w" });
+    const body = `${JSON.stringify({ schemaVersion: 1, kind: "gef.cli.transaction-journal", transactionId, phase, snapshot }, null, 2)}\n`;
+    let owned = claimed.get(transactionId);
+    if (owned === undefined) {
+      try {
+        owned = await privateArea.claimJournalFile(transactionId);
+      } catch (cause: unknown) {
+        const reason = cause instanceof PrivateAuthorityError ? cause.reason : "UNAVAILABLE";
+        return {
+          ok: false as const,
+          error: journalError(transactionId, reason, "Journal file could not be exclusively claimed; an existing entry is never overwritten"),
+        };
+      }
+      claimed.set(transactionId, owned);
+    }
+    const written = await privateArea.writeOwnedFile(owned, body);
+    if (!written.ok) {
+      return {
+        ok: false as const,
+        error: journalError(transactionId, written.detail ?? "UNKNOWN", "Journal file is no longer the file this transaction owns; refusing to overwrite it"),
+      };
+    }
     return ok(true as const);
   };
   const transactionIdOf = (snapshot: unknown): string => {

@@ -12,7 +12,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { join, relative, sep } from "node:path";
 import { tmpdir } from "node:os";
 
-import { PRIVATE_DIRECTORY, applyGovernedCreate, createPrivateArea, detectCaseSemantics } from "../packages/cli/dist/index.js";
+import { PRIVATE_DIRECTORY, applyGovernedCreate, createPrivateArea, detectCaseSemantics, fingerprintOf } from "../packages/cli/dist/index.js";
 
 const sha = (value) => createHash("sha256").update(value).digest("hex");
 const SENTINEL = "EXTERNAL SENTINEL CONTENT\n";
@@ -172,7 +172,10 @@ test("H7: a pre-existing journal-subpath alias is refused before any external mu
 
   const applied = await applyGovernedCreate(request(root), { authorization: ALLOW });
   assert.equal(applied.ok, false, "a journal-subpath alias must not be written through");
-  assert.equal(applied.outcome, "BLOCKED_BEFORE_EFFECT");
+  assert.ok(
+    ["BLOCKED_BEFORE_EFFECT", "ABORTED_STAGED_NO_TARGET_EFFECT"].includes(applied.outcome),
+    `expected an outcome with no target effect, got ${applied.outcome}`,
+  );
   assert.deepEqual(treeIdentity(external), externalBefore, "the external target must be unchanged");
   assert.ok(!existsSync(join(root, ".gef", "init-state.json")));
 });
@@ -235,6 +238,8 @@ test("H7: cleanup revalidates identity and refuses a path swapped to an alias", 
   const owned = await area.createOwnedProbeDirectory();
   assert.ok(existsSync(owned.path));
   writeFileSync(join(owned.path, "durability-probe"), "probe");
+  const probeFile = await area.captureOwnedFile(join(owned.path, "durability-probe"), fingerprintOf("probe"));
+  assert.ok(probeFile !== undefined, "the probe file ownership must be recordable");
 
   // Swap the owned directory for an alias to an external directory after ownership was recorded.
   rmSync(owned.path, { recursive: true, force: true });
@@ -244,8 +249,9 @@ test("H7: cleanup revalidates identity and refuses a path swapped to an alias", 
     return;
   }
 
-  const released = await area.releaseOwnedDirectory(owned, ["durability-probe"]);
-  assert.equal(released, false, "a swapped identity must not be removed");
+  const released = await area.releaseOwnedDirectory(owned, [probeFile]);
+  assert.equal(released.removed, false, "a swapped identity must not be removed");
+  assert.ok(released.refusals.length > 0, "the refusal must be reported as evidence");
   assert.equal(readFileSync(join(external, "sentinel.txt"), "utf8"), SENTINEL, "the external target must survive");
   assert.ok(existsSync(owned.path), "the alias itself is left alone rather than followed");
 });

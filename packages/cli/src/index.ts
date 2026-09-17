@@ -40,10 +40,11 @@ export {
   PROBE_DIRECTORY,
   PrivateAuthorityError,
   createPrivateArea,
+  fingerprintOf,
   isLexicallyContained,
   measureCaseSemantics,
 } from "./private-authority.js";
-export type { OwnedDirectory, PrivateArea, PrivateAuthorityReason } from "./private-authority.js";
+export type { OwnedDirectory, OwnedFile, PrivateArea, PrivateAuthorityReason, RemovalReport, WriteReport } from "./private-authority.js";
 
 
 

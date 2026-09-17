@@ -9,18 +9,24 @@
  *   - every private path is proven lexically contained under the admitted target root;
  *   - every existing ancestor between the root and the candidate is proven not to be a
  *     symlink/reparse point, and the deepest existing ancestor is proven *physically* contained
- *     once resolved, so a user-controlled alias cannot redirect a private effect outside the
- *     target;
+ *     once resolved, so a user-controlled alias cannot redirect a private effect outside the target;
  *   - directories are created level by level with non-recursive `mkdir`, so the invocation knows
  *     exactly which levels it created;
- *   - removal revalidates the recorded identity at the destructive point, so a path swapped to an
- *     alias after ownership was established is never followed;
- *   - removal is non-recursive, so a directory that contains anything this invocation did not put
+ *   - **ownership is recorded at creation time and never inferred at removal time**: a directory or
+ *     file carries the identity token it had when this invocation created it, and every removal
+ *     revalidates that token before touching the entry;
+ *   - a pre-existing directory or file is never claimed, never removed and never overwritten, even
+ *     when it is empty;
+ *   - removal is non-recursive, so a directory containing anything this invocation did not put
  *     there is left in place rather than deleted.
+ *
+ * Identity is `dev:ino`, so an *ordinary* directory swapped in at the same path is detected exactly
+ * like a symlink or reparse point replacement: the token differs and the entry is left untouched.
  */
 
 import { randomBytes } from "node:crypto";
-import { lstat, mkdir, realpath, rm, rmdir } from "node:fs/promises";
+import { createHash } from "node:crypto";
+import { lstat, mkdir, open, readFile, realpath, rm, rmdir } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 export const PRIVATE_DIRECTORY = ".gef-private";
@@ -35,7 +41,9 @@ export type PrivateAuthorityReason =
   | "ALIAS_ANCESTOR"
   | "PHYSICAL_ESCAPE"
   | "NOT_A_DIRECTORY"
+  | "ALREADY_PRESENT"
   | "IDENTITY_CHANGED"
+  | "NOT_EMPTY"
   | "UNAVAILABLE";
 
 export class PrivateAuthorityError extends Error {
@@ -86,9 +94,30 @@ function flipBasename(path: string): string {
   return flipped === base ? path : join(parent, flipped);
 }
 
+/** A directory whose creation-time identity this invocation recorded. */
 export interface OwnedDirectory {
   readonly path: string;
+  /** `dev:ino` observed immediately after creation. */
   readonly identity: string;
+  /** True only when this invocation created the directory; a pre-existing directory is never owned. */
+  readonly owned: boolean;
+}
+
+/** A file whose creation-time identity and content fingerprint this invocation recorded. */
+export interface OwnedFile {
+  readonly path: string;
+  readonly identity: string;
+  readonly fingerprint: string;
+}
+
+export interface RemovalReport {
+  readonly removed: boolean;
+  readonly refusals: readonly string[];
+}
+
+export interface WriteReport {
+  readonly ok: boolean;
+  readonly detail?: string;
 }
 
 export interface PrivateArea {
@@ -98,24 +127,39 @@ export interface PrivateArea {
   assertContainment(segments: readonly string[]): Promise<void>;
   /** Creates an invocation-owned probe directory under `<private>/probes`. */
   createOwnedProbeDirectory(): Promise<OwnedDirectory>;
-  /** Ensures and returns the staging directory for a transaction. */
-  ensureStagingDirectory(transactionId: string): Promise<string>;
-  /** Ensures and returns the journal file path for a transaction. */
-  ensureJournalFile(transactionId: string): Promise<string>;
-  /** Removes an owned directory after revalidating its identity; never follows an alias. */
-  releaseOwnedDirectory(owned: OwnedDirectory, files: readonly string[]): Promise<boolean>;
-  /** Removes a staging directory (and the named files inside it) after revalidating identity. */
-  releaseStagingDirectory(transactionId: string, files: readonly string[]): Promise<boolean>;
+  /** Claims the staging directory for a transaction, recording whether this invocation created it. */
+  claimStagingDirectory(transactionId: string): Promise<OwnedDirectory>;
+  /** Exclusively creates the journal file for a transaction. Fails closed if the path exists. */
+  claimJournalFile(transactionId: string): Promise<OwnedFile>;
+  /** Rewrites an owned file through an identity-verified handle. Never follows a replacement. */
+  writeOwnedFile(owned: OwnedFile, body: string): Promise<WriteReport>;
+  /** Records ownership of a file this invocation just created. */
+  captureOwnedFile(path: string, fingerprint: string): Promise<OwnedFile | undefined>;
+  /** Removes an owned directory and its owned files after revalidating every identity. */
+  releaseOwnedDirectory(owned: OwnedDirectory, files: readonly OwnedFile[]): Promise<RemovalReport>;
 }
 
 export function safeSegment(identifier: string): string {
   return identifier.replace(/[^A-Za-z0-9._-]/g, "_");
 }
 
+export function fingerprintOf(body: string | Uint8Array): string {
+  return createHash("sha256").update(body).digest("hex");
+}
+
+async function contentFingerprint(path: string): Promise<string | undefined> {
+  try {
+    return fingerprintOf(await readFile(path));
+  } catch {
+    return undefined;
+  }
+}
+
 export function createPrivateArea(targetRoot: string): PrivateArea {
   const root = resolve(targetRoot);
   let realRootCache: string | undefined;
-  const created = new Set<string>();
+  /** Path -> identity token, recorded only for directories this invocation created. */
+  const created = new Map<string, string>();
 
   const realRoot = async (): Promise<string> => {
     if (realRootCache !== undefined) return realRootCache;
@@ -128,10 +172,6 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
     return realRootCache;
   };
 
-  /**
-   * Walk the path from the root down, rejecting any existing symlink/reparse ancestor, then prove
-   * the deepest existing ancestor is physically inside the resolved root.
-   */
   const assertContainment = async (segments: readonly string[]): Promise<void> => {
     const candidate = resolve(root, ...segments);
     if (!isLexicallyContained(root, candidate)) {
@@ -146,9 +186,7 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
       current = join(current, segment);
       const identity = await identityOf(current);
       if (identity === undefined) break;
-      if (identity.symbolicLink) {
-        throw new PrivateAuthorityError("ALIAS_ANCESTOR", `${current} is a symlink or reparse point`);
-      }
+      if (identity.symbolicLink) throw new PrivateAuthorityError("ALIAS_ANCESTOR", `${current} is a symlink or reparse point`);
       deepestExisting = current;
     }
     let realDeepest: string;
@@ -162,7 +200,7 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
     }
   };
 
-  /** Create the chain level by level, recording exactly which levels this invocation created. */
+  /** Create the chain level by level, recording the identity of exactly the levels we created. */
   const ensureChain = async (segments: readonly string[]): Promise<string> => {
     await assertContainment(segments);
     let current = root;
@@ -178,55 +216,89 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
       }
       try {
         await mkdir(current);
-        created.add(current);
       } catch (cause: unknown) {
-        // A concurrent creator is acceptable only if the result is a real directory we can re-check.
         if (errorCode(cause) !== "EEXIST") throw cause;
-        const recheck = await identityOf(current);
-        if (recheck === undefined || recheck.symbolicLink) throw new PrivateAuthorityError("ALIAS_ANCESTOR", `${current} appeared as an alias`);
       }
+      const recheck = await identityOf(current);
+      if (recheck === undefined || recheck.symbolicLink || !recheck.directory) {
+        throw new PrivateAuthorityError("ALIAS_ANCESTOR", `${current} appeared as an alias or non-directory`);
+      }
+      created.set(current, recheck.token);
     }
     await assertContainment(segments);
     return current;
   };
 
-  /** Remove the parent chain of a path while it is empty and this invocation created it. */
+  /** Remove the parent chain of a path while it is still the exact directory we created. */
   const pruneCreatedAncestors = async (from: string): Promise<void> => {
     let current = dirname(from);
-    while (created.has(current)) {
+    for (;;) {
+      const recorded = created.get(current);
+      if (recorded === undefined) return;
+      const identity = await identityOf(current);
+      // The directory must still be the exact object this invocation created. A token mismatch
+      // means an ordinary-directory or alias replacement, so it is left untouched.
+      if (identity === undefined || identity.symbolicLink || identity.token !== recorded) return;
       try {
         await rmdir(current);
       } catch {
-        // Not empty, or no longer removable: leave it rather than deleting foreign content.
-        break;
+        return;
       }
       created.delete(current);
       const parent = dirname(current);
-      if (parent === current || !isLexicallyContained(root, current)) break;
+      if (parent === current || !isLexicallyContained(root, current)) return;
       current = parent;
     }
   };
 
-  const removeOwned = async (directory: OwnedDirectory, files: readonly string[]): Promise<boolean> => {
-    const current = await identityOf(directory.path);
-    if (current === undefined) return true;
-    // Identity revalidation at the destructive point: a path swapped to an alias after ownership
-    // was established must never be followed or removed.
-    if (current.symbolicLink || current.token !== directory.identity) return false;
+  const captureOwnedFile = async (path: string, fingerprint: string): Promise<OwnedFile | undefined> => {
+    const identity = await identityOf(path);
+    if (identity === undefined || identity.symbolicLink || identity.directory) return undefined;
+    return { path, identity: identity.token, fingerprint };
+  };
+
+  const releaseOwnedDirectory = async (owned: OwnedDirectory, files: readonly OwnedFile[]): Promise<RemovalReport> => {
+    const refusals: string[] = [];
+    if (!owned.owned) {
+      // A directory this invocation did not create is never removed, even when empty.
+      return { removed: false, refusals: ["PREEXISTING_DIRECTORY"] };
+    }
+    const directoryIdentity = await identityOf(owned.path);
+    if (directoryIdentity === undefined) {
+      // The directory is already gone; its created ancestors are still pruned, and the prune
+      // revalidates each recorded identity so a swapped ancestor is never removed.
+      await pruneCreatedAncestors(owned.path);
+      return { removed: false, refusals: [] };
+    }
+    if (directoryIdentity.symbolicLink || directoryIdentity.token !== owned.identity) {
+      return { removed: false, refusals: ["DIRECTORY_IDENTITY_CHANGED"] };
+    }
     for (const file of files) {
-      const entry = await identityOf(join(directory.path, file));
-      if (entry === undefined) continue;
-      if (entry.symbolicLink) continue;
-      await rm(join(directory.path, file), { force: true }).catch(() => undefined);
+      const identity = await identityOf(file.path);
+      if (identity === undefined) continue;
+      if (identity.symbolicLink || identity.directory || identity.token !== file.identity) {
+        refusals.push(`FILE_IDENTITY_CHANGED:${file.path}`);
+        continue;
+      }
+      if (file.fingerprint.length > 0) {
+        const observed = await contentFingerprint(file.path);
+        if (observed !== file.fingerprint) {
+          refusals.push(`FILE_CONTENT_CHANGED:${file.path}`);
+          continue;
+        }
+      }
+      await rm(file.path, { force: true }).catch(() => {
+        refusals.push(`FILE_REMOVE_FAILED:${file.path}`);
+      });
     }
     try {
-      await rmdir(directory.path);
+      await rmdir(owned.path);
     } catch {
-      return false;
+      return { removed: false, refusals: [...refusals, "DIRECTORY_NOT_EMPTY"] };
     }
-    created.delete(directory.path);
-    await pruneCreatedAncestors(directory.path);
-    return true;
+    created.delete(owned.path);
+    await pruneCreatedAncestors(owned.path);
+    return { removed: true, refusals };
   };
 
   return {
@@ -243,32 +315,84 @@ export function createPrivateArea(targetRoot: string): PrivateArea {
           if (errorCode(cause) === "EEXIST") continue;
           throw new PrivateAuthorityError("UNAVAILABLE", `probe identity unavailable: ${errorCode(cause) || "UNKNOWN"}`);
         }
-        created.add(candidate);
         const identity = await identityOf(candidate);
-        if (identity === undefined || identity.symbolicLink) throw new PrivateAuthorityError("UNAVAILABLE", "probe identity could not be recorded");
-        return { path: candidate, identity: identity.token };
+        if (identity === undefined || identity.symbolicLink || !identity.directory) {
+          throw new PrivateAuthorityError("UNAVAILABLE", "probe identity could not be recorded");
+        }
+        created.set(candidate, identity.token);
+        return { path: candidate, identity: identity.token, owned: true };
       }
       throw new PrivateAuthorityError("UNAVAILABLE", "exhausted probe identity attempts");
     },
 
-    async ensureStagingDirectory(transactionId: string): Promise<string> {
-      return ensureChain([PRIVATE_DIRECTORY, safeSegment(transactionId)]);
-    },
-
-    async ensureJournalFile(transactionId: string): Promise<string> {
-      const journalRoot = await ensureChain([PRIVATE_DIRECTORY, JOURNAL_SUBDIRECTORY]);
-      return join(journalRoot, `${safeSegment(transactionId)}.json`);
-    },
-
-    releaseOwnedDirectory: removeOwned,
-
-    async releaseStagingDirectory(transactionId: string, files: readonly string[]): Promise<boolean> {
+    async claimStagingDirectory(transactionId: string): Promise<OwnedDirectory> {
       const path = join(root, PRIVATE_DIRECTORY, safeSegment(transactionId));
+      const existing = await identityOf(path);
+      if (existing !== undefined) {
+        // A pre-existing staging path is usable, but never owned and therefore never removable.
+        if (existing.symbolicLink) throw new PrivateAuthorityError("ALIAS_ANCESTOR", `${path} is a symlink or reparse point`);
+        if (!existing.directory) throw new PrivateAuthorityError("NOT_A_DIRECTORY", `${path} is not a directory`);
+        return { path, identity: existing.token, owned: false };
+      }
+      await ensureChain([PRIVATE_DIRECTORY, safeSegment(transactionId)]);
       const identity = await identityOf(path);
-      if (identity === undefined) return true;
-      if (identity.symbolicLink) return false;
-      return removeOwned({ path, identity: identity.token }, files);
+      if (identity === undefined || identity.symbolicLink || !identity.directory) {
+        throw new PrivateAuthorityError("UNAVAILABLE", "staging identity could not be recorded");
+      }
+      return { path, identity: identity.token, owned: created.has(path) };
     },
+
+    async claimJournalFile(transactionId: string): Promise<OwnedFile> {
+      const journalRoot = await ensureChain([PRIVATE_DIRECTORY, JOURNAL_SUBDIRECTORY]);
+      const path = join(journalRoot, `${safeSegment(transactionId)}.json`);
+      let handle;
+      try {
+        // Exclusive creation: an existing file, including a symlink to one, fails closed without a
+        // byte being changed.
+        handle = await open(path, "wx");
+      } catch (cause: unknown) {
+        const code = errorCode(cause);
+        if (code === "EEXIST") throw new PrivateAuthorityError("ALREADY_PRESENT", `journal file already exists at ${path}`);
+        throw new PrivateAuthorityError("UNAVAILABLE", `journal file could not be created: ${code || "UNKNOWN"}`);
+      }
+      try {
+        const info = await handle.stat();
+        return { path, identity: `${String(info.dev)}:${String(info.ino)}`, fingerprint: "" };
+      } finally {
+        await handle.close();
+      }
+    },
+
+    async writeOwnedFile(owned: OwnedFile, body: string): Promise<WriteReport> {
+      let handle;
+      try {
+        // `r+` never creates, and the handle is bound to an inode, so a path swapped after the open
+        // cannot redirect the write that follows.
+        handle = await open(owned.path, "r+");
+      } catch (cause: unknown) {
+        return { ok: false, detail: `OPEN_FAILED:${errorCode(cause) || "UNKNOWN"}` };
+      }
+      try {
+        const before = await handle.stat();
+        if (`${String(before.dev)}:${String(before.ino)}` !== owned.identity) {
+          return { ok: false, detail: "IDENTITY_CHANGED" };
+        }
+        await handle.truncate(0);
+        await handle.write(body, 0, "utf8");
+        const after = await handle.stat();
+        if (`${String(after.dev)}:${String(after.ino)}` !== owned.identity) {
+          return { ok: false, detail: "IDENTITY_CHANGED_AFTER_WRITE" };
+        }
+        return { ok: true };
+      } catch (cause: unknown) {
+        return { ok: false, detail: `WRITE_FAILED:${errorCode(cause) || "UNKNOWN"}` };
+      } finally {
+        await handle.close().catch(() => undefined);
+      }
+    },
+
+    captureOwnedFile,
+    releaseOwnedDirectory,
   };
 }
 

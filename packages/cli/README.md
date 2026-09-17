@@ -72,7 +72,16 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
   journal) is proven lexically contained under the target root, every existing ancestor is proven
   not to be a symlink/reparse point, and the deepest existing ancestor is proven physically
   contained once resolved. A user-controlled alias therefore cannot redirect a private effect
-  outside the target, and cleanup revalidates the recorded identity before removing anything.
+  outside the target.
+- **Ownership is recorded at creation and revalidated before anything is removed or overwritten.**
+  A directory or file carries the identity (`dev:ino`) it had when this invocation created it. A
+  pre-existing directory or file is never claimed, removed or overwritten, even when empty;
+  cleanup removes only invocation-owned entries, revalidating the directory identity, each staged
+  file's identity *and* content fingerprint, and each created ancestor's identity; identity
+  mismatch or a content change leaves the entry untouched and is reported as refusal evidence. The
+  journal is claimed with exclusive creation, and every lifecycle write goes through an
+  identity-verified handle, so a journal path replaced by another file or by a symlink/reparse
+  point is refused rather than overwritten.
 - Persisted documents (`.gef/<verb>-state.json` and `.gef/receipts/<runId>.json`) are bound to
   JSON Schema 2020-12 contracts shipped in `schemas/`; an unsupported schema major version
   fails closed on read.
