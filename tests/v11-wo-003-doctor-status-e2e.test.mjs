@@ -8,7 +8,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -207,17 +207,91 @@ test("status reports the declared production truth and the V1.1 overlay separate
   mkdirSync(join(project, ".engineering"), { recursive: true });
   writeFileSync(
     join(project, ".engineering", "CHECKPOINT.json"),
-    JSON.stringify({ status: "GBS_V1_PRODUCTION_ACCEPTED", overallCompletionPercent: 100, v11: { status: "OVERLAY_STATUS", activeWorkOrder: "GBS-V11-WO-003" } }),
+    JSON.stringify({ schemaVersion: 2, status: "GBS_V1_PRODUCTION_ACCEPTED", overallCompletionPercent: 100, v11: { status: "OVERLAY_STATUS", activeWorkOrder: "GBS-V11-WO-003" } }),
   );
   writeFileSync(join(project, "README.md"), "readme\n");
 
   const result = gef(["status", "--target", project, "--json"]);
   assert.equal(result.code, 0);
   const status = JSON.parse(result.stdout).value.status;
+  assert.equal(status.release.valid, true, "a supported checkpoint carries semantic authority");
   assert.equal(status.release.production.status, "GBS_V1_PRODUCTION_ACCEPTED");
   assert.equal(status.release.development.status, "OVERLAY_STATUS", "the V1.1 overlay is reported separately");
   assert.equal(status.release.development.activeWorkOrder, "GBS-V11-WO-003");
   assert.equal(status.operator.progress, 100);
   assert.ok(status.documentation.entries.some((entry) => entry.id === "README.md"));
   assert.ok(status.navigation.files.includes(".engineering/CHECKPOINT.json"));
+});
+
+test("an ancestor alias is refused through the real process, not followed", (t) => {
+  const SENTINEL = "GEF-E2E-EXTERNAL-SENTINEL";
+  const project = tempProject(t, "gef-wo003-alias-");
+  const external = tempProject(t, "gef-wo003-alias-ext-");
+  mkdirSync(join(external, ".engineering"), { recursive: true });
+  writeFileSync(join(external, ".engineering", "CHECKPOINT.json"), JSON.stringify({ schemaVersion: 2, status: SENTINEL, overallCompletionPercent: 100 }));
+  writeFileSync(join(external, "README.md"), `${SENTINEL}\n`);
+
+  // Junctions are unprivileged on Windows; directory symlinks are used elsewhere.
+  if (process.platform === "win32") symlinkSync(join(external, ".engineering"), join(project, ".engineering"), "junction");
+  else symlinkSync(join(external, ".engineering"), join(project, ".engineering"), "dir");
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", project, "--json"]);
+    assert.equal(result.code, 0);
+    assert.equal(`${result.stdout}${result.stderr}`.includes(SENTINEL), false, `${verb} must not expose aliased content`);
+    assert.equal(result.stdout.includes(external), false, `${verb} must not expose the alias destination`);
+    const value = JSON.parse(result.stdout).value[verb];
+    assert.ok(value.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_ALIAS_REFUSED")), `${verb} must record the concrete alias refusal`);
+  }
+
+  // The external content is untouched and the alias itself was never rewritten.
+  assert.equal(readFileSync(join(external, ".engineering", "CHECKPOINT.json"), "utf8").includes(SENTINEL), true);
+  assert.equal(existsSync(join(project, ".gef")), false, "a refused read must not create state");
+});
+
+test("an over-budget checkpoint cannot populate release or operator truth", (t) => {
+  const project = tempProject(t, "gef-wo003-budget-");
+  mkdirSync(join(project, ".engineering"), { recursive: true });
+  // A syntactically valid checkpoint that exceeds the admitted diagnostic budget.
+  const padding = "x".repeat(1024 * 1024);
+  writeFileSync(
+    join(project, ".engineering", "CHECKPOINT.json"),
+    JSON.stringify({ schemaVersion: 2, status: "FABRICATED_STATE", overallCompletionPercent: 100, padding }),
+  );
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", project, "--json"]);
+    assert.equal(result.code, 0);
+    const value = JSON.parse(result.stdout).value[verb];
+    assert.ok(value.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_FILE_OVER_BUDGET")), `${verb} must record the concrete over-budget refusal`);
+    assert.equal(result.stdout.includes("FABRICATED_STATE"), false, "oversized content must never reach the projection");
+  }
+
+  const status = JSON.parse(gef(["status", "--target", project, "--json"]).stdout).value.status;
+  assert.equal(status.release.present, true, "an over-budget source is present, not absent");
+  assert.equal(status.release.valid, false);
+  assert.equal(status.release.production, null);
+  assert.equal(status.operator.progress, null, "progress must never come from an over-budget document");
+});
+
+test("an invalid checkpoint never becomes production or operator truth", (t) => {
+  const project = tempProject(t);
+  mkdirSync(join(project, ".engineering"), { recursive: true });
+  // Syntactically valid JSON that is not a valid checkpoint: impossible progress and no version.
+  writeFileSync(
+    join(project, ".engineering", "CHECKPOINT.json"),
+    JSON.stringify({ status: "GBS_V1_PRODUCTION_ACCEPTED", overallCompletionPercent: 999, nextLegalStage: "DONE" }),
+  );
+  writeFileSync(join(project, "README.md"), "readme\n");
+
+  const result = gef(["status", "--target", project, "--json"]);
+  assert.equal(result.code, 0);
+  const status = JSON.parse(result.stdout).value.status;
+  assert.equal(status.release.present, true, "presence is reported even when the content is not authoritative");
+  assert.equal(status.release.valid, false, "presence must not be confused with validated authority");
+  assert.equal(status.release.production, null);
+  assert.equal(status.release.development, null);
+  assert.equal(status.operator.progress, null, "progress must never be taken from an invalid checkpoint");
+  assert.notEqual(status.operator.state, "GBS_V1_PRODUCTION_ACCEPTED", "a string in a file is not production approval");
+  assert.ok(status.observationLimits.some((limit) => limit.startsWith("GOVERNANCE_CHECKPOINT_")), "the concrete refusal must be recorded");
 });

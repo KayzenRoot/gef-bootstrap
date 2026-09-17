@@ -7,7 +7,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -149,6 +149,28 @@ test("the installed package still keeps WO-002 behaviour intact", (t) => {
   const status = gefAt(bin, ["status", "--target", project, "--json"]);
   assert.equal(status.code, 0);
   assert.equal(readFileSync(join(project, ".gef", "init-state.json"), "utf8"), appliedDigest, "status must not change the governed artifact");
+});
+
+test("the installed package carries the contained-read hardening", (t) => {
+  const { bin } = freshInstall(t, "hardening");
+  const SENTINEL = "GEF-PACKED-EXTERNAL-SENTINEL";
+  const project = tempProject(t);
+  const external = mkdtempSync(join(tmpdir(), "gef-wo003-packed-ext-"));
+  t.after(() => rmSync(external, { recursive: true, force: true }));
+  mkdirSync(join(external, ".engineering"), { recursive: true });
+  writeFileSync(join(external, ".engineering", "CHECKPOINT.json"), JSON.stringify({ schemaVersion: 2, status: SENTINEL, overallCompletionPercent: 100 }));
+
+  // Junctions are unprivileged on Windows; directory symlinks are used elsewhere.
+  if (process.platform === "win32") symlinkSync(join(external, ".engineering"), join(project, ".engineering"), "junction");
+  else symlinkSync(join(external, ".engineering"), join(project, ".engineering"), "dir");
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gefAt(bin, [verb, "--target", project, "--json"]);
+    assert.equal(result.code, 0, `installed ${verb} must exit 0: ${result.stderr}`);
+    assert.equal(result.stdout.includes(SENTINEL), false, `installed ${verb} must not expose aliased content`);
+    const value = JSON.parse(result.stdout).value[verb];
+    assert.ok(value.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_ALIAS_REFUSED")), `installed ${verb} must record the alias refusal`);
+  }
 });
 
 test("the installed package fails closed when the vendored engines are missing", (t) => {

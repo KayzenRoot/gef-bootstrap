@@ -20,9 +20,9 @@
  */
 
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { closeSync, existsSync, fstatSync, lstatSync, openSync, readFileSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { resolve } from "node:path";
+import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import type { GefError, HandlerOutcome } from "@gef-bootstrap/contracts";
 import { CommandRegistry, createGefError } from "@gef-bootstrap/kernel";
@@ -120,6 +120,149 @@ const OBSERVATION_ENTRY_LIMIT = 64;
 const GEF_STATE_DIRECTORY = ".gef";
 const RECEIPTS_DIRECTORY = "receipts";
 const GEF_GOVERNANCE_LABELS: readonly string[] = Object.freeze(["gef-managed", "governed"]);
+
+// ---------------------------------------------------------------------------
+// S0 contained read helper
+// ---------------------------------------------------------------------------
+//
+// Every read-only file the CLI consumes is untrusted input crossing the filesystem boundary
+// (SECURITY.md trust boundaries, T2 path traversal/symlink escape, T12 denial/resource
+// exhaustion). There is exactly one policy for those reads, implemented here and used by every
+// S0 reader: bind the approved root, refuse lexical escape, refuse link-like path components,
+// prove physical containment, require a regular file, and read no more than the admitted budget.
+//
+// Node on Windows reports symlinks *and* directory junctions as symbolic links through `lstat`,
+// which is the strongest portable non-following observation available. A reparse redirect that
+// `lstat` does not surface is still caught by the physical-containment proof below, so an alias
+// whose destination leaves the approved root is refused rather than read.
+
+/** Maximum bytes a single diagnostic file may contribute. */
+export const DIAGNOSTIC_FILE_MAX_BYTES = 1024 * 1024;
+
+/** Maximum number of diagnostic source files one command may consider. */
+export const DIAGNOSTIC_SOURCE_MAX_FILES = 64;
+
+export type DiagnosticReadStatus = "OK" | "ABSENT" | "UNREADABLE" | "ALIAS_REFUSED" | "NOT_REGULAR" | "OVER_BUDGET";
+
+export interface DiagnosticReadOutcome {
+  readonly status: DiagnosticReadStatus;
+  /** The requested relative reference, as it appears in output. */
+  readonly ref: string;
+  /** Admitted content, present only when `status` is `OK`. */
+  readonly bytes: Buffer | null;
+  /** Deterministic observation-limit code, `null` only when `status` is `OK`. */
+  readonly limit: string | null;
+}
+
+function readRefusal(status: Exclude<DiagnosticReadStatus, "OK">, ref: string, code: string): DiagnosticReadOutcome {
+  return { status, ref, bytes: null, limit: `${code}:${ref}` };
+}
+
+/** True when `candidate` is the same path as, or lexically contained by, `root`. */
+function isContained(root: string, candidate: string): boolean {
+  if (candidate === root) return true;
+  return candidate.startsWith(root.endsWith(sep) ? root : `${root}${sep}`);
+}
+
+/**
+ * Read one file inside the approved target root, or refuse with a structured reason.
+ *
+ * The refusal is never silent and never degrades into "absent": a caller can distinguish an
+ * absent path from an unreadable one, from an alias that was refused, from a link-like or
+ * otherwise non-regular target, and from content over the admitted budget.
+ */
+export function readContainedDiagnosticFile(targetRoot: string, requestedRef: string, budget: number = DIAGNOSTIC_FILE_MAX_BYTES): DiagnosticReadOutcome {
+  const ref = requestedRef;
+  if (requestedRef.length === 0 || requestedRef.includes("\0") || isAbsolute(requestedRef)) {
+    return readRefusal("ALIAS_REFUSED", ref, "DIAGNOSTIC_PATH_ESCAPE");
+  }
+  const root = resolve(targetRoot);
+  const candidate = resolve(root, requestedRef);
+  // Lexical containment first: no `..` traversal may leave the approved root, independently of
+  // what the filesystem would resolve afterwards.
+  if (!isContained(root, candidate)) return readRefusal("ALIAS_REFUSED", ref, "DIAGNOSTIC_PATH_ESCAPE");
+  if (candidate === root) return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+
+  // Inspect every existing component from the root down to the final file, without following any
+  // link. A link-like ancestor or a link-like final target is refused even when its destination
+  // would be reachable.
+  const parts = relative(root, candidate).split(sep).filter((part) => part.length > 0);
+  let current = root;
+  let finalIdentity: string | null = null;
+  for (let index = 0; index < parts.length; index += 1) {
+    const part = parts[index];
+    if (part === undefined) continue;
+    current = join(current, part);
+    let stats: ReturnType<typeof lstatSync>;
+    try {
+      stats = lstatSync(current);
+    } catch (cause: unknown) {
+      const code = (cause as { readonly code?: unknown }).code;
+      if (code === "ENOENT" || code === "ENOTDIR") return readRefusal("ABSENT", ref, "DIAGNOSTIC_PATH_ABSENT");
+      return readRefusal("UNREADABLE", ref, "DIAGNOSTIC_PATH_UNREADABLE");
+    }
+    if (stats.isSymbolicLink()) return readRefusal("ALIAS_REFUSED", ref, "DIAGNOSTIC_ALIAS_REFUSED");
+    const isFinal = index === parts.length - 1;
+    if (isFinal) {
+      if (!stats.isFile()) return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+      finalIdentity = `${String(stats.dev)}:${String(stats.ino)}`;
+    } else if (!stats.isDirectory()) {
+      return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+    }
+  }
+  if (finalIdentity === null) return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+
+  // Physical containment: whatever the final path actually resolves to must still be inside the
+  // resolved root. This catches a redirect that the non-following walk above did not surface.
+  try {
+    const physicalRoot = realpathSync.native(root);
+    const physicalCandidate = realpathSync.native(candidate);
+    if (!isContained(physicalRoot, physicalCandidate)) return readRefusal("ALIAS_REFUSED", ref, "DIAGNOSTIC_ALIAS_REFUSED");
+  } catch {
+    return readRefusal("UNREADABLE", ref, "DIAGNOSTIC_PATH_UNREADABLE");
+  }
+
+  let descriptor: number;
+  try {
+    descriptor = openSync(candidate, "r");
+  } catch {
+    return readRefusal("UNREADABLE", ref, "DIAGNOSTIC_PATH_UNREADABLE");
+  }
+  try {
+    const opened = fstatSync(descriptor);
+    // The opened file must be the exact object the non-following walk inspected: this closes the
+    // window between the walk and the open.
+    if (`${String(opened.dev)}:${String(opened.ino)}` !== finalIdentity) return readRefusal("ALIAS_REFUSED", ref, "DIAGNOSTIC_ALIAS_REFUSED");
+    if (!opened.isFile()) return readRefusal("NOT_REGULAR", ref, "DIAGNOSTIC_NOT_REGULAR");
+    // The size gate comes before any read: an over-budget file is never read and never truncated
+    // into apparently valid evidence.
+    if (opened.size > budget) return readRefusal("OVER_BUDGET", ref, "DIAGNOSTIC_FILE_OVER_BUDGET");
+    const bytes = Buffer.alloc(opened.size);
+    let filled = 0;
+    while (filled < opened.size) {
+      const read = readSync(descriptor, bytes, filled, opened.size - filled, filled);
+      // A short read means the file changed size under us; truncated content is refused rather
+      // than accepted as evidence.
+      if (read <= 0) return readRefusal("UNREADABLE", ref, "DIAGNOSTIC_PATH_UNREADABLE");
+      filled += read;
+    }
+    return { status: "OK", ref, bytes, limit: null };
+  } catch {
+    return readRefusal("UNREADABLE", ref, "DIAGNOSTIC_PATH_UNREADABLE");
+  } finally {
+    try {
+      closeSync(descriptor);
+    } catch {
+      // The descriptor is already unusable; nothing further can be done and no content was
+      // produced from it.
+    }
+  }
+}
+
+/** The observation-limit codes of every refused read, in input order. */
+export function diagnosticReadLimits(outcomes: readonly DiagnosticReadOutcome[]): readonly string[] {
+  return Object.freeze(outcomes.filter((outcome) => outcome.limit !== null).map((outcome) => outcome.limit as string));
+}
 
 export function observeTarget(targetRef: string): TargetObservation {
   const absolute = resolve(targetRef);
@@ -236,13 +379,20 @@ export function observeRepository(targetRef: string): RepositoryObservation {
   }
   let head = "";
   let branch = "";
+  let headLimit: string | null = null;
   try {
     const contents = readFileSync(resolve(gitDirectory, "HEAD"), "utf8").trim();
     if (contents.startsWith("ref:")) {
+      // The ref name is attacker-controlled file content. It is accepted only in the exact shape a
+      // real symbolic ref has, so `HEAD` cannot name a path outside the Git directory.
       const refName = contents.slice(4).trim();
-      branch = refName.replace(/^refs\/heads\//, "");
-      const refFile = resolve(gitDirectory, refName);
-      head = existsSync(refFile) ? readFileSync(refFile, "utf8").trim() : "";
+      if (!/^refs\/[A-Za-z0-9._/-]+$/.test(refName) || refName.includes("..") || refName.includes("//")) {
+        headLimit = "GIT_HEAD_REF_UNUSABLE";
+      } else {
+        branch = refName.replace(/^refs\/heads\//, "");
+        const refFile = resolve(gitDirectory, refName);
+        head = existsSync(refFile) ? readFileSync(refFile, "utf8").trim() : "";
+      }
     } else {
       head = contents;
       branch = "DETACHED";
@@ -250,12 +400,13 @@ export function observeRepository(targetRef: string): RepositoryObservation {
   } catch {
     return { input: {}, observationLimits: ["HEAD_UNREADABLE", "WORKING_TREE_NOT_OBSERVED"], dirtiness: "UNKNOWN" };
   }
+  const headLimits: readonly string[] = headLimit === null ? [] : [headLimit];
   const operation = GIT_OPERATION_SENTINELS.find(([sentinel]) => existsSync(resolve(gitDirectory, sentinel)))?.[1];
   const evidence = observeRepositoryDirtiness(absolute);
   if (evidence.observation !== "OBSERVED") {
     return {
       input: { repo: absolute, head, branch, ...(operation === undefined ? {} : { operation }) },
-      observationLimits: ["WORKING_TREE_NOT_OBSERVED", `DIRTINESS_UNKNOWN${evidence.detail === undefined ? "" : `:${evidence.detail}`}`],
+      observationLimits: ["WORKING_TREE_NOT_OBSERVED", `DIRTINESS_UNKNOWN${evidence.detail === undefined ? "" : `:${evidence.detail}`}`, ...headLimits],
       dirtiness: "UNKNOWN",
     };
   }
@@ -270,7 +421,7 @@ export function observeRepository(targetRef: string): RepositoryObservation {
       conflicted: evidence.conflicted,
       ...(operation === undefined ? {} : { operation }),
     },
-    observationLimits: [],
+    observationLimits: [...headLimits],
     dirtiness: "OBSERVED",
   };
 }
@@ -289,20 +440,15 @@ const CANONICAL_CANDIDATES: readonly (readonly [string, string])[] = Object.free
 export function observeCanonicalSources(targetRef: string): readonly CanonicalSourceInput[] {
   const absolute = resolve(targetRef);
   const sources: CanonicalSourceInput[] = [];
-  for (const [relativePath, kind] of CANONICAL_CANDIDATES) {
-    const physical = resolve(absolute, relativePath);
-    if (!existsSync(physical)) continue;
-    try {
-      sources.push({ id: relativePath, kind, value: createHash("sha256").update(readFileSync(physical)).digest("hex") });
-    } catch {
-      // An unreadable candidate is simply not observed; it never fabricates a value.
-    }
+  for (const [relativePath, kind] of CANONICAL_CANDIDATES.slice(0, DIAGNOSTIC_SOURCE_MAX_FILES)) {
+    // The shared S0 read policy applies here too: a candidate that is absent, out of budget or
+    // reached through a link-like path is simply not observed. It never fabricates a value, and
+    // no candidate is ever read through an alias.
+    const outcome = readContainedDiagnosticFile(absolute, relativePath);
+    if (outcome.status !== "OK" || outcome.bytes === null) continue;
+    sources.push({ id: relativePath, kind, value: createHash("sha256").update(outcome.bytes).digest("hex") });
   }
   return Object.freeze(sources);
-}
-
-function artifactPathFor(targetRoot: string, verb: MutationVerb): string {
-  return resolve(targetRoot, GEF_STATE_DIRECTORY, `${verb}-state.json`);
 }
 
 export interface RecordedArtifact {
@@ -311,6 +457,8 @@ export interface RecordedArtifact {
   readonly fingerprint: string;
   readonly recordedObservationFingerprint: string | null;
   readonly schemaVersionSupported: boolean;
+  /** Set when the path was present but refused by the contained-read policy. */
+  readonly refusal?: string;
 }
 
 /**
@@ -320,15 +468,18 @@ export interface RecordedArtifact {
  * as such and never interpreted optimistically.
  */
 export function readRecordedArtifact(targetRef: string, verb: MutationVerb): RecordedArtifact {
-  const physical = artifactPathFor(resolve(targetRef), verb);
   const ref = `${GEF_STATE_DIRECTORY}/${verb}-state.json`;
-  if (!existsSync(physical)) return { ref, present: false, fingerprint: "ABSENT", recordedObservationFingerprint: null, schemaVersionSupported: true };
-  let body: Buffer;
-  try {
-    body = readFileSync(physical);
-  } catch {
-    return { ref, present: true, fingerprint: "UNREADABLE", recordedObservationFingerprint: null, schemaVersionSupported: false };
+  // The recorded baseline is untrusted filesystem input like any other S0 read: it is reached
+  // through the shared contained-read policy, so a linked or escaping `.gef` path is refused
+  // rather than followed.
+  const outcome = readContainedDiagnosticFile(resolve(targetRef), ref);
+  const absent = { ref, present: false, fingerprint: "ABSENT", recordedObservationFingerprint: null, schemaVersionSupported: true } as const;
+  if (outcome.status === "ABSENT") return absent;
+  if (outcome.status !== "OK" || outcome.bytes === null) {
+    // Present but not admissible as evidence: the path exists in some form but was refused.
+    return { ref, present: true, fingerprint: "UNREADABLE", recordedObservationFingerprint: null, schemaVersionSupported: false, ...(outcome.limit === null ? {} : { refusal: outcome.limit }) };
   }
+  const body = outcome.bytes;
   const artifactFingerprint = createHash("sha256").update(body).digest("hex");
   try {
     const parsed: unknown = JSON.parse(body.toString("utf8"));
@@ -435,7 +586,10 @@ const GOVERNANCE_SOURCES: readonly string[] = Object.freeze([
 export interface GovernanceObservation {
   readonly source: string;
   readonly present: boolean;
+  /** The source existed and its bytes were admitted by the contained-read policy. */
   readonly readable: boolean;
+  /** The admitted content passed the checkpoint validation gate and may carry semantic authority. */
+  readonly valid: boolean;
   /** Values declared by the source. Reported as declared; never re-interpreted as approval. */
   readonly production: Readonly<Record<string, unknown>> | null;
   /** The V1.1 development overlay, kept distinguishable from the production truth. */
@@ -443,50 +597,136 @@ export interface GovernanceObservation {
   readonly observationLimits: readonly string[];
 }
 
-function readBoundedFile(path: string): Buffer | undefined {
-  try {
-    return readFileSync(path);
-  } catch {
-    return undefined;
-  }
+/**
+ * Governance checkpoint schema versions this build can interpret.
+ *
+ * This is deliberately narrow: it validates only the checkpoint fields `gef status` consumes and
+ * does not introduce a product-wide checkpoint schema (WO-003 architecture rule 5). A checkpoint
+ * declaring any other version is reported as present-but-invalid, never promoted into semantics.
+ */
+export const SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS: readonly number[] = Object.freeze([2]);
+
+/** Projected production fields and the shape each must have before it carries any meaning. */
+const CHECKPOINT_FIELD_SHAPES: readonly (readonly [string, "string" | "finiteNumber"])[] = Object.freeze([
+  ["status", "string"],
+  ["phase", "string"],
+  ["stopState", "string"],
+  ["completedThroughModule", "string"],
+  ["mainProductionDenominatorWeight", "finiteNumber"],
+  ["earnedProductionWeight", "finiteNumber"],
+  ["overallCompletionPercent", "finiteNumber"],
+  ["nextLegalStage", "string"],
+]);
+
+interface CheckpointValidation {
+  readonly valid: boolean;
+  readonly limit: string | null;
+  readonly production: Readonly<Record<string, unknown>> | null;
+  readonly development: Readonly<Record<string, unknown>> | null;
 }
 
-/** Read the target's declared governance state without mutating or reinterpreting it. */
-export function observeGovernance(targetRef: string): GovernanceObservation {
+/**
+ * Validate a parsed checkpoint before any of its fields become status semantics.
+ *
+ * Trust boundary: `.engineering/CHECKPOINT.json` is untrusted filesystem input. Parseable JSON is
+ * not the same thing as a valid checkpoint, so presence, readability and validity are reported
+ * separately and an invalid document yields no production or development value at all (SEC-09
+ * schema/version discipline; a local file is never treated as trusted merely because it parses).
+ */
+export function validateGovernanceCheckpoint(parsed: unknown): CheckpointValidation {
+  const invalid = (limit: string): CheckpointValidation => ({ valid: false, limit, production: null, development: null });
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) return invalid("GOVERNANCE_CHECKPOINT_NOT_OBJECT");
+  const record = parsed as Record<string, unknown>;
+
+  const version = record["schemaVersion"];
+  if (typeof version !== "number" || !Number.isInteger(version)) return invalid(`GOVERNANCE_CHECKPOINT_SCHEMA_UNSUPPORTED:${String(version)}`);
+  if (!SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS.includes(version)) return invalid(`GOVERNANCE_CHECKPOINT_SCHEMA_UNSUPPORTED:${String(version)}`);
+
+  const production: Record<string, unknown> = {};
+  for (const [key, shape] of CHECKPOINT_FIELD_SHAPES) {
+    if (!(key in record)) continue;
+    const value = record[key];
+    if (shape === "string") {
+      if (typeof value !== "string") return invalid(`GOVERNANCE_CHECKPOINT_FIELD_TYPE_INVALID:${key}`);
+    } else {
+      if (typeof value !== "number" || !Number.isFinite(value)) return invalid(`GOVERNANCE_CHECKPOINT_FIELD_TYPE_INVALID:${key}`);
+    }
+    production[key] = value;
+  }
+
+  // Progress is a bounded percentage; a number outside that range is not a completion claim.
+  const progress = production["overallCompletionPercent"];
+  if (typeof progress === "number" && (progress < 0 || progress > 100)) return invalid(`GOVERNANCE_CHECKPOINT_PROGRESS_OUT_OF_RANGE:${String(progress)}`);
+
+  const overlay = record["v11"];
+  if (overlay !== undefined && overlay !== null && (typeof overlay !== "object" || Array.isArray(overlay))) return invalid("GOVERNANCE_CHECKPOINT_OVERLAY_INVALID");
+
+  return {
+    valid: true,
+    limit: null,
+    production: Object.freeze(production),
+    development: overlay === undefined || overlay === null ? null : Object.freeze(overlay as Record<string, unknown>),
+  };
+}
+
+/**
+ * Read the target's declared governance state without mutating or reinterpreting it.
+ *
+ * The bytes are admitted by the shared S0 contained-read policy (H1/H2) and then passed through
+ * the checkpoint validation gate (H4) before any field becomes semantics.
+ */
+export function observeGovernance(targetRef: string, budget: number = DIAGNOSTIC_FILE_MAX_BYTES): GovernanceObservation {
   const absolute = resolve(targetRef);
   const source = ".engineering/CHECKPOINT.json";
-  const physical = resolve(absolute, source);
-  if (!existsSync(physical)) {
-    return { source, present: false, readable: false, production: null, development: null, observationLimits: ["GOVERNANCE_SOURCE_ABSENT"] };
+  const outcome = readContainedDiagnosticFile(absolute, source, budget);
+  const base = { source, production: null, development: null } as const;
+  if (outcome.status === "ABSENT") return { ...base, present: false, readable: false, valid: false, observationLimits: ["GOVERNANCE_SOURCE_ABSENT"] };
+  if (outcome.status !== "OK" || outcome.bytes === null) {
+    return { ...base, present: true, readable: false, valid: false, observationLimits: [outcome.limit ?? "GOVERNANCE_SOURCE_UNREADABLE"] };
   }
-  const body = readBoundedFile(physical);
-  if (body === undefined) {
-    return { source, present: true, readable: false, production: null, development: null, observationLimits: ["GOVERNANCE_SOURCE_UNREADABLE"] };
-  }
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(body.toString("utf8")) as Record<string, unknown>;
-    const production: Record<string, unknown> = {};
-    for (const key of ["status", "phase", "stopState", "completedThroughModule", "mainProductionDenominatorWeight", "earnedProductionWeight", "overallCompletionPercent", "nextLegalStage"]) {
-      if (key in parsed) production[key] = parsed[key];
-    }
-    const overlay = parsed["v11"];
-    return {
-      source,
-      present: true,
-      readable: true,
-      production: Object.freeze(production),
-      development: overlay !== null && typeof overlay === "object" ? Object.freeze(overlay as Record<string, unknown>) : null,
-      observationLimits: [],
-    };
+    parsed = JSON.parse(outcome.bytes.toString("utf8"));
   } catch {
-    return { source, present: true, readable: false, production: null, development: null, observationLimits: ["GOVERNANCE_SOURCE_NOT_PARSEABLE"] };
+    // The bytes were admissible but yielded no interpretable document, so it is reported as
+    // unreadable rather than as a valid-but-empty source.
+    return { ...base, present: true, readable: false, valid: false, observationLimits: ["GOVERNANCE_SOURCE_NOT_PARSEABLE"] };
   }
+  const validation = validateGovernanceCheckpoint(parsed);
+  if (!validation.valid) {
+    return { ...base, present: true, readable: true, valid: false, observationLimits: [validation.limit ?? "GOVERNANCE_CHECKPOINT_INVALID"] };
+  }
+  return {
+    source,
+    present: true,
+    readable: true,
+    valid: true,
+    production: validation.production,
+    development: validation.development,
+    observationLimits: [],
+  };
 }
 
-/** Bounded listing of the governance sources present in the target. */
-export function observeGovernanceFiles(targetRef: string): readonly string[] {
+/**
+ * Bounded listing of the governance sources present in the target.
+ *
+ * A path is listed only when it is an admissible regular file *inside* the approved root: a
+ * link-like or escaping path is not "present" for diagnostic purposes.
+ */
+export function observeGovernanceFiles(targetRef: string, budget: number = DIAGNOSTIC_FILE_MAX_BYTES): readonly string[] {
   const absolute = resolve(targetRef);
-  return Object.freeze(GOVERNANCE_SOURCES.filter((relativePath) => existsSync(resolve(absolute, relativePath))));
+  const outcomes = GOVERNANCE_SOURCES.slice(0, DIAGNOSTIC_SOURCE_MAX_FILES).map((relativePath) => readContainedDiagnosticFile(absolute, relativePath, budget));
+  return Object.freeze(outcomes.filter((outcome) => outcome.status === "OK").map((outcome) => outcome.ref));
+}
+
+/** Observation-limit codes from the governance-source listing, including the source-count bound. */
+export function observeGovernanceFileLimits(targetRef: string, budget: number = DIAGNOSTIC_FILE_MAX_BYTES): readonly string[] {
+  const absolute = resolve(targetRef);
+  const considered = GOVERNANCE_SOURCES.slice(0, DIAGNOSTIC_SOURCE_MAX_FILES);
+  const outcomes = considered.map((relativePath) => readContainedDiagnosticFile(absolute, relativePath, budget));
+  const limits = diagnosticReadLimits(outcomes.filter((outcome) => outcome.status !== "ABSENT"));
+  const truncated = GOVERNANCE_SOURCES.length > considered.length ? [`DIAGNOSTIC_SOURCE_COUNT_TRUNCATED:${String(considered.length)}`] : [];
+  return Object.freeze([...limits, ...truncated]);
 }
 
 interface DocumentationEntry {
@@ -496,14 +736,19 @@ interface DocumentationEntry {
   readonly digest: string;
 }
 
-/** Documentation manifest entries: present files only, with their real content digest. */
-export function observeDocumentation(targetRef: string): readonly DocumentationEntry[] {
+/**
+ * Documentation manifest entries: admissible regular files only, with their real content digest.
+ *
+ * A refused or over-budget source contributes no entry, so it can never enter the manifest as
+ * valid evidence.
+ */
+export function observeDocumentation(targetRef: string, budget: number = DIAGNOSTIC_FILE_MAX_BYTES): readonly DocumentationEntry[] {
   const absolute = resolve(targetRef);
   const entries: DocumentationEntry[] = [];
-  for (const relativePath of GOVERNANCE_SOURCES) {
-    const body = readBoundedFile(resolve(absolute, relativePath));
-    if (body === undefined) continue;
-    entries.push({ id: relativePath, source: relativePath, version: null, digest: createHash("sha256").update(body).digest("hex") });
+  for (const relativePath of GOVERNANCE_SOURCES.slice(0, DIAGNOSTIC_SOURCE_MAX_FILES)) {
+    const outcome = readContainedDiagnosticFile(absolute, relativePath, budget);
+    if (outcome.status !== "OK" || outcome.bytes === null) continue;
+    entries.push({ id: relativePath, source: relativePath, version: null, digest: createHash("sha256").update(outcome.bytes).digest("hex") });
   }
   return Object.freeze(entries);
 }
@@ -728,11 +973,14 @@ function doctorComposition(engines: Engines, targetRef: string, observation: Tar
   const remediation = findings.filter((finding) => finding.state !== "HEALTHY").map((finding) => engines.repairSuggestion(finding.id));
 
   const nodeMajor = Number.parseInt(process.versions.node.split(".")[0] ?? "0", 10);
-  const manifest = readBoundedFile(resolve(targetRef, "package.json"));
-  const lock = readBoundedFile(resolve(targetRef, "package-lock.json"));
+  // Package manifests are diagnostic sources like any other: admitted by the contained-read
+  // policy, and a refused or over-budget manifest contributes no digest rather than partial
+  // evidence.
+  const manifestOutcome = readContainedDiagnosticFile(targetRef, "package.json");
+  const lockOutcome = readContainedDiagnosticFile(targetRef, "package-lock.json");
   const dependency = engines.dependencySecurity({
-    ...(manifest === undefined ? {} : { manifestDigest: createHash("sha256").update(manifest).digest("hex") }),
-    ...(lock === undefined ? {} : { lockDigest: createHash("sha256").update(lock).digest("hex") }),
+    ...(manifestOutcome.status === "OK" && manifestOutcome.bytes !== null ? { manifestDigest: createHash("sha256").update(manifestOutcome.bytes).digest("hex") } : {}),
+    ...(lockOutcome.status === "OK" && lockOutcome.bytes !== null ? { lockDigest: createHash("sha256").update(lockOutcome.bytes).digest("hex") } : {}),
     // The CLI has not independently verified a dependency audit, so provenance stays unverified and
     // the owning engine reports REVIEW rather than PASS.
     provenance: "unverified",
@@ -764,27 +1012,52 @@ function doctorComposition(engines: Engines, targetRef: string, observation: Tar
     invariants,
     security: { dependency, github, safety },
     capabilities,
-    governance: { source: governance.source, present: governance.present, readable: governance.readable, observationLimits: governance.observationLimits },
+    governance: { source: governance.source, present: governance.present, readable: governance.readable, valid: governance.valid, observationLimits: governance.observationLimits },
     integrity: engines.integritySnapshot({ findings, observations, dependencies: dependency.digest, capabilities: capabilities.digest }),
-    observationLimits: repository.observationLimits,
+    observationLimits: [
+      ...repository.observationLimits,
+      ...diagnosticReadLimits([manifestOutcome, lockOutcome].filter((outcome) => outcome.status !== "ABSENT")),
+      ...observeGovernanceFileLimits(targetRef),
+    ],
   };
   return { body: Object.freeze(body), digest: fingerprint(body) };
 }
 
-function statusComposition(engines: Engines, targetRef: string, observation: TargetObservation, repository: RepositoryObservation, repositoryVerdict: RepositoryStateResult | null, governance: GovernanceObservation, drift: DriftResult, recorded: RecordedArtifact): DiagnosisComposition {
+/**
+ * A recorded baseline may only be compared when it exists, was admitted as a supported document,
+ * and actually carries an observation fingerprint. Anything else is not a baseline.
+ */
+export function recordedBaselineSupported(recorded: RecordedArtifact): boolean {
+  return recorded.present && recorded.schemaVersionSupported && (recorded.recordedObservationFingerprint ?? "").length > 0;
+}
+
+type DriftBaselineState = "RECORDED" | "ABSENT" | "UNSUPPORTED";
+
+function statusComposition(engines: Engines, targetRef: string, observation: TargetObservation, repository: RepositoryObservation, repositoryVerdict: RepositoryStateResult | null, governance: GovernanceObservation, drift: DriftResult | null, recorded: RecordedArtifact): DiagnosisComposition {
   const governanceFiles = observeGovernanceFiles(targetRef);
-  const productionState = governance.production === null ? undefined : governance.production["status"];
-  const declaredProgress = governance.production === null ? undefined : governance.production["overallCompletionPercent"];
+  const fileLimits = observeGovernanceFileLimits(targetRef);
+  // Only a validated checkpoint may carry semantic authority: an invalid or unsupported document
+  // contributes no state and no progress to the operator projection (H4).
+  const productionState = governance.valid && governance.production !== null ? governance.production["status"] : undefined;
+  const declaredProgress = governance.valid && governance.production !== null ? governance.production["overallCompletionPercent"] : undefined;
   const evidenceRefs = governance.present ? [governance.source, ...governanceFiles.filter((file) => file !== governance.source)] : [...governanceFiles];
 
+  // `operatorStatus` coerces `stale` to a boolean, so "unknown" cannot be expressed through it.
+  // When no supported baseline exists there is nothing to be fresh against, so the conservative
+  // value is kept and the reason is emitted as explicit limit evidence.
+  const baselineSupported = recordedBaselineSupported(recorded);
+  const baselineState: DriftBaselineState = baselineSupported ? "RECORDED" : recorded.present ? "UNSUPPORTED" : "ABSENT";
+  const baselineLimits: readonly string[] = baselineState === "RECORDED" ? [] : baselineState === "ABSENT" ? ["drift.baseline.absent", "operator.stale.unknown_conservative"] : ["drift.baseline.unsupported", "operator.stale.unknown_conservative"];
+
   const operator = engines.operatorStatus({
-    // The declared governance state is reported when the target declares one; otherwise the
-    // observed repository verdict is used; otherwise the state is explicitly unobserved.
+    // The declared governance state is reported when the target declares a validated one;
+    // otherwise the observed repository verdict is used; otherwise the state is explicitly
+    // unobserved.
     state: typeof productionState === "string" ? productionState : repositoryVerdict === null ? "UNOBSERVED" : repositoryVerdict.state,
-    // Progress is only reported when the target actually declares it. It is never estimated.
+    // Progress is only reported when the target declares a validated one. It is never estimated.
     progress: typeof declaredProgress === "number" ? declaredProgress : null,
     evidence: evidenceRefs,
-    stale: drift.changed,
+    stale: drift === null ? true : drift.changed,
     optional: false,
   });
   const documentation = engines.documentationManifest(observeDocumentation(targetRef));
@@ -796,22 +1069,24 @@ function statusComposition(engines: Engines, targetRef: string, observation: Tar
     target: { targetRef: observation.targetRef, exists: observation.exists, isDirectory: observation.isDirectory },
     repository: { verdict: repositoryVerdict, dirtiness: repository.dirtiness, observationLimits: repository.observationLimits },
     // Production truth and the development overlay are reported separately and never merged.
+    // Presence, readability and validated semantic authority are three distinct facts.
     release: {
       source: governance.source,
       present: governance.present,
       readable: governance.readable,
+      valid: governance.valid,
       production: governance.production,
       development: governance.development,
     },
     operator,
     documentation,
     navigation,
+    // The drift engine verdict is reported verbatim, and only when a supported baseline exists.
+    // Without one there is no authoritative comparison, so drift is unavailable rather than a
+    // fabricated change event.
     drift,
-    // The drift engine compares two observations; it is not told whether a governed baseline was
-    // ever recorded. The projection states that explicitly, so the absence of governed state is
-    // never read as drift of governed state.
-    driftBaseline: { state: recorded.present ? "RECORDED" : "ABSENT", ref: recorded.present ? recorded.ref : null },
-    observationLimits: recorded.present ? [] : ["drift.baseline.absent"],
+    driftBaseline: { state: baselineState, ref: recorded.present ? recorded.ref : null },
+    observationLimits: [...baselineLimits, ...governance.observationLimits, ...fileLimits],
     integrity: engines.integritySnapshot({ operator, documentation: documentation.digest, navigation: navigation.digest, repository: repository.dirtiness }),
   };
   return { body: Object.freeze(body), digest: fingerprint(body) };
@@ -854,11 +1129,13 @@ async function diagnosisHandler(verb: DiagnosisVerb, input: DiagnosisInput, cont
   // whichever governed artifact exists instead of assuming `init`.
   const recordedInit = readRecordedArtifact(targetRef, "init");
   const recorded = recordedInit.present ? recordedInit : readRecordedArtifact(targetRef, "adopt");
-  const drift = engines.detectDrift(
-    { observation: recorded.recordedObservationFingerprint ?? "NO_RECORDED_STATE" },
-    { observation: observation.stateFingerprint },
-    { authorized: false },
-  );
+  // Drift is a comparison, so it is only computed when a supported recorded baseline actually
+  // exists. Comparing against a sentinel would manufacture a change event that no evidence
+  // supports.
+  const drift =
+    recordedBaselineSupported(recorded) && recorded.recordedObservationFingerprint !== null
+      ? engines.detectDrift({ observation: recorded.recordedObservationFingerprint }, { observation: observation.stateFingerprint }, { authorized: false })
+      : null;
 
   const composition =
     verb === "doctor"

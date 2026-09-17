@@ -117,6 +117,25 @@ reimplemented in the CLI, and neither command writes anything.
   passed to the engine, and the engine's own fail-closed answer stands. Dependency security is
   reported as `REVIEW` rather than `PASS` while provenance is unverified; GitHub capability with
   no provider evidence is `REVIEW`; a missing capability envelope is `DEGRADED`.
+- **Every diagnostic read is contained and bounded (S0 read policy).** One shared helper performs
+  all read-only file reads: it binds the approved target root, rejects lexical escape, inspects
+  every path component with a non-following `lstat`, refuses symlink/junction/reparse ancestors
+  and link-like final targets, proves physical containment through `realpath`, requires a regular
+  file, and verifies that the opened file is the exact object the walk inspected. Reads are
+  capped at `DIAGNOSTIC_FILE_MAX_BYTES` per file and `DIAGNOSTIC_SOURCE_MAX_FILES` sources per
+  command, and the size gate runs *before* any read — oversized content is never read and never
+  truncated into apparently valid evidence. An alias is never followed merely because its
+  destination is reachable. Each refusal produces a deterministic observation-limit code in the
+  output: `DIAGNOSTIC_ALIAS_REFUSED:`, `DIAGNOSTIC_PATH_ESCAPE:`, `DIAGNOSTIC_NOT_REGULAR:`,
+  `DIAGNOSTIC_FILE_OVER_BUDGET:`, `DIAGNOSTIC_PATH_UNREADABLE:`. Absence is a successful
+  observation and is reported as absence, not as a limit.
+- **Checkpoint content is validated before it carries any meaning.** `.engineering/CHECKPOINT.json`
+  is untrusted input, so presence, readability and validated authority are three separate fields.
+  A document is accepted only when it is a non-array object, declares a supported `schemaVersion`,
+  types every projected production field correctly, keeps `overallCompletionPercent` inside
+  0..100, and carries an object-or-null V1.1 overlay. Anything else is reported as
+  `present: true, valid: false` with `production`/`development` `null` and a deterministic code,
+  and `operatorStatus` never consumes it.
 - **Remediation is guidance.** Every `repairSuggestion` keeps its verified posture
   (`automatic: false`, `previewRequired: true`); there is no `--fix` and no destructive repair.
 - **Git unavailable fails closed (WO-002 F2).** A missing or unusable `git` binary is surfaced by
@@ -126,12 +145,16 @@ reimplemented in the CLI, and neither command writes anything.
 - **Production and development state stay distinguishable.** `gef status` reports the declared
   production truth and the V1.1 development overlay as separate fields; it never merges them or
   invents completion.
-- **The drift baseline is stated, not implied.** The drift engine compares two observations and
-  is not told whether a governed baseline exists, so `status` reports `driftBaseline` explicitly
-  and takes it from whichever managed artifact exists (`.gef/init-state.json` or
-  `.gef/adopt-state.json`). A target with no governed state reports `{state: "ABSENT", ref: null}`
-  and lists `drift.baseline.absent` in `observationLimits`, so an ungoverned target is never read
-  as a target that drifted.
+- **The drift baseline is stated, not implied.** Drift is a comparison, so it is computed only
+  when a supported recorded baseline actually exists, and the projection states that baseline
+  explicitly via `driftBaseline`, taken from whichever managed artifact exists
+  (`.gef/init-state.json` or `.gef/adopt-state.json`). A target with no governed state reports
+  `{state: "ABSENT", ref: null}` and `drift: null` with `drift.baseline.absent` in
+  `observationLimits`; a recorded document that cannot be interpreted reports
+  `{state: "UNSUPPORTED"}` with `drift.baseline.unsupported`. Because `operatorStatus` cannot
+  express unknown staleness, the conservative `stale: true` is kept and explained by
+  `operator.stale.unknown_conservative` — an ungoverned target is never read as a target that
+  drifted, and no `UNEXPECTED` drift event is manufactured.
 - **No fabricated progress.** Operator progress is the declared percentage or `null`; an absent
   repository is reported as unobservable rather than assumed present.
 
