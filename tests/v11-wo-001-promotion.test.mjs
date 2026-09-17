@@ -55,7 +55,7 @@ test('D-0042 promotion is explicit and does not self-authorize main', () => {
 });
 
 test('promotion does not convert the V1.1 integration branch into production', () => {
-  assert.match(checkpointMd, /main.*production/i);
+  assert.ok(checkpointMd.includes('The V1.0 production state above remains canonical for `main`'));
   assert.match(checkpointMd, /No V1\.1 development state represents production/i);
   assert.notEqual(checkpoint.v11.status, 'PRODUCTION_APPROVED');
 });
