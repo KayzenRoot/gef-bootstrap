@@ -52,6 +52,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Rights oracle diagnostics
+        run: node packages/cli/scripts/rights-diagnostics.mjs
+
       - name: Rights oracle unit fixtures
         run: node --test tests/v11-wo-003-doctor-status.test.mjs
 

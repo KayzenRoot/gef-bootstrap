@@ -89,6 +89,7 @@ test("every workspace manifest agrees with the root lockfile", () => {
     const lockEntry = lockfile.packages[`packages/${directory}`];
     assert.ok(lockEntry, `packages/${directory} must appear in the lockfile`);
     assert.deepEqual(lockEntry.dependencies ?? {}, manifest.dependencies ?? {}, `packages/${directory} dependencies drifted between manifest and lockfile`);
+    assert.deepEqual(lockEntry.optionalDependencies ?? {}, manifest.optionalDependencies ?? {}, `packages/${directory} optional dependencies drifted between manifest and lockfile`);
     const bundled = manifest.bundleDependencies ?? manifest.bundledDependencies ?? [];
     const lockedBundled = lockEntry.bundleDependencies ?? lockEntry.bundledDependencies ?? [];
     assert.deepEqual(lockedBundled, bundled, `packages/${directory} bundled dependencies drifted between manifest and lockfile`);
@@ -346,7 +347,7 @@ test("the installed package carries the Windows rights oracle and its prebuilt b
   // The declared dependency is an exact pin, not a range.
   const packedManifest = JSON.parse(readFileSync(join(cliDir, "package.json"), "utf8"));
   assert.match(packedManifest.dependencies.koffi, /^\d+\.\d+\.\d+$/, "koffi must be pinned exactly");
-  assert.equal(packedManifest.dependencies["@koromix/koffi-win32-x64"], "3.3.0", "the Windows prebuilt is declared exactly");
+  assert.equal(packedManifest.optionalDependencies["@koromix/koffi-win32-x64"], "3.3.0", "the Windows prebuilt is declared exactly as an optional platform binary");
 
   // The installed CLI uses its own payload: on Windows that means loading the packaged adapter.
   const project = tempProject(t);
