@@ -49,10 +49,13 @@ import type {
 // Command input
 // ---------------------------------------------------------------------------
 
-export type CliVerb = "init" | "adopt";
+/** Re-exported from the parser so one vocabulary describes every admitted verb. */
+export type { CliVerb } from "./parser.js";
+export type MutationVerb = "init" | "adopt";
+export type DiagnosisVerb = "doctor" | "status";
 
 export interface CliCommandInput {
-  readonly verb: CliVerb;
+  readonly verb: MutationVerb;
   readonly apply: boolean;
   readonly targetRef?: string;
 }
@@ -67,6 +70,28 @@ function validateCliInput(input: unknown): { readonly ok: true; readonly value: 
   const targetRef = record["targetRef"];
   if (targetRef !== undefined && typeof targetRef !== "string") return { ok: false, reason: "targetRef_must_be_string" };
   return { ok: true, value: { verb, apply, ...(targetRef === undefined ? {} : { targetRef }) } };
+}
+
+
+// ---------------------------------------------------------------------------
+// Diagnostic input (read-only commands)
+// ---------------------------------------------------------------------------
+
+export interface DiagnosisInput {
+  readonly verb: DiagnosisVerb;
+  readonly targetRef?: string;
+}
+
+function validateDiagnosisInput(input: unknown): { readonly ok: true; readonly value: DiagnosisInput } | { readonly ok: false; readonly reason: string } {
+  if (input === null || typeof input !== "object") return { ok: false, reason: "input_must_be_object" };
+  const record = input as Record<string, unknown>;
+  const verb = record["verb"];
+  if (verb !== "doctor" && verb !== "status") return { ok: false, reason: "verb_must_be_doctor_or_status" };
+  // A mutation intent must never be expressible against a read-only command.
+  if ("apply" in record) return { ok: false, reason: "apply_not_admitted" };
+  const targetRef = record["targetRef"];
+  if (targetRef !== undefined && typeof targetRef !== "string") return { ok: false, reason: "targetRef_must_be_string" };
+  return { ok: true, value: { verb, ...(targetRef === undefined ? {} : { targetRef }) } };
 }
 
 // ---------------------------------------------------------------------------
@@ -276,7 +301,7 @@ export function observeCanonicalSources(targetRef: string): readonly CanonicalSo
   return Object.freeze(sources);
 }
 
-function artifactPathFor(targetRoot: string, verb: CliVerb): string {
+function artifactPathFor(targetRoot: string, verb: MutationVerb): string {
   return resolve(targetRoot, GEF_STATE_DIRECTORY, `${verb}-state.json`);
 }
 
@@ -294,7 +319,7 @@ export interface RecordedArtifact {
  * The document's schema version is enforced on read: an unsupported major version is reported
  * as such and never interpreted optimistically.
  */
-export function readRecordedArtifact(targetRef: string, verb: CliVerb): RecordedArtifact {
+export function readRecordedArtifact(targetRef: string, verb: MutationVerb): RecordedArtifact {
   const physical = artifactPathFor(resolve(targetRef), verb);
   const ref = `${GEF_STATE_DIRECTORY}/${verb}-state.json`;
   if (!existsSync(physical)) return { ref, present: false, fingerprint: "ABSENT", recordedObservationFingerprint: null, schemaVersionSupported: true };
@@ -351,7 +376,7 @@ function adoptComposition(engines: Engines, observation: TargetObservation, repo
   };
 }
 
-function composeFor(engines: Engines, verb: CliVerb, targetRef: string, productVersion: string) {
+function composeFor(engines: Engines, verb: MutationVerb, targetRef: string, productVersion: string) {
   const observation = observeTarget(targetRef);
   const repository = observeRepository(targetRef);
   // A verdict is derived only from an observation that actually saw the working tree. While the
@@ -369,6 +394,118 @@ function composeFor(engines: Engines, verb: CliVerb, targetRef: string, productV
     ? initComposition(engines, observation, repository, repositoryVerdict, canonical, drift, productVersion)
     : adoptComposition(engines, observation, repository, repositoryVerdict, canonical, drift, productVersion);
   return { body, digest: fingerprint(body), observation, repository: { ...repository, verdict: repositoryVerdict }, canonical, drift, recorded };
+}
+
+
+// ---------------------------------------------------------------------------
+// Read-only diagnostic probes
+// ---------------------------------------------------------------------------
+//
+// Doctor and status observe; they never mutate. Every probe below is a bounded read: a bounded
+// subprocess, a bounded file read, or a directory listing. Nothing here creates, writes or removes
+// a path, and nothing here touches the `.gef` / `.gef-private` transaction substrate.
+
+const GIT_PROBE_TIMEOUT_MS = 5_000;
+
+/** Bounded probe for the Git binary itself. A missing binary is a finding, not an assumption. */
+export function gitBinaryAvailable(): boolean {
+  try {
+    const result = spawnSync("git", ["--version"], { encoding: "utf8", timeout: GIT_PROBE_TIMEOUT_MS, maxBuffer: 64 * 1024 });
+    return result.error === undefined && result.status === 0;
+  } catch {
+    return false;
+  }
+}
+
+/** Governance sources the diagnostic surface is willing to read, in a deterministic order. */
+const GOVERNANCE_SOURCES: readonly string[] = Object.freeze([
+  ".engineering/CHECKPOINT.json",
+  ".engineering/CHECKPOINT.md",
+  ".engineering/SCOPE.md",
+  ".engineering/DEFINITION-OF-DONE.md",
+  "AGENTS.md",
+  "README.md",
+  "CHANGELOG.md",
+  "SECURITY.md",
+  "LICENSE",
+  "docs/INSTALLATION.md",
+  "docs/QUICKSTART.md",
+]);
+
+export interface GovernanceObservation {
+  readonly source: string;
+  readonly present: boolean;
+  readonly readable: boolean;
+  /** Values declared by the source. Reported as declared; never re-interpreted as approval. */
+  readonly production: Readonly<Record<string, unknown>> | null;
+  /** The V1.1 development overlay, kept distinguishable from the production truth. */
+  readonly development: Readonly<Record<string, unknown>> | null;
+  readonly observationLimits: readonly string[];
+}
+
+function readBoundedFile(path: string): Buffer | undefined {
+  try {
+    return readFileSync(path);
+  } catch {
+    return undefined;
+  }
+}
+
+/** Read the target's declared governance state without mutating or reinterpreting it. */
+export function observeGovernance(targetRef: string): GovernanceObservation {
+  const absolute = resolve(targetRef);
+  const source = ".engineering/CHECKPOINT.json";
+  const physical = resolve(absolute, source);
+  if (!existsSync(physical)) {
+    return { source, present: false, readable: false, production: null, development: null, observationLimits: ["GOVERNANCE_SOURCE_ABSENT"] };
+  }
+  const body = readBoundedFile(physical);
+  if (body === undefined) {
+    return { source, present: true, readable: false, production: null, development: null, observationLimits: ["GOVERNANCE_SOURCE_UNREADABLE"] };
+  }
+  try {
+    const parsed = JSON.parse(body.toString("utf8")) as Record<string, unknown>;
+    const production: Record<string, unknown> = {};
+    for (const key of ["status", "phase", "stopState", "completedThroughModule", "mainProductionDenominatorWeight", "earnedProductionWeight", "overallCompletionPercent", "nextLegalStage"]) {
+      if (key in parsed) production[key] = parsed[key];
+    }
+    const overlay = parsed["v11"];
+    return {
+      source,
+      present: true,
+      readable: true,
+      production: Object.freeze(production),
+      development: overlay !== null && typeof overlay === "object" ? Object.freeze(overlay as Record<string, unknown>) : null,
+      observationLimits: [],
+    };
+  } catch {
+    return { source, present: true, readable: false, production: null, development: null, observationLimits: ["GOVERNANCE_SOURCE_NOT_PARSEABLE"] };
+  }
+}
+
+/** Bounded listing of the governance sources present in the target. */
+export function observeGovernanceFiles(targetRef: string): readonly string[] {
+  const absolute = resolve(targetRef);
+  return Object.freeze(GOVERNANCE_SOURCES.filter((relativePath) => existsSync(resolve(absolute, relativePath))));
+}
+
+interface DocumentationEntry {
+  readonly id: string;
+  readonly source: string;
+  readonly version: unknown;
+  readonly digest: string;
+}
+
+/** Documentation manifest entries: present files only, with their real content digest. */
+export function observeDocumentation(targetRef: string): readonly DocumentationEntry[] {
+  const absolute = resolve(targetRef);
+  const entries: DocumentationEntry[] = [];
+  for (const relativePath of GOVERNANCE_SOURCES) {
+    const body = readBoundedFile(resolve(absolute, relativePath));
+    if (body === undefined) continue;
+    entries.push({ id: relativePath, source: relativePath, version: null, digest: createHash("sha256").update(body).digest("hex") });
+  }
+  return Object.freeze(entries);
 }
 
 // ---------------------------------------------------------------------------
@@ -418,7 +555,7 @@ function resolveTargetRequested(input: CliCommandInput, context: ExecutionContex
   return context.target?.targetRef ?? input.targetRef ?? context.ports.environment?.values["GEF_TARGET"] ?? process.cwd();
 }
 
-async function planHandler(verb: CliVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
+async function planHandler(verb: MutationVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
   const commandId = verb === "init" ? "gef.init.plan" : "gef.adopt.preview";
   let engines: Engines;
   try {
@@ -432,7 +569,7 @@ async function planHandler(verb: CliVerb, input: CliCommandInput, context: Execu
   return { ok: true, value: { commandId, effect: "NONE", [key]: composed.body, [`${key}Digest`]: composed.digest } };
 }
 
-async function applyHandler(verb: CliVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
+async function applyHandler(verb: MutationVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
   const commandId = verb === "init" ? "gef.init.run" : "gef.adopt.apply";
   let engines: Engines;
   try {
@@ -552,11 +689,197 @@ async function applyHandler(verb: CliVerb, input: CliCommandInput, context: Exec
   };
 }
 
+
+// ---------------------------------------------------------------------------
+// Diagnosis compositions (read-only)
+// ---------------------------------------------------------------------------
+
+/**
+ * Doctor observations.
+ *
+ * Only what was actually measured is reported. An observation that could not be taken is either
+ * omitted (not applicable) or passed as `false` (measured and failing); it is never passed as
+ * `true` on assumption, so the engine can never be handed a fabricated healthy input.
+ */
+function doctorObservations(targetRef: string, repository: RepositoryObservation): Readonly<Record<string, unknown>> {
+  const nodeMajor = Number.parseInt(process.versions.node.split(".")[0] ?? "0", 10);
+  const observations: Record<string, unknown> = {
+    "toolchain.node": Number.isFinite(nodeMajor) && nodeMajor >= 22,
+    "toolchain.platform": ["win32", "linux", "darwin"].includes(process.platform),
+    "toolchain.git": gitBinaryAvailable(),
+  };
+  if (repository.dirtiness === "UNKNOWN") observations["repository.observable"] = false;
+  else if (repository.dirtiness === "OBSERVED") observations["repository.observable"] = true;
+  // With no repository at all the question is not applicable, so it is reported as nothing rather
+  // than as a passing check.
+  return Object.freeze(observations);
+}
+
+export interface DiagnosisComposition {
+  readonly body: Readonly<Record<string, unknown>>;
+  readonly digest: string;
+}
+
+function doctorComposition(engines: Engines, targetRef: string, observation: TargetObservation, repository: RepositoryObservation, governance: GovernanceObservation): DiagnosisComposition {
+  const observations = doctorObservations(targetRef, repository);
+  const findings = engines.doctor(observations);
+  // Remediation is guidance only: the owning engine fixes the posture, and the CLI does not
+  // upgrade it into an action.
+  const remediation = findings.filter((finding) => finding.state !== "HEALTHY").map((finding) => engines.repairSuggestion(finding.id));
+
+  const nodeMajor = Number.parseInt(process.versions.node.split(".")[0] ?? "0", 10);
+  const manifest = readBoundedFile(resolve(targetRef, "package.json"));
+  const lock = readBoundedFile(resolve(targetRef, "package-lock.json"));
+  const dependency = engines.dependencySecurity({
+    ...(manifest === undefined ? {} : { manifestDigest: createHash("sha256").update(manifest).digest("hex") }),
+    ...(lock === undefined ? {} : { lockDigest: createHash("sha256").update(lock).digest("hex") }),
+    // The CLI has not independently verified a dependency audit, so provenance stays unverified and
+    // the owning engine reports REVIEW rather than PASS.
+    provenance: "unverified",
+  });
+  // No provider access is attempted, so provider security evidence is absent and the engine
+  // reports REVIEW. It is never reported as PASS by omission.
+  const github = engines.githubSecurity({});
+
+  const invariants = [
+    engines.invariantResult("platform.supported", observations["toolchain.platform"] === true, true),
+    engines.invariantResult("toolchain.nodeMajor", Number.isFinite(nodeMajor) && nodeMajor >= 22, true),
+    engines.invariantResult("toolchain.git", observations["toolchain.git"] === true, true),
+  ];
+
+  const capabilities = engines.capabilityEnvelope([
+    { capability: "toolchain.git", verified: observations["toolchain.git"] === true },
+    { capability: "toolchain.node", verified: observations["toolchain.node"] === true },
+    { capability: "toolchain.platform", verified: observations["toolchain.platform"] === true },
+    ...(repository.dirtiness === "NOT_APPLICABLE" ? [] : [{ capability: "repository.observable", verified: repository.dirtiness === "OBSERVED" }]),
+  ]);
+
+  const safety = engines.safetyDecision({ classification: "NONE", blastRadius: "known", requested: "AUTO", restricted: false });
+  const body = {
+    verb: "doctor",
+    readOnly: true,
+    target: { targetRef: observation.targetRef, exists: observation.exists, isDirectory: observation.isDirectory },
+    findings,
+    remediation,
+    invariants,
+    security: { dependency, github, safety },
+    capabilities,
+    governance: { source: governance.source, present: governance.present, readable: governance.readable, observationLimits: governance.observationLimits },
+    integrity: engines.integritySnapshot({ findings, observations, dependencies: dependency.digest, capabilities: capabilities.digest }),
+    observationLimits: repository.observationLimits,
+  };
+  return { body: Object.freeze(body), digest: fingerprint(body) };
+}
+
+function statusComposition(engines: Engines, targetRef: string, observation: TargetObservation, repository: RepositoryObservation, repositoryVerdict: RepositoryStateResult | null, governance: GovernanceObservation, drift: DriftResult, recorded: RecordedArtifact): DiagnosisComposition {
+  const governanceFiles = observeGovernanceFiles(targetRef);
+  const productionState = governance.production === null ? undefined : governance.production["status"];
+  const declaredProgress = governance.production === null ? undefined : governance.production["overallCompletionPercent"];
+  const evidenceRefs = governance.present ? [governance.source, ...governanceFiles.filter((file) => file !== governance.source)] : [...governanceFiles];
+
+  const operator = engines.operatorStatus({
+    // The declared governance state is reported when the target declares one; otherwise the
+    // observed repository verdict is used; otherwise the state is explicitly unobserved.
+    state: typeof productionState === "string" ? productionState : repositoryVerdict === null ? "UNOBSERVED" : repositoryVerdict.state,
+    // Progress is only reported when the target actually declares it. It is never estimated.
+    progress: typeof declaredProgress === "number" ? declaredProgress : null,
+    evidence: evidenceRefs,
+    stale: drift.changed,
+    optional: false,
+  });
+  const documentation = engines.documentationManifest(observeDocumentation(targetRef));
+  const navigation = engines.navigationPlan(governanceFiles);
+
+  const body = {
+    verb: "status",
+    readOnly: true,
+    target: { targetRef: observation.targetRef, exists: observation.exists, isDirectory: observation.isDirectory },
+    repository: { verdict: repositoryVerdict, dirtiness: repository.dirtiness, observationLimits: repository.observationLimits },
+    // Production truth and the development overlay are reported separately and never merged.
+    release: {
+      source: governance.source,
+      present: governance.present,
+      readable: governance.readable,
+      production: governance.production,
+      development: governance.development,
+    },
+    operator,
+    documentation,
+    navigation,
+    drift,
+    // The drift engine compares two observations; it is not told whether a governed baseline was
+    // ever recorded. The projection states that explicitly, so the absence of governed state is
+    // never read as drift of governed state.
+    driftBaseline: { state: recorded.present ? "RECORDED" : "ABSENT", ref: recorded.present ? recorded.ref : null },
+    observationLimits: recorded.present ? [] : ["drift.baseline.absent"],
+    integrity: engines.integritySnapshot({ operator, documentation: documentation.digest, navigation: navigation.digest, repository: repository.dirtiness }),
+  };
+  return { body: Object.freeze(body), digest: fingerprint(body) };
+}
+
+function diagnosisEnginesFailure(error: unknown, commandId: string, runId: string): GefError {
+  const detail = error instanceof EngineUnavailableError ? error.detail : error instanceof Error ? error.message : String(error);
+  const engine = error instanceof EngineUnavailableError ? error.engine : "unknown";
+  return createGefError({
+    id: `cli-engine-${commandId}`,
+    category: "CAPABILITY",
+    reason: "engine_unavailable",
+    severity: "ERROR",
+    summary: "A required diagnostic engine is unavailable",
+    retryability: "MANUAL_ONLY",
+    recoverability: "NONE_REQUIRED",
+    terminal: "BLOCKED",
+    commandId,
+    runId,
+    metadata: { engine, detail },
+    remediations: [{ actionId: "gef.cli.verify_installation" }],
+  });
+}
+
+async function diagnosisHandler(verb: DiagnosisVerb, input: DiagnosisInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
+  const commandId = verb === "doctor" ? "gef.doctor.run" : "gef.status.show";
+  let engines: Engines;
+  try {
+    engines = await loadEngines();
+  } catch (error: unknown) {
+    return { ok: false, error: diagnosisEnginesFailure(error, commandId, context.runId) };
+  }
+
+  const targetRef = context.target?.targetRef ?? input.targetRef ?? context.ports.environment?.values["GEF_TARGET"] ?? process.cwd();
+  const observation = observeTarget(targetRef);
+  const repository = observeRepository(targetRef);
+  const repositoryVerdict: RepositoryStateResult | null = repository.dirtiness === "UNKNOWN" ? null : engines.repositoryState(repository.input);
+  const governance = observeGovernance(targetRef);
+  // Either managed path can have recorded the baseline, and status is verb-agnostic: it reports
+  // whichever governed artifact exists instead of assuming `init`.
+  const recordedInit = readRecordedArtifact(targetRef, "init");
+  const recorded = recordedInit.present ? recordedInit : readRecordedArtifact(targetRef, "adopt");
+  const drift = engines.detectDrift(
+    { observation: recorded.recordedObservationFingerprint ?? "NO_RECORDED_STATE" },
+    { observation: observation.stateFingerprint },
+    { authorized: false },
+  );
+
+  const composition =
+    verb === "doctor"
+      ? doctorComposition(engines, targetRef, observation, repository, governance)
+      : statusComposition(engines, targetRef, observation, repository, repositoryVerdict, governance, drift, recorded);
+
+  return { ok: true, value: { commandId, effect: "NONE", [verb]: composition.body, [`${verb}Digest`]: composition.digest } };
+}
+
 // ---------------------------------------------------------------------------
 // Registration
 // ---------------------------------------------------------------------------
 
-export const CLI_COMMAND_IDS: readonly string[] = Object.freeze(["gef.init.plan", "gef.init.run", "gef.adopt.preview", "gef.adopt.apply"]);
+export const CLI_COMMAND_IDS: readonly string[] = Object.freeze([
+  "gef.init.plan",
+  "gef.init.run",
+  "gef.adopt.preview",
+  "gef.adopt.apply",
+  "gef.doctor.run",
+  "gef.status.show",
+]);
 
 /** Help inventory passed to `helpIndex`; the engine owns ordering and projection. */
 export const HELP_INVENTORY: readonly HelpCommandDescriptor[] = Object.freeze([
@@ -564,12 +887,14 @@ export const HELP_INVENTORY: readonly HelpCommandDescriptor[] = Object.freeze([
   { id: "gef.adopt.apply", summary: "run the governed adoption path", schema: null },
   { id: "gef.init.plan", summary: "plan project initialization (safe, read-only)", schema: null },
   { id: "gef.init.run", summary: "run the governed initialization path", schema: null },
+  { id: "gef.doctor.run", summary: "run read-only environment, repository and integrity diagnostics", schema: null },
+  { id: "gef.status.show", summary: "show observed governed project and repository status", schema: null },
 ]);
 
 const MUTATION_SECURITY_CLASS = "filesystem-mutation";
 
 export function cliRegistrations(): readonly CommandRegistration[] {
-  const registrations: readonly CommandRegistration<CliCommandInput, unknown>[] = [
+  const mutationRegistrations: readonly CommandRegistration<CliCommandInput, unknown>[] = [
     {
       commandId: "gef.init.plan",
       contractVersion: CLI_CONTRACT_VERSION,
@@ -609,7 +934,31 @@ export function cliRegistrations(): readonly CommandRegistration[] {
       handler: (input, context) => applyHandler("adopt", input, context),
     },
   ];
-  return Object.freeze(registrations as readonly CommandRegistration[]);
+  const diagnosisRegistrations: readonly CommandRegistration<DiagnosisInput, unknown>[] = [
+    {
+      commandId: "gef.doctor.run",
+      contractVersion: CLI_CONTRACT_VERSION,
+      owner: "m48-m54-maintenance+security-reliability-integrations",
+      mutation: false,
+      requiresTarget: false,
+      validateInput: validateDiagnosisInput,
+      handler: (input, context) => diagnosisHandler("doctor", input, context),
+    },
+    {
+      commandId: "gef.status.show",
+      contractVersion: CLI_CONTRACT_VERSION,
+      owner: "m41-m47-platform+m55-m61-quality+m62-m63-final",
+      mutation: false,
+      requiresTarget: false,
+      validateInput: validateDiagnosisInput,
+      handler: (input, context) => diagnosisHandler("status", input, context),
+    },
+  ];
+  const registrations: readonly CommandRegistration[] = [
+    ...(mutationRegistrations as readonly CommandRegistration[]),
+    ...(diagnosisRegistrations as readonly CommandRegistration[]),
+  ];
+  return Object.freeze(registrations);
 }
 
 export function buildRegistry(): CommandRegistry {

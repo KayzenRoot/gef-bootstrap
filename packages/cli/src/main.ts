@@ -241,10 +241,12 @@ function buildPorts(deps: RunDependencies): RuntimePorts {
 }
 
 function commandRequestFor(commandId: string, verb: CliVerb, apply: boolean, targetRef: string | undefined): CommandRequest {
+  // Read-only commands declare no mutation intent, so their input carries no apply flag at all.
+  const readOnly = verb === "doctor" || verb === "status";
   return {
     commandId,
     contractVersion: CLI_CONTRACT_VERSION,
-    input: { verb, apply, ...(targetRef === undefined ? {} : { targetRef }) },
+    input: { verb, ...(readOnly ? {} : { apply }), ...(targetRef === undefined ? {} : { targetRef }) },
   };
 }
 

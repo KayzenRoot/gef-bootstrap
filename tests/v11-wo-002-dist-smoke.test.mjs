@@ -119,7 +119,7 @@ test("DIST-SMOKE-01c: the installed CLI operates without any surrounding source 
 
   const help = gefAt(bin, ["--help"]);
   assert.equal(help.code, 0, `installed help must exit 0: ${help.stderr}`);
-  assert.deepEqual(JSON.parse(help.stdout).commands.map((command) => command.id), ["gef.adopt.apply", "gef.adopt.preview", "gef.init.plan", "gef.init.run"]);
+  assert.deepEqual(JSON.parse(help.stdout).commands.map((command) => command.id), ["gef.adopt.apply", "gef.adopt.preview", "gef.doctor.run", "gef.init.plan", "gef.init.run", "gef.status.show"]);
 
   const version = gefAt(bin, ["--version"]);
   assert.equal(version.code, 0);

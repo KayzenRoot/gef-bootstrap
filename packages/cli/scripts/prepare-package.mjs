@@ -34,6 +34,9 @@ const ENGINES = [
   { name: "m48-m54-maintenance", source: "packages/m48-m54-maintenance/src/index.mjs", target: "src/index.mjs" },
   { name: "area-h-governance", source: "packages/area-h-governance/index.mjs", target: "index.mjs" },
   { name: "security-reliability-integrations", source: "packages/security-reliability-integrations/src/index.js", target: "src/index.js" },
+  { name: "m41-m47-platform", source: "packages/m41-m47-platform/src/index.mjs", target: "src/index.mjs" },
+  { name: "m55-m61-quality", source: "packages/m55-m61-quality/src/index.mjs", target: "src/index.mjs" },
+  { name: "m62-m63-final", source: "packages/m62-m63-final/src/index.mjs", target: "src/index.mjs" },
 ];
 
 /** Workspace runtime packages bundled into the tarball. */

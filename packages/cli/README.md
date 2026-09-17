@@ -7,7 +7,7 @@ process boundary live here; all domain behaviour is delegated to existing V1 eng
 the kernel `CommandRegistry`/`KernelRuntime`, and no business policy is implemented in CLI
 handlers.
 
-## Admitted commands (WO-002 increment)
+## Admitted commands (WO-002 + WO-003 increments)
 
 | Command | Canonical command ID | Effect |
 | --- | --- | --- |
@@ -17,10 +17,14 @@ handlers.
 | `gef init --apply` | `gef.init.run` | governed initialization run |
 | `gef adopt` | `gef.adopt.preview` | read-only adoption preview |
 | `gef adopt --apply` | `gef.adopt.apply` | governed adoption run |
+| `gef doctor` | `gef.doctor.run` | read-only environment/repository/integrity diagnostics |
+| `gef status` | `gef.status.show` | read-only governed project/repository status |
 
-`doctor`, `status` and `upgrade` are **not** implemented in this increment; they arrive with
-their owning Work Orders (WO-003, WO-004), and are refused as usage errors rather than
-partially working.
+`upgrade` is **not** implemented; it arrives with its owning Work Order (WO-004) and is refused
+as a usage error rather than partially working.
+
+`doctor` and `status` are read-only and admit no mutation flag: `--apply` is refused on exit 10
+before the command is resolved, and their command input carries no apply key at all.
 
 ## Delegation
 
@@ -31,6 +35,11 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
 | `init` | `installPlan`, `repositoryState`, `githubBootstrap`, `detectDrift`, `resolveCanonical` |
 | `adopt` | `detectDrift`, `resolveCanonical`, `backupManifest`, `recoveryPlan`, `installPlan` |
 | both apply paths | the kernel transaction engine |
+| `doctor` | `doctor`, `repairSuggestion`, `invariantResult`, `dependencySecurity`, `githubSecurity`, `integritySnapshot`, `capabilityEnvelope`, `safetyDecision` |
+| `status` | `operatorStatus`, `repositoryState`, `documentationManifest`, `navigationPlan` |
+
+Each diagnostic command is registered with an explicit composite engine owner, so registry
+introspection proves the delegation instead of leaving it implicit.
 
 ## Behaviour
 
@@ -95,6 +104,37 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
   JSON Schema 2020-12 contracts shipped in `schemas/`; an unsupported schema major version
   fails closed on read.
 
+### Doctor and status
+
+Both commands are pure projections: they read a bounded set of already-governed observations,
+hand them to the verified engines, and render the engine's answer. No domain algorithm is
+reimplemented in the CLI, and neither command writes anything.
+
+- **Zero effect.** They create no `.gef`, no `.gef-private`, no receipt, no staging, no journal,
+  no Git branch/tag/config change and no provider call. They use bounded reads only, so the
+  private transaction area is never entered.
+- **Unknown is never upgraded to healthy.** Observations the CLI cannot make are simply not
+  passed to the engine, and the engine's own fail-closed answer stands. Dependency security is
+  reported as `REVIEW` rather than `PASS` while provenance is unverified; GitHub capability with
+  no provider evidence is `REVIEW`; a missing capability envelope is `DEGRADED`.
+- **Remediation is guidance.** Every `repairSuggestion` keeps its verified posture
+  (`automatic: false`, `previewRequired: true`); there is no `--fix` and no destructive repair.
+- **Git unavailable fails closed (WO-002 F2).** A missing or unusable `git` binary is surfaced by
+  `gef doctor` as an actionable `FINDING` on `toolchain.git` with a non-automatic remediation and
+  a failed invariant, and by `gef status` as `dirtiness: "UNKNOWN"` with a `null` verdict and an
+  operator state that is never `CLEAN`. Git absence can never be reported as clean or ready.
+- **Production and development state stay distinguishable.** `gef status` reports the declared
+  production truth and the V1.1 development overlay as separate fields; it never merges them or
+  invents completion.
+- **The drift baseline is stated, not implied.** The drift engine compares two observations and
+  is not told whether a governed baseline exists, so `status` reports `driftBaseline` explicitly
+  and takes it from whichever managed artifact exists (`.gef/init-state.json` or
+  `.gef/adopt-state.json`). A target with no governed state reports `{state: "ABSENT", ref: null}`
+  and lists `drift.baseline.absent` in `observationLimits`, so an ungoverned target is never read
+  as a target that drifted.
+- **No fabricated progress.** Operator progress is the declared percentage or `null`; an absent
+  repository is reported as unobservable rather than assumed present.
+
 ## Distribution
 
 The package is distributed as part of the GEF source workspace, and is also locally
@@ -110,6 +150,11 @@ and the runtime packages the CLI depends on are bundled, so an install needs no 
 surrounding source checkout. The package directory is never used as a scratch area — the
 distribution is assembled in a staging directory. `vendor/MANIFEST.json` records the sha256 of
 every vendored artefact.
+
+Six engine modules are vendored: `m48-m54-maintenance`, `area-h-governance`,
+`security-reliability-integrations`, `m41-m47-platform`, `m55-m61-quality` and `m62-m63-final`.
+The last three were added by the WO-003 increment so the installed package can serve `doctor`
+and `status` from the packaged payload alone.
 
 **No publication to npm, GitHub Releases or any registry is performed or claimed by this
 increment.** `private: true` and the absence of `publishConfig` make an accidental publication
