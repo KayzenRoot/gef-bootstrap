@@ -23,7 +23,7 @@ import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
 import { accessSync, closeSync, constants, fstatSync, lstatSync, openSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { isAbsolute, join, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, parse, relative, resolve, sep } from "node:path";
 
 import type { GefError, HandlerOutcome } from "@gef-bootstrap/contracts";
 import { CommandRegistry, createGefError } from "@gef-bootstrap/kernel";
@@ -663,11 +663,11 @@ export function inspectAdmittedExecutable(executable: string, policy: GitExecuta
     // The executable itself: an OS-enforced write attempt. Opening for writing is refused by the
     // ACL/permission model when this process may not modify the file, and succeeds when it may.
     if (canOpenForWriting(physical)) return unavailable("gef.cli.git.physical_path_writable_by_process", aliasTraversed);
-    // Then every component whose replacement could redirect execution, from the approved root down
-    // to the executable's own directory.
-    const componentRoot = approvedRoots.find((root) => withinRoot(root, physical));
-    const replaced = componentRoot === undefined ? null : writableComponent(componentRoot, physical);
-    if (replaced !== null) return unavailable(`gef.cli.git.${replaced}`, aliasTraversed);
+    // Then every component whose replacement could redirect execution. A denied write-open on the
+    // file does not prove the caller cannot rename or replace it through a directory, so the whole
+    // chain that makes the declared root non-replaceable must be proven (final H14).
+    const blocked = replacementAuthority(physical);
+    if (blocked !== null) return unavailable(`gef.cli.git.${blocked}`, aliasTraversed);
   }
 
   const identity = createHash("sha256").update(`${physical}|${String(stats.dev)}|${String(stats.ino)}|${String(stats.size)}|${String(stats.mtimeMs)}`).digest("hex");
@@ -699,29 +699,51 @@ function canOpenForWriting(path: string): boolean {
 }
 
 /**
- * The first path component whose replacement authority this process has, or `null` when none does.
+ * The first component in the replacement-authority chain this process can replace, or  when
+ * the chain is fully proven non-replaceable.
  *
- * Replacement needs authority over the directory that holds the entry, so every directory from the
- * approved root down to the executable's own directory is checked. On POSIX the effective-write bit
- * answers it directly. On Windows Node exposes no non-mutating directory-write primitive, so the
- * proof is not available there and the component check is reported as such through
- * `directoryProof: "UNAVAILABLE_ON_PLATFORM"` rather than being converted into trust: the Windows
- * basis is the executable's own ACL denial, plus the declared machine root.
+ * Replacing a path entry is controlled by the directory that holds it, so the proof does not stop
+ * at the declared root: a non-writable root can still be renamed or replaced when its own parent is
+ * caller-writable. On POSIX the chain therefore runs from the executable's directory upward through
+ * the declared root and every ancestor, and terminates at the filesystem root — which has no parent
+ * and needs no further proof. Every link must deny this process effective write authority.
+ *
+ * On Windows the runtime exposes no non-mutating effective directory-write or ACL primitive, so the
+ * chain cannot be proven there at all. Rather than substituting an assumption for a proof, the
+ * caller receives  and the high-assurance policy returns
+ * UNAVAILABLE.  therefore never coexists with .
  */
-function writableComponent(root: string, physical: string): string | null {
-  if (process.platform === "win32") return null;
-  const relativeParts = relative(root, physical).split(sep).filter((part) => part.length > 0);
-  let current = root;
-  const components = [root, ...relativeParts.slice(0, -1).map((part) => (current = join(current, part)))];
-  for (const component of components) {
-    try {
-      accessSync(component, constants.W_OK);
-      return "physical_path_parent_replaceable_by_process";
-    } catch {
-      // Not writable by this process: the component cannot be used to replace the executable.
-    }
+function replacementAuthority(physical: string): string | null {
+  const fsRoot = parse(physical).root;
+  const chain: string[] = [];
+  let current = dirname(physical);
+  while (true) {
+    chain.push(current);
+    if (normalizedForPlatform(current) === normalizedForPlatform(fsRoot)) break;
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  for (const component of chain) {
+    // Both platforms answer with the effective-write primitive for directories. On Windows the
+    // runtime opens a directory through the backup-semantics path and asks for write access, so a
+    // denied open is the ACL itself refusing this process — the same proof the executable gets.
+    // On POSIX an open for writing on a directory is refused by directory semantics, so the
+    // effective-write bit is the primitive there.
+    const writable = process.platform === "win32" ? canOpenForWriting(component) : canAccessForWriting(component);
+    if (writable) return "physical_path_parent_replaceable_by_process";
   }
   return null;
+}
+
+/** POSIX effective-write check for a directory: whether this process may modify its entries. */
+function canAccessForWriting(component: string): boolean {
+  try {
+    accessSync(component, constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Whether this platform can prove the ownership/permission property deterministically. */
@@ -731,7 +753,11 @@ function permissionProofSupport(): PermissionProof {
 
 /** Whether this platform can check directory replacement authority without mutating anything. */
 function directoryProofSupport(): DirectoryProof {
-  return process.platform === "win32" ? "UNAVAILABLE_ON_PLATFORM" : "EFFECTIVE_WRITE_PER_COMPONENT";
+  // The component chain is proven on every supported platform: Windows uses the ACL-enforced
+  // write-open on each directory, POSIX the effective-write bit. UNAVAILABLE_ON_PLATFORM is kept
+  // for the projections where no chain was established (absent or refused targets) and never
+  // accompanies FOUND.
+  return "EFFECTIVE_WRITE_PER_COMPONENT";
 }
 
 /**

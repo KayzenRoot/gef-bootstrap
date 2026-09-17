@@ -8,7 +8,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { chmodSync, closeSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { accessSync, chmodSync, closeSync, constants, copyFileSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
 import { delimiter as pathDelimiter, dirname, join, relative, sep } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -1246,6 +1246,17 @@ function machinePolicyOver(root, candidate) {
   });
 }
 
+/** True when this process can replace entries in ; the platform-appropriate primitive. */
+function directoryIsReplaceable(path) {
+  if (process.platform === "win32") return canOpenForWritingForTest(path);
+  try {
+    accessSync(path, constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** Whether this process can open a path for writing; exported only for the H14 assertion. */
 function canOpenForWritingForTest(path) {
   try {
@@ -1453,16 +1464,16 @@ test("H14: replacement authority through a path component is refused where prova
   chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
   if (process.platform !== "win32") assert.equal(canOpenForWritingForTest(candidate), false);
 
+  // Liveness: the path component that holds the executable really is replaceable by this process.
+  // The chmod below can only make a directory non-writable where POSIX bits govern it; on Windows
+  // ACLs do, so there the root stays replaceable and the immediate-parent rule is what fires.
+  assert.equal(directoryIsReplaceable(root), true, "the component holding the executable is replaceable, so the fixture is live");
+  if (process.platform !== "win32") chmodSync(root, 0o555);
+  else t.diagnostic("H14 win32: a temporary root stays ACL-writable, so the immediate-parent rule is the one exercised here");
+
   const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
-  if (process.platform === "win32") {
-    // No non-mutating directory-write primitive exists on Windows, so the component proof is
-    // reported as unavailable rather than converted into trust.
-    assert.equal(inspection.directoryProof, "UNAVAILABLE_ON_PLATFORM");
-    t.diagnostic("H14 evidence gap on win32: directory replacement authority is not provable; the executable's own ACL denial is the whole basis");
-    return;
-  }
   assert.equal(inspection.directoryProof, "EFFECTIVE_WRITE_PER_COMPONENT");
-  assert.equal(inspection.status, "UNAVAILABLE", "a caller-writable parent makes the executable replaceable");
+  assert.equal(inspection.status, "UNAVAILABLE", "a caller-replaceable path component makes the executable replaceable");
   assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
 });
 
@@ -1499,4 +1510,88 @@ test("H14: a genuinely non-replaceable admitted executable still succeeds", (t) 
   assert.equal(inspection.executableIdentity, resolved.identity);
   assert.equal(canOpenForWritingForTest(resolved.physicalPath), false, "this process cannot write the admitted executable");
   t.diagnostic(`H14: admitted executable permissionProof=${inspection.permissionProof} directoryProof=${inspection.directoryProof}`);
+});
+
+// ------------------------------------------- H14 final: trust-anchor chain
+
+test("H14-final: a caller-writable ancestor above the declared root is refused", (t) => {
+  // The declared root is made non-writable, but the directory that holds it is not: replacing the
+  // root entry is exactly what the old root-downward proof could not see.
+  const parent = mkdtempSync(join(tmpdir(), "gef-h14f-ancestor-"));
+  t.after(() => rmSync(parent, { recursive: true, force: true }));
+  const root = join(parent, "trust-root");
+  mkdirSync(root, { recursive: true });
+  const commandDirectory = process.platform === "win32" ? join(root, "cmd") : root;
+  mkdirSync(commandDirectory, { recursive: true });
+  const candidate = process.platform === "win32" ? join(commandDirectory, "git.exe") : join(root, "git");
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14f-sent-")), "sentinel");
+  const payload = writePayload(candidate, "A", sentinel);
+  // The executable itself is not writable, so the refusal must come from the chain, not the file.
+  chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
+  assert.equal(canOpenForWritingForTest(candidate), false, "the executable must be non-writable for this fixture");
+
+  // Liveness: the root entry can be replaced, because the directory holding it is writable.
+  assert.equal(directoryIsReplaceable(parent), true, "the parent of the declared root must be replaceable for this fixture to be live");
+  if (process.platform !== "win32") assert.equal(directoryIsReplaceable(root), false, "the declared root itself is not writable");
+
+  const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
+  assert.equal(inspection.status, "UNAVAILABLE", "a replaceable ancestor above the declared root must refuse the executable");
+  assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
+  assert.equal(existsSync(payload.sentinel ?? ""), false, "the refused candidate never ran");
+});
+
+test("H14-final: the machine chain reaches the filesystem root", (t) => {
+  const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
+  assert.notEqual(resolved, null, "the machine policy admits the system Git");
+  const inspection = inspectAdmittedExecutable(resolved.executable, DEFAULT_GIT_TRUST_POLICY);
+  assert.equal(inspection.status, "FOUND");
+
+  // The proof is a chain, and the same primitive answers for every component of it, on both
+  // platforms: a denied write-open on Windows (the ACL), the effective-write bit on POSIX.
+  let current = dirname(resolved.physicalPath);
+  const chain = [];
+  while (true) {
+    chain.push(current);
+    const up = dirname(current);
+    if (up === current) break;
+    current = up;
+  }
+  assert.ok(chain.length >= 2, "the chain must extend above the executable's own directory");
+  for (const component of chain) {
+    assert.equal(directoryIsReplaceable(component), false, `${component} must not be replaceable by this process`);
+  }
+  t.diagnostic(`H14-final: proven chain of ${chain.length} components, permissionProof=${inspection.permissionProof} directoryProof=${inspection.directoryProof}`);
+});
+
+test("H14-final: FOUND never coexists with an unproven directory chain", () => {
+  // The invariant, asserted over every admission the default policy can make on this host.
+  for (const candidate of DEFAULT_GIT_TRUST_POLICY.candidates) {
+    const inspection = inspectAdmittedExecutable(candidate, DEFAULT_GIT_TRUST_POLICY);
+    if (inspection.status !== "FOUND") continue;
+    assert.equal(inspection.directoryProof, "EFFECTIVE_WRITE_PER_COMPONENT", `${candidate} must carry a proven chain`);
+    assert.equal(canOpenForWritingForTest(inspection.physicalPath), false, `${candidate} must not be writable by this process`);
+  }
+  const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
+  assert.notEqual(resolved, null, "at least one candidate is admitted, so the invariant is exercised");
+});
+
+test("H14-final: a caller-replaceable root is unavailable under the default policy", (t) => {
+  // A Homebrew/local-style prefix owned by the current user: the executable is inside a declared
+  // root and is not group/other writable, but the caller can replace it, so the high-assurance
+  // default must not admit it. The explicit user-managed policy is the only way in.
+  const root = mkdtempSync(join(tmpdir(), "gef-h14f-prefix-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const bin = join(root, "bin");
+  mkdirSync(bin, { recursive: true });
+  const candidate = process.platform === "win32" ? join(bin, "git.exe") : join(bin, "git");
+  writePayload(candidate, "A", join(root, "sentinel"));
+  // Non-writable executable, undecorated group/other bits: containment and mode are satisfied, and
+  // only replacement authority through the caller-writable prefix can refuse it.
+  chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
+  assert.equal(canOpenForWritingForTest(candidate), false, "the executable must be non-writable for this fixture");
+
+  const machine = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
+  assert.equal(machine.status, "UNAVAILABLE", "a caller-replaceable prefix is not machine-trusted");
+  assert.equal(machine.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
+  assert.equal(inspectAdmittedExecutable(candidate, userManagedGitTrustPolicy([{ root, rationale: "prefix" }])).status, "FOUND", "the explicit user-managed policy is the deliberate way in");
 });
