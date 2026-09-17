@@ -6,7 +6,7 @@
   "baseBranch": "release/1.1",
   "baseSha": "c5890620a98f2b23c794d65234824ad2ea084036",
   "promotionBranch": "gov/1.1/wo-001-checkpoint-promotion",
-  "promotionPayloadHead": "d5001c755841b9cfc8c3f90f30c25601b3794687",
+  "promotionPayloadHead": "9af7d1eb848bd8c8a4d96c194289337a7251c08b",
   "promotionDecision": "D-0059",
   "adr": "ADR-0003",
   "inheritedAudit": {
