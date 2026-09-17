@@ -7,10 +7,18 @@ Assurance: `ELEVATED`
 Executed by: external executor under `ADR-0003-D3` (bounded authorization)
 Audit disposition: **not self-assessed** — objective audit is external
 
-**Revision note (final H14 correction).** This bundle supersedes the evidence recorded at head
+**Revision note (Windows replacement-rights correction, disposition BLOCKED).** This bundle supersedes
+the evidence recorded at head `38e19dd1d05121e1bb4b2dbbcd393286eaea361a`, which received
+`CORRECTION_REQUIRED` (review `5240757786`: CRITICAL 0 / HIGH 1). The claim `CRITICAL: 0 / HIGH: 0`
+recorded at that head is **retracted** in §19. The remaining Windows half of H14 is corrected in §9 by
+failing the high-assurance policy closed there; the resulting loss of Git-backed capability on
+Windows, including the WO-002 managed-mutation precondition, is a product-level consequence that
+requires an owner decision above this Work Order, so the disposition is **BLOCKED**.
+
+**Prior revision (final H14 correction).** This bundle also supersedes the evidence recorded at head
 `23fe092fc32b7d7694796999fb8342c94c4805fb`, which received `CORRECTION_REQUIRED` (review
 `5239917392`: CRITICAL 0 / HIGH 1). The claim `CRITICAL: 0 / HIGH 0` recorded at that head is
-**retracted** in §18. The remaining H14 defect — the trust anchor was not proven, so the Windows path
+**retracted** in §19. The remaining H14 defect — the trust anchor was not proven, so the Windows path
 could return FOUND with an unproven directory chain and the POSIX proof stopped at the declared root
 instead of running to the filesystem root — is corrected in §8. H13 is untouched and still closed.
 
@@ -43,7 +51,7 @@ current head in §8; they remain the historical record of those cycles.
 recorded at that head is **retracted** in §15. The two blocking HIGH findings — H7 the dirtiness
 probe could write the repository index, and H8 it could execute a repository-configured FSMonitor
 hook or start the daemon — are corrected in §4 and mapped to code and negative tests in §4.5. The
-H1–H6 closures of §2 and §3 are preserved and re-verified at the current head in §11; they are
+H1–H6 closures of §2 and §3 are preserved and re-verified at the current head in §12; they are
 retained as the historical record of those cycles, not as current-head proof of the Git dirtiness
 subprocess.
 
@@ -71,7 +79,8 @@ those heads was retracted in its own cycle and is not reinstated here.
 | H9–H10 corrected head | `570b235ea7bb4b21a0d564f88f9b92cd6b529cad` — reaudited, `CORRECTION_REQUIRED` (H11–H12) |
 | H11–H12 corrected head | `c1ad0144c3d6a02c0c96911bff5f16d140e5d403` — reaudited, `CORRECTION_REQUIRED` (H13–H14) |
 | H13–H14 corrected head | `23fe092fc32b7d7694796999fb8342c94c4805fb` — reaudited, `CORRECTION_REQUIRED` (final H14) |
-| **Final H14 corrected head** | the commit introducing this revised bundle; exact SHA reported in PR #284 |
+| Final H14 corrected head | `38e19dd1d05121e1bb4b2dbbcd393286eaea361a` — reaudited, `CORRECTION_REQUIRED` (Windows rights) |
+| **Windows-rights corrected head (BLOCKED)** | `2a7010368481b4fa720e34ec1097dd49f2e00754` |
 | Production branch `main` | `72c17bd3e7e421790ac382022b1f0ebbb0275ea4` — **unmodified** |
 | Release tag `v1.0.0` | object `aac89f9c3f0c884474958025bf14828bc338b5ee` → target `866fe3af8cccc65c929aaf6a47a924401fa448b3` — **unmoved** |
 
@@ -1125,7 +1134,101 @@ No WO-002 suite changed its result.
 
 ---
 
-## 9. What was delivered
+## 9. Windows replacement-rights correction (objective review `5240757786`)
+
+Disposition at head `38e19dd…`: `CORRECTION_REQUIRED`, CRITICAL 0 / **HIGH 1**. H13 was confirmed
+closed, and the POSIX trust-anchor chain was accepted as materially closed. The remaining finding was
+the Windows half of H14.
+
+### 9.1 The found defect, verified against the platform
+
+The Windows proof treated a denied `open(r+)` as evidence that a path entry cannot be replaced. That
+is only evidence that generic read/write access is denied. Windows replacement authority is governed
+by two independent rights — `DELETE` on the target object and `FILE_DELETE_CHILD` on the containing
+directory — and a process may lack generic write while holding either of them.
+
+This was verified rather than reasoned about: a file whose `r+` open is refused because it is
+read-only can still be renamed by the same process.
+
+```
+r+ denied?                                    true
+rename/delete/replace authorised by the OS?   true
+```
+
+The previous Windows chain proof was therefore unsound, and the old test helper shared the production
+predicate, which made it circular.
+
+### 9.2 Why no proof can be built inside this Work Order
+
+The supported runtime exposes no way to request `DELETE` or `FILE_DELETE_CHILD` access — Node maps only
+read/write/create/truncate/append flags — and no security-descriptor API. So no OS-enforced probe for
+those rights exists, and evaluating a descriptor against the current token would need a native binding
+or a P/Invoke evaluator (the only Windows mechanisms that publish the decision in a non-localized,
+non-free-form form). Adding either is an architecture and packaging decision above WO-003, so the
+correction takes the alternative the finding prescribes.
+
+### 9.3 The Windows rights model actually implemented
+
+- The high-assurance policy returns `UNAVAILABLE` with the deterministic code
+  **`gef.cli.git.replacement_rights_proof_unavailable`** for every Windows candidate.
+- `directoryProof` is reported as `UNAVAILABLE_ON_PLATFORM` on Windows, so **`FOUND` can never
+  accompany it**; a test asserts that invariant over every candidate.
+- The executable-content check (`open(r+)` denial) is retained, because "the caller cannot modify the
+  executable contents" remains a real, provable requirement — it is simply not sufficient alone.
+- **Availability is not preserved by assumption**: no Windows path is trusted because it starts with
+  `C:\Program Files`, and no owner-name, mode-bit or path-location heuristic is used.
+- The POSIX model is unchanged and still accepted: lexical admission, physical-root containment,
+  regular executable, contents non-writable, and the effective-write chain from the executable
+  upward to the filesystem root.
+- The execution-time identity recheck remains mandatory: the whole inspection, including the trust
+  decision, runs again immediately before every spawn, so a change in either identity or trust rights
+  refuses without executing.
+
+### 9.4 The required non-circular Windows fixtures
+
+| Fixture | What it proves |
+|---|---|
+| Write denied, replacement authorised | The dangerous case, with an **independent rename oracle** performed inside the disposable fixture — not the production predicate. The corrected policy returns `UNAVAILABLE` with the rights code. |
+| Parent permits deletion | A protected executable inside a caller-replaceable directory is refused; the directory side of the decision is exercised by creating and removing a real entry. |
+| Target-DELETE-only / delete-child-only | Both are refused because neither right is observable. Authoring an ACL that grants exactly one of them needs ACL editing the test runtime does not expose; that construction limit is recorded as an evidence gap, and the consequence it exists to assert — that a candidate holding either right cannot be trusted by assumption — is covered because **no** Windows candidate is admitted. |
+| Trusted inverse | On POSIX the system chain is provable and admitted with `EFFECTIVE_WRITE_PER_COMPONENT`; on Windows nothing is admitted and the test asserts exactly that. |
+| No fake execution | Every refused fixture asserts its sentinel executable was never spawned. |
+
+All four Windows fixtures and the POSIX ones run in the focused suite: **72 / 72 passing**.
+
+### 9.5 The consequence, and why this is a blocked decision
+
+With no admitted Git on Windows, the working tree cannot be observed there: `gef doctor` reports the
+toolchain as `UNAVAILABLE` with an actionable finding, `gef status` reports the repository as
+`UNKNOWN` with a `null` verdict, and — because WO-002 deliberately blocks managed mutation when the
+working tree cannot be observed — `init --apply` / `adopt --apply` are blocked on that platform.
+
+That breaks five tests in the **accepted** WO-002 suites, which encode that accepted behaviour and
+have been left unmodified:
+
+```
+tests/v11-wo-002-repository-state.test.mjs   fail 3
+tests/v11-wo-002-cli.test.mjs                fail 1
+tests/v11-wo-002-cli-e2e.test.mjs            fail 1
+```
+
+Local ladder on this host: `npm run validate` → exit **1**, tests 1456 / pass 1437 / fail 5 /
+skipped 14. CI runs the full suite on `ubuntu-latest`, where the POSIX chain is proven and the whole
+suite passes; the exact-head workflows for the head carrying this section are **23 runs / 89 checks,
+all `success`**.
+
+No safety guarantee is weakened — every path is strictly more conservative — but a supported platform
+loses Git-backed capability, including managed mutations, which is a product-level decision WO-003
+cannot make. Per the correction prompt this is the stated blocked condition: exact Windows
+replacement rights cannot be proven inside the supported runtime without a frozen architecture
+decision (a native effective-rights binding or an equivalent P/Invoke evaluator), so the default
+machine policy fails closed and the disposition is **BLOCKED** pending that owner decision. The
+WO-003 suites assert the truthful Windows outcome with explicit diagnosed skips for the Git-backed
+cases rather than silently passing them.
+
+---
+
+## 10. What was delivered
 
 Two read-only diagnostic commands, registered on the canonical IDs and projected through the
 existing renderer contract. No `--fix`, no destructive repair, no `upgrade`, no migration/recovery
@@ -1188,9 +1291,9 @@ renders the engine's answer.
 
 ---
 
-## 10. Changed files and reasons
+## 11. Changed files and reasons
 
-### 10.1 Files inside the Context Lock `expectedWriteSurface`
+### 11.1 Files inside the Context Lock `expectedWriteSurface`
 
 | File | Change | Reason |
 |---|---|---|
@@ -1206,7 +1309,7 @@ renders the engine's answer.
 | `tests/v11-wo-003-dist-smoke.test.mjs` | new; 5 tests initially, 6 after the H1-H4 correction | WO-003 ladder L3 |
 | `.engineering/evidence/GBS-V11-WO-003-EVIDENCE.md` | new (this file) | WO-003 evidence bundle |
 
-### 10.2 Context expansions (writes outside the Context Lock surface, each with a concrete dependency reason)
+### 11.2 Context expansions (writes outside the Context Lock surface, each with a concrete dependency reason)
 
 | File | Reason |
 |---|---|
@@ -1217,10 +1320,10 @@ renders the engine's answer.
 | `tests/v11-wo-002-dist-smoke.test.mjs` | Same mechanical update in the packed-install suite (installed `--help` inventory). |
 
 No expansion touched `packages/kernel`, the V1.0 accepted history, any workflow, or any
-upgrade/migration or WO-005+ surface. The negative-search ledger in §16 records what was deliberately
+upgrade/migration or WO-005+ surface. The negative-search ledger in §17 records what was deliberately
 not changed.
 
-### 10.3 Read scope
+### 11.3 Read scope
 
 Read only the Execution Brief minimum read set plus the directly named engine modules required to
 bind the verified symbols (`m48-m54-maintenance`, `area-h-governance`,
@@ -1228,7 +1331,7 @@ bind the verified symbols (`m48-m54-maintenance`, `area-h-governance`,
 repository-wide rediscovery pass was performed. `detectDrift` and `operatorStatus` were read to
 confirm their exact contracts before composing inputs.
 
-### 10.4 A projection defect found and fixed during the initial implementation
+### 11.4 A projection defect found and fixed during the initial implementation
 
 `detectDrift` compares two observations and is not told whether a governed baseline exists. The
 first working version of `statusComposition` passed the `"NO_RECORDED_STATE"` sentinel on a target
@@ -1252,7 +1355,7 @@ The baseline is taken from whichever managed artifact exists — `init` **or** `
 
 ---
 
-## 11. Validation ladder — commands, exit codes, counts
+## 12. Validation ladder — commands, exit codes, counts
 
 All figures below are at the final-H14 corrected head. The figures recorded at the earlier heads —
 `89b2d137…` (16 / 9 / 5 focused, 1374 total), `49ceca34…` (38 / 12 / 6, 1400 total),
@@ -1317,7 +1420,7 @@ the Execution Brief permits renderer extension only where the current renderers 
 
 ---
 
-## 12. No-mutation proof
+## 13. No-mutation proof
 
 Every mutation-capable surface was compared before and after a real invocation.
 
@@ -1351,7 +1454,7 @@ Neither command reads stdin, so a non-TTY invocation cannot block on an implicit
 
 ---
 
-## 13. Git-unavailable / capability fail-closed proof (WO-002 F2 closure)
+## 14. Git-unavailable / capability fail-closed proof (WO-002 F2 closure)
 
 Reproduced with a real process and an emptied `PATH` (absolute Node path retained):
 
@@ -1384,7 +1487,7 @@ Additional fail-closed cases covered by tests:
 
 ---
 
-## 14. Local packed-install parity proof
+## 15. Local packed-install parity proof
 
 `tests/v11-wo-003-dist-smoke.test.mjs` builds the package with the repository's staging script
 (`scripts/prepare-package.mjs --pack`), installs the tarball with a real `npm install` into a fresh
@@ -1412,17 +1515,17 @@ no registry is contacted.
 
 ---
 
-## 15. `init` / `adopt` regression proof
+## 16. `init` / `adopt` regression proof
 
 The three WO-002 suites run unchanged in behavior at this head: 30 + 11 + 7 = 48 tests, all
 passing. The only edits to those files are assertion updates for the grown command inventory and
 engine-symbol count; no `init`/`adopt` behavioral assertion was weakened, removed or relaxed, and no
 transaction, traversal, recovery, private-containment, journal-ownership or authorization contract
-was modified. `packages/kernel` is untouched by this increment (see §16).
+was modified. `packages/kernel` is untouched by this increment (see §17).
 
 ---
 
-## 16. Negative-search ledger — deliberate non-changes
+## 17. Negative-search ledger — deliberate non-changes
 
 | Not changed | Why |
 |---|---|
@@ -1448,7 +1551,7 @@ was modified. `packages/kernel` is untouched by this increment (see §16).
 
 ---
 
-## 17. No-publication and production-boundary statement
+## 18. No-publication and production-boundary statement
 
 - No merge was performed. PR #284 remains open and unmerged.
 - No tag was created or moved; `v1.0.0` still resolves to object
@@ -1462,13 +1565,13 @@ was modified. `packages/kernel` is untouched by this increment (see §16).
 
 ---
 
-## 18. Findings by severity
+## 19. Findings by severity
 
 ### Retraction
 
-The claim `CRITICAL: 0 / HIGH: 0` recorded for head `23fe092fc32b7d7694796999fb8342c94c4805fb` is
-**retracted**. Objective reaudit review `5239917392` found **CRITICAL 0 / HIGH 1** at that head. That
-finding is corrected in §8 and revalidated in §11.
+The claim `CRITICAL: 0 / HIGH: 0` recorded for head `38e19dd1d05121e1bb4b2dbbcd393286eaea361a` is
+**retracted**. Objective reaudit review `5240757786` found **CRITICAL 0 / HIGH 1** at that head. That
+finding is corrected in §9, and the product-level consequence it creates is escalated as BLOCKED.
 
 Both earlier retractions also stand: `CRITICAL: 0 / HIGH: 0` for head `49ceca34…` was retracted after
 review `5237002898` found CRITICAL 0 / HIGH 2, and for head `89b2d137…` after review `5236410386`
@@ -1502,7 +1605,7 @@ nothing and passed against the vulnerable code until the fixtures were made live
 | H13 | Invocation authority was process-global mutable state, so overlapping invocations could observe each other | **Corrected** — the authority is bound to the asynchronous execution context with AsyncLocalStorage; nested and concurrent invocations are isolated independently of completion order, and nothing survives an invocation (§7.1) |
 | H14 | Physical admission did not prove the executable was non-replaceable by the caller | **Corrected** in the H13–H14 cycle, and completed in the final H14 cycle: the proof is now a chain to the filesystem root, proven on Windows through the ACL-enforced write-open on each directory and on POSIX through the effective-write bit, so  can no longer coexist with an unproven chain (§8) |
 
-The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §11 and
+The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §12 and
 the tests in §2/§3/§4. It is not a claim that no further finding exists; that determination belongs
 to the objective reaudit.
 
@@ -1540,16 +1643,21 @@ to the objective reaudit.
 
 ---
 
-## 19. Executor statement
+## 20. Executor statement
 
 All work in this bundle is executor evidence. It is **not** self-approval and it does not claim
 `APPROVED`. The objective reviewer must return exactly one terminal disposition — `APPROVED`,
 `CORRECTION_REQUIRED` or `BLOCKED` — bound to the exact implementation head.
 
-This revision corrects objective reaudit review `5239917392` (final H14). It does not merge, tag,
+This revision corrects objective reaudit review `5240757786` (Windows replacement rights) and stops as
+BLOCKED on the product-level consequence of failing closed there. It does not merge, tag,
 publish, force-push, rewrite history, touch `main`, move `v1.0.0`, or self-approve.
 
-STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_H14_FINAL`
+STOP CONDITION: BLOCKED — Windows replacement rights (DELETE / FILE_DELETE_CHILD) cannot be proven
+in the supported runtime without a frozen architecture decision; the default machine policy fails
+closed there and the resulting Windows capability loss needs an owner decision.
+
+MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED
 
 The final head for this revision is `059ebc90d8341300477edc2fce9dfe8758edbd43`, whose exact-head
 assurance is 23 workflow runs / 89 check runs, all `success`.
