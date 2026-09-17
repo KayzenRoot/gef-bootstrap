@@ -513,6 +513,7 @@ async function applyHandler(verb: CliVerb, input: CliCommandInput, context: Exec
     policyRef: `cli:${verb}:managed-write:v1`,
     moduleOwner: verb === "init" ? "m48-m54-maintenance" : "security-reliability-integrations",
     commandId,
+    purpose: verb === "init" ? "STATE_INIT" : "STATE_ADOPT",
   });
   if (!applied.ok) {
     const error = applied.error ?? createGefError({

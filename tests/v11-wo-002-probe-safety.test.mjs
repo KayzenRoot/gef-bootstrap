@@ -34,6 +34,7 @@ function request(root, relativePath, content, overrides = {}) {
     policyRef: "cli:init:managed-write:v1",
     moduleOwner: "m48-m54-maintenance",
     commandId: "gef.init.run",
+    purpose: "STATE_INIT",
     ...overrides,
   };
 }
@@ -114,22 +115,27 @@ test("H4: a pre-existing probe directory is reused, never removed", async (t) =>
   assert.deepEqual(readdirSync(probesRoot), ["user-owned.txt"], "only our own probe directory may be removed");
 });
 
-test("H4: a file occupying the probe directory path is preserved and fails closed", async (t) => {
+test("H4: a file occupying the private probe path is preserved and the mutation fails closed", async (t) => {
   const root = tempRoot(t);
   mkdirSync(join(root, TRANSACTION_PRIVATE_DIRECTORY), { recursive: true });
   const occupied = join(root, TRANSACTION_PRIVATE_DIRECTORY, "probes");
-  writeFileSync(occupied, "user owned file at the probe directory path\n");
+  const occupant = "user owned file at the probe directory path\n";
+  writeFileSync(occupied, occupant);
 
-  // The probe cannot establish an owned identity, so the measurement fails closed...
-  assert.equal(await detectCaseSemantics(root), "UNKNOWN");
-  // ...without touching the occupant.
-  assert.equal(readFileSync(occupied, "utf8"), "user owned file at the probe directory path\n");
+  // Case semantics is measured read-only, so it does not need the private area at all.
+  assert.ok(["SENSITIVE", "INSENSITIVE"].includes(await detectCaseSemantics(root)));
 
-  // ...and the governed mutation refuses rather than proceeding without a capability.
+  // The occupied reserved path is a namespace conflict: the transaction refuses rather than
+  // writing through it, and the occupant is untouched.
   const applied = await applyGovernedCreate(request(root, ".gef/init-state.json", "{}\n", { transactionId: "tx-probe-occupied" }));
   assert.equal(applied.ok, false);
+  assert.ok(
+    ["BLOCKED_BEFORE_EFFECT", "ABORTED_STAGED_NO_TARGET_EFFECT"].includes(applied.outcome),
+    `expected an outcome with no target effect, got ${applied.outcome}`,
+  );
+  assert.equal(applied.error.category, "CAPABILITY");
+  assert.equal(readFileSync(occupied, "utf8"), occupant);
   assert.ok(!existsSync(join(root, ".gef")), "a refused transaction must leave no target effect");
-  assert.equal(readFileSync(occupied, "utf8"), "user owned file at the probe directory path\n");
 });
 
 test("H4: a collision-suffixed probe identity is retried until an unused name is owned", async (t) => {

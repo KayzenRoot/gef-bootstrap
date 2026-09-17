@@ -25,6 +25,9 @@ import { link, lstat, mkdir, open, readFile, rename, rm, rmdir, stat, unlink, wr
 import { dirname, join, relative, sep } from "node:path";
 import { existsSync } from "node:fs";
 
+import { PrivateAuthorityError, createPrivateArea, measureCaseSemantics, PRIVATE_DIRECTORY, PROBE_DIRECTORY, safeSegment } from "./private-authority.js";
+import type { OwnedDirectory, PrivateArea } from "./private-authority.js";
+
 import { loadEngines } from "./engines.js";
 
 import type { GefError } from "@gef-bootstrap/contracts";
@@ -57,7 +60,7 @@ import type {
   VerificationObligation,
 } from "@gef-bootstrap/kernel";
 
-export const TRANSACTION_PRIVATE_DIRECTORY = ".gef-private";
+export const TRANSACTION_PRIVATE_DIRECTORY = PRIVATE_DIRECTORY;
 
 const sha256 = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
 
@@ -134,108 +137,60 @@ async function observeChain(capsule: FilesystemPathCapsule) {
 // Capability probes
 // ---------------------------------------------------------------------------
 //
-// A probe is a capability measurement, not a governed effect, so it must not touch anything the
-// project owns. Probes are therefore confined to an invocation-owned directory under the
-// reserved GEF private area, named with a collision-resistant token and created exclusively, so
-// a pre-existing project path can never be overwritten, truncated or removed.
+// A probe is a capability measurement, not a governed effect. Case semantics is measured
+// read-only, because it is needed before the transaction authorization gate runs and no
+// project-visible path may be created before that gate succeeds. Durability is probed after the
+// gate, inside an invocation-owned directory of the private area, so it can never touch project
+// content.
+//
+// The private area is containment- and alias-proven by `private-authority.ts`: a symlink or
+// reparse point anywhere between the target root and the private path makes the measurement fail
+// closed instead of redirecting a write outside the target.
 
-const PROBE_DIRECTORY = "probes";
 const PROBE_ATTEMPTS = 8;
-
-interface OwnedProbe {
-  readonly directory: string;
-  /** Removes only what this invocation created, and only while it is still empty or ours. */
-  release(): Promise<void>;
-}
-
-function errorCode(cause: unknown): string {
-  return cause !== null && typeof cause === "object" && "code" in cause ? String((cause as { readonly code: unknown }).code) : "";
-}
-
-/**
- * Create a uniquely named probe directory with exclusive semantics.
- *
- * `mkdir` without `recursive` fails with `EEXIST` when the name is taken, which is the ownership
- * proof: only the invocation that observed a successful create may later remove the directory.
- */
-async function createOwnedProbe(root: string): Promise<OwnedProbe> {
-  const probesRoot = join(root, TRANSACTION_PRIVATE_DIRECTORY, PROBE_DIRECTORY);
-  const parentExisted = existsSync(probesRoot);
-  await mkdir(probesRoot, { recursive: true });
-  for (let attempt = 0; attempt < PROBE_ATTEMPTS; attempt += 1) {
-    const candidate = join(probesRoot, `probe-${randomBytes(12).toString("hex")}`);
-    try {
-      await mkdir(candidate);
-    } catch (cause: unknown) {
-      if (errorCode(cause) === "EEXIST") continue;
-      throw new Error(`PROBE_IDENTITY_UNAVAILABLE: ${errorCode(cause) || "UNKNOWN"}`);
-    }
-    return {
-      directory: candidate,
-      async release() {
-        // Remove our own probe file, then remove the directory non-recursively: `rmdir` refuses
-        // a non-empty directory, so anything this invocation did not create survives.
-        await rm(join(candidate, "CaseProbe"), { force: true }).catch(() => undefined);
-        await rm(join(candidate, "durability-probe"), { force: true }).catch(() => undefined);
-        await rmdir(candidate).catch(() => undefined);
-        if (!parentExisted) await rmdir(probesRoot).catch(() => undefined);
-      },
-    };
-  }
-  throw new Error("PROBE_IDENTITY_UNAVAILABLE: exhausted attempts");
-}
 
 const caseSemanticsCache = new Map<string, "SENSITIVE" | "INSENSITIVE" | "UNKNOWN">();
 const durabilityCache = new Map<string, "CRASH_DURABLE" | "UNPROVEN">();
 
 /**
- * Determine filesystem case semantics for the target root.
+ * Measure filesystem case semantics without creating anything.
  *
- * Traversal proof refuses to run against ambiguous case semantics, so this is probed rather than
- * assumed. The probe is bounded, confined to an invocation-owned directory, and leaves no
- * residue behind on success or refusal.
+ * Traversal proof refuses to run against ambiguous case semantics, so this is measured rather than
+ * assumed. Ambiguity fails closed as `UNKNOWN`.
  */
 export async function detectCaseSemantics(root: string): Promise<"SENSITIVE" | "INSENSITIVE" | "UNKNOWN"> {
   const cached = caseSemanticsCache.get(root);
   if (cached !== undefined) return cached;
-  let probe: OwnedProbe;
+  let semantics: "SENSITIVE" | "INSENSITIVE" | "UNKNOWN";
   try {
-    probe = await createOwnedProbe(root);
+    semantics = await measureCaseSemantics(root);
   } catch {
-    caseSemanticsCache.set(root, "UNKNOWN");
-    return "UNKNOWN";
+    semantics = "UNKNOWN";
   }
-  try {
-    await writeFile(join(probe.directory, "CaseProbe"), "x", { flag: "wx" });
-    try {
-      await lstat(join(probe.directory, "caseprobe"));
-      caseSemanticsCache.set(root, "INSENSITIVE");
-      return "INSENSITIVE";
-    } catch (cause: unknown) {
-      const semantics = errorCode(cause) === "ENOENT" ? "SENSITIVE" : "UNKNOWN";
-      caseSemanticsCache.set(root, semantics);
-      return semantics;
-    }
-  } catch {
-    caseSemanticsCache.set(root, "UNKNOWN");
-    return "UNKNOWN";
-  } finally {
-    await probe.release();
-  }
+  caseSemanticsCache.set(root, semantics);
+  return semantics;
 }
 
-async function probeDurability(root: string): Promise<"CRASH_DURABLE" | "UNPROVEN"> {
-  const cached = durabilityCache.get(root);
+async function probeDurability(privateArea: PrivateArea): Promise<"CRASH_DURABLE" | "UNPROVEN"> {
+  const cacheKey = privateArea.targetRoot;
+  const cached = durabilityCache.get(cacheKey);
   if (cached !== undefined) return cached;
-  let probe: OwnedProbe;
+  let owned: OwnedDirectory;
   try {
-    probe = await createOwnedProbe(root);
-  } catch {
-    durabilityCache.set(root, "UNPROVEN");
+    owned = await privateArea.createOwnedProbeDirectory();
+  } catch (cause: unknown) {
+    // A namespace conflict (alias, escape, non-directory) is a containment failure and must abort
+    // the transaction; only an unprovable platform capability degrades to UNPROVEN.
+    if (cause instanceof PrivateAuthorityError) throw cause;
+    durabilityCache.set(cacheKey, "UNPROVEN");
     return "UNPROVEN";
   }
+  const settle = (value: "CRASH_DURABLE" | "UNPROVEN"): "CRASH_DURABLE" | "UNPROVEN" => {
+    durabilityCache.set(cacheKey, value);
+    return value;
+  };
   try {
-    const file = join(probe.directory, "durability-probe");
+    const file = join(owned.path, "durability-probe");
     await writeFile(file, "probe", { flag: "wx" });
     const handle = await open(file, "r+");
     try {
@@ -244,27 +199,22 @@ async function probeDurability(root: string): Promise<"CRASH_DURABLE" | "UNPROVE
       await handle.close();
     }
     try {
-      const directory = await open(probe.directory, "r");
+      const directory = await open(owned.path, "r");
       try {
         await directory.sync();
       } finally {
         await directory.close();
       }
-      durabilityCache.set(root, "CRASH_DURABLE");
-      return "CRASH_DURABLE";
-    } catch (cause: unknown) {
-      if (["EISDIR", "EPERM", "EACCES", "EINVAL", "ENOTSUP"].includes(errorCode(cause))) {
-        durabilityCache.set(root, "UNPROVEN");
-        return "UNPROVEN";
-      }
-      durabilityCache.set(root, "UNPROVEN");
-      return "UNPROVEN";
+      return settle("CRASH_DURABLE");
+    } catch {
+      // Directory fsync is unavailable on some platforms; the platform is then classified
+      // honestly rather than assumed durable.
+      return settle("UNPROVEN");
     }
   } catch {
-    durabilityCache.set(root, "UNPROVEN");
-    return "UNPROVEN";
+    return settle("UNPROVEN");
   } finally {
-    await probe.release();
+    await privateArea.releaseOwnedDirectory(owned, ["durability-probe"]).catch(() => undefined);
   }
 }
 
@@ -297,6 +247,8 @@ export interface PhysicalPortOptions {
   readonly transactionId: string;
   /** Probed case semantics; traversal proof refuses to run while these are ambiguous. */
   readonly caseSemantics: "SENSITIVE" | "INSENSITIVE";
+  /** Containment- and alias-proven private area for probes and staging. */
+  readonly privateArea: PrivateArea;
   /** Authorization/policy reference recorded on the plan. */
   readonly policyRef: string;
 }
@@ -307,19 +259,6 @@ interface PreparedIntent {
   readonly stagePath: string;
   readonly desiredFingerprint?: string;
   readonly recoveryRef?: string;
-}
-
-/**
- * Filesystem-safe directory name for a transaction. Transaction identities may contain
- * characters that are illegal in path components (for example `:`), so the name is sanitized
- * while the original identity is preserved in the journal and receipts.
- */
-function safeSegment(transactionId: string): string {
-  return transactionId.replace(/[^A-Za-z0-9._-]/g, "_");
-}
-
-function stagingDirectory(root: string, transactionId: string): string {
-  return join(root, TRANSACTION_PRIVATE_DIRECTORY, safeSegment(transactionId));
 }
 
 export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhysicalPort {
@@ -345,19 +284,25 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
     },
 
     async atomicFacts(request) {
+      let durability: "CRASH_DURABLE" | "UNPROVEN";
+      try {
+        durability = await probeDurability(options.privateArea);
+      } catch (cause: unknown) {
+        const reason = cause instanceof PrivateAuthorityError ? cause.reason : "UNAVAILABLE";
+        return portError(request.intent, `private_authority_${reason.toLowerCase()}`, "The private transaction area is not safely contained by the target", "CAPABILITY");
+      }
       let destination = request.path.physicalRoot;
       try {
         destination = (await stat(dirname(request.path.physicalTarget))).isDirectory() ? dirname(request.path.physicalTarget) : request.path.physicalRoot;
       } catch {
         destination = request.path.physicalRoot;
       }
-      const staging = stagingDirectory(options.targetRoot, options.transactionId);
-      await mkdir(staging, { recursive: true });
+      const staging = await options.privateArea.ensureStagingDirectory(options.transactionId);
       const destinationId = String((await stat(destination)).dev);
       const stagingId = String((await stat(staging)).dev);
       return ok({
-        primitive: cliPrimitiveFor("CREATE", await probeDurability(options.targetRoot)),
-        stagingAuthorityRef: `${options.rootRef}:${TRANSACTION_PRIVATE_DIRECTORY}`,
+        primitive: cliPrimitiveFor("CREATE", durability),
+        stagingAuthorityRef: `${options.rootRef}:${PRIVATE_DIRECTORY}`,
         ...(stagingId === undefined ? {} : { stagingFilesystemId: stagingId }),
         ...(destinationId === undefined ? {} : { destinationFilesystemId: destinationId }),
       });
@@ -369,10 +314,17 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
         return portError(request.intent, "target_not_absent", "Managed creation requires an absent target; existing content is never overwritten", "PRECONDITION");
       }
       const recoveryRef = `cli-absent:${request.intent.intentId}:${request.transactionId}`;
+      let durability: "CRASH_DURABLE" | "UNPROVEN";
+      try {
+        durability = await probeDurability(options.privateArea);
+      } catch (cause: unknown) {
+        const reason = cause instanceof PrivateAuthorityError ? cause.reason : "UNAVAILABLE";
+        return portError(request.intent, `private_authority_${reason.toLowerCase()}`, "The private transaction area is not safely contained by the target", "CAPABILITY");
+      }
       prepared.set(request.intent.intentId, {
         capsule: request.target,
-        durability: await probeDurability(options.targetRoot),
-        stagePath: join(stagingDirectory(options.targetRoot, request.transactionId), `${request.intent.intentId}.stage`),
+        durability,
+        stagePath: join(await options.privateArea.ensureStagingDirectory(request.transactionId), `${request.intent.intentId}.stage`),
         ...(request.intent.desiredFingerprint === undefined ? {} : { desiredFingerprint: request.intent.desiredFingerprint }),
         recoveryRef,
       });
@@ -475,7 +427,10 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
     },
 
     async cleanup(request) {
-      await rm(stagingDirectory(options.targetRoot, request.transactionId), { recursive: true, force: true }).catch(() => undefined);
+      // Only the staged files this transaction wrote are named here; removal is non-recursive and
+      // revalidates the directory identity, so an alias swap or foreign content is never deleted.
+      const stagedFiles = [...prepared.values()].map((state) => state.stagePath.slice(state.stagePath.lastIndexOf(sep) + 1));
+      await options.privateArea.releaseStagingDirectory(request.transactionId, stagedFiles).catch(() => undefined);
       return ok(true);
     },
 
@@ -519,7 +474,7 @@ async function syncDirectory(directory: string): Promise<void> {
 // Journal port
 // ---------------------------------------------------------------------------
 
-export const JOURNAL_DIRECTORY = `${TRANSACTION_PRIVATE_DIRECTORY}/journal`;
+export const JOURNAL_DIRECTORY = `${PRIVATE_DIRECTORY}/journal`;
 
 /**
  * File-backed transaction journal.
@@ -528,13 +483,11 @@ export const JOURNAL_DIRECTORY = `${TRANSACTION_PRIVATE_DIRECTORY}/journal`;
  * the transaction lifecycle (begin / update / finish) and survives `cleanup`, so recovery
  * evidence is inspectable after the run instead of being an in-memory artefact.
  */
-export function createJournalPort(targetRoot: string): TransactionJournalPort {
-  const pathFor = (transactionId: string): string => join(targetRoot, TRANSACTION_PRIVATE_DIRECTORY, "journal", `${safeSegment(transactionId)}.json`);
+export function createJournalPort(privateArea: PrivateArea): TransactionJournalPort {
   const persist = async (transactionId: string, phase: "BEGIN" | "UPDATE" | "FINISH" | "ROLLBACK", snapshot: unknown) => {
-    const file = pathFor(transactionId);
-    await mkdir(dirname(file), { recursive: true });
-    await writeFile(file, `${JSON.stringify({ schemaVersion: 1, kind: "gef.cli.transaction-journal", transactionId, phase, snapshot }, null, 2)}
-`, { flag: "w" });
+    // The journal path is containment- and alias-proven before the file is opened.
+    const file = await privateArea.ensureJournalFile(transactionId);
+    await writeFile(file, `${JSON.stringify({ schemaVersion: 1, kind: "gef.cli.transaction-journal", transactionId, phase, snapshot }, null, 2)}\n`, { flag: "w" });
     return ok(true as const);
   };
   const transactionIdOf = (snapshot: unknown): string => {
@@ -552,6 +505,111 @@ export function createJournalPort(targetRoot: string): TransactionJournalPort {
 }
 
 
+
+// ---------------------------------------------------------------------------
+// Authorization binding
+// ---------------------------------------------------------------------------
+
+export type MutationPurpose = "STATE_INIT" | "STATE_ADOPT" | "RECEIPT_INIT" | "RECEIPT_ADOPT";
+
+export type MutationSurfaceMode = "EXACT" | "PREFIX";
+
+/**
+ * One deterministic authorization binding per admitted mutation command and purpose.
+ *
+ * A binding fixes which command may perform which mutation purpose, under which policy, with which
+ * module owner, over which declared plan surface, and in which safety classification. It is the
+ * only way a mutation transaction can be authorized: an unadmitted combination has no binding and
+ * therefore cannot pass the gate, at the initial call or at the commit barrier.
+ */
+export interface AuthorizedMutationBinding {
+  readonly commandId: string;
+  readonly verb: "init" | "adopt";
+  readonly purpose: MutationPurpose;
+  readonly policyRef: string;
+  readonly moduleOwner: string;
+  readonly artifact: string;
+  readonly surfaceMode: MutationSurfaceMode;
+  /** Operation context the owning safety decision is evaluated in. */
+  readonly classification: "MUTATING" | "REVERSIBLE";
+}
+
+export const ADMITTED_MUTATION_BINDINGS: readonly AuthorizedMutationBinding[] = Object.freeze([
+  {
+    commandId: "gef.init.run",
+    verb: "init",
+    purpose: "STATE_INIT",
+    policyRef: "cli:init:managed-write:v1",
+    moduleOwner: "m48-m54-maintenance",
+    artifact: ".gef/init-state.json",
+    surfaceMode: "EXACT",
+    classification: "MUTATING",
+  },
+  {
+    commandId: "gef.adopt.apply",
+    verb: "adopt",
+    purpose: "STATE_ADOPT",
+    policyRef: "cli:adopt:managed-write:v1",
+    moduleOwner: "security-reliability-integrations",
+    artifact: ".gef/adopt-state.json",
+    surfaceMode: "EXACT",
+    classification: "MUTATING",
+  },
+  {
+    // Receipt persistence has its own admitted purpose: it must not borrow a state-command
+    // identity under an unrelated receipt policy.
+    commandId: "gef.init.run",
+    verb: "init",
+    purpose: "RECEIPT_INIT",
+    policyRef: "cli:receipt:managed-write:v1",
+    moduleOwner: "cli.transport",
+    artifact: ".gef/receipts/",
+    surfaceMode: "PREFIX",
+    classification: "REVERSIBLE",
+  },
+  {
+    commandId: "gef.adopt.apply",
+    verb: "adopt",
+    purpose: "RECEIPT_ADOPT",
+    policyRef: "cli:receipt:managed-write:v1",
+    moduleOwner: "cli.transport",
+    artifact: ".gef/receipts/",
+    surfaceMode: "PREFIX",
+    classification: "REVERSIBLE",
+  },
+]);
+
+export function bindingAllowsSurface(binding: AuthorizedMutationBinding, surface: string): boolean {
+  return binding.surfaceMode === "EXACT" ? surface === binding.artifact : surface.startsWith(binding.artifact);
+}
+
+export interface MutationBindingQuery {
+  readonly commandId: string;
+  readonly purpose: MutationPurpose;
+  readonly policyRef: string;
+  readonly moduleOwner: string;
+  readonly surface: string;
+}
+
+/** Resolve the admitted binding for a claimed mutation, or `undefined` when none is admitted. */
+export function resolveMutationBinding(query: MutationBindingQuery): AuthorizedMutationBinding | undefined {
+  return ADMITTED_MUTATION_BINDINGS.find(
+    (binding) =>
+      binding.commandId === query.commandId &&
+      binding.purpose === query.purpose &&
+      binding.policyRef === query.policyRef &&
+      binding.moduleOwner === query.moduleOwner &&
+      bindingAllowsSurface(binding, query.surface),
+  );
+}
+
+/** The binding a command/purpose pair is admitted under, or `undefined` when none is. */
+export function bindingFor(commandId: string, purpose: MutationPurpose): AuthorizedMutationBinding | undefined {
+  const candidates = ADMITTED_MUTATION_BINDINGS.filter((binding) => binding.commandId === commandId && binding.purpose === purpose);
+  const [binding] = candidates;
+  return candidates.length === 1 ? binding : undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Authorization port
 // ---------------------------------------------------------------------------
@@ -562,17 +620,16 @@ export interface AuthorizationDecision {
 }
 
 export interface AuthorizationContext {
-  /** The policy requirement the transaction plan must declare. */
-  readonly policyRef: string;
+  /** The admitted binding this port authorizes. */
+  readonly binding: AuthorizedMutationBinding;
   readonly runId: string;
-  readonly commandId: string;
   /** Absolute project root the transaction is bound to. */
   readonly targetRef: string;
   /**
-   * Evaluates the owning authorization decision. Defaults to the verified safety engine; a
-   * failure to obtain a decision is a denial, never an allow.
+   * Evaluates the owning authorization decision for the bound operation. Defaults to the verified
+   * safety engine; a failure to obtain a decision is a denial, never an allow.
    */
-  readonly decide?: () => Promise<AuthorizationDecision> | AuthorizationDecision;
+  readonly decide?: (binding: AuthorizedMutationBinding) => Promise<AuthorizationDecision> | AuthorizationDecision;
   /** Revocation hook, re-evaluated on every authorization call including the commit barrier. */
   readonly isRevoked?: () => boolean;
 }
@@ -589,21 +646,25 @@ function authorizationDenial(context: AuthorizationContext, reason: string, summ
     recoverability: "NONE_REQUIRED",
     effectStatus: "NONE",
     terminal: "BLOCKED",
-    commandId: context.commandId,
+    commandId: context.binding.commandId,
     runId: context.runId,
     targetRef: context.targetRef,
     causes: [],
     evidenceRefs: [],
     remediations: [],
-    metadata: { policyRef: context.policyRef, reason },
+    metadata: { policyRef: context.binding.policyRef, purpose: context.binding.purpose, reason },
   };
 }
 
-/** Default decision: the verified safety engine must admit the mutation. Fails closed. */
-async function safetyEngineDecision(): Promise<AuthorizationDecision> {
+/**
+ * Default decision: the verified safety engine must admit the mutation *in the bound operation
+ * context*. A generic mutating classification is not enough — the binding decides which
+ * classification the decision is evaluated under. Fails closed.
+ */
+async function safetyEngineDecision(binding: AuthorizedMutationBinding): Promise<AuthorizationDecision> {
   try {
     const engines = await loadEngines();
-    const decision = engines.safetyDecision({ classification: "MUTATING", blastRadius: "known", requested: "AUTO", restricted: false });
+    const decision = engines.safetyDecision({ classification: binding.classification, blastRadius: "known", requested: "AUTO", restricted: false });
     if (decision.state !== "READY" || decision.confirmation === "FORBIDDEN") {
       return { authorized: false, reason: `safety_decision_${decision.state}_${decision.confirmation}` };
     }
@@ -628,14 +689,42 @@ export function createAuthorizationPort(context: AuthorizationContext): Transact
     async authorize(request) {
       if (context.isRevoked?.() === true) return deny("revoked", "Authorization was revoked before the transaction committed");
       if (request.runId !== context.runId) return deny("run_mismatch", "Authorization is bound to a different run");
+      const expected = context.binding;
       const refs = [...request.authorizationRefs];
-      if (!refs.includes(context.policyRef)) return deny("policy_not_admitted", "Authorization reference was not presented to the transaction");
+      if (!refs.includes(expected.policyRef)) return deny("policy_not_admitted", "Authorization reference was not presented to the transaction");
       const declared = [...request.plan.authorizationRequirements];
-      if (!declared.includes(context.policyRef)) return deny("requirement_not_declared", "Transaction plan does not declare the admitted policy requirement");
+      if (!declared.includes(expected.policyRef)) return deny("requirement_not_declared", "Transaction plan does not declare the admitted policy requirement");
       if (request.plan.targetBinding.targetRef !== `target:${context.targetRef}`) return deny("target_mismatch", "Transaction plan is bound to a different target");
+
+      // The command/purpose/policy/owner/surface binding is re-derived from what the plan actually
+      // declares, so a valid policy string paired with an unrelated command identity — or a state
+      // command paired with a receipt policy — has no admitted binding and is refused.
+      const surfaces = [...request.plan.mutationSurface];
+      const owners = [...request.plan.expectedPreState].map((binding) => binding.owner);
+      const [surface] = surfaces;
+      if (surface === undefined || surfaces.length !== 1) return deny("binding_surface_ambiguous", "Transaction plan must declare exactly one mutation surface");
+      const moduleOwner = owners[0];
+      if (moduleOwner === undefined || owners.some((owner) => owner !== moduleOwner)) {
+        return deny("binding_owner_ambiguous", "Transaction plan must declare exactly one module owner");
+      }
+      const resolved = resolveMutationBinding({
+        commandId: expected.commandId,
+        purpose: expected.purpose,
+        policyRef: expected.policyRef,
+        moduleOwner,
+        surface,
+      });
+      if (resolved === undefined || resolved !== expected) {
+        return deny(
+          "binding_not_admitted",
+          `No admitted authorization binding for ${expected.commandId}/${expected.purpose} over ${surface}`,
+        );
+      }
+      if (request.plan.securityClass !== "S1_MANAGED_WRITE") return deny("binding_security_class", "Transaction plan security class is outside the admitted binding");
+
       let decision: AuthorizationDecision;
       try {
-        decision = await (context.decide ?? safetyEngineDecision)();
+        decision = await (context.decide ?? safetyEngineDecision)(expected);
       } catch (cause: unknown) {
         return deny("decision_unavailable", `Authorization decision could not be proven: ${cause instanceof Error ? cause.message : String(cause)}`);
       }
@@ -660,6 +749,8 @@ export interface GovernedCreateRequest {
   readonly moduleOwner: string;
   /** Command identity the authorization decision is bound to. */
   readonly commandId: string;
+  /** Mutation purpose the authorization binding is resolved for. */
+  readonly purpose: MutationPurpose;
 }
 
 export interface GovernedCreateOutcome {
@@ -671,7 +762,8 @@ export interface GovernedCreateOutcome {
   readonly error?: GefError;
 }
 
-function resolverFor(request: GovernedCreateRequest, caseSemantics: "SENSITIVE" | "INSENSITIVE"): FilesystemIntentResolver {
+function resolverFor(request: GovernedCreateRequest, caseSemantics: "SENSITIVE" | "INSENSITIVE", _privateArea: PrivateArea): FilesystemIntentResolver {
+  void _privateArea;
   const root = {
     rootRef: `target:${request.targetRoot}`,
     rootKind: "project-directory",
@@ -761,12 +853,48 @@ export function createStatePort(targetRoot: string, managedRef: string): Transac
  * The destination must be absent. The safety chain, staging, commit barrier, post-state
  * verification and receipt all come from the kernel; this function only wires the ports.
  */
+function privateAuthorityFailure(cause: unknown, request: GovernedCreateRequest): GovernedCreateOutcome {
+  const reason = cause instanceof PrivateAuthorityError ? cause.reason : "UNAVAILABLE";
+  return {
+    ok: false,
+    outcome: "BLOCKED_BEFORE_EFFECT",
+    error: {
+      schemaVersion: 1,
+      id: `cli-private-authority-${reason}`,
+      category: "PRECONDITION",
+      reasonCode: `gef.precondition.private_authority_${reason.toLowerCase()}`,
+      severity: "ERROR",
+      summary: "The private transaction area is not safely contained by the target",
+      retryability: "MANUAL_ONLY",
+      recoverability: "NONE_REQUIRED",
+      effectStatus: "NONE",
+      terminal: "BLOCKED",
+      commandId: request.commandId,
+      runId: request.runId,
+      targetRef: request.targetRoot,
+      causes: [],
+      evidenceRefs: [],
+      remediations: [],
+      metadata: { reason, detail: cause instanceof Error ? cause.message : String(cause) },
+    },
+  };
+}
+
 export interface GovernedCreateOverrides {
   /** Test seam only: the production default is the real authorization port. */
   readonly authorization?: TransactionAuthorizationPort;
 }
 
 export async function applyGovernedCreate(request: GovernedCreateRequest, overrides?: GovernedCreateOverrides): Promise<GovernedCreateOutcome> {
+  // Containment and alias proof for the private area, established before anything is created.
+  const privateArea = createPrivateArea(request.targetRoot);
+  try {
+    await privateArea.assertContainment([PRIVATE_DIRECTORY]);
+  } catch (cause: unknown) {
+    return privateAuthorityFailure(cause, request);
+  }
+
+  // Read-only measurement: nothing project-visible is created before the authorization gate.
   const caseSemantics = await detectCaseSemantics(request.targetRoot);
   if (caseSemantics === "UNKNOWN") {
     return {
@@ -799,23 +927,56 @@ export async function applyGovernedCreate(request: GovernedCreateRequest, overri
   const payloads = new Map<string, string>([[request.relativePath, request.content]]);
   const effects = createFilesystemEffectAdapter({
     transactionId: request.transactionId,
-    resolver: resolverFor(request, caseSemantics),
-    physical: createPhysicalPort({ targetRoot: request.targetRoot, rootRef: `target:${request.targetRoot}`, transactionId: request.transactionId, caseSemantics, payloads, policyRef: request.policyRef }),
+    resolver: resolverFor(request, caseSemantics, privateArea),
+    physical: createPhysicalPort({ targetRoot: request.targetRoot, rootRef: `target:${request.targetRoot}`, transactionId: request.transactionId, caseSemantics, privateArea, payloads, policyRef: request.policyRef }),
   });
 
+  const binding = bindingFor(request.commandId, request.purpose);
+  if (binding === undefined) {
+    return {
+      ok: false,
+      outcome: "BLOCKED_BEFORE_EFFECT",
+      error: {
+        schemaVersion: 1,
+        id: `cli-authorization-binding-${request.commandId}`,
+        category: "AUTHORIZATION",
+        reasonCode: "gef.authorization.binding_not_admitted",
+        severity: "ERROR",
+        summary: "No admitted authorization binding for this command and mutation purpose",
+        retryability: "REQUIRES_NEW_AUTHORIZATION",
+        recoverability: "NONE_REQUIRED",
+        effectStatus: "NONE",
+        terminal: "BLOCKED",
+        commandId: request.commandId,
+        runId: request.runId,
+        targetRef: request.targetRoot,
+        causes: [],
+        evidenceRefs: [],
+        remediations: [],
+        metadata: { purpose: request.purpose },
+      },
+    };
+  }
   const authorization =
-    overrides?.authorization ??
-    createAuthorizationPort({ policyRef: request.policyRef, runId: request.runId, commandId: request.commandId, targetRef: request.targetRoot });
+    overrides?.authorization ?? createAuthorizationPort({ binding, runId: request.runId, targetRef: request.targetRoot });
 
   const ports: TransactionPorts = {
     digest: CLIENT_DIGEST_PORT,
     state: createStatePort(request.targetRoot, request.relativePath),
     authorization,
-    journal: createJournalPort(request.targetRoot),
+    journal: createJournalPort(privateArea),
     effects,
   };
 
-  const result = await applyTransaction({ plan, runId: request.runId, transactionId: request.transactionId, authorizationRefs: [request.policyRef], ports });
+  let result: Awaited<ReturnType<typeof applyTransaction>>;
+  try {
+    result = await applyTransaction({ plan, runId: request.runId, transactionId: request.transactionId, authorizationRefs: [binding.policyRef], ports });
+  } catch (cause: unknown) {
+    // A containment refusal raised by the private authority during journal or staging work is a
+    // governed block, never an internal failure.
+    if (cause instanceof PrivateAuthorityError) return privateAuthorityFailure(cause, request);
+    throw cause;
+  }
   if (!result.ok) return { ok: false, outcome: result.outcome, planDigest: plan.planDigest, ...(result.error === undefined ? {} : { error: result.error }) };
   const applied = result.receipt.appliedIntentResults.find((entry) => entry.intentId === "i1");
   return {

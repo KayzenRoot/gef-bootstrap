@@ -5,13 +5,14 @@ Title: CLI + Distribution Foundation
 Release line: `1.1.x`
 Assurance: `ELEVATED`
 Executed by: external executor under `ADR-0003-D3` (bounded authorization)
-Audit disposition: **not self-assessed** — objective re-audit #2 is external
+Audit disposition: **not self-assessed** — objective re-audit #3 is external
 
-**Revision note (V2).** This bundle supersedes the evidence recorded at head
-`17a81fac5d5417c1b14ade61fdf541b293dca59c`, which received `CORRECTION_REQUIRED`
-(objective reaudit comment `5711990826`: CRITICAL 0 / HIGH 3). The claim
-`CRITICAL: 0 / HIGH: 0` recorded at that head is **retracted** in §7. The H2/H3 and
-M1/M2/M3 corrections from the previous cycle are preserved, not revisited.
+**Revision note (V3).** This bundle supersedes the evidence recorded at head
+`7c06443964fc8df827d27f4675c5fddee28cadf8`, which received `CORRECTION_REQUIRED`
+(objective reaudit #3, review `5234282893`: CRITICAL 0 / HIGH 2). The claim
+`CRITICAL: 0 / HIGH: 0` recorded at that head is **retracted** in §7. Every previously closed item
+— H1/H2/H3, M1/M2/M3, H4, H5, H6 — is preserved; H4 and H5 were recorded by that review as
+"materially improved but not fully closed" and are now closed through H7 and H8 respectively.
 
 ---
 
@@ -21,9 +22,8 @@ M1/M2/M3 corrections from the previous cycle are preserved, not revisited.
 |---|---|
 | Repository | `KayzenRoot/gef-bootstrap` |
 | Admission merge (implementation base) | `66e223fe0d791c612e494a180eb12df9516cff87` |
-| Work branch | `feat/1.1/wo-002-cli-distribution` |
-| Previous correction baseline | `8face8738c1640e0a7e1adbf460496cde4597210` |
-| Reaudit #2 baseline (corrected head) | `17a81fac5d5417c1b14ade61fdf541b293dca59c` |
+| Corrected heads in this lineage | `8face873…` → `17a81fac…` → `7c064439…` |
+| Reaudit #3 baseline (audited head) | `7c06443964fc8df827d27f4675c5fddee28cadf8` |
 | Implementation head | the commit introducing this bundle; exact SHA reported in PR #282 |
 | Production branch `main` | `72c17bd3e7e421790ac382022b1f0ebbb0275ea4` — **unmodified** |
 | Release tag `v1.0.0` | object `aac89f9c3f0c884474958025bf14828bc338b5ee` → `866fe3af8cccc65c929aaf6a47a924401fa448b3` — **unmoved** |
@@ -34,133 +34,142 @@ No rebase, no force-push, no history rewrite.
 
 ---
 
-## 2. Closure mapping — H4 / H5 / H6
+## 2. Closure mapping — H7 / H8
 
-### HIGH H4 — capability probes no longer touch project content
+### HIGH H7 — private filesystem authority is containment-proven and zero-effect before authorization
 
-`detectCaseSemantics()` wrote a fixed `${targetRoot}/.gef-private/CaseProbe` with a clobbering
-write and then removed that path unconditionally; `probeDurability()` wrote a fixed
-`${targetRoot}/.gef-private-durability-probe` with the default clobbering mode. Both were
-target-visible mutations outside the transaction.
+The previous head measured case semantics by creating `<target>/.gef-private/probes/<token>` before
+`applyTransaction` reached its authorization gate, and `createOwnedProbeDirectory` built that chain
+with recursive `mkdir`, so a newly created `.gef-private` root survived cleanup. An initial
+authorization denial could therefore leave a target-visible effect. The same private area — probes,
+staging and journal — used direct path operations, so a symlink or reparse point on `.gef-private`
+or one of its subpaths could redirect a private effect outside the admitted target.
 
-**Correction.** Probes now run through an invocation-owned probe authority
-(`createOwnedProbe`): a collision-resistant `probe-<24 hex>` directory under the reserved
-`.gef-private/probes` parent, created with `mkdir` **without** `recursive`, so `EEXIST` is the
-ownership signal and the create is the proof. The measured file is written inside that directory
-with `flag: "wx"`. Release removes only the files this invocation wrote and then calls `rmdir`
-(non-recursive), which refuses a non-empty directory — anything not created here survives. The
-`probes` parent itself is removed only if this invocation created it and it is still empty. A
-file occupying the probe path cannot be claimed, so the measurement returns `UNKNOWN` and the
-governed mutation fails closed without touching it.
+**Correction.**
 
-**Regression evidence** — `tests/v11-wo-002-probe-safety.test.mjs` (7 cases, all PASS):
+1. **Read-only case-semantics measurement.** `measureCaseSemantics` compares the identity
+   (`dev:ino`) of an existing path with the identity of its case-flipped sibling, walking up until
+   a component with a cased letter is found. Nothing is created. Equal identity ⇒ `INSENSITIVE`,
+   absent sibling ⇒ `SENSITIVE`, anything else ⇒ `UNKNOWN` (fail closed). The durability probe —
+   which must write — runs in `atomicFacts`/`captureRecovery`, *after* the authorization gate.
+2. **A dedicated private authority** (`packages/cli/src/private-authority.ts`) now owns every
+   private path:
+   - lexical containment is proven with `path.relative` (no `..`, no absolute escape);
+   - every existing ancestor between the target root and the candidate is `lstat`ed and a
+     symlink/reparse point is refused (`ALIAS_ANCESTOR`);
+   - the deepest existing ancestor is `realpath`ed and required to be inside the resolved target
+     root (`PHYSICAL_ESCAPE`) — this catches junctions and any alias the `lstat` check might miss;
+   - directories are created level by level with **non-recursive** `mkdir`, so the invocation knows
+     exactly which levels it created, and an occupied name that is not a directory is a
+     `NOT_A_DIRECTORY` namespace conflict rather than something to write through;
+   - removal revalidates the recorded identity at the destructive point and is non-recursive, so a
+     path swapped to an alias, or a directory containing foreign content, is never followed or
+     deleted;
+   - an invocation-created private root is pruned when it is still empty.
+3. **A containment refusal is a governed block.** A `PrivateAuthorityError` raised during journal
+   or staging work is projected as `BLOCKED_BEFORE_EFFECT` with a `PRECONDITION` category, not as
+   an internal failure.
+4. `detectCaseSemantics` no longer writes at all, so **no project-visible path is created before
+   the initial authorization gate succeeds**.
 
-| Case | Evidence |
-|---|---|
-| successful apply | pre-existing `.gef-private/CaseProbe` and durability-probe content survive byte for byte; the governed artifact is still created |
-| refused apply | a pre-existing artifact is refused and both probe-path files survive |
-| residue | after probing, the `probes` directory does not exist and the private area is empty |
-| pre-existing probe directory | reused, never removed; user content inside it survives |
-| file at the probe path | preserved byte for byte; the probe yields `UNKNOWN` and the mutation refuses with no target effect |
-| decoys in the probe parent | untouched; a free name is still owned |
-| durability probe during a transaction | project content untouched |
-
-### HIGH H5 — transaction authorization is a real decision
-
-`applyGovernedCreate()` compiled a plan declaring `authorizationRequirements: [policyRef]` but
-supplied `authorization: { authorize: () => ok(true) }`, making both the initial gate and the
-commit-barrier reauthorization tautological, and it never passed `authorizationRefs`.
-
-**Correction.** `createAuthorizationPort` replaces the unconditional allow and
-`authorizationRefs: [policyRef]` is now supplied to `applyTransaction`. Every authorization call
-re-evaluates: the revocation hook, the run identity, the presented policy references, the plan's
-declared requirement, the plan's target binding, and the owning decision — which defaults to the
-verified safety engine and is re-asked on every call, so an authorization that lapses between
-staging and commit is refused. An unprovable decision (a throwing or unavailable capability) is a
-denial, never an allow. `GovernedCreateOverrides.authorization` exists as a test seam; the
-production default is the real port.
-
-**Negative evidence** — `tests/v11-wo-002-authorization.test.mjs` (6 cases, all PASS):
+**Regression evidence** — `tests/v11-wo-002-private-authority.test.mjs` (9 cases, all PASS):
 
 | Case | Evidence |
 |---|---|
-| initial denial | `BLOCKED_BEFORE_EFFECT`, `AUTHORIZATION`, no `.gef` artifact, **no journal** (the transaction never started), no probe residue |
-| revocation at the commit barrier | the port approves call 1 and denies call 2; the kernel demonstrably calls it twice; outcome `ABORTED_STAGED_NO_TARGET_EFFECT`, `AUTHORIZATION`, no artifact promoted, staging cleaned, abort journal recorded |
-| unprovable decision | both a `{authorized:false}` decision and a throwing capability deny — the latter as `gef.authorization.decision_unavailable` |
-| binding | run mismatch, policy not presented, requirement not declared, target mismatch and revocation each deny with a distinct reason code |
-| production default | the real port consults the verified safety engine and admits |
-| no over-blocking | an approving port results in `APPLIED` with exactly two authorization calls |
+| zero delta before authorization | whole-tree identity (kind, size, content hash, link target) is compared before and after an initial-denial apply and is **identical**; no `.gef-private`, `.gef`, `probes`, `journal` or staging path exists; the read-only measurement also leaves the tree identical |
+| private-root alias | a pre-existing `.gef-private` alias to an external directory with a sentinel ⇒ `BLOCKED_BEFORE_EFFECT`, `private_authority_*`, external tree unchanged, no artifact |
+| probe-subpath alias | `.gef-private/probes` aliased externally ⇒ read-only measurement still answers, the transaction refuses, external tree unchanged |
+| journal-subpath alias | `.gef-private/journal` aliased externally ⇒ refused before any external mutation, external tree unchanged |
+| staging-subpath alias | `.gef-private/<txId>` aliased externally ⇒ refused, external tree unchanged |
+| ordinary private content | user files directly under `.gef-private` and inside `.gef-private/probes` survive a successful apply; no probe residue beside them |
+| private-root pruning | a refusal before the gate leaves no private root at all |
+| cleanup identity swap | an owned directory swapped for an alias after ownership was recorded ⇒ release returns `false`, the external sentinel survives, the alias is left alone |
+| containment proof | `..` and nested `..` escapes are rejected as `NOT_CONTAINED` |
 
-### HIGH H6 — unobserved dirtiness is never reported as clean
+Directory aliases are created with a real symlink where the host allows it and fall back to a
+junction on Windows; both are reparse points and both are detected. A host that can create neither
+records an explicit diagnostic rather than passing silently.
 
-`observeRepository()` deliberately did not observe modified/staged/untracked files but passed
-`repo/head/branch` with the dirty arrays omitted; the accepted engine reads omitted arrays as
-empty and therefore returned `CLEAN`. Apply only blocked an in-progress Git operation, so unknown
-evidence became a clean precondition.
+### HIGH H8 — the command and mutation purpose are part of the authorization binding
 
-**Correction.** `observeRepositoryDirtiness` reads the working tree deterministically with
-`git status --porcelain -z` over an **argv array** (no shell string is ever built), against the
-target repository only and bounded by a 10 s timeout. The parsed `modified`, `staged`,
-`untracked` and `conflicted` arrays are supplied to `repositoryState`, so the verdict is derived
-from real evidence. When `.git` exists but the tree cannot be read, the observation is `UNKNOWN`,
-**no verdict is claimed at all**, and `--apply` blocks with `repository_state_unknown` before any
-transaction-visible effect. A directory with no `.git` is `NOT_APPLICABLE` — a known-absent
-repository, not an unknown one — so `init` on a fresh directory still works.
+`createAuthorizationPort` verified the run, the presented policy reference, the plan requirement
+and the target, then called the safety decision; `context.commandId` was used only in error
+metadata. A caller could therefore pair a valid policy string with an unrelated command identity,
+and receipt persistence reused a state-command identity under an unrelated receipt policy.
 
-**Evidence** — `tests/v11-wo-002-repository-state.test.mjs` (6 cases, all PASS) plus
-`CLI-E2E`:
+**Correction.** `ADMITTED_MUTATION_BINDINGS` is one deterministic authorization binding per
+admitted command and mutation purpose:
 
-| State | Observation | Engine verdict | Apply |
-|---|---|---|---|
-| no repository | `NOT_APPLICABLE`, `NO_LOCAL_GIT_DIRECTORY` | `BLOCKED` (missing repo) | allowed — the state is known |
-| clean | `OBSERVED`, no limits | `CLEAN` | allowed |
-| modified (unstaged) | `OBSERVED`, non-empty `modified` | `DIRTY` | allowed |
-| staged | `OBSERVED`, non-empty `staged` | `DIRTY` | allowed |
-| untracked | `OBSERVED`, non-empty `untracked` | `DIRTY` | allowed |
-| conflicted (real merge conflict) | `OBSERVED`, non-empty `conflicted` | `BLOCKED` | blocked |
-| mid-operation (`MERGE_HEAD`) | `OBSERVED`, `operation: MERGE` | `BLOCKED` | blocked (`repository_operation_in_progress`) |
-| unreadable tree | `UNKNOWN`, `WORKING_TREE_NOT_OBSERVED` + the concrete reason, dirty arrays **absent** | none claimed (`verdict: null`) | blocked (`repository_state_unknown`) with zero target effect |
+| command | purpose | policy | module owner | surface | classification |
+|---|---|---|---|---|---|
+| `gef.init.run` | `STATE_INIT` | `cli:init:managed-write:v1` | `m48-m54-maintenance` | `.gef/init-state.json` | `MUTATING` |
+| `gef.adopt.apply` | `STATE_ADOPT` | `cli:adopt:managed-write:v1` | `security-reliability-integrations` | `.gef/adopt-state.json` | `MUTATING` |
+| `gef.init.run` | `RECEIPT_INIT` | `cli:receipt:managed-write:v1` | `cli.transport` | `.gef/receipts/` | `REVERSIBLE` |
+| `gef.adopt.apply` | `RECEIPT_ADOPT` | `cli:receipt:managed-write:v1` | `cli.transport` | `.gef/receipts/` | `REVERSIBLE` |
 
-The conflicted fixture is a real two-branch merge conflict, so `UU` comes from Git rather than
-from a hand-written status string.
+On every authorization call the port re-derives the binding **from what the plan actually
+declares** — the single mutation surface, the single pre-state module owner, the plan's declared
+policy requirement and reference, and the target binding — and requires it to equal the binding the
+port was created for. An unknown command or an unadmitted purpose has no binding and is refused
+before the transaction starts. Receipt persistence now has its own admitted purpose rather than
+borrowing a state identity. The default decision calls the verified safety engine with the
+**binding's own classification**, so the operation context is bound rather than a generic mutating
+label, and the same re-derivation runs at the initial gate and at the commit barrier.
+
+**Negative evidence** — `tests/v11-wo-002-command-binding.test.mjs` (8 cases, all PASS):
+
+| Case | Evidence |
+|---|---|
+| table self-consistency | unique command/purpose keys, immutable table, each row resolves to itself, read-only commands have no binding |
+| mismatched combinations | init+adopt policy, adopt+init policy, unknown command+valid policy, state purpose+receipt policy, receipt purpose+state policy, owner mismatch, surface outside the bound artifact — all yield **no admitted binding** |
+| tampered plan | a tampered module owner or a tampered surface is refused as `binding_not_admitted` |
+| unadmitted command/purpose | `BLOCKED_BEFORE_EFFECT`, `AUTHORIZATION`, `binding_not_admitted`, no artifact and no private root |
+| cross-command / cross-policy pairing through the real driver | refused before effects with zero target delta |
+| no over-blocking | a correct adopt binding still returns `APPLIED` |
+| commit barrier | approving the first call and tampering with the plan surface on the second proves the barrier re-authorizes and re-derives the binding (`ABORTED_STAGED_NO_TARGET_EFFECT`, staging cleaned, no artifact) |
+| bound decision context | the decision hook observes `gef.init.run/STATE_INIT/MUTATING` on **both** calls |
 
 ---
 
-## 3. Preservation of the previously closed findings
+## 3. Preservation of every previously closed item
 
 | Prior finding | Status |
 |---|---|
-| H1 kernel transaction/effect integration | **Preserved** — all managed state and receipt effects still go through `compileTransactionPlan`/`applyTransaction`; this cycle added authorization and probe corrections on top, and the 12-case transaction safety suite still passes |
-| H2 frozen delegation map | **Preserved** — `installPlan`, `repositoryState`, `githubBootstrap`, `detectDrift`, `resolveCanonical`, `backupManifest`, `recoveryPlan` still bound by explicit module ownership |
-| H3 real clean install | **Preserved** — the staging-based distribution and the real `npm install` smoke still pass with no source-checkout injection |
+| H1 kernel transaction/effect integration | **Preserved** — all managed state and receipt effects still go through `compileTransactionPlan`/`applyTransaction`; the 12-case transaction safety suite still passes |
+| H2 frozen delegation map | **Preserved** |
+| H3 real clean install | **Preserved** — staging-based distribution and the real `npm install` smoke still pass |
 | M1 `helpIndex` authority | **Preserved** |
 | M2 automatic non-TTY JSON | **Preserved** |
 | M3 schemas and package payload | **Preserved** |
+| H4 probe hygiene | **Closed further** by H7: probes are now containment-proven and an invocation-created private root is pruned; probe tests still pass |
+| H5 real reauthorization | **Closed further** by H8: the port now enforces the command/purpose/policy/owner/surface binding, at both calls |
+| H6 Git dirtiness fail-closed | **Preserved and re-verified** — bounded argv-based `git status --porcelain -z`, no verdict when unknown, apply blocked; the full clean/modified/staged/untracked/conflicted/mid-operation matrix still passes |
 | No publication / tag / promotion | **Preserved** |
 
 ---
 
 ## 4. Changed files and reasons
 
-14 paths: 9 modified, 5 added.
+13 paths: 6 modified, 4 added, plus this bundle.
 
 | Path | Kind | Reason |
 |---|---|---|
-| `packages/cli/src/transaction.ts` | M | H4 probe authority; H5 real authorization port; `commandId` binding; `authorizationRefs` |
-| `packages/cli/src/engines.ts` | A | the verified engine boundary extracted so the registry and the transaction driver can share it without a circular import (H5 needs the safety decision there) |
-| `packages/cli/src/registry.ts` | M | H6 dirtiness observation and the fail-closed apply gate; imports the extracted engine boundary |
-| `packages/cli/src/main.ts` | M | passes `commandId` into the receipt transaction |
+| `packages/cli/src/private-authority.ts` | A | H7: containment/alias-proven private area, ownership-proven removal, read-only case-semantics measurement |
+| `packages/cli/src/transaction.ts` | M | H7: read-only measurement, private-area probes/staging/journal, identity-revalidated cleanup, governed containment refusal; H8: binding table and enforcement |
+| `packages/cli/src/registry.ts` | M | H8: passes the mutation purpose for state writes |
+| `packages/cli/src/main.ts` | M | H8: receipt persistence declares its own purpose |
 | `packages/cli/src/index.ts` | M | publishes the new surface |
-| `packages/cli/README.md` | M | documents authorization, repository observation and probe ownership |
-| `tests/v11-wo-002-probe-safety.test.mjs` | A | H4 regression suite |
-| `tests/v11-wo-002-authorization.test.mjs` | A | H5 negative suite |
-| `tests/v11-wo-002-repository-state.test.mjs` | A | H6 state matrix |
-| `tests/v11-wo-002-cli.test.mjs` | M | the observation contract changed for the better |
-| `tests/v11-wo-002-cli-e2e.test.mjs` | M | real-repository mid-operation fixture; unobservable-tree block case |
-| `tests/v11-wo-002-dist-smoke.test.mjs` | M | the resolution-order assertion follows the extracted engine module |
+| `packages/cli/README.md` | M | documents read-only probing, the private authority and the binding |
+| `tests/v11-wo-002-private-authority.test.mjs` | A | H7 regression suite |
+| `tests/v11-wo-002-command-binding.test.mjs` | A | H8 negative suite |
+| `tests/v11-wo-002-transaction-safety.test.mjs` | M | bound to the command identity; private area wired into the inline port |
+| `tests/v11-wo-002-probe-safety.test.mjs` | M | occupancy case follows the read-only measurement |
+| `tests/v11-wo-002-authorization.test.mjs` | M | plans carry the binding-relevant fields |
 | `.engineering/evidence/GBS-V11-WO-002-EVIDENCE.md` | M | this bundle |
 
-No `.engineering/` production state was modified. No package outside `packages/cli` was touched.
+No `.engineering/` production state was modified. No package outside `packages/cli` was touched,
+and `packages/kernel`/`packages/contracts` are unmodified — the kernel safety chain was not
+weakened.
 
 ---
 
@@ -170,19 +179,21 @@ No `.engineering/` production state was modified. No package outside `packages/c
 |---|---|---|---|
 | 1 | `npm run build -- --force` | **0** | forced rebuild of all 28 projects |
 | 2 | `npm run typecheck` | **0** | clean |
-| 3 | `npm run validate` | **0** | **1290 tests, 1290 pass, 0 fail, 0 skipped** |
-| 4 | `node --test …/v11-wo-002-probe-safety.test.mjs` | **0** | 7/7 |
-| 5 | `node --test …/v11-wo-002-authorization.test.mjs` | **0** | 6/6 |
-| 6 | `node --test …/v11-wo-002-repository-state.test.mjs` | **0** | 6/6 |
-| 7 | `node --test …/v11-wo-002-transaction-safety.test.mjs` | **0** | 12/12 |
-| 8 | `node --test …/v11-wo-002-cli.test.mjs` | **0** | 30/30 |
-| 9 | `node --test …/v11-wo-002-cli-e2e.test.mjs` | **0** | 11/11 |
-| 10 | `node --test …/v11-wo-002-dist-smoke.test.mjs` | **0** | 7/7 |
-| 11 | `npm audit --audit-level=high` | **0** | `found 0 vulnerabilities` |
+| 3 | `npm run validate` | **0** | **1307 tests, 1307 pass, 0 fail, 0 skipped** |
+| 4 | `node --test …/v11-wo-002-private-authority.test.mjs` | **0** | 9/9 |
+| 5 | `node --test …/v11-wo-002-command-binding.test.mjs` | **0** | 8/8 |
+| 6 | `node --test …/v11-wo-002-probe-safety.test.mjs` | **0** | 7/7 |
+| 7 | `node --test …/v11-wo-002-authorization.test.mjs` | **0** | 6/6 |
+| 8 | `node --test …/v11-wo-002-repository-state.test.mjs` | **0** | 6/6 |
+| 9 | `node --test …/v11-wo-002-transaction-safety.test.mjs` | **0** | 12/12 |
+| 10 | `node --test …/v11-wo-002-cli.test.mjs` | **0** | 30/30 |
+| 11 | `node --test …/v11-wo-002-cli-e2e.test.mjs` | **0** | 11/11 |
+| 12 | `node --test …/v11-wo-002-dist-smoke.test.mjs` | **0** | 7/7 |
+| 13 | `npm audit --audit-level=high` | **0** | `found 0 vulnerabilities` |
+| 14 | `gef init --apply` then `gef adopt --apply` on a fresh target | **0** | both `APPLIED`, both receipts persisted under their own binding |
 
-Baseline: the reaudited head carried 1270 tests; this revision carries **1290** (+20: 7 probe
-safety, 6 authorization, 6 repository state, 1 additional E2E case). No regression in any
-pre-existing suite.
+Baseline: the reaudited head carried 1290 tests; this revision carries **1307** (+17: 9 private
+authority, 8 command binding). No regression in any pre-existing suite.
 
 ---
 
@@ -195,7 +206,7 @@ pre-existing suite.
 | `release/1.1` | **NOT rewritten** | `66e223fe…` |
 | `.engineering/` production state | **NOT modified** | only this bundle changed |
 | Packages outside `packages/cli` | **NOT modified** | no other package source changed |
-| Kernel safety | **NOT weakened** | no kernel source touched; the CLI now satisfies more of it |
+| Kernel safety chain | **NOT weakened** | `packages/kernel` unmodified; the CLI now satisfies more of it |
 | Publication / tag / release | **NOT performed** | — |
 | Merge | **NOT performed** | PR #282 left open |
 | Force-push / history rewrite | **NOT performed** | ordinary commits only |
@@ -204,12 +215,12 @@ pre-existing suite.
 
 ## 7. Retractions
 
-| Claim at `17a81fac` | Status |
+| Claim at `7c064439` | Status |
 |---|---|
-| "CRITICAL: 0. HIGH: 0." | **RETRACTED** — objective reaudit #2 (`5711990826`) found three HIGH findings (H4, H5, H6). |
-| "A file-backed journal port records durable recovery evidence; a real pre-state port lets the commit barrier detect a target that appeared after planning." | Retained, but **incomplete**: the same commit passed an unconditional authorization port, which is now corrected under H5. |
-| "Case semantics are probed, never assumed." | Retained as a claim, but the probe itself was unsafe (H4); the probe is now ownership-proving and residue-free. |
-| "Repository and canonical-source observations are read-only, bounded, and report what they cannot observe … instead of asserting a clean tree." | **RETRACTED for the clean case** — the observation reported the limitation while the *engine verdict* still became `CLEAN`. Corrected under H6. |
+| "CRITICAL: 0. HIGH: 0" | **RETRACTED** — objective reaudit #3 (`5234282893`) found H7 and H8. |
+| "Capability probes never touch project content" | Retained for content, **corrected for effect**: the case-semantics probe still created a private path before authorization. Measurement is now read-only. |
+| "Probes now run through an invocation-owned probe authority … created exclusively with a collision-resistant name" | Retained, and **extended**: the authority is now containment- and alias-proven and prunes the private root it created. |
+| "the authorization decision defaults to the verified safety engine and is re-asked on every call" | Retained, and **extended**: the decision is now bound to the command and mutation purpose, and is evaluated in the bound operation context. |
 
 ---
 
@@ -219,32 +230,33 @@ pre-existing suite.
 
 | ID | Severity | Finding | Disposition |
 |---|---|---|---|
-| H4 | was HIGH | probes could overwrite/delete user-owned files | **CLOSED** — owned, collision-resistant, no-clobber probes; 7-case regression suite |
-| H5 | was HIGH | transaction authorization was an unconditional allow | **CLOSED** — real bound port re-evaluated at the commit barrier; 6-case negative suite |
-| H6 | was HIGH | unobserved dirtiness was reported as `CLEAN` | **CLOSED** — deterministic dirtiness observation, no verdict when unknown, apply blocked; 6-case matrix |
+| H7 | was HIGH | private authority could mutate before authorization and could escape through aliases | **CLOSED** — read-only measurement, containment/alias-proven private area, identity-revalidated cleanup; 9-case suite |
+| H8 | was HIGH | command/verb were not part of the authorization binding | **CLOSED** — deterministic binding table enforced at both gates; 8-case negative suite |
 | F1 | MEDIUM | the kernel classifies any `checkPhysicalSafety` failure as `CAPABILITY`, so a no-clobber refusal exits 40 rather than 20. The CLI preserves the engine's classification. | Recorded. Owner: kernel/M05 semantics. |
-| F2 | MEDIUM | dirtiness now requires a `git` binary; where git is unavailable the CLI blocks `--apply`. This is the intended fail-closed behaviour, but it is a real operational dependency. | Recorded. Owner: WO-003 (Doctor) should surface it as an actionable diagnostic. |
+| F2 | MEDIUM | repository dirtiness requires a `git` binary; where git is unavailable, `--apply` blocks. Intended fail-closed behaviour, but a real operational dependency. | Recorded. Owner: WO-003 should surface it as an actionable diagnostic. |
+| F5 | LOW | an occupied non-directory in the reserved private namespace now fails the transaction closed rather than proceeding with an unproven durability capability. This is stricter than strictly necessary and is deliberate. | Recorded. |
 | F3 | LOW | `--help` depends on the engine inventory and fails closed in a broken install. | Accepted, documented. |
-| F4 | LOW | the symlink case reports a diagnostic and does not assert on this host (`EPERM`). | Recorded. |
+| F4 | LOW | a host that cannot create a directory alias reports a diagnostic instead of asserting; junctions cover Windows, symlinks cover Linux/macOS. | Recorded; cross-platform coverage is exercised by the assurance matrix. |
 | C4 | MEDIUM | carried from WO-001: `ARCHITECTURE.md` vs `D-0043` constitutional version. | Open. Owner: Project Owner. |
 | C8 | MEDIUM | carried from WO-001: `Repository validation` triggers only for PRs to `main`. | Open. Owner: WO-009. |
 
-No HIGH/CRITICAL finding was suppressed. No uncertainty was converted into a PASS.
+No HIGH/CRITICAL finding was suppressed, and no security case was skipped silently to obtain a
+PASS.
 
 ---
 
 ## 9. Limits of this bundle
 
-- This bundle records what was executed in this environment. It is **not** independent
-  verification and does **not** claim `APPROVED`.
-- Local execution is `win32`. The new suites use real `git` fixtures and avoid
-  platform-conditional assertions except where noted (the npm `.cmd` shim, symlink support);
-  cross-platform evidence is produced by CI.
-- The dirtiness observation adds one bounded `git status` call per repository-bearing apply. That
-  is a deliberate correctness cost, not a claimed optimisation.
+- This bundle records what was executed in this environment. It is **not** independent verification
+  and does **not** claim `APPROVED`.
+- Local execution is `win32`. Alias cases use junctions here; the same cases use symlinks on
+  Linux/macOS, where the primitive is available without elevation. Cross-platform evidence comes
+  from CI.
+- The containment proof adds one `lstat` per private path component and one `realpath` per private
+  operation. That is a deliberate correctness cost, not a claimed optimisation.
 - No performance improvement is claimed; token metrics are unavailable in this environment.
 - The compatibility matrix remains a skeleton; this WO asserts no compatibility.
 
-STOP CONDITION: `GBS_V11_WO_002_READY_FOR_OBJECTIVE_REAUDIT_2`.
+STOP CONDITION: `GBS_V11_WO_002_READY_FOR_OBJECTIVE_REAUDIT_3`.
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED.

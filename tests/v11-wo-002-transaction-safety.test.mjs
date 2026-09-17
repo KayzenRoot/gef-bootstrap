@@ -20,7 +20,7 @@ import {
   applyTransaction,
   composeFilesystemPhysicalSafety,
 } from "../packages/kernel/dist/index.js";
-import { JOURNAL_DIRECTORY, applyGovernedCreate, cliPrimitiveFor, createJournalPort, createPhysicalPort, createStatePort, detectCaseSemantics, TRANSACTION_PRIVATE_DIRECTORY } from "../packages/cli/dist/index.js";
+import { JOURNAL_DIRECTORY, applyGovernedCreate, cliPrimitiveFor, createJournalPort, createPhysicalPort, createPrivateArea, createStatePort, detectCaseSemantics, TRANSACTION_PRIVATE_DIRECTORY } from "../packages/cli/dist/index.js";
 
 const sha = (value) => createHash("sha256").update(value).digest("hex");
 
@@ -40,6 +40,8 @@ function request(root, relativePath, content, overrides = {}) {
     transactionId: "tx-1",
     policyRef: "cli:init:managed-write:v1",
     moduleOwner: "m48-m54-maintenance",
+    commandId: "gef.init.run",
+    purpose: "STATE_INIT",
     ...overrides,
   };
 }
@@ -208,6 +210,7 @@ test("a target that appears between preparation and promotion is refused at the 
     rootRef: `target:${root}`,
     transactionId: "tx-race",
     caseSemantics,
+    privateArea: createPrivateArea(root),
     payloads: new Map([[relativePath, content]]),
     policyRef: "cli:init:managed-write:v1",
   });
@@ -242,7 +245,7 @@ test("a target that appears between preparation and promotion is refused at the 
     runId: "run-race",
     transactionId: "tx-race",
     // The real CLI pre-state port is used, so the barrier's stale detection is genuinely exercised.
-    ports: { digest, state: createStatePort(root, relativePath), authorization: { authorize: () => ({ ok: true, value: true }) }, journal: createJournalPort(root), effects },
+    ports: { digest, state: createStatePort(root, relativePath), authorization: { authorize: () => ({ ok: true, value: true }) }, journal: createJournalPort(createPrivateArea(root)), effects },
   });
 
   assert.equal(result.ok, false, "the commit barrier must refuse a target that appeared after preparation");

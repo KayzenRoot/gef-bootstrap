@@ -51,14 +51,28 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
   target, and asks the verified safety engine on every call — an authorization that lapses
   between staging and commit is refused with no target-visible effect, and an unprovable
   decision is a denial.
+- **Every mutation is bound to a command and a purpose.** One deterministic authorization binding
+  exists per admitted command and mutation purpose, fixing the policy, the module owner, the
+  declared plan surface and the safety classification. `init` cannot authorize an adopt policy or
+  vice versa, an unknown command has no binding, and receipt persistence has its own admitted
+  purpose rather than borrowing a state-command identity. The binding is re-derived from what the
+  plan actually declares, at the initial gate and again at the commit barrier.
 - **Repository state must be observed, never assumed.** Working-tree dirtiness is read
   deterministically from the target repository (`git status --porcelain` over an argv array, no
   shell string, bounded by a timeout). If the working tree cannot be observed, no verdict is
   claimed and `--apply` is blocked before any effect; a non-repository directory is reported as
   known-absent rather than unknown.
-- **Capability probes never touch project content.** Case-semantics and durability probes run in
-  an invocation-owned directory under the reserved GEF private area, created exclusively with a
-  collision-resistant name, and remove only what that invocation created and still owns.
+- **Nothing project-visible is created before authorization.** Case semantics is measured
+  read-only, by comparing the identity of an existing path with its case-flipped sibling, so an
+  initial authorization denial leaves an exact zero filesystem delta.
+- **Capability probes never touch project content.** The durability probe runs in an
+  invocation-owned directory under the reserved GEF private area, created exclusively with a
+  collision-resistant name, and removes only what that invocation created and still owns.
+- **The private area is containment- and alias-proven.** Every private path (probes, staging,
+  journal) is proven lexically contained under the target root, every existing ancestor is proven
+  not to be a symlink/reparse point, and the deepest existing ancestor is proven physically
+  contained once resolved. A user-controlled alias therefore cannot redirect a private effect
+  outside the target, and cleanup revalidates the recorded identity before removing anything.
 - Persisted documents (`.gef/<verb>-state.json` and `.gef/receipts/<runId>.json`) are bound to
   JSON Schema 2020-12 contracts shipped in `schemas/`; an unsupported schema major version
   fails closed on read.

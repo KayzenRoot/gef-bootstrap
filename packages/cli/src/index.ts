@@ -35,6 +35,19 @@ export type { JsonEnvelope, JsonErrorProjection } from "./render.js";
 export * from "./engines.js";
 
 export {
+  JOURNAL_SUBDIRECTORY,
+  PRIVATE_DIRECTORY,
+  PROBE_DIRECTORY,
+  PrivateAuthorityError,
+  createPrivateArea,
+  isLexicallyContained,
+  measureCaseSemantics,
+} from "./private-authority.js";
+export type { OwnedDirectory, PrivateArea, PrivateAuthorityReason } from "./private-authority.js";
+
+
+
+export {
   CLI_COMMAND_IDS,
   EngineUnavailableError,
   GEF_STATE_DIRECTORY,
@@ -92,6 +105,18 @@ export {
   createStatePort,
   detectCaseSemantics,
   relativeRef,
+} from "./transaction.js";
+export {
+  ADMITTED_MUTATION_BINDINGS,
+  bindingAllowsSurface,
+  bindingFor,
+  resolveMutationBinding,
+} from "./transaction.js";
+export type {
+  AuthorizedMutationBinding,
+  MutationBindingQuery,
+  MutationPurpose,
+  MutationSurfaceMode,
 } from "./transaction.js";
 export type {
   AuthorizationContext,

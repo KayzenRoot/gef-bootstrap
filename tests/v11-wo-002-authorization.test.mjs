@@ -12,7 +12,18 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
-import { JOURNAL_DIRECTORY, TRANSACTION_PRIVATE_DIRECTORY, applyGovernedCreate, createAuthorizationPort } from "../packages/cli/dist/index.js";
+import {
+  JOURNAL_DIRECTORY,
+  TRANSACTION_PRIVATE_DIRECTORY,
+  applyGovernedCreate,
+  bindingFor,
+  createAuthorizationPort,
+  resolveMutationBinding,
+} from "../packages/cli/dist/index.js";
+
+const INIT_BINDING = bindingFor("gef.init.run", "STATE_INIT");
+const ADOPT_BINDING = bindingFor("gef.adopt.apply", "STATE_ADOPT");
+const RECEIPT_INIT_BINDING = bindingFor("gef.init.run", "RECEIPT_INIT");
 
 const sha = (value) => createHash("sha256").update(value).digest("hex");
 
@@ -34,9 +45,24 @@ function request(root, overrides = {}) {
     policyRef: "cli:init:managed-write:v1",
     moduleOwner: "m48-m54-maintenance",
     commandId: "gef.init.run",
+    purpose: "STATE_INIT",
     ...overrides,
   };
 }
+
+
+/** A complete plan shape: the authorization binding is re-derived from the plan's own fields. */
+function planFor(binding, overrides = {}) {
+  return {
+    authorizationRequirements: [binding.policyRef],
+    targetBinding: { targetRef: `target:${overrides.targetRef ?? bindingTarget}` },
+    mutationSurface: [overrides.surface ?? binding.artifact],
+    expectedPreState: [{ key: overrides.surface ?? binding.artifact, owner: overrides.owner ?? binding.moduleOwner }],
+    securityClass: "S1_MANAGED_WRITE",
+  };
+}
+
+const bindingTarget = "/admitted/target";
 
 const allow = () => ({ ok: true, value: true });
 /** The `decide` hook returns an AuthorizationDecision, not a kernel GateResult. */
@@ -56,11 +82,11 @@ function noEffect(root, label) {
 
 test("H5: the default authorization port consults the verified safety engine", async (t) => {
   const root = tempRoot(t);
-  const port = createAuthorizationPort({ policyRef: "cli:init:managed-write:v1", runId: "run-authz", commandId: "gef.init.run", targetRef: root });
+  const port = createAuthorizationPort({ binding: INIT_BINDING, runId: "run-authz", targetRef: root });
   const decision = await port.authorize({
     runId: "run-authz",
-    authorizationRefs: ["cli:init:managed-write:v1"],
-    plan: { authorizationRequirements: ["cli:init:managed-write:v1"], targetBinding: { targetRef: `target:${root}` } },
+    authorizationRefs: [INIT_BINDING.policyRef],
+    plan: planFor(INIT_BINDING, { targetRef: root }),
   });
   assert.equal(decision.ok, true, decision.ok ? "" : decision.error.summary);
 });
@@ -68,24 +94,22 @@ test("H5: the default authorization port consults the verified safety engine", a
 test("H5: an unprovable authorization decision is a denial, never an allow", async (t) => {
   const root = tempRoot(t);
   const denying = createAuthorizationPort({
-    policyRef: "cli:init:managed-write:v1",
+    binding: INIT_BINDING,
     runId: "run-authz",
-    commandId: "gef.init.run",
     targetRef: root,
     decide: () => ({ authorized: false, reason: "policy_unproven" }),
   });
   const denied = await denying.authorize({
     runId: "run-authz",
-    authorizationRefs: ["cli:init:managed-write:v1"],
-    plan: { authorizationRequirements: ["cli:init:managed-write:v1"], targetBinding: { targetRef: `target:${root}` } },
+    authorizationRefs: [INIT_BINDING.policyRef],
+    plan: planFor(INIT_BINDING, { targetRef: root }),
   });
   assert.equal(denied.ok, false);
   assert.equal(denied.error.category, "AUTHORIZATION");
 
   const throwing = createAuthorizationPort({
-    policyRef: "cli:init:managed-write:v1",
+    binding: INIT_BINDING,
     runId: "run-authz",
-    commandId: "gef.init.run",
     targetRef: root,
     decide: () => {
       throw new Error("decision capability unavailable");
@@ -93,8 +117,8 @@ test("H5: an unprovable authorization decision is a denial, never an allow", asy
   });
   const failed = await throwing.authorize({
     runId: "run-authz",
-    authorizationRefs: ["cli:init:managed-write:v1"],
-    plan: { authorizationRequirements: ["cli:init:managed-write:v1"], targetBinding: { targetRef: `target:${root}` } },
+    authorizationRefs: [INIT_BINDING.policyRef],
+    plan: planFor(INIT_BINDING, { targetRef: root }),
   });
   assert.equal(failed.ok, false);
   assert.equal(failed.error.reasonCode, "gef.authorization.decision_unavailable");
@@ -102,24 +126,33 @@ test("H5: an unprovable authorization decision is a denial, never an allow", asy
 
 test("H5: the authorization binding rejects mismatched run, policy, requirement and target", async (t) => {
   const root = tempRoot(t);
-  const base = { policyRef: "cli:init:managed-write:v1", runId: "run-authz", commandId: "gef.init.run", targetRef: root, decide: decideAllow };
-  const good = { authorizationRefs: ["cli:init:managed-write:v1"], plan: { authorizationRequirements: ["cli:init:managed-write:v1"], targetBinding: { targetRef: `target:${root}` } } };
+  const base = { binding: INIT_BINDING, runId: "run-authz", targetRef: root, decide: decideAllow };
+  const good = { authorizationRefs: [INIT_BINDING.policyRef], plan: planFor(INIT_BINDING, { targetRef: root }) };
 
   assert.equal((await createAuthorizationPort(base).authorize({ runId: "run-authz", ...good })).ok, true);
   assert.equal((await createAuthorizationPort(base).authorize({ runId: "other-run", ...good })).error.reasonCode, "gef.authorization.run_mismatch");
   assert.equal((await createAuthorizationPort(base).authorize({ runId: "run-authz", ...good, authorizationRefs: [] })).error.reasonCode, "gef.authorization.policy_not_admitted");
   assert.equal(
-    (await createAuthorizationPort(base).authorize({ runId: "run-authz", authorizationRefs: ["cli:init:managed-write:v1"], plan: { authorizationRequirements: [], targetBinding: { targetRef: `target:${root}` } } })).error.reasonCode,
+    (await createAuthorizationPort(base).authorize({
+      runId: "run-authz",
+      authorizationRefs: [INIT_BINDING.policyRef],
+      plan: { ...planFor(INIT_BINDING, { targetRef: root }), authorizationRequirements: [] },
+    })).error.reasonCode,
     "gef.authorization.requirement_not_declared",
   );
   assert.equal(
-    (await createAuthorizationPort(base).authorize({ runId: "run-authz", authorizationRefs: ["cli:init:managed-write:v1"], plan: { authorizationRequirements: ["cli:init:managed-write:v1"], targetBinding: { targetRef: "target:/somewhere/else" } } })).error.reasonCode,
+    (await createAuthorizationPort(base).authorize({
+      runId: "run-authz",
+      authorizationRefs: [INIT_BINDING.policyRef],
+      plan: planFor(INIT_BINDING, { targetRef: "/somewhere/else" }),
+    })).error.reasonCode,
     "gef.authorization.target_mismatch",
   );
 
   const revoked = await createAuthorizationPort({ ...base, isRevoked: () => true }).authorize({ runId: "run-authz", ...good });
   assert.equal(revoked.error.reasonCode, "gef.authorization.revoked");
 });
+
 
 // ------------------------------------------------- initial denial, no effect
 
