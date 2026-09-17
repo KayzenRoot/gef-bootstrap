@@ -379,9 +379,18 @@ test("the installed package carries the Windows rights oracle and its prebuilt b
   const project = tempProject(t);
   const doctor = JSON.parse(gefAt(bin, ["doctor", "--target", project, "--json"]).stdout).value.doctor;
   assert.equal(doctor.toolchain.git.presence, sourceGitDecision(), "the installed CLI reaches the source workspace decision on this token");
-  if (process.platform === "win32" && doctor.toolchain.git.presence === "FOUND") {
-    assert.deepEqual([...doctor.toolchain.git.gaps], [], "the packaged oracle proved the chain on Windows");
-    t.diagnostic("win32: the installed package loaded the packaged FFI adapter and proved the replacement rights");
+  if (process.platform === "win32") {
+    if (doctor.toolchain.git.presence === "FOUND") {
+      // The packaged adapter loaded and proved the replacement rights for this token.
+      assert.deepEqual([...doctor.toolchain.git.gaps], [], "the packaged oracle proved the chain on Windows");
+      t.diagnostic("win32: the installed package loaded the packaged FFI adapter and proved the replacement rights");
+    } else {
+      // An assurance token that can itself replace the machine executable is refused by the policy;
+      // the reason must be the unprovable right, never a missing adapter.
+      assert.equal(doctor.toolchain.git.presence, "UNAVAILABLE");
+      assert.equal(doctor.toolchain.git.gaps.some((gap) => gap.startsWith("gef.cli.git.")), true, "the packaged CLI states the trust reason");
+      t.diagnostic("win32: this token holds the replacement rights, so the policy withholds the executable");
+    }
   } else {
     // POSIX never loads the adapter; the effective-write chain is the proof there.
     assert.equal(existsSync(join(cliDir, "node_modules", "@koromix", "koffi-win32-x64")), false, "a POSIX build stages no Windows binary");
