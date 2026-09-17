@@ -10,6 +10,8 @@ const readJson = (p) => JSON.parse(read(p));
 
 const schema = readJson('.engineering/schemas/execution-capsule.schema.json');
 const contextLock = readJson('.engineering/context-locks/GBS-V11-WO-001.json');
+const checkpoint = readJson('.engineering/CHECKPOINT.json');
+const ledger = read('.engineering/DECISIONS-LEDGER.md');
 const adr = read('.engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md');
 const capsuleContract = read('.engineering/releases/V1.1-EXECUTION-CAPSULE-CONTRACT.md');
 
@@ -46,9 +48,17 @@ test('Codex execution authority points to ADR-0003-D3, not hotfix D2', () => {
   assert.ok(adr.includes('ADR-0003-D3 — Conditional authorization for Codex execution'));
 });
 
-test('continuing Codex authority is gated by D-0042 audit and checkpoint promotion', () => {
-  assert.ok(adr.includes('not effective for subsequent implementation Work Orders until objective audit is APPROVED and the decision is promoted through the governed checkpoint flow'));
+test('continuing Codex authority requires the D-0042 audit plus checkpoint-promotion chain', () => {
+  const prePromotionGate = adr.includes('not effective for subsequent implementation Work Orders until objective audit is APPROVED and the decision is promoted through the governed checkpoint flow');
+  const promotedGate =
+    adr.includes('objective audit `APPROVED`') &&
+    adr.includes('checkpoint promotion recorded by `D-0059`') &&
+    ledger.includes('## D-0059 — V1.1 foundation decisions are promoted after objective audit') &&
+    checkpoint.v11?.promotion?.decision === 'D-0059';
+  assert.ok(prePromotionGate || promotedGate, 'authority must be either explicitly gated or backed by the completed D-0042 promotion chain');
   assert.ok(contextLock.codexAuthorizedScope.includes('until ADR-0003-D3 passes objective audit and checkpoint promotion'));
+  assert.equal(checkpoint.v11?.executorAuthority?.decision, 'ADR-0003-D3');
+  assert.ok(checkpoint.v11?.executorAuthority?.prohibited?.includes('main'));
 });
 
 test('deterministic ordering is delegated truthfully to WO-005 instead of claimed as already proven', () => {
