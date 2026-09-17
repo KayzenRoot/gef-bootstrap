@@ -1,9 +1,30 @@
 {
   "name": "@gef-bootstrap/cli",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "private": true,
+  "description": "GEF Bootstrap thin operator CLI surface (transport and rendering only)",
   "type": "module",
-  "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}},
+  "license": "UNLICENSED",
+  "bin": {
+    "gef": "./bin/gef.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "types": "./dist/index.d.ts",
-  "dependencies": {"@gef-bootstrap/contracts": "0.0.0", "@gef-bootstrap/kernel": "0.0.0"}
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@gef-bootstrap/contracts": "0.0.0",
+    "@gef-bootstrap/kernel": "0.0.0"
+  }
 }
