@@ -1096,7 +1096,24 @@ process (POSIX effective-write bit, Windows ACL write-open) before the policy is
 and the root-above-root case proves replacement authority one level higher than the old proof
 reached.
 
-### 8.4 Regression status
+### 8.4 A red CI round, its cause, and the fixture cleanup
+
+The first push of this cycle () turned **all 23 workflows red**. The failures were in the
+three new H14 fixtures on Linux, with
+
+```
+Error: EACCES, Permission denied: /tmp/gef-h14-parent-...
+```
+
+These fixtures deliberately make a directory non-writable to prove the refusal, and the cleanup hook
+then tried to delete that directory: removing an entry needs write authority on its directory, so the
+harness could not undo what the test had just proved. Windows does not gate deletion on the POSIX
+mode bits, which is why the same tests were green locally and red on . The cleanup now
+restores the mode bits level by level before removing, and the three tests are green on both
+platforms. The red round is recorded here rather than presented as if the green re-run had been the
+only outcome.
+
+### 8.5 Regression status
 
 H13 remains green unchanged: the concurrent-overlap tests were re-run and the `AsyncLocalStorage`
 binding was not touched. The lockfile reconciliation is untouched and `npm ci --dry-run` is clean.

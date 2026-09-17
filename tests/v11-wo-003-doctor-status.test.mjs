@@ -1246,7 +1246,25 @@ function machinePolicyOver(root, candidate) {
   });
 }
 
-/** True when this process can replace entries in ; the platform-appropriate primitive. */
+/**
+ * Remove a fixture that may contain directories the test made read-only.
+ *
+ * Deleting an entry needs write authority on its directory, so a fixture that proves a directory is
+ * non-writable must have those bits restored before cleanup or the removal itself fails.
+ */
+function removeFixture(fixturePath) {
+  try {
+    for (const entry of readdirSync(fixturePath, { withFileTypes: true })) {
+      if (entry.isDirectory()) removeFixture(join(fixturePath, entry.name));
+    }
+    chmodSync(fixturePath, 0o755);
+  } catch {
+    // Best effort: the assertion already ran, and cleanup must not replace its result.
+  }
+  rmSync(fixturePath, { recursive: true, force: true });
+}
+
+/** True when this process can replace entries in a directory; the platform-appropriate primitive. */
 function directoryIsReplaceable(path) {
   if (process.platform === "win32") return canOpenForWritingForTest(path);
   try {
@@ -1454,7 +1472,7 @@ test("H14: a caller-writable executable is refused by the machine policy", (t) =
 
 test("H14: replacement authority through a path component is refused where provable", (t) => {
   const root = mkdtempSync(join(tmpdir(), "gef-h14-parent-"));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => removeFixture(root));
   const commandDirectory = process.platform === "win32" ? join(root, "cmd") : root;
   mkdirSync(commandDirectory, { recursive: true });
   const candidate = process.platform === "win32" ? join(commandDirectory, "git.exe") : join(root, "git");
@@ -1518,7 +1536,7 @@ test("H14-final: a caller-writable ancestor above the declared root is refused",
   // The declared root is made non-writable, but the directory that holds it is not: replacing the
   // root entry is exactly what the old root-downward proof could not see.
   const parent = mkdtempSync(join(tmpdir(), "gef-h14f-ancestor-"));
-  t.after(() => rmSync(parent, { recursive: true, force: true }));
+  t.after(() => removeFixture(parent));
   const root = join(parent, "trust-root");
   mkdirSync(root, { recursive: true });
   const commandDirectory = process.platform === "win32" ? join(root, "cmd") : root;
@@ -1580,7 +1598,7 @@ test("H14-final: a caller-replaceable root is unavailable under the default poli
   // root and is not group/other writable, but the caller can replace it, so the high-assurance
   // default must not admit it. The explicit user-managed policy is the only way in.
   const root = mkdtempSync(join(tmpdir(), "gef-h14f-prefix-"));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.after(() => removeFixture(root));
   const bin = join(root, "bin");
   mkdirSync(bin, { recursive: true });
   const candidate = process.platform === "win32" ? join(bin, "git.exe") : join(bin, "git");
