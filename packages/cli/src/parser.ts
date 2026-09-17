@@ -119,26 +119,3 @@ export function parseArgv(argv: readonly string[]): ParseOutcome {
   };
   return parsed;
 }
-
-/** Deterministic usage text. Rendered without consulting the network or the filesystem. */
-export function usageText(verb?: CliVerb): readonly string[] {
-  const lines: string[] = ["gef - GEF Bootstrap operator surface", "", "Usage: gef <command> [options]", "", "Commands:"];
-  if (verb === undefined) {
-    lines.push("  init           plan project initialization (safe, read-only by default)");
-    lines.push("  adopt          preview brownfield adoption (safe, read-only by default)");
-  } else if (verb === "init") {
-    lines.push("  init           plan project initialization (safe, read-only by default)");
-    lines.push("  init --apply   run the governed initialization path");
-  } else {
-    lines.push("  adopt          preview brownfield adoption (safe, read-only by default)");
-    lines.push("  adopt --apply  run the governed adoption path");
-  }
-  lines.push("", "Options:");
-  lines.push("  --json              emit a stable machine-readable envelope");
-  lines.push("  --apply             run the governed mutation path instead of the safe plan");
-  lines.push("  --target <ref>      target project directory");
-  lines.push("  -h, --help          show help");
-  lines.push("  -V, --version       show version");
-  lines.push("", "Not yet available: doctor, status, upgrade.");
-  return Object.freeze(lines);
-}

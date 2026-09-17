@@ -11,7 +11,10 @@
   "files": [
     "dist",
     "bin",
-    "README.md"
+    "vendor",
+    "schemas",
+    "README.md",
+    "LICENSE"
   ],
   "exports": {
     ".": {
@@ -26,5 +29,12 @@
   "dependencies": {
     "@gef-bootstrap/contracts": "0.0.0",
     "@gef-bootstrap/kernel": "0.0.0"
+  },
+  "bundleDependencies": [
+    "@gef-bootstrap/contracts",
+    "@gef-bootstrap/kernel"
+  ],
+  "scripts": {
+    "verify-package": "node scripts/prepare-package.mjs"
   }
 }

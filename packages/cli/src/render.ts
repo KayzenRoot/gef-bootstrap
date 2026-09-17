@@ -2,12 +2,16 @@
  * Result rendering.
  *
  * Rendering is the only output authority of the CLI. Both renderers project the same
- * `GefResult` produced by the kernel runtime; neither reinterprets engine payloads,
- * derives new semantics or invents fields. The JSON envelope is a stable, ordered
- * projection so machine consumers never parse human text.
+ * `GefResult` produced by the kernel runtime; neither reinterprets engine payloads, derives
+ * new semantics or invents fields. The JSON envelope is a stable, ordered projection so
+ * machine consumers never parse human text.
+ *
+ * Help *semantics* (the command inventory and its deterministic sorted order) come from the
+ * verified `helpIndex` engine; this module only draws the lines.
  */
 
 import type { FailureResult, GefResult, SuccessResult } from "@gef-bootstrap/contracts";
+import type { HelpEntry } from "./registry.js";
 
 export const ENVELOPE_SCHEMA_VERSION = 1;
 
@@ -89,6 +93,37 @@ export function renderLines(lines: readonly string[]): string {
   return `${lines.join("\n")}\n`;
 }
 
+/**
+ * Deterministic help text derived from the engine-projected inventory.
+ *
+ * The entry set and its order are owned by `helpIndex`; a caller that cannot obtain the
+ * inventory must not render invented help.
+ */
+export function renderHelp(entries: readonly HelpEntry[], verb?: string): string {
+  const lines: string[] = ["gef - GEF Bootstrap operator surface", "", "Usage: gef <command> [options]", "", "Commands:"];
+  const prefix = verb === undefined ? undefined : `gef.${verb}.`;
+  for (const entry of entries) {
+    if (prefix !== undefined && !entry.id.startsWith(prefix)) continue;
+    const width = Math.max(...entries.map((candidate) => candidate.id.length));
+    lines.push(`  ${entry.id.padEnd(width)}  ${entry.summary}`);
+  }
+  lines.push("", "Options:");
+  lines.push("  --json              force a machine-readable envelope (automatic when stdout is not a TTY)");
+  lines.push("  --apply             run the governed mutation path instead of the safe plan");
+  lines.push("  --target <ref>      target project directory");
+  lines.push("  -h, --help          show help");
+  lines.push("  -V, --version       show version");
+  lines.push("", "Not yet available: doctor, status, upgrade.");
+  return `${lines.join("\n")}\n`;
+}
+
+export function renderHelpJson(entries: readonly HelpEntry[], verb?: string): string {
+  const prefix = verb === undefined ? undefined : `gef.${verb}.`;
+  const filtered = prefix === undefined ? entries : entries.filter((entry) => entry.id.startsWith(prefix));
+  const envelope = { schemaVersion: ENVELOPE_SCHEMA_VERSION, ok: true, kind: "help", commands: filtered.map((entry) => ({ id: entry.id, summary: entry.summary, schema: entry.schema })) };
+  return `${JSON.stringify(envelope, null, 2)}\n`;
+}
+
 /** A usage/input failure is rendered here rather than through the kernel, because no command was resolved. */
 export function renderUsageFailureJson(reason: string, summary: string): string {
   const envelope = {
@@ -104,11 +139,6 @@ export function renderUsageFailureJson(reason: string, summary: string): string 
 
 export function renderUsageFailureHuman(reason: string, summary: string): string {
   return `gef: ${summary}\nRun 'gef --help' for usage.\n(gef.input.${reason})\n`;
-}
-
-/** Deterministic help projection, built from parsed metadata only. */
-export function renderHelp(usage: readonly string[]): string {
-  return renderLines(usage);
 }
 
 /** Deterministic version projection. */
