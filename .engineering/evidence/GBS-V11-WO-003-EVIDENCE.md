@@ -1659,7 +1659,8 @@ closed there and the resulting Windows capability loss needs an owner decision.
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED
 
-The final head for this revision is `059ebc90d8341300477edc2fce9dfe8758edbd43`, whose exact-head
-assurance is 23 workflow runs / 89 check runs, all `success`.
+The head carrying this revision is `b324ad8d067bf0451a83051ba7f59624a918cda1` (code change at
+`2a7010368481b4fa720e34ec1097dd49f2e00754`); its exact-head assurance is 23 workflow runs / 89 check
+runs, all `success`.
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED
