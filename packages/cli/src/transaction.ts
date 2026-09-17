@@ -539,8 +539,27 @@ export const JOURNAL_DIRECTORY = `${PRIVATE_DIRECTORY}/journal`;
  *     descriptor, which is bound to an inode), so a path replaced by another file or by a
  *     symlink/reparse point between writes is refused rather than overwritten.
  */
-export function createJournalPort(privateArea: PrivateArea): TransactionJournalPort {
-  const claimed = new Map<string, OwnedJournal>();
+export interface CliJournalPort extends TransactionJournalPort {
+  /**
+   * Closes any journal descriptor still open. Journal evidence files are never removed — only the
+   * descriptor is released — so recovery evidence survives a lifecycle that never reached its
+   * terminal phase.
+   */
+  release(): Promise<void>;
+}
+
+export function createJournalPort(privateArea: PrivateArea): CliJournalPort {
+  /**
+   * One journal authority per transaction, retained for the transaction's whole lifetime.
+   *
+   * An apply lifecycle and a rollback lifecycle are distinct: apply runs BEGIN -> UPDATE* -> FINISH,
+   * and a rollback runs BEGIN_ROLLBACK -> UPDATE_ROLLBACK* -> FINISH_ROLLBACK. Both write the same
+   * owned journal file, so the record is kept after a lifecycle closes its descriptor and is
+   * reopened — with identity and content verification — when the next lifecycle needs it. That is
+   * what stops a rollback from double-claiming an existing owned file and escalating recovery over
+   * a journaling artefact rather than a real recovery defect.
+   */
+  const journal = new Map<string, { file: OwnedFile; fingerprint: string; handle: OwnedJournal | undefined }>();
 
   const journalError = (transactionId: string, detail: string, summary: string): GefError => ({
     schemaVersion: 1,
@@ -559,12 +578,17 @@ export function createJournalPort(privateArea: PrivateArea): TransactionJournalP
     metadata: { transactionId, detail },
   });
 
-  const persist = async (transactionId: string, phase: "BEGIN" | "UPDATE" | "FINISH" | "ROLLBACK", snapshot: unknown) => {
-    const body = `${JSON.stringify({ schemaVersion: 1, kind: "gef.cli.transaction-journal", transactionId, phase, snapshot }, null, 2)}\n`;
-    let owned = claimed.get(transactionId);
-    if (owned === undefined) {
+  type JournalPhase = "APPLY_BEGIN" | "APPLY_UPDATE" | "APPLY_FINISH" | "ROLLBACK_BEGIN" | "ROLLBACK_UPDATE" | "ROLLBACK_FINISH";
+  const terminalPhase = (phase: JournalPhase): boolean => phase === "APPLY_FINISH" || phase === "ROLLBACK_FINISH";
+
+  const persist = async (transactionId: string, phase: JournalPhase, snapshot: unknown) => {
+    const body = `${JSON.stringify({ schemaVersion: 1, kind: "gef.cli.transaction-journal", transactionId, phase, snapshot }, null, 2)}
+`;
+    let record = journal.get(transactionId);
+    if (record === undefined) {
+      let claimed: OwnedJournal;
       try {
-        owned = await privateArea.claimJournalFile(transactionId);
+        claimed = await privateArea.claimJournalFile(transactionId);
       } catch (cause: unknown) {
         const reason = cause instanceof PrivateAuthorityError ? cause.reason : "UNAVAILABLE";
         return {
@@ -572,37 +596,62 @@ export function createJournalPort(privateArea: PrivateArea): TransactionJournalP
           error: journalError(transactionId, reason, "Journal file could not be exclusively claimed; an existing entry is never overwritten"),
         };
       }
-      claimed.set(transactionId, owned);
+      record = { file: claimed.file, fingerprint: "", handle: claimed };
+      journal.set(transactionId, record);
     }
-    const written = await owned.write(body);
+    let handle = record.handle;
+    if (handle === undefined) {
+      // A later lifecycle reuses the transaction's own journal authority.
+      try {
+        handle = await privateArea.reopenOwnedFile(record.file, record.fingerprint);
+      } catch (cause: unknown) {
+        const reason = cause instanceof PrivateAuthorityError ? cause.reason : "UNAVAILABLE";
+        return {
+          ok: false as const,
+          error: journalError(transactionId, reason, "Owned journal evidence is no longer the file this transaction wrote; refusing to reuse it"),
+        };
+      }
+      record = { ...record, handle };
+      journal.set(transactionId, record);
+    }
+
+    const written = await handle.write(body);
     if (!written.ok) {
       return {
         ok: false as const,
         error: journalError(transactionId, written.detail ?? "UNKNOWN", "Journal file is no longer the file this transaction owns; refusing to overwrite it"),
       };
     }
-    if (phase === "FINISH" || phase === "ROLLBACK") {
-      // The lifecycle is complete: release the handle that kept the owned inode allocated.
-      claimed.delete(transactionId);
-      await owned.close();
+    record.fingerprint = fingerprintOf(body);
+    if (terminalPhase(phase)) {
+      // The lifecycle is complete: release the descriptor but keep the record, because a rollback
+      // may still need the same owned journal authority.
+      await handle.close();
+      journal.set(transactionId, { file: record.file, fingerprint: record.fingerprint, handle: undefined });
     }
     return ok(true as const);
   };
+
   const transactionIdOf = (snapshot: unknown): string => {
     const candidate = snapshot !== null && typeof snapshot === "object" ? (snapshot as { readonly transactionId?: unknown }).transactionId : undefined;
     return typeof candidate === "string" && candidate.length > 0 ? candidate : "unbound";
   };
   return {
-    begin: (snapshot) => persist(transactionIdOf(snapshot), "BEGIN", snapshot),
-    update: (snapshot) => persist(transactionIdOf(snapshot), "UPDATE", snapshot),
-    finish: (snapshot) => persist(transactionIdOf(snapshot), "FINISH", snapshot),
-    beginRollback: (snapshot) => persist(transactionIdOf(snapshot), "ROLLBACK", snapshot),
-    updateRollback: (snapshot) => persist(transactionIdOf(snapshot), "ROLLBACK", snapshot),
-    finishRollback: (snapshot) => persist(transactionIdOf(snapshot), "ROLLBACK", snapshot),
+    begin: (snapshot) => persist(transactionIdOf(snapshot), "APPLY_BEGIN", snapshot),
+    update: (snapshot) => persist(transactionIdOf(snapshot), "APPLY_UPDATE", snapshot),
+    finish: (snapshot) => persist(transactionIdOf(snapshot), "APPLY_FINISH", snapshot),
+    beginRollback: (snapshot) => persist(transactionIdOf(snapshot), "ROLLBACK_BEGIN", snapshot),
+    updateRollback: (snapshot) => persist(transactionIdOf(snapshot), "ROLLBACK_UPDATE", snapshot),
+    finishRollback: (snapshot) => persist(transactionIdOf(snapshot), "ROLLBACK_FINISH", snapshot),
+    async release() {
+      for (const [transactionId, record] of journal) {
+        if (record.handle === undefined) continue;
+        await record.handle.close();
+        journal.set(transactionId, { file: record.file, fingerprint: record.fingerprint, handle: undefined });
+      }
+    },
   };
 }
-
-
 
 // ---------------------------------------------------------------------------
 // Authorization binding
@@ -1057,12 +1106,15 @@ export async function applyGovernedCreate(request: GovernedCreateRequest, overri
   }
   const authorization =
     overrides?.authorization ?? createAuthorizationPort({ binding, runId: request.runId, targetRef: request.targetRoot });
+  // One journal port for the transaction: its claim record is what lets a rollback reuse the same
+  // owned journal authority instead of double-claiming it.
+  const journalPort = createJournalPort(privateArea);
 
   const ports: TransactionPorts = {
     digest: CLIENT_DIGEST_PORT,
     state: createStatePort(request.targetRoot, request.relativePath),
     authorization,
-    journal: createJournalPort(privateArea),
+    journal: journalPort,
     effects,
   };
 
@@ -1074,6 +1126,9 @@ export async function applyGovernedCreate(request: GovernedCreateRequest, overri
     // governed block, never an internal failure.
     if (cause instanceof PrivateAuthorityError) return privateAuthorityFailure(cause, request);
     throw cause;
+  } finally {
+    // Descriptors are released whatever the outcome; the journal evidence itself is retained.
+    await journalPort.release();
   }
   if (!result.ok) return { ok: false, outcome: result.outcome, planDigest: plan.planDigest, ...(result.error === undefined ? {} : { error: result.error }) };
   const applied = result.receipt.appliedIntentResults.find((entry) => entry.intentId === "i1");

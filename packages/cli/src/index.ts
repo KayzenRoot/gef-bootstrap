@@ -36,6 +36,7 @@ export * from "./engines.js";
 
 export {
   JOURNAL_SUBDIRECTORY,
+  OWNER_MARKER,
   PRIVATE_DIRECTORY,
   PROBE_DIRECTORY,
   PrivateAuthorityError,

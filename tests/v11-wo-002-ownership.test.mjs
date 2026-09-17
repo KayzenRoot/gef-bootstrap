@@ -312,7 +312,7 @@ test("H10: the normal journal lifecycle writes only to the file this transaction
   const recorded = JSON.parse(readFileSync(journalPath, "utf8"));
   assert.equal(recorded.kind, "gef.cli.transaction-journal");
   assert.equal(recorded.transactionId, "tx-ok");
-  assert.equal(recorded.phase, "FINISH");
+  assert.equal(recorded.phase, "APPLY_FINISH", "the terminal apply phase is recorded explicitly");
   // The journal directory is itself invocation-created, so it carries its ownership marker beside
   // the single journal file this transaction owns.
   assert.deepEqual(readdirSync(join(root, PRIVATE_DIRECTORY, "journal")).sort(), [".gef-owner", "tx-ok.json"]);

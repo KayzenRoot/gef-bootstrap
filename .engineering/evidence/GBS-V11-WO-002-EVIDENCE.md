@@ -5,14 +5,15 @@ Title: CLI + Distribution Foundation
 Release line: `1.1.x`
 Assurance: `ELEVATED`
 Executed by: external executor under `ADR-0003-D3` (bounded authorization)
-Audit disposition: **not self-assessed** — objective re-audit #4 is external
+Audit disposition: **not self-assessed** — objective re-audit #5 is external
 
-**Revision note (V4).** This bundle supersedes the evidence recorded at head
-`4e3cd1cb603b5c164b2966d9d6a5459a409da0a2`, which received `CORRECTION_REQUIRED`
-(objective reaudit #4, review `5234658809`: CRITICAL 0 / HIGH 2). The claim
+**Revision note (V5).** This bundle supersedes the evidence recorded at head
+`d22be7544a8c84a17d8703b391c418f7539505ce`, which received `CORRECTION_REQUIRED`
+(objective reaudit #5, review `5235152314`: CRITICAL 0 / HIGH 2). The claim
 `CRITICAL: 0 / HIGH: 0` recorded at that head is **retracted** in §7. Every previously closed item —
-H1/H2/H3, M1/M2/M3, H4, H5, H6, H7 and H8 — is preserved; H9 and H10 are the ownership defects that
-remained inside the private transaction substrate introduced by H7.
+H1–H10, M1/M2/M3, the command/purpose authorization binding, Git dirtiness fail-closed, private
+containment, the clean install, schemas, packaging, `helpIndex`, non-TTY JSON and the no-publication
+guarantees — is preserved.
 
 ---
 
@@ -22,8 +23,8 @@ remained inside the private transaction substrate introduced by H7.
 |---|---|
 | Repository | `KayzenRoot/gef-bootstrap` |
 | Admission merge (implementation base) | `66e223fe0d791c612e494a180eb12df9516cff87` |
-| Corrected heads in this lineage | `8face873…` → `17a81fac…` → `7c064439…` → `4e3cd1c…` |
-| Reaudit #4 baseline (audited head) | `4e3cd1cb603b5c164b2966d9d6a5459a409da0a2` |
+| Corrected heads in this lineage | `8face873…` → `17a81fac…` → `7c064439…` → `4e3cd1c…` → `d22be75…` |
+| Reaudit #5 baseline (audited head) | `d22be7544a8c84a17d8703b391c418f7539505ce` |
 | Implementation head | the commit introducing this bundle; exact SHA reported in PR #282 |
 | Production branch `main` | `72c17bd3e7e421790ac382022b1f0ebbb0275ea4` — **unmodified** |
 | Release tag `v1.0.0` | object `aac89f9c3f0c884474958025bf14828bc338b5ee` → `866fe3af8cccc65c929aaf6a47a924401fa448b3` — **unmoved** |
@@ -34,96 +35,81 @@ No rebase, no force-push, no history rewrite.
 
 ---
 
-## 2. Closure mapping — H9 / H10
+## 2. Closure mapping — H11 / H12
 
-### HIGH H9 — staging cleanup now retains creation-time ownership
+### HIGH H11 — a concurrently-created directory is never claimed as owned
 
-`ensureStagingDirectory` returned only a path, and `releaseStagingDirectory` read the identity at
-cleanup time and fed that same freshly-read token into the removal check — a tautology. A staging
-path replaced by another *ordinary* directory was therefore accepted as owned, a pre-existing empty
-`.gef-private/<transactionId>` could be removed, and named staged files were deleted whenever they
-were merely non-symlinks, regardless of whether the transaction created them.
+`ensureChain` observed a missing directory, called `mkdir`, accepted `EEXIST` as a concurrent
+creator — and then wrote `.gef-owner` and registered the path in the ownership map anyway. A
+directory created by another actor in that window could therefore be marked as this invocation's and
+later pruned or removed.
 
-**Correction.** Ownership is now a property of creation, not of removal:
+**Correction.** Ownership is conferred by exactly one thing: **this invocation's own successful
+`mkdir`**. The create is tracked (`createdHere`), and only a successful create leads to the marker
+write and the ownership registration. On `EEXIST` the path is revalidated for containment/type/alias
+state and then treated as **pre-existing and unowned**: no marker is written into another actor's
+directory, nothing is entered into the ownership registry, and the path is never removable by this
+invocation. Every caller inherits the distinction — `claimStagingDirectory` reports `owned: false`,
+the probe parent is not marked and is never pruned, and the journal directory is not marked.
 
-- `claimStagingDirectory` returns an `OwnedDirectory { path, identity, owned }`. The identity token
-  is captured immediately after `mkdir`; `owned` is true only when **this invocation** created the
-  directory. A pre-existing staging path is returned with `owned: false`.
-- `releaseOwnedDirectory` refuses outright when `owned` is false (`PREEXISTING_DIRECTORY`) and never
-  removes a pre-existing directory, even when it is empty.
-- The directory identity is revalidated at the destructive point, **together with an ownership
-  marker**: every directory this invocation creates receives a `.gef-owner` file holding a random
-  16-byte token whose identity and content fingerprint are recorded. `dev:ino` alone proved
-  insufficient — Linux readily reuses the inode number of a just-removed directory, so a
-  replacement could present the same token. The marker is a value a replacement cannot reproduce,
-  so an **ordinary-directory replacement is detected exactly like a symlink replacement**
-  (`DIRECTORY_IDENTITY_CHANGED` or `DIRECTORY_OWNERSHIP_LOST`). This was found by CI, not by
-  inspection: the first CI run at this revision failed three cases on Linux precisely because the
-  inode was reused.
-- `stage()` records the staged file's identity **and content fingerprint** the moment it creates it
-  with `flag: "wx"`. Before unlinking, both are revalidated; a replaced file
-  (`FILE_IDENTITY_CHANGED`) or an in-place content change (`FILE_CONTENT_CHANGED`) leaves the entry
-  untouched and is reported as refusal evidence.
-- `pruneCreatedAncestors` now stores `path -> identity token` for every directory this invocation
-  created and revalidates that token before each `rmdir`; a swapped ancestor is never removed. Path
-  membership in a set is no longer sufficient, and the prune also runs when the leaf is already
-  gone.
-- Removal remains non-recursive, so foreign content is never deleted, and a cleanup that refuses
-  reports `gef.recovery.cleanup_ownership_refused` with the offending entries.
-- A re-observation during the commit barrier re-ran `atomicFacts`; the ownership record is now read
-  through the registry-aware claim so a later observation can never overwrite the creation-time
-  record with an unowned one. (This defect was found by the new suite, not by inspection.)
+A deterministic seam (`PrivateAreaOptions.onBeforeCreate`) runs after the absence observation and
+immediately before this invocation's `mkdir`, so the interleaving is exercised exactly rather than
+probabilistically. It cannot change a production decision: whatever it does is observed by the
+ordinary `mkdir` result.
 
-**Regression evidence** — `tests/v11-wo-002-ownership.test.mjs` (H9 cases, all PASS):
+**Regression evidence** — `tests/v11-wo-002-concurrent-ownership.test.mjs` (9 cases, all PASS):
 
 | Case | Evidence |
 |---|---|
-| pre-existing empty private tree | `…/.gef-private/probes` exists before the run and survives the entire transaction and cleanup; no probe residue is left inside it |
-| owned probe directory | pruned while the pre-existing parent and private root survive |
-| pre-existing empty staging directory | claimed with `owned: false`, refused with `PREEXISTING_DIRECTORY`, and still present afterwards |
-| ordinary-directory swap | the owned staging directory is replaced by a *different ordinary* directory holding user content: removal is refused (`DIRECTORY_IDENTITY_CHANGED` or `DIRECTORY_OWNERSHIP_LOST` — the assertion deliberately does not depend on the inode differing, because Linux reuses it), and the replacement content survives **byte for byte** |
-| staged-file replacement | the staged file is replaced by a different regular file under the same name: refusal reported, replacement byte for byte intact, directory not removed |
-| staged-file in-place change | the same path with different content is refused as `FILE_CONTENT_CHANGED` and left intact |
-| created parent swapped | the created private root is swapped for another ordinary empty directory before pruning: `removed: false` and the swapped directory is untouched (device/inode compared) |
-| normal transaction | removes only the transaction-owned staging directory and the probe directory it created; a user file placed in the private area survives |
-| alias swap | the symlink/junction swap case remains refused with the external tree unchanged |
+| concurrent creator wins | the observed-absent → created-by-other → `EEXIST` interleaving is produced deterministically; the claim returns `owned: false` |
+| no marker written | `readdirSync(staging)` is exactly the concurrent creator's content; no `.gef-owner` exists |
+| not registered as owned | cleanup refuses with `PREEXISTING_DIRECTORY` rather than removing it |
+| never removed | the concurrently-created directory survives cleanup even when empty |
+| content preserved | the concurrent creator's file is byte for byte identical after cleanup |
+| probe parent | a raced `probes` directory is **not** marked, and survives the pruning that removes the probe directory created inside it |
+| journal parent | a raced `journal` directory is not marked and its user file survives |
+| normal path intact | an invocation-created directory still receives its marker and is still pruned, including its created private root |
+| checks not weakened | lexical escape is still `NOT_CONTAINED`; a raced alias is never owned and the external target is untouched |
 
-### HIGH H10 — the journal file is no-clobber and identity-owned
+### HIGH H12 — the journal handle survives the whole rollback lifecycle
 
-`createJournalPort().persist()` obtained a containment-proven path but wrote it with
-`writeFile(..., { flag: "w" })`, and `ensureJournalFile` proved only the directory. A pre-existing
-`.gef-private/journal/<id>.json` was truncated, and a file replaced between lifecycle writes was
-overwritten. Containment is not ownership.
+`createJournalPort` mapped `beginRollback`, `updateRollback` and `finishRollback` to one internal
+phase and closed **and discarded** the claimed journal record whenever it saw that phase. The first
+`beginRollback` therefore released the claim, and the next `updateRollback` attempted a fresh
+exclusive claim of the already-existing journal file, failed with `ALREADY_PRESENT`, and escalated
+recovery over a journaling artefact rather than a real recovery defect.
 
-**Correction.**
+**Correction.** The two lifecycles are explicitly distinct — `APPLY_BEGIN`/`APPLY_UPDATE`/
+`APPLY_FINISH` and `ROLLBACK_BEGIN`/`ROLLBACK_UPDATE`/`ROLLBACK_FINISH` — and both write the
+transaction's **single owned journal file**:
 
-- The first write for a transaction **claims the file with exclusive creation** (`open(path, "wx")`).
-  An existing file — including a symlink to one — fails with `EEXIST`, which is reported as
-  `ALREADY_PRESENT` **without a byte being changed**.
-- The file identity is recorded immediately after that exclusive creation
-  (`fstat` on the creating handle).
-- The handle opened by that exclusive creation is **held for the whole lifecycle**, and every later
-  write goes through it. Holding the handle keeps the original inode allocated, which is what makes
-  replacement detection reliable rather than best-effort: an unlinked-but-open inode cannot be
-  reused, so the path entry can only still match the descriptor while it really refers to this file.
-  Each write compares the path entry's identity against the descriptor's, and refuses with
-  `gef.integrity.journal_ownership_refused` when they differ — which covers both a regular-file
-  replacement and a symlink/reparse replacement, regardless of inode reuse. The handle is released
-  when the lifecycle reaches its terminal phase.
-- The journal directory itself remains under the H7 containment and alias guarantees.
-- Because the kernel treats a failed journal write as a transaction abort, a refusal produces
-  `ABORTED_STAGED_NO_TARGET_EFFECT` with no artifact promoted.
+- One claim record per transaction is retained for its whole lifetime. A lifecycle that reaches a
+  terminal phase releases its descriptor but keeps the record.
+- When a later lifecycle needs the authority, the port **reopens the transaction's own file** with
+  identity *and* content verification instead of claiming anew. A replacement cannot reuse the inode
+  of a file this invocation still owns, and the content check covers a replacement made while no
+  descriptor was held.
+- `applyGovernedCreate` releases any outstanding descriptor in a `finally`, so a lifecycle that never
+  reaches its terminal phase cannot leak a handle — and releasing a descriptor never removes the
+  evidence file.
 
-**Regression evidence** — `tests/v11-wo-002-ownership.test.mjs` (H10 cases, all PASS):
+**Regression evidence** — `tests/v11-wo-002-rollback-journal.test.mjs` (6 cases, all PASS), driving
+the **real certified rollback engine** (`rollbackTransaction`) rather than isolated port calls:
 
 | Case | Evidence |
 |---|---|
-| pre-existing journal file | sentinel content is asserted byte-for-byte identical after the attempt; the transaction refuses with no artifact promoted |
-| regular-file replacement between writes | `begin` succeeds, the file is replaced, `update` returns `journal_ownership_refused` and the replacement survives byte for byte |
-| symlink/junction replacement between writes | the alias is refused and the external tree — including its sentinel file — is unchanged |
-| normal lifecycle | `begin`/`update`/`finish` all succeed against the owned file only; the directory contains exactly that one file and its recorded phase is `FINISH` |
-| aborted transaction | an abort at the commit barrier (authorization revoked after the initial gate) still leaves valid journal evidence with the transaction identity, and the transaction-owned staging is cleaned up |
-| containment | the journal directory is created under the containment-proven private area |
+| certified rollback | a real apply receipt is produced by `applyTransaction`; `rollbackTransaction` then reaches `beginRollback` → `updateRollback` (the `ALREADY_RESTORED` leg) → `finishRollback`, and the result is **not** `RECOVERY_ESCALATION_REQUIRED`; the recorded terminal phase is `ROLLBACK_FINISH` with the kernel snapshot at `ROLLBACK_RECEIPTING` and the rollback outcome |
+| one file across both lifecycles | the same journal file, for the same transaction, holds `APPLY_FINISH` after the apply and `ROLLBACK_FINISH` after the rollback |
+| replacement between rollback updates | the file is replaced after `beginRollback` has claimed its descriptor: the update is refused, the outcome escalates, and the replacement survives byte for byte |
+| repeated rollback | a second rollback lifecycle reuses the same owned authority and does not fail as `ALREADY_PRESENT` |
+| distinct phases | both phases are recorded in one evidence file per transaction |
+| release | releasing descriptors leaves the evidence file present and unmodified |
+
+**Test sensitivity, proven rather than assumed.** Reintroducing the audited behaviour faithfully
+(closing on the rollback-begin phase *and* discarding the claim record) makes **4 of these 6 cases
+fail**, with the reported symptom `RECOVERY_ESCALATION_REQUIRED` and the message "rollback must not
+escalate over journal ownership". The suite therefore exercises the dangerous lifecycle instead of
+merely passing beside it.
 
 ---
 
@@ -131,37 +117,37 @@ overwritten. Containment is not ownership.
 
 | Prior finding | Status |
 |---|---|
-| H1 kernel transaction/effect integration | **Preserved** — 12-case transaction safety suite still passes |
+| H1 kernel transaction/effect integration | **Preserved** — 12-case transaction safety suite passes |
 | H2 frozen delegation map | **Preserved** |
-| H3 real clean install | **Preserved** — staging-based distribution and the real `npm install` smoke still pass |
-| M1 `helpIndex` authority | **Preserved** |
-| M2 automatic non-TTY JSON | **Preserved** |
-| M3 schemas and package payload | **Preserved** |
-| H4 probe hygiene | **Preserved** — probe tests still pass with the ownership model |
-| H5 real reauthorization | **Preserved** — authorization suite still passes |
-| H6 Git dirtiness fail-closed | **Preserved and re-verified** — bounded argv-based `git status --porcelain -z`, no verdict when unknown, apply blocked; the full clean/modified/staged/untracked/conflicted/mid-operation matrix still passes |
-| H7 private containment | **Preserved and strengthened** — the private-authority suite still passes, and staging/journal now carry ownership on top of containment |
-| H8 command/purpose binding | **Preserved and re-verified** — the 8-case binding suite still passes |
+| H3 real clean install | **Preserved** — staging-based distribution and the real `npm install` smoke pass |
+| M1 / M2 / M3 | **Preserved** — `helpIndex` authority, automatic non-TTY JSON, schemas and package payload |
+| H4 probe hygiene | **Preserved** — probe suite passes |
+| H5 real reauthorization | **Preserved** — authorization suite passes |
+| H6 Git dirtiness fail-closed | **Preserved and re-verified** — bounded argv-based `git status --porcelain -z`, no verdict when unknown, apply blocked; full state matrix passes |
+| H7 private containment | **Preserved** — private-authority suite passes; H11 tightens it further |
+| H8 command/purpose binding | **Preserved and re-verified** — 8-case binding suite passes, at both authorization calls |
+| H9 staged-file identity + fingerprint | **Preserved and re-verified** — ownership suite passes |
+| H10 exclusive journal claim + replacement detection | **Preserved and re-verified** — the same suite passes; H12 extends it across the rollback lifecycle |
 | No publication / tag / promotion | **Preserved** |
 
 ---
 
 ## 4. Changed files and reasons
 
-5 paths: 3 modified, 1 added, plus this bundle.
-
 | Path | Kind | Reason |
 |---|---|---|
-| `packages/cli/src/private-authority.ts` | M | H9: `OwnedDirectory`/`OwnedFile` with creation-time identity, `owned` flag, fingerprint revalidation, identity-token ancestor pruning; H10: `claimJournalFile` (exclusive) and `writeOwnedFile` (identity-verified handle) |
-| `packages/cli/src/transaction.ts` | M | H9: staging claimed through the registry so the barrier cannot overwrite the ownership record; staged-file ownership recorded at `stage()`; cleanup refuses with evidence; H10: journal port claims exclusively and writes through the owned file |
-| `packages/cli/src/index.ts` | M | publishes the ownership surface |
-| `packages/cli/README.md` | M | documents creation-time ownership and the journal guarantee |
-| `tests/v11-wo-002-ownership.test.mjs` | A | H9/H10 regression suite |
+| `packages/cli/src/private-authority.ts` | M | H11: ownership only on this invocation's own successful `mkdir`, `onBeforeCreate` race seam; H12: `reopenOwnedFile` with identity and content verification, shared handle wrapper |
+| `packages/cli/src/transaction.ts` | M | H12: two explicit journal lifecycles over one owned file, retained claim record, `release()` for outstanding descriptors |
+| `packages/cli/src/index.ts` | M | publishes `OWNER_MARKER` and the new types |
+| `packages/cli/README.md` | M | documents concurrent-creation ownership and the two journal lifecycles |
+| `tests/v11-wo-002-concurrent-ownership.test.mjs` | A | H11 deterministic race suite |
+| `tests/v11-wo-002-rollback-journal.test.mjs` | A | H12 certified rollback integration suite |
+| `tests/v11-wo-002-ownership.test.mjs` | M | the recorded apply phase is now the explicit `APPLY_FINISH` |
 | `.engineering/evidence/GBS-V11-WO-002-EVIDENCE.md` | M | this bundle |
 
 No `.engineering/` production state was modified. No package outside `packages/cli` was touched, and
-`packages/kernel`/`packages/contracts` are unmodified — the kernel traversal, transaction, recovery
-and authorization contracts were not weakened to make anything pass.
+`packages/kernel`/`packages/contracts` are unmodified — no kernel contract, containment rule or
+authorization semantic was weakened to make a test pass.
 
 ---
 
@@ -171,21 +157,23 @@ and authorization contracts were not weakened to make anything pass.
 |---|---|---|---|
 | 1 | `npm run build -- --force` | **0** | forced rebuild of all 28 projects |
 | 2 | `npm run typecheck` | **0** | clean |
-| 3 | `npm run validate` | **0** | **1322 tests, 1322 pass, 0 fail, 0 skipped** |
-| 4 | `node --test …/v11-wo-002-ownership.test.mjs` | **0** | 15/15 (H9 and H10) |
-| 4b | first CI run at this revision, then the inode-reuse fix | — | 3 Linux cases failed on the inode-only proof; the ownership marker and the held journal handle close them. Reported rather than hidden: see §2. |
-| 5 | `node --test …/v11-wo-002-private-authority.test.mjs` | **0** | 9/9 |
-| 6 | `node --test …/v11-wo-002-command-binding.test.mjs` | **0** | 8/8 |
-| 7 | `node --test …/v11-wo-002-probe-safety.test.mjs` | **0** | 7/7 |
-| 8 | `node --test …/v11-wo-002-authorization.test.mjs` | **0** | 6/6 |
-| 9 | `node --test …/v11-wo-002-repository-state.test.mjs` | **0** | 6/6 |
-| 10 | `node --test …/v11-wo-002-transaction-safety.test.mjs` | **0** | 12/12 |
-| 11 | `node --test …/v11-wo-002-cli.test.mjs` / `-e2e` / `-dist-smoke` | **0** | 30/30 · 11/11 · 7/7 |
-| 12 | `npm audit --audit-level=high` | **0** | `found 0 vulnerabilities` |
-| 13 | `init --apply`, `adopt --apply`, then a repeated `init --apply` on a fresh target | **0** | both `APPLIED`; the repeat is refused with no target effect; staging removed, only the journal remains as evidence |
+| 3 | `npm run validate` | **0** | **1337 tests, 1337 pass, 0 fail, 0 skipped** |
+| 4 | `node --test …/v11-wo-002-concurrent-ownership.test.mjs` | **0** | 9/9 (H11) |
+| 5 | `node --test …/v11-wo-002-rollback-journal.test.mjs` | **0** | 6/6 (H12) |
+| 6 | `node --test …/v11-wo-002-ownership.test.mjs` | **0** | 15/15 |
+| 7 | `node --test …/v11-wo-002-private-authority.test.mjs` | **0** | 9/9 |
+| 8 | `node --test …/v11-wo-002-command-binding.test.mjs` | **0** | 8/8 |
+| 9 | `node --test …/v11-wo-002-probe-safety.test.mjs` | **0** | 7/7 |
+| 10 | `node --test …/v11-wo-002-authorization.test.mjs` | **0** | 6/6 |
+| 11 | `node --test …/v11-wo-002-repository-state.test.mjs` | **0** | 6/6 |
+| 12 | `node --test …/v11-wo-002-transaction-safety.test.mjs` | **0** | 12/12 |
+| 13 | `node --test …/v11-wo-002-cli.test.mjs` / `-e2e` / `-dist-smoke` | **0** | 30/30 · 11/11 · 7/7 |
+| 14 | `npm audit --audit-level=high` | **0** | `found 0 vulnerabilities` |
+| 15 | `init --apply` then `adopt --apply` on a fresh target | **0** | both `APPLIED`; only the journal remains in the private area |
+| 16 | defect-reintroduction experiment on H12 | — | 4 of 6 rollback cases fail with `RECOVERY_ESCALATION_REQUIRED`; the suite is sensitive to the audited defect |
 
-Baseline: the reaudited head carried 1307 tests; this revision carries **1322** (+15). No regression
-in any pre-existing suite.
+Baseline: the reaudited head carried 1322 tests; this revision carries **1337** (+15: 9 concurrent
+ownership, 6 certified rollback). No regression in any pre-existing suite.
 
 ---
 
@@ -207,12 +195,11 @@ in any pre-existing suite.
 
 ## 7. Retractions
 
-| Claim at `4e3cd1cb` | Status |
+| Claim at `d22be754` | Status |
 |---|---|
-| "CRITICAL: 0. HIGH: 0" | **RETRACTED** — objective reaudit #4 (`5234658809`) found H9 and H10. |
-| "cleanup revalidates the recorded identity before removing anything" | **RETRACTED for staging**: the recorded identity was read at removal time, making the check tautological, and file ownership was never recorded at all. |
-| "the private transaction area is containment- and alias-proven" | Retained as far as it goes, and **incomplete**: containment is not ownership. Both now hold. |
-| "a file-backed journal port records durable recovery evidence" | Retained, and **corrected**: the journal was written with a clobbering flag and could truncate a pre-existing file. |
+| "CRITICAL: 0. HIGH: 0" | **RETRACTED** — objective reaudit #5 (`5235152314`) found H11 and H12. |
+| "ownership is recorded at creation and revalidated before anything is removed" | **RETRACTED for the concurrent case**: a directory created by another actor in the observation-to-`mkdir` window was still marked and registered as owned. |
+| "every lifecycle write goes through an identity-verified handle" | Retained for the apply lifecycle, and **incomplete**: the rollback lifecycle closed and discarded the claim at `beginRollback`. |
 
 ---
 
@@ -222,20 +209,21 @@ in any pre-existing suite.
 
 | ID | Severity | Finding | Disposition |
 |---|---|---|---|
-| H9 | was HIGH | staging cleanup did not retain creation-time ownership | **CLOSED** — owned records, identity + fingerprint revalidation, identity-token ancestor pruning; 9 H9 cases |
-| H10 | was HIGH | the journal file could clobber a pre-existing or replaced file | **CLOSED** — exclusive claim, identity-owned writes through a verified handle; 6 H10 cases |
+| H11 | was HIGH | a concurrently-created directory could be claimed as owned | **CLOSED** — ownership requires this invocation's own successful `mkdir`; 9-case deterministic race suite |
+| H12 | was HIGH | the journal claim was closed and discarded at `beginRollback` | **CLOSED** — two explicit lifecycles over one owned file with verified reopen; 6-case certified-rollback suite, sensitivity proven |
+| F7 | LOW | a descriptor opened for the journal is released in a `finally`, so an abandoned lifecycle does not leak it; the evidence file is never removed by that release. | Recorded. |
 | F1 | MEDIUM | the kernel classifies any `checkPhysicalSafety` failure as `CAPABILITY`, so a no-clobber refusal exits 40 rather than 20. The CLI preserves the engine's classification. | Recorded. Owner: kernel/M05 semantics. |
 | F2 | MEDIUM | repository dirtiness requires a `git` binary; where git is unavailable `--apply` blocks. Intended fail-closed behaviour and a real operational dependency for WO-003 to surface. | Recorded. |
-| F6 | LOW | cleanup refusals are recorded in the transaction's verification results (`CLEANUP_FAILED`) and in the refusal error metadata rather than in the journal, because the port cannot write the journal itself. | Recorded; sufficient for WO-002 evidence, worth revisiting when WO-008 adds telemetry. |
+| F6 | LOW | cleanup refusals are recorded in the transaction verification results and refusal error metadata rather than in the journal, because the port cannot write the journal itself. | Recorded; worth revisiting when WO-008 adds telemetry. |
 | F5 | LOW | an occupied non-directory in the reserved private namespace fails the transaction closed rather than proceeding with an unproven durability capability. Deliberate. | Recorded. |
-| F3 | LOW | `--help` depends on the engine inventory and fails closed in a broken install. | Accepted, documented. |
-| F4 | LOW | a host that cannot create a directory alias reports a diagnostic; junctions cover Windows, symlinks cover Linux/macOS. | Recorded. |
+| F3 / F4 | LOW | `--help` depends on the engine inventory and fails closed in a broken install; a host without a directory-alias primitive reports a diagnostic. | Recorded. |
 | C4 | MEDIUM | carried from WO-001: `ARCHITECTURE.md` vs `D-0043` constitutional version. | Open. Owner: Project Owner. |
 | C8 | MEDIUM | carried from WO-001: `Repository validation` triggers only for PRs to `main`. | Open. Owner: WO-009. |
 
-No HIGH/CRITICAL finding was suppressed. No security scenario was marked PASS without the dangerous
-replacement actually being exercised: the owned directory really is replaced by a different ordinary
-directory, and the staged file and journal file really are replaced before removal or update.
+No HIGH/CRITICAL finding was suppressed. No race or rollback scenario was marked PASS without the
+dangerous interleaving or lifecycle actually being exercised: the concurrent creator really wins the
+`mkdir` race through an injected seam, and the certified rollback really fails when the audited
+behaviour is reintroduced.
 
 ---
 
@@ -243,16 +231,15 @@ directory, and the staged file and journal file really are replaced before remov
 
 - This bundle records what was executed in this environment. It is **not** independent verification
   and does **not** claim `APPROVED`.
-- Local execution is `win32`. Alias cases use junctions here and symlinks on Linux/macOS; the
-  ordinary-directory replacement cases need no alias primitive and run everywhere.
-- The ownership model adds one marker file per invocation-created private directory, one `lstat` per
+- Local execution is `win32`. The H11 race is exercised through a deterministic seam and the H12
+  suite drives the real kernel rollback engine; neither depends on platform-specific timing. Alias
+  cases use junctions here and symlinks on Linux/macOS.
+- The ownership model adds a marker file per invocation-created private directory, one `lstat` per
   created entry and one path/descriptor comparison per journal write. That is a deliberate
   correctness cost, not a claimed optimisation.
-- An invocation-created private directory therefore leaves a `.gef-owner` marker beside its
-  contents while it exists; the marker is removed with the directory when it is pruned.
 - No performance improvement is claimed; token metrics are unavailable in this environment.
 - The compatibility matrix remains a skeleton; this WO asserts no compatibility.
 
-STOP CONDITION: `GBS_V11_WO_002_READY_FOR_OBJECTIVE_REAUDIT_4`.
+STOP CONDITION: `GBS_V11_WO_002_READY_FOR_OBJECTIVE_REAUDIT_5`.
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED.

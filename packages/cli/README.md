@@ -82,6 +82,15 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
   journal is claimed with exclusive creation, and every lifecycle write goes through an
   identity-verified handle, so a journal path replaced by another file or by a symlink/reparse
   point is refused rather than overwritten.
+- **A concurrently-created directory is never claimed.** Ownership is conferred only by this
+  invocation's own successful `mkdir`. If another actor creates the path first, the `EEXIST` is
+  treated as a pre-existing entry: no ownership marker is written into someone else's directory,
+  nothing is registered as owned, and cleanup never removes it.
+- **The apply and rollback journal lifecycles are distinct.** `begin`/`update`/`finish` and
+  `beginRollback`/`updateRollback`/`finishRollback` both write the transaction's single owned
+  journal file. The claim record is kept after a lifecycle closes its descriptor and reopened —
+  with identity and content verification — when the next lifecycle needs it, so a rollback never
+  double-claims an existing owned file and recovery is never escalated over a journaling artefact.
 - Persisted documents (`.gef/<verb>-state.json` and `.gef/receipts/<runId>.json`) are bound to
   JSON Schema 2020-12 contracts shipped in `schemas/`; an unsupported schema major version
   fails closed on read.
