@@ -364,6 +364,27 @@ export interface RepositoryObservation {
 const CONFLICT_CODES = new Set(["DD", "AU", "UD", "UA", "DU", "AA", "UU"]);
 
 const GIT_STATUS_TIMEOUT_MS = 10_000;
+const GIT_STATUS_MAX_BUFFER = 8 * 1024 * 1024;
+
+/**
+ * Command-scoped Git overrides that keep the dirtiness probe side-effect free.
+ *
+ * Both entries are global options and therefore precede the subcommand:
+ *
+ * - `-c core.fsmonitor=false` — command-line configuration outranks system, global, local and
+ *   worktree configuration, so a target repository cannot make this probe execute a
+ *   repository-selected FSMonitor hook or start the built-in daemon merely because the operator
+ *   ran a read-only diagnostic. The override is process-local: no user or repository Git
+ *   configuration is read into GEF state, rewritten or persisted.
+ * - `--no-optional-locks` — `git status` refreshes the index by default and may write the
+ *   refreshed index as an optimization. Optional locks are disabled so the S0 probe cannot mutate
+ *   the repository it is only meant to observe.
+ *
+ * Neither override changes what is reported: dirtiness still comes from `--porcelain` output, and
+ * `GIT_OPTIONAL_LOCKS=0` in the probe environment is the deterministic second binding of the same
+ * guarantee, so the protection does not depend on argument precedence alone.
+ */
+const GIT_STATUS_SAFETY_ARGV: readonly string[] = Object.freeze(["-c", "core.fsmonitor=false", "--no-optional-locks"]);
 
 interface DirtinessEvidence {
   readonly observation: DirtinessObservation;
@@ -377,9 +398,12 @@ interface DirtinessEvidence {
 /**
  * Read deterministic working-tree dirtiness for the target repository.
  *
- * `git status --porcelain -z` is invoked with an argv array (no shell string is ever built) and
- * a bounded timeout, against the target repository only — no broad rediscovery. A git binary
- * that is missing, fails or times out yields `UNKNOWN`, never an assumed clean tree.
+ * `git status --porcelain -z` is invoked with an argv array (no shell string is ever built), a
+ * bounded timeout and a bounded output buffer, against the target repository only — no broad
+ * rediscovery. The probe runs with repository-controlled optional locks and FSMonitor disabled, so
+ * observing a hostile or merely refreshable repository cannot write its index or execute a
+ * repository-selected process. A git binary that is missing, fails or times out yields `UNKNOWN`,
+ * never an assumed clean tree.
  */
 export function observeRepositoryDirtiness(targetRef: string): DirtinessEvidence {
   const modified: string[] = [];
@@ -388,10 +412,13 @@ export function observeRepositoryDirtiness(targetRef: string): DirtinessEvidence
   const conflicted: string[] = [];
   let result: ReturnType<typeof spawnSync>;
   try {
-    result = spawnSync("git", ["-C", resolve(targetRef), "status", "--porcelain", "-z", "--untracked-files=normal"], {
+    result = spawnSync("git", [...GIT_STATUS_SAFETY_ARGV, "-C", resolve(targetRef), "status", "--porcelain", "-z", "--untracked-files=normal"], {
       encoding: "utf8",
       timeout: GIT_STATUS_TIMEOUT_MS,
-      maxBuffer: 8 * 1024 * 1024,
+      maxBuffer: GIT_STATUS_MAX_BUFFER,
+      // The inherited environment is kept because Git needs PATH, HOME and SystemRoot, and the
+      // probe's own determinism is added on top rather than replacing anything.
+      env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
     });
   } catch (cause: unknown) {
     return { observation: "UNKNOWN", modified, staged, untracked, conflicted, detail: cause instanceof Error ? cause.message : String(cause) };

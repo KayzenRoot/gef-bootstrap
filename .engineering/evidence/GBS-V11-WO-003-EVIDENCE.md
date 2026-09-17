@@ -7,19 +7,21 @@ Assurance: `ELEVATED`
 Executed by: external executor under `ADR-0003-D3` (bounded authorization)
 Audit disposition: **not self-assessed** — objective audit is external
 
-**Revision note (H5–H6 correction).** This bundle supersedes the evidence recorded at head
-`49ceca340119d3cec53f4b06593f0a6d64ee3a70`, which received `CORRECTION_REQUIRED`
-(objective reaudit review `5237002898`: CRITICAL 0 / HIGH 2). The claim `CRITICAL: 0 / HIGH: 0`
-recorded at that head is **retracted** in §13. The two blocking HIGH findings — H5 Git metadata
-bypassing the contained-read policy, and H6 unbounded Git metadata reads — are corrected in §3 and
-mapped to code and negative tests in §3.4. The H1–H4 closure of §2 is preserved and re-verified at
-the current head in §6; it is retained as historical record of that cycle, not as current-head proof
-of the Git metadata surface.
+**Revision note (H7–H8 correction).** This bundle supersedes the evidence recorded at head
+`e99751f99fc34394fce93322fd8d6d6ac0e9767b`, which received `CORRECTION_REQUIRED`
+(objective reaudit review `5237495234`: CRITICAL 0 / HIGH 2). The claim `CRITICAL: 0 / HIGH: 0`
+recorded at that head is **retracted** in §14. The two blocking HIGH findings — H7 the dirtiness
+probe could write the repository index, and H8 it could execute a repository-configured FSMonitor
+hook or start the daemon — are corrected in §4 and mapped to code and negative tests in §4.5. The
+H1–H6 closures of §2 and §3 are preserved and re-verified at the current head in §7; they are
+retained as the historical record of those cycles, not as current-head proof of the Git dirtiness
+subprocess.
 
-**Prior revision (H1–H4 correction).** This bundle also supersedes the evidence recorded at head
-`89b2d137839995a63e706b5f68c4d592ba9eabf8`, which received `CORRECTION_REQUIRED` (objective audit
-review `5236410386`: CRITICAL 0 / HIGH 4). The `CRITICAL: 0 / HIGH: 0` claim recorded at *that* head
-was retracted in the H1–H4 cycle and is not reinstated.
+**Prior revisions.** This bundle also supersedes the evidence recorded at head
+`49ceca340119d3cec53f4b06593f0a6d64ee3a70` (`CORRECTION_REQUIRED`, review `5237002898`: CRITICAL 0 /
+HIGH 2, H5–H6) and at head `89b2d137839995a63e706b5f68c4d592ba9eabf8` (`CORRECTION_REQUIRED`, review
+`5236410386`: CRITICAL 0 / HIGH 4, H1–H4). Every earlier `CRITICAL: 0 / HIGH: 0` claim recorded at
+those heads was retracted in its own cycle and is not reinstated here.
 
 ---
 
@@ -33,8 +35,9 @@ was retracted in the H1–H4 cycle and is not reinstated.
 | Implementation base (branch activation commit) | `77204f569388744e734b19acdaf2115bf0f7f3f6` |
 | `origin/release/1.1` at execution | `7592624f7c9bf8726a7a460629f5e862a35a857d` — ancestor of HEAD (verified with `git merge-base --is-ancestor`) |
 | First implementation head | `89b2d137839995a63e706b5f68c4d592ba9eabf8` — audited, `CORRECTION_REQUIRED` (H1–H4) |
-| H1–H4 corrected head | `49ceca340119d3cec53f4b06593f0a6d64ee3a70` — reaudited, `CORRECTION_REQUIRED` (H5–H6); ancestor of the corrected head |
-| **H5–H6 corrected head** | the commit introducing this revised bundle; exact SHA reported in PR #284 |
+| H1–H4 corrected head | `49ceca340119d3cec53f4b06593f0a6d64ee3a70` — reaudited, `CORRECTION_REQUIRED` (H5–H6) |
+| H5–H6 corrected head | `e99751f99fc34394fce93322fd8d6d6ac0e9767b` — reaudited, `CORRECTION_REQUIRED` (H7–H8) |
+| **H7–H8 corrected head** | the commit introducing this revised bundle; exact SHA reported in PR #284 |
 | Production branch `main` | `72c17bd3e7e421790ac382022b1f0ebbb0275ea4` — **unmodified** |
 | Release tag `v1.0.0` | object `aac89f9c3f0c884474958025bf14828bc338b5ee` → target `866fe3af8cccc65c929aaf6a47a924401fa448b3` — **unmoved** |
 
@@ -370,7 +373,112 @@ exercised in CI on `ubuntu-latest` and `macos-latest`. No coverage is claimed by
 
 ---
 
-## 4. What was delivered
+## 4. Correction cycle — H7–H8 (objective reaudit review `5237495234`)
+
+Disposition at the H5–H6 corrected head: `CORRECTION_REQUIRED`, CRITICAL 0 / HIGH 2. The reaudit
+confirmed H1–H6 were materially closed and identified two remaining gaps in the **Git dirtiness
+subprocess**: it could write the repository index while merely observing it (H7), and it inherited
+repository configuration that can make Git execute a repository-selected FSMonitor hook or start the
+built-in daemon during a read-only diagnostic (H8). Both are corrected here, narrowly, in the probe
+argv and environment.
+
+### 4.1 H7 — `git status` must not write the index
+
+**Defect.** `observeRepositoryDirtiness()` ran
+`git -C <target> status --porcelain -z --untracked-files=normal` without Git's
+`--no-optional-locks` protection. Git documents that `git status` refreshes the index and may write
+the refreshed index as an optimization, which contradicts the WO-003 S0/zero-mutation contract. The
+write only happens when the refresh has something to update, which is exactly why a benign fixture
+had proved nothing.
+
+**Correction.** The probe now runs as
+`git -c core.fsmonitor=false --no-optional-locks -C <target> status --porcelain -z --untracked-files=normal`,
+and the probe environment binds `GIT_OPTIONAL_LOCKS=0` as a deterministic second expression of the
+same guarantee, so the protection does not rest on argument precedence alone. Invocation stays a
+direct executable plus argv array with no shell string, under the existing 10 s timeout and the
+now-explicitly-named `GIT_STATUS_MAX_BUFFER` output bound. Dirtiness semantics are untouched: the
+classification still comes from the same `--porcelain` output, and nothing is suppressed to obtain a
+side-effect-free probe.
+
+### 4.2 H8 — repository config must not execute FSMonitor during the S0 probe
+
+**Defect.** The same subprocess inherited repository Git configuration. Git uses
+`core.fsmonitor` during `status`, and a repository can set it to a hook command path — so running a
+read-only `gef doctor` or `gef status` could execute a target-selected process.
+
+**Correction.** `-c core.fsmonitor=false` is passed in the same argv invocation. Command-line
+configuration outranks system, global, local and worktree configuration, so a target repository
+cannot re-enable FSMonitor for this probe, cannot have its hook executed, and cannot make the
+diagnostic require or start the built-in daemon. The override is **process-local**: no user or
+repository configuration is read into GEF state, rewritten or persisted — verified by asserting the
+repository's `core.fsmonitor` still names its own hook after the probe. Fail-closed behaviour and
+full working-tree observation are preserved.
+
+**Environment note (SEC-05).** The probe keeps the inherited environment, because Git needs `PATH`,
+`HOME` and `SystemRoot` and narrowing it is neither required by the finding nor safe to do narrowly,
+and adds exactly one binding: `GIT_OPTIONAL_LOCKS=0`. No other variable is set, removed or emitted,
+and no secret is read into evidence.
+
+### 4.3 Live confirmation at the H7–H8 corrected head
+
+```
+== H7: index byte identity ==
+plain git status               possible=true  (fixture is refreshable)
+index before                   c4e60de74bb42db41f9b0377cb63e88f
+gef doctor exit                0     index unchanged? true
+gef status exit                0     index unchanged? true
+index after                    c4e60de74bb42db41f9b0377cb63e88f
+index.lock left?               false
+branch/HEAD/refs               master / 427230321001 / 1 ref(s)
+dirtiness preserved            OBSERVED / dirty=false
+
+== H8: fsmonitor hook ==
+plain status: hook ran?        true  sentinel=true  (fixture is live)
+gef doctor exit=0              hook ran? false  sentinel? false
+  hook path echoed?            false
+gef status exit=0              hook ran? false  sentinel? false
+  hook path echoed?            false
+repo config preserved?         true
+fsmonitor=true doctor          exit=0 hook=false daemon-artifact=false
+fsmonitor=true status          exit=0 hook=false daemon-artifact=false
+```
+
+The `plain git status` lines are the liveness proof: without optional-lock suppression the fixture's
+index really is rewritten, and the configured FSMonitor hook really is executed and writes its
+external sentinel. The fixtures are therefore dangerous, and the GEF results are meaningful rather
+than vacuous.
+
+### 4.4 Sensitivity proof — the new tests fail against the audited behaviour
+
+The audited-head argv was reintroduced faithfully (the safety arguments removed and the
+`GIT_OPTIONAL_LOCKS` binding dropped) and the suite re-run:
+
+```
+defect reintroduced
+✖ H7: doctor and status leave .git/index byte-for-byte identical
+✖ H8: doctor and status never execute a repository fsmonitor hook
+✖ H8: core.fsmonitor=true needs no daemon or hook for the probe
+ℹ tests 19  ℹ pass 16  ℹ fail 3
+```
+
+The two liveness tests still passed, as they must: they assert that the fixtures are dangerous, not
+that GEF is safe. The fix was then restored and the suite returned to 19/19. This is the direct
+evidence that the H7/H8 tests are not vacuous.
+
+### 4.5 H7–H8 correction-to-code-and-test map
+
+| Finding | Code | Tests |
+|---|---|---|
+| H7 no index mutation | `GIT_STATUS_SAFETY_ARGV`, `GIT_STATUS_MAX_BUFFER`, probe `env` binding | E2E `H7: the fixture's index really is refreshable by a plain git status` (liveness), `H7: doctor and status leave .git/index byte-for-byte identical`, dist-smoke `the installed package probes dirtiness without index or fsmonitor side effects` |
+| H8 no FSMonitor execution | `-c core.fsmonitor=false` in `GIT_STATUS_SAFETY_ARGV` | E2E `H8: the fsmonitor fixture is live — a plain git status does run the hook` (liveness), `H8: doctor and status never execute a repository fsmonitor hook`, `H8: core.fsmonitor=true needs no daemon or hook for the probe`, dist-smoke installed-package case |
+
+Both themes are additionally checked by the pre-existing `neither command mutates the project tree,
+.gef state or Git state` case, whose `gitState` comparison now also covers `refs`, local `config`
+and the index digest, and by the WO-002 dirtiness suites which remain green.
+
+---
+
+## 5. What was delivered
 
 Two read-only diagnostic commands, registered on the canonical IDs and projected through the
 existing renderer contract. No `--fix`, no destructive repair, no `upgrade`, no migration/recovery
@@ -433,9 +541,9 @@ renders the engine's answer.
 
 ---
 
-## 5. Changed files and reasons
+## 6. Changed files and reasons
 
-### 5.1 Files inside the Context Lock `expectedWriteSurface`
+### 6.1 Files inside the Context Lock `expectedWriteSurface`
 
 | File | Change | Reason |
 |---|---|---|
@@ -451,7 +559,7 @@ renders the engine's answer.
 | `tests/v11-wo-003-dist-smoke.test.mjs` | new; 5 tests initially, 6 after the H1-H4 correction | WO-003 ladder L3 |
 | `.engineering/evidence/GBS-V11-WO-003-EVIDENCE.md` | new (this file) | WO-003 evidence bundle |
 
-### 5.2 Context expansions (writes outside the Context Lock surface, each with a concrete dependency reason)
+### 6.2 Context expansions (writes outside the Context Lock surface, each with a concrete dependency reason)
 
 | File | Reason |
 |---|---|
@@ -462,10 +570,10 @@ renders the engine's answer.
 | `tests/v11-wo-002-dist-smoke.test.mjs` | Same mechanical update in the packed-install suite (installed `--help` inventory). |
 
 No expansion touched `packages/kernel`, the V1.0 accepted history, any workflow, or any
-upgrade/migration or WO-005+ surface. The negative-search ledger in §11 records what was deliberately
+upgrade/migration or WO-005+ surface. The negative-search ledger in §12 records what was deliberately
 not changed.
 
-### 5.3 Read scope
+### 6.3 Read scope
 
 Read only the Execution Brief minimum read set plus the directly named engine modules required to
 bind the verified symbols (`m48-m54-maintenance`, `area-h-governance`,
@@ -473,7 +581,7 @@ bind the verified symbols (`m48-m54-maintenance`, `area-h-governance`,
 repository-wide rediscovery pass was performed. `detectDrift` and `operatorStatus` were read to
 confirm their exact contracts before composing inputs.
 
-### 5.4 A projection defect found and fixed during the initial implementation
+### 6.4 A projection defect found and fixed during the initial implementation
 
 `detectDrift` compares two observations and is not told whether a governed baseline exists. The
 first working version of `statusComposition` passed the `"NO_RECORDED_STATE"` sentinel on a target
@@ -497,27 +605,27 @@ The baseline is taken from whichever managed artifact exists — `init` **or** `
 
 ---
 
-## 6. Validation ladder — commands, exit codes, counts
+## 7. Validation ladder — commands, exit codes, counts
 
-All figures below are at the H5–H6 corrected head. The figures recorded at the first audited head
-`89b2d137…` (16 / 9 / 5 focused, 1374 total) and at the H1–H4 corrected head `49ceca34…`
-(38 / 12 / 6, 1400 total) are **historical**; they are retained as the record of those cycles and
-are not current-head proof.
+All figures below are at the H7–H8 corrected head. The figures recorded at the earlier heads —
+`89b2d137…` (16 / 9 / 5 focused, 1374 total), `49ceca34…` (38 / 12 / 6, 1400 total) and
+`e99751f…` (48 / 14 / 7, 1413 total) — are **historical**; they are retained as the record of those
+cycles and are not current-head proof.
 
 | Step | Command | Exit | Result |
 |---|---|---|---|
 | Build | `npm run build -- --force` | 0 | 28 projects compiled from scratch |
 | Typecheck | `npm run typecheck` | 0 | clean |
 | L1 focused (incl. H1–H6) | `node --test tests/v11-wo-003-doctor-status.test.mjs` | 0 | tests 48 / pass 48 / fail 0 |
-| L2 process E2E | `node --test tests/v11-wo-003-doctor-status-e2e.test.mjs` | 0 | tests 14 / pass 14 / fail 0 |
-| L3 packed install | `node --test tests/v11-wo-003-dist-smoke.test.mjs` | 0 | tests 7 / pass 7 / fail 0 |
+| L2 process E2E (incl. H7–H8) | `node --test tests/v11-wo-003-doctor-status-e2e.test.mjs` | 0 | tests 19 / pass 19 / fail 0 |
+| L3 packed install | `node --test tests/v11-wo-003-dist-smoke.test.mjs` | 0 | tests 8 / pass 8 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-cli.test.mjs` | 0 | tests 30 / pass 30 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-cli-e2e.test.mjs` | 0 | tests 11 / pass 11 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-dist-smoke.test.mjs` | 0 | tests 7 / pass 7 / fail 0 |
-| L4 full | `npm run validate` | 0 | tests 1413 / pass 1413 / fail 0 |
+| L4 full | `npm run validate` | 0 | tests 1419 / pass 1419 / fail 0 |
 | Dependency audit | `npm audit --audit-level=high` | 0 | found 0 vulnerabilities |
 
-The combined six-suite run reports tests 117 / pass 117 / fail 0 (30 + 11 + 7 + 48 + 14 + 7). No test
+The combined six-suite run reports tests 123 / pass 123 / fail 0 (30 + 11 + 7 + 48 + 19 + 8). No test
 was skipped to reduce runtime; every required suite ran in full.
 
 ### Observed projections (source workspace, target = repository root)
@@ -561,7 +669,7 @@ the Execution Brief permits renderer extension only where the current renderers 
 
 ---
 
-## 7. No-mutation proof
+## 8. No-mutation proof
 
 Every mutation-capable surface was compared before and after a real invocation.
 
@@ -595,7 +703,7 @@ Neither command reads stdin, so a non-TTY invocation cannot block on an implicit
 
 ---
 
-## 8. Git-unavailable / capability fail-closed proof (WO-002 F2 closure)
+## 9. Git-unavailable / capability fail-closed proof (WO-002 F2 closure)
 
 Reproduced with a real process and an emptied `PATH` (absolute Node path retained):
 
@@ -628,7 +736,7 @@ Additional fail-closed cases covered by tests:
 
 ---
 
-## 9. Local packed-install parity proof
+## 10. Local packed-install parity proof
 
 `tests/v11-wo-003-dist-smoke.test.mjs` builds the package with the repository's staging script
 (`scripts/prepare-package.mjs --pack`), installs the tarball with a real `npm install` into a fresh
@@ -650,20 +758,21 @@ no registry is contacted.
 | Vendored engines removed | both commands exit 40, `error.category CAPABILITY`, no `value`, no mutation |
 | Alias containment in the installed package | a junction/symlink `.engineering` is refused with `DIAGNOSTIC_ALIAS_REFUSED` and no external sentinel appears in output |
 | Git metadata in the installed package | an aliased `.git` is refused and an oversized `.git/HEAD` is refused without echoing its content |
+| Git subprocess side effects in the installed package | the installed probe leaves `.git/index` byte-identical and does not execute a repository fsmonitor hook |
 
 ---
 
-## 10. `init` / `adopt` regression proof
+## 11. `init` / `adopt` regression proof
 
 The three WO-002 suites run unchanged in behavior at this head: 30 + 11 + 7 = 48 tests, all
 passing. The only edits to those files are assertion updates for the grown command inventory and
 engine-symbol count; no `init`/`adopt` behavioral assertion was weakened, removed or relaxed, and no
 transaction, traversal, recovery, private-containment, journal-ownership or authorization contract
-was modified. `packages/kernel` is untouched by this increment (see §11).
+was modified. `packages/kernel` is untouched by this increment (see §12).
 
 ---
 
-## 11. Negative-search ledger — deliberate non-changes
+## 12. Negative-search ledger — deliberate non-changes
 
 | Not changed | Why |
 |---|---|
@@ -675,7 +784,7 @@ was modified. `packages/kernel` is untouched by this increment (see §11).
 | WO-005+ surfaces (Context Compiler, Execution Capsule, incremental validation, telemetry, channel redesign, production acceptance) | Out of scope. |
 | `packages/cli/src/transaction.ts`, `private-authority.ts`, `schemas.ts`, `packages/cli/schemas/**` | Untouched. The diagnostic commands do not enter the private transaction area at all. |
 | `render.ts` human formatting | Not extended: the existing renderer contract already satisfies AC-7 and the brief's "only where current renderers need extension". |
-| `observeRepositoryDirtiness` | Unchanged: the argv-based, timeout- and `maxBuffer`-bounded `git status` call keeps its existing bounds. |
+| Rest of `observeRepositoryDirtiness` | Unchanged: argv-only invocation, the 10 s timeout and the 8 MiB output bound are preserved; only the safety overrides and the `GIT_OPTIONAL_LOCKS` binding were added. |
 | Git `gitdir:` worktree indirection | Not followed: resolving it would read metadata outside the approved root. Reported as `GIT_DIRECTORY_NOT_A_DIRECTORY` / `UNKNOWN` (see finding L5). |
 | `observeCanonicalSources` output shape | Routed through the shared contained-read policy, but its projection is unchanged, so the WO-002 `init`/`adopt` plan contract and digests are preserved for normal targets. |
 | `init`/`adopt` plan `drift` field | Left as the WO-002-approved contract (see §2.3). Only the diagnostic projection was corrected. |
@@ -683,7 +792,7 @@ was modified. `packages/kernel` is untouched by this increment (see §11).
 
 ---
 
-## 12. No-publication and production-boundary statement
+## 13. No-publication and production-boundary statement
 
 - No merge was performed. PR #284 remains open and unmerged.
 - No tag was created or moved; `v1.0.0` still resolves to object
@@ -697,20 +806,22 @@ was modified. `packages/kernel` is untouched by this increment (see §11).
 
 ---
 
-## 13. Findings by severity
+## 14. Findings by severity
 
 ### Retraction
 
-The claim `CRITICAL: 0 / HIGH: 0` recorded for head `49ceca340119d3cec53f4b06593f0a6d64ee3a70` is
-**retracted**. Objective reaudit review `5237002898` found **CRITICAL 0 / HIGH 2** at that head. The
-two HIGH findings are corrected in §3 and revalidated in §6.
+The claim `CRITICAL: 0 / HIGH: 0` recorded for head `e99751f99fc34394fce93322fd8d6d6ac0e9767b` is
+**retracted**. Objective reaudit review `5237495234` found **CRITICAL 0 / HIGH 2** at that head. The
+two HIGH findings are corrected in §4 and revalidated in §7.
 
-The earlier retraction also stands: `CRITICAL: 0 / HIGH: 0` recorded for head
-`89b2d137839995a63e706b5f68c4d592ba9eabf8` was retracted after review `5236410386` found
-CRITICAL 0 / HIGH 4 at that head, and it is not reinstated.
+Both earlier retractions also stand: `CRITICAL: 0 / HIGH: 0` for head `49ceca34…` was retracted after
+review `5237002898` found CRITICAL 0 / HIGH 2, and for head `89b2d137…` after review `5236410386`
+found CRITICAL 0 / HIGH 4. None is reinstated.
 
-Twice now the executor's severity claim has been wrong before an objective review. That is the
-pattern this bundle records rather than hides.
+Three successive objective reviews have each found blocking HIGH findings that the executor's own
+severity claim missed, and each was in the same S0 trust boundary. The pattern is recorded here
+rather than hidden: an executor severity claim about its own change is not evidence about that
+change.
 
 ### CRITICAL — 0
 
@@ -722,12 +833,14 @@ pattern this bundle records rather than hides.
 | H2 | Diagnostic reads were not resource bounded | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.2) |
 | H3 | Absent baseline still emitted false `UNEXPECTED` drift | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.3) |
 | H4 | Parseable but invalid checkpoint promoted into status semantics | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.4) |
-| H5 | Git metadata reads bypassed the contained-read policy | **Corrected** — one containment primitive with two thin consumers, `.git`/`HEAD`/ref bound to the root, alias and gitfile states fail closed to `UNKNOWN` (§3.1) |
-| H6 | Git metadata reads were unbounded | **Corrected** — `GIT_METADATA_MAX_BYTES`, size gate before read, over-budget never a usable identity and never echoed (§3.2) |
+| H5 | Git metadata reads bypassed the contained-read policy | **Corrected** in the H5–H6 cycle, preserved and re-verified at this head (§3.1) |
+| H6 | Git metadata reads were unbounded | **Corrected** in the H5–H6 cycle, preserved and re-verified at this head (§3.2) |
+| H7 | The dirtiness probe could write the repository index | **Corrected** — `--no-optional-locks` plus a `GIT_OPTIONAL_LOCKS=0` binding; index proven byte-identical and the fixture proven refreshable (§4.1) |
+| H8 | The dirtiness probe could execute a repository-configured FSMonitor hook or start its daemon | **Corrected** — `-c core.fsmonitor=false` in the same argv invocation, process-local, with a live hook fixture proving the danger and GEF's refusal (§4.2) |
 
-The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §6 and
-the tests in §2/§3. It is not a claim that no further finding exists; that determination belongs to
-the objective reaudit.
+The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §7 and
+the tests in §2/§3/§4. It is not a claim that no further finding exists; that determination belongs
+to the objective reaudit.
 
 ### MEDIUM — 2 (carried, not introduced)
 
@@ -762,15 +875,15 @@ the objective reaudit.
 
 ---
 
-## 14. Executor statement
+## 15. Executor statement
 
 All work in this bundle is executor evidence. It is **not** self-approval and it does not claim
 `APPROVED`. The objective reviewer must return exactly one terminal disposition — `APPROVED`,
 `CORRECTION_REQUIRED` or `BLOCKED` — bound to the exact implementation head.
 
-This revision corrects objective reaudit review `5237002898` (H5–H6). It does not merge, tag,
+This revision corrects objective reaudit review `5237495234` (H7–H8). It does not merge, tag,
 publish, force-push, rewrite history, touch `main`, move `v1.0.0`, or self-approve.
 
-STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_H5_H6`
+STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_H7_H8`
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED

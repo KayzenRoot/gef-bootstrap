@@ -8,7 +8,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -37,6 +37,64 @@ function tempProject(t, prefix = "gef-wo003-") {
   return root;
 }
 
+const digestOf = (path) => createHash("sha256").update(readFileSync(path)).digest("hex");
+
+/** Run Git in `root` with an explicit argv array; returns the raw spawn result. */
+function gitIn(root, args, options = {}) {
+  return spawnSync("git", ["-C", root, ...args], { encoding: "utf8", timeout: 60_000, ...options });
+}
+
+/**
+ * A repository whose index stat cache is stale, so `git status` has something to refresh.
+ *
+ * The tracked files keep their content but get an mtime a day in the past, which is exactly the
+ * condition under which Git rewrites the index during a status refresh.
+ */
+function refreshableRepo(t, prefix) {
+  const root = tempProject(t, prefix);
+  gitIn(root, ["init", "-q"]);
+  gitIn(root, ["config", "user.email", "executor@example.invalid"]);
+  gitIn(root, ["config", "user.name", "GEF Executor"]);
+  writeFileSync(join(root, "tracked.txt"), "tracked content\n");
+  writeFileSync(join(root, "second.txt"), "second content\n");
+  gitIn(root, ["add", "."]);
+  gitIn(root, ["commit", "-qm", "seed"]);
+  const stale = new Date(Date.now() - 86_400_000);
+  utimesSync(join(root, "tracked.txt"), stale, stale);
+  utimesSync(join(root, "second.txt"), stale, stale);
+  return { root, index: join(root, ".git", "index") };
+}
+
+/**
+ * A side-effect-free `git status`.
+ *
+ * Used by the comparison helpers: a helper that perturbed the very state it measures (by
+ * refreshing the index or running a repository fsmonitor hook) would invalidate its own
+ * measurement before the probe under test is even reached.
+ */
+function safeGitStatus(root) {
+  const result = spawnSync("git", ["-c", "core.fsmonitor=false", "--no-optional-locks", "-C", root, "status", "--porcelain"], {
+    encoding: "utf8",
+    timeout: 60_000,
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
+  });
+  return result.stdout ?? "";
+}
+
+/** The Git metadata that a read-only probe must never rewrite, including the index bytes. */
+function gitState(root) {
+  const read = (args) => gitIn(root, args).stdout ?? "";
+  return {
+    index: digestOf(join(root, ".git", "index")),
+    status: safeGitStatus(root),
+    branch: read(["rev-parse", "--abbrev-ref", "HEAD"]),
+    head: read(["rev-parse", "HEAD"]),
+    refs: read(["for-each-ref"]),
+    tags: read(["tag", "--list"]),
+    config: read(["config", "--local", "--list"]),
+  };
+}
+
 function snapshot(root) {
   const entries = [];
   const walk = (current) => {
@@ -51,11 +109,6 @@ function snapshot(root) {
   };
   walk(root);
   return entries.sort();
-}
-
-function gitState(root) {
-  const run = (args) => spawnSync("git", ["-C", root, ...args], { encoding: "utf8", timeout: 30_000 }).stdout ?? "";
-  return { status: run(["status", "--porcelain"]), head: run(["rev-parse", "HEAD"]), branch: run(["rev-parse", "--abbrev-ref", "HEAD"]), tags: run(["tag", "--list"]) };
 }
 
 function initRepo(root) {
@@ -322,6 +375,129 @@ test("oversized Git metadata is refused through the real process", (t) => {
   assert.equal(status.repository.dirtiness, "UNKNOWN");
   assert.equal(status.repository.verdict, null);
   assert.equal(status.operator.state, "UNOBSERVED", "no repository and no governance source means unobserved");
+});
+
+// ------------------------------------------------- H7: no index mutation
+
+test("H7: the fixture's index really is refreshable by a plain git status", (t) => {
+  const { root, index } = refreshableRepo(t, "gef-wo003-h7-live-");
+  const before = digestOf(index);
+
+  // Sensitivity: without optional-lock suppression Git rewrites the refreshed index. If this
+  // assertion ever stops holding, the H7 fixture has gone stale and the test below would prove
+  // nothing.
+  gitIn(root, ["status", "--porcelain"]);
+  assert.notEqual(digestOf(index), before, "a plain git status must be able to change this fixture's index");
+});
+
+test("H7: doctor and status leave .git/index byte-for-byte identical", (t) => {
+  const { root, index } = refreshableRepo(t, "gef-wo003-h7-");
+  writeFileSync(join(root, "untracked.txt"), "untracked\n");
+  const indexBefore = digestOf(index);
+  const stateBefore = gitState(root);
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", root, "--json"]);
+    assert.equal(result.code, 0, `${verb} must exit 0: ${result.stderr}`);
+    assert.equal(digestOf(index), indexBefore, `${verb} must not rewrite .git/index`);
+    assert.equal(existsSync(join(root, ".git", "index.lock")), false, `${verb} must leave no index lock behind`);
+    assert.deepEqual(gitState(root), stateBefore, `${verb} must not change branch, HEAD, refs, tags or config`);
+  }
+
+  // Dirtiness reporting is not weakened to obtain the side-effect-free probe.
+  const status = JSON.parse(gef(["status", "--target", root, "--json"]).stdout).value.status;
+  assert.equal(status.repository.dirtiness, "OBSERVED");
+  assert.equal(status.repository.verdict.dirty, true, "the untracked file must still be reported");
+});
+
+// ------------------------------------------------- H8: no fsmonitor hook
+
+/**
+ * A repository whose `core.fsmonitor` names a hook that writes an external sentinel if Git runs it.
+ *
+ * Git treats the value as a shell command, so the hook path is written in POSIX form; the hook
+ * records its own working directory and a run marker next to itself, outside the worktree.
+ */
+function fsmonitorRepo(t, prefix, value) {
+  const root = tempProject(t, prefix);
+  gitIn(root, ["init", "-q"]);
+  gitIn(root, ["config", "user.email", "executor@example.invalid"]);
+  gitIn(root, ["config", "user.name", "GEF Executor"]);
+  writeFileSync(join(root, "tracked.txt"), "tracked content\n");
+  gitIn(root, ["add", "."]);
+  gitIn(root, ["commit", "-qm", "seed"]);
+
+  const hook = join(root, ".git", "fsmonitor-hook.sh");
+  const marker = join(root, ".git", "hook-ran.txt");
+  const sentinel = join(root, "..", `gef-fsmon-sentinel-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
+  const posix = (path) => path.split("\\").join("/");
+  writeFileSync(
+    hook,
+    ["#!/bin/sh", 'dir=$(dirname "$0")', `printf run > "${posix(marker)}"`, `printf sentinel > "${posix(sentinel)}"`, 'echo ""', ""].join("\n"),
+  );
+  try {
+    chmodSync(hook, 0o755);
+  } catch {
+    // Windows ignores the mode; Git invokes the hook through its own shell.
+  }
+  gitIn(root, ["config", "core.fsmonitor", value === "hook" ? posix(hook) : value]);
+  const cleanup = () => rmSync(sentinel, { force: true });
+  t.after(cleanup);
+  cleanup();
+  return { root, hook, marker, sentinel, posixHook: posix(hook) };
+}
+
+test("H8: the fsmonitor fixture is live — a plain git status does run the hook", (t) => {
+  const fixture = fsmonitorRepo(t, "gef-wo003-h8-live-", "hook");
+  gitIn(fixture.root, ["status", "--porcelain"]);
+  assert.equal(existsSync(fixture.marker), true, "a plain git status must invoke this fixture's fsmonitor hook");
+  assert.equal(existsSync(fixture.sentinel), true, "the hook must be able to write the external sentinel");
+});
+
+test("H8: doctor and status never execute a repository fsmonitor hook", (t) => {
+  const fixture = fsmonitorRepo(t, "gef-wo003-h8-", "hook");
+  const indexBefore = digestOf(join(fixture.root, ".git", "index"));
+  const stateBefore = gitState(fixture.root);
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", fixture.root, "--json"]);
+    assert.equal(result.code, 0, `${verb} must exit 0: ${result.stderr}`);
+    assert.equal(existsSync(fixture.marker), false, `${verb} must not execute the repository's fsmonitor hook`);
+    assert.equal(existsSync(fixture.sentinel), false, `${verb} must not produce the hook's external side effect`);
+    assert.equal(digestOf(join(fixture.root, ".git", "index")), indexBefore, `${verb} must not rewrite the index`);
+    assert.deepEqual(gitState(fixture.root), stateBefore, `${verb} must not change Git state`);
+    // The override is process-local: the repository configuration still names its own hook.
+    assert.equal(gitIn(fixture.root, ["config", "core.fsmonitor"]).stdout.trim(), fixture.posixHook, `${verb} must not rewrite repository configuration`);
+    // No hook path, sentinel path or environment detail leaks into the projection.
+    assert.equal(result.stdout.includes(fixture.posixHook), false, `${verb} must not echo the hook path`);
+    assert.equal(result.stdout.includes(fixture.sentinel), false, `${verb} must not echo the sentinel path`);
+  }
+
+  // Dirtiness reporting is preserved with fsmonitor disabled.
+  writeFileSync(join(fixture.root, "untracked.txt"), "untracked\n");
+  const status = JSON.parse(gef(["status", "--target", fixture.root, "--json"]).stdout).value.status;
+  assert.equal(status.repository.dirtiness, "OBSERVED");
+  assert.equal(status.repository.verdict.dirty, true);
+});
+
+test("H8: core.fsmonitor=true needs no daemon or hook for the probe", (t) => {
+  const fixture = fsmonitorRepo(t, "gef-wo003-h8-daemon-", "true");
+  const before = snapshot(fixture.root);
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", fixture.root, "--json"]);
+    assert.equal(result.code, 0, `${verb} must exit 0: ${result.stderr}`);
+    const value = JSON.parse(result.stdout).value[verb];
+    assert.equal(value.repository?.observationLimits?.some((limit) => limit.startsWith("DIRTINESS_UNKNOWN")) ?? false, false, `${verb} must observe the tree, not fail closed`);
+  }
+
+  assert.equal(existsSync(fixture.marker), false, "no hook may run for the built-in fsmonitor setting");
+  assert.equal(existsSync(fixture.sentinel), false);
+  // No daemon artefact may be created in the repository by a read-only probe.
+  for (const name of ["fsmonitor--daemon.ipc", "fsmonitor--daemon"]) {
+    assert.equal(existsSync(join(fixture.root, ".git", name)), false, `${name} must not be created`);
+  }
+  assert.deepEqual(snapshot(fixture.root), before, "doctor and status must not change the repository");
 });
 
 test("an invalid checkpoint never becomes production or operator truth", (t) => {

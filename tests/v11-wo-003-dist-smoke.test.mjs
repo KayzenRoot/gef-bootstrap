@@ -7,7 +7,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -200,6 +200,41 @@ test("the installed package refuses aliased and oversized Git metadata", (t) => 
   assert.equal(bigStatus.code, 0);
   assert.equal(bigStatus.stdout.includes(SENTINEL), false, "the installed CLI must not echo oversized metadata");
   assert.ok(JSON.parse(bigStatus.stdout).value.status.repository.observationLimits.some((limit) => limit.startsWith("DIAGNOSTIC_FILE_OVER_BUDGET:.git/HEAD")));
+});
+
+test("the installed package probes dirtiness without index or fsmonitor side effects", (t) => {
+  const { bin } = freshInstall(t, "git-side-effects");
+  const project = tempProject(t);
+  const git = (args) => spawnSync("git", ["-C", project, ...args], { encoding: "utf8", timeout: 60_000 });
+  git(["init", "-q"]);
+  git(["config", "user.email", "executor@example.invalid"]);
+  git(["config", "user.name", "GEF Executor"]);
+  writeFileSync(join(project, "tracked.txt"), "tracked content\n");
+  git(["add", "."]);
+  git(["commit", "-qm", "seed"]);
+
+  // A repository-configured fsmonitor hook that would record its own execution.
+  const marker = join(project, ".git", "hook-ran.txt");
+  const hook = join(project, ".git", "fsmonitor-hook.sh");
+  writeFileSync(hook, ["#!/bin/sh", 'dir=$(dirname "$0")', 'printf run > "$dir/hook-ran.txt"', 'echo ""', ""].join("\n"));
+  git(["config", "core.fsmonitor", hook.split("\\").join("/")]);
+
+  // Invalidate the index stat cache so a refresh would rewrite it.
+  const stale = new Date(Date.now() - 86_400_000);
+  utimesSync(join(project, "tracked.txt"), stale, stale);
+  const index = join(project, ".git", "index");
+  const indexBefore = readFileSync(index);
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gefAt(bin, [verb, "--target", project, "--json"]);
+    assert.equal(result.code, 0, `installed ${verb} must exit 0: ${result.stderr}`);
+    assert.equal(readFileSync(index).equals(indexBefore), true, `installed ${verb} must not rewrite .git/index`);
+    assert.equal(existsSync(marker), false, `installed ${verb} must not execute the repository's fsmonitor hook`);
+    assert.equal(result.stdout.includes(hook.split("\\").join("/")), false, `installed ${verb} must not echo the hook path`);
+  }
+
+  const status = JSON.parse(gefAt(bin, ["status", "--target", project, "--json"]).stdout).value.status;
+  assert.equal(status.repository.dirtiness, "OBSERVED", "dirtiness reporting is preserved");
 });
 
 test("the installed package fails closed when the vendored engines are missing", (t) => {

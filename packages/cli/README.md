@@ -147,6 +147,18 @@ reimplemented in the CLI, and neither command writes anything.
   0..100, and carries an object-or-null V1.1 overlay. Anything else is reported as
   `present: true, valid: false` with `production`/`development` `null` and a deterministic code,
   and `operatorStatus` never consumes it.
+- **The dirtiness probe is side-effect free, even against a hostile repository.** `git status`
+  normally refreshes the index and may write it, and it honours repository configuration — including
+  `core.fsmonitor`, which can name a hook for Git to execute. The probe therefore runs as
+  `git -c core.fsmonitor=false --no-optional-locks -C <target> status --porcelain -z
+  --untracked-files=normal`: the command-scoped configuration outranks every config file, so a
+  target cannot make the diagnostic execute a repository-selected hook or start the built-in
+  fsmonitor daemon, and optional locks are disabled so the probe cannot rewrite the index it is
+  only meant to observe. `GIT_OPTIONAL_LOCKS=0` is bound in the probe environment as a second,
+  deterministic expression of the same guarantee. The overrides are process-local — no user or
+  repository configuration is rewritten — and dirtiness reporting is unchanged, because it still
+  comes from the same `--porcelain` output. Invocation stays direct executable plus argv with no
+  shell string, under the existing timeout and output bound.
 - **Remediation is guidance.** Every `repairSuggestion` keeps its verified posture
   (`automatic: false`, `previewRequired: true`); there is no `--fix` and no destructive repair.
 - **Git unavailable fails closed (WO-002 F2).** A missing or unusable `git` binary is surfaced by
