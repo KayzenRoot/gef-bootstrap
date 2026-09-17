@@ -1,0 +1,121 @@
+# @gef-bootstrap/cli
+
+Thin operator CLI surface for GEF Bootstrap V1.1.
+
+This package is **transport and rendering only**. Command parsing, result rendering and the
+process boundary live here; all domain behaviour is delegated to existing V1 engines through
+the kernel `CommandRegistry`/`KernelRuntime`, and no business policy is implemented in CLI
+handlers.
+
+## Admitted commands (WO-002 increment)
+
+| Command | Canonical command ID | Effect |
+| --- | --- | --- |
+| `gef --help` | — | usage projected from the verified `helpIndex` engine |
+| `gef --version` | — | canonical product version |
+| `gef init` | `gef.init.plan` | read-only initialization plan |
+| `gef init --apply` | `gef.init.run` | governed initialization run |
+| `gef adopt` | `gef.adopt.preview` | read-only adoption preview |
+| `gef adopt --apply` | `gef.adopt.apply` | governed adoption run |
+
+`doctor`, `status` and `upgrade` are **not** implemented in this increment; they arrive with
+their owning Work Orders (WO-003, WO-004), and are refused as usage errors rather than
+partially working.
+
+## Delegation
+
+The CLI composes these verified V1 engines and adds no replacement semantics:
+
+| Command | Engines |
+| --- | --- |
+| `init` | `installPlan`, `repositoryState`, `githubBootstrap`, `detectDrift`, `resolveCanonical` |
+| `adopt` | `detectDrift`, `resolveCanonical`, `backupManifest`, `recoveryPlan`, `installPlan` |
+| both apply paths | the kernel transaction engine |
+
+## Behaviour
+
+- Default `init`/`adopt` paths are read-only. Mutation requires an explicit `--apply`.
+- **Output selection:** a JSON envelope is emitted when `--json` is present **or** when stdout
+  is not a TTY. The TTY capability is injected into the runner, never sniffed during parsing.
+- Exit codes are projected only through the kernel `projectExitCode` mapping.
+- The CLI never reads stdin, so a non-TTY invocation cannot hang on an implicit prompt.
+- **Managed mutation runs through the kernel transaction engine**, never through a direct file
+  write. Each apply compiles a transaction plan and applies it with the filesystem effect
+  adapter, which runs the full safety chain: path authorization, traversal proof, overwrite
+  evaluation, physical-safety composition, recovery capture, staging, staged verification,
+  commit barrier, promotion and post-state verification. Traversal, no-clobber, hard-link
+  alias, symlink and stale-target races are all refused, and a transaction journal is recorded
+  as recovery evidence.
+- **Authorization is a real decision, re-evaluated at the commit barrier.** The transaction
+  authorization port is bound to the admitted policy requirement, the run, the command and the
+  target, and asks the verified safety engine on every call — an authorization that lapses
+  between staging and commit is refused with no target-visible effect, and an unprovable
+  decision is a denial.
+- **Every mutation is bound to a command and a purpose.** One deterministic authorization binding
+  exists per admitted command and mutation purpose, fixing the policy, the module owner, the
+  declared plan surface and the safety classification. `init` cannot authorize an adopt policy or
+  vice versa, an unknown command has no binding, and receipt persistence has its own admitted
+  purpose rather than borrowing a state-command identity. The binding is re-derived from what the
+  plan actually declares, at the initial gate and again at the commit barrier.
+- **Repository state must be observed, never assumed.** Working-tree dirtiness is read
+  deterministically from the target repository (`git status --porcelain` over an argv array, no
+  shell string, bounded by a timeout). If the working tree cannot be observed, no verdict is
+  claimed and `--apply` is blocked before any effect; a non-repository directory is reported as
+  known-absent rather than unknown.
+- **Nothing project-visible is created before authorization.** Case semantics is measured
+  read-only, by comparing the identity of an existing path with its case-flipped sibling, so an
+  initial authorization denial leaves an exact zero filesystem delta.
+- **Capability probes never touch project content.** The durability probe runs in an
+  invocation-owned directory under the reserved GEF private area, created exclusively with a
+  collision-resistant name, and removes only what that invocation created and still owns.
+- **The private area is containment- and alias-proven.** Every private path (probes, staging,
+  journal) is proven lexically contained under the target root, every existing ancestor is proven
+  not to be a symlink/reparse point, and the deepest existing ancestor is proven physically
+  contained once resolved. A user-controlled alias therefore cannot redirect a private effect
+  outside the target.
+- **Ownership is recorded at creation and revalidated before anything is removed or overwritten.**
+  A directory or file carries the identity (`dev:ino`) it had when this invocation created it. A
+  pre-existing directory or file is never claimed, removed or overwritten, even when empty;
+  cleanup removes only invocation-owned entries, revalidating the directory identity, each staged
+  file's identity *and* content fingerprint, and each created ancestor's identity; identity
+  mismatch or a content change leaves the entry untouched and is reported as refusal evidence. The
+  journal is claimed with exclusive creation, and every lifecycle write goes through an
+  identity-verified handle, so a journal path replaced by another file or by a symlink/reparse
+  point is refused rather than overwritten.
+- **A concurrently-created directory is never claimed.** Ownership is conferred only by this
+  invocation's own successful `mkdir`. If another actor creates the path first, the `EEXIST` is
+  treated as a pre-existing entry: no ownership marker is written into someone else's directory,
+  nothing is registered as owned, and cleanup never removes it.
+- **The apply and rollback journal lifecycles are distinct.** `begin`/`update`/`finish` and
+  `beginRollback`/`updateRollback`/`finishRollback` both write the transaction's single owned
+  journal file. The claim record is kept after a lifecycle closes its descriptor and reopened —
+  with identity and content verification — when the next lifecycle needs it, so a rollback never
+  double-claims an existing owned file and recovery is never escalated over a journaling artefact.
+- Persisted documents (`.gef/<verb>-state.json` and `.gef/receipts/<runId>.json`) are bound to
+  JSON Schema 2020-12 contracts shipped in `schemas/`; an unsupported schema major version
+  fails closed on read.
+
+## Distribution
+
+The package is distributed as part of the GEF source workspace, and is also locally
+installable:
+
+```bash
+node scripts/prepare-package.mjs --pack --destination <dir>
+npm install <dir>/gef-bootstrap-cli-<version>.tgz
+```
+
+The tarball is self-contained: the verified engine modules are vendored under `vendor/engines`
+and the runtime packages the CLI depends on are bundled, so an install needs no registry and no
+surrounding source checkout. The package directory is never used as a scratch area — the
+distribution is assembled in a staging directory. `vendor/MANIFEST.json` records the sha256 of
+every vendored artefact.
+
+**No publication to npm, GitHub Releases or any registry is performed or claimed by this
+increment.** `private: true` and the absence of `publishConfig` make an accidental publication
+mechanically impossible.
+
+## License
+
+All rights reserved. See the repository `LICENSE` for the current rights notice. No
+open-source license is granted merely by the package being installable.
