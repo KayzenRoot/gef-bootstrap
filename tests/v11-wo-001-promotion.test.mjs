@@ -16,6 +16,8 @@ const receipt = json('.engineering/evidence/GBS-V11-WO-001-PROMOTION-RECEIPT.jso
 
 const foundationPromoted = checkpoint.v11.status === 'GBS_V11_FOUNDATION_PROMOTED';
 const wo002Admitted = checkpoint.v11.status === 'GBS_V11_WO_002_ADMITTED';
+const wo003Admitted = checkpoint.v11.status === 'GBS_V11_WO_003_ADMITTED';
+const legalPostFoundationStates = foundationPromoted || wo002Admitted || wo003Admitted;
 
 test('V1.0 production acceptance remains byte-semantically preserved at the checkpoint boundary', () => {
   assert.equal(checkpoint.status, 'GBS_V1_PRODUCTION_ACCEPTED');
@@ -37,6 +39,9 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
   } else if (wo002Admitted) {
     assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_WO_002_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`'));
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_002_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
+  } else if (wo003Admitted) {
+    assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_WO_003_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`'));
+    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_003_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
   } else {
     assert.fail(`unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
   }
@@ -44,7 +49,7 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
 
 test('V1.1 overlay preserves the objectively audited WO-001 foundation lineage after later admissions', () => {
   assert.equal(checkpoint.v11.releaseLine, '1.1.x');
-  assert.ok(foundationPromoted || wo002Admitted, `unexpected V1.1 state ${checkpoint.v11.status}`);
+  assert.ok(legalPostFoundationStates, `unexpected V1.1 state ${checkpoint.v11.status}`);
   assert.equal(checkpoint.v11.foundation.workOrder, 'GBS-V11-WO-001');
   assert.equal(checkpoint.v11.foundation.auditedHead, '989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635');
   assert.equal(checkpoint.v11.foundation.objectiveAudit, 'APPROVED');
@@ -115,7 +120,7 @@ test('receipt makes post-payload semantic mutation invalid by contract', () => {
   assert.equal(receipt.finalHeadAuditRule, 'OBJECTIVE_AUDIT_MUST_BIND_THE_PR_HEAD_CONTAINING_THIS_RECEIPT');
 });
 
-test('WO-002 remains the governed next increment before admission and becomes the active admitted increment afterwards', () => {
+test('WO-002 remains the first governed increment after foundation promotion and later state proves it completed before WO-003', () => {
   if (foundationPromoted) {
     assert.equal(checkpoint.v11.nextLegalWorkOrder, 'GBS-V11-WO-002');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_FOUNDATION_PROMOTED_READY_FOR_WO_002');
@@ -124,6 +129,14 @@ test('WO-002 remains the governed next increment before admission and becomes th
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
     assert.equal(checkpoint.v11.nextLegalAction, 'CREATE_WO_002_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_002_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
+  } else if (wo003Admitted) {
+    const completed = checkpoint.v11.completedWorkOrders['GBS-V11-WO-002'];
+    assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
+    assert.equal(completed.objectiveAudit, 'APPROVED');
+    assert.equal(completed.criticalFindings, 0);
+    assert.equal(completed.highFindings, 0);
+    assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-003');
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
   } else {
     assert.fail(`unexpected V1.1 lifecycle state: ${checkpoint.v11.status}`);
   }
