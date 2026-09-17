@@ -1,0 +1,90 @@
+name: WO-003 Windows Rights Oracle
+
+# Dedicated Windows assurance for the bounded platform dependency admitted by
+# `.engineering/decisions/ADR-0004-WINDOWS-EFFECTIVE-RIGHTS-ORACLE.md`.
+#
+# The high-assurance Git trust policy proves replacement authority on Windows with an OS access check
+# for `DELETE` and `FILE_DELETE_CHILD`. That capability only exists on Windows, so a Linux-only
+# assurance set cannot verify it; this job exercises it on the platform it belongs to. It does not
+# replace or weaken the existing Ubuntu assurance.
+#
+# The decision gate asserts, on any token, that the policy's decision agrees with the operating
+# system's own answer. It then reports whether this token can replace the machine Git. When it can —
+# a GitHub Windows runner authenticates as an administrator, which genuinely holds both rights over
+# the machine Git — the policy withholds that executable by design, so the Git-backed parity suites
+# are not exercisable on that token and are not run; the gate's assertions and the oracle fixtures
+# still are. On an unprivileged machine those same suites are the parity proof.
+
+on:
+  pull_request:
+    paths:
+      - "packages/cli/**"
+      - "tests/v11-wo-003-*.test.mjs"
+      - "tests/v11-wo-002-*.test.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/wo-003-windows-rights.yml"
+  push:
+    branches: [release/1.1]
+    paths:
+      - "packages/cli/**"
+      - ".github/workflows/wo-003-windows-rights.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wo-003-windows-rights-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-rights:
+    name: Windows rights oracle
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install exact locked dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build -- --force
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Rights oracle diagnostics
+        run: node packages/cli/scripts/rights-diagnostics.mjs
+
+      - name: Decision agrees with the operating system
+        id: gate
+        run: node packages/cli/scripts/rights-decision-gate.mjs
+
+      - name: Packed install smoke
+        run: node --test tests/v11-wo-003-dist-smoke.test.mjs
+
+      - name: Distribution regression
+        run: node --test tests/v11-wo-002-dist-smoke.test.mjs
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Rights oracle fixtures, E2E and WO-002 parity
+        if: steps.gate.outputs.parity == 'yes'
+        run: |
+          node --test tests/v11-wo-002-repository-state.test.mjs
+          node --test tests/v11-wo-002-cli.test.mjs
+          node --test tests/v11-wo-002-cli-e2e.test.mjs
+          node --test tests/v11-wo-003-doctor-status.test.mjs
+          node --test tests/v11-wo-003-doctor-status-e2e.test.mjs
+          npm run validate
+
+      - name: Parity not exercisable on this token
+        if: steps.gate.outputs.parity != 'yes'
+        run: echo "This assurance token can replace the machine Git, so the high-assurance policy withholds the executable by design. The decision gate proved the policy agrees with the operating system; the Git-backed parity suites require an unprivileged token."

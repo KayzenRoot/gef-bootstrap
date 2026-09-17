@@ -27,6 +27,9 @@ const ENGINE_SOURCES = {
   maintenance: ["../vendor/engines/m48-m54-maintenance/src/index.mjs", "../../m48-m54-maintenance/src/index.mjs"],
   governance: ["../vendor/engines/area-h-governance/index.mjs", "../../area-h-governance/index.mjs"],
   safety: ["../vendor/engines/security-reliability-integrations/src/index.js", "../../security-reliability-integrations/src/index.js"],
+  platform: ["../vendor/engines/m41-m47-platform/src/index.mjs", "../../m41-m47-platform/src/index.mjs"],
+  quality: ["../vendor/engines/m55-m61-quality/src/index.mjs", "../../m55-m61-quality/src/index.mjs"],
+  final: ["../vendor/engines/m62-m63-final/src/index.mjs", "../../m62-m63-final/src/index.mjs"],
 } as const satisfies Record<string, readonly string[]>;
 
 export type EngineKey = keyof typeof ENGINE_SOURCES;
@@ -45,9 +48,22 @@ export class EngineUnavailableError extends Error {
 }
 
 const REQUIRED_SYMBOLS: Readonly<Record<EngineKey, readonly string[]>> = Object.freeze({
-  maintenance: ["installPlan", "helpIndex"],
+  maintenance: ["installPlan", "helpIndex", "doctor", "repairSuggestion", "invariantResult"],
   governance: ["repositoryState", "githubBootstrap"],
-  safety: ["safetyDecision", "detectDrift", "resolveCanonical", "backupManifest", "recoveryPlan"],
+  safety: [
+    "safetyDecision",
+    "detectDrift",
+    "resolveCanonical",
+    "backupManifest",
+    "recoveryPlan",
+    "dependencySecurity",
+    "githubSecurity",
+    "integritySnapshot",
+    "capabilityEnvelope",
+  ],
+  platform: ["operatorStatus"],
+  quality: ["documentationManifest"],
+  final: ["navigationPlan"],
 });
 
 async function loadEngine(key: EngineKey): Promise<Record<string, unknown>> {
@@ -187,6 +203,112 @@ export interface RecoveryPlanResult {
   readonly digest: string;
 }
 
+
+// --- diagnostics and status surfaces (signatures mirror the sources at the WO-003 base) ---
+
+export type DoctorFindingState = "HEALTHY" | "FINDING" | "UNKNOWN";
+
+export interface DoctorFindingResult {
+  readonly id: string;
+  readonly state: DoctorFindingState;
+}
+
+export interface RepairSuggestionResult {
+  readonly finding: string;
+  readonly risk: string;
+  readonly automatic: boolean;
+  readonly previewRequired: boolean;
+}
+
+export interface InvariantResultValue {
+  readonly name: string;
+  readonly pass: boolean;
+  readonly actual: unknown;
+  readonly expected: unknown;
+}
+
+export interface DependencySecurityInput {
+  readonly manifestDigest?: string;
+  readonly lockDigest?: string;
+  readonly auditCritical?: number;
+  readonly provenance?: string;
+}
+
+export interface DependencySecurityResult {
+  readonly manifestDigest: string | null;
+  readonly lockDigest: string | null;
+  readonly auditCritical: number;
+  readonly provenance: string;
+  readonly state: "UNKNOWN" | "BLOCKED" | "REVIEW" | "PASS";
+  readonly digest: string;
+}
+
+export interface GithubSecurityInput {
+  readonly immutableRef?: boolean;
+  readonly untrustedFork?: boolean;
+  readonly writePermission?: boolean;
+}
+
+export interface GithubSecurityResult {
+  readonly immutableRef: boolean;
+  readonly untrustedFork: boolean;
+  readonly writePermission: boolean;
+  readonly state: "BLOCKED" | "REVIEW" | "PASS";
+  readonly digest: string;
+}
+
+export interface IntegritySnapshotResult {
+  readonly root: string;
+  readonly schema: number;
+  readonly digest: string;
+}
+
+export interface CapabilityObservation {
+  readonly capability?: string;
+  readonly verified?: boolean;
+}
+
+export interface CapabilityEnvelopeResult {
+  readonly capabilities: readonly string[];
+  readonly unknown: readonly string[];
+  readonly state: "DEGRADED" | "COMPATIBLE";
+  readonly digest: string;
+}
+
+export interface OperatorStatusInput {
+  readonly state: string;
+  readonly progress: unknown;
+  readonly evidence?: readonly string[];
+  readonly stale?: boolean;
+  readonly optional?: boolean;
+}
+
+export interface OperatorStatusResult {
+  readonly state: string;
+  readonly progress: unknown;
+  readonly evidence: readonly string[];
+  readonly stale: boolean;
+  readonly optional: boolean;
+}
+
+export interface DocumentationManifestEntry {
+  readonly id: string;
+  readonly source: string;
+  readonly version: unknown;
+  readonly digest?: string;
+}
+
+export interface DocumentationManifestResult {
+  readonly entries: readonly { readonly id: string; readonly source: string; readonly version: unknown; readonly digest: string }[];
+  readonly digest: string;
+}
+
+export interface NavigationPlanResult {
+  readonly files: readonly string[];
+  readonly ioBudget: number;
+  readonly digest: string;
+}
+
 export interface Engines {
   readonly installPlan: (input: InstallPlanInput) => InstallPlanResult;
   readonly helpIndex: (commands: readonly HelpCommandDescriptor[]) => readonly HelpEntry[];
@@ -208,10 +330,27 @@ export interface Engines {
     readonly corrupt?: boolean;
     readonly maxAttempts?: number;
   }) => RecoveryPlanResult;
+  readonly doctor: (observations: Readonly<Record<string, unknown>>) => readonly DoctorFindingResult[];
+  readonly repairSuggestion: (finding: string) => RepairSuggestionResult;
+  readonly invariantResult: (name: string, actual: unknown, expected: unknown) => InvariantResultValue;
+  readonly dependencySecurity: (input?: DependencySecurityInput) => DependencySecurityResult;
+  readonly githubSecurity: (input?: GithubSecurityInput) => GithubSecurityResult;
+  readonly integritySnapshot: (value: unknown) => IntegritySnapshotResult;
+  readonly capabilityEnvelope: (observations?: readonly CapabilityObservation[]) => CapabilityEnvelopeResult;
+  readonly operatorStatus: (input: OperatorStatusInput) => OperatorStatusResult;
+  readonly documentationManifest: (entries?: readonly DocumentationManifestEntry[]) => DocumentationManifestResult;
+  readonly navigationPlan: (files?: readonly string[]) => NavigationPlanResult;
 }
 
 export async function loadEngines(): Promise<Engines> {
-  const [maintenance, governance, safety] = await Promise.all([loadEngine("maintenance"), loadEngine("governance"), loadEngine("safety")]);
+  const [maintenance, governance, safety, platform, quality, final] = await Promise.all([
+    loadEngine("maintenance"),
+    loadEngine("governance"),
+    loadEngine("safety"),
+    loadEngine("platform"),
+    loadEngine("quality"),
+    loadEngine("final"),
+  ]);
   return Object.freeze({
     installPlan: maintenance["installPlan"] as Engines["installPlan"],
     helpIndex: maintenance["helpIndex"] as Engines["helpIndex"],
@@ -222,5 +361,15 @@ export async function loadEngines(): Promise<Engines> {
     resolveCanonical: safety["resolveCanonical"] as Engines["resolveCanonical"],
     backupManifest: safety["backupManifest"] as Engines["backupManifest"],
     recoveryPlan: safety["recoveryPlan"] as Engines["recoveryPlan"],
+    doctor: maintenance["doctor"] as Engines["doctor"],
+    repairSuggestion: maintenance["repairSuggestion"] as Engines["repairSuggestion"],
+    invariantResult: maintenance["invariantResult"] as Engines["invariantResult"],
+    dependencySecurity: safety["dependencySecurity"] as Engines["dependencySecurity"],
+    githubSecurity: safety["githubSecurity"] as Engines["githubSecurity"],
+    integritySnapshot: safety["integritySnapshot"] as Engines["integritySnapshot"],
+    capabilityEnvelope: safety["capabilityEnvelope"] as Engines["capabilityEnvelope"],
+    operatorStatus: platform["operatorStatus"] as Engines["operatorStatus"],
+    documentationManifest: quality["documentationManifest"] as Engines["documentationManifest"],
+    navigationPlan: final["navigationPlan"] as Engines["navigationPlan"],
   });
 }

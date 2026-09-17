@@ -113,7 +113,7 @@ export function renderHelp(entries: readonly HelpEntry[], verb?: string): string
   lines.push("  --target <ref>      target project directory");
   lines.push("  -h, --help          show help");
   lines.push("  -V, --version       show version");
-  lines.push("", "Not yet available: doctor, status, upgrade.");
+  lines.push("", "Not yet available: upgrade.");
   return `${lines.join("\n")}\n`;
 }
 

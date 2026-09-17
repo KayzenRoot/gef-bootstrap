@@ -26,6 +26,8 @@ import { CLI_CONTRACT_VERSION, parseArgv } from "./parser.js";
 import { renderHelp, renderHelpJson, renderResultHuman, renderResultJson, renderUsageFailureHuman, renderUsageFailureJson, renderVersion, renderVersionJson } from "./render.js";
 import { buildRegistry, loadEngines, observeTarget } from "./registry.js";
 import type { CliVerb, HelpEntry } from "./registry.js";
+import { DEFAULT_GIT_TRUST_POLICY, withGitToolInvocation } from "./registry.js";
+import type { GitExecutableTrustPolicy } from "./registry.js";
 import { UnsupportedDocumentVersionError, buildReceiptDocument, requireSupportedSchemaVersion } from "./schemas.js";
 import type { TransactionSummary } from "./schemas.js";
 import { applyGovernedCreate } from "./transaction.js";
@@ -62,6 +64,21 @@ export interface RunDependencies {
   readonly productVersion: string;
   /** Explicit TTY capability for stdout. Drives the automatic JSON selection. */
   readonly stdoutIsTty: boolean;
+  /**
+   * Optional injected Git executable trust policy.
+   *
+   * The default is the frozen platform policy. This is the injection point for embeddings and for
+   * tests that must exercise physical-trust behaviour with a temporary root instead of writing into
+   * real system locations; it is deliberately **not** an environment variable, so no ambient value
+   * can widen the trusted set.
+   */
+  readonly gitExecutablePolicy?: GitExecutableTrustPolicy;
+  /**
+   * Optional hook invoked once this invocation's Git authority is bound and before any command
+   * runs. Embeddings use it to observe the binding; tests use it as a synchronisation barrier to
+   * hold two invocations open at once deterministically, without sleeping.
+   */
+  readonly onGitInvocationScoped?: () => Promise<void> | void;
 }
 
 /**
@@ -241,10 +258,12 @@ function buildPorts(deps: RunDependencies): RuntimePorts {
 }
 
 function commandRequestFor(commandId: string, verb: CliVerb, apply: boolean, targetRef: string | undefined): CommandRequest {
+  // Read-only commands declare no mutation intent, so their input carries no apply flag at all.
+  const readOnly = verb === "doctor" || verb === "status";
   return {
     commandId,
     contractVersion: CLI_CONTRACT_VERSION,
-    input: { verb, apply, ...(targetRef === undefined ? {} : { targetRef }) },
+    input: { verb, ...(readOnly ? {} : { apply }), ...(targetRef === undefined ? {} : { targetRef }) },
   };
 }
 
@@ -256,6 +275,18 @@ async function helpEntries(): Promise<readonly HelpEntry[]> {
 
 /** Execute one CLI invocation and return the projected process exit code. */
 export async function runCli(deps: RunDependencies): Promise<number> {
+  // One invocation owns its Git authority. The binding follows the asynchronous chain, so
+  // overlapping invocations in the same process cannot observe each other's policy, port or
+  // executable, and nested or out-of-order completion changes nothing.
+  return withGitToolInvocation(deps.gitExecutablePolicy ?? DEFAULT_GIT_TRUST_POLICY, async () => {
+    // Optional embedding/test seam: lets a caller observe or synchronise on the point where this
+    // invocation's authority is already bound and no command has run yet.
+    if (deps.onGitInvocationScoped !== undefined) await deps.onGitInvocationScoped();
+    return runCliWithinInvocation(deps);
+  });
+}
+
+async function runCliWithinInvocation(deps: RunDependencies): Promise<number> {
   const parsed = parseArgv(deps.argv);
   // Frozen output contract: JSON when explicitly requested, or automatically when stdout is
   // not a TTY. The capability is injected, never sniffed inside pure parsing.
