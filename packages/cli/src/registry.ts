@@ -21,6 +21,7 @@
 
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 import { resolve } from "node:path";
 
 import type { GefError, HandlerOutcome } from "@gef-bootstrap/contracts";
@@ -31,217 +32,19 @@ import { CLI_CONTRACT_VERSION } from "./parser.js";
 import { buildStateDocument, requireSupportedSchemaVersion, UnsupportedDocumentVersionError } from "./schemas.js";
 import { applyGovernedCreate } from "./transaction.js";
 
-// ---------------------------------------------------------------------------
-// Engine boundary
-// ---------------------------------------------------------------------------
-
-/**
- * Declared resolution order per engine. The packaged layout is tried first so an installed
- * CLI is self-contained; the source-workspace layout is the fallback. Both are explicit and
- * reproducible — no discovery, no search, no globbing.
- */
-const ENGINE_SOURCES = {
-  maintenance: ["../vendor/engines/m48-m54-maintenance/src/index.mjs", "../../m48-m54-maintenance/src/index.mjs"],
-  governance: ["../vendor/engines/area-h-governance/index.mjs", "../../area-h-governance/index.mjs"],
-  safety: ["../vendor/engines/security-reliability-integrations/src/index.js", "../../security-reliability-integrations/src/index.js"],
-} as const satisfies Record<string, readonly string[]>;
-
-export type EngineKey = keyof typeof ENGINE_SOURCES;
-
-export class EngineUnavailableError extends Error {
-  readonly engine: string;
-  readonly attempts: readonly string[];
-  readonly detail: string;
-  constructor(engine: string, attempts: readonly string[], detail: string) {
-    super(`Engine unavailable: ${engine} (${detail}); tried ${attempts.join(", ")}`);
-    this.name = "EngineUnavailableError";
-    this.engine = engine;
-    this.attempts = attempts;
-    this.detail = detail;
-  }
-}
-
-const REQUIRED_SYMBOLS: Readonly<Record<EngineKey, readonly string[]>> = Object.freeze({
-  maintenance: ["installPlan", "helpIndex"],
-  governance: ["repositoryState", "githubBootstrap"],
-  safety: ["safetyDecision", "detectDrift", "resolveCanonical", "backupManifest", "recoveryPlan"],
-});
-
-async function loadEngine(key: EngineKey): Promise<Record<string, unknown>> {
-  const candidates = ENGINE_SOURCES[key];
-  const required = REQUIRED_SYMBOLS[key];
-  const failures: string[] = [];
-  for (const specifier of candidates) {
-    let loaded: unknown;
-    try {
-      loaded = await import(specifier);
-    } catch (cause: unknown) {
-      failures.push(`${specifier}: ${cause instanceof Error ? cause.message : String(cause)}`);
-      continue;
-    }
-    if (loaded === null || typeof loaded !== "object") {
-      failures.push(`${specifier}: MODULE_SHAPE_INVALID`);
-      continue;
-    }
-    const module = loaded as Record<string, unknown>;
-    const missing = required.filter((symbol) => typeof module[symbol] !== "function");
-    if (missing.length > 0) {
-      failures.push(`${specifier}: MISSING_SYMBOLS ${missing.join(",")}`);
-      continue;
-    }
-    return module;
-  }
-  throw new EngineUnavailableError(key, candidates, failures.join(" | "));
-}
-
-// --- verified engine surface (signatures mirror the sources at the WO-002 base) ---
-
-export interface InstallPlanInput {
-  readonly platform: string;
-  readonly target: string;
-  readonly version: string;
-  readonly current?: string | null;
-  readonly elevated?: boolean;
-}
-
-export type InstallPlanResult =
-  | { readonly state: "UNSUPPORTED" }
-  | {
-      readonly state: "READY";
-      readonly platform: string;
-      readonly target: string;
-      readonly version: string;
-      readonly current: string | null;
-      readonly elevated: boolean;
-      readonly phases: readonly string[];
-      readonly digest: string;
-    };
-
-export interface HelpCommandDescriptor {
-  readonly id: string;
-  readonly summary: string;
-  readonly schema?: string | null;
-}
-
-export interface HelpEntry {
-  readonly id: string;
-  readonly summary: string;
-  readonly schema: string | null;
-}
-
-export interface RepositoryStateInput {
-  readonly repo?: string;
-  readonly head?: string;
-  readonly branch?: string;
-  readonly modified?: readonly string[];
-  readonly staged?: readonly string[];
-  readonly untracked?: readonly string[];
-  readonly conflicted?: readonly string[];
-  readonly operation?: string;
-}
-
-export type RepositoryStateResult =
-  | { readonly state: "BLOCKED"; readonly reason: string }
-  | { readonly state: "CLEAN" | "DIRTY" | "BLOCKED"; readonly dirty: boolean; readonly conflict: boolean; readonly digest: string };
-
-export interface GithubBootstrapInput {
-  readonly labels?: readonly string[];
-  readonly metadata?: Readonly<Record<string, unknown>>;
-  readonly templates?: Readonly<Record<string, unknown>>;
-}
-
-export interface GithubBootstrapResult {
-  readonly metadata: Readonly<Record<string, unknown>>;
-  readonly labels: readonly string[];
-  readonly templates: Readonly<Record<string, unknown>>;
-  readonly labelsToAdd: readonly string[];
-  readonly preservedUnknown: readonly string[];
-  readonly idempotencyKey: string;
-}
-
-export interface CanonicalSourceInput {
-  readonly id: string;
-  readonly kind: string;
-  readonly value: unknown;
-}
-
-export interface CanonicalResolutionResult {
-  readonly selected: CanonicalSourceInput | null;
-  readonly conflict: boolean;
-  readonly state: "CONFLICT" | "READY" | "UNKNOWN";
-  readonly digest: string;
-}
-
-export interface DriftResult {
-  readonly before: string;
-  readonly after: string;
-  readonly changed: boolean;
-  readonly class: "NONE" | "EXPECTED" | "UNEXPECTED";
-  readonly digest: string;
-}
-
-export interface SafetyDecisionResult {
-  readonly classification: string;
-  readonly confirmation: string;
-  readonly requested: string;
-  readonly restricted: boolean;
-  readonly minimum: readonly string[];
-  readonly state: "READY" | "BLOCKED";
-  readonly digest: string;
-}
-
-export interface BackupManifestResult {
-  readonly items: readonly { readonly id: string; readonly digest: string }[];
-  readonly verified: boolean;
-  readonly digest: string;
-}
-
-export interface RecoveryPlanResult {
-  readonly last: string;
-  readonly action: string;
-  readonly maxAttempts: number;
-  readonly state: "READY" | "BLOCKED";
-  readonly digest: string;
-}
-
-export interface Engines {
-  readonly installPlan: (input: InstallPlanInput) => InstallPlanResult;
-  readonly helpIndex: (commands: readonly HelpCommandDescriptor[]) => readonly HelpEntry[];
-  readonly repositoryState: (input?: RepositoryStateInput) => RepositoryStateResult;
-  readonly githubBootstrap: (current: GithubBootstrapInput, desired: GithubBootstrapInput) => GithubBootstrapResult;
-  readonly safetyDecision: (input: {
-    readonly classification?: string;
-    readonly blastRadius?: string;
-    readonly requested?: string;
-    readonly restricted?: boolean;
-    readonly capabilities?: readonly string[];
-  }) => SafetyDecisionResult;
-  readonly detectDrift: (before: unknown, after: unknown, options?: { readonly authorized?: boolean }) => DriftResult;
-  readonly resolveCanonical: (sources?: readonly CanonicalSourceInput[]) => CanonicalResolutionResult;
-  readonly backupManifest: (entries: readonly { readonly id: string; readonly digest: string }[]) => BackupManifestResult;
-  readonly recoveryPlan: (input?: {
-    readonly journal?: readonly { readonly state: string }[];
-    readonly candidateMatches?: boolean;
-    readonly corrupt?: boolean;
-    readonly maxAttempts?: number;
-  }) => RecoveryPlanResult;
-}
-
-export async function loadEngines(): Promise<Engines> {
-  const [maintenance, governance, safety] = await Promise.all([loadEngine("maintenance"), loadEngine("governance"), loadEngine("safety")]);
-  return Object.freeze({
-    installPlan: maintenance["installPlan"] as Engines["installPlan"],
-    helpIndex: maintenance["helpIndex"] as Engines["helpIndex"],
-    repositoryState: governance["repositoryState"] as Engines["repositoryState"],
-    githubBootstrap: governance["githubBootstrap"] as Engines["githubBootstrap"],
-    safetyDecision: safety["safetyDecision"] as Engines["safetyDecision"],
-    detectDrift: safety["detectDrift"] as Engines["detectDrift"],
-    resolveCanonical: safety["resolveCanonical"] as Engines["resolveCanonical"],
-    backupManifest: safety["backupManifest"] as Engines["backupManifest"],
-    recoveryPlan: safety["recoveryPlan"] as Engines["recoveryPlan"],
-  });
-}
-
+// The verified engine boundary lives in its own module so the command registry and the
+// transaction driver can both use it without a circular import.
+export * from "./engines.js";
+import { EngineUnavailableError, loadEngines } from "./engines.js";
+import type {
+  CanonicalResolutionResult,
+  CanonicalSourceInput,
+  DriftResult,
+  Engines,
+  HelpCommandDescriptor,
+  RepositoryStateInput,
+  RepositoryStateResult,
+} from "./engines.js";
 // ---------------------------------------------------------------------------
 // Command input
 // ---------------------------------------------------------------------------
@@ -320,24 +123,91 @@ const GIT_OPERATION_SENTINELS: readonly (readonly [string, string])[] = Object.f
   ["BISECT_LOG", "BISECT"],
 ]);
 
+export type DirtinessObservation = "OBSERVED" | "UNKNOWN" | "NOT_APPLICABLE";
+
 export interface RepositoryObservation {
   readonly input: RepositoryStateInput;
   readonly observationLimits: readonly string[];
+  readonly dirtiness: DirtinessObservation;
+}
+
+/** Git porcelain v1 unmerged (conflicted) status codes. */
+const CONFLICT_CODES = new Set(["DD", "AU", "UD", "UA", "DU", "AA", "UU"]);
+
+const GIT_STATUS_TIMEOUT_MS = 10_000;
+
+interface DirtinessEvidence {
+  readonly observation: DirtinessObservation;
+  readonly modified: readonly string[];
+  readonly staged: readonly string[];
+  readonly untracked: readonly string[];
+  readonly conflicted: readonly string[];
+  readonly detail?: string;
 }
 
 /**
- * Observe the target's local Git identity without invoking a subprocess and without
- * repository rediscovery: `.git/HEAD` plus the well-known operation sentinels.
+ * Read deterministic working-tree dirtiness for the target repository.
  *
- * Working-tree dirtiness is not derivable from these files, so it is reported as an explicit
- * observation limit rather than being asserted as clean. The verdict itself always comes from
- * the engine (`repositoryState`).
+ * `git status --porcelain -z` is invoked with an argv array (no shell string is ever built) and
+ * a bounded timeout, against the target repository only — no broad rediscovery. A git binary
+ * that is missing, fails or times out yields `UNKNOWN`, never an assumed clean tree.
+ */
+export function observeRepositoryDirtiness(targetRef: string): DirtinessEvidence {
+  const modified: string[] = [];
+  const staged: string[] = [];
+  const untracked: string[] = [];
+  const conflicted: string[] = [];
+  let result: ReturnType<typeof spawnSync>;
+  try {
+    result = spawnSync("git", ["-C", resolve(targetRef), "status", "--porcelain", "-z", "--untracked-files=normal"], {
+      encoding: "utf8",
+      timeout: GIT_STATUS_TIMEOUT_MS,
+      maxBuffer: 8 * 1024 * 1024,
+    });
+  } catch (cause: unknown) {
+    return { observation: "UNKNOWN", modified, staged, untracked, conflicted, detail: cause instanceof Error ? cause.message : String(cause) };
+  }
+  if (result.error !== undefined || result.status !== 0) {
+    const detail = result.error?.message ?? (String(result.stderr ?? "").trim() || `exit ${String(result.status)}`);
+    return { observation: "UNKNOWN", modified, staged, untracked, conflicted, detail };
+  }
+  const entries = String(result.stdout ?? "").split("\0").filter((entry) => entry.length > 0);
+  for (let index = 0; index < entries.length; index += 1) {
+    const entry = entries[index];
+    if (entry === undefined || entry.length < 4) continue;
+    const code = entry.slice(0, 2);
+    const path = entry.slice(3);
+    if (code === "??") {
+      untracked.push(path);
+      continue;
+    }
+    if (CONFLICT_CODES.has(code)) {
+      conflicted.push(path);
+      // A rename entry carries a second NUL-terminated path.
+      if (code.startsWith("R") || code.startsWith("C")) index += 1;
+      continue;
+    }
+    if (code.startsWith("R") || code.startsWith("C")) index += 1;
+    if (code[0] !== " " && code[0] !== "?") staged.push(path);
+    if (code[1] !== " " && code[1] !== "?") modified.push(path);
+  }
+  return { observation: "OBSERVED", modified, staged, untracked, conflicted };
+}
+
+/**
+ * Observe the target's local Git identity and working-tree state.
+ *
+ * Identity comes from `.git/HEAD` plus the well-known operation sentinels; dirtiness comes from
+ * the deterministic `git status` read above. When `.git` exists but dirtiness cannot be proven,
+ * the observation is reported as `UNKNOWN` and no engine verdict is fabricated from it — the
+ * caller blocks mutation instead.
  */
 export function observeRepository(targetRef: string): RepositoryObservation {
   const absolute = resolve(targetRef);
   const gitDirectory = resolve(absolute, ".git");
   if (!existsSync(gitDirectory)) {
-    return { input: {}, observationLimits: ["WORKING_TREE_NOT_OBSERVED", "NO_LOCAL_GIT_DIRECTORY"] };
+    // No repository: the state is known to be "absent", not unknown.
+    return { input: {}, observationLimits: ["NO_LOCAL_GIT_DIRECTORY"], dirtiness: "NOT_APPLICABLE" };
   }
   let head = "";
   let branch = "";
@@ -353,12 +223,30 @@ export function observeRepository(targetRef: string): RepositoryObservation {
       branch = "DETACHED";
     }
   } catch {
-    return { input: {}, observationLimits: ["WORKING_TREE_NOT_OBSERVED", "HEAD_UNREADABLE"] };
+    return { input: {}, observationLimits: ["HEAD_UNREADABLE", "WORKING_TREE_NOT_OBSERVED"], dirtiness: "UNKNOWN" };
   }
   const operation = GIT_OPERATION_SENTINELS.find(([sentinel]) => existsSync(resolve(gitDirectory, sentinel)))?.[1];
+  const evidence = observeRepositoryDirtiness(absolute);
+  if (evidence.observation !== "OBSERVED") {
+    return {
+      input: { repo: absolute, head, branch, ...(operation === undefined ? {} : { operation }) },
+      observationLimits: ["WORKING_TREE_NOT_OBSERVED", `DIRTINESS_UNKNOWN${evidence.detail === undefined ? "" : `:${evidence.detail}`}`],
+      dirtiness: "UNKNOWN",
+    };
+  }
   return {
-    input: { repo: absolute, head, branch, ...(operation === undefined ? {} : { operation }) },
-    observationLimits: ["WORKING_TREE_DIRTINESS_NOT_OBSERVED"],
+    input: {
+      repo: absolute,
+      head,
+      branch,
+      modified: evidence.modified,
+      staged: evidence.staged,
+      untracked: evidence.untracked,
+      conflicted: evidence.conflicted,
+      ...(operation === undefined ? {} : { operation }),
+    },
+    observationLimits: [],
+    dirtiness: "OBSERVED",
   };
 }
 
@@ -438,11 +326,11 @@ export function readRecordedArtifact(targetRef: string, verb: CliVerb): Recorded
 // Compositions
 // ---------------------------------------------------------------------------
 
-function initComposition(engines: Engines, observation: TargetObservation, repository: RepositoryObservation, repositoryVerdict: RepositoryStateResult, canonical: CanonicalResolutionResult, drift: DriftResult, productVersion: string): Readonly<Record<string, unknown>> {
+function initComposition(engines: Engines, observation: TargetObservation, repository: RepositoryObservation, repositoryVerdict: RepositoryStateResult | null, canonical: CanonicalResolutionResult, drift: DriftResult, productVersion: string): Readonly<Record<string, unknown>> {
   return {
     verb: "init",
     observation,
-    repository: { verdict: repositoryVerdict, observationLimits: repository.observationLimits },
+    repository: { verdict: repositoryVerdict, dirtiness: repository.dirtiness, observationLimits: repository.observationLimits },
     install: engines.installPlan({ platform: process.platform, target: observation.targetRef, version: productVersion, current: null }),
     governance: { observationSource: "NOT_OBSERVED", ...engines.githubBootstrap({}, { labels: [...GEF_GOVERNANCE_LABELS] }) },
     canonical,
@@ -450,11 +338,11 @@ function initComposition(engines: Engines, observation: TargetObservation, repos
   };
 }
 
-function adoptComposition(engines: Engines, observation: TargetObservation, repository: RepositoryObservation, repositoryVerdict: RepositoryStateResult, canonical: CanonicalResolutionResult, drift: DriftResult, productVersion: string): Readonly<Record<string, unknown>> {
+function adoptComposition(engines: Engines, observation: TargetObservation, repository: RepositoryObservation, repositoryVerdict: RepositoryStateResult | null, canonical: CanonicalResolutionResult, drift: DriftResult, productVersion: string): Readonly<Record<string, unknown>> {
   return {
     verb: "adopt",
     observation,
-    repository: { verdict: repositoryVerdict, observationLimits: repository.observationLimits },
+    repository: { verdict: repositoryVerdict, dirtiness: repository.dirtiness, observationLimits: repository.observationLimits },
     install: engines.installPlan({ platform: process.platform, target: observation.targetRef, version: productVersion, current: null }),
     canonical,
     drift,
@@ -466,7 +354,10 @@ function adoptComposition(engines: Engines, observation: TargetObservation, repo
 function composeFor(engines: Engines, verb: CliVerb, targetRef: string, productVersion: string) {
   const observation = observeTarget(targetRef);
   const repository = observeRepository(targetRef);
-  const repositoryVerdict: RepositoryStateResult = engines.repositoryState(repository.input);
+  // A verdict is derived only from an observation that actually saw the working tree. While the
+  // dirtiness is unknown, no verdict is claimed, so unknown evidence can never be presented as a
+  // clean precondition.
+  const repositoryVerdict: RepositoryStateResult | null = repository.dirtiness === "UNKNOWN" ? null : engines.repositoryState(repository.input);
   const canonical = engines.resolveCanonical([...observeCanonicalSources(targetRef)]);
   const recorded = readRecordedArtifact(targetRef, verb);
   const drift = engines.detectDrift(
@@ -554,6 +445,27 @@ async function applyHandler(verb: CliVerb, input: CliCommandInput, context: Exec
 
   // A repository in a conflicted operation is a precondition block: the CLI refuses to add
   // managed state while the target repository is mid-operation.
+  // Required repository evidence that was not obtained must not become an optimistic
+  // precondition: apply fails closed before any transaction-visible effect.
+  if (composed.repository.dirtiness === "UNKNOWN") {
+    return {
+      ok: false,
+      error: createGefError({
+        id: `cli-repository-unknown-${commandId}`,
+        category: "PRECONDITION",
+        reason: "repository_state_unknown",
+        severity: "ERROR",
+        summary: "Target repository working-tree state could not be observed",
+        retryability: "SAFE_WITH_BACKOFF",
+        recoverability: "NONE_REQUIRED",
+        terminal: "BLOCKED",
+        commandId,
+        runId: context.runId,
+        metadata: { observationLimits: [...composed.repository.observationLimits] },
+      }),
+    };
+  }
+
   const operation = composed.repository.input["operation"];
   if (operation !== undefined) {
     return {
@@ -600,6 +512,7 @@ async function applyHandler(verb: CliVerb, input: CliCommandInput, context: Exec
     transactionId: `${context.runId}:${verb}`,
     policyRef: `cli:${verb}:managed-write:v1`,
     moduleOwner: verb === "init" ? "m48-m54-maintenance" : "security-reliability-integrations",
+    commandId,
   });
   if (!applied.ok) {
     const error = applied.error ?? createGefError({

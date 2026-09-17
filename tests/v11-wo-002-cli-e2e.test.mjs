@@ -231,17 +231,57 @@ test("adopt apply runs the governed path and leaves brownfield source untouched"
   }
 });
 
+function git(target, args) {
+  const result = spawnSync("git", ["-C", target, ...args], { encoding: "utf8", timeout: 60_000 });
+  assert.equal(result.status, 0, `git ${args.join(" ")} failed: ${result.stderr}`);
+  return result.stdout ?? "";
+}
+
+/** A real repository, so dirtiness is observable and the operation sentinel is the only anomaly. */
+function initGitRepo(target) {
+  git(target, ["init", "-q"]);
+  git(target, ["config", "user.email", "executor@example.invalid"]);
+  git(target, ["config", "user.name", "GEF Executor"]);
+  writeFileSync(join(target, "seed.txt"), "seed\n");
+  git(target, ["add", "."]);
+  git(target, ["commit", "-qm", "seed"]);
+}
+
 test("a repository mid-operation is a precondition block for apply", () => {
   const target = tempTarget();
   try {
-    mkdirSync(join(target, ".git"), { recursive: true });
-    writeFileSync(join(target, ".git", "HEAD"), "ref: refs/heads/main\n");
-    writeFileSync(join(target, ".git", "MERGE_HEAD"), "deadbeef\n");
+    initGitRepo(target);
+    // A real in-flight operation: the sentinel is present while the working tree stays observable.
+    writeFileSync(join(target, ".git", "MERGE_HEAD"), `${"0".repeat(40)}\n`);
 
     const result = gef(["init", "--apply", "--target", target, "--json"]);
     assert.equal(result.code, 20, "an in-flight Git operation must block the mutation");
     assert.equal(JSON.parse(result.stdout).error.reasonCode, "gef.precondition.repository_operation_in_progress");
     assert.ok(!existsSync(join(target, ".gef")), "a blocked run must not create governed state");
+  } finally {
+    rmSync(target, { recursive: true, force: true });
+  }
+});
+
+test("an unobservable working tree blocks apply with zero target effect", () => {
+  const target = tempTarget();
+  try {
+    // Git identity is present but not a usable repository, so dirtiness cannot be proven.
+    mkdirSync(join(target, ".git"), { recursive: true });
+    writeFileSync(join(target, ".git", "HEAD"), "ref: refs/heads/main\n");
+    writeFileSync(join(target, "USER.txt"), "user content\n");
+
+    const plan = gef(["init", "--target", target, "--json"]);
+    assert.equal(plan.code, 0);
+    const observed = JSON.parse(plan.stdout).value.plan.repository;
+    assert.equal(observed.dirtiness, "UNKNOWN");
+    assert.equal(observed.verdict, null, "no engine verdict may be fabricated from an unobserved tree");
+
+    const applied = gef(["init", "--apply", "--target", target, "--json"]);
+    assert.equal(applied.code, 20);
+    assert.equal(JSON.parse(applied.stdout).error.reasonCode, "gef.precondition.repository_state_unknown");
+    assert.ok(!existsSync(join(target, ".gef")), "a blocked run must not create governed state");
+    assert.equal(readFileSync(join(target, "USER.txt"), "utf8"), "user content\n");
   } finally {
     rmSync(target, { recursive: true, force: true });
   }

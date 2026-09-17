@@ -217,6 +217,7 @@ function buildPorts(deps: RunDependencies): RuntimePorts {
         transactionId: `${request.runId}:receipt`,
         policyRef: "cli:receipt:managed-write:v1",
         moduleOwner: "cli.transport",
+        commandId: request.commandId,
       });
       if (!applied.ok) {
         const error = applied.error ?? cliError({ category: "RECOVERY", reason: "receipt_transaction_failed", summary: "Receipt transaction did not apply", commandId: request.commandId, runId: request.runId, terminal: "RECOVERY_REQUIRED" });

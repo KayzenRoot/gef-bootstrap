@@ -258,15 +258,35 @@ test("target observation is read-only, bounded and deterministic", () => {
   assert.equal(missing.exists, false);
 });
 
-test("repository observation reports what it cannot observe instead of assuming clean", () => {
+test("repository observation never represents unobserved dirtiness as clean", () => {
+  // No repository at all: the state is known to be absent, so no dirtiness claim is made either.
   const absent = observeRepository(resolve(ROOT, "__definitely_absent__"));
   assert.deepEqual(absent.input, {});
   assert.ok(absent.observationLimits.includes("NO_LOCAL_GIT_DIRECTORY"));
-  assert.ok(absent.observationLimits.includes("WORKING_TREE_NOT_OBSERVED"));
+  assert.equal(absent.dirtiness, "NOT_APPLICABLE");
 
+  // A real repository is observed deterministically, so the dirtiness is OBSERVED and the dirty
+  // arrays are supplied to the engine rather than omitted.
   const here = observeRepository(ROOT);
-  assert.ok(here.observationLimits.includes("WORKING_TREE_DIRTINESS_NOT_OBSERVED"));
-  if (here.input.head !== undefined) assert.equal(typeof here.input.branch, "string");
+  assert.equal(here.dirtiness, "OBSERVED");
+  assert.deepEqual([...here.observationLimits], []);
+  for (const key of ["modified", "staged", "untracked", "conflicted"]) {
+    assert.ok(Array.isArray(here.input[key]), `${key} must be an observed array, not omitted`);
+  }
+  assert.equal(typeof here.input.head, "string");
+  assert.equal(typeof here.input.branch, "string");
+
+  // Identity without an observable working tree is UNKNOWN, never clean.
+  const broken = mkdtempSync(join(tmpdir(), "gef-repo-broken-"));
+  try {
+    mkdirSync(join(broken, ".git"), { recursive: true });
+    writeFileSync(join(broken, ".git", "HEAD"), "ref: refs/heads/main\n");
+    const unknown = observeRepository(broken);
+    assert.equal(unknown.dirtiness, "UNKNOWN");
+    assert.ok(unknown.observationLimits.includes("WORKING_TREE_NOT_OBSERVED"));
+  } finally {
+    rmSync(broken, { recursive: true, force: true });
+  }
 });
 
 test("a repository mid-operation is observed as such", (t) => {

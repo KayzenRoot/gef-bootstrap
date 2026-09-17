@@ -20,9 +20,12 @@
  * while `visibilityAtomic` is declared false.
  */
 
-import { createHash } from "node:crypto";
-import { link, lstat, mkdir, open, readFile, rename, rm, stat, unlink, writeFile } from "node:fs/promises";
+import { createHash, randomBytes } from "node:crypto";
+import { link, lstat, mkdir, open, readFile, rename, rm, rmdir, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
+import { existsSync } from "node:fs";
+
+import { loadEngines } from "./engines.js";
 
 import type { GefError } from "@gef-bootstrap/contracts";
 import {
@@ -47,6 +50,7 @@ import type {
   TransactionIntent,
   TransactionPlan,
   TransactionPlanBody,
+  TransactionAuthorizationPort,
   TransactionJournalPort,
   TransactionPorts,
   TransactionStatePort,
@@ -126,49 +130,142 @@ async function observeChain(capsule: FilesystemPathCapsule) {
 }
 
 
+// ---------------------------------------------------------------------------
+// Capability probes
+// ---------------------------------------------------------------------------
+//
+// A probe is a capability measurement, not a governed effect, so it must not touch anything the
+// project owns. Probes are therefore confined to an invocation-owned directory under the
+// reserved GEF private area, named with a collision-resistant token and created exclusively, so
+// a pre-existing project path can never be overwritten, truncated or removed.
+
+const PROBE_DIRECTORY = "probes";
+const PROBE_ATTEMPTS = 8;
+
+interface OwnedProbe {
+  readonly directory: string;
+  /** Removes only what this invocation created, and only while it is still empty or ours. */
+  release(): Promise<void>;
+}
+
+function errorCode(cause: unknown): string {
+  return cause !== null && typeof cause === "object" && "code" in cause ? String((cause as { readonly code: unknown }).code) : "";
+}
+
+/**
+ * Create a uniquely named probe directory with exclusive semantics.
+ *
+ * `mkdir` without `recursive` fails with `EEXIST` when the name is taken, which is the ownership
+ * proof: only the invocation that observed a successful create may later remove the directory.
+ */
+async function createOwnedProbe(root: string): Promise<OwnedProbe> {
+  const probesRoot = join(root, TRANSACTION_PRIVATE_DIRECTORY, PROBE_DIRECTORY);
+  const parentExisted = existsSync(probesRoot);
+  await mkdir(probesRoot, { recursive: true });
+  for (let attempt = 0; attempt < PROBE_ATTEMPTS; attempt += 1) {
+    const candidate = join(probesRoot, `probe-${randomBytes(12).toString("hex")}`);
+    try {
+      await mkdir(candidate);
+    } catch (cause: unknown) {
+      if (errorCode(cause) === "EEXIST") continue;
+      throw new Error(`PROBE_IDENTITY_UNAVAILABLE: ${errorCode(cause) || "UNKNOWN"}`);
+    }
+    return {
+      directory: candidate,
+      async release() {
+        // Remove our own probe file, then remove the directory non-recursively: `rmdir` refuses
+        // a non-empty directory, so anything this invocation did not create survives.
+        await rm(join(candidate, "CaseProbe"), { force: true }).catch(() => undefined);
+        await rm(join(candidate, "durability-probe"), { force: true }).catch(() => undefined);
+        await rmdir(candidate).catch(() => undefined);
+        if (!parentExisted) await rmdir(probesRoot).catch(() => undefined);
+      },
+    };
+  }
+  throw new Error("PROBE_IDENTITY_UNAVAILABLE: exhausted attempts");
+}
+
+const caseSemanticsCache = new Map<string, "SENSITIVE" | "INSENSITIVE" | "UNKNOWN">();
+const durabilityCache = new Map<string, "CRASH_DURABLE" | "UNPROVEN">();
+
 /**
  * Determine filesystem case semantics for the target root.
  *
- * Traversal proof refuses to run against ambiguous case semantics, so this is probed rather
- * than assumed. The probe is bounded and lives entirely inside the transaction-private area.
+ * Traversal proof refuses to run against ambiguous case semantics, so this is probed rather than
+ * assumed. The probe is bounded, confined to an invocation-owned directory, and leaves no
+ * residue behind on success or refusal.
  */
 export async function detectCaseSemantics(root: string): Promise<"SENSITIVE" | "INSENSITIVE" | "UNKNOWN"> {
-  const probeDirectory = join(root, TRANSACTION_PRIVATE_DIRECTORY);
-  const probeFile = join(probeDirectory, "CaseProbe");
+  const cached = caseSemanticsCache.get(root);
+  if (cached !== undefined) return cached;
+  let probe: OwnedProbe;
   try {
-    await mkdir(probeDirectory, { recursive: true });
-    await writeFile(probeFile, "x", { flag: "w" });
+    probe = await createOwnedProbe(root);
+  } catch {
+    caseSemanticsCache.set(root, "UNKNOWN");
+    return "UNKNOWN";
+  }
+  try {
+    await writeFile(join(probe.directory, "CaseProbe"), "x", { flag: "wx" });
     try {
-      await lstat(join(probeDirectory, "caseprobe"));
+      await lstat(join(probe.directory, "caseprobe"));
+      caseSemanticsCache.set(root, "INSENSITIVE");
       return "INSENSITIVE";
     } catch (cause: unknown) {
-      const code = cause !== null && typeof cause === "object" && "code" in cause ? String((cause as { readonly code: unknown }).code) : "";
-      if (code === "ENOENT") return "SENSITIVE";
-      return "UNKNOWN";
+      const semantics = errorCode(cause) === "ENOENT" ? "SENSITIVE" : "UNKNOWN";
+      caseSemanticsCache.set(root, semantics);
+      return semantics;
     }
   } catch {
+    caseSemanticsCache.set(root, "UNKNOWN");
     return "UNKNOWN";
   } finally {
-    await rm(probeFile, { force: true }).catch(() => undefined);
+    await probe.release();
   }
 }
 
 async function probeDurability(root: string): Promise<"CRASH_DURABLE" | "UNPROVEN"> {
-  const probe = join(root, `${TRANSACTION_PRIVATE_DIRECTORY}-durability-probe`);
+  const cached = durabilityCache.get(root);
+  if (cached !== undefined) return cached;
+  let probe: OwnedProbe;
   try {
-    await writeFile(probe, "probe");
-    const handle = await open(probe, "r+");
+    probe = await createOwnedProbe(root);
+  } catch {
+    durabilityCache.set(root, "UNPROVEN");
+    return "UNPROVEN";
+  }
+  try {
+    const file = join(probe.directory, "durability-probe");
+    await writeFile(file, "probe", { flag: "wx" });
+    const handle = await open(file, "r+");
     try {
       await handle.sync();
     } finally {
       await handle.close();
     }
+    try {
+      const directory = await open(probe.directory, "r");
+      try {
+        await directory.sync();
+      } finally {
+        await directory.close();
+      }
+      durabilityCache.set(root, "CRASH_DURABLE");
+      return "CRASH_DURABLE";
+    } catch (cause: unknown) {
+      if (["EISDIR", "EPERM", "EACCES", "EINVAL", "ENOTSUP"].includes(errorCode(cause))) {
+        durabilityCache.set(root, "UNPROVEN");
+        return "UNPROVEN";
+      }
+      durabilityCache.set(root, "UNPROVEN");
+      return "UNPROVEN";
+    }
   } catch {
+    durabilityCache.set(root, "UNPROVEN");
     return "UNPROVEN";
   } finally {
-    await rm(probe, { force: true }).catch(() => undefined);
+    await probe.release();
   }
-  return "CRASH_DURABLE";
 }
 
 export function cliPrimitiveFor(operation: "CREATE" | "UPDATE" | "REMOVE" | "MOVE_DESTINATION", durability: "CRASH_DURABLE" | "UNPROVEN"): FilesystemPrimitiveCapability {
@@ -454,6 +551,100 @@ export function createJournalPort(targetRoot: string): TransactionJournalPort {
   };
 }
 
+
+// ---------------------------------------------------------------------------
+// Authorization port
+// ---------------------------------------------------------------------------
+
+export interface AuthorizationDecision {
+  readonly authorized: boolean;
+  readonly reason?: string;
+}
+
+export interface AuthorizationContext {
+  /** The policy requirement the transaction plan must declare. */
+  readonly policyRef: string;
+  readonly runId: string;
+  readonly commandId: string;
+  /** Absolute project root the transaction is bound to. */
+  readonly targetRef: string;
+  /**
+   * Evaluates the owning authorization decision. Defaults to the verified safety engine; a
+   * failure to obtain a decision is a denial, never an allow.
+   */
+  readonly decide?: () => Promise<AuthorizationDecision> | AuthorizationDecision;
+  /** Revocation hook, re-evaluated on every authorization call including the commit barrier. */
+  readonly isRevoked?: () => boolean;
+}
+
+function authorizationDenial(context: AuthorizationContext, reason: string, summary: string): GefError {
+  return {
+    schemaVersion: 1,
+    id: `cli-authorization-${reason}`,
+    category: "AUTHORIZATION",
+    reasonCode: `gef.authorization.${reason}`,
+    severity: "ERROR",
+    summary,
+    retryability: "REQUIRES_NEW_AUTHORIZATION",
+    recoverability: "NONE_REQUIRED",
+    effectStatus: "NONE",
+    terminal: "BLOCKED",
+    commandId: context.commandId,
+    runId: context.runId,
+    targetRef: context.targetRef,
+    causes: [],
+    evidenceRefs: [],
+    remediations: [],
+    metadata: { policyRef: context.policyRef, reason },
+  };
+}
+
+/** Default decision: the verified safety engine must admit the mutation. Fails closed. */
+async function safetyEngineDecision(): Promise<AuthorizationDecision> {
+  try {
+    const engines = await loadEngines();
+    const decision = engines.safetyDecision({ classification: "MUTATING", blastRadius: "known", requested: "AUTO", restricted: false });
+    if (decision.state !== "READY" || decision.confirmation === "FORBIDDEN") {
+      return { authorized: false, reason: `safety_decision_${decision.state}_${decision.confirmation}` };
+    }
+    return { authorized: true };
+  } catch (cause: unknown) {
+    return { authorized: false, reason: `safety_engine_unavailable:${cause instanceof Error ? cause.message : String(cause)}` };
+  }
+}
+
+/**
+ * Real transaction authorization.
+ *
+ * The kernel calls this at the initial gate and again at the commit barrier. Every call is
+ * re-evaluated: the binding (policy requirement, run, command, target) is re-checked against the
+ * plan being applied and the owning decision is asked again, so an authorization that lapses
+ * between staging and commit is refused with no target-visible effect. An unprovable decision is
+ * a denial.
+ */
+export function createAuthorizationPort(context: AuthorizationContext): TransactionAuthorizationPort {
+  const deny = (reason: string, summary: string) => ({ ok: false as const, error: authorizationDenial(context, reason, summary) });
+  return {
+    async authorize(request) {
+      if (context.isRevoked?.() === true) return deny("revoked", "Authorization was revoked before the transaction committed");
+      if (request.runId !== context.runId) return deny("run_mismatch", "Authorization is bound to a different run");
+      const refs = [...request.authorizationRefs];
+      if (!refs.includes(context.policyRef)) return deny("policy_not_admitted", "Authorization reference was not presented to the transaction");
+      const declared = [...request.plan.authorizationRequirements];
+      if (!declared.includes(context.policyRef)) return deny("requirement_not_declared", "Transaction plan does not declare the admitted policy requirement");
+      if (request.plan.targetBinding.targetRef !== `target:${context.targetRef}`) return deny("target_mismatch", "Transaction plan is bound to a different target");
+      let decision: AuthorizationDecision;
+      try {
+        decision = await (context.decide ?? safetyEngineDecision)();
+      } catch (cause: unknown) {
+        return deny("decision_unavailable", `Authorization decision could not be proven: ${cause instanceof Error ? cause.message : String(cause)}`);
+      }
+      if (decision.authorized !== true) return deny("denied", `Authorization denied: ${decision.reason ?? "no reason supplied"}`);
+      return { ok: true, value: true };
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Intent resolver and governed driver
 // ---------------------------------------------------------------------------
@@ -467,6 +658,8 @@ export interface GovernedCreateRequest {
   readonly transactionId: string;
   readonly policyRef: string;
   readonly moduleOwner: string;
+  /** Command identity the authorization decision is bound to. */
+  readonly commandId: string;
 }
 
 export interface GovernedCreateOutcome {
@@ -568,7 +761,12 @@ export function createStatePort(targetRoot: string, managedRef: string): Transac
  * The destination must be absent. The safety chain, staging, commit barrier, post-state
  * verification and receipt all come from the kernel; this function only wires the ports.
  */
-export async function applyGovernedCreate(request: GovernedCreateRequest): Promise<GovernedCreateOutcome> {
+export interface GovernedCreateOverrides {
+  /** Test seam only: the production default is the real authorization port. */
+  readonly authorization?: TransactionAuthorizationPort;
+}
+
+export async function applyGovernedCreate(request: GovernedCreateRequest, overrides?: GovernedCreateOverrides): Promise<GovernedCreateOutcome> {
   const caseSemantics = await detectCaseSemantics(request.targetRoot);
   if (caseSemantics === "UNKNOWN") {
     return {
@@ -605,15 +803,19 @@ export async function applyGovernedCreate(request: GovernedCreateRequest): Promi
     physical: createPhysicalPort({ targetRoot: request.targetRoot, rootRef: `target:${request.targetRoot}`, transactionId: request.transactionId, caseSemantics, payloads, policyRef: request.policyRef }),
   });
 
+  const authorization =
+    overrides?.authorization ??
+    createAuthorizationPort({ policyRef: request.policyRef, runId: request.runId, commandId: request.commandId, targetRef: request.targetRoot });
+
   const ports: TransactionPorts = {
     digest: CLIENT_DIGEST_PORT,
     state: createStatePort(request.targetRoot, request.relativePath),
-    authorization: { authorize: () => ok(true as const) },
+    authorization,
     journal: createJournalPort(request.targetRoot),
     effects,
   };
 
-  const result = await applyTransaction({ plan, runId: request.runId, transactionId: request.transactionId, ports });
+  const result = await applyTransaction({ plan, runId: request.runId, transactionId: request.transactionId, authorizationRefs: [request.policyRef], ports });
   if (!result.ok) return { ok: false, outcome: result.outcome, planDigest: plan.planDigest, ...(result.error === undefined ? {} : { error: result.error }) };
   const applied = result.receipt.appliedIntentResults.find((entry) => entry.intentId === "i1");
   return {

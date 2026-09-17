@@ -46,6 +46,19 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
   commit barrier, promotion and post-state verification. Traversal, no-clobber, hard-link
   alias, symlink and stale-target races are all refused, and a transaction journal is recorded
   as recovery evidence.
+- **Authorization is a real decision, re-evaluated at the commit barrier.** The transaction
+  authorization port is bound to the admitted policy requirement, the run, the command and the
+  target, and asks the verified safety engine on every call — an authorization that lapses
+  between staging and commit is refused with no target-visible effect, and an unprovable
+  decision is a denial.
+- **Repository state must be observed, never assumed.** Working-tree dirtiness is read
+  deterministically from the target repository (`git status --porcelain` over an argv array, no
+  shell string, bounded by a timeout). If the working tree cannot be observed, no verdict is
+  claimed and `--apply` is blocked before any effect; a non-repository directory is reported as
+  known-absent rather than unknown.
+- **Capability probes never touch project content.** Case-semantics and durability probes run in
+  an invocation-owned directory under the reserved GEF private area, created exclusively with a
+  collision-resistant name, and remove only what that invocation created and still owns.
 - Persisted documents (`.gef/<verb>-state.json` and `.gef/receipts/<runId>.json`) are bound to
   JSON Schema 2020-12 contracts shipped in `schemas/`; an unsupported schema major version
   fails closed on read.

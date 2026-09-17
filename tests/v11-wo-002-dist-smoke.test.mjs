@@ -142,8 +142,9 @@ test("DIST-SMOKE-01c: the installed CLI operates without any surrounding source 
 
   // Engine resolution is explicit and reproducible: the installed package's own vendor tree is
   // used, and the workspace fallback cannot resolve from the sandbox.
-  const engineBundle = readFileSync(join(bin, "..", "..", "dist", "registry.js"), "utf8");
+  const engineBundle = readFileSync(join(bin, "..", "..", "dist", "engines.js"), "utf8");
   assert.ok(engineBundle.includes("vendor/engines"), "the declared resolution order must include the packaged vendor path");
+  assert.ok(engineBundle.includes("m48-m54-maintenance"), "the declared resolution order must name the engine modules");
   const manifest = JSON.parse(readFileSync(join(bin, "..", "..", "vendor", "MANIFEST.json"), "utf8"));
   assert.equal(manifest.kind, "gef.cli.vendored-artifacts");
   for (const artefact of manifest.artifacts.filter((entry) => entry.kind === "engine")) {

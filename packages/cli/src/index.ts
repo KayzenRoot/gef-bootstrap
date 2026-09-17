@@ -32,6 +32,8 @@ export {
 } from "./render.js";
 export type { JsonEnvelope, JsonErrorProjection } from "./render.js";
 
+export * from "./engines.js";
+
 export {
   CLI_COMMAND_IDS,
   EngineUnavailableError,
@@ -43,6 +45,7 @@ export {
   loadEngines,
   observeCanonicalSources,
   observeRepository,
+  observeRepositoryDirtiness,
   observeTarget,
   readRecordedArtifact,
 } from "./registry.js";
@@ -51,6 +54,7 @@ export type {
   CanonicalResolutionResult,
   CanonicalSourceInput,
   CliCommandInput,
+  DirtinessObservation,
   DriftResult,
   EngineKey,
   Engines,
@@ -77,8 +81,26 @@ export {
 } from "./schemas.js";
 export type { ReceiptDocument, StateDocument, TransactionSummary } from "./schemas.js";
 
-export { JOURNAL_DIRECTORY, TRANSACTION_PRIVATE_DIRECTORY, applyGovernedCreate, cliPrimitiveFor, createJournalPort, createPhysicalPort, createStatePort, detectCaseSemantics, relativeRef } from "./transaction.js";
-export type { GovernedCreateOutcome, GovernedCreateRequest, PhysicalPortOptions } from "./transaction.js";
+export {
+  JOURNAL_DIRECTORY,
+  TRANSACTION_PRIVATE_DIRECTORY,
+  applyGovernedCreate,
+  cliPrimitiveFor,
+  createAuthorizationPort,
+  createJournalPort,
+  createPhysicalPort,
+  createStatePort,
+  detectCaseSemantics,
+  relativeRef,
+} from "./transaction.js";
+export type {
+  AuthorizationContext,
+  AuthorizationDecision,
+  GovernedCreateOutcome,
+  GovernedCreateOverrides,
+  GovernedCreateRequest,
+  PhysicalPortOptions,
+} from "./transaction.js";
 
 export { FALLBACK_PRODUCT_VERSION, main, resolveProductVersion, runCli } from "./main.js";
 export type { RunDependencies } from "./main.js";
