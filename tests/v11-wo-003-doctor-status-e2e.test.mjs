@@ -25,16 +25,6 @@ import {
 } from "../packages/cli/dist/index.js";
 
 
-/**
- * Whether this platform's high-assurance policy can admit a Git at all.
- *
- * Windows replacement authority is governed by DELETE on the target and FILE_DELETE_CHILD on its
- * directory; the supported runtime exposes neither, so the machine policy fails closed there. The
- * Git-backed cases below are therefore not exercisable on Windows and are reported as skipped with
- * this reason rather than silently passing. The Windows product outcome itself is asserted by
- * "the Windows high-assurance policy reports the Git toolchain as unavailable".
- */
-const MACHINE_GIT_ADMITTED = process.platform !== "win32";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const GEF_BIN = resolve(ROOT, "packages/cli/bin/gef.mjs");
@@ -232,11 +222,6 @@ test("neither command mutates the project tree, .gef state or Git state", (t) =>
 // ------------------------------------ Git tool resolution (H10) and ambient PATH
 
 test("Git presence no longer depends on ambient PATH at all", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const project = tempProject(t);
   const result = gef(["doctor", "--target", project, "--json"], { env: withoutGit(t) });
@@ -253,11 +238,6 @@ test("Git presence no longer depends on ambient PATH at all", (t) => {
 });
 
 test("the approved Git is used even with an empty PATH, and status still observes the tree", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const project = tempProject(t);
   initRepo(project);
@@ -294,11 +274,6 @@ function naiveStatus(root, env) {
 }
 
 test("H9: GIT_DIR and GIT_WORK_TREE cannot redirect the admitted target", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { a, b, marker } = twoRepoFixture(t);
   const ambient = { ...process.env, GIT_DIR: join(b, ".git"), GIT_WORK_TREE: b };
@@ -327,11 +302,6 @@ test("H9: GIT_DIR and GIT_WORK_TREE cannot redirect the admitted target", (t) =>
 });
 
 test("H9: GIT_INDEX_FILE is neither consumed nor modified", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { a, externalIndex } = twoRepoFixture(t);
   writeFileSync(externalIndex, "sentinel-index-content");
@@ -356,11 +326,6 @@ test("H9: GIT_INDEX_FILE is neither consumed nor modified", (t) => {
 });
 
 test("H9: object-store and config redirection variables cannot change the observation", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { a, b, marker } = twoRepoFixture(t);
   const ambient = {
@@ -433,11 +398,6 @@ function hostilePathFixture(t, sentinelName) {
 }
 
 test("H10: a runnable fake git first in PATH is never executed", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { a } = twoRepoFixture(t);
   const fixture = hostilePathFixture(t, "sentinel");
@@ -505,12 +465,6 @@ test("H10: a failed resolution does not fall back to ambient git", (t) => {
 });
 
 test("H10: the approved locations are a frozen constant list", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    assert.equal(resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY)), null, "no Windows candidate is admitted");
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
   // Every admitted candidate is an absolute path in a machine-owned directory, and no ambient
   // value can change the list or its order.
   for (const candidate of GIT_APPROVED_EXECUTABLES) {
@@ -536,11 +490,6 @@ test("H10: the approved locations are a frozen constant list", (t) => {
 });
 
 test("H10: a descriptor outside the declared policy is refused", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { a } = twoRepoFixture(t);
   const insideTarget = join(a, "git");
@@ -720,11 +669,6 @@ test("H7: the fixture's index really is refreshable by a plain git status", (t) 
 });
 
 test("H7: doctor and status leave .git/index byte-for-byte identical", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { root, index } = refreshableRepo(t, "gef-wo003-h7-");
   writeFileSync(join(root, "untracked.txt"), "untracked\n");
@@ -792,11 +736,6 @@ test("H8: the fsmonitor fixture is live — a plain git status does run the hook
 });
 
 test("H8: doctor and status never execute a repository fsmonitor hook", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const fixture = fsmonitorRepo(t, "gef-wo003-h8-", "hook");
   const indexBefore = digestOf(join(fixture.root, ".git", "index"));
@@ -824,11 +763,6 @@ test("H8: doctor and status never execute a repository fsmonitor hook", (t) => {
 });
 
 test("H8: core.fsmonitor=true needs no daemon or hook for the probe", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const fixture = fsmonitorRepo(t, "gef-wo003-h8-daemon-", "true");
   const before = snapshot(fixture.root);
@@ -871,26 +805,23 @@ test("an invalid checkpoint never becomes production or operator truth", (t) => 
   assert.ok(status.observationLimits.some((limit) => limit.startsWith("GOVERNANCE_CHECKPOINT_")), "the concrete refusal must be recorded");
 });
 
-test("the Windows high-assurance policy reports the Git toolchain as unavailable", (t) => {
-  if (MACHINE_GIT_ADMITTED) {
-    t.diagnostic("POSIX: the chain reaches the filesystem root, so this platform admits the system Git");
-    return;
-  }
-  const project = tempProject(t, "gef-wo003-win-rights-");
-  // A repository-shaped target, so the unobservable tree is the Git unavailability and not the
-  // absence of a repository (which is a known-absent state, not an unknown one).
-  mkdirSync(join(project, ".git"), { recursive: true });
-  writeFileSync(join(project, ".git", "HEAD"), ["ref: refs/heads/main", ""].join(String.fromCharCode(10)));
-  for (const verb of ["doctor", "status"]) {
-    const result = gef([verb, "--target", project, "--json"]);
-    assert.equal(result.code, 0, `${verb} must stay on the success path`);
-  }
-  const doctorRaw = gef(["doctor", "--target", project, "--json"]);
-  assert.equal(doctorRaw.stdout.includes("replacement_rights_proof_unavailable"), true, "doctor must name the unprovable rights");
+test("the installed policy admits Git through the proven replacement rights", (t) => {
+  const project = tempProject(t, "gef-wo003-rights-");
+  // A real repository, so the observation exercises the Git-backed path rather than the
+  // known-absent no-repository state or an unreadable working tree.
+  initRepo(project);
+
   const doctor = JSON.parse(gef(["doctor", "--target", project, "--json"]).stdout).value.doctor;
-  assert.equal(doctor.toolchain.git.presence, "UNAVAILABLE", "availability must not be preserved by assumption");
-  assert.equal(doctor.findings.find((finding) => finding.id === "toolchain.git").state, "FINDING");
+  assert.equal(doctor.toolchain.git.presence, "FOUND", "the system Git is admitted on every platform");
+  assert.equal(doctor.toolchain.git.probeStatus, "SUCCEEDED");
+  assert.deepEqual([...doctor.toolchain.git.gaps], [], "a proven chain carries no gap");
+
   const status = JSON.parse(gef(["status", "--target", project, "--json"]).stdout).value.status;
-  assert.equal(status.repository.dirtiness, "UNKNOWN", "an unavailable Git means an unobservable tree");
-  assert.equal(status.repository.verdict, null, "and no verdict may be fabricated");
+  assert.equal(status.repository.dirtiness, "OBSERVED", "the tree is observable again, so the WO-002 preconditions hold");
+
+  if (process.platform === "win32") {
+    // On Windows the admission rests on the rights oracle, and the projection says so.
+    t.diagnostic("win32: admission proven by the DELETE / FILE_DELETE_CHILD oracle");
+    assert.equal(gef(["status", "--target", project, "--json"]).stdout.includes("replacement_rights_proof_unavailable"), false);
+  }
 });

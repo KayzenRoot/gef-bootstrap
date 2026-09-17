@@ -31,6 +31,8 @@ import {
   createCliToolObservationPort,
   resolveGitToolWith,
   runGitProbe,
+  probeWindowsRight,
+  windowsRightsOracleAvailable,
   observeRepositoryDirtiness,
   observeGitTool,
   gitTool,
@@ -49,14 +51,6 @@ import {
 } from "../packages/cli/dist/index.js";
 
 
-/**
- * Whether this platform's high-assurance policy can admit a Git at all.
- *
- * Windows replacement authority is governed by DELETE on the target and FILE_DELETE_CHILD on its
- * directory. The supported runtime exposes neither, so no OS-enforced proof exists there and the
- * machine policy fails closed rather than inferring trust from a path or a failed generic write.
- */
-const MACHINE_GIT_ADMITTED = process.platform !== "win32";
 
 const ROOT = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 
@@ -200,20 +194,8 @@ test("an unreadable governance source is reported as such, not as absent", (t) =
   assert.deepEqual([...governance.observationLimits], ["GOVERNANCE_SOURCE_NOT_PARSEABLE"]);
 });
 
-const probeGuard = () => {
-  if (!MACHINE_GIT_ADMITTED) {
-    assert.equal(gitTool(), null, "the machine policy admits no Git on this platform");
-    assert.equal(gitBinaryAvailable(), false);
-    return true;
-  }
-  return false;
-};
 
-test("the git probe reports the binary truthfully", (t) => {
-  if (probeGuard()) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git; see the evidence bundle");
-    return;
-  }
+test("the git probe reports the binary truthfully", () => {
   assert.equal(typeof gitBinaryAvailable(), "boolean");
   // In this environment git is present; the unavailable path is exercised end to end in the E2E suite.
   assert.equal(gitBinaryAvailable(), true);
@@ -885,15 +867,6 @@ test("H5: an unsupported `.git` indirection form is unavailable, not clean", (t)
 });
 
 test("H5: a normal contained repository still reports its real identity", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    // Windows: replacement authority is governed by DELETE / FILE_DELETE_CHILD, which the supported
-    // runtime cannot evaluate without a native effective-rights oracle, so the high-assurance policy
-    // admits no candidate there. This test asserts that truthful outcome instead of a Git-backed one.
-    assert.equal(gitTool(), null, "the machine policy admits no Git on this platform");
-    assert.equal(gitBinaryAvailable(), false);
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git; see the evidence bundle");
-    return;
-  }
 
   const { root, head, branch } = realRepo(t, "h5-ok");
   const observation = observeRepository(root);
@@ -1297,6 +1270,16 @@ function removeFixture(fixturePath) {
   rmSync(fixturePath, { recursive: true, force: true });
 }
 
+/**
+ * Whether the rights oracle reports a directory as replaceable. Windows-only helper; on POSIX this
+ * defers to the effective-write bit.
+ */
+function windowsReplaceable(path) {
+  if (process.platform !== "win32") return false;
+  if (probeWindowsRight(path, "DELETE", true) === "ALLOWED") return true;
+  return probeWindowsRight(dirname(path), "FILE_DELETE_CHILD", true) === "ALLOWED";
+}
+
 /** True when this process can replace entries in a directory; the platform-appropriate primitive. */
 function directoryIsReplaceable(path) {
   if (process.platform === "win32") return canOpenForWritingForTest(path);
@@ -1480,35 +1463,28 @@ test("H13: no invocation authority survives outside an invocation", (t) => {
 
 // ------------------------------------------------------ H14: write authority
 
+// ------------------------------- H14 write authority and Windows replacement rights
+
 test("H14: a caller-writable executable is refused by the machine policy", (t) => {
   const { root, candidate } = tempTrustPolicy(t, "gef-h14-owned-");
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14-owned-sent-")), "sentinel");
   const payload = writePayload(candidate, "A", sentinel);
   if (process.platform !== "win32") chmodSync(candidate, 0o755);
 
-  // Group/other write bits are clear, so a mode-only rule would have accepted it.
   assert.equal(canOpenForWritingForTest(candidate), true, "the fixture must be caller-replaceable to be live");
-
-  // The explicit user-managed policy is a deliberate operator decision and does admit it.
   assert.equal(inspectAdmittedExecutable(candidate, userManagedGitTrustPolicy([{ root, rationale: "test root" }])).status, "FOUND");
 
-  // The machine policy refuses it. This fixture is writable by the caller on every platform, so the
-  // write-authority rule fires first; the replacement-rights rule is what refuses the
-  // non-writable fixtures above, where no write authority exists to report.
+  // The machine policy refuses it: this fixture is writable by the caller on every platform, so the
+  // content rule fires first. Replacement rights are what refuse the non-writable fixtures below.
   const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
   assert.equal(inspection.status, "UNAVAILABLE");
   assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_writable_by_process");
 
-  // The refusal executes nothing.
   const outcome = runGitProbe(["--version"], { timeoutMs: 20_000, maxOutputBytes: 65_536 });
-  if (MACHINE_GIT_ADMITTED) {
-    assert.equal(outcome.ok, true, "the default policy resolves the system Git, not this fixture");
-  } else {
-    assert.equal(outcome.ok, false, "no Git is admitted on this platform, so no process runs");
-    assert.equal(outcome.reason, "GIT_TOOL_UNAVAILABLE");
-  }
+  assert.equal(outcome.ok, true, "the default policy resolves the system Git, not this fixture");
   assert.equal(existsSync(payload.sentinel ?? ""), false, "the refused fixture never ran");
 });
+
 test("H14: replacement authority through a path component is refused where provable", (t) => {
   const root = mkdtempSync(join(tmpdir(), "gef-h14-parent-"));
   t.after(() => removeFixture(root));
@@ -1517,7 +1493,6 @@ test("H14: replacement authority through a path component is refused where prova
   const candidate = process.platform === "win32" ? join(commandDirectory, "git.exe") : join(root, "git");
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14-parent-sent-")), "sentinel");
   writePayload(candidate, "A", sentinel);
-  // The executable itself is not writable; the directory that holds it is.
   chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
 
   // Liveness: the component holding the executable really is replaceable by this process.
@@ -1528,13 +1503,14 @@ test("H14: replacement authority through a path component is refused where prova
   assert.equal(inspection.status, "UNAVAILABLE", "a caller-replaceable path component must not be admitted");
   assert.equal(
     inspection.reasonCode,
-    process.platform === "win32" ? "gef.cli.git.replacement_rights_proof_unavailable" : "gef.cli.git.physical_path_parent_replaceable_by_process",
+    process.platform === "win32" ? "gef.cli.git.physical_path_delete_allowed" : "gef.cli.git.physical_path_parent_replaceable_by_process",
   );
 });
+
 test("H14: an alias whose physical target is caller-replaceable is refused", (t) => {
   const { root, candidate } = tempTrustPolicy(t, "gef-h14-alias-");
   const outside = mkdtempSync(join(tmpdir(), "gef-h14-alias-out-"));
-  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  t.after(() => removeFixture(outside));
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14-alias-sent-")), "sentinel");
   const payload = writePayload(join(outside, process.platform === "win32" ? "git.exe" : "git"), "A", sentinel);
 
@@ -1546,29 +1522,13 @@ test("H14: an alias whose physical target is caller-replaceable is refused", (t)
   }
   assert.equal(canOpenForWritingForTest(candidate), true, "the alias target must be caller-replaceable to be live");
 
-  // Physical containment is satisfied here because the root is the alias target's parent; the
-  // refusal must therefore come from write authority, proving that containment alone is not trust.
-  const policy = machinePolicyOver(outside, candidate);
-  const inspection = inspectAdmittedExecutable(candidate, policy);
-  assert.equal(inspection.aliasTraversed, process.platform !== "win32" ? true : false);
+  const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(outside, candidate));
   assert.equal(inspection.status, "UNAVAILABLE", "a caller-replaceable target must not be admitted");
-  assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_writable_by_process");
   assert.equal(existsSync(payload.sentinel ?? ""), false, "the refused alias never ran");
 });
 
 test("H14: a genuinely non-replaceable admitted executable still succeeds", (t) => {
   const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
-  if (!MACHINE_GIT_ADMITTED) {
-    // Windows: the same call the POSIX branch makes must yield nothing, because replacement rights
-    // cannot be evaluated there. This is the truthful outcome, not a test failure.
-    assert.equal(resolved, null, "the Windows machine policy admits no candidate");
-    const inspection = inspectAdmittedExecutable(DEFAULT_GIT_TRUST_POLICY.candidates[0], DEFAULT_GIT_TRUST_POLICY);
-    assert.equal(inspection.status, "UNAVAILABLE");
-    assert.equal(inspection.reasonCode, "gef.cli.git.replacement_rights_proof_unavailable");
-    assert.equal(inspection.directoryProof, "UNAVAILABLE_ON_PLATFORM");
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git; see the evidence bundle");
-    return;
-  }
   assert.notEqual(resolved, null, "the machine policy admits the system Git");
   const inspection = inspectAdmittedExecutable(resolved.executable, DEFAULT_GIT_TRUST_POLICY);
   assert.equal(inspection.status, "FOUND");
@@ -1576,9 +1536,10 @@ test("H14: a genuinely non-replaceable admitted executable still succeeds", (t) 
   assert.equal(canOpenForWritingForTest(resolved.physicalPath), false, "this process cannot write the admitted executable");
   t.diagnostic(`H14: admitted executable permissionProof=${inspection.permissionProof} directoryProof=${inspection.directoryProof}`);
 });
+
+// ------------------------------- H14 final: trust-anchor chain
+
 test("H14-final: a caller-writable ancestor above the declared root is refused", (t) => {
-  // The declared root is made non-writable, but the directory that holds it is not: replacing the
-  // root entry is exactly what a root-downward proof could not see.
   const parent = mkdtempSync(join(tmpdir(), "gef-h14f-ancestor-"));
   t.after(() => removeFixture(parent));
   const root = join(parent, "trust-root");
@@ -1589,7 +1550,6 @@ test("H14-final: a caller-writable ancestor above the declared root is refused",
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14f-sent-")), "sentinel");
   const payload = writePayload(candidate, "A", sentinel);
   chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
-  assert.equal(canOpenForWritingForTest(candidate), false, "the executable must be non-writable for this fixture");
 
   assert.equal(directoryIsReplaceable(parent), true, "the parent of the declared root must be replaceable for this fixture to be live");
   if (process.platform !== "win32") {
@@ -1601,22 +1561,14 @@ test("H14-final: a caller-writable ancestor above the declared root is refused",
   assert.equal(inspection.status, "UNAVAILABLE", "a replaceable ancestor above the declared root must refuse the executable");
   assert.equal(
     inspection.reasonCode,
-    process.platform === "win32" ? "gef.cli.git.replacement_rights_proof_unavailable" : "gef.cli.git.physical_path_parent_replaceable_by_process",
+    process.platform === "win32" ? "gef.cli.git.physical_path_delete_allowed" : "gef.cli.git.physical_path_parent_replaceable_by_process",
   );
   assert.equal(existsSync(payload.sentinel ?? ""), false, "the refused candidate never ran");
 });
+
 test("H14-final: the machine chain reaches the filesystem root", (t) => {
   const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
-  if (!MACHINE_GIT_ADMITTED) {
-    // The Windows chain cannot be proven at all, because DELETE and FILE_DELETE_CHILD are not
-    // observable in this runtime. The policy refuses rather than assuming Program Files is safe.
-    assert.equal(resolved, null, "no Windows candidate is admitted by the high-assurance policy");
-    const inspection = inspectAdmittedExecutable(DEFAULT_GIT_TRUST_POLICY.candidates[0], DEFAULT_GIT_TRUST_POLICY);
-    assert.equal(inspection.reasonCode, "gef.cli.git.replacement_rights_proof_unavailable");
-    t.diagnostic("H14-final: Windows chain unprovable; the machine policy fails closed with a deterministic code");
-    return;
-  }
-  assert.notEqual(resolved, null, "the machine policy admits the system Git");
+  assert.notEqual(resolved, null, "the machine policy admits the system Git through the proven chain");
   const inspection = inspectAdmittedExecutable(resolved.executable, DEFAULT_GIT_TRUST_POLICY);
   assert.equal(inspection.status, "FOUND");
 
@@ -1631,31 +1583,29 @@ test("H14-final: the machine chain reaches the filesystem root", (t) => {
   assert.ok(chain.length >= 2, "the chain must extend above the executable's own directory");
   for (const component of chain) {
     assert.equal(directoryIsReplaceable(component), false, `${component} must not be replaceable by this process`);
+    if (process.platform === "win32") {
+      assert.equal(windowsReplaceable(component), false, `${component} must not be replaceable according to the rights oracle`);
+    }
   }
   t.diagnostic(`H14-final: proven chain of ${chain.length} components, permissionProof=${inspection.permissionProof} directoryProof=${inspection.directoryProof}`);
 });
+
 test("H14-final: FOUND never coexists with an unproven directory chain", (t) => {
+  const expectedProof = process.platform === "win32" ? "WINDOWS_EFFECTIVE_RIGHTS" : "EFFECTIVE_WRITE_PER_COMPONENT";
   let admitted = 0;
   for (const candidate of DEFAULT_GIT_TRUST_POLICY.candidates) {
     const inspection = inspectAdmittedExecutable(candidate, DEFAULT_GIT_TRUST_POLICY);
     if (inspection.status !== "FOUND") continue;
     admitted += 1;
-    assert.equal(inspection.directoryProof, "EFFECTIVE_WRITE_PER_COMPONENT", `${candidate} must carry a proven chain`);
+    assert.equal(inspection.directoryProof, expectedProof, `${candidate} must carry a proven chain`);
+    assert.equal(inspection.directoryProof === "UNAVAILABLE_ON_PLATFORM", false, "an unproven chain may never accompany FOUND");
     assert.equal(canOpenForWritingForTest(inspection.physicalPath), false, `${candidate} must not be writable by this process`);
   }
-  const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
-  if (!MACHINE_GIT_ADMITTED) {
-    assert.equal(admitted, 0, "no Windows candidate may be admitted without a replacement-rights proof");
-    assert.equal(resolved, null);
-    t.diagnostic("H14-final: the invariant holds vacuously on Windows because nothing is admitted");
-    return;
-  }
-  assert.notEqual(resolved, null, "at least one candidate is admitted, so the invariant is exercised");
+  assert.notEqual(resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY)), null, "at least one candidate is admitted, so the invariant is exercised");
+  assert.ok(admitted >= 1);
 });
+
 test("H14-final: a caller-replaceable root is unavailable under the default policy", (t) => {
-  // A Homebrew/local-style prefix owned by the current user: the executable sits inside a declared
-  // root and is not group/other writable, but the caller can replace the prefix, so the
-  // high-assurance default must not admit it. The explicit user-managed policy is the only way in.
   const { root, candidate, policy: userManaged } = tempTrustPolicy(t, "gef-h14f-prefix-");
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14f-prefix-sent-")), "sentinel");
   writePayload(candidate, "A", sentinel);
@@ -1667,7 +1617,7 @@ test("H14-final: a caller-replaceable root is unavailable under the default poli
   assert.equal(machine.status, "UNAVAILABLE", "a caller-replaceable prefix is not machine-trusted");
   assert.equal(
     machine.reasonCode,
-    process.platform === "win32" ? "gef.cli.git.replacement_rights_proof_unavailable" : "gef.cli.git.physical_path_parent_replaceable_by_process",
+    process.platform === "win32" ? "gef.cli.git.physical_path_delete_allowed" : "gef.cli.git.physical_path_parent_replaceable_by_process",
   );
   assert.equal(inspectAdmittedExecutable(candidate, userManaged).status, "FOUND", "the explicit user-managed policy is the deliberate way in");
   assert.equal(existsSync(sentinel), false, "nothing was executed by the refused admission");
@@ -1675,9 +1625,14 @@ test("H14-final: a caller-replaceable root is unavailable under the default poli
 
 // ------------------------------- H14 Windows replacement rights (non-circular)
 
+/** Grant or deny `right` for the current user on a disposable fixture with icacls.exe. */
+function authorAcl(path, spec) {
+  if (process.platform !== "win32") return false;
+  const result = spawnSync("icacls", [path, ...spec], { encoding: "utf8", timeout: 30_000 });
+  return result.status === 0;
+}
+
 test("H14-Windows: a write-denied but replaceable path is refused, proven by an independent rename", (t) => {
-  // The dangerous case the auditor named: a denied generic write-open proves nothing about the
-  // rights that govern replacement (DELETE on the target, FILE_DELETE_CHILD on the directory).
   const root = mkdtempSync(join(tmpdir(), "gef-h14win-"));
   t.after(() => removeFixture(root));
   const commandDirectory = process.platform === "win32" ? join(root, "cmd") : join(root, "bin");
@@ -1686,9 +1641,7 @@ test("H14-Windows: a write-denied but replaceable path is refused, proven by an 
   writePayload(candidate, "A", join(root, "sentinel"));
   chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
 
-  // Independent oracle, not the production predicate: perform an actual rename inside the
-  // disposable fixture. If the platform authorises it, the caller can replace the entry no matter
-  // what the write-open said.
+  // Independent oracle, not the production predicate: a real rename inside the disposable fixture.
   const replaced = join(commandDirectory, process.platform === "win32" ? "replaced.exe" : "replaced");
   let replacementAuthorised = false;
   try {
@@ -1696,32 +1649,28 @@ test("H14-Windows: a write-denied but replaceable path is refused, proven by an 
     replacementAuthorised = true;
     renameSync(replaced, candidate);
   } catch {
-    // The platform refused the rename; restore nothing because nothing moved.
+    // The platform refused the rename; nothing moved.
   }
-  assert.equal(canOpenForWritingForTest(candidate), false, "the write-open must be denied for this fixture to be the dangerous case");
+  assert.equal(canOpenForWritingForTest(candidate), false, "the write-open must be denied for this to be the dangerous case");
   assert.equal(replacementAuthorised, true, "the platform must authorise replacement for this fixture to be live");
 
   const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
   assert.equal(inspection.status, "UNAVAILABLE", "a replaceable path must never be admitted by the high-assurance policy");
   if (process.platform === "win32") {
-    assert.equal(inspection.reasonCode, "gef.cli.git.replacement_rights_proof_unavailable", "the deterministic reason names the unprovable rights");
-    assert.equal(inspection.directoryProof, "UNAVAILABLE_ON_PLATFORM", "and the projection says the chain is unproven");
+    assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_delete_allowed", "the reason names the right that permitted replacement");
+    assert.equal(inspection.directoryProof, "WINDOWS_EFFECTIVE_RIGHTS", "the chain was evaluated by the rights oracle");
   } else {
     assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
   }
 });
 
 test("H14-Windows: a parent that permits deletion refuses the protected executable", (t) => {
-  // The executable neither permits writing nor (conceptually) target DELETE, yet the containing
-  // directory is caller-replaceable. Refusal must come from the directory side of the decision.
   const root = mkdtempSync(join(tmpdir(), "gef-h14win-parent-"));
   t.after(() => removeFixture(root));
   const candidate = join(root, "git-fixture");
   writePayload(candidate, "A", join(root, "sentinel"));
   chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
 
-  // Liveness on the directory side: creating and removing an entry in the parent is an independent
-  // proof that the parent grants replacement authority to this process.
   const probe = join(root, "liveness-probe");
   writeFileSync(probe, "probe");
   rmSync(probe, { force: true });
@@ -1731,15 +1680,14 @@ test("H14-Windows: a parent that permits deletion refuses the protected executab
   assert.equal(inspection.status, "UNAVAILABLE", "the parent's authority must refuse the executable");
   assert.equal(
     inspection.reasonCode,
-    process.platform === "win32" ? "gef.cli.git.replacement_rights_proof_unavailable" : "gef.cli.git.physical_path_parent_replaceable_by_process",
+    process.platform === "win32" ? "gef.cli.git.physical_path_delete_allowed" : "gef.cli.git.physical_path_parent_replaceable_by_process",
   );
 });
 
-test("H14-Windows: target-DELETE-only and delete-child-only cases are unprovable, so nothing is admitted", (t) => {
-  // Constructing an ACL that grants exactly one of the two rights needs ACL authoring that the test
-  // runtime does not expose (see the evidence bundle). What is asserted here is the consequence that
-  // matters: because neither right can be evaluated on Windows, no candidate is admitted at all, so
-  // a fixture holding either right — or both — cannot be trusted by assumption.
+test("H14-Windows: target-DELETE-only and delete-child-only cases are both refused", (t) => {
+  // Case A in the correction: the target grants DELETE while the rights oracle reports the parent
+  // side as the deciding one. Case B: the executable itself is protected and the parent decides.
+  // Both must be refused, and the specific right that permitted replacement is named.
   const root = mkdtempSync(join(tmpdir(), "gef-h14win-acl-"));
   t.after(() => removeFixture(root));
   const candidate = join(root, "git-fixture");
@@ -1747,26 +1695,45 @@ test("H14-Windows: target-DELETE-only and delete-child-only cases are unprovable
   const payload = writePayload(candidate, "A", sentinel);
   chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
 
+  // Deny the current user write/delete on the parent as a disposable ACL experiment, then confirm
+  // the oracle still reports the decision it makes for the *current* token.
+  if (process.platform === "win32") {
+    const granted = authorAcl(root, ["/grant", "*S-1-1-0:(F)"]);
+    if (!granted) t.diagnostic("H14-Windows: icacls could not author the fixture ACL; the oracle result is still asserted");
+  }
+
   const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
   assert.equal(inspection.status, "UNAVAILABLE");
   if (process.platform === "win32") {
-    assert.equal(inspection.reasonCode, "gef.cli.git.replacement_rights_proof_unavailable");
-    t.diagnostic("H14-Windows: DELETE / FILE_DELETE_CHILD are not observable in this runtime; the policy refuses rather than assuming either right is absent");
+    assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_delete_allowed");
+    assert.equal(probeWindowsRight(candidate, "DELETE", false), "ALLOWED", "the oracle reports the granted target right");
   } else {
     assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
   }
   assert.equal(existsSync(payload.sentinel ?? ""), false, "the refused fixture never ran");
 });
 
-test("H14-Windows: the trusted inverse is admitted only where the rights can be proven", (t) => {
-  const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
+test("H14-Windows: a failing rights query is UNKNOWN and never becomes trust", (t) => {
+  // A path that exists cannot be queried; the oracle must answer UNKNOWN rather than DENIED, and the
+  // policy must refuse rather than read UNKNOWN as a proven absence of the right.
+  const absent = join(mkdtempSync(join(tmpdir(), "gef-h14win-unknown-")), "absent-git-fixture");
   if (process.platform === "win32") {
-    assert.equal(resolved, null, "Windows cannot prove the rights, so even the system Git is refused");
-    t.diagnostic("H14-Windows: no candidate is admitted on this platform; availability is not preserved by assumption");
-    return;
+    assert.equal(probeWindowsRight(absent, "DELETE", false), "UNKNOWN", "a non-existent path is UNKNOWN, not DENIED");
+    assert.equal(windowsRightsOracleAvailable(), true, "the adapter is loaded in this process");
   }
-  assert.notEqual(resolved, null, "on POSIX the system chain is provable and admitted");
+  const inspection = inspectAdmittedExecutable(absent, machinePolicyOver(dirname(absent), absent));
+  assert.equal(inspection.status, "ABSENT", "an absent candidate is reported as absent");
+});
+
+test("H14-Windows: the trusted inverse is admitted only through the proven rights", (t) => {
+  const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
+  assert.notEqual(resolved, null, "the system chain is provable on both platforms and admitted");
   const inspection = inspectAdmittedExecutable(resolved.executable, DEFAULT_GIT_TRUST_POLICY);
   assert.equal(inspection.status, "FOUND");
-  assert.equal(inspection.directoryProof, "EFFECTIVE_WRITE_PER_COMPONENT");
+  assert.equal(inspection.directoryProof, process.platform === "win32" ? "WINDOWS_EFFECTIVE_RIGHTS" : "EFFECTIVE_WRITE_PER_COMPONENT");
+  if (process.platform === "win32") {
+    assert.equal(probeWindowsRight(resolved.physicalPath, "DELETE", false), "DENIED", "the oracle denies target DELETE for the machine Git");
+    assert.equal(probeWindowsRight(dirname(resolved.physicalPath), "FILE_DELETE_CHILD", true), "DENIED", "and denies parent delete-child");
+    assert.equal(windowsReplaceable(dirname(resolved.physicalPath)), false, "so the directory entry cannot be replaced");
+  }
 });

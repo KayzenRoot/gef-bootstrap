@@ -33,6 +33,8 @@ export {
 export type { JsonEnvelope, JsonErrorProjection } from "./render.js";
 
 export * from "./engines.js";
+export { probeWindowsRight, windowsRightsOracleAvailable } from "./windows-rights.js";
+export type { WindowsRight, WindowsRightVerdict } from "./windows-rights.js";
 
 export {
   JOURNAL_SUBDIRECTORY,

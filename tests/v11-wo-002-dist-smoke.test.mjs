@@ -105,10 +105,13 @@ test("DIST-SMOKE-01b: the packed payload carries README, LICENSE and the schema 
   assert.deepEqual(packedManifest.bin, { gef: "./bin/gef.mjs" });
   assert.equal(packedManifest.private, true);
   // Runtime dependencies are bundled, not resolved from a registry. The preflight toolchain
-  // authority joined this list when the CLI began resolving its Git executable through it.
+  // authority joined this list when the CLI began resolving its Git executable through it, and the
+  // Koffi FFI runtime with its platform prebuilt joined it when the Windows rights oracle was
+  // admitted (ADR-0004).
+  const hostPlatformPackage = `@koromix/koffi-${process.platform}-${process.arch}`;
   assert.deepEqual(
     [...(packedManifest.bundleDependencies ?? packedManifest.bundledDependencies ?? [])].sort(),
-    ["@gef-bootstrap/contracts", "@gef-bootstrap/kernel", "@gef-bootstrap/preflight"],
+    ["@gef-bootstrap/contracts", "@gef-bootstrap/kernel", "@gef-bootstrap/preflight", hostPlatformPackage, "koffi"].sort(),
   );
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "kernel")), "the bundled runtime must be installed with the package");
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "contracts")));

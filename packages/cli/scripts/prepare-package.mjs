@@ -20,7 +20,7 @@
  */
 
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
@@ -79,6 +79,27 @@ export function stage() {
       target: `vendor/engines/${engine.name}/${engine.target}`,
       sha256: sha256(target),
     });
+  }
+
+  // Koffi and its platform prebuilt binary are runtime dependencies of the Windows rights oracle.
+  // Koffi resolves its native binary as a sibling of its own package directory, so both entries
+  // must be installed together for the installed CLI to load the adapter.
+  // Only the build host's prebuilt binary is resolvable: npm skips platform packages whose os/cpu
+  // fields do not match, so a Linux build stages no Windows binary and the Windows build stages no
+  // Linux one. The host must always have its own, and that requirement is enforced here.
+  const koromixRoot = join(repositoryRoot, "node_modules", "@koromix");
+  const hostPlatformPackage = `@koromix/koffi-${process.platform}-${process.arch}`;
+  const availableNative = existsSync(koromixRoot) ? readdirSync(koromixRoot).map((name) => `@koromix/${name}`) : [];
+  if (!availableNative.includes(hostPlatformPackage)) throw new Error(`Native runtime for this host is missing: ${hostPlatformPackage} (run npm install)`);
+  const nativePackages = ["koffi", ...availableNative];
+  for (const name of nativePackages) {
+    const source = join(repositoryRoot, "node_modules", ...name.split("/"));
+    if (!existsSync(source)) throw new Error(`Runtime native package is missing: ${name} (run npm install)`);
+    const target = join(staging, "node_modules", ...name.split("/"));
+    mkdirSync(target, { recursive: true });
+    cpSync(source, target, { recursive: true });
+    const declared = JSON.parse(readFileSync(join(source, "package.json"), "utf8"));
+    manifest.artifacts.push({ kind: "native-runtime", name, version: declared.version, target: `node_modules/${name}` });
   }
 
   for (const name of RUNTIME_PACKAGES) {

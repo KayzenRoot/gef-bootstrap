@@ -21,6 +21,7 @@
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
+import { probeWindowsRight, windowsRightsOracleAvailable } from "./windows-rights.js";
 import { accessSync, closeSync, constants, fstatSync, lstatSync, openSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, isAbsolute, join, parse, relative, resolve, sep } from "node:path";
@@ -563,7 +564,7 @@ export type PermissionProof = "POSIX_MODE_NO_GROUP_OR_OTHER_WRITE" | "UNAVAILABL
  * platform exposes no non-mutating directory-write check: the executable's own ACL denial is then
  * the whole basis, and that weaker basis is reported rather than silently treated as equivalent.
  */
-export type DirectoryProof = "EFFECTIVE_WRITE_PER_COMPONENT" | "UNAVAILABLE_ON_PLATFORM";
+export type DirectoryProof = "EFFECTIVE_WRITE_PER_COMPONENT" | "WINDOWS_EFFECTIVE_RIGHTS" | "UNAVAILABLE_ON_PLATFORM";
 
 /** The CLI's own richer view of one trust inspection, of which the frozen port sees a projection. */
 export interface PhysicalTrustInspection {
@@ -714,19 +715,12 @@ function canOpenForWriting(path: string): boolean {
  * UNAVAILABLE.  therefore never coexists with .
  */
 function replacementAuthority(physical: string): string | null {
-  // Replacement authority on Windows is governed by two rights that are independent of generic
-  // write access: DELETE on the target object and FILE_DELETE_CHILD on the containing directory. A
-  // denied write-open proves neither. This was verified against the platform: a read-only file whose
-  // r+ open is refused can still be renamed, so the write-open probe is not evidence of
-  // non-replaceability and must not be treated as such.
-  //
-  // The supported runtime exposes no way to request DELETE or FILE_DELETE_CHILD access, so no
-  // OS-enforced probe for them exists, and Node exposes no security-descriptor API. A narrowed
-  // effective-rights oracle would need a native binding or a P/Invoke evaluator, which is an
-  // architecture and packaging decision above this Work Order. Until such an oracle exists, the
-  // high-assurance policy fails closed here rather than inferring trust from a path or from a
-  // failed generic write: no Windows candidate is admitted by MACHINE_NON_REPLACEABLE.
-  if (process.platform === "win32") return "replacement_rights_proof_unavailable";
+  // Windows: the rights that govern replacement are DELETE on the object and FILE_DELETE_CHILD on
+  // its directory. They are independent of generic write access — a read-only file whose write-open
+  // is refused can still be renamed — so they are asked of the operating system directly through the
+  // narrow adapter admitted by ADR-0004. ALLOWED means the caller can replace the entry, and
+  // UNKNOWN means the proof could not be established; both refuse.
+  if (process.platform === "win32") return windowsReplacementAuthority(physical);
   // POSIX: replacement of a path entry is controlled by the directory that holds it, so the chain
   // runs from the executable upward through every ancestor and terminates at the filesystem root —
   // which has no parent and needs no further proof.
@@ -742,6 +736,39 @@ function replacementAuthority(physical: string): string | null {
   }
   for (const component of chain) {
     if (canAccessForWriting(component)) return "physical_path_parent_replaceable_by_process";
+  }
+  return null;
+}
+
+/**
+ * The Windows replacement-authority chain, proven with the OS access check (ADR-0004).
+ *
+ * For the executable:  on it and  on its directory. Then for every
+ * directory entry in the physical chain up to, but not including, the volume root:  on the
+ * directory and  on its parent. The volume root is the termination anchor.
+ */
+function windowsReplacementAuthority(physical: string): string | null {
+  const executable = probeWindowsRight(physical, "DELETE", false);
+  if (executable === "ALLOWED") return "physical_path_delete_allowed";
+  if (executable === "UNKNOWN") return "replacement_rights_proof_unavailable";
+
+  const directory = dirname(physical);
+  const parentDeleteChild = probeWindowsRight(directory, "FILE_DELETE_CHILD", true);
+  if (parentDeleteChild === "ALLOWED") return "physical_path_parent_delete_child_allowed";
+  if (parentDeleteChild === "UNKNOWN") return "replacement_rights_proof_unavailable";
+
+  const volumeRoot = parse(physical).root;
+  let current = directory;
+  while (normalizedForPlatform(current) !== normalizedForPlatform(volumeRoot)) {
+    const deleteOnDirectory = probeWindowsRight(current, "DELETE", true);
+    if (deleteOnDirectory === "ALLOWED") return "physical_path_ancestor_replaceable";
+    if (deleteOnDirectory === "UNKNOWN") return "replacement_rights_proof_unavailable";
+    const ancestor = dirname(current);
+    if (ancestor === current) break;
+    const deleteChildOnParent = probeWindowsRight(ancestor, "FILE_DELETE_CHILD", true);
+    if (deleteChildOnParent === "ALLOWED") return "physical_path_ancestor_replaceable";
+    if (deleteChildOnParent === "UNKNOWN") return "replacement_rights_proof_unavailable";
+    current = ancestor;
   }
   return null;
 }
@@ -763,11 +790,10 @@ function permissionProofSupport(): PermissionProof {
 
 /** Whether this platform can check directory replacement authority without mutating anything. */
 function directoryProofSupport(): DirectoryProof {
-  // On POSIX the component chain is proven with the effective-write bit. On Windows neither DELETE
-  // nor FILE_DELETE_CHILD can be evaluated, so the chain is not proven there at all — and because
-  // the high-assurance policy refuses to admit a Windows candidate without it, this value never
-  // accompanies FOUND.
-  return process.platform === "win32" ? "UNAVAILABLE_ON_PLATFORM" : "EFFECTIVE_WRITE_PER_COMPONENT";
+  // POSIX proves the chain with the effective-write bit; Windows proves it with the OS access check
+  // for DELETE and FILE_DELETE_CHILD (ADR-0004). UNAVAILABLE_ON_PLATFORM remains for the projections
+  // where no chain was established at all.
+  return process.platform === "win32" ? "WINDOWS_EFFECTIVE_RIGHTS" : "EFFECTIVE_WRITE_PER_COMPONENT";
 }
 
 /**

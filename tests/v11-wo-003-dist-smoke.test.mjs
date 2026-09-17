@@ -13,16 +13,6 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 
-/**
- * Whether this platform's high-assurance policy can admit a Git at all.
- *
- * Windows replacement authority is governed by DELETE on the target and FILE_DELETE_CHILD on its
- * directory; the supported runtime exposes neither, so the machine policy fails closed there. The
- * Git-backed cases below are therefore not exercisable on Windows and are reported as skipped with
- * this reason rather than silently passing. The Windows product outcome itself is asserted by
- * "the Windows high-assurance policy reports the Git toolchain as unavailable".
- */
-const MACHINE_GIT_ADMITTED = process.platform !== "win32";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CLI_PACKAGE_DIR = resolve(ROOT, "packages/cli");
@@ -134,11 +124,6 @@ test("the packed payload vendors every engine doctor and status depend on", (t) 
 });
 
 test("the installed package exposes doctor and status with source-workspace semantics", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { bin } = freshInstall(t, "parity");
   const project = tempProject(t);
@@ -262,11 +247,6 @@ test("the installed package refuses aliased and oversized Git metadata", (t) => 
 });
 
 test("the installed package probes dirtiness without index or fsmonitor side effects", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { bin } = freshInstall(t, "git-side-effects");
   const project = tempProject(t);
@@ -306,11 +286,6 @@ test("the installed package probes dirtiness without index or fsmonitor side eff
 });
 
 test("the installed package resolves Git through the approved policy, not PATH", (t) => {
-  if (!MACHINE_GIT_ADMITTED) {
-    t.diagnostic("escalation: the Windows high-assurance policy admits no Git because DELETE / FILE_DELETE_CHILD cannot be evaluated in this runtime; this Git-backed case runs on the POSIX platforms");
-    t.skip("Git is not admitted on this platform");
-    return;
-  }
 
   const { bin } = freshInstall(t, "trusted-git");
   const project = tempProject(t);
@@ -351,4 +326,37 @@ test("the installed package fails closed when the vendored engines are missing",
   // A degraded install must never degrade into a healthy verdict, and must not mutate anything.
   assert.deepEqual(readdirSync(project), before, "a failed diagnostic must not touch the project");
   assert.ok(!existsSync(join(project, ".gef")));
+});
+
+// ------------------------------------------- native rights oracle in the payload
+
+test("the installed package carries the Windows rights oracle and its prebuilt binary", (t) => {
+  const { cliDir, bin } = freshInstall(t, "native-runtime");
+  const hostPlatformPackage = `koffi-${process.platform}-${process.arch}`;
+
+  // Koffi resolves its native binary as a sibling of its own package directory, so both must ship.
+  assert.ok(existsSync(join(cliDir, "node_modules", "koffi")), "the FFI runtime must be packaged");
+  assert.ok(existsSync(join(cliDir, "node_modules", "@koromix", hostPlatformPackage)), `the host prebuilt must be packaged: ${hostPlatformPackage}`);
+
+  const manifest = JSON.parse(readFileSync(join(cliDir, "vendor", "MANIFEST.json"), "utf8"));
+  const natives = manifest.artifacts.filter((entry) => entry.kind === "native-runtime");
+  assert.equal(natives.length, 2, "the manifest records the runtime and one platform binary");
+  for (const entry of natives) assert.match(entry.version, /^\d+\.\d+\.\d+$/, `${entry.name} must carry its exact version`);
+
+  // The declared dependency is an exact pin, not a range.
+  const packedManifest = JSON.parse(readFileSync(join(cliDir, "package.json"), "utf8"));
+  assert.match(packedManifest.dependencies.koffi, /^\d+\.\d+\.\d+$/, "koffi must be pinned exactly");
+  assert.equal(packedManifest.dependencies["@koromix/koffi-win32-x64"], "3.3.0", "the Windows prebuilt is declared exactly");
+
+  // The installed CLI uses its own payload: on Windows that means loading the packaged adapter.
+  const project = tempProject(t);
+  const doctor = JSON.parse(gefAt(bin, ["doctor", "--target", project, "--json"]).stdout).value.doctor;
+  assert.equal(doctor.toolchain.git.presence, "FOUND", "the installed CLI admits the system Git");
+  if (process.platform === "win32") {
+    assert.deepEqual([...doctor.toolchain.git.gaps], [], "the packaged oracle proved the chain on Windows");
+    t.diagnostic("win32: the installed package loaded the packaged FFI adapter and proved the replacement rights");
+  } else {
+    // POSIX never loads the adapter; the effective-write chain is the proof there.
+    assert.equal(existsSync(join(cliDir, "node_modules", "@koromix", "koffi-win32-x64")), false, "a POSIX build stages no Windows binary");
+  }
 });
