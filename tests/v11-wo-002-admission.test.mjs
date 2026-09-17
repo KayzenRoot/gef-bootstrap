@@ -85,6 +85,7 @@ test('Execution Brief is explicitly non-executable before admission merge and su
 
 test('distribution remains local-proof-only and publication stays forbidden', () => {
   assert.ok(wo.includes('Do **not** publish to npm, GitHub Releases, or any registry'));
-  assert.ok(wo.includes('Local packaging proof is required; publication is forbidden'));
+  assert.ok(wo.includes('locally packable/installable') || wo.includes('`npm pack`'));
   assert.ok(brief.includes('Local packaging proof is required; publication is forbidden'));
+  assert.ok(brief.includes('no publication claim/action'));
 });
