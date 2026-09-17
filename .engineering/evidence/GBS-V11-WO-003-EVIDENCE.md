@@ -7,10 +7,18 @@ Assurance: `ELEVATED`
 Executed by: external executor under `ADR-0003-D3` (bounded authorization)
 Audit disposition: **not self-assessed** — objective audit is external
 
-**Revision note (H9–H10 correction).** This bundle supersedes the evidence recorded at head
+**Revision note (H11–H12 correction).** This bundle supersedes the evidence recorded at head
+`570b235ea7bb4b21a0d564f88f9b92cd6b529cad`, which received `CORRECTION_REQUIRED` (objective reaudit
+review `5238855257`: CRITICAL 0 / HIGH 2, plus one MEDIUM for a stale workspace lockfile). The claim
+`CRITICAL: 0 / HIGH: 0` recorded at that head is **retracted** in §16. H11 (trust admission was
+lexical, not physical), H12 (executable identity was not bound to the process actually spawned) and
+M3 (manifest/lock drift) are corrected in §6. The H1–H10 closures of §2–§5 are preserved and
+re-verified at the current head in §9.
+
+**Prior revision (H9–H10 correction).** This bundle also supersedes the evidence recorded at head
 `d7329784b758ebee1f320d2fdd75d177e36d1ea8`, which received `CORRECTION_REQUIRED` (objective reaudit
 review `5238264811`: CRITICAL 0 / HIGH 2). The claim `CRITICAL: 0 / HIGH: 0` recorded at that head is
-**retracted** in §15. The two blocking HIGH findings — H9 the Git probe inherited the caller's whole
+**retracted** in §16. The two blocking HIGH findings — H9 the Git probe inherited the caller's whole
 environment and H10 the executable was chosen by ambient `PATH` — are corrected in §5 and mapped to
 code and negative tests in §5.5. The H1–H8 closures of §2–§4 are preserved and re-verified at the
 current head in §8; they remain the historical record of those cycles.
@@ -21,7 +29,7 @@ current head in §8; they remain the historical record of those cycles.
 recorded at that head is **retracted** in §15. The two blocking HIGH findings — H7 the dirtiness
 probe could write the repository index, and H8 it could execute a repository-configured FSMonitor
 hook or start the daemon — are corrected in §4 and mapped to code and negative tests in §4.5. The
-H1–H6 closures of §2 and §3 are preserved and re-verified at the current head in §8; they are
+H1–H6 closures of §2 and §3 are preserved and re-verified at the current head in §9; they are
 retained as the historical record of those cycles, not as current-head proof of the Git dirtiness
 subprocess.
 
@@ -46,7 +54,8 @@ those heads was retracted in its own cycle and is not reinstated here.
 | H1–H4 corrected head | `49ceca340119d3cec53f4b06593f0a6d64ee3a70` — reaudited, `CORRECTION_REQUIRED` (H5–H6) |
 | H5–H6 corrected head | `e99751f99fc34394fce93322fd8d6d6ac0e9767b` — reaudited, `CORRECTION_REQUIRED` (H7–H8) |
 | H7–H8 corrected head | `d7329784b758ebee1f320d2fdd75d177e36d1ea8` — reaudited, `CORRECTION_REQUIRED` (H9–H10) |
-| **H9–H10 corrected head** | the commit introducing this revised bundle; exact SHA reported in PR #284 |
+| H9–H10 corrected head | `570b235ea7bb4b21a0d564f88f9b92cd6b529cad` — reaudited, `CORRECTION_REQUIRED` (H11–H12) |
+| **H11–H12 corrected head** | the commit introducing this revised bundle; exact SHA reported in PR #284 |
 | Production branch `main` | `72c17bd3e7e421790ac382022b1f0ebbb0275ea4` — **unmodified** |
 | Release tag `v1.0.0` | object `aac89f9c3f0c884474958025bf14828bc338b5ee` → target `866fe3af8cccc65c929aaf6a47a924401fa448b3` — **unmoved** |
 
@@ -684,7 +693,157 @@ admitted set, which the test `H10: a descriptor outside the declared policy is r
 
 ---
 
-## 6. What was delivered
+## 6. Correction cycle — H11–H12 (objective reaudit review `5238855257`) + lockfile (M3)
+
+Disposition at the H9–H10 corrected head: `CORRECTION_REQUIRED`, CRITICAL 0 / HIGH 2, plus one
+MEDIUM. The reaudit confirmed H1–H10 closed and found that the trust admission was still only
+lexical (H11) and that the executable identity was not bound to the process actually spawned (H12).
+The stale workspace lockfile (M3) is reconciled in the same increment.
+
+### 6.1 H11 — physical trust, not lexical admission
+
+**Defect.** `GIT_APPROVED_EXECUTABLES` admitted fixed *path strings*, and `inspectAdmittedExecutable`
+then used `statSync()` — which follows aliases — with `realpathSync.native()` only to build an
+identity digest. The physical resolved target was never authorized, so an admitted path could be a
+symlink, junction or reparse alias to an executable outside the declared trust surface and still
+return `FOUND`.
+
+**Correction.** Admission now applies to the physical executable:
+
+1. **Lexical admission** — the requested reference must be one of the policy's declared candidates.
+2. **Physical admission** — `realpathSync.native(candidate)` must be inside one of the policy's
+   approved **physical roots**, compared after resolving each root too, so a root that is itself an
+   alias is normalized consistently.
+3. The physical target must be a regular file the process may execute.
+4. On platforms exposing POSIX permission bits it must additionally not be writable by group or
+   others. Where the platform exposes no such primitive the admission returns
+   `permissionProof: "UNAVAILABLE_ON_PLATFORM"` rather than claiming the proof passed.
+
+**Alias behaviour is explicit:** aliases are permitted, but only when the final physical target
+passes the physical-root and permission policy. A payload reached through a link is refused when it
+lands outside the approved roots, and an admitted path with a legitimate alias (a distribution that
+symlinks `/bin` to `/usr/bin`) still works because the physical target is inside an approved root.
+
+The roots are a frozen constant with a per-platform rationale, **not derived from the environment**,
+and the policy refuses a `PATH_NAME` descriptor outright. The policy reference became
+`gef.cli.git-executable-policy.v2`. Deterministic refusals: `gef.cli.git.path_not_admitted`
+(lexical), `gef.cli.git.physical_path_not_admitted` (physical escape),
+`gef.cli.git.physical_path_writable_by_others`, `gef.cli.git.executable_not_regular`,
+`gef.cli.git.executable_not_executable`, `gef.cli.git.executable_unresolvable`.
+
+### 6.2 H12 — identity bound to the process actually spawned
+
+**Defect.** `gitTool()` cached `{ executable, identity }` in a module global that outlived one
+`runCli` call, and the probes executed only the cached path with no revalidation before `spawnSync`.
+A replacement between resolution and execution could make the evidence claim identity A while the
+process that ran was B.
+
+**Correction.** The port that verified an executable is now **the only place a Git process is
+launched**, and it re-inspects under the same policy immediately before every spawn:
+
+- `probe` re-inspects the executable, compares the physical path and identity against what the
+  policy admitted, and on any difference **refuses without spawning**, recording the refusal as
+  `gef.cli.git.identity_changed_before_spawn`.
+- Resolution is **scoped to one invocation**: `runCli` installs the snapshot with
+  `beginGitToolInvocation` and removes it in a `finally`, so no module-global value carries an
+  identity across invocations. `deps.gitExecutablePolicy` is the injection point — deliberately not
+  an environment variable.
+- Outside an invocation a probe resolves for that call alone and discards the result with it, so
+  nothing is reused across calls (M04-S04 TOOL-14).
+- Evidence reports an identity **only when a probe actually succeeded through a verified
+  executable**. A refused or stale resolution reports no identity at all. A defect found while
+  writing the tests is fixed with it: the observation previously fell back to the snapshot's
+  identity when the resolution failed, which is exactly the H12 failure mode.
+
+The version observation and the dirtiness observation therefore run through the same
+invocation-bound port, and the identity in the projection is the identity verified for the process
+that answered.
+
+### 6.3 Live confirmation at the H11–H12 corrected head
+
+```
+H11 physical escape (injected test policy over a temporary approved root)
+  liveness        executing the admitted lexical path runs the external payload
+  inspection      status UNAVAILABLE, reason gef.cli.git.physical_path_not_admitted
+  identity        none issued for a refused target
+  resolveGitToolWith(port) -> null
+
+H11 valid approved physical target
+  inspection      FOUND, aliasTraversed false, identity sha256
+  runGitProbe     ok, identity == the admitted identity, the approved payload is what ran
+
+H11 permission proof
+  POSIX           chmod 0777 -> UNAVAILABLE / physical_path_writable_by_others; 0755 -> FOUND
+  Windows         permissionProof UNAVAILABLE_ON_PLATFORM (recorded, not claimed)
+
+H12 swap between resolution and execution
+  first probe     payload A answers
+  swap to B       runGitProbe -> ok false, reason gef.cli.git.identity_changed_before_spawn
+  B executed?     no
+  snapshot        unchanged (not silently rewritten)
+
+H12 swap between the version probe and the dirtiness probe
+  version probe   ok (payload A)
+  swap to B       observeRepositoryDirtiness -> UNKNOWN, refusal code, B not executed
+
+H12 two logical invocations in one process
+  invocation 1    identity == the identity the policy admits for payload A
+  swap to B       invocation 2 identity != identity A, re-resolved
+```
+
+### 6.4 Sensitivity proof — the tests fail against the audited behaviour
+
+Three defects were reintroduced faithfully (lexical-only admission, no execution-time revalidation,
+module-global snapshot reused across invocations) and the suite re-run:
+
+```
+defects reintroduced: 3 of 3
+✖ H11: an admitted lexical path whose physical target escapes the root is refused
+✖ H12: a replacement between resolution and execution is refused, never executed
+✖ H12: a replacement between the version probe and the dirtiness probe is refused
+✖ H12: a second logical invocation re-resolves instead of reusing the first identity
+```
+
+Two mistakes made during this cycle are recorded rather than smoothed over. First, an earlier
+reintroduction of the cross-invocation defect did not actually apply — the edit silently matched
+nothing — so that test appeared insensitive; the check was repeated against the source and the
+defect was reintroduced properly, after which the test failed as it should. Second, the first version
+of the fixtures copied `node.exe` (~80 MB) as the payload, which made the probes timing-sensitive
+under a loaded parallel `npm run validate` and produced two intermittent failures in the
+`executableIdentity` assertions. The payloads were replaced with two small distinct system
+executables, and the assertions now compare against output captured from the source binary, so
+nothing depends on knowing what a payload prints.
+
+### 6.5 M3 — workspace lockfile reconciliation
+
+`packages/cli/package.json` declared `@gef-bootstrap/preflight`, but the root `package-lock.json`
+still recorded only `contracts` and `kernel`. The lockfile was regenerated with the canonical
+`npm install --package-lock-only --no-audit --no-fund` and the resulting diff is exactly the
+expected lines — the CLI entry's `dependencies` gains `@gef-bootstrap/preflight: 0.0.0` and its
+`bundleDependencies` gains the same package — with **no unrelated version changes**:
+
+```
+ package-lock.json | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+```
+
+Two guards now fail on any workspace manifest/lock drift:
+`every workspace manifest agrees with the root lockfile` (compares every workspace package's
+`dependencies`, bundled dependencies and version against its lock entry) and
+`the CLI lockfile entry records the toolchain runtime dependency`. `npm ci --dry-run --no-audit
+--no-fund` exits 0 against the reconciled lockfile.
+
+### 6.6 H11–H12 correction-to-code-and-test map
+
+| Finding | Code | Tests |
+|---|---|---|
+| H11 physical trust | `GitExecutableTrustPolicy`, `ApprovedExecutableRoot`, `DEFAULT_GIT_TRUST_POLICY`, `GIT_TRUST_POLICY_REF`, `inspectAdmittedExecutable` (physical admission + permission proof), `PhysicalTrustInspection` | focused `H11: an admitted lexical path whose physical target escapes the root is refused` (live alias + liveness), `H11: a valid approved physical target is admitted and usable`, `H11: a group/other-writable physical target is refused where the platform expresses it` |
+| H12 execution-time identity | `createCliToolObservationPort` (verified map + revalidation in `probe`), `beginGitToolInvocation` / `endGitToolInvocation`, `gitScope`, `runGitProbe`, `observeGitTool` identity rule | focused `H12: a replacement between resolution and execution is refused, never executed`, `H12: a replacement between the version probe and the dirtiness probe is refused`, `H12: a second logical invocation re-resolves instead of reusing the first identity`, `H12: the reported identity is the one verified for the process that answered`, `H12: no fallback to PATH survives the invocation boundary` |
+| M3 lockfile | `package-lock.json` | dist-smoke `every workspace manifest agrees with the root lockfile`, `the CLI lockfile entry records the toolchain runtime dependency` |
+
+---
+
+## 7. What was delivered
 
 Two read-only diagnostic commands, registered on the canonical IDs and projected through the
 existing renderer contract. No `--fix`, no destructive repair, no `upgrade`, no migration/recovery
@@ -747,9 +906,9 @@ renders the engine's answer.
 
 ---
 
-## 7. Changed files and reasons
+## 8. Changed files and reasons
 
-### 7.1 Files inside the Context Lock `expectedWriteSurface`
+### 8.1 Files inside the Context Lock `expectedWriteSurface`
 
 | File | Change | Reason |
 |---|---|---|
@@ -765,7 +924,7 @@ renders the engine's answer.
 | `tests/v11-wo-003-dist-smoke.test.mjs` | new; 5 tests initially, 6 after the H1-H4 correction | WO-003 ladder L3 |
 | `.engineering/evidence/GBS-V11-WO-003-EVIDENCE.md` | new (this file) | WO-003 evidence bundle |
 
-### 7.2 Context expansions (writes outside the Context Lock surface, each with a concrete dependency reason)
+### 8.2 Context expansions (writes outside the Context Lock surface, each with a concrete dependency reason)
 
 | File | Reason |
 |---|---|
@@ -776,10 +935,10 @@ renders the engine's answer.
 | `tests/v11-wo-002-dist-smoke.test.mjs` | Same mechanical update in the packed-install suite (installed `--help` inventory). |
 
 No expansion touched `packages/kernel`, the V1.0 accepted history, any workflow, or any
-upgrade/migration or WO-005+ surface. The negative-search ledger in §13 records what was deliberately
+upgrade/migration or WO-005+ surface. The negative-search ledger in §14 records what was deliberately
 not changed.
 
-### 7.3 Read scope
+### 8.3 Read scope
 
 Read only the Execution Brief minimum read set plus the directly named engine modules required to
 bind the verified symbols (`m48-m54-maintenance`, `area-h-governance`,
@@ -787,7 +946,7 @@ bind the verified symbols (`m48-m54-maintenance`, `area-h-governance`,
 repository-wide rediscovery pass was performed. `detectDrift` and `operatorStatus` were read to
 confirm their exact contracts before composing inputs.
 
-### 7.4 A projection defect found and fixed during the initial implementation
+### 8.4 A projection defect found and fixed during the initial implementation
 
 `detectDrift` compares two observations and is not told whether a governed baseline exists. The
 first working version of `statusComposition` passed the `"NO_RECORDED_STATE"` sentinel on a target
@@ -811,27 +970,28 @@ The baseline is taken from whichever managed artifact exists — `init` **or** `
 
 ---
 
-## 8. Validation ladder — commands, exit codes, counts
+## 9. Validation ladder — commands, exit codes, counts
 
-All figures below are at the H9–H10 corrected head. The figures recorded at the earlier heads —
-`89b2d137…` (16 / 9 / 5 focused, 1374 total), `49ceca34…` (38 / 12 / 6, 1400 total) and
-`e99751f…` (48 / 14 / 7, 1413 total) and `d732978…` (48 / 19 / 8, 1419 total) — are **historical**; they
+All figures below are at the H11–H12 corrected head. The figures recorded at the earlier heads —
+`89b2d137…` (16 / 9 / 5 focused, 1374 total), `49ceca34…` (38 / 12 / 6, 1400 total),
+`e99751f…` (48 / 14 / 7, 1413 total), `d732978…` (48 / 19 / 8, 1419 total) and `570b235…`
+(48 / 19 / 9, 1429 total) — are **historical**; they
 are retained as the record of those cycles and are not current-head proof.
 
 | Step | Command | Exit | Result |
 |---|---|---|---|
 | Build | `npm run build -- --force` | 0 | 28 projects compiled from scratch |
 | Typecheck | `npm run typecheck` | 0 | clean |
-| L1 focused (incl. H1–H6) | `node --test tests/v11-wo-003-doctor-status.test.mjs` | 0 | tests 48 / pass 48 / fail 0 |
+| L1 focused (incl. H1–H12) | `node --test tests/v11-wo-003-doctor-status.test.mjs` | 0 | tests 56 / pass 56 / fail 0 |
 | L2 process E2E (incl. H7–H10) | `node --test tests/v11-wo-003-doctor-status-e2e.test.mjs` | 0 | tests 28 / pass 28 / fail 0 |
-| L3 packed install | `node --test tests/v11-wo-003-dist-smoke.test.mjs` | 0 | tests 9 / pass 9 / fail 0 |
+| L3 packed install | `node --test tests/v11-wo-003-dist-smoke.test.mjs` | 0 | tests 11 / pass 11 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-cli.test.mjs` | 0 | tests 30 / pass 30 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-cli-e2e.test.mjs` | 0 | tests 11 / pass 11 / fail 0 |
 | WO-002 regression | `node --test tests/v11-wo-002-dist-smoke.test.mjs` | 0 | tests 7 / pass 7 / fail 0 |
-| L4 full | `npm run validate` | 0 | tests 1429 / pass 1429 / fail 0 |
+| L4 full | `npm run validate` | 0 | tests 1439 / pass 1439 / fail 0 |
 | Dependency audit | `npm audit --audit-level=high` | 0 | found 0 vulnerabilities |
 
-The combined six-suite run reports tests 133 / pass 133 / fail 0 (30 + 11 + 7 + 48 + 28 + 9). No test
+The combined six-suite run reports tests 143 / pass 143 / fail 0 (30 + 11 + 7 + 56 + 28 + 11). No test
 was skipped to reduce runtime; every required suite ran in full.
 
 ### Observed projections (source workspace, target = repository root)
@@ -875,7 +1035,7 @@ the Execution Brief permits renderer extension only where the current renderers 
 
 ---
 
-## 9. No-mutation proof
+## 10. No-mutation proof
 
 Every mutation-capable surface was compared before and after a real invocation.
 
@@ -909,7 +1069,7 @@ Neither command reads stdin, so a non-TTY invocation cannot block on an implicit
 
 ---
 
-## 10. Git-unavailable / capability fail-closed proof (WO-002 F2 closure)
+## 11. Git-unavailable / capability fail-closed proof (WO-002 F2 closure)
 
 Reproduced with a real process and an emptied `PATH` (absolute Node path retained):
 
@@ -942,7 +1102,7 @@ Additional fail-closed cases covered by tests:
 
 ---
 
-## 11. Local packed-install parity proof
+## 12. Local packed-install parity proof
 
 `tests/v11-wo-003-dist-smoke.test.mjs` builds the package with the repository's staging script
 (`scripts/prepare-package.mjs --pack`), installs the tarball with a real `npm install` into a fresh
@@ -962,7 +1122,7 @@ no registry is contacted.
 | Unknown flag | exit 10 |
 | WO-002 behaviour | `init` plan is `effect: NONE` and does not create `.gef`; `init --apply` reports `APPLIED`; `status` leaves the governed artifact byte-identical |
 | Vendored engines removed | both commands exit 40, `error.category CAPABILITY`, no `value`, no mutation |
-| Bundled runtime closure | `@gef-bootstrap/contracts`, `@gef-bootstrap/kernel` and `@gef-bootstrap/preflight` (the toolchain authority), each installed with the package |
+| Bundled runtime closure | `@gef-bootstrap/contracts`, `@gef-bootstrap/kernel` and `@gef-bootstrap/preflight` (the toolchain authority), each installed with the package, with the lockfile entry reconciled to the manifest |
 | Trusted Git in the installed package | the installed CLI resolves the approved executable and never executes a runnable fake `git` placed first on `PATH` |
 | Alias containment in the installed package | a junction/symlink `.engineering` is refused with `DIAGNOSTIC_ALIAS_REFUSED` and no external sentinel appears in output |
 | Git metadata in the installed package | an aliased `.git` is refused and an oversized `.git/HEAD` is refused without echoing its content |
@@ -970,17 +1130,17 @@ no registry is contacted.
 
 ---
 
-## 12. `init` / `adopt` regression proof
+## 13. `init` / `adopt` regression proof
 
 The three WO-002 suites run unchanged in behavior at this head: 30 + 11 + 7 = 48 tests, all
 passing. The only edits to those files are assertion updates for the grown command inventory and
 engine-symbol count; no `init`/`adopt` behavioral assertion was weakened, removed or relaxed, and no
 transaction, traversal, recovery, private-containment, journal-ownership or authorization contract
-was modified. `packages/kernel` is untouched by this increment (see §13).
+was modified. `packages/kernel` is untouched by this increment (see §14).
 
 ---
 
-## 13. Negative-search ledger — deliberate non-changes
+## 14. Negative-search ledger — deliberate non-changes
 
 | Not changed | Why |
 |---|---|
@@ -994,15 +1154,17 @@ was modified. `packages/kernel` is untouched by this increment (see §13).
 | `render.ts` human formatting | Not extended: the existing renderer contract already satisfies AC-7 and the brief's "only where current renderers need extension". |
 | Rest of `observeRepositoryDirtiness` | Unchanged: argv-only invocation, the 10 s timeout and the 8 MiB output bound are preserved; only the safety overrides and the `GIT_OPTIONAL_LOCKS` binding were added. |
 | Git `gitdir:` worktree indirection | Not followed: resolving it would read metadata outside the approved root. Reported as `GIT_DIRECTORY_NOT_A_DIRECTORY` / `UNKNOWN` (see finding L5). |
-| Git executable on `PATH` | Never consulted for resolution. The admitted locations are a frozen constant; a `PATH_NAME` descriptor is refused outright. |
+| Git executable on `PATH` | Never consulted for resolution. The admitted locations and their physical roots are frozen constants; a `PATH_NAME` descriptor is refused outright. |
 | Ambient environment | Never forwarded wholesale. The Git probe environment is an explicit nine-key allowlist; on this host the probes also succeed with an empty environment, which is recorded rather than claimed as a requirement. |
+| Trust admission | Never lexical-only: a candidate whose physical target escapes the approved roots is refused even when its path string is admitted. |
+| Executable identity | Revalidated under the same policy immediately before every launch; a change between resolution and execution refuses rather than spawns. |
 | `observeCanonicalSources` output shape | Routed through the shared contained-read policy, but its projection is unchanged, so the WO-002 `init`/`adopt` plan contract and digests are preserved for normal targets. |
 | `init`/`adopt` plan `drift` field | Left as the WO-002-approved contract (see §2.3). Only the diagnostic projection was corrected. |
 | Repository-wide search | Not performed; the read set was the Execution Brief minimum set plus the directly named engine modules. |
 
 ---
 
-## 14. No-publication and production-boundary statement
+## 15. No-publication and production-boundary statement
 
 - No merge was performed. PR #284 remains open and unmerged.
 - No tag was created or moved; `v1.0.0` still resolves to object
@@ -1016,24 +1178,24 @@ was modified. `packages/kernel` is untouched by this increment (see §13).
 
 ---
 
-## 15. Findings by severity
+## 16. Findings by severity
 
 ### Retraction
 
-The claim `CRITICAL: 0 / HIGH: 0` recorded for head `d7329784b758ebee1f320d2fdd75d177e36d1ea8` is
-**retracted**. Objective reaudit review `5238264811` found **CRITICAL 0 / HIGH 2** at that head. The
-two HIGH findings are corrected in §5 and revalidated in §8.
+The claim `CRITICAL: 0 / HIGH: 0` recorded for head `570b235ea7bb4b21a0d564f88f9b92cd6b529cad` is
+**retracted**. Objective reaudit review `5238855257` found **CRITICAL 0 / HIGH 2** and one MEDIUM at
+that head. Those findings are corrected in §6 and revalidated in §9.
 
 Both earlier retractions also stand: `CRITICAL: 0 / HIGH: 0` for head `49ceca34…` was retracted after
 review `5237002898` found CRITICAL 0 / HIGH 2, and for head `89b2d137…` after review `5236410386`
 found CRITICAL 0 / HIGH 4. None is reinstated.
 
-Four successive objective reviews have each found blocking HIGH findings that the executor's own
+Five successive objective reviews have each found blocking HIGH findings that the executor's own
 severity claim missed, and every one was in the same S0 trust boundary. The pattern is recorded here
 rather than hidden: an executor severity claim about its own change is not evidence about that
 change. The H9/H10 cycle added a second lesson — the *first* version of those very tests proved
 nothing and passed against the vulnerable code until the fixtures were made live and discriminating
-(§5.4).
+(§5.4, and again in §6.4).
 
 ### CRITICAL — 0
 
@@ -1050,9 +1212,11 @@ nothing and passed against the vulnerable code until the fixtures were made live
 | H7 | The dirtiness probe could write the repository index | **Corrected** — `--no-optional-locks` plus a `GIT_OPTIONAL_LOCKS=0` binding; index proven byte-identical and the fixture proven refreshable (§4.1) |
 | H8 | The dirtiness probe could execute a repository-configured FSMonitor hook or start its daemon | **Corrected** — `-c core.fsmonitor=false` in the same argv invocation, process-local, with a live hook fixture proving the danger and GEF's refusal (§4.2) |
 | H9 | The Git probe inherited the caller's whole environment, so ambient Git-control variables could redirect repository and index | **Corrected** — one explicit allowlisted child environment shared by both probes; forbidden keys absent by construction; A/B redirect fixture with a discriminating dirtiness observable (§5.1) |
-| H10 | The Git executable was chosen by ambient `PATH` | **Corrected** — resolution through the frozen M04-S04 toolchain authority over a closed constant list of machine-owned locations, once per invocation, no fallback; live runnable fake on `PATH` never executed (§5.2) |
+| H10 | The Git executable was chosen by ambient `PATH` | **Corrected** in the H9–H10 cycle, preserved and re-verified at this head (§5.2) |
+| H11 | Trust admission was lexical, so an admitted path could alias an executable outside the trust surface | **Corrected** — admission applies to the physical target, which must be inside an approved physical root and, where the platform exposes it, not group/other writable; alias behaviour explicit; live alias fixture with an external payload (§6.1) |
+| H12 | Executable identity was not bound to the process actually spawned, and the snapshot was a module global | **Corrected** — invocation-scoped snapshot, revalidation under the same policy immediately before every spawn, refusal instead of execution on any change, no identity in evidence unless a probe actually succeeded (§6.2) |
 
-The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §8 and
+The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §9 and
 the tests in §2/§3/§4. It is not a claim that no further finding exists; that determination belongs
 to the objective reaudit.
 
@@ -1062,6 +1226,7 @@ to the objective reaudit.
 |---|---|---|---|
 | C4 | Constitutional version binding | Project Owner | Not expanded into WO-003, per the Work Order's known-findings section. |
 | M-H4 | `SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS` is a CLI-local allowlist (`[2]`) over the governance checkpoint's `schemaVersion`. It validates only the fields this command consumes. If the governance checkpoint version advances, the CLI must be updated in the same increment or `status` will fail closed. | WO-003 owner / next governance-checkpoint change | Deliberate: the correction explicitly forbids inventing a product-wide checkpoint schema. Fail-closed on an unknown version is the safe direction. |
+| M3 | Workspace lockfile was stale after the preflight runtime dependency was added | WO-003 (this cycle) | **Resolved** in §6.5: lockfile regenerated with the canonical npm workflow, diff limited to the expected lines, and two drift guards added. |
 
 ### LOW — 5
 
@@ -1089,15 +1254,15 @@ to the objective reaudit.
 
 ---
 
-## 16. Executor statement
+## 17. Executor statement
 
 All work in this bundle is executor evidence. It is **not** self-approval and it does not claim
 `APPROVED`. The objective reviewer must return exactly one terminal disposition — `APPROVED`,
 `CORRECTION_REQUIRED` or `BLOCKED` — bound to the exact implementation head.
 
-This revision corrects objective reaudit review `5238264811` (H9–H10). It does not merge, tag,
+This revision corrects objective reaudit review `5238855257` (H11–H12 and M3). It does not merge, tag,
 publish, force-push, rewrite history, touch `main`, move `v1.0.0`, or self-approve.
 
-STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_H9_H10`
+STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_H11_H12`
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED
