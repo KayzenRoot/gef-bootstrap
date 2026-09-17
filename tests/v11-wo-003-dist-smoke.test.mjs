@@ -7,8 +7,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { delimiter, dirname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
@@ -51,8 +51,8 @@ function freshInstall(t, tag) {
   return { sandbox, cliDir, bin: join(cliDir, "bin", "gef.mjs") };
 }
 
-function gefAt(bin, args) {
-  const result = run(process.execPath, [bin, ...args], { encoding: "utf8", timeout: 60_000 });
+function gefAt(bin, args, env) {
+  const result = run(process.execPath, [bin, ...args], { encoding: "utf8", timeout: 60_000, ...(env === undefined ? {} : { env }) });
   return { code: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "" };
 }
 
@@ -238,6 +238,28 @@ test("the installed package probes dirtiness without index or fsmonitor side eff
 
   const status = JSON.parse(gefAt(bin, ["status", "--target", project, "--json"]).stdout).value.status;
   assert.equal(status.repository.dirtiness, "OBSERVED", "dirtiness reporting is preserved");
+});
+
+test("the installed package resolves Git through the approved policy, not PATH", (t) => {
+  const { bin } = freshInstall(t, "trusted-git");
+  const project = tempProject(t);
+  const fakeDir = mkdtempSync(join(tmpdir(), "gef-packed-fake-git-"));
+  t.after(() => rmSync(fakeDir, { recursive: true, force: true }));
+  const sentinel = join(fakeDir, "sentinel");
+  const fake = join(fakeDir, process.platform === "win32" ? "git.cmd" : "git");
+  writeFileSync(fake, process.platform === "win32" ? `@echo off\r\necho run > "${sentinel}"\r\nexit /b 0\r\n` : `#!/bin/sh\nprintf run > "${sentinel}"\nexit 0\n`);
+  try { chmodSync(fake, 0o755); } catch { /* Windows ignores the mode */ }
+
+  const env = { ...process.env, PATH: `${fakeDir}${delimiter}${process.env.PATH ?? ""}` };
+  for (const verb of ["doctor", "status"]) {
+    const result = gefAt(bin, [verb, "--target", project, "--json"], env);
+    assert.equal(result.code, 0, `installed ${verb} must exit 0: ${result.stderr}`);
+    assert.equal(existsSync(sentinel), false, `installed ${verb} must not execute a PATH-supplied fake git`);
+  }
+
+  const doctor = JSON.parse(gefAt(bin, ["doctor", "--target", project, "--json"], env).stdout).value.doctor;
+  assert.equal(doctor.toolchain.git.presence, "FOUND", "the installed CLI resolves the approved Git");
+  assert.match(doctor.toolchain.git.executableIdentity, /^[0-9a-f]{64}$/);
 });
 
 test("the installed package fails closed when the vendored engines are missing", (t) => {

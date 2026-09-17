@@ -40,7 +40,7 @@ const ENGINES = [
 ];
 
 /** Workspace runtime packages bundled into the tarball. */
-const RUNTIME_PACKAGES = ["contracts", "kernel"];
+const RUNTIME_PACKAGES = ["contracts", "kernel", "preflight"];
 
 /** Package payload copied verbatim from the package directory. */
 const PAYLOAD = ["dist", "bin", "schemas", "README.md", "package.json"];

@@ -20,13 +20,17 @@
  */
 
 import { createHash } from "node:crypto";
-import { closeSync, fstatSync, lstatSync, openSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
+import { accessSync, closeSync, constants, fstatSync, lstatSync, openSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { isAbsolute, join, relative, resolve, sep } from "node:path";
 
 import type { GefError, HandlerOutcome } from "@gef-bootstrap/contracts";
 import { CommandRegistry, createGefError } from "@gef-bootstrap/kernel";
 import type { CommandRegistration, ExecutionContext } from "@gef-bootstrap/kernel";
+import { ToolObservationSession } from "@gef-bootstrap/preflight/toolchain";
+// Type-only: the frozen contract shapes come from the package root and are erased at compile time,
+// so importing them costs the packaged CLI no runtime dependency beyond the toolchain module.
+import type { MutablePreflightCounters, ToolDescriptor, ToolObservation, ToolObservationPort, ToolProbeResult, ToolProbeSpec, ToolResolutionResult } from "@gef-bootstrap/preflight";
 
 import { CLI_CONTRACT_VERSION } from "./parser.js";
 import { buildStateDocument, requireSupportedSchemaVersion, UnsupportedDocumentVersionError } from "./schemas.js";
@@ -363,6 +367,269 @@ export interface RepositoryObservation {
 /** Git porcelain v1 unmerged (conflicted) status codes. */
 const CONFLICT_CODES = new Set(["DD", "AU", "UD", "UA", "DU", "AA", "UU"]);
 
+// ---------------------------------------------------------------------------
+// Git toolchain authority (M04-S04 TOOL-06/TOOL-16, SEC-05)
+// ---------------------------------------------------------------------------
+//
+// The Git executable is never selected by ambient PATH. `GBS-M04-S04` TOOL-06 admits only an
+// approved logical tool or an explicitly admitted trusted path, and TOOL-16 states that files
+// inside the target repository are not trusted executable sources. Resolution therefore walks a
+// fixed, code-declared list of system-owned locations and takes the first that exists, is a
+// regular executable file, and can be given a stable identity. The observation target and the
+// caller's PATH are never consulted, so a repository-supplied or PATH-prepended `git` cannot run
+// merely because an operator asked for a read-only diagnostic.
+//
+// The frozen preflight toolchain contract is reused directly: the descriptor, resolution result,
+// probe spec and `ToolObservationSession` all come from `@gef-bootstrap/preflight/toolchain`.
+
+/** Frozen tool identity for the Git executable. */
+export const GIT_TOOL_ID = "git";
+
+/** Declared resolution policy for the approved Git locations below. */
+export const GIT_EXECUTABLE_POLICY_REF = "gef.cli.git-executable-policy.v1";
+
+/** The policy's version probe contract: bounded, shell-free, argv-only. */
+export const GIT_VERSION_PROBE_TIMEOUT_MS = 5_000;
+export const GIT_VERSION_PROBE_MAX_OUTPUT_BYTES = 64 * 1024;
+
+/**
+ * Explicitly admitted Git locations, in deterministic precedence order.
+ *
+ * These are machine-owned directories: writing there requires administrative privilege on every
+ * supported platform, which is what separates them from a repository-controlled or user-writable
+ * path. The list is a frozen constant — it is **not** derived from the environment, so no ambient
+ * value can add, reorder or redirect an admitted location, and a caller cannot widen the trusted
+ * set by exporting a variable.
+ */
+export const GIT_APPROVED_EXECUTABLES: readonly string[] = Object.freeze(
+  process.platform === "win32"
+    ? ["C:\\Program Files\\Git\\cmd\\git.exe", "C:\\Program Files\\Git\\bin\\git.exe", "C:\\Program Files (x86)\\Git\\cmd\\git.exe"]
+    : ["/usr/bin/git", "/bin/git", "/usr/local/bin/git", "/opt/homebrew/bin/git", "/opt/local/bin/git"],
+);
+
+/**
+ * The only environment a Git probe receives.
+ *
+ * Keys are admitted individually and each one is here for a stated runtime reason; nothing else is
+ * forwarded, so `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`, `GIT_OBJECT_DIRECTORY`,
+ * `GIT_ALTERNATE_OBJECT_DIRECTORIES`, `GIT_NAMESPACE`, `GIT_CEILING_DIRECTORIES`, `GIT_COMMON_DIR`,
+ * `GIT_CONFIG*`, `GIT_TRACE*` and hook/process redirection variables cannot reach the child at all.
+ * That is an allowlist rather than a denylist: an unanticipated Git-control variable is excluded by
+ * construction. `PATH` is admitted for the child's own runtime portability and is explicitly **not**
+ * used to choose the executable — resolution happens above, against approved locations only.
+ */
+const GIT_PROBE_ENVIRONMENT_KEYS: readonly string[] = Object.freeze([
+  "PATH",
+  "HOME",
+  "USERPROFILE",
+  "SystemRoot",
+  "WINDIR",
+  "PATHEXT",
+  "TEMP",
+  "TMP",
+  "TMPDIR",
+]);
+
+/** Build the minimal child environment for a Git probe. */
+export function gitProbeEnvironment(): Readonly<Record<string, string>> {
+  const environment: Record<string, string> = { GIT_OPTIONAL_LOCKS: "0" };
+  for (const key of GIT_PROBE_ENVIRONMENT_KEYS) {
+    const value = process.env[key];
+    if (typeof value === "string" && value.length > 0) environment[key] = value;
+  }
+  return Object.freeze(environment);
+}
+
+/** The descriptor for one admitted Git location, under the declared policy. */
+export function gitToolDescriptor(executable: string): ToolDescriptor {
+  return Object.freeze({
+    toolId: GIT_TOOL_ID,
+    source: "BUILTIN",
+    resolution: { kind: "TRUSTED_PATH", executable, policyRef: GIT_EXECUTABLE_POLICY_REF } as const,
+    versionProbe: { argv: Object.freeze(["--version"]), timeoutMs: GIT_VERSION_PROBE_TIMEOUT_MS, maxOutputBytes: GIT_VERSION_PROBE_MAX_OUTPUT_BYTES },
+  });
+}
+
+/**
+ * Trusted-executable inspection for one declared location.
+ *
+ * A candidate is admissible only when it exists as a regular file that the current process may
+ * execute. Its identity binds the resolved physical path, device, inode and size, so two probes can
+ * be proven to have used the same binary. A location that is absent, a directory, or not executable
+ * is reported as such and never substituted by a different path.
+ */
+export function inspectAdmittedExecutable(executable: string): ToolResolutionResult {
+  if (!isAbsolute(executable) || executable.length === 0) return { status: "UNAVAILABLE", reasonCode: "gef.cli.git.path_not_absolute" };
+  // The policy admits a closed set of locations. A descriptor naming anything else is refused here
+  // rather than trusted because it carried the policy reference, so no caller can widen the trusted
+  // set by constructing a descriptor.
+  const normalized = process.platform === "win32" ? executable.toLowerCase() : executable;
+  const admitted = GIT_APPROVED_EXECUTABLES.map((candidate) => (process.platform === "win32" ? candidate.toLowerCase() : candidate));
+  if (!admitted.includes(normalized)) return { status: "UNAVAILABLE", reasonCode: "gef.cli.git.path_not_admitted" };
+  let stats: ReturnType<typeof statSync>;
+  try {
+    stats = statSync(executable);
+  } catch {
+    return { status: "ABSENT", reasonCode: "gef.cli.git.executable_absent" };
+  }
+  if (!stats.isFile()) return { status: "UNAVAILABLE", reasonCode: "gef.cli.git.executable_not_regular" };
+  try {
+    accessSync(executable, constants.X_OK);
+  } catch {
+    return { status: "UNAVAILABLE", reasonCode: "gef.cli.git.executable_not_executable" };
+  }
+  let physical: string;
+  try {
+    physical = realpathSync.native(executable);
+  } catch {
+    return { status: "UNAVAILABLE", reasonCode: "gef.cli.git.executable_unresolvable" };
+  }
+  const identity = createHash("sha256").update(`${physical}|${String(stats.dev)}|${String(stats.ino)}|${String(stats.size)}`).digest("hex");
+  return { status: "FOUND", executable, executableIdentity: identity };
+}
+
+/**
+ * The frozen port contract allows a port to answer synchronously or asynchronously. This CLI port
+ * answers synchronously, which lets the read-only probes stay synchronous — the WO-002 transaction
+ * path calls them from synchronous composition code — so the narrower type is declared here and is
+ * structurally assignable to the frozen `ToolObservationPort`.
+ */
+export interface SyncToolObservationPort {
+  resolve(descriptor: ToolDescriptor): ToolResolutionResult;
+  probe(spec: ToolProbeSpec): ToolProbeResult;
+}
+
+/**
+ * The frozen tool-observation port, implemented over this process's filesystem and process APIs.
+ *
+ * The repository ships no other implementation, so this is the smallest compatible adapter around
+ * the frozen contract rather than a second policy: every trust decision is expressed through the
+ * descriptor's `TRUSTED_PATH` admission and is normalized by the frozen session.
+ */
+export const cliToolObservationPort: SyncToolObservationPort = Object.freeze({
+  resolve(descriptor: ToolDescriptor): ToolResolutionResult {
+    const resolution = descriptor.resolution;
+    if (resolution.kind !== "TRUSTED_PATH" || resolution.policyRef !== GIT_EXECUTABLE_POLICY_REF) {
+      return { status: "UNAVAILABLE", reasonCode: "gef.cli.git.untrusted_resolution_kind" };
+    }
+    return inspectAdmittedExecutable(resolution.executable);
+  },
+  probe(spec: ToolProbeSpec): ToolProbeResult {
+    // The probe environment is the port's minimal allowlist plus whatever the spec declares, so a
+    // caller can never widen it by accident.
+    const result = spawnSync(spec.executable, [...spec.argv], {
+      encoding: "utf8",
+      timeout: spec.timeoutMs,
+      maxBuffer: spec.maxOutputBytes,
+      env: { ...gitProbeEnvironment(), ...spec.env },
+    });
+    if (result.error !== undefined) {
+      const timedOut = (result.error as { readonly code?: unknown }).code === "ETIMEDOUT";
+      return { status: timedOut ? "TIMED_OUT" : "FAILED", stdout: "", stderr: "" };
+    }
+    return {
+      status: "SUCCEEDED",
+      ...(typeof result.status === "number" ? { exitCode: result.status } : {}),
+      stdout: String(result.stdout ?? ""),
+      stderr: String(result.stderr ?? ""),
+    };
+  },
+});
+
+export interface ResolvedGitTool {
+  readonly executable: string;
+  readonly identity: string;
+  readonly descriptor: ToolDescriptor;
+}
+
+/**
+ * The one Git resolution for this invocation.
+ *
+ * `undefined` means "not resolved yet"; `null` means "no admitted Git". Both the presence probe and
+ * the dirtiness probe read this single value, so they cannot diverge onto different executables and
+ * there is no path from a failed trusted resolution to ambient PATH execution.
+ */
+let resolvedGitTool: ResolvedGitTool | null | undefined;
+
+/**
+ * Resolve Git through an explicit port.
+ *
+ * This is the frozen contract's own injection point (M04-S04 TOOL-03: tool discovery crosses an
+ * injectable typed port). The built-in model is the CLI port over the admitted locations; an
+ * embedding or a test may supply a different port without any environment variable being able to
+ * influence which executable is trusted.
+ */
+export function resolveGitToolWith(port: SyncToolObservationPort): ResolvedGitTool | null {
+  for (const candidate of GIT_APPROVED_EXECUTABLES) {
+    if (candidate.length === 0) continue;
+    const descriptor = gitToolDescriptor(candidate);
+    let resolution: ToolResolutionResult;
+    try {
+      resolution = port.resolve(descriptor);
+    } catch {
+      // A port that cannot answer is a resolution failure, never a reason to try elsewhere.
+      return null;
+    }
+    if (resolution.status === "FOUND" && resolution.executable !== undefined && resolution.executableIdentity !== undefined) {
+      return { executable: resolution.executable, identity: resolution.executableIdentity, descriptor };
+    }
+  }
+  return null;
+}
+
+/** The resolved Git tool for this invocation, or `null` when no admitted Git exists. */
+export function gitTool(): ResolvedGitTool | null {
+  if (resolvedGitTool === undefined) resolvedGitTool = resolveGitToolWith(cliToolObservationPort);
+  return resolvedGitTool;
+}
+
+/** Declared parser identity for the Git version token (M04-S04 TOOL-05/TOOL-09). */
+export const GIT_VERSION_PARSER_REF = "gef.cli.git-version-parser.v1";
+
+/**
+ * Narrow Git version parser.
+ *
+ * `git --version` answers `git version <token>`, where the token may carry a vendor suffix such as
+ * `2.55.0.windows.3`. Only that token is extracted; the rest of the output is ignored rather than
+ * propagated, and an unrecognised shape yields no version at all. Whether a version is supported is
+ * M51-owned and is never decided here.
+ */
+export function parseGitVersion(stdout: string, stderr: string): string | null {
+  const match = /^git version ([0-9][0-9A-Za-z._+-]{0,63})(?:\s|$)/.exec(`${stdout}\n${stderr}`.trim());
+  return match?.[1] ?? null;
+}
+
+/**
+ * Frozen-session tool observation for the resolved Git, or the gap that prevented one.
+ *
+ * The frozen session projects presence, version, probe status and gaps; it does not project the
+ * resolved executable identity, so the identity established by this invocation's single resolution
+ * is added here — the same value both probes use, which is what makes "one resolved executable"
+ * checkable in the projection.
+ */
+export async function observeGitTool(): Promise<{ readonly observation: ToolObservation; readonly tool: ResolvedGitTool | null }> {
+  const tool = gitTool();
+  const session = new ToolObservationSession(cliToolObservationPort, createMutableToolCounters());
+  if (tool === null) {
+    const descriptor = gitToolDescriptor(GIT_APPROVED_EXECUTABLES.find((candidate) => candidate.length > 0) ?? "git");
+    const observation = await session.observe({ descriptor, requireVersion: false });
+    return { observation, tool: null };
+  }
+  const observed = await session.observe({
+    descriptor: tool.descriptor,
+    requireVersion: true,
+    parseVersion: parseGitVersion,
+    parseVersionRef: GIT_VERSION_PARSER_REF,
+  });
+  return { observation: Object.freeze({ ...observed, executableIdentity: tool.identity }), tool };
+}
+
+/** Counters required by the frozen session; the CLI reports no counter evidence. */
+function createMutableToolCounters(): MutablePreflightCounters {
+  return { environmentReads: new Map(), gitReads: new Map(), providerReads: 0, toolResolutions: new Map(), toolProbes: new Map(), cacheHits: 0, skippedByPrerequisite: 0 };
+}
+
+
 const GIT_STATUS_TIMEOUT_MS = 10_000;
 const GIT_STATUS_MAX_BUFFER = 8 * 1024 * 1024;
 
@@ -410,15 +677,19 @@ export function observeRepositoryDirtiness(targetRef: string): DirtinessEvidence
   const staged: string[] = [];
   const untracked: string[] = [];
   const conflicted: string[] = [];
+  // The probe runs the resolved approved executable, or it does not run at all: an unresolved tool
+  // is `UNKNOWN`, never a fallback to whatever `git` the ambient PATH would offer.
+  const tool = gitTool();
+  if (tool === null) {
+    return { observation: "UNKNOWN", modified, staged, untracked, conflicted, detail: "GIT_TOOL_UNAVAILABLE" };
+  }
   let result: ReturnType<typeof spawnSync>;
   try {
-    result = spawnSync("git", [...GIT_STATUS_SAFETY_ARGV, "-C", resolve(targetRef), "status", "--porcelain", "-z", "--untracked-files=normal"], {
+    result = spawnSync(tool.executable, [...GIT_STATUS_SAFETY_ARGV, "-C", resolve(targetRef), "status", "--porcelain", "-z", "--untracked-files=normal"], {
       encoding: "utf8",
       timeout: GIT_STATUS_TIMEOUT_MS,
       maxBuffer: GIT_STATUS_MAX_BUFFER,
-      // The inherited environment is kept because Git needs PATH, HOME and SystemRoot, and the
-      // probe's own determinism is added on top rather than replacing anything.
-      env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
+      env: gitProbeEnvironment(),
     });
   } catch (cause: unknown) {
     return { observation: "UNKNOWN", modified, staged, untracked, conflicted, detail: cause instanceof Error ? cause.message : String(cause) };
@@ -686,14 +957,17 @@ function composeFor(engines: Engines, verb: MutationVerb, targetRef: string, pro
 
 const GIT_PROBE_TIMEOUT_MS = 5_000;
 
-/** Bounded probe for the Git binary itself. A missing binary is a finding, not an assumption. */
+/**
+ * Bounded presence probe for the Git toolchain.
+ *
+ * The executable is the one the approved resolution established; a missing or unusable admitted
+ * Git is a finding, not an assumption, and is never substituted by an ambient `git`.
+ */
 export function gitBinaryAvailable(): boolean {
-  try {
-    const result = spawnSync("git", ["--version"], { encoding: "utf8", timeout: GIT_PROBE_TIMEOUT_MS, maxBuffer: 64 * 1024 });
-    return result.error === undefined && result.status === 0;
-  } catch {
-    return false;
-  }
+  const tool = gitTool();
+  if (tool === null) return false;
+  const probe = cliToolObservationPort.probe({ executable: tool.executable, argv: Object.freeze(["--version"]), timeoutMs: GIT_PROBE_TIMEOUT_MS, maxOutputBytes: GIT_VERSION_PROBE_MAX_OUTPUT_BYTES, env: Object.freeze({}) });
+  return probe.status === "SUCCEEDED" && probe.exitCode === 0;
 }
 
 /** Governance sources the diagnostic surface is willing to read, in a deterministic order. */
@@ -1093,7 +1367,7 @@ export interface DiagnosisComposition {
   readonly digest: string;
 }
 
-function doctorComposition(engines: Engines, targetRef: string, observation: TargetObservation, repository: RepositoryObservation, governance: GovernanceObservation): DiagnosisComposition {
+function doctorComposition(engines: Engines, targetRef: string, observation: TargetObservation, repository: RepositoryObservation, governance: GovernanceObservation, gitEvidence: ToolObservation | null): DiagnosisComposition {
   const observations = doctorObservations(targetRef, repository);
   const findings = engines.doctor(observations);
   // Remediation is guidance only: the owning engine fixes the posture, and the CLI does not
@@ -1140,6 +1414,22 @@ function doctorComposition(engines: Engines, targetRef: string, observation: Tar
     invariants,
     security: { dependency, github, safety },
     capabilities,
+    // Frozen M04-S04 tool evidence: logical tool id, normalized presence/version/compatibility and
+    // gaps. No absolute executable path, no PATH contents and no raw probe output (TOOL-18).
+    toolchain: {
+      git:
+        gitEvidence === null
+          ? { toolId: GIT_TOOL_ID, presence: "UNAVAILABLE", probeStatus: "NOT_REQUIRED", compatibility: "NOT_CHECKED", gaps: ["gef.cli.git.evidence_unavailable"] }
+          : {
+              toolId: gitEvidence.toolId,
+              presence: gitEvidence.presence,
+              ...(gitEvidence.executableIdentity === undefined ? {} : { executableIdentity: gitEvidence.executableIdentity }),
+              ...(gitEvidence.observedVersion === undefined ? {} : { observedVersion: gitEvidence.observedVersion }),
+              probeStatus: gitEvidence.probeStatus,
+              compatibility: gitEvidence.compatibility,
+              gaps: gitEvidence.gaps.map((entry) => entry.code),
+            },
+    },
     governance: { source: governance.source, present: governance.present, readable: governance.readable, valid: governance.valid, observationLimits: governance.observationLimits },
     integrity: engines.integritySnapshot({ findings, observations, dependencies: dependency.digest, capabilities: capabilities.digest }),
     observationLimits: [
@@ -1267,7 +1557,7 @@ async function diagnosisHandler(verb: DiagnosisVerb, input: DiagnosisInput, cont
 
   const composition =
     verb === "doctor"
-      ? doctorComposition(engines, targetRef, observation, repository, governance)
+      ? doctorComposition(engines, targetRef, observation, repository, governance, (await observeGitTool()).observation)
       : statusComposition(engines, targetRef, observation, repository, repositoryVerdict, governance, drift, recorded);
 
   return { ok: true, value: { commandId, effect: "NONE", [verb]: composition.body, [`${verb}Digest`]: composition.digest } };

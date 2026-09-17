@@ -104,13 +104,15 @@ test("DIST-SMOKE-01b: the packed payload carries README, LICENSE and the schema 
   assert.equal(packedManifest.version, cliPackage.version);
   assert.deepEqual(packedManifest.bin, { gef: "./bin/gef.mjs" });
   assert.equal(packedManifest.private, true);
-  // Runtime dependencies are bundled, not resolved from a registry.
+  // Runtime dependencies are bundled, not resolved from a registry. The preflight toolchain
+  // authority joined this list when the CLI began resolving its Git executable through it.
   assert.deepEqual(
     [...(packedManifest.bundleDependencies ?? packedManifest.bundledDependencies ?? [])].sort(),
-    ["@gef-bootstrap/contracts", "@gef-bootstrap/kernel"],
+    ["@gef-bootstrap/contracts", "@gef-bootstrap/kernel", "@gef-bootstrap/preflight"],
   );
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "kernel")), "the bundled runtime must be installed with the package");
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "contracts")));
+  assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "preflight")), "the toolchain authority must travel with the package");
 });
 
 test("DIST-SMOKE-01c: the installed CLI operates without any surrounding source checkout", (t) => {

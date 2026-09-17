@@ -159,6 +159,24 @@ reimplemented in the CLI, and neither command writes anything.
   repository configuration is rewritten — and dirtiness reporting is unchanged, because it still
   comes from the same `--porcelain` output. Invocation stays direct executable plus argv with no
   shell string, under the existing timeout and output bound.
+- **The Git executable comes from an approved location, never from `PATH`.** The CLI resolves Git
+  through the frozen M04-S04 toolchain authority (`ToolDescriptor` with `TRUSTED_PATH`,
+  `ToolObservationPort`, `ToolObservationSession`) against a closed, code-declared list of
+  machine-owned locations — `%ProgramFiles%\Git\…` on Windows, `/usr/bin`, `/bin`, `/usr/local/bin`,
+  `/opt/homebrew/bin`, `/opt/local/bin` elsewhere. That list is a constant: no environment value,
+  repository and no caller can add, reorder or redirect an admitted location, and a descriptor
+  naming anything else is refused by the policy itself. Resolution happens once per invocation and
+  the exact same resolved executable is used for the version probe and the dirtiness probe; a failed
+  resolution is a truthful capability gap, never a fallback to whatever `git` the ambient `PATH`
+  would offer.
+- **Git probes run under a minimal allowlisted environment.** Instead of inheriting the caller's
+  environment, the probe receives an explicit set — `GIT_OPTIONAL_LOCKS=0` plus the documented
+  runtime keys (`PATH`, `HOME`, `USERPROFILE`, `SystemRoot`, `WINDIR`, `PATHEXT`, `TEMP`, `TMP`,
+  `TMPDIR`). `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`, `GIT_OBJECT_DIRECTORY`,
+  `GIT_ALTERNATE_OBJECT_DIRECTORIES`, `GIT_NAMESPACE`, `GIT_CEILING_DIRECTORIES`, `GIT_COMMON_DIR`,
+  `GIT_CONFIG*` and trace variables therefore cannot reach the child at all, and `--target` stays the
+  repository authority. The allowlist shape means an unanticipated Git-control variable is excluded
+  by construction rather than by remembering to deny it.
 - **Remediation is guidance.** Every `repairSuggestion` keeps its verified posture
   (`automatic: false`, `previewRequired: true`); there is no `--fix` and no destructive repair.
 - **Git unavailable fails closed (WO-002 F2).** A missing or unusable `git` binary is surfaced by

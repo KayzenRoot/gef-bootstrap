@@ -8,10 +8,20 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
-import { dirname, join, relative, resolve, sep } from "node:path";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { delimiter, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
+
+import {
+  GIT_APPROVED_EXECUTABLES,
+  GIT_EXECUTABLE_POLICY_REF,
+  cliToolObservationPort,
+  gitProbeEnvironment,
+  gitTool,
+  gitToolDescriptor,
+  resolveGitToolWith,
+} from "../packages/cli/dist/index.js";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const GEF_BIN = resolve(ROOT, "packages/cli/bin/gef.mjs");
@@ -206,40 +216,279 @@ test("neither command mutates the project tree, .gef state or Git state", (t) =>
   assert.deepEqual(gitState(ROOT), repoBefore, "the commands must not change the repository they run in");
 });
 
-// ------------------------------------------- WO-002 F2: Git unavailable
+// ------------------------------------ Git tool resolution (H10) and ambient PATH
 
-test("a missing Git binary is an actionable doctor finding, never a healthy verdict", (t) => {
+test("Git presence no longer depends on ambient PATH at all", (t) => {
   const project = tempProject(t);
   const result = gef(["doctor", "--target", project, "--json"], { env: withoutGit(t) });
   assert.equal(result.code, 0, "doctor reports findings in its payload, it does not fail the process");
 
   const doctor = JSON.parse(result.stdout).value.doctor;
-  const gitFinding = doctor.findings.find((finding) => finding.id === "toolchain.git");
-  assert.ok(gitFinding, "the git capability must be reported");
-  assert.equal(gitFinding.state, "FINDING", "an unavailable Git binary is a finding, not HEALTHY");
-  assert.equal(gitFinding.state === "HEALTHY", false, "the verdict must never be healthy by omission");
-
-  const remediation = doctor.remediation.find((suggestion) => suggestion.finding === "toolchain.git");
-  assert.ok(remediation, "the finding must carry actionable remediation");
-  assert.equal(remediation.automatic, false, "remediation is never automatic");
-  assert.equal(remediation.previewRequired, true);
-
-  assert.equal(doctor.invariants.find((entry) => entry.name === "toolchain.git").pass, false);
-  assert.ok(doctor.capabilities.unknown.includes("toolchain.git") || doctor.capabilities.state === "DEGRADED", "the capability envelope must record the gap");
+  // The approved resolution does not consult PATH, so emptying it cannot make the admitted Git
+  // disappear: the evidence is the same toolchain identity either way.
+  assert.equal(doctor.toolchain.git.presence, "FOUND", "the approved executable is resolved without PATH");
+  assert.equal(doctor.toolchain.git.probeStatus, "SUCCEEDED");
+  assert.match(doctor.toolchain.git.executableIdentity, /^[0-9a-f]{64}$/);
+  assert.equal(doctor.findings.find((finding) => finding.id === "toolchain.git").state, "HEALTHY");
+  assert.deepEqual([...doctor.toolchain.git.gaps], [], "a resolved, probed tool carries no gap");
 });
 
-test("with Git unavailable, status reports unknown rather than clean", (t) => {
+test("the approved Git is used even with an empty PATH, and status still observes the tree", (t) => {
   const project = tempProject(t);
   initRepo(project);
 
   const result = gef(["status", "--target", project, "--json"], { env: withoutGit(t) });
   assert.equal(result.code, 0);
   const status = JSON.parse(result.stdout).value.status;
+  assert.equal(status.repository.dirtiness, "OBSERVED", "the approved executable is run without any PATH entry");
+  assert.notEqual(status.repository.verdict, null);
+});
 
-  assert.equal(status.repository.dirtiness, "UNKNOWN", "unobservable dirtiness must be reported as unknown");
-  assert.equal(status.repository.verdict, null, "no repository verdict may be fabricated while the tree is unobservable");
-  assert.notEqual(status.operator.state, "CLEAN", "status must never report CLEAN by omission");
-  assert.ok(status.repository.observationLimits.some((limit) => limit.startsWith("DIRTINESS_UNKNOWN")), "the concrete reason must be recorded");
+// ------------------------------------------- H9: hostile ambient Git environment
+
+/**
+ * Two distinct repositories plus an external index.
+ *
+ * A is clean and B is dirty (one untracked file), so a redirected observation is *visible*: the
+ * reported dirtiness of A differs from A's real dirtiness whenever an ambient variable succeeds in
+ * pointing Git at B. A fixture where both repositories looked the same would prove nothing.
+ */
+function twoRepoFixture(t) {
+  const a = tempProject(t, "gef-h9-a-");
+  const b = tempProject(t, "gef-h9-b-");
+  initRepo(a);
+  initRepo(b);
+  writeFileSync(join(b, "second-repo-marker.txt"), "only in B\n");
+  const externalIndex = join(tempProject(t, "gef-h9-idx-"), "external.index");
+  return { a, b, externalIndex, marker: "second-repo-marker.txt" };
+}
+
+/** The plain `git status` a hostile variable would produce, for liveness. */
+function naiveStatus(root, env) {
+  return (spawnSync("git", ["-C", root, "status", "--porcelain"], { encoding: "utf8", env }).stdout ?? "");
+}
+
+test("H9: GIT_DIR and GIT_WORK_TREE cannot redirect the admitted target", (t) => {
+  const { a, b, marker } = twoRepoFixture(t);
+  const ambient = { ...process.env, GIT_DIR: join(b, ".git"), GIT_WORK_TREE: b };
+
+  // Liveness: the hostile variables really do redirect a plain Git invocation — `-C A` still reports
+  // B's untracked file, so a redirect would be visible in the dirtiness GEF reports.
+  assert.equal(naiveStatus(a, ambient).includes(marker), true, "the redirect must be real for this fixture to be live");
+  assert.equal(naiveStatus(a, process.env).includes(marker), false, "A itself is clean");
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", a, "--json"], { env: ambient });
+    assert.equal(result.code, 0, `${verb} must exit 0: ${result.stderr}`);
+    assert.equal(result.stdout.includes(marker), false, `${verb} must not report the second repository`);
+    assert.equal(result.stdout.includes(b), false, `${verb} must not report the second repository path`);
+  }
+
+  const status = JSON.parse(gef(["status", "--target", a, "--json"], { env: ambient }).stdout).value.status;
+  assert.equal(status.repository.dirtiness, "OBSERVED", "A must still be observed");
+  assert.equal(status.repository.verdict.dirty, false, "A is clean, so no foreign dirtiness may be reported");
+  assert.deepEqual([...status.repository.verdict.untracked ?? []], [], "B's untracked file must not appear");
+  assert.equal(
+    status.target.targetRef.replace(/\\/g, "/").toLowerCase().endsWith(a.replace(/\\/g, "/").toLowerCase()),
+    true,
+    "the observed target is the admitted one",
+  );
+});
+
+test("H9: GIT_INDEX_FILE is neither consumed nor modified", (t) => {
+  const { a, externalIndex } = twoRepoFixture(t);
+  writeFileSync(externalIndex, "sentinel-index-content");
+  const before = readFileSync(externalIndex);
+  const ambient = { ...process.env, GIT_INDEX_FILE: externalIndex };
+
+  // Liveness: an external index really does change what a plain Git invocation reports — Git either
+  // fails against the foreign index or reports a state that is not A's.
+  const naive = spawnSync("git", ["-C", a, "status", "--porcelain"], { encoding: "utf8", env: ambient });
+  assert.equal(naive.status !== 0 || (naive.stdout ?? "").trim() !== "", true, "the external index must change the plain observation for this fixture to be live");
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", a, "--json"], { env: ambient });
+    assert.equal(result.code, 0);
+    assert.equal(result.stdout.includes(externalIndex), false, `${verb} must not echo the external index path`);
+  }
+  const status = JSON.parse(gef(["status", "--target", a, "--json"], { env: ambient }).stdout).value.status;
+  assert.equal(status.repository.dirtiness, "OBSERVED", "A is observed through its own index");
+  assert.equal(status.repository.verdict.dirty, false, "the external index must not fabricate dirtiness");
+  assert.equal(readFileSync(externalIndex).equals(before), true, "the external index must not be consumed, replaced or written");
+  assert.equal(readFileSync(externalIndex).toString("utf8"), "sentinel-index-content");
+});
+
+test("H9: object-store and config redirection variables cannot change the observation", (t) => {
+  const { a, b, marker } = twoRepoFixture(t);
+  const ambient = {
+    ...process.env,
+    GIT_OBJECT_DIRECTORY: join(b, ".git", "objects"),
+    GIT_ALTERNATE_OBJECT_DIRECTORIES: join(b, ".git", "objects"),
+    GIT_NAMESPACE: "hostile-namespace",
+    GIT_CEILING_DIRECTORIES: join(a, ".."),
+    GIT_COMMON_DIR: join(b, ".git"),
+    GIT_CONFIG_GLOBAL: join(b, "hostile.gitconfig"),
+    GIT_CONFIG_SYSTEM: join(b, "hostile-system.gitconfig"),
+    GIT_TRACE: "1",
+  };
+  const baseline = JSON.parse(gef(["status", "--target", a, "--json"]).stdout).value.status;
+  const hostile = JSON.parse(gef(["status", "--target", a, "--json"], { env: ambient }).stdout).value.status;
+
+  assert.equal(baseline.repository.verdict.dirty, false, "A is clean under the baseline");
+  assert.equal(hostile.repository.dirtiness, baseline.repository.dirtiness, "dirtiness must be identical under hostile Git-control variables");
+  assert.deepEqual(hostile.repository.verdict, baseline.repository.verdict, "the repository verdict must be identical and clean");
+  assert.equal(hostile.target.targetRef, baseline.target.targetRef, "the target must be the admitted one");
+  assert.equal(JSON.stringify(hostile).includes(marker), false, "B's untracked file must not appear");
+});
+
+test("H9: an arbitrary ambient variable is not forwarded or echoed", (t) => {
+  const { a } = twoRepoFixture(t);
+  const secret = "GEF-H9-AMBIENT-SECRET-VALUE";
+  const ambient = { ...process.env, GEF_TEST_AMBIENT_SECRET: secret, ANOTHER_SECRET: secret };
+
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", a, "--json"], { env: ambient });
+    assert.equal(result.code, 0);
+    assert.equal(`${result.stdout}${result.stderr}`.includes(secret), false, `${verb} must not echo arbitrary ambient values`);
+  }
+});
+
+test("H9: the Git probe environment is an explicit allowlist", () => {
+  const environment = gitProbeEnvironment();
+  const admitted = Object.keys(environment).sort();
+  // GIT_OPTIONAL_LOCKS is always set explicitly; the rest are the documented runtime keys actually
+  // present in this process. Nothing else is forwarded.
+  const allowed = new Set(["GIT_OPTIONAL_LOCKS", "PATH", "HOME", "USERPROFILE", "SystemRoot", "WINDIR", "PATHEXT", "TEMP", "TMP", "TMPDIR"]);
+  for (const key of admitted) assert.equal(allowed.has(key), true, `${key} is not an admitted probe key`);
+  assert.equal(environment.GIT_OPTIONAL_LOCKS, "0", "optional locks stay disabled");
+  for (const forbidden of ["GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE", "GIT_CEILING_DIRECTORIES", "GIT_COMMON_DIR"]) {
+    assert.equal(forbidden in environment, false, `${forbidden} must never be forwarded`);
+  }
+});
+
+// ------------------------------------------- H10: approved executable resolution
+
+/**
+ * A directory placed first on PATH that offers a `git` an ambient lookup would really run.
+ *
+ * On Windows Node refuses to spawn `.cmd`/`.bat` without a shell, so a batch fake would never be
+ * live; instead a genuine system executable is copied in under the name `git.exe`, which Node does
+ * spawn. On POSIX a shell script named `git` is used and writes the sentinel when executed.
+ */
+function hostilePathFixture(t, sentinelName) {
+  const dir = tempProject(t, "gef-h10-fake-");
+  const sentinel = join(tempProject(t, "gef-h10-sent-"), sentinelName);
+  if (process.platform === "win32") {
+    const source = join(process.env["SystemRoot"] ?? "C:\\Windows", "System32", "cmd.exe");
+    copyFileSync(source, join(dir, "git.exe"));
+    return { dir, sentinel, fake: join(dir, "git.exe"), kind: "exe-copy" };
+  }
+  const fake = join(dir, "git");
+  writeFileSync(fake, `#!/bin/sh\nprintf run > "${sentinel}"\nexit 0\n`);
+  try { chmodSync(fake, 0o755); } catch { /* POSIX honours the mode set above */ }
+  return { dir, sentinel, fake, kind: "shell-script" };
+}
+
+test("H10: a runnable fake git first in PATH is never executed", (t) => {
+  const { a } = twoRepoFixture(t);
+  const fixture = hostilePathFixture(t, "sentinel");
+  const ambient = { ...process.env, PATH: `${fixture.dir}${delimiter}${process.env.PATH ?? ""}` };
+
+  // Liveness: an ambient lookup really does reach the fake. On Windows the copy runs and fails
+  // (`cmd.exe --version` is not a Git version); on POSIX the script runs and writes its sentinel.
+  const naive = spawnSync("git", ["--version"], { encoding: "utf8", env: ambient });
+  if (fixture.kind === "shell-script") {
+    assert.equal(naive.status, 0, "the fake must be runnable for this fixture to be live");
+    assert.equal(existsSync(fixture.sentinel), true, "a plain PATH lookup must execute the fake");
+  } else {
+    // The copied system executable runs, but what it prints is not a Git version — which is how the
+    // fixture proves that an ambient lookup reaches the fake rather than the real Git.
+    assert.equal((naive.stdout ?? "").includes("git version"), false, "the PATH-supplied fake git must be the one that ran");
+    t.diagnostic("H10 liveness on win32: a copied system executable named git.exe is what an ambient lookup runs");
+  }
+
+  rmSync(fixture.sentinel, { force: true });
+  const sentinelBefore = existsSync(fixture.sentinel);
+  for (const verb of ["doctor", "status"]) {
+    const result = gef([verb, "--target", a, "--json"], { env: ambient });
+    assert.equal(result.code, 0, `${verb} must exit 0: ${result.stderr}`);
+    assert.equal(existsSync(fixture.sentinel), sentinelBefore, `${verb} must never execute a PATH-supplied fake git`);
+    assert.equal(result.stdout.includes(fixture.dir), false, `${verb} must not echo the hostile directory`);
+  }
+
+  // The observation is the approved Git's, not the fake's: had the fake been used, the version probe
+  // would have failed and the toolchain evidence would carry that failure.
+  const doctor = JSON.parse(gef(["doctor", "--target", a, "--json"], { env: ambient }).stdout).value.doctor;
+  assert.equal(doctor.toolchain.git.presence, "FOUND", "the approved Git is still the one used");
+  assert.equal(doctor.toolchain.git.probeStatus, "SUCCEEDED", "the fake would have failed this probe");
+  assert.equal(doctor.toolchain.git.observedVersion.includes("git version"), false, "no raw probe output is propagated");
+  assert.equal(doctor.toolchain.git.executableIdentity, gitTool().identity, "the identity is the approved executable's");
+
+  // Execution-tied evidence: the fake prints its own error text on stdout and exits 0, so a probe
+  // that ran it would parse that text as porcelain output and report fabricated dirtiness. A is
+  // clean, so any reported dirtiness here would be the fake's.
+  const status = JSON.parse(gef(["status", "--target", a, "--json"], { env: ambient }).stdout).value.status;
+  assert.equal(status.repository.dirtiness, "OBSERVED", "the approved Git must be the process that answered");
+  assert.equal(status.repository.verdict.dirty, false, "A is clean; the fake's output must not be parsed as dirtiness");
+});
+
+test("H10: a failed resolution does not fall back to ambient git", (t) => {
+  const fakeDir = tempProject(t, "gef-h10-fallback-");
+  const fake = join(fakeDir, process.platform === "win32" ? "git.cmd" : "git");
+  writeFileSync(fake, process.platform === "win32" ? "@echo off\r\nexit /b 0\r\n" : "#!/bin/sh\nexit 0\n");
+  try { chmodSync(fake, 0o755); } catch { /* Windows ignores the mode */ }
+  // An ambient PATH that resolves, so a fallback would succeed if one existed.
+  const priorPath = process.env.PATH;
+  process.env.PATH = `${fakeDir}${delimiter}${priorPath ?? ""}`;
+  t.after(() => { process.env.PATH = priorPath; });
+
+  const refusing = { resolve: () => ({ status: "ABSENT", reasonCode: "gef.test.refused" }), probe: () => ({ status: "FAILED", stdout: "", stderr: "" }) };
+  const resolution = resolveGitToolWith(refusing);
+  assert.equal(resolution, null, "a refused resolution yields no tool rather than an ambient fallback");
+});
+
+test("H10: the approved locations are a frozen constant list", () => {
+  // Every admitted candidate is an absolute path in a machine-owned directory, and no ambient
+  // value can change the list or its order.
+  for (const candidate of GIT_APPROVED_EXECUTABLES) {
+    assert.equal(isAbsolute(candidate), true, `${candidate} must be absolute`);
+    assert.equal(candidate.includes("PATH"), false);
+  }
+  const resolved = gitTool();
+  assert.notEqual(resolved, null, "this environment has an approved Git");
+  assert.match(resolved.identity, /^[0-9a-f]{64}$/);
+  assert.equal(resolved.descriptor.resolution.kind, "TRUSTED_PATH");
+  assert.equal(resolved.descriptor.resolution.policyRef, GIT_EXECUTABLE_POLICY_REF);
+  // Both probes read this single resolution, so their executable is identical by construction.
+  assert.equal(gitTool().identity, resolved.identity, "resolution is stable for the invocation");
+  const probe = cliToolObservationPort.probe({ executable: resolved.executable, argv: ["--version"], timeoutMs: 5000, maxOutputBytes: 65536, env: {} });
+  assert.equal(probe.status, "SUCCEEDED");
+});
+
+test("H10: a descriptor outside the declared policy is refused", (t) => {
+  const { a } = twoRepoFixture(t);
+  const insideTarget = join(a, "git");
+  writeFileSync(insideTarget, "not a real git");
+
+  // The policy admits a closed set of locations. A descriptor naming anything else is refused by the
+  // policy itself rather than trusted because it carried the policy reference (M04-S04 TOOL-06/16).
+  for (const notAdmitted of [insideTarget, join(a, "absent-git"), process.platform === "win32" ? "C:\\tmp\\git.exe" : "/tmp/git"]) {
+    const resolution = cliToolObservationPort.resolve(gitToolDescriptor(notAdmitted));
+    assert.equal(resolution.status, "UNAVAILABLE", `${notAdmitted} must not be admitted`);
+    assert.equal(resolution.reasonCode, "gef.cli.git.path_not_admitted");
+  }
+  // A PATH_NAME resolution — the weaker descriptor kind — is not admitted by this policy either.
+  const pathName = cliToolObservationPort.resolve({ toolId: "git", source: "BUILTIN", resolution: { kind: "PATH_NAME", executable: "git" } });
+  assert.equal(pathName.status, "UNAVAILABLE");
+  assert.equal(pathName.reasonCode, "gef.cli.git.untrusted_resolution_kind");
+
+  // Each admitted location is inspected, not assumed: every candidate answers with a real state.
+  const states = GIT_APPROVED_EXECUTABLES.map((candidate) => cliToolObservationPort.resolve(gitToolDescriptor(candidate)).status);
+  for (const state of states) assert.equal(["FOUND", "ABSENT", "UNAVAILABLE"].includes(state), true, `unexpected resolution state ${state}`);
+  assert.equal(states.includes("FOUND"), true, "this environment has at least one admitted Git");
+
+  // And the production resolution still selects the approved executable.
+  assert.notEqual(gitTool(), null);
 });
 
 test("with Git available and an unobservable tree, status stays unknown", (t) => {
