@@ -204,9 +204,42 @@ function snapshot(root) {
   return entries.sort();
 }
 
+/**
+ * Git status without optional locks.
+ *
+ * The comparison helper must not perturb the state it measures. A plain `git status` may refresh
+ * and rewrite the index, and it may run auto-maintenance, which on Linux can run detached and leave
+ * a transient `.git/objects/maintenance.lock` behind while this suite is walking the tree.
+ */
+function safeGitStatus(root) {
+  const result = spawnSync("git", ["-c", "core.fsmonitor=false", "--no-optional-locks", "-C", root, "status", "--porcelain"], {
+    encoding: "utf8",
+    timeout: 30_000,
+    env: { ...process.env, GIT_OPTIONAL_LOCKS: "0" },
+  });
+  return result.stdout ?? "";
+}
+
 function gitState(root) {
   const run = (args) => spawnSync("git", ["-C", root, ...args], { encoding: "utf8", timeout: 30_000 }).stdout ?? "";
-  return { status: run(["status", "--porcelain"]), branch: run(["rev-parse", "--abbrev-ref", "HEAD"]), head: run(["rev-parse", "HEAD"]), tags: run(["tag", "--list"]) };
+  return { status: safeGitStatus(root), branch: run(["rev-parse", "--abbrev-ref", "HEAD"]), head: run(["rev-parse", "HEAD"]), tags: run(["tag", "--list"]) };
+}
+
+/**
+ * Initialise a repository with Git's own automatic maintenance disabled.
+ *
+ * The suite asserts that GEF changes nothing; a background `git maintenance run --auto` scheduled
+ * by the fixture's own commit would be a second, unrelated writer in the same tree, and its
+ * transient lock files would race this suite's tree walk.
+ */
+function initQuietRepo(root) {
+  const run = (args) => spawnSync("git", ["-C", root, ...args], { encoding: "utf8", timeout: 30_000 });
+  run(["init", "-q"]);
+  run(["config", "user.email", "executor@example.invalid"]);
+  run(["config", "user.name", "GEF Executor"]);
+  run(["config", "gc.auto", "0"]);
+  run(["config", "maintenance.auto", "false"]);
+  return run;
 }
 
 function deps(argv) {
@@ -234,10 +267,7 @@ test("doctor and status mutate neither the project tree nor Git state", async (t
   mkdirSync(join(root, "src"), { recursive: true });
   writeFileSync(join(root, "src", "app.js"), "// user source\n");
   writeFileSync(join(root, "README.md"), "user readme\n");
-  const run = (args) => spawnSync("git", ["-C", root, ...args], { encoding: "utf8", timeout: 30_000 });
-  run(["init", "-q"]);
-  run(["config", "user.email", "executor@example.invalid"]);
-  run(["config", "user.name", "GEF Executor"]);
+  const run = initQuietRepo(root);
   run(["add", "."]);
   run(["commit", "-qm", "seed"]);
 

@@ -476,6 +476,42 @@ Both themes are additionally checked by the pre-existing `neither command mutate
 .gef state or Git state` case, whose `gitState` comparison now also covers `refs`, local `config`
 and the index digest, and by the WO-002 dirtiness suites which remain green.
 
+### 4.6 A red CI check, its diagnosis, and the fixture correction
+
+The first push of this correction (`8480f07`) produced **one failing check**:
+`M55-M61 Integrated Assurance → regression` on `ubuntu-latest`, with
+
+```
+not ok 1384 - doctor and status mutate neither the project tree nor Git state
+error: "ENOENT: no such file or directory, stat
+        '/tmp/gef-nomut-HK8ZdY/.git/objects/maintenance.lock'"
+```
+
+**Diagnosis.** The failure was in the test harness, not in the product. That case compares a
+recursive digest snapshot of the whole tree — including `.git/` — before and after each command,
+and its own `gitState()` helper ran a **plain** `git status`, which allows Git's optional
+sub-operations (auto-gc and `maintenance run --auto`) to run. On Linux those can detach, so a
+transient `.git/objects/maintenance.lock` appeared and disappeared while the walk was running, and
+`statSync` on a path that had just been listed threw `ENOENT`. Nothing in GEF creates that path;
+`GIT_OPTIONAL_LOCKS=0` — which the corrected probe now sets — is precisely what disables those
+optional sub-operations. The change therefore made the probe strictly safer while shifting the
+timing of Git's own detached maintenance, which had been a latent flake in the harness since the
+first cycle. It is recorded here because a green re-run must not be presented as if the red one had
+never happened.
+
+**Correction (harness only).** Two changes, both to test fixtures:
+
+1. The comparison helper now reads status through the same side-effect-free invocation
+   (`-c core.fsmonitor=false --no-optional-locks`, `GIT_OPTIONAL_LOCKS=0`), so the harness cannot
+   perturb the state it measures.
+2. Every repository fixture in the three WO-003 suites now sets `gc.auto=0` and
+   `maintenance.auto=false`, so Git's own background maintenance cannot become a second writer in a
+   tree whose whole purpose is to prove that nothing writes to it.
+
+The tree snapshot was deliberately kept **strict** (a vanished path still fails) rather than made
+tolerant: ignoring disappearing files would weaken exactly the assertion that case exists to make,
+and it would convert an unexplained change into a pass.
+
 ---
 
 ## 5. What was delivered

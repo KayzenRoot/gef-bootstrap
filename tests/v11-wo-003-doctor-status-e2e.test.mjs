@@ -55,6 +55,8 @@ function refreshableRepo(t, prefix) {
   gitIn(root, ["init", "-q"]);
   gitIn(root, ["config", "user.email", "executor@example.invalid"]);
   gitIn(root, ["config", "user.name", "GEF Executor"]);
+  gitIn(root, ["config", "gc.auto", "0"]);
+  gitIn(root, ["config", "maintenance.auto", "false"]);
   writeFileSync(join(root, "tracked.txt"), "tracked content\n");
   writeFileSync(join(root, "second.txt"), "second content\n");
   gitIn(root, ["add", "."]);
@@ -116,6 +118,8 @@ function initRepo(root) {
   run(["init", "-q"]);
   run(["config", "user.email", "executor@example.invalid"]);
   run(["config", "user.name", "GEF Executor"]);
+  run(["config", "gc.auto", "0"]);
+  run(["config", "maintenance.auto", "false"]);
   writeFileSync(join(root, "seed.txt"), "seed\n");
   run(["add", "."]);
   run(["commit", "-qm", "seed"]);
@@ -423,6 +427,8 @@ function fsmonitorRepo(t, prefix, value) {
   gitIn(root, ["init", "-q"]);
   gitIn(root, ["config", "user.email", "executor@example.invalid"]);
   gitIn(root, ["config", "user.name", "GEF Executor"]);
+  gitIn(root, ["config", "gc.auto", "0"]);
+  gitIn(root, ["config", "maintenance.auto", "false"]);
   writeFileSync(join(root, "tracked.txt"), "tracked content\n");
   gitIn(root, ["add", "."]);
   gitIn(root, ["commit", "-qm", "seed"]);

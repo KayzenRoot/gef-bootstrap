@@ -209,6 +209,9 @@ test("the installed package probes dirtiness without index or fsmonitor side eff
   git(["init", "-q"]);
   git(["config", "user.email", "executor@example.invalid"]);
   git(["config", "user.name", "GEF Executor"]);
+  // Git's own automatic maintenance must not become a second writer in the tree under test.
+  git(["config", "gc.auto", "0"]);
+  git(["config", "maintenance.auto", "false"]);
   writeFileSync(join(project, "tracked.txt"), "tracked content\n");
   git(["add", "."]);
   git(["commit", "-qm", "seed"]);
