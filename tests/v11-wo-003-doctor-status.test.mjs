@@ -8,8 +8,8 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
-import { delimiter as pathDelimiter, join, relative, sep } from "node:path";
+import { chmodSync, closeSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from "node:fs";
+import { delimiter as pathDelimiter, dirname, join, relative, sep } from "node:path";
 import { tmpdir } from "node:os";
 
 import {
@@ -24,8 +24,8 @@ import {
   cliRegistrations,
   containedEntryKind,
   DEFAULT_GIT_TRUST_POLICY,
-  beginGitToolInvocation,
-  endGitToolInvocation,
+  withGitToolInvocation,
+  userManagedGitTrustPolicy,
   gitBinaryAvailable,
   inspectAdmittedExecutable,
   createCliToolObservationPort,
@@ -966,12 +966,9 @@ function tempTrustPolicy(t, tag) {
   const commandDirectory = process.platform === "win32" ? join(root, "cmd") : root;
   mkdirSync(commandDirectory, { recursive: true });
   const candidate = process.platform === "win32" ? join(commandDirectory, "git.exe") : join(root, "git");
-  const policy = {
-    policyRef: "gef.cli.git-executable-policy.test.v1",
-    roots: [{ root, rationale: "test-owned root" }],
-    candidates: [candidate],
-    aliasBehaviour: "PHYSICAL_TARGET_MUST_PASS_ROOT_AND_PERMISSION_POLICY",
-  };
+  // A user-owned temporary root can never satisfy the machine policy, so these fixtures exercise
+  // the explicit, separately-named user-managed policy.
+  const policy = userManagedGitTrustPolicy([{ root, rationale: "test-owned root" }]);
   return { root, candidate, commandDirectory, policy };
 }
 
@@ -1048,7 +1045,7 @@ test("H11: an admitted lexical path whose physical target escapes the root is re
   assert.equal(existsSync(`${sentinel}-A`), process.platform !== "win32" && existsSync(`${sentinel}-A`), "only the explicit liveness run may have executed the payload");
 });
 
-test("H11: a valid approved physical target is admitted and usable", (t) => {
+test("H11: a valid approved physical target is admitted and usable", async (t) => {
   const { candidate, policy } = tempTrustPolicy(t, "gef-h11-ok-");
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h11-sent-")), "sentinel");
   const payload = writePayload(candidate, "A", sentinel);
@@ -1059,15 +1056,12 @@ test("H11: a valid approved physical target is admitted and usable", (t) => {
   assert.match(inspection.executableIdentity, /^[0-9a-f]{64}$/);
   assert.equal(inspection.physicalPath, inspection.executablePath ?? inspection.physicalPath);
 
-  beginGitToolInvocation(policy);
-  try {
+  await withGitToolInvocation(policy, async () => {
     const outcome = runGitProbe(["--version"], { timeoutMs: 20_000, maxOutputBytes: 65_536 });
     assert.equal(outcome.ok, true, `the approved target must be usable: ${outcome.reason ?? ""}`);
     assert.equal(outcome.identity, inspection.executableIdentity, "the identity is the one the policy admitted");
     assert.equal(payloadRan(outcome, payload), true, "the approved payload is the process that ran");
-  } finally {
-    endGitToolInvocation();
-  }
+  });
 });
 
 test("H11: a group/other-writable physical target is refused where the platform expresses it", (t) => {
@@ -1103,8 +1097,7 @@ test("H12: a replacement between resolution and execution is refused, never exec
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h12-sent-")), "sentinel");
   const payloadA = writePayload(candidate, "A", sentinel);
 
-  beginGitToolInvocation(policy);
-  try {
+  await withGitToolInvocation(policy, async () => {
     const tool = gitTool();
     assert.notEqual(tool, null, "the approved payload resolves");
     assert.equal(payloadRan(runGitProbe(["--version"], { timeoutMs: 20_000, maxOutputBytes: 65_536 }), payloadA), true, "payload A is the one that answers first");
@@ -1124,9 +1117,7 @@ test("H12: a replacement between resolution and execution is refused, never exec
     // report the superseded identity as if it had been verified.
     const after = await observeGitTool(policy);
     assert.notEqual(after.observation.executableIdentity, tool.identity, "the superseded identity is never re-reported");
-  } finally {
-    endGitToolInvocation();
-  }
+  });
 });
 
 test("H12: a replacement between the version probe and the dirtiness probe is refused", async (t) => {
@@ -1136,8 +1127,7 @@ test("H12: a replacement between the version probe and the dirtiness probe is re
   const project = mkdtempSync(join(tmpdir(), "gef-h12-proj-"));
   t.after(() => rmSync(project, { recursive: true, force: true }));
 
-  beginGitToolInvocation(policy);
-  try {
+  await withGitToolInvocation(policy, async () => {
     const version = runGitProbe(["--version"], { timeoutMs: 20_000, maxOutputBytes: 65_536 });
     assert.equal(version.ok, true);
     assert.equal(payloadRan(version, payloadA), true);
@@ -1147,9 +1137,7 @@ test("H12: a replacement between the version probe and the dirtiness probe is re
     assert.equal(observation.observation, "UNKNOWN", "the second probe must refuse rather than use stale authority");
     assert.equal(payloadRan({ result: null }, payloadB), false);
     assert.equal(existsSync(payloadB.sentinel ?? ""), false, "the replacement payload must not have run");
-  } finally {
-    endGitToolInvocation();
-  }
+  });
 });
 
 test("H12: a second logical invocation re-resolves instead of reusing the first identity", async (t) => {
@@ -1186,8 +1174,7 @@ test("H12: the reported identity is the one verified for the process that answer
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h12-ev-sent-")), "sentinel");
   const payloadA = writePayload(candidate, "A", sentinel);
 
-  beginGitToolInvocation(policy);
-  try {
+  await withGitToolInvocation(policy, async () => {
     const { observation, tool } = await observeGitTool(policy);
     assert.notEqual(tool, null);
     assert.equal(observation.executableIdentity, tool.identity, "the observation carries the verified identity, not a cached one");
@@ -1200,12 +1187,10 @@ test("H12: the reported identity is the one verified for the process that answer
       assert.equal(observation.executableIdentity, inspectAdmittedExecutable(candidate, policy).executableIdentity);
       assert.equal(existsSync(payloadA.sentinel), true, "the payload that produced the token really ran");
     }
-  } finally {
-    endGitToolInvocation();
-  }
+  });
 });
 
-test("H12: no fallback to PATH survives the invocation boundary", (t) => {
+test("H12: no fallback to PATH survives the invocation boundary", async (t) => {
   const { candidate, policy } = tempTrustPolicy(t, "gef-h12-path-");
   const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h12-path-sent-")), "sentinel");
   const hostile = mkdtempSync(join(tmpdir(), "gef-h12-hostile-"));
@@ -1222,15 +1207,296 @@ test("H12: no fallback to PATH survives the invocation boundary", (t) => {
   assert.equal(inspection.status, "FOUND");
   assert.equal(resolveGitToolWith(createCliToolObservationPort(policy)).identity, inspection.executableIdentity);
 
-  beginGitToolInvocation(policy);
-  try {
+  await withGitToolInvocation(policy, async () => {
     const outcome = runGitProbe(["--version"], { timeoutMs: 20_000, maxOutputBytes: 65_536 });
     assert.equal(outcome.ok, true);
     assert.equal(payloadRan(outcome, payloadA), true, "the policy-bound payload ran");
     assert.equal(payloadRan(outcome, hostilePayload), false, "the PATH-supplied payload did not run");
-  } finally {
-    endGitToolInvocation();
-  }
+  });
 });
 
 
+
+// =========================================================================
+// H13-H14 correction (objective reaudit review 5239594304)
+// =========================================================================
+
+/** A latch that lets a test hold an invocation open until it decides to release it. */
+function latch() {
+  let release;
+  const gate = new Promise((resolve) => { release = resolve; });
+  return { gate, release: () => release() };
+}
+
+/** A promise plus its settle function, so a test can wait for a precise point. */
+function deferred() {
+  let settle;
+  const promise = new Promise((resolve) => { settle = resolve; });
+  return { promise, settle };
+}
+
+/** A machine-write-authority policy over an explicitly supplied root, for the H14 fixtures. */
+function machinePolicyOver(root, candidate) {
+  return Object.freeze({
+    policyRef: "gef.cli.git-executable-policy.test-machine.v1",
+    roots: [{ root, rationale: "test root treated as machine-owned" }],
+    candidates: [candidate],
+    aliasBehaviour: "PHYSICAL_TARGET_MUST_PASS_ROOT_AND_PERMISSION_POLICY",
+    writeAuthority: "MACHINE_NON_REPLACEABLE",
+  });
+}
+
+/** Whether this process can open a path for writing; exported only for the H14 assertion. */
+function canOpenForWritingForTest(path) {
+  try {
+    const descriptor = openSync(path, "r+");
+    closeSync(descriptor);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ------------------------------------------------------ H13: async authority
+
+test("H13: concurrent invocations keep their own Git authority", async (t) => {
+  const a = tempTrustPolicy(t, "gef-h13-a-");
+  const b = tempTrustPolicy(t, "gef-h13-b-");
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h13-sent-")), "sentinel");
+  writePayload(a.candidate, "A", sentinel);
+  writePayload(b.candidate, "B", sentinel);
+  const project = mkdtempSync(join(tmpdir(), "gef-h13-proj-"));
+  t.after(() => rmSync(project, { recursive: true, force: true }));
+
+  const expectedA = inspectAdmittedExecutable(a.candidate, a.policy).executableIdentity;
+  const expectedB = inspectAdmittedExecutable(b.candidate, b.policy).executableIdentity;
+  assert.notEqual(expectedA, expectedB, "the two policies must name different executables");
+
+  const seenAtScope = new Map();
+  const atA = deferred();
+  const atB = deferred();
+  const gateA = latch();
+  const gateB = latch();
+  const doneA = deferred();
+  const doneB = deferred();
+
+  const start = (policy, key, arrived, gate, done) => {
+    const captured = deps(["doctor", "--target", project, "--json"], policy);
+    const promise = runCli({
+      ...captured,
+      onGitInvocationScoped: async () => {
+        // Recorded from inside this invocation's own scope, before either is released.
+        seenAtScope.set(key, gitTool() === null ? null : gitTool().identity);
+        arrived.settle();
+        await gate.gate;
+        done.settle();
+      },
+    });
+    return { captured, promise };
+  };
+
+  const runA = start(a.policy, "A", atA, gateA, doneA);
+  await atA.promise;
+  const runB = start(b.policy, "B", atB, gateB, doneB);
+  await atB.promise;
+
+  // Both invocations are alive and inside their own scope at the same time; neither has been
+  // released yet, so the observations above cannot be explained by sequential execution.
+  assert.equal(seenAtScope.get("A"), expectedA, "invocation A sees its own executable");
+  assert.equal(seenAtScope.get("B"), expectedB, "invocation B sees its own executable");
+
+  // Release in the opposite order to the start order: B completes first, A last.
+  gateB.release();
+  await doneB.promise;
+  gateA.release();
+  const [codeA, codeB] = await Promise.all([runA.promise, runB.promise]);
+  assert.equal(codeA, 0);
+  assert.equal(codeB, 0);
+
+  const envelopeA = JSON.parse(runA.captured.out.join(""));
+  const envelopeB = JSON.parse(runB.captured.out.join(""));
+  assert.equal(envelopeA.value.doctor.toolchain.git.executableIdentity, expectedA, "A reports A's identity");
+  assert.equal(envelopeB.value.doctor.toolchain.git.executableIdentity, expectedB, "B reports B's identity");
+  assert.equal(runA.captured.out.join("").includes(b.candidate), false, "A never observes B's executable");
+  assert.equal(runB.captured.out.join("").includes(a.candidate), false, "B never observes A's executable");
+});
+
+test("H13: each concurrent invocation reports only its own identity through doctor and status", async (t) => {
+  const a = tempTrustPolicy(t, "gef-h13-rd-a-");
+  const b = tempTrustPolicy(t, "gef-h13-rd-b-");
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h13-rd-sent-")), "sentinel");
+  writePayload(a.candidate, "A", sentinel);
+  writePayload(b.candidate, "B", sentinel);
+  const project = mkdtempSync(join(tmpdir(), "gef-h13-rd-proj-"));
+  t.after(() => rmSync(project, { recursive: true, force: true }));
+  const expectedA = inspectAdmittedExecutable(a.candidate, a.policy).executableIdentity;
+  const expectedB = inspectAdmittedExecutable(b.candidate, b.policy).executableIdentity;
+
+  for (const verb of ["doctor", "status"]) {
+    const atA = deferred();
+    const atB = deferred();
+    const gateA = latch();
+    const gateB = latch();
+
+    const start = (policy, arrived, gate) => {
+      const captured = deps([verb, "--target", project, "--json"], policy);
+      const promise = runCli({
+        ...captured,
+        onGitInvocationScoped: async () => {
+          arrived.settle();
+          await gate.gate;
+        },
+      });
+      return { captured, promise };
+    };
+
+    const runA = start(a.policy, atA, gateA);
+    await atA.promise;
+    const runB = start(b.policy, atB, gateB);
+    await atB.promise;
+    // Opposite completion order again.
+    gateB.release();
+    gateA.release();
+    const [codeA, codeB] = await Promise.all([runA.promise, runB.promise]);
+    assert.equal(codeA, 0);
+    assert.equal(codeB, 0);
+
+    if (verb === "doctor") {
+      const envelopeA = JSON.parse(runA.captured.out.join(""));
+      const envelopeB = JSON.parse(runB.captured.out.join(""));
+      assert.equal(envelopeA.value.doctor.toolchain.git.executableIdentity, expectedA, "A reports A's identity");
+      assert.equal(envelopeB.value.doctor.toolchain.git.executableIdentity, expectedB, "B reports B's identity");
+    }
+    assert.equal(runA.captured.out.join("").includes(b.candidate), false, "A never observes B's executable");
+    assert.equal(runB.captured.out.join("").includes(a.candidate), false, "B never observes A's executable");
+  }
+});
+
+test("H13: a nested invocation is isolated and the outer authority is restored", async (t) => {
+  const outer = tempTrustPolicy(t, "gef-h13-outer-");
+  const inner = tempTrustPolicy(t, "gef-h13-inner-");
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h13-nest-")), "sentinel");
+  writePayload(outer.candidate, "A", sentinel);
+  writePayload(inner.candidate, "B", sentinel);
+  const expectedOuter = inspectAdmittedExecutable(outer.candidate, outer.policy).executableIdentity;
+  const expectedInner = inspectAdmittedExecutable(inner.candidate, inner.policy).executableIdentity;
+  const project = mkdtempSync(join(tmpdir(), "gef-h13-nest-proj-"));
+  t.after(() => rmSync(project, { recursive: true, force: true }));
+
+  const observations = {};
+  await withGitToolInvocation(outer.policy, async () => {
+    observations.before = gitTool() === null ? null : gitTool().identity;
+    await runCli({
+      ...deps(["doctor", "--target", project, "--json"], inner.policy),
+      onGitInvocationScoped: async () => {
+        observations.inner = gitTool() === null ? null : gitTool().identity;
+      },
+    });
+    observations.after = gitTool() === null ? null : gitTool().identity;
+  });
+
+  assert.equal(observations.before, expectedOuter, "the outer scope sees its own executable");
+  assert.equal(observations.inner, expectedInner, "the nested invocation sees only its own executable");
+  assert.equal(observations.after, expectedOuter, "the outer authority is intact after the nested one");
+});
+
+test("H13: no invocation authority survives outside an invocation", (t) => {
+  const a = tempTrustPolicy(t, "gef-h13-outside-");
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h13-out-sent-")), "sentinel");
+  writePayload(a.candidate, "A", sentinel);
+  const expected = inspectAdmittedExecutable(a.candidate, a.policy).executableIdentity;
+
+  withGitToolInvocation(a.policy, () => {
+    assert.equal(gitTool() === null ? null : gitTool().identity, expected);
+  });
+  // After the invocation ends the injected policy must not linger: the default policy applies.
+  const defaultCandidate = DEFAULT_GIT_TRUST_POLICY.candidates.find((candidate) => candidate.length > 0);
+  const defaultInspection = inspectAdmittedExecutable(defaultCandidate);
+  const expectedDefault = defaultInspection.status === "FOUND" ? defaultInspection.executableIdentity : null;
+  assert.equal(gitTool() === null ? null : gitTool().identity, expectedDefault, "no invocation state survives");
+});
+
+// ------------------------------------------------------ H14: write authority
+
+test("H14: a caller-writable executable is refused by the machine policy", (t) => {
+  const { root, candidate } = tempTrustPolicy(t, "gef-h14-owned-");
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14-owned-sent-")), "sentinel");
+  const payload = writePayload(candidate, "A", sentinel);
+  if (process.platform !== "win32") chmodSync(candidate, 0o755);
+
+  // Group/other write bits are clear, so the old rule would have accepted it.
+  assert.equal(canOpenForWritingForTest(candidate), true, "the fixture must be caller-replaceable to be live");
+
+  // The explicit user-managed policy is a deliberate operator decision and does admit it.
+  assert.equal(inspectAdmittedExecutable(candidate, userManagedGitTrustPolicy([{ root, rationale: "test root" }])).status, "FOUND");
+
+  // The machine policy refuses it, and names write authority as the reason.
+  const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
+  assert.equal(inspection.status, "UNAVAILABLE");
+  assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_writable_by_process");
+
+  // The refusal executes nothing.
+  const outcome = runGitProbe(["--version"], { timeoutMs: 20_000, maxOutputBytes: 65_536 });
+  assert.equal(outcome.ok, true, "the default policy resolves the system Git, not this fixture");
+  assert.equal(existsSync(payload.sentinel ?? ""), false, "the refused fixture never ran");
+});
+
+test("H14: replacement authority through a path component is refused where provable", (t) => {
+  const root = mkdtempSync(join(tmpdir(), "gef-h14-parent-"));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const commandDirectory = process.platform === "win32" ? join(root, "cmd") : root;
+  mkdirSync(commandDirectory, { recursive: true });
+  const candidate = process.platform === "win32" ? join(commandDirectory, "git.exe") : join(root, "git");
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14-parent-sent-")), "sentinel");
+  writePayload(candidate, "A", sentinel);
+  // The executable itself is not writable; the directory that holds it is.
+  chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
+  if (process.platform !== "win32") assert.equal(canOpenForWritingForTest(candidate), false);
+
+  const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
+  if (process.platform === "win32") {
+    // No non-mutating directory-write primitive exists on Windows, so the component proof is
+    // reported as unavailable rather than converted into trust.
+    assert.equal(inspection.directoryProof, "UNAVAILABLE_ON_PLATFORM");
+    t.diagnostic("H14 evidence gap on win32: directory replacement authority is not provable; the executable's own ACL denial is the whole basis");
+    return;
+  }
+  assert.equal(inspection.directoryProof, "EFFECTIVE_WRITE_PER_COMPONENT");
+  assert.equal(inspection.status, "UNAVAILABLE", "a caller-writable parent makes the executable replaceable");
+  assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
+});
+
+test("H14: an alias whose physical target is caller-replaceable is refused", (t) => {
+  const { root, candidate } = tempTrustPolicy(t, "gef-h14-alias-");
+  const outside = mkdtempSync(join(tmpdir(), "gef-h14-alias-out-"));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14-alias-sent-")), "sentinel");
+  const payload = writePayload(join(outside, process.platform === "win32" ? "git.exe" : "git"), "A", sentinel);
+
+  if (process.platform === "win32") {
+    rmSync(dirname(candidate), { recursive: true, force: true });
+    symlinkSync(outside, dirname(candidate), "junction");
+  } else {
+    symlinkSync(join(outside, "git"), candidate);
+  }
+  assert.equal(canOpenForWritingForTest(candidate), true, "the alias target must be caller-replaceable to be live");
+
+  // Physical containment is satisfied here because the root is the alias target's parent; the
+  // refusal must therefore come from write authority, proving that containment alone is not trust.
+  const policy = machinePolicyOver(outside, candidate);
+  const inspection = inspectAdmittedExecutable(candidate, policy);
+  assert.equal(inspection.aliasTraversed, process.platform !== "win32" ? true : false);
+  assert.equal(inspection.status, "UNAVAILABLE", "a caller-replaceable target must not be admitted");
+  assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_writable_by_process");
+  assert.equal(existsSync(payload.sentinel ?? ""), false, "the refused alias never ran");
+});
+
+test("H14: a genuinely non-replaceable admitted executable still succeeds", (t) => {
+  const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
+  assert.notEqual(resolved, null, "the machine policy admits the system Git");
+  const inspection = inspectAdmittedExecutable(resolved.executable, DEFAULT_GIT_TRUST_POLICY);
+  assert.equal(inspection.status, "FOUND");
+  assert.equal(inspection.executableIdentity, resolved.identity);
+  assert.equal(canOpenForWritingForTest(resolved.physicalPath), false, "this process cannot write the admitted executable");
+  t.diagnostic(`H14: admitted executable permissionProof=${inspection.permissionProof} directoryProof=${inspection.directoryProof}`);
+});

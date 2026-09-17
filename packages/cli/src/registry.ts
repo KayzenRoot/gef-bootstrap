@@ -19,6 +19,7 @@
  * Constraint C3: the implemented package layout at the base is used as-is.
  */
 
+import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
 import { accessSync, closeSync, constants, fstatSync, lstatSync, openSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -419,9 +420,23 @@ export interface GitExecutableTrustPolicy {
   readonly candidates: readonly string[];
   /** Explicit alias behaviour: a link-like candidate is admitted only via its physical target. */
   readonly aliasBehaviour: "PHYSICAL_TARGET_MUST_PASS_ROOT_AND_PERMISSION_POLICY";
+  /**
+   * The declared write-authority requirement enforced on the executable and on the path components
+   * whose replacement could redirect execution.
+   *
+   * `MACHINE_NON_REPLACEABLE` is the high-assurance default: the current process must be unable to
+   * modify the executable or replace it through an ancestor directory. `USER_MANAGED_DECLARED` is
+   * an explicitly weaker decision an operator makes for a user-managed tool location; it still
+   * refuses group/other-writable targets but accepts that the owner may replace them. The weaker
+   * one is never reachable by default.
+   */
+  readonly writeAuthority: "MACHINE_NON_REPLACEABLE" | "USER_MANAGED_DECLARED";
 }
 
-export const GIT_TRUST_POLICY_REF = "gef.cli.git-executable-policy.v2";
+export const GIT_TRUST_POLICY_REF = "gef.cli.git-executable-policy.v3";
+
+/** The explicitly weaker policy for operator-declared, user-managed tool locations. */
+export const GIT_USER_MANAGED_POLICY_REF = "gef.cli.git-executable-policy.user-managed.v1";
 
 /** POSIX permission bits that would let a non-owner modify the executable. */
 const GROUP_OR_OTHER_WRITE_BITS = 0o022;
@@ -459,7 +474,37 @@ export const DEFAULT_GIT_TRUST_POLICY: GitExecutableTrustPolicy = Object.freeze(
   roots: Object.freeze(defaultRoots()),
   candidates: candidatesFor(Object.freeze(defaultRoots())),
   aliasBehaviour: "PHYSICAL_TARGET_MUST_PASS_ROOT_AND_PERMISSION_POLICY",
+  writeAuthority: "MACHINE_NON_REPLACEABLE",
 });
+
+/**
+ * The explicitly weaker policy for operator-declared, user-managed tool locations.
+ *
+ * A user-managed Git (a package manager prefix owned by the installing account, a per-user
+ * install) is replaceable by that account by construction, so it can never satisfy the machine
+ * policy. Admitting it is a separate trust decision with its own policy reference: still inside a
+ * declared root, still a regular executable, still not group/other writable — but explicitly not
+ * equivalent to a machine-trusted default. It is only reachable by injecting it deliberately.
+ */
+export const USER_MANAGED_GIT_TRUST_POLICY: GitExecutableTrustPolicy = Object.freeze({
+  policyRef: GIT_USER_MANAGED_POLICY_REF,
+  roots: Object.freeze(defaultRoots()),
+  candidates: candidatesFor(Object.freeze(defaultRoots())),
+  aliasBehaviour: "PHYSICAL_TARGET_MUST_PASS_ROOT_AND_PERMISSION_POLICY",
+  writeAuthority: "USER_MANAGED_DECLARED",
+});
+
+/** Build a user-managed policy over explicit roots, for embeddings and tests. */
+export function userManagedGitTrustPolicy(roots: readonly ApprovedExecutableRoot[]): GitExecutableTrustPolicy {
+  const frozen = Object.freeze([...roots]);
+  return Object.freeze({
+    policyRef: GIT_USER_MANAGED_POLICY_REF,
+    roots: frozen,
+    candidates: candidatesFor(frozen),
+    aliasBehaviour: "PHYSICAL_TARGET_MUST_PASS_ROOT_AND_PERMISSION_POLICY",
+    writeAuthority: "USER_MANAGED_DECLARED",
+  });
+}
 
 /** The candidate paths of the frozen default policy, in deterministic precedence order. */
 export const GIT_APPROVED_EXECUTABLES: readonly string[] = DEFAULT_GIT_TRUST_POLICY.candidates;
@@ -510,6 +555,16 @@ export function gitProbeEnvironment(): Readonly<Record<string, string>> {
 /** How a platform could prove the executable's ownership/permission trust property. */
 export type PermissionProof = "POSIX_MODE_NO_GROUP_OR_OTHER_WRITE" | "UNAVAILABLE_ON_PLATFORM";
 
+/**
+ * How the policy established that no path component can be used to replace the executable.
+ *
+ *  means every directory from the approved root to the executable was
+ * checked with the platform's own effective-write primitive.  means the
+ * platform exposes no non-mutating directory-write check: the executable's own ACL denial is then
+ * the whole basis, and that weaker basis is reported rather than silently treated as equivalent.
+ */
+export type DirectoryProof = "EFFECTIVE_WRITE_PER_COMPONENT" | "UNAVAILABLE_ON_PLATFORM";
+
 /** The CLI's own richer view of one trust inspection, of which the frozen port sees a projection. */
 export interface PhysicalTrustInspection {
   readonly status: ToolPresenceStatus;
@@ -519,6 +574,8 @@ export interface PhysicalTrustInspection {
   readonly reasonCode?: string;
   readonly aliasTraversed: boolean;
   readonly permissionProof: PermissionProof;
+  /** How the policy established that this process cannot replace the executable through its path. */
+  readonly directoryProof: DirectoryProof;
 }
 
 /** The descriptor for one admitted Git location, under the declared policy. */
@@ -552,7 +609,7 @@ function withinRoot(root: string, candidate: string): boolean {
  * `gef.cli.git.executable_not_executable` and `gef.cli.git.physical_path_writable_by_others`.
  */
 export function inspectAdmittedExecutable(executable: string, policy: GitExecutableTrustPolicy = DEFAULT_GIT_TRUST_POLICY): PhysicalTrustInspection {
-  const unavailable = (reasonCode: string, aliasTraversed = false): PhysicalTrustInspection => ({ status: "UNAVAILABLE", reasonCode, aliasTraversed, permissionProof: permissionProofSupport() });
+  const unavailable = (reasonCode: string, aliasTraversed = false): PhysicalTrustInspection => ({ status: "UNAVAILABLE", reasonCode, aliasTraversed, permissionProof: permissionProofSupport(), directoryProof: directoryProofSupport() });
   if (!isAbsolute(executable) || executable.length === 0) return unavailable("gef.cli.git.path_not_absolute");
   const normalized = normalizedForPlatform(executable);
   if (!policy.candidates.map(normalizedForPlatform).includes(normalized)) return unavailable("gef.cli.git.path_not_admitted");
@@ -561,7 +618,7 @@ export function inspectAdmittedExecutable(executable: string, policy: GitExecuta
   try {
     linkStats = lstatSync(executable);
   } catch {
-    return { status: "ABSENT", reasonCode: "gef.cli.git.executable_absent", aliasTraversed: false, permissionProof: permissionProofSupport() };
+    return { status: "ABSENT", reasonCode: "gef.cli.git.executable_absent", aliasTraversed: false, permissionProof: permissionProofSupport(), directoryProof: directoryProofSupport() };
   }
   const aliasTraversed = linkStats.isSymbolicLink();
 
@@ -600,13 +657,81 @@ export function inspectAdmittedExecutable(executable: string, policy: GitExecuta
     return unavailable("gef.cli.git.physical_path_writable_by_others", aliasTraversed);
   }
 
+  // Write authority (audit H14). An executable the current process can modify is replaceable after
+  // admission, so containment and permission bits alone are not trust.
+  if (policy.writeAuthority === "MACHINE_NON_REPLACEABLE") {
+    // The executable itself: an OS-enforced write attempt. Opening for writing is refused by the
+    // ACL/permission model when this process may not modify the file, and succeeds when it may.
+    if (canOpenForWriting(physical)) return unavailable("gef.cli.git.physical_path_writable_by_process", aliasTraversed);
+    // Then every component whose replacement could redirect execution, from the approved root down
+    // to the executable's own directory.
+    const componentRoot = approvedRoots.find((root) => withinRoot(root, physical));
+    const replaced = componentRoot === undefined ? null : writableComponent(componentRoot, physical);
+    if (replaced !== null) return unavailable(`gef.cli.git.${replaced}`, aliasTraversed);
+  }
+
   const identity = createHash("sha256").update(`${physical}|${String(stats.dev)}|${String(stats.ino)}|${String(stats.size)}|${String(stats.mtimeMs)}`).digest("hex");
-  return { status: "FOUND", executable, physicalPath: physical, executableIdentity: identity, aliasTraversed, permissionProof };
+  return { status: "FOUND", executable, physicalPath: physical, executableIdentity: identity, aliasTraversed, permissionProof, directoryProof: directoryProofSupport() };
+}
+
+/**
+ * Whether this process can open `path` for writing.
+ *
+ * This is the effective write-authority primitive: an open for writing is evaluated by the operating
+ * system's own permission model, so it answers "can this process modify this object" rather than
+ * "does the mode look a certain way". No byte is ever written — the handle is closed immediately.
+ * On Windows this is the strongest available proof, because POSIX mode bits do not exist and Node
+ * exposes no ACL API; `EPERM`/`EACCES` there means the ACL denies this process write access.
+ */
+function canOpenForWriting(path: string): boolean {
+  try {
+    const descriptor = openSync(path, "r+");
+    closeSync(descriptor);
+    return true;
+  } catch (cause: unknown) {
+    const code = (cause as { readonly code?: unknown }).code;
+    // A file the platform refuses to open for writing at all (for example a read-only attribute) is
+    // equally non-writable for this process.
+    if (code === "EPERM" || code === "EACCES" || code === "EROFS") return false;
+    // Any other failure is not evidence of non-writability, so it must not be read as one.
+    return true;
+  }
+}
+
+/**
+ * The first path component whose replacement authority this process has, or `null` when none does.
+ *
+ * Replacement needs authority over the directory that holds the entry, so every directory from the
+ * approved root down to the executable's own directory is checked. On POSIX the effective-write bit
+ * answers it directly. On Windows Node exposes no non-mutating directory-write primitive, so the
+ * proof is not available there and the component check is reported as such through
+ * `directoryProof: "UNAVAILABLE_ON_PLATFORM"` rather than being converted into trust: the Windows
+ * basis is the executable's own ACL denial, plus the declared machine root.
+ */
+function writableComponent(root: string, physical: string): string | null {
+  if (process.platform === "win32") return null;
+  const relativeParts = relative(root, physical).split(sep).filter((part) => part.length > 0);
+  let current = root;
+  const components = [root, ...relativeParts.slice(0, -1).map((part) => (current = join(current, part)))];
+  for (const component of components) {
+    try {
+      accessSync(component, constants.W_OK);
+      return "physical_path_parent_replaceable_by_process";
+    } catch {
+      // Not writable by this process: the component cannot be used to replace the executable.
+    }
+  }
+  return null;
 }
 
 /** Whether this platform can prove the ownership/permission property deterministically. */
 function permissionProofSupport(): PermissionProof {
   return process.platform === "win32" ? "UNAVAILABLE_ON_PLATFORM" : "POSIX_MODE_NO_GROUP_OR_OTHER_WRITE";
+}
+
+/** Whether this platform can check directory replacement authority without mutating anything. */
+function directoryProofSupport(): DirectoryProof {
+  return process.platform === "win32" ? "UNAVAILABLE_ON_PLATFORM" : "EFFECTIVE_WRITE_PER_COMPONENT";
 }
 
 /**
@@ -771,29 +896,35 @@ export function resolveGitToolWith(port: SyncToolObservationPort): ResolvedGitTo
  * The Git tool snapshot for the invocation currently in progress.
  *
  * M04-S04 TOOL-13 permits reuse inside one invocation and TOOL-14 forbids making cross-run caches
- * authoritative, so the snapshot lives in an explicit invocation scope rather than in a module
- * global: `beginGitToolInvocation` installs it, `endGitToolInvocation` removes it in a `finally`.
- * A probe taken outside any invocation resolves for that call alone and never reuses another
- * invocation's identity, so an executable changed between two logical `runCli` calls is
- * re-resolved rather than trusted.
+ * authoritative, so the snapshot is bound to the **asynchronous execution context** rather than to
+ * module-global mutable state. `runCli` is asynchronous: with a global "active invocation" two
+ * overlapping invocations could interleave — one installing its scope, the other replacing it — and
+ * a probe could then observe another invocation's policy, port or executable. A stack would not fix
+ * that either, because concurrent promises do not complete in nesting order.
+ *
+ * `AsyncLocalStorage` gives every invocation, and every nested invocation inside it, its own store,
+ * which follows the asynchronous chain instead of a global slot. A probe taken outside any
+ * invocation resolves for that call alone and never observes another invocation's state, so an
+ * executable changed between two logical `runCli` calls is re-resolved rather than trusted.
  */
-let activeInvocation: GitToolInvocation | null = null;
+const gitInvocationContext = new AsyncLocalStorage<GitToolInvocation>();
 
-/** Begin an invocation-scoped Git tool snapshot. Nested scopes restore the previous scope. */
-export function beginGitToolInvocation(policy: GitExecutableTrustPolicy = DEFAULT_GIT_TRUST_POLICY): GitToolInvocation {
+/** Create one invocation's Git authority: its own policy, its own port, its own resolved tool. */
+export function createGitToolInvocation(policy: GitExecutableTrustPolicy = DEFAULT_GIT_TRUST_POLICY): GitToolInvocation {
   const port = createCliToolObservationPort(policy);
-  const invocation: GitToolInvocation = { port, policy, tool: resolveGitToolWith(port) };
-  previousInvocations.push(activeInvocation);
-  activeInvocation = invocation;
-  return invocation;
+  return Object.freeze({ port, policy, tool: resolveGitToolWith(port) });
 }
 
-/** End the current invocation scope, restoring any enclosing one. */
-export function endGitToolInvocation(): void {
-  activeInvocation = previousInvocations.pop() ?? null;
+/**
+ * Run `body` with its own Git invocation authority.
+ *
+ * Nested calls get their own store, and sibling calls started from the same context cannot see each
+ * other's. The binding follows the asynchronous chain, so it survives `await` and does not depend on
+ * completion order.
+ */
+export function withGitToolInvocation<T>(policy: GitExecutableTrustPolicy, body: () => T): T {
+  return gitInvocationContext.run(createGitToolInvocation(policy), body);
 }
-
-const previousInvocations: (GitToolInvocation | null)[] = [];
 
 /**
  * The port and the tool it resolved, bound together for this call.
@@ -804,7 +935,10 @@ const previousInvocations: (GitToolInvocation | null)[] = [];
  * is reused across calls (M04-S04 TOOL-14).
  */
 function gitScope(): { readonly port: SyncToolObservationPort; readonly tool: ResolvedGitTool | null } {
-  if (activeInvocation !== null) return { port: activeInvocation.port, tool: activeInvocation.tool };
+  const active = gitInvocationContext.getStore();
+  if (active !== undefined) return { port: active.port, tool: active.tool };
+  // Outside any invocation: a fresh, isolated context for this call alone. It can never observe
+  // another invocation's policy, port, tool or refusal state.
   const port = createCliToolObservationPort();
   return { port, tool: resolveGitToolWith(port) };
 }
@@ -859,7 +993,7 @@ export function runGitProbe(argv: readonly string[], bounds: { readonly timeoutM
  * the identity reported is the identity of the executable that actually answered — never a value
  * captured earlier and never a cross-invocation cache.
  */
-export async function observeGitTool(policy: GitExecutableTrustPolicy = activeInvocation?.policy ?? DEFAULT_GIT_TRUST_POLICY): Promise<{ readonly observation: ToolObservation; readonly tool: ResolvedGitTool | null }> {
+export async function observeGitTool(policy: GitExecutableTrustPolicy = gitInvocationContext.getStore()?.policy ?? DEFAULT_GIT_TRUST_POLICY): Promise<{ readonly observation: ToolObservation; readonly tool: ResolvedGitTool | null }> {
   const { port, tool } = gitScope();
   const session = new ToolObservationSession(port, createMutableToolCounters());
   if (tool === null) {

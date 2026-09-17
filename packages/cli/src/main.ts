@@ -26,7 +26,7 @@ import { CLI_CONTRACT_VERSION, parseArgv } from "./parser.js";
 import { renderHelp, renderHelpJson, renderResultHuman, renderResultJson, renderUsageFailureHuman, renderUsageFailureJson, renderVersion, renderVersionJson } from "./render.js";
 import { buildRegistry, loadEngines, observeTarget } from "./registry.js";
 import type { CliVerb, HelpEntry } from "./registry.js";
-import { DEFAULT_GIT_TRUST_POLICY, beginGitToolInvocation, endGitToolInvocation } from "./registry.js";
+import { DEFAULT_GIT_TRUST_POLICY, withGitToolInvocation } from "./registry.js";
 import type { GitExecutableTrustPolicy } from "./registry.js";
 import { UnsupportedDocumentVersionError, buildReceiptDocument, requireSupportedSchemaVersion } from "./schemas.js";
 import type { TransactionSummary } from "./schemas.js";
@@ -73,6 +73,12 @@ export interface RunDependencies {
    * can widen the trusted set.
    */
   readonly gitExecutablePolicy?: GitExecutableTrustPolicy;
+  /**
+   * Optional hook invoked once this invocation's Git authority is bound and before any command
+   * runs. Embeddings use it to observe the binding; tests use it as a synchronisation barrier to
+   * hold two invocations open at once deterministically, without sleeping.
+   */
+  readonly onGitInvocationScoped?: () => Promise<void> | void;
 }
 
 /**
@@ -269,15 +275,15 @@ async function helpEntries(): Promise<readonly HelpEntry[]> {
 
 /** Execute one CLI invocation and return the projected process exit code. */
 export async function runCli(deps: RunDependencies): Promise<number> {
-  // One invocation scope owns the Git tool snapshot. It is installed here and removed in the
-  // `finally` below, so a second logical invocation re-resolves instead of inheriting the first
-  // one's identity, and no module-global value outlives an invocation.
-  beginGitToolInvocation(deps.gitExecutablePolicy ?? DEFAULT_GIT_TRUST_POLICY);
-  try {
-    return await runCliWithinInvocation(deps);
-  } finally {
-    endGitToolInvocation();
-  }
+  // One invocation owns its Git authority. The binding follows the asynchronous chain, so
+  // overlapping invocations in the same process cannot observe each other's policy, port or
+  // executable, and nested or out-of-order completion changes nothing.
+  return withGitToolInvocation(deps.gitExecutablePolicy ?? DEFAULT_GIT_TRUST_POLICY, async () => {
+    // Optional embedding/test seam: lets a caller observe or synchronise on the point where this
+    // invocation's authority is already bound and no command has run yet.
+    if (deps.onGitInvocationScoped !== undefined) await deps.onGitInvocationScoped();
+    return runCliWithinInvocation(deps);
+  });
 }
 
 async function runCliWithinInvocation(deps: RunDependencies): Promise<number> {
