@@ -14,9 +14,10 @@ import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 
 import {
+  DEFAULT_GIT_TRUST_POLICY,
   GIT_APPROVED_EXECUTABLES,
   GIT_EXECUTABLE_POLICY_REF,
-  cliToolObservationPort,
+  createCliToolObservationPort,
   gitProbeEnvironment,
   gitTool,
   gitToolDescriptor,
@@ -442,7 +443,15 @@ test("H10: a failed resolution does not fall back to ambient git", (t) => {
   process.env.PATH = `${fakeDir}${delimiter}${priorPath ?? ""}`;
   t.after(() => { process.env.PATH = priorPath; });
 
-  const refusing = { resolve: () => ({ status: "ABSENT", reasonCode: "gef.test.refused" }), probe: () => ({ status: "FAILED", stdout: "", stderr: "" }) };
+  const refusing = {
+    policy: DEFAULT_GIT_TRUST_POLICY,
+    counters: { environmentReads: new Map(), gitReads: new Map(), providerReads: 0, toolResolutions: new Map(), toolProbes: new Map(), cacheHits: 0, skippedByPrerequisite: 0 },
+    resolve: () => ({ status: "ABSENT", reasonCode: "gef.test.refused" }),
+    probe: () => ({ status: "FAILED", stdout: "", stderr: "" }),
+    lastSpawnRefusal: () => null,
+    verifiedIdentity: () => null,
+    verifiedPhysical: () => null,
+  };
   const resolution = resolveGitToolWith(refusing);
   assert.equal(resolution, null, "a refused resolution yields no tool rather than an ambient fallback");
 });
@@ -461,8 +470,15 @@ test("H10: the approved locations are a frozen constant list", () => {
   assert.equal(resolved.descriptor.resolution.policyRef, GIT_EXECUTABLE_POLICY_REF);
   // Both probes read this single resolution, so their executable is identical by construction.
   assert.equal(gitTool().identity, resolved.identity, "resolution is stable for the invocation");
-  const probe = cliToolObservationPort.probe({ executable: resolved.executable, argv: ["--version"], timeoutMs: 5000, maxOutputBytes: 65536, env: {} });
+  // A probe is only admitted after this port instance has verified the executable, so the
+  // resolution must happen through the same instance.
+  const port = createCliToolObservationPort();
+  assert.equal(port.resolve(resolved.descriptor).status, "FOUND");
+  const probe = port.probe({ executable: resolved.executable, argv: ["--version"], timeoutMs: 5000, maxOutputBytes: 65536, env: {} });
   assert.equal(probe.status, "SUCCEEDED");
+  assert.equal(port.probe({ executable: resolved.executable, argv: ["--version"], timeoutMs: 5000, maxOutputBytes: 65536, env: {} }).status, "SUCCEEDED");
+  // A fresh port has verified nothing, so it must refuse rather than spawn.
+  assert.equal(createCliToolObservationPort().probe({ executable: resolved.executable, argv: ["--version"], timeoutMs: 5000, maxOutputBytes: 65536, env: {} }).status, "FAILED");
 });
 
 test("H10: a descriptor outside the declared policy is refused", (t) => {
@@ -473,17 +489,17 @@ test("H10: a descriptor outside the declared policy is refused", (t) => {
   // The policy admits a closed set of locations. A descriptor naming anything else is refused by the
   // policy itself rather than trusted because it carried the policy reference (M04-S04 TOOL-06/16).
   for (const notAdmitted of [insideTarget, join(a, "absent-git"), process.platform === "win32" ? "C:\\tmp\\git.exe" : "/tmp/git"]) {
-    const resolution = cliToolObservationPort.resolve(gitToolDescriptor(notAdmitted));
+    const resolution = createCliToolObservationPort().resolve(gitToolDescriptor(notAdmitted));
     assert.equal(resolution.status, "UNAVAILABLE", `${notAdmitted} must not be admitted`);
     assert.equal(resolution.reasonCode, "gef.cli.git.path_not_admitted");
   }
   // A PATH_NAME resolution — the weaker descriptor kind — is not admitted by this policy either.
-  const pathName = cliToolObservationPort.resolve({ toolId: "git", source: "BUILTIN", resolution: { kind: "PATH_NAME", executable: "git" } });
+  const pathName = createCliToolObservationPort().resolve({ toolId: "git", source: "BUILTIN", resolution: { kind: "PATH_NAME", executable: "git" } });
   assert.equal(pathName.status, "UNAVAILABLE");
   assert.equal(pathName.reasonCode, "gef.cli.git.untrusted_resolution_kind");
 
   // Each admitted location is inspected, not assumed: every candidate answers with a real state.
-  const states = GIT_APPROVED_EXECUTABLES.map((candidate) => cliToolObservationPort.resolve(gitToolDescriptor(candidate)).status);
+  const states = GIT_APPROVED_EXECUTABLES.map((candidate) => createCliToolObservationPort().resolve(gitToolDescriptor(candidate)).status);
   for (const state of states) assert.equal(["FOUND", "ABSENT", "UNAVAILABLE"].includes(state), true, `unexpected resolution state ${state}`);
   assert.equal(states.includes("FOUND"), true, "this environment has at least one admitted Git");
 

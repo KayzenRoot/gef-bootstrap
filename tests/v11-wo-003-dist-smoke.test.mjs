@@ -64,6 +64,47 @@ function tempProject(t) {
 
 // ------------------------------------------------------------- packaged parity
 
+// ------------------------------------------- workspace manifest / lock consistency
+
+/**
+ * The canonical lockfile must agree with every workspace manifest.
+ *
+ * A runtime dependency added to a workspace manifest without reconciling the root lockfile is a
+ * supply-chain metadata defect that `npm ci` can hide, so the drift is detected directly here.
+ */
+test("every workspace manifest agrees with the root lockfile", () => {
+  const lockfile = JSON.parse(readFileSync(join(ROOT, "package-lock.json"), "utf8"));
+  const workspaceDirectories = readdirSync(join(ROOT, "packages"), { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+  assert.ok(workspaceDirectories.length > 0, "the workspace must contain packages");
+
+  for (const directory of workspaceDirectories) {
+    const manifestPath = join(ROOT, "packages", directory, "package.json");
+    if (!existsSync(manifestPath)) continue;
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+    const lockEntry = lockfile.packages[`packages/${directory}`];
+    assert.ok(lockEntry, `packages/${directory} must appear in the lockfile`);
+    assert.deepEqual(lockEntry.dependencies ?? {}, manifest.dependencies ?? {}, `packages/${directory} dependencies drifted between manifest and lockfile`);
+    const bundled = manifest.bundleDependencies ?? manifest.bundledDependencies ?? [];
+    const lockedBundled = lockEntry.bundleDependencies ?? lockEntry.bundledDependencies ?? [];
+    assert.deepEqual(lockedBundled, bundled, `packages/${directory} bundled dependencies drifted between manifest and lockfile`);
+    assert.equal(lockEntry.version, manifest.version, `packages/${directory} version drifted`);
+  }
+});
+
+test("the CLI lockfile entry records the toolchain runtime dependency", () => {
+  const lockfile = JSON.parse(readFileSync(join(ROOT, "package-lock.json"), "utf8"));
+  const manifest = JSON.parse(readFileSync(join(CLI_PACKAGE_DIR, "package.json"), "utf8"));
+  const lockEntry = lockfile.packages["packages/cli"];
+  assert.equal(lockEntry.dependencies["@gef-bootstrap/preflight"], "0.0.0");
+  assert.equal(manifest.dependencies["@gef-bootstrap/preflight"], "0.0.0");
+  assert.equal((lockEntry.bundleDependencies ?? []).includes("@gef-bootstrap/preflight"), true);
+  assert.deepEqual(Object.keys(lockEntry.dependencies).sort(), Object.keys(manifest.dependencies).sort(), "no unrelated dependency drift for this package");
+});
+
+
 test("the packed payload vendors every engine doctor and status depend on", (t) => {
   const { cliDir } = freshInstall(t, "payload");
   // The three engine modules WO-003 introduced must be part of the packaged artifact.

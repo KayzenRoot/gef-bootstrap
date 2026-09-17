@@ -26,6 +26,8 @@ import { CLI_CONTRACT_VERSION, parseArgv } from "./parser.js";
 import { renderHelp, renderHelpJson, renderResultHuman, renderResultJson, renderUsageFailureHuman, renderUsageFailureJson, renderVersion, renderVersionJson } from "./render.js";
 import { buildRegistry, loadEngines, observeTarget } from "./registry.js";
 import type { CliVerb, HelpEntry } from "./registry.js";
+import { DEFAULT_GIT_TRUST_POLICY, beginGitToolInvocation, endGitToolInvocation } from "./registry.js";
+import type { GitExecutableTrustPolicy } from "./registry.js";
 import { UnsupportedDocumentVersionError, buildReceiptDocument, requireSupportedSchemaVersion } from "./schemas.js";
 import type { TransactionSummary } from "./schemas.js";
 import { applyGovernedCreate } from "./transaction.js";
@@ -62,6 +64,15 @@ export interface RunDependencies {
   readonly productVersion: string;
   /** Explicit TTY capability for stdout. Drives the automatic JSON selection. */
   readonly stdoutIsTty: boolean;
+  /**
+   * Optional injected Git executable trust policy.
+   *
+   * The default is the frozen platform policy. This is the injection point for embeddings and for
+   * tests that must exercise physical-trust behaviour with a temporary root instead of writing into
+   * real system locations; it is deliberately **not** an environment variable, so no ambient value
+   * can widen the trusted set.
+   */
+  readonly gitExecutablePolicy?: GitExecutableTrustPolicy;
 }
 
 /**
@@ -258,6 +269,18 @@ async function helpEntries(): Promise<readonly HelpEntry[]> {
 
 /** Execute one CLI invocation and return the projected process exit code. */
 export async function runCli(deps: RunDependencies): Promise<number> {
+  // One invocation scope owns the Git tool snapshot. It is installed here and removed in the
+  // `finally` below, so a second logical invocation re-resolves instead of inheriting the first
+  // one's identity, and no module-global value outlives an invocation.
+  beginGitToolInvocation(deps.gitExecutablePolicy ?? DEFAULT_GIT_TRUST_POLICY);
+  try {
+    return await runCliWithinInvocation(deps);
+  } finally {
+    endGitToolInvocation();
+  }
+}
+
+async function runCliWithinInvocation(deps: RunDependencies): Promise<number> {
   const parsed = parseArgv(deps.argv);
   // Frozen output contract: JSON when explicitly requested, or automatically when stdout is
   // not a TTY. The capability is injected, never sniffed inside pure parsing.
