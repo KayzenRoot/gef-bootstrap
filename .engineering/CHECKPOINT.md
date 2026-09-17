@@ -41,13 +41,24 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Exact objectively audited head: `989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635`
 - Objective re-audit: `APPROVED`, CRITICAL `0`, HIGH `0`
 - WO-001 merge into `release/1.1`: `c5890620a98f2b23c794d65234824ad2ea084036`
+- Checkpoint-promotion merge: `02e5926557e485e8c5e340e9bb9c4d2aee74e0ea`
 - Promotion decision: `D-0059`
 - ADR: `ADR-0003`, status `APPROVED`
-- External executor authority: `ADR-0003-D3`, **EFFECTIVE only after this checkpoint-promotion increment merges into `release/1.1`**
-- Authorized execution surface: `release/1.1` and subordinate branches, admitted Work Orders only
+- External executor authority: `ADR-0003-D3`, effective on `release/1.1` for admitted Work Orders only
+- Authorized execution surface: `release/1.1` and subordinate V1.1 branches, admitted Work Orders only
 - Explicitly prohibited: `main`, `v1.0.0` tag mutation, merge, tag, publish, force-push, history rewrite, self-approval
 - CLI admission: `ADR-0003-D4`, thin deterministic mechanical layer only
-- Next legal V1.1 Work Order after promotion: `GBS-V11-WO-002`
+
+### Active V1.1 increment
+- Active Work Order after this admission merge: `GBS-V11-WO-002`
+- Work Order status: `ADMITTED`
+- Objective: CLI + Distribution Foundation (`gef init`, `gef adopt`, thin parser/render/process surface, local package/install smoke)
+- Implementation branch: `feat/1.1/wo-002-cli-distribution`
+- Executor: external executor allowed under `ADR-0003-D3` after branch creation from the exact admission merge
+- Context Lock: `.engineering/context-locks/GBS-V11-WO-002.json`
+- Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-002-CODEX.md`
+- Explicitly deferred: `doctor`/`status` → WO-003; `upgrade` → WO-004; Context Compiler → WO-005
+- Next legal action after this admission merge: create `feat/1.1/wo-002-cli-distribution` from the exact admission merge, finalize exact implementation-base binding, then hand off to Codex
 
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
@@ -60,7 +71,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 stage after this promotion merge: `GBS-V11-WO-002`.
+Next legal V1.1 action after admission merge: `CREATE_WO_002_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_FOUNDATION_PROMOTED_READY_FOR_WO_002`.
+V1.1 STOP CONDITION: `GBS_V11_WO_002_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
