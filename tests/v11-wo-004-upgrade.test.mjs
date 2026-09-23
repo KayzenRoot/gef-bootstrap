@@ -329,13 +329,20 @@ test("COMPAT-01: an unsupported version pair is UNSUPPORTED and has no mutation 
 });
 
 test("COMPAT-02: an unknown blocking dimension is INDETERMINATE and fails closed", async () => {
-  const project = inMemoryProject();
-  const result = await directPreview(project, {
-    repository: { dirtiness: "UNKNOWN", input: {}, observationLimits: ["TEST_GIT_UNAVAILABLE"] },
+  const engines = await loadEngines();
+  const result = composeUpgradePreview({
+    targetRoot: "C:/fixture/unknown",
+    productVersion: PRODUCT_VERSION,
+    platform: "linux",
+    nodeMajor: 22,
+    observationFingerprint: sha("unknown-target"),
+    repository: { dirtiness: "OBSERVED", input: { repo: "C:/fixture/unknown", head: "a".repeat(40), branch: "main" }, observationLimits: [] },
+    readFile: () => ({ status: "ABSENT", bytes: null, limit: null }),
+    engines,
   });
   assert.equal(result.compatibility, "INDETERMINATE");
   assert.equal(result.readiness, "INDETERMINATE");
-  assert.equal(result.body.state.reason, "TRUSTED_GIT_OBSERVATION_UNAVAILABLE");
+  assert.equal(result.body.state.reason, "SOURCE_STATE_ABSENT");
 });
 
 test("COMPAT-03: an unsupported platform is UNSUPPORTED", async () => {
@@ -352,24 +359,15 @@ test("COMPAT-04: a Node runtime below the declared minimum is UNSUPPORTED", asyn
   assert.equal(result.readiness, "UNSUPPORTED");
 });
 
-test("COMPAT-05: an absent required managed-receipt capability produces a gap and no bypass", async () => {
+test("COMPAT-05: an absent required trusted-Git capability produces a gap and no bypass", async () => {
   const project = inMemoryProject();
-  const engines = await loadEngines();
-  const result = composeUpgradePreview({
-    targetRoot: "C:/fixture/project",
-    productVersion: PRODUCT_VERSION,
-    platform: "linux",
-    nodeMajor: 22,
-    observationFingerprint: sha("target-observation"),
-    repository: { dirtiness: "OBSERVED", input: { repo: "C:/fixture/project", head: "a".repeat(40), branch: "main" }, observationLimits: [] },
-    readFile: (ref) => ref === project.fixture.receiptRef
-      ? { status: "ABSENT", bytes: null, limit: null }
-      : project.readFile(ref),
-    engines,
+  const result = await directPreview(project, {
+    repository: { dirtiness: "UNKNOWN", input: {}, observationLimits: ["TEST_TRUSTED_GIT_CAPABILITY_ABSENT"] },
   });
   assert.equal(result.compatibility, "INDETERMINATE");
   assert.equal(result.readiness, "INDETERMINATE");
-  assert.equal(result.body.state.reason, "SOURCE_RECEIPT_UNAVAILABLE");
+  assert.equal(result.body.state.reason, "TRUSTED_GIT_OBSERVATION_UNAVAILABLE");
+  assert.ok(result.body.repository.observationLimits.includes("TEST_TRUSTED_GIT_CAPABILITY_ABSENT"));
 });
 
 test("COMPAT-06: no VERIFIED compatibility row exists without complete evidence bindings", () => {
