@@ -21,7 +21,7 @@
  */
 
 import { createHash, randomBytes } from "node:crypto";
-import { link, lstat, mkdir, open, readFile, rm, stat, unlink, writeFile } from "node:fs/promises";
+import { link, lstat, mkdir, open, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
 import { existsSync } from "node:fs";
 
@@ -39,6 +39,7 @@ import {
   createFilesystemEffectAdapter,
   evaluateFilesystemOverwrite,
   proveFilesystemTraversal,
+  rollbackTransaction,
 } from "@gef-bootstrap/kernel";
 import type {
   DigestPort,
@@ -54,6 +55,7 @@ import type {
   TransactionPlan,
   TransactionPlanBody,
   TransactionAuthorizationPort,
+  TransactionEffectPort,
   TransactionJournalPort,
   TransactionPorts,
   TransactionStatePort,
@@ -225,9 +227,9 @@ export function cliPrimitiveFor(operation: "CREATE" | "UPDATE" | "REMOVE" | "MOV
   return {
     capabilityRef: `cli:${process.platform}:${operation}:v1`,
     operation,
-    // An exclusive create is race-resistant and cannot clobber. It is deliberately NOT
-    // declared visibility-atomic: the destination file becomes visible while being written.
-    visibilityAtomic: false,
+    // An exclusive create cannot clobber but is not visibility-atomic because the destination
+    // file becomes visible while being written. Exact removal operates on one verified entry.
+    visibilityAtomic: operation === "REMOVE",
     raceResistant: true,
     noClobberCreate: true,
     replaceExisting: false,
@@ -311,6 +313,32 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
   };
 
   const requirePrepared = (intent: TransactionIntent): PreparedIntent | undefined => prepared.get(intent.intentId);
+  const verifyCapturedRecovery = async (request: {
+    readonly transactionId: string;
+    readonly intent: TransactionIntent;
+    readonly recoveryRef: string;
+    readonly expectedPreFingerprint?: string;
+    readonly expectedPostFingerprint?: string;
+  }): Promise<FilesystemResult<true>> => {
+    const state = requirePrepared(request.intent);
+    if (state === undefined) return portError(request.intent, "recovery_unprepared", "Recovery verification requires prepared transaction-private state", "RECOVERY");
+    const expectedRecoveryRef = `cli-absent:${request.intent.intentId}:${request.transactionId}`;
+    if (request.transactionId !== options.transactionId || request.recoveryRef !== expectedRecoveryRef || state.recoveryRef !== expectedRecoveryRef) {
+      return portError(request.intent, "recovery_binding_mismatch", "Recovery material is bound to another intent or transaction", "RECOVERY");
+    }
+    if (request.expectedPreFingerprint !== "absent") {
+      return portError(request.intent, "recovery_pre_state_unbound", "Recovery material does not prove the admitted absent pre-state", "RECOVERY");
+    }
+    const chain = await observeChain(state.capsule);
+    const traversal = proveFilesystemTraversal({ path: state.capsule, ancestors: chain.ancestors, target: chain.target });
+    if (!traversal.ok) return portError(request.intent, "recovery_traversal_invalid", "Recovery target ancestry no longer proves a safe contained path", "RECOVERY");
+    if (request.expectedPostFingerprint === undefined) {
+      if (chain.target.kind !== "ABSENT") return portError(request.intent, "recovery_pre_state_changed", "Recorded recovery assumption (absent target) no longer holds", "RECOVERY");
+    } else if (chain.target.kind !== "FILE" || chain.target.fingerprint !== request.expectedPostFingerprint || (chain.target.linkCount ?? 0) > 1) {
+      return portError(request.intent, "recovery_current_state_changed", "Current target no longer matches the transaction-owned post-state", "RECOVERY");
+    }
+    return ok(true);
+  };
 
   return {
     async observe(path: FilesystemPathCapsule, _context: FilesystemExecutionContext) {
@@ -332,11 +360,14 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
       } catch {
         destination = request.path.physicalRoot;
       }
-      const staging = await claimStaging(options.privateArea, stagingDirectories, options.transactionId);
       const destinationId = String((await stat(destination)).dev);
-      const stagingId = String((await stat(staging.path)).dev);
+      let stagingId: string | undefined;
+      if (request.path.operation !== "REMOVE") {
+        const staging = await claimStaging(options.privateArea, stagingDirectories, options.transactionId);
+        stagingId = String((await stat(staging.path)).dev);
+      }
       return ok({
-        primitive: cliPrimitiveFor("CREATE", durability),
+        primitive: cliPrimitiveFor(request.path.operation === "REMOVE" ? "REMOVE" : "CREATE", durability),
         stagingAuthorityRef: `${options.rootRef}:${PRIVATE_DIRECTORY}`,
         ...(stagingId === undefined ? {} : { stagingFilesystemId: stagingId }),
         ...(destinationId === undefined ? {} : { destinationFilesystemId: destinationId }),
@@ -367,13 +398,7 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
     },
 
     async verifyRecovery(request) {
-      const observed = await observeEntry("", request.recoveryRef.includes(":") ? options.targetRoot : options.targetRoot);
-      void observed;
-      const state = requirePrepared(request.intent);
-      if (state === undefined) return portError(request.intent, "recovery_unprepared", "Recovery verification requires prepared transaction-private state", "RECOVERY");
-      const target = await observeEntry(state.capsule.normalizedRelativePath, state.capsule.physicalTarget);
-      if (target.kind !== "ABSENT") return portError(request.intent, "recovery_pre_state_changed", "Recorded recovery assumption (absent target) no longer holds", "RECOVERY");
-      return ok(true);
+      return verifyCapturedRecovery(request);
     },
 
     async stage(request) {
@@ -484,6 +509,14 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
     async restore(request) {
       const state = requirePrepared(request.intent);
       if (state === undefined) return portError(request.intent, "restore_unprepared", "Rollback requires prepared state", "RECOVERY");
+      const recovery = await verifyCapturedRecovery({
+        transactionId: options.transactionId,
+        intent: request.intent,
+        recoveryRef: request.recoveryRef,
+        expectedPreFingerprint: "absent",
+        ...(state.desiredFingerprint === undefined ? {} : { expectedPostFingerprint: state.desiredFingerprint }),
+      });
+      if (!recovery.ok) return recovery;
       const observed = await observeEntry(state.capsule.normalizedRelativePath, state.capsule.physicalTarget);
       if (observed.kind === "ABSENT") return ok({});
       // Managed creation owns exactly the content whose fingerprint it promoted. Rollback
@@ -492,7 +525,12 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
       if (state.desiredFingerprint === undefined || observed.fingerprint !== state.desiredFingerprint) {
         return portError(request.intent, "rollback_fingerprint_mismatch", "Rollback refuses to remove content it does not own", "RECOVERY");
       }
-      await rm(state.capsule.physicalTarget, { force: true });
+      try {
+        // unlink cannot recursively remove a directory that replaced the verified file.
+        await unlink(state.capsule.physicalTarget);
+      } catch {
+        return portError(request.intent, "rollback_unlink_failed", "The verified managed entry could not be removed during rollback", "RECOVERY");
+      }
       return ok({});
     },
   };
@@ -657,7 +695,7 @@ export function createJournalPort(privateArea: PrivateArea): CliJournalPort {
 // Authorization binding
 // ---------------------------------------------------------------------------
 
-export type MutationPurpose = "STATE_INIT" | "STATE_ADOPT" | "RECEIPT_INIT" | "RECEIPT_ADOPT";
+export type MutationPurpose = "STATE_INIT" | "STATE_ADOPT" | "STATE_UPGRADE" | "RECEIPT_INIT" | "RECEIPT_ADOPT" | "RECEIPT_UPGRADE";
 
 export type MutationSurfaceMode = "EXACT" | "PREFIX";
 
@@ -671,7 +709,7 @@ export type MutationSurfaceMode = "EXACT" | "PREFIX";
  */
 export interface AuthorizedMutationBinding {
   readonly commandId: string;
-  readonly verb: "init" | "adopt";
+  readonly verb: "init" | "adopt" | "upgrade";
   readonly purpose: MutationPurpose;
   readonly policyRef: string;
   readonly moduleOwner: string;
@@ -703,6 +741,16 @@ export const ADMITTED_MUTATION_BINDINGS: readonly AuthorizedMutationBinding[] = 
     classification: "MUTATING",
   },
   {
+    commandId: "gef.upgrade.apply",
+    verb: "upgrade",
+    purpose: "STATE_UPGRADE",
+    policyRef: "cli:upgrade:managed-write:v1",
+    moduleOwner: "m48-m54-maintenance",
+    artifact: ".gef/upgrade-state.json",
+    surfaceMode: "EXACT",
+    classification: "MUTATING",
+  },
+  {
     // Receipt persistence has its own admitted purpose: it must not borrow a state-command
     // identity under an unrelated receipt policy.
     commandId: "gef.init.run",
@@ -718,6 +766,16 @@ export const ADMITTED_MUTATION_BINDINGS: readonly AuthorizedMutationBinding[] = 
     commandId: "gef.adopt.apply",
     verb: "adopt",
     purpose: "RECEIPT_ADOPT",
+    policyRef: "cli:receipt:managed-write:v1",
+    moduleOwner: "cli.transport",
+    artifact: ".gef/receipts/",
+    surfaceMode: "PREFIX",
+    classification: "REVERSIBLE",
+  },
+  {
+    commandId: "gef.upgrade.apply",
+    verb: "upgrade",
+    purpose: "RECEIPT_UPGRADE",
     policyRef: "cli:receipt:managed-write:v1",
     moduleOwner: "cli.transport",
     artifact: ".gef/receipts/",
@@ -898,6 +956,11 @@ export interface GovernedCreateRequest {
   readonly commandId: string;
   /** Mutation purpose the authorization binding is resolved for. */
   readonly purpose: MutationPurpose;
+  /** Additional exact pre-state bindings re-observed by the kernel at its commit barrier. */
+  readonly preconditions?: readonly { readonly key: string; readonly owner: string; readonly value: string }[];
+  readonly observePrecondition?: (key: string) => Promise<string | undefined> | string | undefined;
+  /** Run the certified kernel rollback when a target-visible effect fails verification. */
+  readonly automaticRecovery?: boolean;
 }
 
 export interface GovernedCreateOutcome {
@@ -906,6 +969,7 @@ export interface GovernedCreateOutcome {
   readonly planDigest?: string;
   readonly receiptDigest?: string;
   readonly postFingerprint?: string;
+  readonly recoveryOutcome?: string;
   readonly error?: GefError;
 }
 
@@ -917,7 +981,8 @@ function resolverFor(request: GovernedCreateRequest, caseSemantics: "SENSITIVE" 
     physicalRoot: request.targetRoot,
     pathFlavor: (sep === "\\" ? "WINDOWS" : "POSIX") as "WINDOWS" | "POSIX",
     caseSemantics,
-    allowedOperations: ["READ", "CREATE", "STAGE"] as const,
+    // REMOVE is used only by the kernel's certified rollback of this CREATE plan.
+    allowedOperations: ["READ", "CREATE", "STAGE", "REMOVE"] as const,
     policyRef: request.policyRef,
     pathSemanticsRef: `cli:${process.platform}:v1`,
   };
@@ -943,6 +1008,13 @@ function planBodyFor(request: GovernedCreateRequest): TransactionPlanBody {
     targetBinding: { targetRef: `target:${request.targetRoot}`, bindingStrength: "OPERATIONAL_ONLY" },
     expectedPreState: [
       { key: managedRef, owner: request.moduleOwner, predicate: "EXACT", value: "absent", contractVersion: "cli-tx-v1" },
+      ...(request.preconditions ?? []).map((precondition) => ({
+        key: precondition.key,
+        owner: precondition.owner,
+        predicate: "EXACT" as const,
+        value: precondition.value,
+        contractVersion: "cli-tx-v1",
+      })),
     ],
     securityClass: "S1_MANAGED_WRITE",
     authorizationRequirements: [request.policyRef],
@@ -978,9 +1050,16 @@ const CLIENT_DIGEST_PORT: DigestPort = { digest: (canonicalValue: string) => sha
  * The pre-state binding is a real observation of the admitted target, so the kernel commit
  * barrier can detect a target that appeared or changed after planning.
  */
-export function createStatePort(targetRoot: string, managedRef: string): TransactionStatePort {
+export function createStatePort(
+  targetRoot: string,
+  managedRef: string,
+  preconditions: GovernedCreateRequest["preconditions"] = [],
+  observePrecondition?: GovernedCreateRequest["observePrecondition"],
+): TransactionStatePort {
+  const expectedPreconditions = new Map((preconditions ?? []).map((item) => [item.key, item.value] as const));
   return {
     async observeBinding(binding) {
+      if (expectedPreconditions.has(binding.key)) return ok(await observePrecondition?.(binding.key));
       if (binding.key !== managedRef && binding.key !== `target:${managedRef}`) return ok(undefined);
       // A real observation of the admitted target, so `revalidatePreState` can detect a target
       // that appeared or changed between planning and the commit barrier.
@@ -988,8 +1067,10 @@ export function createStatePort(targetRoot: string, managedRef: string): Transac
       if (observed.kind === "ABSENT") return ok("absent");
       return ok(observed.fingerprint ?? observed.kind);
     },
-    observeTargetFingerprint() {
-      return ok(undefined);
+    async observeTargetFingerprint(targetRef) {
+      if (targetRef !== managedRef) return ok(undefined);
+      const observed = await observeEntry(managedRef, join(targetRoot, managedRef));
+      return ok(observed.kind === "ABSENT" ? undefined : observed.fingerprint ?? observed.kind);
     },
   };
 }
@@ -1030,6 +1111,9 @@ function privateAuthorityFailure(cause: unknown, request: GovernedCreateRequest)
 export interface GovernedCreateOverrides {
   /** Test seam only: the production default is the real authorization port. */
   readonly authorization?: TransactionAuthorizationPort;
+  /** Test-only transaction fault injection; never exposed by the CLI command surface. */
+  readonly failPostStateVerification?: boolean;
+  readonly failRollbackRecoveryVerification?: boolean;
 }
 
 export async function applyGovernedCreate(request: GovernedCreateRequest, overrides?: GovernedCreateOverrides): Promise<GovernedCreateOutcome> {
@@ -1072,11 +1156,30 @@ export async function applyGovernedCreate(request: GovernedCreateRequest, overri
   const plan = compiled.value;
 
   const payloads = new Map<string, string>([[request.relativePath, request.content]]);
-  const effects = createFilesystemEffectAdapter({
+  const baseEffects = createFilesystemEffectAdapter({
     transactionId: request.transactionId,
     resolver: resolverFor(request, caseSemantics, privateArea),
     physical: createPhysicalPort({ targetRoot: request.targetRoot, rootRef: `target:${request.targetRoot}`, transactionId: request.transactionId, caseSemantics, privateArea, payloads, policyRef: request.policyRef }),
   });
+  const effects: TransactionEffectPort = overrides?.failPostStateVerification === true || overrides?.failRollbackRecoveryVerification === true
+    ? {
+        ...baseEffects,
+        ...(overrides.failPostStateVerification === true ? {
+          async verifyPostState(plan, applied, obligations) {
+            const intent = plan.intents[0];
+            return intent === undefined
+              ? baseEffects.verifyPostState(plan, applied, obligations)
+              : portError(intent, "test_post_state_failure", "Injected test failure after managed promotion", "VERIFICATION");
+          },
+        } : {}),
+        ...(overrides.failRollbackRecoveryVerification === true && baseEffects.verifyRecoveryMaterial !== undefined ? {
+          async verifyRecoveryMaterial(request) {
+            if (request.phase === "ROLLBACK") return portError(request.intent, "test_recovery_material_invalid", "Injected test corruption of rollback material", "RECOVERY");
+            return baseEffects.verifyRecoveryMaterial?.(request) ?? portError(request.intent, "recovery_unavailable", "Recovery verification is unavailable", "RECOVERY");
+          },
+        } : {}),
+      }
+    : baseEffects;
 
   const binding = bindingFor(request.commandId, request.purpose);
   if (binding === undefined) {
@@ -1112,7 +1215,7 @@ export async function applyGovernedCreate(request: GovernedCreateRequest, overri
 
   const ports: TransactionPorts = {
     digest: CLIENT_DIGEST_PORT,
-    state: createStatePort(request.targetRoot, request.relativePath),
+    state: createStatePort(request.targetRoot, request.relativePath, request.preconditions, request.observePrecondition),
     authorization,
     journal: journalPort,
     effects,
@@ -1121,6 +1224,97 @@ export async function applyGovernedCreate(request: GovernedCreateRequest, overri
   let result: Awaited<ReturnType<typeof applyTransaction>>;
   try {
     result = await applyTransaction({ plan, runId: request.runId, transactionId: request.transactionId, authorizationRefs: [binding.policyRef], ports });
+    if (!result.ok && request.automaticRecovery === true && result.receipt !== undefined && (result.outcome === "RECOVERY_REQUIRED" || result.outcome === "FAILED_POST_STATE_VERIFICATION")) {
+      try {
+        const verifyRollbackMaterial = async (intent: TransactionIntent) => {
+          const applied = result.receipt?.appliedIntentResults.find((entry) => entry.intentId === intent.intentId);
+          if (applied?.recoveryRef === undefined || effects.verifyRecoveryMaterial === undefined) {
+            return portError(intent, "recovery_material_unavailable", "The apply receipt does not contain verifiable recovery material", "RECOVERY");
+          }
+          const before = plan.expectedPreState.find((entry) => entry.key === intent.targetRef || entry.key === `target:${intent.targetRef}`)?.value;
+          const after = applied.postFingerprint ?? intent.desiredFingerprint;
+          return effects.verifyRecoveryMaterial({
+            phase: "ROLLBACK",
+            planDigest: plan.planDigest,
+            transactionId: request.transactionId,
+            intent,
+            recoveryRef: applied.recoveryRef,
+            ...(before === undefined ? {} : { expectedPreFingerprint: before }),
+            ...(after === undefined ? {} : { expectedPostFingerprint: after }),
+          });
+        };
+        // The apply-time CREATE precondition is intentionally absent-only. During rollback the
+        // kernel has already proven the current post-fingerprint, so rerun the exact recovery
+        // material and contained-path proof instead of reusing that now-stale CREATE check.
+        const rollbackEffects: TransactionEffectPort = {
+          ...effects,
+          async revalidateCommitBarrier(rollbackPlan) {
+            for (const intent of rollbackPlan.intents) {
+              const verified = await verifyRollbackMaterial(intent);
+              if (!verified.ok) return verified;
+            }
+            return ok(true);
+          },
+          async restore(restoreRequest) {
+            const restored = await effects.restore(restoreRequest);
+            return restored;
+          },
+          async checkPhysicalSafety(intent) {
+            return verifyRollbackMaterial(intent);
+          },
+        };
+        const rollback = await rollbackTransaction({
+          plan,
+          applyReceipt: result.receipt,
+          recoveryRunId: request.runId,
+          ports: { ...ports, effects: rollbackEffects },
+          authorizationRefs: [binding.policyRef],
+        });
+        if (rollback.outcome === "RESTORED" || rollback.outcome === "ALREADY_RESTORED") {
+          return {
+            ok: false,
+            outcome: "RECOVERED",
+            planDigest: plan.planDigest,
+            receiptDigest: rollback.receiptDigest,
+            recoveryOutcome: rollback.outcome,
+            error: {
+              ...result.error,
+              id: "cli-transaction-recovered",
+              category: "EXECUTION",
+              reasonCode: "gef.execution.transaction_recovered",
+              severity: "WARNING",
+              summary: "The transaction failed and its managed target was restored",
+              retryability: "NEVER",
+              recoverability: "NONE_REQUIRED",
+              effectStatus: "NONE",
+              terminal: "BLOCKED",
+              metadata: { ...result.error.metadata, applyOutcome: result.outcome, rollbackOutcome: rollback.outcome },
+            },
+          };
+        }
+        return {
+          ok: false,
+          outcome: "RECOVERY_REQUIRED",
+          planDigest: plan.planDigest,
+          recoveryOutcome: rollback.outcome,
+          error: {
+            ...result.error,
+            metadata: { ...result.error.metadata, applyOutcome: result.outcome, rollbackOutcome: rollback.outcome },
+          },
+        };
+      } catch (cause: unknown) {
+        return {
+          ok: false,
+          outcome: "RECOVERY_REQUIRED",
+          planDigest: plan.planDigest,
+          recoveryOutcome: "ROLLBACK_FAILED",
+          error: {
+            ...result.error,
+            metadata: { ...result.error.metadata, applyOutcome: result.outcome, rollbackFailure: cause instanceof Error ? cause.name : "UNKNOWN" },
+          },
+        };
+      }
+    }
   } catch (cause: unknown) {
     // A containment refusal raised by the private authority during journal or staging work is a
     // governed block, never an internal failure.

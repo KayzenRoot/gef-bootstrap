@@ -1,21 +1,22 @@
 /**
  * Bounded V1.1 CLI command registrations and engine delegation.
  *
- * The CLI is transport only. Every handler composes verified V1 engines and returns their
- * payload; no business policy is implemented here.
+ * Handlers compose verified V1 engines and the bounded WO-004 upgrade application module, then
+ * return their payload; rendering remains policy-free.
  *
  * Delegation map (frozen by `.engineering/releases/V1.1-CLI-DISTRIBUTION-ARCHITECTURE.md`):
  *   gef init   -> installPlan, repositoryState, githubBootstrap, detectDrift, resolveCanonical
  *   gef adopt  -> detectDrift, resolveCanonical, backupManifest, recoveryPlan, installPlan
- *   both       -> the kernel transaction engine for every managed filesystem effect
+ *   upgrade    -> upgradePreview, maintenance compatibility, installPlan, backupManifest, recoveryPlan
+ *   all applies -> the kernel transaction engine for every managed filesystem effect
  *
  * The V1 domain engines are untyped `.mjs`/`.js` modules. They are reached through the loader
  * below, which resolves a declared candidate order and verifies the expected exports are
  * callable before use. A missing or malformed engine fails closed as a CAPABILITY error.
  *
- * Constraint C5: colliding exports are bound by explicit module ownership. `compatibility`,
- * `redactSecrets` and the path-containment helpers are never consumed, and `digest` is never
- * imported from an engine — node:crypto is used directly.
+ * Constraint C5: maintenance-owned `compatibility` is explicitly bound for upgrade requirements;
+ * the safety collision, `redactSecrets` and path-containment helpers are not consumed, and `digest`
+ * is never imported from an engine — node:crypto is used directly.
  * Constraint C3: the implemented package layout at the base is used as-is.
  */
 
@@ -37,6 +38,7 @@ import type { MutablePreflightCounters, ToolDescriptor, ToolObservation, ToolObs
 import { CLI_CONTRACT_VERSION } from "./parser.js";
 import { buildStateDocument, requireSupportedSchemaVersion, UnsupportedDocumentVersionError } from "./schemas.js";
 import { applyGovernedCreate } from "./transaction.js";
+import { buildUpgradeStateDocument, composeUpgradePreview, UPGRADE_MIGRATION_ID, UPGRADE_STATE_REF, upgradePreconditionKey, upgradeRepositoryIdentityFingerprint, upgradeStateFingerprint } from "./upgrade.js";
 
 // The verified engine boundary lives in its own module so the command registry and the
 // transaction driver can both use it without a circular import.
@@ -57,7 +59,8 @@ import type {
 
 /** Re-exported from the parser so one vocabulary describes every admitted verb. */
 export type { CliVerb } from "./parser.js";
-export type MutationVerb = "init" | "adopt";
+export type MutationVerb = "init" | "adopt" | "upgrade";
+type LegacyMutationVerb = "init" | "adopt";
 export type DiagnosisVerb = "doctor" | "status";
 
 export interface CliCommandInput {
@@ -70,7 +73,7 @@ function validateCliInput(input: unknown): { readonly ok: true; readonly value: 
   if (input === null || typeof input !== "object") return { ok: false, reason: "input_must_be_object" };
   const record = input as Record<string, unknown>;
   const verb = record["verb"];
-  if (verb !== "init" && verb !== "adopt") return { ok: false, reason: "verb_must_be_init_or_adopt" };
+  if (verb !== "init" && verb !== "adopt" && verb !== "upgrade") return { ok: false, reason: "verb_must_be_init_adopt_or_upgrade" };
   const apply = record["apply"];
   if (typeof apply !== "boolean") return { ok: false, reason: "apply_must_be_boolean" };
   const targetRef = record["targetRef"];
@@ -1388,7 +1391,7 @@ function adoptComposition(engines: Engines, observation: TargetObservation, repo
   };
 }
 
-function composeFor(engines: Engines, verb: MutationVerb, targetRef: string, productVersion: string) {
+function composeFor(engines: Engines, verb: LegacyMutationVerb, targetRef: string, productVersion: string) {
   const observation = observeTarget(targetRef);
   const repository = observeRepository(targetRef);
   // A verdict is derived only from an observation that actually saw the working tree. While the
@@ -1662,7 +1665,7 @@ function resolveTargetRequested(input: CliCommandInput, context: ExecutionContex
   return context.target?.targetRef ?? input.targetRef ?? context.ports.environment?.values["GEF_TARGET"] ?? process.cwd();
 }
 
-async function planHandler(verb: MutationVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
+async function planHandler(verb: LegacyMutationVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
   const commandId = verb === "init" ? "gef.init.plan" : "gef.adopt.preview";
   let engines: Engines;
   try {
@@ -1676,7 +1679,7 @@ async function planHandler(verb: MutationVerb, input: CliCommandInput, context: 
   return { ok: true, value: { commandId, effect: "NONE", [key]: composed.body, [`${key}Digest`]: composed.digest } };
 }
 
-async function applyHandler(verb: MutationVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
+async function applyHandler(verb: LegacyMutationVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
   const commandId = verb === "init" ? "gef.init.run" : "gef.adopt.apply";
   let engines: Engines;
   try {
@@ -1791,6 +1794,185 @@ async function applyHandler(verb: MutationVerb, input: CliCommandInput, context:
         planDigest: applied.planDigest,
         receiptDigest: applied.receiptDigest,
         postFingerprint: applied.postFingerprint,
+      },
+    },
+  };
+}
+
+function composeUpgradeFor(targetRef: string, context: ExecutionContext, engines: Engines) {
+  const targetRoot = resolve(targetRef);
+  const observation = observeTarget(targetRoot);
+  const repository = observeRepository(targetRoot);
+  const nodeMajor = Number.parseInt(context.identity.nodeVersion.split(".")[0] ?? "0", 10);
+  const composition = composeUpgradePreview({
+    targetRoot,
+    productVersion: context.identity.productVersion,
+    platform: context.identity.platform,
+    nodeMajor,
+    observationFingerprint: observation.stateFingerprint,
+    repository: {
+      dirtiness: repository.dirtiness,
+      input: { ...repository.input },
+      observationLimits: repository.observationLimits,
+    },
+    readFile: (relativeRef) => readContainedDiagnosticFile(targetRoot, relativeRef),
+    engines,
+  });
+  return { composition, repository, targetRoot };
+}
+
+async function upgradePreviewHandler(input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
+  const commandId = "gef.upgrade.preview";
+  let engines: Engines;
+  try {
+    engines = await loadEngines();
+  } catch (error: unknown) {
+    return { ok: false, error: engineFailure(error, commandId, context.runId) };
+  }
+  const targetRef = resolveTargetRequested(input, context);
+  const { composition } = composeUpgradeFor(targetRef, context, engines);
+  return { ok: true, value: { commandId, effect: "NONE", preview: composition.body, previewDigest: composition.digest } };
+}
+
+function upgradeReadinessFailure(readiness: string, reason: string, commandId: string, runId: string, digest: string) {
+  const category = readiness === "UNSUPPORTED" ? "CAPABILITY" : readiness === "USER_MODIFIED" ? "INTEGRITY" : readiness === "RECOVERY_REQUIRED" ? "RECOVERY" : "PRECONDITION";
+  const recoveryRequired = readiness === "RECOVERY_REQUIRED";
+  return createGefError({
+    id: `cli-upgrade-${readiness.toLowerCase()}`,
+    category,
+    reason: `upgrade_${readiness.toLowerCase()}`,
+    severity: recoveryRequired ? "CRITICAL" : "ERROR",
+    summary: `Upgrade is not safe to apply: ${reason}`,
+    retryability: "NEVER",
+    recoverability: recoveryRequired ? "RECOVERY_REQUIRED" : "NONE_REQUIRED",
+    terminal: recoveryRequired ? "RECOVERY_REQUIRED" : "BLOCKED",
+    effectStatus: recoveryRequired ? "PARTIAL" : "NONE",
+    commandId,
+    runId,
+    metadata: { readiness, reason, previewDigest: digest },
+  });
+}
+
+async function upgradeApplyHandler(input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
+  const commandId = "gef.upgrade.apply";
+  let engines: Engines;
+  try {
+    engines = await loadEngines();
+  } catch (error: unknown) {
+    return { ok: false, error: engineFailure(error, commandId, context.runId) };
+  }
+
+  const targetRef = resolveTargetRequested(input, context);
+  const target = composeUpgradeFor(targetRef, context, engines);
+  const { composition, repository, targetRoot } = target;
+
+  if (composition.readiness === "NOOP" && composition.existingDocument !== undefined && composition.existingBytes !== undefined) {
+    const transactionFingerprint = upgradeStateFingerprint(composition.existingBytes);
+    return {
+      ok: true,
+      value: {
+        commandId,
+        effect: "CONFIRMED",
+        preview: composition.body,
+        previewDigest: composition.digest,
+        document: composition.existingDocument,
+        artifactRef: UPGRADE_STATE_REF,
+        transaction: { outcome: "NOOP_APPLIED", planDigest: composition.digest, postFingerprint: transactionFingerprint },
+      },
+    };
+  }
+
+  if (composition.readiness !== "READY" || composition.source === undefined) {
+    return { ok: false, error: upgradeReadinessFailure(composition.readiness, String((composition.body["state"] as Record<string, unknown>)?.["reason"] ?? "upgrade preconditions are not proven"), commandId, context.runId, composition.digest) };
+  }
+  if (repository.dirtiness !== "OBSERVED") {
+    return { ok: false, error: upgradeReadinessFailure("INDETERMINATE", "trusted Git working-tree evidence is unavailable", commandId, context.runId, composition.digest) };
+  }
+  const operation = repository.input["operation"];
+  if (operation !== undefined) {
+    return { ok: false, error: upgradeReadinessFailure("INDETERMINATE", `Git operation is in progress: ${operation}`, commandId, context.runId, composition.digest) };
+  }
+
+  // Recompute the source, compatibility row and exact preview immediately before the governed
+  // transaction. The kernel then binds the source bytes and trusted Git identity at its barrier.
+  const revalidated = composeUpgradeFor(targetRoot, context, engines).composition;
+  if (revalidated.readiness !== "READY" || revalidated.digest !== composition.digest || revalidated.source === undefined) {
+    return { ok: false, error: upgradeReadinessFailure(revalidated.readiness === "READY" ? "CONFLICTING" : revalidated.readiness, "upgrade preconditions changed after preview", commandId, context.runId, revalidated.digest) };
+  }
+
+  const row = (composition.body["compatibility"] as Record<string, unknown>)["row"] as Record<string, unknown>;
+  const document = buildUpgradeStateDocument({
+    productVersion: context.identity.productVersion,
+    runId: context.runId,
+    source: composition.source,
+    planDigest: composition.digest,
+    observationFingerprint: String(composition.body["observationFingerprint"]),
+    migrationId: String(row["migrationId"] ?? UPGRADE_MIGRATION_ID),
+  });
+  const content = `${JSON.stringify(document, null, 2)}\n`;
+  const applied = await applyGovernedCreate({
+    targetRoot,
+    relativePath: UPGRADE_STATE_REF,
+    content,
+    contentFingerprint: createHash("sha256").update(content).digest("hex"),
+    runId: context.runId,
+    transactionId: `${context.runId}:upgrade`,
+    policyRef: "cli:upgrade:managed-write:v1",
+    moduleOwner: "m48-m54-maintenance",
+    commandId,
+    purpose: "STATE_UPGRADE",
+    preconditions: composition.preconditions,
+    observePrecondition: (key) => {
+      if (key === upgradePreconditionKey("repository-identity")) {
+        const currentRepository = observeRepository(targetRoot);
+        return currentRepository.dirtiness === "OBSERVED" ? upgradeRepositoryIdentityFingerprint({ ...currentRepository.input }) : undefined;
+      }
+      if (!key.startsWith("upgrade-precondition:")) return undefined;
+      const current = readContainedDiagnosticFile(targetRoot, key.slice("upgrade-precondition:".length));
+      return current.status === "OK" && current.bytes !== null ? createHash("sha256").update(current.bytes).digest("hex") : undefined;
+    },
+    automaticRecovery: true,
+  });
+  if (!applied.ok) {
+    const base = applied.error ?? createGefError({
+      id: `cli-tx-${commandId}`,
+      category: applied.outcome === "RECOVERY_REQUIRED" ? "RECOVERY" : "EXECUTION",
+      reason: "transaction_failed",
+      severity: applied.outcome === "RECOVERY_REQUIRED" ? "CRITICAL" : "ERROR",
+      summary: "The governed upgrade transaction did not apply",
+      retryability: "NEVER",
+      recoverability: applied.outcome === "RECOVERY_REQUIRED" ? "RECOVERY_REQUIRED" : "NONE_REQUIRED",
+      terminal: applied.outcome === "RECOVERY_REQUIRED" ? "RECOVERY_REQUIRED" : "BLOCKED",
+      effectStatus: applied.outcome === "RECOVERY_REQUIRED" ? "PARTIAL" : "NONE",
+      commandId,
+      runId: context.runId,
+      metadata: { outcome: applied.outcome, recoveryOutcome: applied.recoveryOutcome ?? null },
+    });
+    const wrapped = transactionFailure(base, commandId, context.runId);
+    return {
+      ok: false,
+      error: {
+        ...wrapped,
+        ...(applied.outcome === "RECOVERY_REQUIRED" ? { category: "RECOVERY" as const, severity: "CRITICAL" as const, recoverability: "RECOVERY_REQUIRED" as const, terminal: "RECOVERY_REQUIRED" as const, effectStatus: "PARTIAL" as const } : {}),
+        metadata: { ...wrapped.metadata, outcome: applied.outcome, recoveryOutcome: applied.recoveryOutcome ?? null },
+      },
+    };
+  }
+
+  return {
+    ok: true,
+    value: {
+      commandId,
+      effect: "CONFIRMED",
+      preview: composition.body,
+      previewDigest: composition.digest,
+      document,
+      artifactRef: UPGRADE_STATE_REF,
+      transaction: {
+        outcome: applied.outcome,
+        planDigest: applied.planDigest ?? composition.digest,
+        ...(applied.receiptDigest === undefined ? {} : { receiptDigest: applied.receiptDigest }),
+        ...(applied.postFingerprint === undefined ? {} : { postFingerprint: applied.postFingerprint }),
       },
     },
   };
@@ -2032,6 +2214,8 @@ export const CLI_COMMAND_IDS: readonly string[] = Object.freeze([
   "gef.init.run",
   "gef.adopt.preview",
   "gef.adopt.apply",
+  "gef.upgrade.preview",
+  "gef.upgrade.apply",
   "gef.doctor.run",
   "gef.status.show",
 ]);
@@ -2042,6 +2226,8 @@ export const HELP_INVENTORY: readonly HelpCommandDescriptor[] = Object.freeze([
   { id: "gef.adopt.apply", summary: "run the governed adoption path", schema: null },
   { id: "gef.init.plan", summary: "plan project initialization (safe, read-only)", schema: null },
   { id: "gef.init.run", summary: "run the governed initialization path", schema: null },
+  { id: "gef.upgrade.preview", summary: "preview a managed project upgrade (safe, read-only)", schema: null },
+  { id: "gef.upgrade.apply", summary: "apply the governed project upgrade", schema: null },
   { id: "gef.doctor.run", summary: "run read-only environment, repository and integrity diagnostics", schema: null },
   { id: "gef.status.show", summary: "show observed governed project and repository status", schema: null },
 ]);
@@ -2087,6 +2273,25 @@ export function cliRegistrations(): readonly CommandRegistration[] {
       securityClass: MUTATION_SECURITY_CLASS,
       validateInput: validateCliInput,
       handler: (input, context) => applyHandler("adopt", input, context),
+    },
+    {
+      commandId: "gef.upgrade.preview",
+      contractVersion: CLI_CONTRACT_VERSION,
+      owner: "m48-m54-maintenance",
+      mutation: false,
+      requiresTarget: false,
+      validateInput: validateCliInput,
+      handler: (input, context) => upgradePreviewHandler(input, context),
+    },
+    {
+      commandId: "gef.upgrade.apply",
+      contractVersion: CLI_CONTRACT_VERSION,
+      owner: "m48-m54-maintenance",
+      mutation: true,
+      requiresTarget: true,
+      securityClass: MUTATION_SECURITY_CLASS,
+      validateInput: validateCliInput,
+      handler: (input, context) => upgradeApplyHandler(input, context),
     },
   ];
   const diagnosisRegistrations: readonly CommandRegistration<DiagnosisInput, unknown>[] = [

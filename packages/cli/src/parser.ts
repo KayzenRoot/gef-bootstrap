@@ -9,7 +9,7 @@
 
 export const CLI_CONTRACT_VERSION = "1.0";
 
-export type CliVerb = "init" | "adopt" | "doctor" | "status";
+export type CliVerb = "init" | "adopt" | "upgrade" | "doctor" | "status";
 
 export interface ParsedCommand {
   readonly kind: "command";
@@ -40,15 +40,16 @@ export type ParseOutcome = ParsedCommand | ParsedMeta | ParseFailure;
 const ACTION_MAP: Readonly<Record<CliVerb, (apply: boolean) => string>> = Object.freeze({
   init: (apply) => (apply ? "gef.init.run" : "gef.init.plan"),
   adopt: (apply) => (apply ? "gef.adopt.apply" : "gef.adopt.preview"),
+  upgrade: (apply) => (apply ? "gef.upgrade.apply" : "gef.upgrade.preview"),
   doctor: () => "gef.doctor.run",
   status: () => "gef.status.show",
 });
 
 /** Verbs that declare an apply action. Doctor and status are read-only in this Work Order. */
-const APPLY_CAPABLE_VERBS: readonly CliVerb[] = Object.freeze(["init", "adopt"]);
+const APPLY_CAPABLE_VERBS: readonly CliVerb[] = Object.freeze(["init", "adopt", "upgrade"]);
 
-/** Verbs admitted so far. `upgrade` remains WO-004. */
-export const ADMITTED_VERBS: readonly CliVerb[] = Object.freeze(["init", "adopt", "doctor", "status"]);
+/** Verbs admitted by the V1.1 command contract. */
+export const ADMITTED_VERBS: readonly CliVerb[] = Object.freeze(["init", "adopt", "upgrade", "doctor", "status"]);
 
 function isVerb(value: string): value is CliVerb {
   return (ADMITTED_VERBS as readonly string[]).includes(value);

@@ -59,12 +59,16 @@ test('WO-004 scope is upgrade compatibility recovery and future ownership is pre
   assert.ok(wo.includes('STOP CONDITION: `GBS_V11_WO_004_READY_FOR_OBJECTIVE_AUDIT`'));
 });
 
-test('WO-004 Context Lock anchors the exact WO-003 merge and immutable production refs', () => {
-  assert.equal(lock.baseSha, '22c5ce65443f1a7855a2967ff7837aadb98e0ba1');
+test('WO-004 Context Lock preserves lineage and binds the authorized refreshed clean baseline', () => {
+  assert.equal(lock.baseSha, 'b97f2b454ef2647823b682da13b69a501d82c794');
+  assert.equal(lock.refresh?.previousBaseSha, 'f5141d6548474f41884f19ffd432bddd3d23f6fc');
+  assert.equal(lock.refresh?.refreshedBaseSha, 'b97f2b454ef2647823b682da13b69a501d82c794');
+  assert.equal(lock.refresh?.preservesWorkOrderScope, true);
+  assert.ok(lock.canonicalSources.some((source) => source.path === '.engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md'));
   assert.equal(lock.productionShaAtLock, '72c17bd3e7e421790ac382022b1f0ebbb0275ea4');
   assert.equal(lock.v100TagObjectAtLock, 'aac89f9c3f0c884474958025bf14828bc338b5ee');
   assert.equal(lock.v100TagTargetAtLock, '866fe3af8cccc65c929aaf6a47a924401fa448b3');
-  assert.equal(lock.implementationBranch, 'feat/1.1/wo-004-upgrade-recovery');
+  assert.equal(lock.implementationBranch, 'feat/1.1/wo-004-upgrade-recovery-clean');
   assert.equal(lock.executorAuthority, 'ADR-0003-D3');
   assert.equal(lock.assurance, 'HIGH_ASSURANCE');
   assert.ok(lock.canonicalSources.length >= 12);

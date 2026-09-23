@@ -170,7 +170,7 @@ test("help and verb help cover both diagnostic commands deterministically", () =
   const global = gef(["--help"]);
   assert.equal(global.code, 0);
   const ids = JSON.parse(global.stdout).commands.map((command) => command.id);
-  assert.deepEqual(ids, ["gef.adopt.apply", "gef.adopt.preview", "gef.doctor.run", "gef.init.plan", "gef.init.run", "gef.status.show"]);
+  assert.deepEqual(ids, ["gef.adopt.apply", "gef.adopt.preview", "gef.doctor.run", "gef.init.plan", "gef.init.run", "gef.status.show", "gef.upgrade.apply", "gef.upgrade.preview"]);
   assert.equal(global.stdout, gef(["--help"]).stdout, "help must be byte-identical across runs");
   for (const verb of ["doctor", "status"]) assert.equal(gef([verb, "--help"]).code, 0);
 });
@@ -186,7 +186,7 @@ test("malformed input stays on exit 10 and mutates nothing", (t) => {
   assert.equal(gef(["status", "--target"]).code, 10);
   assert.equal(gef(["doctor", "--apply", "--target", project]).code, 10, "a mutation flag must be refused for a read-only command");
   assert.equal(gef(["status", "--apply", "--target", project]).code, 10);
-  assert.equal(gef(["upgrade", "--target", project]).code, 10, "upgrade remains WO-004");
+  assert.equal(gef(["upgrade", "--unknown", "--target", project]).code, 10, "malformed upgrade input must remain a usage failure");
 
   assert.deepEqual(snapshot(project), before, "usage failures must leave the project untouched");
   assert.ok(!existsSync(join(project, ".gef")));

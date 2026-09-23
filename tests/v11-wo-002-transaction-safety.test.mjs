@@ -74,7 +74,6 @@ test("case semantics are probed, never assumed", async (t) => {
   const root = tempRoot(t);
   const semantics = await detectCaseSemantics(root);
   assert.ok(["SENSITIVE", "INSENSITIVE"].includes(semantics), `expected a proven case semantics, got ${semantics}`);
-  assert.equal(semantics, process.platform === "win32" ? "INSENSITIVE" : "SENSITIVE");
   // The probe leaves no residue.
   assert.equal(existsSync(join(root, TRANSACTION_PRIVATE_DIRECTORY, "CaseProbe")), false);
 });

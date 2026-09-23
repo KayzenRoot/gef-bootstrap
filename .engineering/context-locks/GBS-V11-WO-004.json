@@ -6,24 +6,24 @@
   "assurance": "HIGH_ASSURANCE",
   "repository": "KayzenRoot/gef-bootstrap",
   "baseRef": "release/1.1",
-  "baseSha": "22c5ce65443f1a7855a2967ff7837aadb98e0ba1",
+  "baseSha": "b97f2b454ef2647823b682da13b69a501d82c794",
   "productionRef": "main",
   "productionShaAtLock": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
   "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
   "v100TagTargetAtLock": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
-  "implementationBranch": "feat/1.1/wo-004-upgrade-recovery",
+  "implementationBranch": "feat/1.1/wo-004-upgrade-recovery-clean",
   "executorAuthority": "ADR-0003-D3",
   "executorAuthorityEffective": true,
-  "authorityPrecondition": "Executable only after the WO-003 promotion / WO-004 admission governance PR merges into release/1.1. The implementation branch must be created from that exact admission merge, not from this governance branch or the pre-admission base.",
+  "authorityPrecondition": "Executable implementation branch is rooted at the exact post-detachment V1.1 baseline b97f2b454ef2647823b682da13b69a501d82c794; objective audit must bind the final implementation head against that baseline.",
   "canonicalSources": [
     {
       "path": ".engineering/CHECKPOINT.json",
-      "baseBlobSha": "b09184d6ba5a520d6acb29982f524a1c2463ae45",
+      "baseBlobSha": "305a463f4465b9d23c0cf8705826bb3bcd672ef5",
       "fingerprintKind": "git-blob-sha1"
     },
     {
       "path": ".engineering/DECISIONS-LEDGER.md",
-      "baseBlobSha": "a1633144edcf9e68698731fb7c16f7986713d925",
+      "baseBlobSha": "65167869fd424b32e82bf912876821cf35d908b1",
       "fingerprintKind": "git-blob-sha1"
     },
     {
@@ -37,13 +37,18 @@
       "fingerprintKind": "git-blob-sha1"
     },
     {
+      "path": ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md",
+      "baseBlobSha": "786eba0313202f2f2648461a2fc4e6f81190969a",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
       "path": ".engineering/releases/V1.1-SCOPE.md",
       "baseBlobSha": "b8d05dae2e9584b2fed6670c65751f493f698c8e",
       "fingerprintKind": "git-blob-sha1"
     },
     {
       "path": ".engineering/ARCHITECTURE.md",
-      "baseBlobSha": "c2221b95f501b1a835e092e66c4121a7e97ee347",
+      "baseBlobSha": "c5eda022280e47ff4b45070193d196929a3a1ec0",
       "fingerprintKind": "git-blob-sha1"
     },
     {
@@ -74,7 +79,8 @@
     {
       "path": ".engineering/work-orders/GBS-V11-WO-004.md",
       "admissionBlobSha": "f89aaefc2cd36cf45a90ad49ac1d6112a44bccb2",
-      "fingerprintKind": "git-blob-sha1"
+      "fingerprintKind": "git-blob-sha1",
+      "baseBlobSha": "f89aaefc2cd36cf45a90ad49ac1d6112a44bccb2"
     }
   ],
   "knownFindings": [
@@ -135,13 +141,18 @@
   ],
   "readPolicy": "Start from WO-004, this lock, checkpoint, current CLI/distribution architecture, merged WO-002/WO-003 CLI/transaction code, and the explicitly named upgrade/recovery engines. Do not begin with repository-wide rediscovery. Expand only on concrete import/type/test/dependency evidence and record every expansion.",
   "staleIf": [
-    "release/1.1 advances before the WO-004 implementation branch is created",
+    "release/1.1 advances after this refreshed context lock before objective audit",
     "WO-004 scope or acceptance criteria change",
-    "ADR-0003-D3/D4/D5 changes",
-    "ADR-0004 changes incompatibly",
+    "ADR-0003, ADR-0004, or ADR-0005 changes incompatibly",
     "CLI distribution architecture or V1.1 Test Matrix changes incompatibly",
-    "the merged WO-003 CLI/transaction surface changes before branch creation"
+    "the cleaned V1.1 baseline changes before objective audit"
   ],
   "onStale": "STOP_AND_RECOMPILE_FROM_NEW_RELEASE_1_1_HEAD",
-  "stopCondition": "GBS_V11_WO_004_CONTEXT_LOCK_VALID_FOR_ADMISSION"
+  "stopCondition": "GBS_V11_WO_004_CONTEXT_LOCK_VALID_FOR_ADMISSION",
+  "refresh": {
+    "reason": "D-0061 legacy ecosystem detachment changed canonical architecture/decision inputs after the original WO-004 admission",
+    "previousBaseSha": "f5141d6548474f41884f19ffd432bddd3d23f6fc",
+    "refreshedBaseSha": "b97f2b454ef2647823b682da13b69a501d82c794",
+    "preservesWorkOrderScope": true
+  }
 }
