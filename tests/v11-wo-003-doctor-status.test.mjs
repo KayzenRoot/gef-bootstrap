@@ -75,7 +75,8 @@ test("neither read-only command admits a mutation flag", () => {
 test("unknown input stays on the canonical usage path", () => {
   assert.equal(parseArgv(["doctor", "--nope"]).reason, "unknown_flag");
   assert.equal(parseArgv(["doctor", "--target"]).reason, "missing_target_value");
-  assert.equal(parseArgv(["upgrade"]).reason, "unknown_command", "upgrade remains WO-004");
+  assert.equal(parseArgv(["unknown-command"]).reason, "unknown_command");
+  assert.equal(parseArgv(["upgrade"]).commandId, "gef.upgrade.preview", "WO-004 adds the default read-only upgrade preview");
 });
 
 // ------------------------------------------------------------------- registry
