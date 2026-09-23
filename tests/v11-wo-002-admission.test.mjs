@@ -23,9 +23,10 @@ test('V1 production truth remains unchanged while V1.1 progresses beyond WO-002 
 });
 
 test('V1.1 checkpoint progression never regresses before WO-002 admission', () => {
-  const legal = ['GBS_V11_WO_002_ADMITTED', 'GBS_V11_WO_003_ADMITTED', 'GBS_V11_WO_004_ADMITTED'];
-  assert.ok(legal.includes(checkpoint.v11.status), `unexpected V1.1 state: ${checkpoint.v11.status}`);
-  if (checkpoint.v11.status === 'GBS_V11_WO_002_ADMITTED') {
+  const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
+  const ordinal = match === null ? null : Number.parseInt(match[1], 10);
+  assert.ok(Number.isInteger(ordinal) && ordinal >= 2, `unexpected V1.1 state: ${checkpoint.v11.status}`);
+  if (ordinal === 2) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-002');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
     assert.equal(checkpoint.v11.implementationBranch, 'feat/1.1/wo-002-cli-distribution');
