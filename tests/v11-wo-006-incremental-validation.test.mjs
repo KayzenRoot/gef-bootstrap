@@ -330,3 +330,22 @@ test("invalid assurance/capsule enum truth fails closed before selection", () =>
   });
   assert.equal(failCode(badCertainty), "INCREMENTAL_INPUT_INVALID");
 });
+
+
+test("capsule escalation floor can raise uncertain validation from L4 to L5", () => {
+  const result = compile({
+    selectorConfidence: "INDETERMINATE",
+    capsule: capsule({
+      escalation: [
+        { trigger: "selector-indeterminate", escalateTo: "L5" },
+        { trigger: "other", escalateTo: "L4" },
+      ],
+    }),
+  });
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.value.state, "INDETERMINATE");
+  assert.equal(result.value.level, "L5");
+  assert.equal(result.value.finalSweepRequired, true);
+  assert.equal(result.value.fullSuiteRequired, true);
+  assert.equal(result.value.intermediateSuppression, "PROHIBITED");
+});
