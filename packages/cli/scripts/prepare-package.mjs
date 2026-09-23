@@ -44,6 +44,13 @@ const RUNTIME_PACKAGES = ["contracts", "kernel", "preflight"];
 
 /** Package payload copied verbatim from the package directory. */
 const PAYLOAD = ["dist", "bin", "schemas", "README.md", "package.json"];
+const CLI_SCHEMA_ASSETS = [
+  "gef-cli-state.schema.json",
+  "gef-cli-receipt.schema.json",
+  "gef-cli-upgrade-state.schema.json",
+  "gef-cli-upgrade-compatibility-matrix.schema.json",
+  "gef-cli-upgrade-compatibility-matrix.json",
+];
 
 const sha256 = (path) => createHash("sha256").update(readFileSync(path)).digest("hex");
 
@@ -77,6 +84,18 @@ export function stage() {
       name: engine.name,
       source: engine.source,
       target: `vendor/engines/${engine.name}/${engine.target}`,
+      sha256: sha256(target),
+    });
+  }
+
+  for (const name of CLI_SCHEMA_ASSETS) {
+    const target = join(staging, "schemas", name);
+    if (!existsSync(target)) throw new Error(`CLI schema asset is missing: schemas/${name}`);
+    manifest.artifacts.push({
+      kind: "cli-schema",
+      name,
+      source: `packages/cli/schemas/${name}`,
+      target: `schemas/${name}`,
       sha256: sha256(target),
     });
   }
