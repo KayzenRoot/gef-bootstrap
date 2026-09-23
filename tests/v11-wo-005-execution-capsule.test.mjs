@@ -455,9 +455,9 @@ test("M14 stale or mismatched handoff cannot become COMPILED", () => {
   assert.equal(mismatch.value.state, "STALE");
 });
 
-test("M15 receipt or pack binding mismatch cannot become COMPILED", () => {
+test("M15 receipt or sealed-pack mismatch is rejected before projection", () => {
   const base = baseCapsuleInput();
-  const result = compileExecutionCapsule({
+  const badReceipt = compileExecutionCapsule({
     ...base,
     compiledPack: {
       ...base.compiledPack,
@@ -467,8 +467,19 @@ test("M15 receipt or pack binding mismatch cannot become COMPILED", () => {
       },
     },
   }, opts);
-  assert.equal(result.ok, true, JSON.stringify(result));
-  assert.equal(result.value.state, "STALE");
+  assert.equal(failCode(badReceipt), "CAPSULE_M15_SEAL_INVALID");
+
+  const badPack = compileExecutionCapsule({
+    ...base,
+    compiledPack: {
+      ...base.compiledPack,
+      pack: {
+        ...base.compiledPack.pack,
+        objective: "tampered objective that was never sealed",
+      },
+    },
+  }, opts);
+  assert.equal(failCode(badPack), "CAPSULE_M15_SEAL_INVALID");
 });
 
 test("write-allowed and write-forbidden intersection rejects the capsule", () => {
