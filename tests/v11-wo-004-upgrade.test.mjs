@@ -109,6 +109,10 @@ function snapshot(root) {
     for (const name of readdirSync(directory).sort()) {
       const path = join(directory, name);
       const rel = prefix ? `${prefix}/${name}` : name;
+      // Git may transiently create this internal lock while read-only commands trigger automatic
+      // object maintenance on macOS. It is not project/repository semantic state and can vanish
+      // between two snapshots without any GEF mutation.
+      if (rel === ".git/objects/maintenance.lock") continue;
       const info = lstatSync(path);
       if (info.isSymbolicLink()) result.push([rel, "LINK", readlinkSync(path)]);
       else if (info.isDirectory()) { result.push([rel, "DIR"]); walk(path, rel); }
