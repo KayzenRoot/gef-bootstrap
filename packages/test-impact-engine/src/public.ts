@@ -4,3 +4,5 @@ export*from'./s01-source-test-map.js';
 export*from'./s02-selection-reuse.js';
 export*from'./s03-regression-radius.js';
 export*from'./s04-uncertainty-handoff.js';
+
+export*from'./v11-incremental-validation.js';
