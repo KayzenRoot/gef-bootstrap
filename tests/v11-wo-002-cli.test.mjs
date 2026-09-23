@@ -84,12 +84,10 @@ test("parser fails closed on unknown command and malformed flags", () => {
   assert.equal(parseArgv(["--version", "init"]).reason, "conflicting_options");
 });
 
-test("only init and adopt are admitted in this increment", () => {
-  // `doctor` and `status` were admitted by WO-003; `upgrade` remains WO-004.
-  assert.deepEqual([...ADMITTED_VERBS], ["init", "adopt", "doctor", "status"]);
-  for (const deferred of ["upgrade"]) {
-    assert.equal(parseArgv([deferred]).reason, "unknown_command", `${deferred} must stay deferred`);
-  }
+test("all admitted verbs resolve through their canonical actions", () => {
+  assert.deepEqual([...ADMITTED_VERBS], ["init", "adopt", "upgrade", "doctor", "status"]);
+  assert.equal(parseArgv(["upgrade"]).commandId, "gef.upgrade.preview");
+  assert.equal(parseArgv(["upgrade", "--apply"]).commandId, "gef.upgrade.apply");
   for (const readOnly of ["doctor", "status"]) {
     assert.equal(parseArgv([readOnly, "--apply"]).reason, "apply_not_admitted", `${readOnly} must not admit a mutation flag`);
     assert.equal(parseArgv([readOnly]).commandId, readOnly === "doctor" ? "gef.doctor.run" : "gef.status.show");
@@ -147,7 +145,7 @@ test("usage failure envelope is machine readable", () => {
 
 test("registry exposes canonical command IDs with explicit ownership and mutation flags", () => {
   const introspection = buildRegistry().introspect();
-  // WO-002 registered init/adopt; WO-003 added doctor/status. Every ID stays canonical.
+  // WO-002 registered init/adopt; WO-003 added doctor/status; WO-004 adds upgrade.
   assert.deepEqual(introspection.map((entry) => entry.commandId), [
     "gef.adopt.apply",
     "gef.adopt.preview",
@@ -155,13 +153,17 @@ test("registry exposes canonical command IDs with explicit ownership and mutatio
     "gef.init.plan",
     "gef.init.run",
     "gef.status.show",
+    "gef.upgrade.apply",
+    "gef.upgrade.preview",
   ]);
-  assert.equal(introspection.filter((entry) => entry.mutation).every((entry) => entry.commandId === "gef.init.run" || entry.commandId === "gef.adopt.apply"), true, "only the apply commands may declare mutation");
+  assert.equal(introspection.filter((entry) => entry.mutation).every((entry) => entry.commandId === "gef.init.run" || entry.commandId === "gef.adopt.apply" || entry.commandId === "gef.upgrade.apply"), true, "only the apply commands may declare mutation");
   const byId = Object.fromEntries(introspection.map((entry) => [entry.commandId, entry]));
   assert.equal(byId["gef.init.plan"].mutation, false);
   assert.equal(byId["gef.init.run"].mutation, true);
   assert.equal(byId["gef.adopt.preview"].mutation, false);
   assert.equal(byId["gef.adopt.apply"].mutation, true);
+  assert.equal(byId["gef.upgrade.preview"].mutation, false);
+  assert.equal(byId["gef.upgrade.apply"].mutation, true);
   assert.equal(byId["gef.init.plan"].requiresTarget, false);
   assert.equal(byId["gef.init.run"].requiresTarget, true);
   assert.equal(byId["gef.init.plan"].owner, "m48-m54-maintenance");
@@ -185,7 +187,8 @@ test("registry rejects a duplicate command id", () => {
 test("command input validation fails closed", () => {
   const validate = buildRegistry().get("gef.init.plan").validateInput;
   assert.equal(validate(null).ok, false);
-  assert.equal(validate({ verb: "upgrade", apply: false }).ok, false);
+  assert.equal(validate({ verb: "unknown", apply: false }).ok, false);
+  assert.equal(validate({ verb: "upgrade", apply: false }).ok, true);
   assert.equal(validate({ verb: "init", apply: "yes" }).ok, false);
   assert.equal(validate({ verb: "init", apply: false, targetRef: 5 }).ok, false);
   assert.equal(validate({ verb: "init", apply: false }).ok, true);
@@ -197,10 +200,10 @@ test("the frozen delegation symbols are exposed by the engine boundary", async (
   const engines = await loadEngines();
   // init: installPlan, repositoryState, githubBootstrap, detectDrift, resolveCanonical
   // adopt: detectDrift, resolveCanonical, backupManifest, recoveryPlan, installPlan
-  for (const symbol of ["installPlan", "repositoryState", "githubBootstrap", "detectDrift", "resolveCanonical", "backupManifest", "recoveryPlan", "helpIndex"]) {
+  for (const symbol of ["installPlan", "upgradePreview", "compatibility", "repositoryState", "githubBootstrap", "detectDrift", "resolveCanonical", "backupManifest", "recoveryPlan", "helpIndex"]) {
     assert.equal(typeof engines[symbol], "function", `${symbol} must be bound`);
   }
-  // WO-003 added the diagnostic and status surfaces; the WO-002 set must remain intact.
+  // WO-003 added diagnostics; WO-004 adds the maintenance upgrade surfaces.
   for (const symbol of ["doctor", "repairSuggestion", "invariantResult", "dependencySecurity", "githubSecurity", "integritySnapshot", "capabilityEnvelope", "operatorStatus", "documentationManifest", "navigationPlan"]) {
     assert.equal(typeof engines[symbol], "function", `${symbol} must be bound`);
   }
@@ -209,6 +212,7 @@ test("the frozen delegation symbols are exposed by the engine boundary", async (
     [
       "backupManifest",
       "capabilityEnvelope",
+      "compatibility",
       "dependencySecurity",
       "detectDrift",
       "doctor",
@@ -226,13 +230,16 @@ test("the frozen delegation symbols are exposed by the engine boundary", async (
       "repositoryState",
       "resolveCanonical",
       "safetyDecision",
+      "upgradePreview",
     ],
   );
 });
 
 test("colliding exports are bound by explicit module ownership (C5)", async () => {
   const engines = await loadEngines();
-  assert.equal(engines.compatibility, undefined);
+  const maintenance = await import("../packages/m48-m54-maintenance/src/index.mjs");
+  assert.equal(engines.compatibility, maintenance.compatibility, "upgrade compatibility is explicitly maintenance-owned");
+  assert.equal(engines.upgradePreview, maintenance.upgradePreview);
   assert.equal(engines.redactSecrets, undefined);
   assert.equal(engines.digest, undefined);
 });
@@ -351,11 +358,11 @@ test("canonical source observation never fabricates a value", (t) => {
 
 // ------------------------------------------------- M3 — schema contract
 
-test("the CLI ships JSON Schema 2020-12 contracts for both persisted documents", () => {
+test("the CLI ships JSON Schema 2020-12 contracts for persisted documents and upgrade compatibility", () => {
   for (const asset of SCHEMA_ASSETS) {
     const schema = JSON.parse(readFileSync(resolve(ROOT, "packages/cli/schemas", asset), "utf8"));
     assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
-    assert.equal(schema.properties.schemaVersion.const, SUPPORTED_SCHEMA_VERSION);
+    assert.ok([SUPPORTED_SCHEMA_VERSION, 1].includes(schema.properties.schemaVersion.const));
     assert.ok(schema.required.includes("schemaVersion"));
   }
   assert.equal(CLI_STATE_SCHEMA_ID, "urn:gef:schema:cli-state:1");
