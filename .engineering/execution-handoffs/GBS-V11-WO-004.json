@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-WO-004",
+  "title": "Upgrade + Compatibility + Recovery",
+  "state": "EXECUTABLE_ON_ADMITTED_BRANCH",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "releaseLine": "1.1.x",
+  "assurance": "HIGH_ASSURANCE",
+  "releaseRef": "release/1.1",
+  "admissionMergeSha": "f5141d6548474f41884f19ffd432bddd3d23f6fc",
+  "implementationBranch": "feat/1.1/wo-004-upgrade-recovery",
+  "implementationBaseSha": "f5141d6548474f41884f19ffd432bddd3d23f6fc",
+  "executorAuthority": "ADR-0003-D3",
+  "objectiveGovernanceAudit": {
+    "pullRequest": 285,
+    "auditedHead": "52d556b4222831484199ea472f4e5b0e0fd59202",
+    "reviewId": 5286026350,
+    "verdict": "APPROVED",
+    "criticalFindings": 0,
+    "highFindings": 0
+  },
+  "completedPriorIncrement": {
+    "workOrderId": "GBS-V11-WO-003",
+    "implementationPr": 284,
+    "auditedHead": "acb632a5f3b1770a50a3cce039473c5266c7b3b7",
+    "objectiveReview": 5285940414,
+    "implementationMerge": "22c5ce65443f1a7855a2967ff7837aadb98e0ba1",
+    "criticalFindings": 0,
+    "highFindings": 0
+  },
+  "productionBoundary": {
+    "mainShaAtHandoff": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+    "v100TagObjectAtHandoff": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+    "v100TagTargetAtHandoff": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+    "mainAuthorized": false,
+    "tagMutationAuthorized": false,
+    "publicationAuthorized": false
+  },
+  "requiredFirstReads": [
+    ".engineering/work-orders/GBS-V11-WO-004.md",
+    ".engineering/context-locks/GBS-V11-WO-004.json",
+    ".engineering/execution-briefs/GBS-V11-WO-004-CODEX.md",
+    ".engineering/CHECKPOINT.json",
+    ".engineering/releases/V1.1-CLI-DISTRIBUTION-ARCHITECTURE.md",
+    ".engineering/releases/V1.1-TEST-MATRIX.md"
+  ],
+  "scope": [
+    "gef upgrade / gef.upgrade.preview",
+    "gef upgrade --apply / gef.upgrade.apply",
+    "versioned compatibility and migration matrix",
+    "V1.0 to V1.1 migration path",
+    "preservation-first managed-file classification",
+    "deterministic preview/apply plan digest",
+    "transaction-bound backup and recovery",
+    "RECOVERED and RECOVERY_REQUIRED evidence",
+    "idempotent successful re-apply",
+    "packed-install parity",
+    "Windows Linux macOS upgrade assurance",
+    "UPG-MIG-01 through UPG-MIG-07",
+    "COMPAT-01 through COMPAT-06"
+  ],
+  "preserve": [
+    "WO-002 transaction journal ownership rollback and filesystem safety",
+    "WO-003 doctor status process environment and trusted-Git hardening",
+    "ADR-0004 Windows effective-rights oracle",
+    "main and v1.0.0 production boundary"
+  ],
+  "explicitlyForbidden": [
+    "merge",
+    "tag",
+    "publish",
+    "force-push",
+    "history rewrite",
+    "main mutation",
+    "v1.0.0 mutation",
+    "silent CLI self-update",
+    "package-manager invocation for product upgrade",
+    "silent overwrite of user-modified or conflicting content",
+    "WO-005+ implementation",
+    "self-approval"
+  ],
+  "rediscoveryPolicy": "Use the minimum read set. Do not begin with repository-wide search. Expand only on evidence-backed import/type/test/dependency triggers and record expansions in the Evidence Bundle.",
+  "executorStopCondition": "GBS_V11_WO_004_READY_FOR_OBJECTIVE_AUDIT",
+  "finalStatement": "MERGE NOT PERFORMED; OBJECTIVE AUDIT REQUIRED"
+}
