@@ -95,18 +95,31 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Test Matrix traceability: `UPG-MIG-01..07` and `COMPAT-01..06` aligned to frozen semantics.
 - Production boundary preserved: `main` and `v1.0.0` unchanged.
 
-### Active V1.1 increment
-- Active Work Order after this governance merge: `GBS-V11-WO-005`
-- Work Order status: `ADMITTED`
+### Completed V1.1 increment — WO-005
+- Work Order: `GBS-V11-WO-005`
 - Objective: Context Compiler + deterministic Execution Capsule
+- Implementation PR: `#290`
+- Exact objectively audited head: `9110dc48d00a9dcfe28aae63cb609235ea174af5`
+- Objective audit: `APPROVED`
+- Objective review: `5291888382`
+- CRITICAL/HIGH: `0 / 0`
+- Implementation merge into `release/1.1`: `d20c0499556bbaf1304a88d869bdd2159537df3e`
+- Exact-head assurance: m01 `35869769765`, M41-M47 `35869769724`, M48-M54 `35869769771`, M55-M61 `35869769692`, M62-M63 `35869769791`, M15 `35869769783`, Execution Capsule `35869769818`, all `SUCCESS`.
+- CTX-DET cross-platform matrix: Ubuntu/Windows/macOS `SUCCESS`.
+- Production boundary preserved: `main` and `v1.0.0` unchanged.
+
+### Active V1.1 increment
+- Active Work Order after this governance merge: `GBS-V11-WO-006`
+- Work Order status: `ADMITTED`
+- Objective: Test Impact + Incremental Validation
 - Assurance: `ELEVATED`
-- Implementation branch: `feat/1.1/wo-005-execution-capsule`
-- Context Lock: `.engineering/context-locks/GBS-V11-WO-005.json`
-- Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-005-DIRECT.md`
-- Mandatory test ownership: `CTX-DET-01..08`
-- Preserve: M14 context authority, M15 execution-pack authority, M63 acceleration semantics, D-0061/ADR-0005 neutral ecosystem boundary.
-- Explicitly deferred: incremental validation -> WO-006; proof reuse -> WO-007; telemetry -> WO-008; integrated assurance/release -> WO-009/010.
-- Next legal action: create `feat/1.1/wo-005-execution-capsule` from the exact governance/admission merge.
+- Implementation branch: `feat/1.1/wo-006-incremental-validation`
+- Context Lock: `.engineering/context-locks/GBS-V11-WO-006.json`
+- Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-006-DIRECT.md`
+- Mandatory test ownership: `INC-VAL-01..05`
+- Preserve: M28 Test Impact authority, WO-005 Execution Capsule bindings, M63 progressive-validation semantics, D-0061/ADR-0005 neutral ecosystem boundary.
+- Explicitly deferred: proof reuse eligibility -> WO-007; telemetry -> WO-008; integrated assurance/release -> WO-009/010.
+- Next legal action: create `feat/1.1/wo-006-incremental-validation` from the exact governance/admission merge.
 
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
@@ -119,7 +132,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action after governance merge: `CREATE_WO_005_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
+Next legal V1.1 action after governance merge: `CREATE_WO_006_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_WO_005_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
+V1.1 STOP CONDITION: `GBS_V11_WO_006_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.

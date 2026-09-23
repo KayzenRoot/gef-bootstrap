@@ -44,19 +44,31 @@ test("legacy ecosystem detachment remains effective before WO-005", () => {
   assert.equal(checkpoint.v11.ecosystemDetachment.highFindings, 0);
 });
 
-test("machine and human checkpoint agree on admitted WO-005", () => {
-  assert.equal(checkpoint.v11.status, "GBS_V11_WO_005_ADMITTED");
-  assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-005");
-  assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
-  assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-005-execution-capsule");
-  assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-005.json");
-  assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-005-DIRECT.md");
-  assert.equal(checkpoint.v11.nextLegalAction, "CREATE_WO_005_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_005_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH");
-  assert.ok(checkpointMd.includes("Active Work Order after this governance merge: `GBS-V11-WO-005`"));
-  assert.ok(checkpointMd.includes("V1.1 STOP CONDITION: `GBS_V11_WO_005_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`"));
-});
+test("WO-005 admission remains provable after objective promotion to later Work Orders", () => {
+  const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
+  const ordinal = match === null ? null : Number.parseInt(match[1], 10);
+  assert.ok(Number.isInteger(ordinal) && ordinal >= 5, `unexpected V1.1 state: ${checkpoint.v11.status}`);
 
+  if (ordinal === 5) {
+    assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-005");
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
+    assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-005-execution-capsule");
+    assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_005_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH");
+  } else {
+    const completed = checkpoint.v11.completedWorkOrders["GBS-V11-WO-005"];
+    assert.equal(completed.status, "OBJECTIVE_AUDIT_APPROVED_MERGED");
+    assert.equal(completed.implementationPr, 290);
+    assert.equal(completed.auditedHead, "9110dc48d00a9dcfe28aae63cb609235ea174af5");
+    assert.equal(completed.objectiveReview, 5291888382);
+    assert.equal(completed.implementationMerge, "d20c0499556bbaf1304a88d869bdd2159537df3e");
+    assert.equal(completed.criticalFindings, 0);
+    assert.equal(completed.highFindings, 0);
+    const activeId = String(ordinal).padStart(3, "0");
+    assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${activeId}`);
+    assert.equal(checkpoint.v11.stopState, `GBS_V11_WO_${activeId}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`);
+    assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-005"));
+  }
+});
 test("WO-005 scope owns CTX-DET and preserves downstream ownership", () => {
   assert.ok(wo.includes("CTX-DET-01"));
   assert.ok(wo.includes("CTX-DET-08"));

@@ -36,7 +36,10 @@ test('WO-003 objective approval is promoted before WO-004 admission', () => {
   assert.equal(completed.assuranceRuns.windowsRightsOracle, 35805459223);
 });
 
-test('WO-004 promotion is preserved when the checkpoint advances to WO-005', () => {
+test('WO-004 promotion is preserved after every later V1.1 admission', () => {
+  const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
+  const ordinal = match === null ? null : Number.parseInt(match[1], 10);
+  assert.ok(Number.isInteger(ordinal) && ordinal >= 5, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   const completed = checkpoint.v11.completedWorkOrders['GBS-V11-WO-004'];
   assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
   assert.equal(completed.implementationPr, 288);
@@ -45,7 +48,7 @@ test('WO-004 promotion is preserved when the checkpoint advances to WO-005', () 
   assert.equal(completed.implementationMerge, 'ab820243b6c44e2ce9c5b747a7a6a4c688d90fed');
   assert.equal(completed.criticalFindings, 0);
   assert.equal(completed.highFindings, 0);
-  assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-005');
+  assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${String(ordinal).padStart(3, '0')}`);
   assert.ok(checkpointMd.includes('### Completed V1.1 increment — WO-004'));
 });
 
