@@ -69,7 +69,7 @@ before objective audit.
 | COMPAT-02 | Unknown blocking dimension -> `INDETERMINATE`, fail closed — PASS |
 | COMPAT-03 | Unsupported platform -> `UNSUPPORTED` — PASS |
 | COMPAT-04 | Node runtime below declared minimum -> `UNSUPPORTED` — PASS |
-| COMPAT-05 | Missing required managed-receipt capability produces a gap and no bypass — PASS |
+| COMPAT-05 | Missing required trusted-Git capability produces an explicit gap and no bypass — PASS |
 | COMPAT-06 | No `VERIFIED` compatibility row exists without complete evidence bindings — PASS |
 
 Additional admitted acceptance proofs remain explicit and separate from the frozen matrix IDs:
