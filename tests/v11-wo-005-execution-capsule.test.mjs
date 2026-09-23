@@ -546,3 +546,82 @@ test("navigation MUST_READ must cover every admitted M14 semantic payload", () =
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.value.state, "REJECTED");
 });
+
+
+test("runtime contract validator rejects undeclared properties and malformed nested schema state", () => {
+  const compiled = compile();
+  assert.equal(compiled.ok, true, JSON.stringify(compiled));
+
+  const extraTopLevel = { ...compiled.value, surprise: true };
+  assert.equal(failCode(validateExecutionCapsuleContract(extraTopLevel)), "CAPSULE_SCHEMA_INVALID");
+
+  const badProofState = {
+    ...compiled.value,
+    proofReferences: compiled.value.proofReferences.map((proof, index) =>
+      index === 0 ? { ...proof, state: "NOT_A_STATE" } : proof
+    ),
+  };
+  assert.equal(failCode(validateExecutionCapsuleContract(badProofState)), "CAPSULE_SCHEMA_INVALID");
+
+  const extraNested = {
+    ...compiled.value,
+    navigation: { ...compiled.value.navigation, surprise: "nope" },
+  };
+  assert.equal(failCode(validateExecutionCapsuleContract(extraNested)), "CAPSULE_SCHEMA_INVALID");
+
+  const badFingerprint = {
+    ...compiled.value,
+    fingerprints: {
+      ...compiled.value.fingerprints,
+      inputs: [{ ref: "x", fingerprint: "not-a-sha" }],
+    },
+  };
+  assert.equal(failCode(validateExecutionCapsuleContract(badFingerprint)), "CAPSULE_SCHEMA_INVALID");
+});
+
+test("capsule identity changes for semantic navigation/test/proof changes but not volatile metadata", () => {
+  const base = baseCapsuleInput();
+  const original = compileExecutionCapsule(base, opts);
+  assert.equal(original.ok, true, JSON.stringify(original));
+
+  const navChanged = compileExecutionCapsule({
+    ...base,
+    navigation: {
+      ...base.navigation,
+      readIfTriggered: [
+        ...base.navigation.readIfTriggered,
+        { path: "packages/execution-pack-compiler/src/types.ts", trigger: "type-surface-change" },
+      ],
+    },
+  }, opts);
+  assert.equal(navChanged.ok, true, JSON.stringify(navChanged));
+  assert.notEqual(navChanged.value.capsuleId, original.value.capsuleId);
+
+  const testsChanged = compileExecutionCapsule({
+    ...base,
+    selectedTests: {
+      ...base.selectedTests,
+      tests: [...base.selectedTests.tests, "CTX-DET-08"],
+    },
+  }, opts);
+  assert.equal(testsChanged.ok, true, JSON.stringify(testsChanged));
+  assert.notEqual(testsChanged.value.capsuleId, original.value.capsuleId);
+
+  const proofChanged = compileExecutionCapsule({
+    ...base,
+    proofReferences: [
+      ...base.proofReferences,
+      { proofId: "proof-c", state: "INDETERMINATE", bindsTo: sha("proof-c"), manufacturesProductionCredit: false },
+    ],
+  }, opts);
+  assert.equal(proofChanged.ok, true, JSON.stringify(proofChanged));
+  assert.notEqual(proofChanged.value.capsuleId, original.value.capsuleId);
+
+  const volatileChanged = compileExecutionCapsule({
+    ...base,
+    expiresAt: "2050-05-05T00:00:00.000Z",
+    volatileMetadata: { host: "volatile-host", time: 42 },
+  }, opts);
+  assert.equal(volatileChanged.ok, true, JSON.stringify(volatileChanged));
+  assert.equal(volatileChanged.value.capsuleId, original.value.capsuleId);
+});
