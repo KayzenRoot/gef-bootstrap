@@ -48,7 +48,7 @@ const ERROR_ACCESS_DENIED = 5;
 
 interface NativeBindings {
   readonly createFile: (path: string, access: number, share: number, securityAttributes: null, disposition: number, flags: number, templateFile: null) => number;
-  readonly closeHandle: (handle: number) => void;
+  readonly closeHandle: (handle: number) => number;
   readonly lastError: () => number;
 }
 
@@ -95,21 +95,25 @@ export function probeWindowsRight(path: string, right: WindowsRight, isDirectory
   const native = loadBindings();
   if (native === null) return "UNKNOWN";
   let handle: number;
-  let error: number;
   try {
     handle = native.createFile(path, ACCESS_MASKS[right], SHARE_ALL, null, OPEN_EXISTING, isDirectory ? FILE_FLAG_BACKUP_SEMANTICS : 0, null);
-    error = native.lastError();
   } catch {
     return "UNKNOWN";
   }
   if (handle === INVALID_HANDLE_VALUE) {
+    let error: number;
+    try {
+      error = native.lastError();
+    } catch {
+      return "UNKNOWN";
+    }
     return error === ERROR_ACCESS_DENIED ? "DENIED" : "UNKNOWN";
   }
   try {
-    native.closeHandle(handle);
+    if (native.closeHandle(handle) === 0) return "UNKNOWN";
   } catch {
-    // The handle cannot be released; the verdict is still the OS answer we already received, and no
-    // further native call is attempted.
+    // A failed close leaves the proof unusable; the handle is never returned or exposed.
+    return "UNKNOWN";
   }
   return "ALLOWED";
 }

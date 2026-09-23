@@ -559,10 +559,9 @@ export type PermissionProof = "POSIX_MODE_NO_GROUP_OR_OTHER_WRITE" | "UNAVAILABL
 /**
  * How the policy established that no path component can be used to replace the executable.
  *
- *  means every directory from the approved root to the executable was
- * checked with the platform's own effective-write primitive.  means the
- * platform exposes no non-mutating directory-write check: the executable's own ACL denial is then
- * the whole basis, and that weaker basis is reported rather than silently treated as equivalent.
+ * POSIX uses an effective-write check for every directory through the filesystem root. Windows
+ * checks DELETE on each object and FILE_DELETE_CHILD on each containing directory with the OS access
+ * check. UNAVAILABLE_ON_PLATFORM is reserved for a platform with no proof for the whole chain.
  */
 export type DirectoryProof = "EFFECTIVE_WRITE_PER_COMPONENT" | "WINDOWS_EFFECTIVE_RIGHTS" | "UNAVAILABLE_ON_PLATFORM";
 
@@ -678,11 +677,9 @@ export function inspectAdmittedExecutable(executable: string, policy: GitExecuta
 /**
  * Whether this process can open `path` for writing.
  *
- * This is the effective write-authority primitive: an open for writing is evaluated by the operating
- * system's own permission model, so it answers "can this process modify this object" rather than
- * "does the mode look a certain way". No byte is ever written — the handle is closed immediately.
- * On Windows this is the strongest available proof, because POSIX mode bits do not exist and Node
- * exposes no ACL API; `EPERM`/`EACCES` there means the ACL denies this process write access.
+ * This is the content-write refusal check: an open for writing is evaluated by the operating
+ * system's own permission model, and no byte is written. Replacement authority is proven separately
+ * by `replacementAuthority`, including the Windows DELETE and FILE_DELETE_CHILD checks.
  */
 function canOpenForWriting(path: string): boolean {
   try {
@@ -705,14 +702,9 @@ function canOpenForWriting(path: string): boolean {
  *
  * Replacing a path entry is controlled by the directory that holds it, so the proof does not stop
  * at the declared root: a non-writable root can still be renamed or replaced when its own parent is
- * caller-writable. On POSIX the chain therefore runs from the executable's directory upward through
- * the declared root and every ancestor, and terminates at the filesystem root — which has no parent
- * and needs no further proof. Every link must deny this process effective write authority.
- *
- * On Windows the runtime exposes no non-mutating effective directory-write or ACL primitive, so the
- * chain cannot be proven there at all. Rather than substituting an assumption for a proof, the
- * caller receives  and the high-assurance policy returns
- * UNAVAILABLE.  therefore never coexists with .
+ * caller-writable. On POSIX the chain runs from the executable's directory through every ancestor
+ * to the filesystem root. On Windows, the OS access check for DELETE and FILE_DELETE_CHILD proves
+ * each directory entry up to the volume root. The root is the termination anchor on both platforms.
  */
 function replacementAuthority(physical: string): string | null {
   // Windows: the rights that govern replacement are DELETE on the object and FILE_DELETE_CHILD on
@@ -748,24 +740,37 @@ function replacementAuthority(physical: string): string | null {
  * directory and  on its parent. The volume root is the termination anchor.
  */
 function windowsReplacementAuthority(physical: string): string | null {
-  const executable = probeWindowsRight(physical, "DELETE", false);
+  return windowsReplacementAuthorityWithProbe(physical, probeWindowsRight);
+}
+
+/**
+ * Windows replacement-rights policy separated from the native adapter so every tri-state branch and
+ * the complete volume-root chain can be proven with deterministic rights fixtures.
+ *
+ * This remains an internal registry export for focused tests; the public CLI API does not expose an
+ * injectable trust oracle.
+ */
+export function windowsReplacementAuthorityWithProbe(physical: string, probe: typeof probeWindowsRight): string | null {
+  const volumeRoot = parse(physical).root;
+  if (volumeRoot.length === 0) return "replacement_rights_proof_unavailable";
+
+  const executable = probe(physical, "DELETE", false);
   if (executable === "ALLOWED") return "physical_path_delete_allowed";
   if (executable === "UNKNOWN") return "replacement_rights_proof_unavailable";
 
   const directory = dirname(physical);
-  const parentDeleteChild = probeWindowsRight(directory, "FILE_DELETE_CHILD", true);
+  const parentDeleteChild = probe(directory, "FILE_DELETE_CHILD", true);
   if (parentDeleteChild === "ALLOWED") return "physical_path_parent_delete_child_allowed";
   if (parentDeleteChild === "UNKNOWN") return "replacement_rights_proof_unavailable";
 
-  const volumeRoot = parse(physical).root;
   let current = directory;
   while (normalizedForPlatform(current) !== normalizedForPlatform(volumeRoot)) {
-    const deleteOnDirectory = probeWindowsRight(current, "DELETE", true);
+    const deleteOnDirectory = probe(current, "DELETE", true);
     if (deleteOnDirectory === "ALLOWED") return "physical_path_ancestor_replaceable";
     if (deleteOnDirectory === "UNKNOWN") return "replacement_rights_proof_unavailable";
     const ancestor = dirname(current);
     if (ancestor === current) break;
-    const deleteChildOnParent = probeWindowsRight(ancestor, "FILE_DELETE_CHILD", true);
+    const deleteChildOnParent = probe(ancestor, "FILE_DELETE_CHILD", true);
     if (deleteChildOnParent === "ALLOWED") return "physical_path_ancestor_replaceable";
     if (deleteChildOnParent === "UNKNOWN") return "replacement_rights_proof_unavailable";
     current = ancestor;

@@ -17,8 +17,8 @@
  * Writes `parity=yes|no` to the GitHub step output when running in Actions.
  */
 
-import { existsSync, openSync, closeSync, appendFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { existsSync, openSync, closeSync, appendFileSync, realpathSync } from "node:fs";
+import { dirname, parse, win32 } from "node:path";
 import { DEFAULT_GIT_TRUST_POLICY, inspectAdmittedExecutable, probeWindowsRight } from "../dist/index.js";
 
 if (process.platform !== "win32") {
@@ -29,33 +29,72 @@ if (process.platform !== "win32") {
 const problems = [];
 let parity = false;
 
-for (const candidate of DEFAULT_GIT_TRUST_POLICY.candidates) {
+/** Independently enumerate the OS rights that govern replacing every entry in the physical chain. */
+function observeReplacementRights(physical) {
+  const volumeRoot = parse(physical).root;
+  if (volumeRoot.length === 0) return null;
+  const observations = [
+    probeWindowsRight(physical, "DELETE", false),
+    probeWindowsRight(dirname(physical), "FILE_DELETE_CHILD", true),
+  ];
+  let current = dirname(physical);
+  while (win32.normalize(current).toLowerCase() !== win32.normalize(volumeRoot).toLowerCase()) {
+    observations.push(probeWindowsRight(current, "DELETE", true));
+    const parent = dirname(current);
+    if (parent === current) return null;
+    observations.push(probeWindowsRight(parent, "FILE_DELETE_CHILD", true));
+    current = parent;
+  }
+  return observations;
+}
+
+const rightPolicyRefusals = new Set([
+  "gef.cli.git.physical_path_delete_allowed",
+  "gef.cli.git.physical_path_parent_delete_child_allowed",
+  "gef.cli.git.physical_path_ancestor_replaceable",
+  "gef.cli.git.replacement_rights_proof_unavailable",
+]);
+
+for (const [index, candidate] of DEFAULT_GIT_TRUST_POLICY.candidates.entries()) {
   const inspection = inspectAdmittedExecutable(candidate, DEFAULT_GIT_TRUST_POLICY);
   if (!existsSync(candidate)) {
     if (inspection.status !== "ABSENT") problems.push(`${candidate}: absent on disk but policy said ${inspection.status}`);
     continue;
   }
+  // Other admission failures (for example a non-regular or out-of-root alias) are outside this
+  // rights comparison. A rights refusal, however, must agree with the independent OS observations.
+  if (inspection.status === "UNAVAILABLE" && !rightPolicyRefusals.has(inspection.reasonCode ?? "")) continue;
+
+  let physical;
+  try {
+    physical = realpathSync.native(candidate);
+  } catch {
+    problems.push(`candidate-${index + 1}: policy admitted or rights-refused an unresolvable path`);
+    continue;
+  }
   let contentWritable = false;
   try {
-    closeSync(openSync(candidate, "r+"));
+    closeSync(openSync(physical, "r+"));
     contentWritable = true;
   } catch {
     contentWritable = false;
   }
-  const targetDelete = probeWindowsRight(candidate, "DELETE", false);
-  const parentDeleteChild = probeWindowsRight(dirname(candidate), "FILE_DELETE_CHILD", true);
-  const replaceableAnywhere = contentWritable || targetDelete === "ALLOWED" || parentDeleteChild === "ALLOWED";
-  const unprovable = targetDelete === "UNKNOWN" || parentDeleteChild === "UNKNOWN";
+  const rights = observeReplacementRights(physical);
+  if (rights === null) {
+    problems.push(`candidate-${index + 1}: physical path has no verifiable volume-root chain`);
+    continue;
+  }
+  const replaceableAnywhere = contentWritable || rights.includes("ALLOWED");
+  const unprovable = rights.includes("UNKNOWN");
   const admitted = inspection.status === "FOUND";
+  const counts = { allowed: rights.filter((right) => right === "ALLOWED").length, denied: rights.filter((right) => right === "DENIED").length, unknown: rights.filter((right) => right === "UNKNOWN").length };
 
-  console.log(
-    `${candidate}: DELETE=${targetDelete} FILE_DELETE_CHILD=${parentDeleteChild} content-writable=${String(contentWritable)} policy=${inspection.status}`,
-  );
+  console.log(`candidate-${index + 1}: rights=${JSON.stringify(counts)} content-writable=${String(contentWritable)} policy=${inspection.status}`);
 
-  if (replaceableAnywhere && admitted) problems.push(`${candidate}: admitted although this token can replace it`);
-  if (unprovable && admitted) problems.push(`${candidate}: admitted although a right query was UNKNOWN`);
-  if (!replaceableAnywhere && !unprovable && inspection.status === "UNAVAILABLE") {
-    problems.push(`${candidate}: refused although every right is denied (${inspection.reasonCode ?? "no reason"})`);
+  if (replaceableAnywhere && admitted) problems.push(`candidate-${index + 1}: admitted although this token can replace it`);
+  if (unprovable && admitted) problems.push(`candidate-${index + 1}: admitted although a right query was UNKNOWN`);
+  if (!replaceableAnywhere && !unprovable && inspection.status === "UNAVAILABLE" && rightPolicyRefusals.has(inspection.reasonCode ?? "")) {
+    problems.push(`candidate-${index + 1}: refused although every right is denied (${inspection.reasonCode ?? "no reason"})`);
   }
   if (admitted) parity = true;
 }

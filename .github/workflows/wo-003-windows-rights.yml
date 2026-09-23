@@ -59,6 +59,9 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
+      - name: Windows rights fixtures and complete chain policy
+        run: node --test tests/v11-wo-003-windows-rights.test.mjs
+
       - name: Rights oracle diagnostics
         run: node packages/cli/scripts/rights-diagnostics.mjs
 
@@ -75,7 +78,7 @@ jobs:
       - name: Dependency audit
         run: npm audit --audit-level=high
 
-      - name: Rights oracle fixtures, E2E and WO-002 parity
+      - name: WO-003 focused and E2E, plus WO-002 parity
         if: steps.gate.outputs.parity == 'yes'
         run: |
           node --test tests/v11-wo-002-repository-state.test.mjs

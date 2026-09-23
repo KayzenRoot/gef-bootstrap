@@ -1657,7 +1657,7 @@ test("H14-Windows: a write-denied but replaceable path is refused, proven by an 
   const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
   assert.equal(inspection.status, "UNAVAILABLE", "a replaceable path must never be admitted by the high-assurance policy");
   if (process.platform === "win32") {
-    assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_delete_allowed", "the reason names the right that permitted replacement");
+    assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_delete_allowed", "the effective DELETE open refused the replaceable fixture");
     assert.equal(inspection.directoryProof, "WINDOWS_EFFECTIVE_RIGHTS", "the chain was evaluated by the rights oracle");
   } else {
     assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
@@ -1682,35 +1682,6 @@ test("H14-Windows: a parent that permits deletion refuses the protected executab
     inspection.reasonCode,
     process.platform === "win32" ? "gef.cli.git.physical_path_delete_allowed" : "gef.cli.git.physical_path_parent_replaceable_by_process",
   );
-});
-
-test("H14-Windows: target-DELETE-only and delete-child-only cases are both refused", (t) => {
-  // Case A in the correction: the target grants DELETE while the rights oracle reports the parent
-  // side as the deciding one. Case B: the executable itself is protected and the parent decides.
-  // Both must be refused, and the specific right that permitted replacement is named.
-  const root = mkdtempSync(join(tmpdir(), "gef-h14win-acl-"));
-  t.after(() => removeFixture(root));
-  const candidate = join(root, "git-fixture");
-  const sentinel = join(mkdtempSync(join(tmpdir(), "gef-h14win-acl-sent-")), "sentinel");
-  const payload = writePayload(candidate, "A", sentinel);
-  chmodSync(candidate, process.platform === "win32" ? 0o444 : 0o555);
-
-  // Deny the current user write/delete on the parent as a disposable ACL experiment, then confirm
-  // the oracle still reports the decision it makes for the *current* token.
-  if (process.platform === "win32") {
-    const granted = authorAcl(root, ["/grant", "*S-1-1-0:(F)"]);
-    if (!granted) t.diagnostic("H14-Windows: icacls could not author the fixture ACL; the oracle result is still asserted");
-  }
-
-  const inspection = inspectAdmittedExecutable(candidate, machinePolicyOver(root, candidate));
-  assert.equal(inspection.status, "UNAVAILABLE");
-  if (process.platform === "win32") {
-    assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_delete_allowed");
-    assert.equal(probeWindowsRight(candidate, "DELETE", false), "ALLOWED", "the oracle reports the granted target right");
-  } else {
-    assert.equal(inspection.reasonCode, "gef.cli.git.physical_path_parent_replaceable_by_process");
-  }
-  assert.equal(existsSync(payload.sentinel ?? ""), false, "the refused fixture never ran");
 });
 
 test("H14-Windows: a failing rights query is UNKNOWN and never becomes trust", (t) => {
