@@ -15,6 +15,7 @@ import {
   deepFreeze,
   fail,
 } from "./utils.js";
+import { computeSealedDigests, findSealedDigestDrift } from "./s05-receipt.js";
 
 export type ExecutionCapsuleState = "COMPILED" | "INDETERMINATE" | "STALE" | "REJECTED";
 export type ExecutionCapsuleCertainty = "SUFFICIENT" | "INSUFFICIENT";
@@ -632,6 +633,33 @@ export function compileExecutionCapsule(
     .sort((a, b) => compareCodePoint(a.path, b.path) || compareCodePoint(a.trigger, b.trigger));
   if (mustRead.some((path) => !nonEmpty(path)) || readIfTriggered.some((entry) => !nonEmpty(entry.path) || !nonEmpty(entry.trigger))) {
     return fail("CAPSULE_NAVIGATION_INVALID", "Navigation paths/triggers must be non-empty");
+  }
+
+  // M15 is an admitted input, but admission is validity-bound rather than trust-by-shape.
+  // Recompute all four sealed digests so a copied/tampered pack cannot ride on an old receipt.
+  const recomputedSeals = computeSealedDigests(input.compiledPack.pack, options);
+  if (!recomputedSeals.ok) {
+    return fail("CAPSULE_M15_SEAL_INVALID", "Unable to re-verify the compiled M15 pack seals");
+  }
+  const trustedPackSeals = {
+    graphDigest: input.compiledPack.pack.graphDigest,
+    toolPlanDigest: input.compiledPack.pack.toolPlanDigest,
+    validationPlanDigest: input.compiledPack.pack.validationPlanDigest,
+    semanticDigest: input.compiledPack.pack.semanticDigest,
+  };
+  const packDrift = findSealedDigestDrift(recomputedSeals.value, trustedPackSeals);
+  const receipt = input.compiledPack.receipt;
+  const receiptDrift =
+    receipt.graphDigest !== trustedPackSeals.graphDigest ||
+    receipt.toolPlanDigest !== trustedPackSeals.toolPlanDigest ||
+    receipt.validationPlanDigest !== trustedPackSeals.validationPlanDigest ||
+    receipt.semanticDigest !== trustedPackSeals.semanticDigest;
+  if (packDrift.length > 0 || receiptDrift) {
+    return fail(
+      "CAPSULE_M15_SEAL_INVALID",
+      `Compiled M15 pack/receipt seal mismatch: ${packDrift.join(",") || "receipt"}`,
+      input.compiledPack.pack.packId,
+    );
   }
 
   const state = knownBindingState(input);
