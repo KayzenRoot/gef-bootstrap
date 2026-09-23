@@ -58,23 +58,29 @@ before objective audit.
 
 | Criterion | Evidence and result |
 |---|---|
-| UPG-MIG-01 | `tests/v11-wo-004-upgrade.test.mjs`: preview is deterministic, read-only and inventories preservation state — PASS |
-| UPG-MIG-02 | V1.0 to V1.1 apply matches the preview digest and preserves source bytes — PASS |
-| UPG-MIG-03 | Injected post-promotion failure is rolled back and reports `RECOVERED` — PASS |
-| UPG-MIG-04 | Corrupted recovery material remains `RECOVERY_REQUIRED` with journal evidence — PASS |
-| UPG-MIG-05 | User-modified and conflicting managed state is not overwritten — PASS |
-| UPG-MIG-06 | Repeated apply is idempotent and preserves upgraded-state bytes — PASS |
-| UPG-MIG-07 | A stale transaction journal cannot authorize another run — PASS |
-| COMPAT-01 | Verified 1.0.0 to 1.1.0 row is supported on Windows, Linux and macOS fixtures — PASS |
-| COMPAT-02 | Unsupported version pairs are explicit and cannot be applied — PASS |
-| COMPAT-03 | Unsupported platform and Node runtime fail closed — PASS |
-| COMPAT-04 | Missing matrix row or required capability never becomes `SUPPORTED` — PASS |
-| COMPAT-05 | Schema dialects, criterion references and packaged hashes are checked — PASS |
-| COMPAT-06 | Untrusted Git is indeterminate and Windows machine-write policy stays strict — PASS |
+| UPG-MIG-01 | `tests/v11-wo-004-upgrade.test.mjs`: preview is deterministic, read-only and preserves tree/private/Git state — PASS |
+| UPG-MIG-02 | Preview and apply use the same plan digest for identical pre-state — PASS |
+| UPG-MIG-03 | Forced post-promotion failure with complete recovery material restores the pre-state and reports `RECOVERED` — PASS |
+| UPG-MIG-04 | Corrupted/incomplete recovery material reports `RECOVERY_REQUIRED` and preserves journal evidence — PASS |
+| UPG-MIG-05 | `USER_MODIFIED` managed state is never silently overwritten — PASS |
+| UPG-MIG-06 | `CONFLICTING` managed state escalates and is never automatically resolved — PASS |
+| UPG-MIG-07 | The evidence-bound V1.0 -> V1.1 migration row exists and applies — PASS |
+| COMPAT-01 | Unsupported version pair -> `UNSUPPORTED`, no mutation eligibility — PASS |
+| COMPAT-02 | Unknown blocking dimension -> `INDETERMINATE`, fail closed — PASS |
+| COMPAT-03 | Unsupported platform -> `UNSUPPORTED` — PASS |
+| COMPAT-04 | Node runtime below declared minimum -> `UNSUPPORTED` — PASS |
+| COMPAT-05 | Missing required managed-receipt capability produces a gap and no bypass — PASS |
+| COMPAT-06 | No `VERIFIED` compatibility row exists without complete evidence bindings — PASS |
 
-The test matrix binds these 13 required criteria to the matrix row's `evidenceRefs`. `CI-01` also
-checks that the workflow uses the exact PR head for checkout and verification and that evidence-file
-changes trigger the workflow.
+Additional admitted acceptance proofs remain explicit and separate from the frozen matrix IDs:
+- `WO004-IDEMPOTENCE`: repeated successful apply is `NOOP_APPLIED` and preserves upgraded-state bytes.
+- `WO004-JOURNAL-ISOLATION`: a stale transaction journal cannot authorize another run.
+- `WO004-TRUST-BOUNDARY`: untrusted Git remains indeterminate and mutation-free.
+- `CI-01`: the cross-platform workflow checks out and verifies the exact pull-request head.
+
+The compatibility row's `evidenceRefs` binds exactly the seven UPG-MIG and six COMPAT IDs above.
+Idempotence, journal isolation, trust-boundary and CI proofs are additional acceptance evidence and
+do not replace or renumber the frozen Test Matrix obligations.
 
 ## 4. Local qualification at the implementation commit
 
