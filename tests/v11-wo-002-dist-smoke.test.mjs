@@ -104,13 +104,22 @@ test("DIST-SMOKE-01b: the packed payload carries README, LICENSE and the schema 
   assert.equal(packedManifest.version, cliPackage.version);
   assert.deepEqual(packedManifest.bin, { gef: "./bin/gef.mjs" });
   assert.equal(packedManifest.private, true);
-  // Runtime dependencies are bundled, not resolved from a registry.
+  // Runtime dependencies are bundled, not resolved from a registry. The preflight toolchain
+  // authority joined this list when the CLI began resolving its Git executable through it, and the
+  // Koffi FFI runtime with its platform prebuilt joined it when the Windows rights oracle was
+  // admitted (ADR-0004).
+  // The declared bundled set is host-independent: the raw package manifest is the source of truth,
+  // and only what is actually present on the host can be packed.
   assert.deepEqual(
     [...(packedManifest.bundleDependencies ?? packedManifest.bundledDependencies ?? [])].sort(),
-    ["@gef-bootstrap/contracts", "@gef-bootstrap/kernel"],
+    [...(cliPackage.bundleDependencies ?? [])].sort(),
   );
+  for (const required of ["@gef-bootstrap/contracts", "@gef-bootstrap/kernel", "@gef-bootstrap/preflight", "koffi", "@koromix/koffi-win32-x64"]) {
+    assert.ok(cliPackage.bundleDependencies.includes(required), `${required} must be declared as bundled`);
+  }
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "kernel")), "the bundled runtime must be installed with the package");
   assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "contracts")));
+  assert.ok(existsSync(join(cliDir, "node_modules", "@gef-bootstrap", "preflight")), "the toolchain authority must travel with the package");
 });
 
 test("DIST-SMOKE-01c: the installed CLI operates without any surrounding source checkout", (t) => {
@@ -119,7 +128,7 @@ test("DIST-SMOKE-01c: the installed CLI operates without any surrounding source 
 
   const help = gefAt(bin, ["--help"]);
   assert.equal(help.code, 0, `installed help must exit 0: ${help.stderr}`);
-  assert.deepEqual(JSON.parse(help.stdout).commands.map((command) => command.id), ["gef.adopt.apply", "gef.adopt.preview", "gef.init.plan", "gef.init.run"]);
+  assert.deepEqual(JSON.parse(help.stdout).commands.map((command) => command.id), ["gef.adopt.apply", "gef.adopt.preview", "gef.doctor.run", "gef.init.plan", "gef.init.run", "gef.status.show"]);
 
   const version = gefAt(bin, ["--version"]);
   assert.equal(version.code, 0);

@@ -85,9 +85,14 @@ test("parser fails closed on unknown command and malformed flags", () => {
 });
 
 test("only init and adopt are admitted in this increment", () => {
-  assert.deepEqual([...ADMITTED_VERBS], ["init", "adopt"]);
-  for (const deferred of ["doctor", "status", "upgrade"]) {
+  // `doctor` and `status` were admitted by WO-003; `upgrade` remains WO-004.
+  assert.deepEqual([...ADMITTED_VERBS], ["init", "adopt", "doctor", "status"]);
+  for (const deferred of ["upgrade"]) {
     assert.equal(parseArgv([deferred]).reason, "unknown_command", `${deferred} must stay deferred`);
+  }
+  for (const readOnly of ["doctor", "status"]) {
+    assert.equal(parseArgv([readOnly, "--apply"]).reason, "apply_not_admitted", `${readOnly} must not admit a mutation flag`);
+    assert.equal(parseArgv([readOnly]).commandId, readOnly === "doctor" ? "gef.doctor.run" : "gef.status.show");
   }
 });
 
@@ -142,7 +147,16 @@ test("usage failure envelope is machine readable", () => {
 
 test("registry exposes canonical command IDs with explicit ownership and mutation flags", () => {
   const introspection = buildRegistry().introspect();
-  assert.deepEqual(introspection.map((entry) => entry.commandId), ["gef.adopt.apply", "gef.adopt.preview", "gef.init.plan", "gef.init.run"]);
+  // WO-002 registered init/adopt; WO-003 added doctor/status. Every ID stays canonical.
+  assert.deepEqual(introspection.map((entry) => entry.commandId), [
+    "gef.adopt.apply",
+    "gef.adopt.preview",
+    "gef.doctor.run",
+    "gef.init.plan",
+    "gef.init.run",
+    "gef.status.show",
+  ]);
+  assert.equal(introspection.filter((entry) => entry.mutation).every((entry) => entry.commandId === "gef.init.run" || entry.commandId === "gef.adopt.apply"), true, "only the apply commands may declare mutation");
   const byId = Object.fromEntries(introspection.map((entry) => [entry.commandId, entry]));
   assert.equal(byId["gef.init.plan"].mutation, false);
   assert.equal(byId["gef.init.run"].mutation, true);
@@ -186,9 +200,33 @@ test("the frozen delegation symbols are exposed by the engine boundary", async (
   for (const symbol of ["installPlan", "repositoryState", "githubBootstrap", "detectDrift", "resolveCanonical", "backupManifest", "recoveryPlan", "helpIndex"]) {
     assert.equal(typeof engines[symbol], "function", `${symbol} must be bound`);
   }
+  // WO-003 added the diagnostic and status surfaces; the WO-002 set must remain intact.
+  for (const symbol of ["doctor", "repairSuggestion", "invariantResult", "dependencySecurity", "githubSecurity", "integritySnapshot", "capabilityEnvelope", "operatorStatus", "documentationManifest", "navigationPlan"]) {
+    assert.equal(typeof engines[symbol], "function", `${symbol} must be bound`);
+  }
   assert.deepEqual(
     Object.keys(engines).sort(),
-    ["backupManifest", "detectDrift", "githubBootstrap", "helpIndex", "installPlan", "recoveryPlan", "repositoryState", "resolveCanonical", "safetyDecision"],
+    [
+      "backupManifest",
+      "capabilityEnvelope",
+      "dependencySecurity",
+      "detectDrift",
+      "doctor",
+      "documentationManifest",
+      "githubBootstrap",
+      "githubSecurity",
+      "helpIndex",
+      "installPlan",
+      "integritySnapshot",
+      "invariantResult",
+      "navigationPlan",
+      "operatorStatus",
+      "recoveryPlan",
+      "repairSuggestion",
+      "repositoryState",
+      "resolveCanonical",
+      "safetyDecision",
+    ],
   );
 });
 
@@ -238,7 +276,7 @@ test("help rendering derives from the projected entries and is deterministic", a
   const first = renderHelp(entries);
   assert.equal(first, renderHelp(engines.helpIndex(HELP_INVENTORY)));
   for (const entry of entries) assert.ok(first.includes(entry.id), `help must list ${entry.id}`);
-  assert.ok(first.includes("Not yet available: doctor, status, upgrade."));
+  assert.ok(first.includes("Not yet available: upgrade."));
   assert.ok(renderHelp(entries, "init").includes("gef.init.plan"));
   assert.ok(!renderHelp(entries, "init").includes("gef.adopt.plan"));
 

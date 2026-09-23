@@ -7,7 +7,7 @@ process boundary live here; all domain behaviour is delegated to existing V1 eng
 the kernel `CommandRegistry`/`KernelRuntime`, and no business policy is implemented in CLI
 handlers.
 
-## Admitted commands (WO-002 increment)
+## Admitted commands (WO-002 + WO-003 increments)
 
 | Command | Canonical command ID | Effect |
 | --- | --- | --- |
@@ -17,10 +17,14 @@ handlers.
 | `gef init --apply` | `gef.init.run` | governed initialization run |
 | `gef adopt` | `gef.adopt.preview` | read-only adoption preview |
 | `gef adopt --apply` | `gef.adopt.apply` | governed adoption run |
+| `gef doctor` | `gef.doctor.run` | read-only environment/repository/integrity diagnostics |
+| `gef status` | `gef.status.show` | read-only governed project/repository status |
 
-`doctor`, `status` and `upgrade` are **not** implemented in this increment; they arrive with
-their owning Work Orders (WO-003, WO-004), and are refused as usage errors rather than
-partially working.
+`upgrade` is **not** implemented; it arrives with its owning Work Order (WO-004) and is refused
+as a usage error rather than partially working.
+
+`doctor` and `status` are read-only and admit no mutation flag: `--apply` is refused on exit 10
+before the command is resolved, and their command input carries no apply key at all.
 
 ## Delegation
 
@@ -31,6 +35,11 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
 | `init` | `installPlan`, `repositoryState`, `githubBootstrap`, `detectDrift`, `resolveCanonical` |
 | `adopt` | `detectDrift`, `resolveCanonical`, `backupManifest`, `recoveryPlan`, `installPlan` |
 | both apply paths | the kernel transaction engine |
+| `doctor` | `doctor`, `repairSuggestion`, `invariantResult`, `dependencySecurity`, `githubSecurity`, `integritySnapshot`, `capabilityEnvelope`, `safetyDecision` |
+| `status` | `operatorStatus`, `repositoryState`, `documentationManifest`, `navigationPlan` |
+
+Each diagnostic command is registered with an explicit composite engine owner, so registry
+introspection proves the delegation instead of leaving it implicit.
 
 ## Behaviour
 
@@ -95,6 +104,101 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
   JSON Schema 2020-12 contracts shipped in `schemas/`; an unsupported schema major version
   fails closed on read.
 
+### Doctor and status
+
+Both commands are pure projections: they read a bounded set of already-governed observations,
+hand them to the verified engines, and render the engine's answer. No domain algorithm is
+reimplemented in the CLI, and neither command writes anything.
+
+- **Zero effect.** They create no `.gef`, no `.gef-private`, no receipt, no staging, no journal,
+  no Git branch/tag/config change and no provider call. They use bounded reads only, so the
+  private transaction area is never entered.
+- **Unknown is never upgraded to healthy.** Observations the CLI cannot make are simply not
+  passed to the engine, and the engine's own fail-closed answer stands. Dependency security is
+  reported as `REVIEW` rather than `PASS` while provenance is unverified; GitHub capability with
+  no provider evidence is `REVIEW`; a missing capability envelope is `DEGRADED`.
+- **Every diagnostic read is contained and bounded (S0 read policy).** One shared helper performs
+  all read-only file reads: it binds the approved target root, rejects lexical escape, inspects
+  every path component with a non-following `lstat`, refuses symlink/junction/reparse ancestors
+  and link-like final targets, proves physical containment through `realpath`, requires a regular
+  file, and verifies that the opened file is the exact object the walk inspected. Reads are
+  capped at `DIAGNOSTIC_FILE_MAX_BYTES` per file and `DIAGNOSTIC_SOURCE_MAX_FILES` sources per
+  command, and the size gate runs *before* any read — oversized content is never read and never
+  truncated into apparently valid evidence. An alias is never followed merely because its
+  destination is reachable. Each refusal produces a deterministic observation-limit code in the
+  output: `DIAGNOSTIC_ALIAS_REFUSED:`, `DIAGNOSTIC_PATH_ESCAPE:`, `DIAGNOSTIC_NOT_REGULAR:`,
+  `DIAGNOSTIC_FILE_OVER_BUDGET:`, `DIAGNOSTIC_PATH_UNREADABLE:`. Absence is a successful
+  observation and is reported as absence, not as a limit.
+- **Git metadata is read through the same policy, under its own budget.** `.git`, `.git/HEAD` and
+  any symbolic-ref target are bound to the approved project root and read through the shared
+  containment primitive with the tighter `GIT_METADATA_MAX_BYTES` budget, because they are read
+  before any subprocess bound applies. A `.git` that is a symlink or junction is refused
+  (`GIT_DIRECTORY_ALIAS_REFUSED`); a `.git` that is a file or any other indirection form yields
+  `GIT_DIRECTORY_NOT_A_DIRECTORY`, never a clean repository; a symbolic ref whose text is not a
+  well-formed `refs/...` name is `GIT_HEAD_REF_UNUSABLE`; a `HEAD` whose content is not a ref name
+  or a Git object id is `GIT_HEAD_UNUSABLE`. Operation sentinels are probed with the same
+  non-following primitive. Every one of those states reports `UNKNOWN` and a `null` repository
+  verdict rather than inventing a clean tree. The argv-based `git status` and `git --version`
+  probes keep their existing timeout and output bounds.
+- **Checkpoint content is validated before it carries any meaning.** `.engineering/CHECKPOINT.json`
+  is untrusted input, so presence, readability and validated authority are three separate fields.
+  A document is accepted only when it is a non-array object, declares a supported `schemaVersion`,
+  types every projected production field correctly, keeps `overallCompletionPercent` inside
+  0..100, and carries an object-or-null V1.1 overlay. Anything else is reported as
+  `present: true, valid: false` with `production`/`development` `null` and a deterministic code,
+  and `operatorStatus` never consumes it.
+- **The dirtiness probe is side-effect free, even against a hostile repository.** `git status`
+  normally refreshes the index and may write it, and it honours repository configuration — including
+  `core.fsmonitor`, which can name a hook for Git to execute. The probe therefore runs as
+  `git -c core.fsmonitor=false --no-optional-locks -C <target> status --porcelain -z
+  --untracked-files=normal`: the command-scoped configuration outranks every config file, so a
+  target cannot make the diagnostic execute a repository-selected hook or start the built-in
+  fsmonitor daemon, and optional locks are disabled so the probe cannot rewrite the index it is
+  only meant to observe. `GIT_OPTIONAL_LOCKS=0` is bound in the probe environment as a second,
+  deterministic expression of the same guarantee. The overrides are process-local — no user or
+  repository configuration is rewritten — and dirtiness reporting is unchanged, because it still
+  comes from the same `--porcelain` output. Invocation stays direct executable plus argv with no
+  shell string, under the existing timeout and output bound.
+- **The Git executable comes from an approved location, never from `PATH`.** The CLI resolves Git
+  through the frozen M04-S04 toolchain authority (`ToolDescriptor` with `TRUSTED_PATH`,
+  `ToolObservationPort`, `ToolObservationSession`) against a closed, code-declared list of
+  machine-owned locations — `%ProgramFiles%\Git\…` on Windows, `/usr/bin`, `/bin`, `/usr/local/bin`,
+  `/opt/homebrew/bin`, `/opt/local/bin` elsewhere. That list is a constant: no environment value,
+  repository and no caller can add, reorder or redirect an admitted location, and a descriptor
+  naming anything else is refused by the policy itself. Resolution happens once per invocation and
+  the exact same resolved executable is used for the version probe and the dirtiness probe; a failed
+  resolution is a truthful capability gap, never a fallback to whatever `git` the ambient `PATH`
+  would offer.
+- **Git probes run under a minimal allowlisted environment.** Instead of inheriting the caller's
+  environment, the probe receives an explicit set — `GIT_OPTIONAL_LOCKS=0` plus the documented
+  runtime keys (`PATH`, `HOME`, `USERPROFILE`, `SystemRoot`, `WINDIR`, `PATHEXT`, `TEMP`, `TMP`,
+  `TMPDIR`). `GIT_DIR`, `GIT_WORK_TREE`, `GIT_INDEX_FILE`, `GIT_OBJECT_DIRECTORY`,
+  `GIT_ALTERNATE_OBJECT_DIRECTORIES`, `GIT_NAMESPACE`, `GIT_CEILING_DIRECTORIES`, `GIT_COMMON_DIR`,
+  `GIT_CONFIG*` and trace variables therefore cannot reach the child at all, and `--target` stays the
+  repository authority. The allowlist shape means an unanticipated Git-control variable is excluded
+  by construction rather than by remembering to deny it.
+- **Remediation is guidance.** Every `repairSuggestion` keeps its verified posture
+  (`automatic: false`, `previewRequired: true`); there is no `--fix` and no destructive repair.
+- **Git unavailable fails closed (WO-002 F2).** A missing or unusable `git` binary is surfaced by
+  `gef doctor` as an actionable `FINDING` on `toolchain.git` with a non-automatic remediation and
+  a failed invariant, and by `gef status` as `dirtiness: "UNKNOWN"` with a `null` verdict and an
+  operator state that is never `CLEAN`. Git absence can never be reported as clean or ready.
+- **Production and development state stay distinguishable.** `gef status` reports the declared
+  production truth and the V1.1 development overlay as separate fields; it never merges them or
+  invents completion.
+- **The drift baseline is stated, not implied.** Drift is a comparison, so it is computed only
+  when a supported recorded baseline actually exists, and the projection states that baseline
+  explicitly via `driftBaseline`, taken from whichever managed artifact exists
+  (`.gef/init-state.json` or `.gef/adopt-state.json`). A target with no governed state reports
+  `{state: "ABSENT", ref: null}` and `drift: null` with `drift.baseline.absent` in
+  `observationLimits`; a recorded document that cannot be interpreted reports
+  `{state: "UNSUPPORTED"}` with `drift.baseline.unsupported`. Because `operatorStatus` cannot
+  express unknown staleness, the conservative `stale: true` is kept and explained by
+  `operator.stale.unknown_conservative` — an ungoverned target is never read as a target that
+  drifted, and no `UNEXPECTED` drift event is manufactured.
+- **No fabricated progress.** Operator progress is the declared percentage or `null`; an absent
+  repository is reported as unobservable rather than assumed present.
+
 ## Distribution
 
 The package is distributed as part of the GEF source workspace, and is also locally
@@ -110,6 +214,11 @@ and the runtime packages the CLI depends on are bundled, so an install needs no 
 surrounding source checkout. The package directory is never used as a scratch area — the
 distribution is assembled in a staging directory. `vendor/MANIFEST.json` records the sha256 of
 every vendored artefact.
+
+Six engine modules are vendored: `m48-m54-maintenance`, `area-h-governance`,
+`security-reliability-integrations`, `m41-m47-platform`, `m55-m61-quality` and `m62-m63-final`.
+The last three were added by the WO-003 increment so the installed package can serve `doctor`
+and `status` from the packaged payload alone.
 
 **No publication to npm, GitHub Releases or any registry is performed or claimed by this
 increment.** `private: true` and the absence of `publishConfig` make an accidental publication

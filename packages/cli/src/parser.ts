@@ -9,7 +9,7 @@
 
 export const CLI_CONTRACT_VERSION = "1.0";
 
-export type CliVerb = "init" | "adopt";
+export type CliVerb = "init" | "adopt" | "doctor" | "status";
 
 export interface ParsedCommand {
   readonly kind: "command";
@@ -36,14 +36,19 @@ export interface ParseFailure {
 
 export type ParseOutcome = ParsedCommand | ParsedMeta | ParseFailure;
 
-/** Frozen safe-action mapping for the WO-002 increment. */
+/** Frozen safe-action mapping. `doctor` and `status` are read-only and have no apply action. */
 const ACTION_MAP: Readonly<Record<CliVerb, (apply: boolean) => string>> = Object.freeze({
   init: (apply) => (apply ? "gef.init.run" : "gef.init.plan"),
   adopt: (apply) => (apply ? "gef.adopt.apply" : "gef.adopt.preview"),
+  doctor: () => "gef.doctor.run",
+  status: () => "gef.status.show",
 });
 
-/** Verbs admitted by this Work Order. `doctor`, `status` and `upgrade` are WO-003/WO-004. */
-export const ADMITTED_VERBS: readonly CliVerb[] = Object.freeze(["init", "adopt"]);
+/** Verbs that declare an apply action. Doctor and status are read-only in this Work Order. */
+const APPLY_CAPABLE_VERBS: readonly CliVerb[] = Object.freeze(["init", "adopt"]);
+
+/** Verbs admitted so far. `upgrade` remains WO-004. */
+export const ADMITTED_VERBS: readonly CliVerb[] = Object.freeze(["init", "adopt", "doctor", "status"]);
 
 function isVerb(value: string): value is CliVerb {
   return (ADMITTED_VERBS as readonly string[]).includes(value);
@@ -107,6 +112,12 @@ export function parseArgv(argv: readonly string[]): ParseOutcome {
 
   // Verb-level help resolves before apply/target validation: help is never an error.
   if (help) return { kind: "help", json, verb };
+
+  // Read-only commands declare no apply action; `--apply` is a usage error rather than a
+  // silently ignored flag, so a mutation intent can never be directed at a diagnostic command.
+  if (apply && !APPLY_CAPABLE_VERBS.includes(verb)) {
+    return failure("apply_not_admitted", `--apply is not admitted for '${verb}'`, json);
+  }
 
   const parsed: ParsedCommand = {
     kind: "command",
