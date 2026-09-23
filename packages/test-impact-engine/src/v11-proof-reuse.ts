@@ -391,11 +391,12 @@ export function compileProofReusePlan(
     reusedTests = [];
     testsToRun = selectedTests;
     for (let index = 0; index < decisions.length; index += 1) {
-      if (decisions[index]?.suppressed) {
+      const entry = decisions[index];
+      if (entry !== undefined && entry.suppressed) {
         decisions[index] = Object.freeze({
-          ...decisions[index],
+          ...entry,
           suppressed: false,
-          reason: `GLOBAL_${state}_NO_SUPPRESSION:${decisions[index]?.reason ?? "UNKNOWN"}`,
+          reason: `GLOBAL_${state}_NO_SUPPRESSION:${entry.reason}`,
         });
       }
     }
