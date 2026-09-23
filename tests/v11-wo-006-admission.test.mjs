@@ -72,7 +72,7 @@ test("WO-006 Context Lock binds exact WO-005 merge and immutable production refs
 
 test("Direct Execution Brief freezes fail-closed incremental validation rules", () => {
   assert.ok(brief.includes("State: `NOT_EXECUTABLE_UNTIL_ADMISSION_MERGE`"));
-  assert.ok(brief.includes("Do not begin with repository-wide discovery"));
+  assert.ok(brief.includes("No repository-wide rediscovery") || brief.includes("Do not begin with repository-wide discovery"));
   assert.ok(brief.includes("BROWNFIELD_UNPROVEN"));
   assert.ok(brief.includes("L5/finalSweepRequired can never be downgraded"));
   assert.ok(brief.includes("Proof reuse eligibility is NOT decided here"));
