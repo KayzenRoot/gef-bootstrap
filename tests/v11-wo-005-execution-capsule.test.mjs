@@ -301,6 +301,7 @@ test("CTX-DET-02: a semantically meaningful input change changes the fingerprint
   assert.equal(first.ok, true, JSON.stringify(first));
   assert.equal(second.ok, true, JSON.stringify(second));
   assert.notEqual(first.value.fingerprints.capsuleFingerprint, second.value.fingerprints.capsuleFingerprint);
+  assert.notEqual(first.value.capsuleId, second.value.capsuleId, "different exact bindings require different capsule identities");
 });
 
 test("CTX-DET-03: volatile-only metadata and expiry do not change the semantic fingerprint", () => {
@@ -314,6 +315,7 @@ test("CTX-DET-03: volatile-only metadata and expiry do not change the semantic f
   assert.equal(first.ok, true, JSON.stringify(first));
   assert.equal(second.ok, true, JSON.stringify(second));
   assert.equal(first.value.fingerprints.capsuleFingerprint, second.value.fingerprints.capsuleFingerprint);
+  assert.equal(first.value.capsuleId, second.value.capsuleId, "volatile-only changes cannot change capsule identity");
   assert.notEqual(serializeExecutionCapsuleCanonical(first.value), serializeExecutionCapsuleCanonical(second.value));
 });
 
