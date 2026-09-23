@@ -471,6 +471,18 @@ test("M15 receipt or sealed-pack mismatch is rejected before projection", () => 
   }, opts);
   assert.equal(failCode(badReceipt), "CAPSULE_M15_SEAL_INVALID");
 
+  const badReceiptBinding = compileExecutionCapsule({
+    ...base,
+    compiledPack: {
+      ...base.compiledPack,
+      receipt: {
+        ...base.compiledPack.receipt,
+        policyVersion: "9.9.9",
+      },
+    },
+  }, opts);
+  assert.equal(failCode(badReceiptBinding), "CAPSULE_M15_SEAL_INVALID");
+
   const badPack = compileExecutionCapsule({
     ...base,
     compiledPack: {
@@ -483,7 +495,6 @@ test("M15 receipt or sealed-pack mismatch is rejected before projection", () => 
   }, opts);
   assert.equal(failCode(badPack), "CAPSULE_M15_SEAL_INVALID");
 });
-
 test("write-allowed and write-forbidden intersection rejects the capsule", () => {
   const base = baseCapsuleInput();
   const result = compileExecutionCapsule({
@@ -624,4 +635,41 @@ test("capsule identity changes for semantic navigation/test/proof changes but no
   }, opts);
   assert.equal(volatileChanged.ok, true, JSON.stringify(volatileChanged));
   assert.equal(volatileChanged.value.capsuleId, original.value.capsuleId);
+});
+
+
+test("runtime validator enforces raw lowercase SHA-256 output exactly as the frozen schema", () => {
+  const compiled = compile();
+  assert.equal(compiled.ok, true, JSON.stringify(compiled));
+
+  const prefixedTree = {
+    ...compiled.value,
+    base: {
+      ...compiled.value.base,
+      treeFingerprint: `sha256:${compiled.value.base.treeFingerprint}`,
+    },
+  };
+  assert.equal(failCode(validateExecutionCapsuleContract(prefixedTree)), "CAPSULE_SCHEMA_INVALID");
+
+  const uppercaseProof = {
+    ...compiled.value,
+    proofReferences: compiled.value.proofReferences.map((proof, index) =>
+      index === 0 ? { ...proof, bindsTo: proof.bindsTo.toUpperCase() } : proof
+    ),
+  };
+  assert.equal(failCode(validateExecutionCapsuleContract(uppercaseProof)), "CAPSULE_SCHEMA_INVALID");
+});
+
+test("derived capsule identity includes resulting state/certainty", () => {
+  const base = baseCapsuleInput();
+  const compiled = compileExecutionCapsule(base, opts);
+  const indeterminate = compileExecutionCapsule({
+    ...base,
+    affected: { ...base.affected, dependencyKnowledgeComplete: false },
+  }, opts);
+  assert.equal(compiled.ok, true, JSON.stringify(compiled));
+  assert.equal(indeterminate.ok, true, JSON.stringify(indeterminate));
+  assert.equal(compiled.value.state, "COMPILED");
+  assert.equal(indeterminate.value.state, "INDETERMINATE");
+  assert.notEqual(compiled.value.capsuleId, indeterminate.value.capsuleId);
 });
