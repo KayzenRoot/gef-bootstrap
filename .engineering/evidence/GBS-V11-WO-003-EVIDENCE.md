@@ -13,6 +13,14 @@ decision now recorded as ADR-0004 and ledger entry D-0060. §10 records the orac
 Windows parity, the rights it proves, the non-circular fixtures, the packaging, and the one limitation
 it does not resolve (a privileged caller).
 
+**Latest resolution cycle (WO-003 Windows rights).** This revision executes the architect resolution
+for objective review `5241170498` against the implementation branch at `ed2fac34d16a69ecbc38fd96b05d3f18ce3aae88`.
+It adds live Windows ACL fixtures for the two independent replacement routes, removes the former
+non-discriminating ACL test, binds `UNKNOWN` and handle-close failures to fail-closed outcomes, and
+records full Windows validation and package proof in §10.7 and §13. The local unprivileged Windows
+token admits the protected machine Git and passes WO-002 behavior; the privileged-token limitation
+remains disclosed in §20 rather than generalized to all Windows users.
+
 **Prior revision (Windows replacement-rights correction, disposition BLOCKED).** This bundle also supersedes
 the evidence recorded at head `38e19dd1d05121e1bb4b2dbbcd393286eaea361a`, which received
 `CORRECTION_REQUIRED` (review `5240757786`: CRITICAL 0 / HIGH 1). The claim `CRITICAL: 0 / HIGH: 0`
@@ -88,7 +96,11 @@ those heads was retracted in its own cycle and is not reinstated here.
 | Final H14 corrected head | `38e19dd1d05121e1bb4b2dbbcd393286eaea361a` — reaudited, `CORRECTION_REQUIRED` (Windows rights) |
 | Windows-rights corrected head (BLOCKED) | `2a7010368481b4fa720e34ec1097dd49f2e00754` |
 | Trust-anchor head | `8e8801f2f0292ed1617bc04ac19d36415b1c3ff2` |
-| **Oracle corrected head** | `724c36e` lineage; exact SHA reported in PR #284 |
+| Oracle implementation before this resolution | `ed2fac34d16a69ecbc38fd96b05d3f18ce3aae88` |
+| **Corrected implementation and test head for this resolution** | `2175c2d94f122af8357a08be648a2fe9b5719795` |
+| Exact-head Windows workflow | [Run `35804964191`](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/35804964191) (`WO-003 Windows Rights Oracle`), bound to `2175c2d94f122af8357a08be648a2fe9b5719795`; job conclusion `success`. Rights fixtures, diagnostics, decision gate, packed install, distribution regression and dependency audit succeeded. The focused WO-003 / WO-002 parity step was `skipped` because parity was not exercisable on the hosted token; §13 records the local Windows suites that passed. |
+| Exact-head Actions set | 24 workflow runs completed successfully at implementation/test head `2175c2d94f122af8357a08be648a2fe9b5719795`, including the Windows rights run above. |
+| Pull request | [PR #284](https://github.com/KayzenRoot/gef-bootstrap/pull/284), open and draft, base `release/1.1`; no merge performed |
 | Production branch `main` | `72c17bd3e7e421790ac382022b1f0ebbb0275ea4` — **unmodified** |
 | Release tag `v1.0.0` | object `aac89f9c3f0c884474958025bf14828bc338b5ee` → target `866fe3af8cccc65c929aaf6a47a924401fa448b3` — **unmoved** |
 
@@ -1305,8 +1317,11 @@ whole assurance set red before the fix. The staging script requires the **host's
 and stages it with the runtime; `vendor/MANIFEST.json` records both as `native-runtime` with their
 exact versions. A POSIX build stages no Windows binary and the POSIX path never loads the adapter.
 `bundleDependencies` and `optionalDependencies` are both covered by the manifest/lock drift guard.
+The exact locked artifacts are `koffi@3.3.0` (`sha512-UeyQtptuPeCP0BqKD+Q8ftTQhIUBHO7bXyK9DVIaW9hJSg0BrICm4K5N8Qtn7zKk20sb5vpnES9KBqVksM2kpQ==`)
+and optional `@koromix/koffi-win32-x64@3.3.0`
+(`sha512-D+ORp73rTmvGVfq01+4uBmgVZqrPqU9N9xCZCfexaCDlVk0WQsaqid1dGsi6eScJuHt4Cp8s1i5/4CsecxFTKQ==`).
 
-### 10.6 A permanent limitation, stated plainly
+### 10.6 Privileged-token limitation at the reviewed head `8e8801f…` (historical)
 
 The Git-backed parity suites compare the **installed package against the source workspace on the same
 token**, not against an assumption that Git is admitted. That is deliberate: a GitHub Windows runner
@@ -1319,10 +1334,53 @@ parity is exercisable there. On an unprivileged machine (this workstation) the m
 and `npm run validate` exits 0 with 1458/1458 and zero skips; on the elevated CI runner the gate proves
 consistency and the parity suites are not run, with the reason printed in the job.
 
-The same asymmetry exists on POSIX for a root caller. Whether a privileged caller should be admitted —
+This subsection records the runner behavior and local test count at that reviewed head; the later
+unprivileged Windows validation is recorded in §10.7 and §13. The same asymmetry exists on POSIX for
+a root caller. Whether a privileged caller should be admitted —
 i.e. whether "the caller is an administrator" is inside the admitted threat model — is a policy
 question the architect has not answered, and it is recorded as a MEDIUM finding rather than decided
 here.
+
+### 10.7 WO-003 Windows rights resolution — objective review `5241170498`
+
+The attached resolution prompt records `BLOCKED` at audited head
+`8e8801f2f0292ed1617bc04ac19d36415b1c3ff2` and authorizes the bounded Windows oracle correction on
+this branch. ADR-0004 and ledger decision D-0060 were already present before this corrective code
+change; their scope is preserved. The correction does not alter the frozen query order: content-write
+refusal first, executable `DELETE`, its parent `FILE_DELETE_CHILD`, then each ancestor directory's
+`DELETE` and its parent's `FILE_DELETE_CHILD`, terminating at the volume root.
+
+`packages/cli/src/windows-rights.ts` now calls `GetLastError` only after `CreateFileW` returns
+`INVALID_HANDLE_VALUE`. A successful open is closed immediately; a failed `CloseHandle` or thrown
+native call becomes `UNKNOWN`. Only Win32 error 5 means `DENIED`. The internal test seam in
+`registry.ts` proves the entire all-denied chain reaches the volume-root `FILE_DELETE_CHILD`, never
+asks for `DELETE` on the volume root, and refuses an `UNKNOWN` result.
+
+The former broad-grant ACL test was removed because it did not construct either exact rights case.
+`tests/v11-wo-003-windows-rights.test.mjs` creates and resets only disposable temporary ACL fixtures:
+Microsoft documents that a Windows file can be renamed when either the file grants delete access or
+its parent grants delete-child access ([MoveFileEx](https://learn.microsoft.com/en-us/windows/win32/api/winbase/nf-winbase-movefileexa)); fixture B exercises the parent route independently.
+
+| Case | Fixture and independent observation | Policy result |
+|---|---|---|
+| A | `icacls` grants target `DELETE` and denies parent `FILE_DELETE_CHILD`; target access query is `ALLOWED`; a real rename and restore prove liveness. | `UNAVAILABLE` with `physical_path_delete_allowed`; the copied `cmd.exe` fixture is refused and its post-refusal sentinel stays absent. |
+| B | Target DACL grants only `RX`. With parent `FILE_DELETE_CHILD` denied, the target `DELETE` query is `DENIED`. The parent deny is then removed and only `FILE_DELETE_CHILD` is granted; the parent query is `ALLOWED` and a real rename and restore succeed. | `UNAVAILABLE`; a successful effective `DELETE` open can reflect the parent route, so the required target-first policy refuses conservatively. The fake executable is refused and its sentinel stays absent. |
+| C | A deterministic `DENIED` probe traverses the executable, every ancestor directory and the volume-root parent right. | Returns no replacement refusal when every right is denied; the remaining normal trust checks decide admission. |
+| D | An absent target causes a non-access-denied Win32 failure. | `UNKNOWN` and `replacement_rights_proof_unavailable`, never `DENIED` or `FOUND`. |
+| E/F | A and B each prove a real rename before asking production policy to refuse; both then attempt the copied executable only through the guarded observation port. | Both refusals leave the sentinel absent. |
+
+Windows `rights-diagnostics.mjs` reported the oracle available. `rights-decision-gate.mjs` independently
+observed both machine Git candidates over the physical path chain: 8 `DENIED`, 0 `ALLOWED`, 0
+`UNKNOWN` rights each, content-writable false, policy `FOUND`; `parity=yes`. The Windows workflow now
+runs the rights fixtures before that token-dependent parity decision. The privileged-runner behavior
+and its explicit parity guard remain visible in §10.6 and in the workflow output.
+
+The local Windows package smoke loaded the adapter from the installed tarball and proved the same Git
+decision as the source workspace. The four required WO-002 repository-state, CLI, CLI-E2E and
+distribution regression suites passed unchanged in behavior on this unprivileged Windows token; the
+full source/test-head results are in §13. The exact-head hosted Windows job completed successfully,
+with the token-dependent focused parity step explicitly skipped; hosted step detail is bound in §1.
+Objective review remains external and must bind its disposition to the implementation and test head.
 
 ---
 
@@ -1413,13 +1471,19 @@ renders the engine's answer.
 |---|---|
 | `packages/cli/src/index.ts` | The package barrel re-exports the registry surface. The new probes and types must be exported for library consumers and for the tests; without this the added surface is unreachable and the type layer is inconsistent. Mechanical consequence of the registry change, no new policy. |
 | `packages/cli/scripts/prepare-package.mjs` | Packaging parity (brief step 8) is impossible without vendoring the three engine modules the diagnostic commands resolve. `vendor/engines` would otherwise lack `m41-m47-platform`, `m55-m61-quality` and `m62-m63-final`, and the installed CLI would fail closed instead of matching the source workspace. |
+| `packages/cli/src/windows-rights.ts` | `CloseHandle` return status is checked; `GetLastError` is read only after an invalid handle; native uncertainty remains `UNKNOWN`. |
+| `packages/cli/src/registry.ts` | Add an internal injectable seam for deterministic full-chain rights policy tests; the production query order and public API remain unchanged. |
+| `packages/cli/scripts/rights-decision-gate.mjs` | Independently enumerate target plus every physical ancestor right through the volume root, and report candidate indexes/counts without absolute trusted paths. |
+| `tests/v11-wo-003-windows-rights.test.mjs` | Replace broad, non-discriminating ACL claims with exact disposable target-DELETE/parent-delete-child fixtures, UNKNOWN and full-chain cases, liveness rename, and sentinel refusal proof. |
+| `tests/v11-wo-003-doctor-status.test.mjs` | Remove the earlier broad-grant ACL assertion superseded by the exact Windows fixtures; retain the H13/H14 regression assertions. |
+| `.github/workflows/wo-003-windows-rights.yml` | Always run the Windows rights fixture file before the token-aware parity gate; the existing Linux assurance path is unchanged. |
 | `tests/v11-wo-002-cli.test.mjs` | Mechanical assertion update: the test encoded the four-command inventory and the nineteen-symbol engine surface. Both numbers are now six and twenty-nine. Required by "preserve `init`/`adopt` behavior" — the assertions describe the surface, not the behavior. |
 | `tests/v11-wo-002-cli-e2e.test.mjs` | Same mechanical update in the process-level suite (command inventory and deferred-command expectations). |
 | `tests/v11-wo-002-dist-smoke.test.mjs` | Same mechanical update in the packed-install suite (installed `--help` inventory). |
 
-No expansion touched `packages/kernel`, the V1.0 accepted history, any workflow, or any
-upgrade/migration or WO-005+ surface. The negative-search ledger in §18 records what was deliberately
-not changed.
+No expansion touched `packages/kernel`, the V1.0 accepted history, any Linux assurance workflow, or
+any upgrade/migration or WO-005+ surface. This Windows-rights resolution makes the single bounded
+workflow update listed in §18; the negative-search ledger records what was deliberately not changed.
 
 ### 12.3 Read scope
 
@@ -1455,27 +1519,39 @@ The baseline is taken from whichever managed artifact exists — `init` **or** `
 
 ## 13. Validation ladder — commands, exit codes, counts
 
-All figures below are at the final-H14 corrected head. The figures recorded at the earlier heads —
-`89b2d137…` (16 / 9 / 5 focused, 1374 total), `49ceca34…` (38 / 12 / 6, 1400 total),
-`e99751f…` (48 / 14 / 7, 1413 total), `d732978…` (48 / 19 / 8, 1419 total) and `570b235…`
-(48 / 19 / 9, 1429 total) and `c1ad014…` (56 / 28 / 11, 1439 total) and `23fe092…` (64 / 28 / 11, 1447 total) — are **historical**; they
-are retained as the record of those cycles and are not current-head proof.
+The following results were collected on Windows under the unprivileged `csn19` token at source and
+test commit `2175c2d94f122af8357a08be648a2fe9b5719795`, before the evidence-only follow-up. The
+hosted result below is independently bound to that same exact implementation/test SHA. Earlier
+counts and dispositions in §§2–10 remain historical and are not current-head proof.
 
 | Step | Command | Exit | Result |
 |---|---|---|---|
-| Build | `npm run build -- --force` | 0 | 28 projects compiled from scratch |
+| Clean build | `npm run build -- --force` | 0 | 28 projects compiled from scratch |
 | Typecheck | `npm run typecheck` | 0 | clean |
-| L1 focused (incl. H1–H14 and the rights fixtures) | `node --test tests/v11-wo-003-doctor-status.test.mjs` | 0 | tests 73 / pass 73 / fail 0 |
-| L2 process E2E (incl. H7–H10) | `node --test tests/v11-wo-003-doctor-status-e2e.test.mjs` | 0 | tests 28 / pass 28 / fail 0 |
-| L3 packed install | `node --test tests/v11-wo-003-dist-smoke.test.mjs` | 0 | tests 12 / pass 12 / fail 0 |
-| WO-002 regression | `node --test tests/v11-wo-002-cli.test.mjs` | 0 | tests 30 / pass 30 / fail 0 |
-| WO-002 regression | `node --test tests/v11-wo-002-cli-e2e.test.mjs` | 0 | tests 11 / pass 11 / fail 0 |
-| WO-002 regression | `node --test tests/v11-wo-002-dist-smoke.test.mjs` | 0 | tests 7 / pass 7 / fail 0 |
-| L4 full (Windows, unprivileged) | `npm run validate` | 0 | tests 1458 / pass 1458 / fail 0, 0 skipped |
+| Windows rights fixtures | `node --test tests/v11-wo-003-windows-rights.test.mjs` | 0 | 4 / 4 pass; ACL A/B, full all-denied chain, UNKNOWN |
+| L1 focused (incl. H13/H14) | `node --test tests/v11-wo-003-doctor-status.test.mjs` | 0 | 72 / 72 pass |
+| L2 process E2E | `node --test tests/v11-wo-003-doctor-status-e2e.test.mjs` | 0 | 29 / 29 pass |
+| L3 + required WO-002 Windows regressions | one `node --test` invocation over WO-002 repository-state, CLI, CLI-E2E, distribution and WO-003 distribution files | 0 | 66 / 66 pass: 6 + 30 + 11 + 7 + 12 |
+| Full Windows suite | `node --test` | 0 | 1461 / 1461 pass, 0 fail, 0 skipped |
+| `npm run validate` wrapper | `npm run validate` | 1 | PowerShell 5.1 rejected the script's `&&` token before typecheck or tests started; equivalent constituents below both passed |
+| Validate constituent 1 | `npm run typecheck` | 0 | clean |
+| Validate constituent 2 | `node --test` | 0 | 1461 / 1461 pass, 0 fail, 0 skipped |
+| Lock/install dry run | `npm ci --dry-run --no-audit --no-fund` | 0 | up to date; npm reports Koffi's install script as pending approval, with no script executed by this dry run |
+| Windows adapter diagnostics | `node packages/cli/scripts/rights-diagnostics.mjs` | 0 | adapter available; both installed Git candidates `DELETE=DENIED`, parent `FILE_DELETE_CHILD=DENIED`, content-writable false |
+| Independent rights decision gate | `node packages/cli/scripts/rights-decision-gate.mjs` | 0 | both candidates: 8 denied / 0 allowed / 0 unknown, content-writable false, policy `FOUND`; `parity=yes` |
 | Dependency audit | `npm audit --audit-level=high` | 0 | found 0 vulnerabilities |
+| Exact-head hosted Windows job | [Actions run `35804964191`](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/35804964191) | success | fixtures, rights diagnostics, decision gate, packed install, distribution regression and audit passed; token-dependent WO-003 focused / WO-002 parity step was explicitly skipped because hosted-token parity was not exercisable |
+| Exact-head hosted Actions set | GitHub Actions API, head `2175c2d94f122af8357a08be648a2fe9b5719795` | 24 / 24 successful | 23 other workflow runs plus the Windows rights oracle job |
 
-The combined six-suite run reports tests 155 / pass 155 / fail 0 (30 + 11 + 7 + 68 + 28 + 11). No test
-was skipped to reduce runtime; every required suite ran in full.
+The full test run also emitted existing Node `FileHandle` garbage-collection deprecation warnings; they
+did not affect test outcomes. The workflow-gate import defect found during the first direct gate run
+was corrected before the passing result above; the final command output is the evidence of record.
+
+Exact five-file regression/distribution invocation:
+
+```
+node --test tests/v11-wo-002-repository-state.test.mjs tests/v11-wo-002-cli.test.mjs tests/v11-wo-002-cli-e2e.test.mjs tests/v11-wo-002-dist-smoke.test.mjs tests/v11-wo-003-dist-smoke.test.mjs
+```
 
 ### Observed projections (source workspace, target = repository root)
 
@@ -1606,6 +1682,8 @@ no registry is contacted.
 | WO-002 behaviour | `init` plan is `effect: NONE` and does not create `.gef`; `init --apply` reports `APPLIED`; `status` leaves the governed artifact byte-identical |
 | Vendored engines removed | both commands exit 40, `error.category CAPABILITY`, no `value`, no mutation |
 | Bundled runtime closure | `@gef-bootstrap/contracts`, `@gef-bootstrap/kernel` and `@gef-bootstrap/preflight` (the toolchain authority), each installed with the package, with the lockfile entry reconciled to the manifest |
+| Windows native runtime | The packed install carries `koffi@3.3.0` and optional `@koromix/koffi-win32-x64@3.3.0`; on this Windows host the installed adapter loads and reports the same admitted Git decision as the source workspace |
+| Windows package smoke | `tests/v11-wo-003-dist-smoke.test.mjs` passes 12 / 12, including installed-runtime metadata and the Windows rights adapter |
 | Trusted Git in the installed package | the installed CLI resolves the approved executable and never executes a runnable fake `git` placed first on `PATH` |
 | Alias containment in the installed package | a junction/symlink `.engineering` is refused with `DIAGNOSTIC_ALIAS_REFUSED` and no external sentinel appears in output |
 | Git metadata in the installed package | an aliased `.git` is refused and an oversized `.git/HEAD` is refused without echoing its content |
@@ -1615,11 +1693,13 @@ no registry is contacted.
 
 ## 17. `init` / `adopt` regression proof
 
-The three WO-002 suites run unchanged in behavior at this head: 30 + 11 + 7 = 48 tests, all
-passing. The only edits to those files are assertion updates for the grown command inventory and
-engine-symbol count; no `init`/`adopt` behavioral assertion was weakened, removed or relaxed, and no
-transaction, traversal, recovery, private-containment, journal-ownership or authorization contract
-was modified. `packages/kernel` is untouched by this increment (see §18).
+All four Windows regression suites required by the resolution prompt ran unchanged:
+`v11-wo-002-repository-state` (6), `v11-wo-002-cli` (30), `v11-wo-002-cli-e2e` (11), and
+`v11-wo-002-dist-smoke` (7), for 54 / 54 passing tests. The same command also ran the WO-003 packed
+install suite (12 / 12), for 66 / 66 total. The full Windows suite then passed 1461 / 1461 with no
+skips. No `init`/`adopt` behavior assertion was weakened, removed or relaxed; no transaction,
+traversal, recovery, private-containment, journal-ownership or authorization contract was modified.
+`packages/kernel` is untouched by this increment (see §18).
 
 ---
 
@@ -1629,7 +1709,7 @@ was modified. `packages/kernel` is untouched by this increment (see §18).
 |---|---|
 | `packages/kernel/**` | The diagnostic commands are read-only projections; no kernel contract needed modification. WO-002 F1 (kernel physical-safety exit classification) stays with its owner. |
 | Kernel transaction, traversal, recovery, journal and authorization semantics | Preserved byte-for-byte; the WO forbids regression and no change was required. |
-| `.github/workflows/**` | C8 remains owned by WO-009. No workflow was added, removed or relaxed. |
+| Other workflow files | The Linux assurance workflows are unchanged; the one authorized Windows rights workflow update is recorded in §12.2. C8 remains owned by WO-009. |
 | `main`, tag `v1.0.0`, V1.0 acceptance history | Forbidden by the Work Order and the handoff production boundary. |
 | `upgrade`, migration, recovery product features | Out of scope (WO-004). `upgrade` remains refused on the canonical usage path. |
 | WO-005+ surfaces (Context Compiler, Execution Capsule, incremental validation, telemetry, channel redesign, production acceptance) | Out of scope. |
@@ -1655,8 +1735,9 @@ was modified. `packages/kernel` is untouched by this increment (see §18).
 - No tag was created or moved; `v1.0.0` still resolves to object
   `aac89f9c3f0c884474958025bf14828bc338b5ee` → target
   `866fe3af8cccc65c929aaf6a47a924401fa448b3`.
-- No npm publication, no GitHub Release, no registry contact. `private: true` and the absence of
-  `publishConfig` make an accidental publication mechanically impossible.
+- No npm publication or GitHub Release was created. The read-only `npm audit`/install checks may
+  contact the npm registry, but no registry write or publication capability was exercised.
+  `private: true` and the absence of `publishConfig` remain in force.
 - `main` was not read into, written to, or targeted. `main` is never an execution target of these
   commands.
 - No force-push, no history rewrite, no self-approval. The executor does not claim `APPROVED`.
@@ -1682,30 +1763,29 @@ change. The H9/H10 cycle added a second lesson — the *first* version of those 
 nothing and passed against the vulnerable code until the fixtures were made live and discriminating
 (§5.4, and again in §6.4).
 
-### CRITICAL — 0
+### CRITICAL — not independently assessed for this correction
 
-### HIGH — 0 at this head
+### HIGH — not independently assessed for this correction
 
 | ID | Finding | Status |
 |---|---|---|
-| H1 | Target escape through symlink/junction aliases in the S0 diagnostic readers | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.1) |
-| H2 | Diagnostic reads were not resource bounded | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.2) |
-| H3 | Absent baseline still emitted false `UNEXPECTED` drift | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.3) |
-| H4 | Parseable but invalid checkpoint promoted into status semantics | **Corrected** in the H1–H4 cycle, preserved and re-verified at this head (§2.4) |
-| H5 | Git metadata reads bypassed the contained-read policy | **Corrected** in the H5–H6 cycle, preserved and re-verified at this head (§3.1) |
-| H6 | Git metadata reads were unbounded | **Corrected** in the H5–H6 cycle, preserved and re-verified at this head (§3.2) |
-| H7 | The dirtiness probe could write the repository index | **Corrected** — `--no-optional-locks` plus a `GIT_OPTIONAL_LOCKS=0` binding; index proven byte-identical and the fixture proven refreshable (§4.1) |
-| H8 | The dirtiness probe could execute a repository-configured FSMonitor hook or start its daemon | **Corrected** — `-c core.fsmonitor=false` in the same argv invocation, process-local, with a live hook fixture proving the danger and GEF's refusal (§4.2) |
-| H9 | The Git probe inherited the caller's whole environment, so ambient Git-control variables could redirect repository and index | **Corrected** — one explicit allowlisted child environment shared by both probes; forbidden keys absent by construction; A/B redirect fixture with a discriminating dirtiness observable (§5.1) |
-| H10 | The Git executable was chosen by ambient `PATH` | **Corrected** in the H9–H10 cycle, preserved and re-verified at this head (§5.2) |
-| H11 | Trust admission was lexical, so an admitted path could alias an executable outside the trust surface | **Corrected** — admission applies to the physical target, which must be inside an approved physical root and, where the platform exposes it, not group/other writable; alias behaviour explicit; live alias fixture with an external payload (§6.1) |
-| H12 | Executable identity was not bound to the process actually spawned, and the snapshot was a module global | **Corrected** in the H11–H12 cycle, preserved and re-verified at this head (§6.2) |
-| H13 | Invocation authority was process-global mutable state, so overlapping invocations could observe each other | **Corrected** — the authority is bound to the asynchronous execution context with AsyncLocalStorage; nested and concurrent invocations are isolated independently of completion order, and nothing survives an invocation (§7.1) |
-| H14 | Physical admission did not prove the executable was non-replaceable by the caller | **Corrected** in the H13–H14 cycle, and completed in the final H14 cycle: the proof is now a chain to the filesystem root, proven on Windows through the ACL-enforced write-open on each directory and on POSIX through the effective-write bit, so  can no longer coexist with an unproven chain (§8) |
+| H1 | Target escape through symlink/junction aliases in the S0 diagnostic readers | Corrected in the H1–H4 cycle; preserved by the current full-suite pass (§2.1, §13); objective reaudit pending |
+| H2 | Diagnostic reads were not resource bounded | Corrected in the H1–H4 cycle; preserved by the current full-suite pass (§2.2, §13); objective reaudit pending |
+| H3 | Absent baseline still emitted false `UNEXPECTED` drift | Corrected in the H1–H4 cycle; preserved by the current full-suite pass (§2.3, §13); objective reaudit pending |
+| H4 | Parseable but invalid checkpoint promoted into status semantics | Corrected in the H1–H4 cycle; preserved by the current full-suite pass (§2.4, §13); objective reaudit pending |
+| H5 | Git metadata reads bypassed the contained-read policy | Corrected in the H5–H6 cycle; preserved by the current full-suite pass (§3.1, §13); objective reaudit pending |
+| H6 | Git metadata reads were unbounded | Corrected in the H5–H6 cycle; preserved by the current full-suite pass (§3.2, §13); objective reaudit pending |
+| H7 | The dirtiness probe could write the repository index | Corrected with `--no-optional-locks` and `GIT_OPTIONAL_LOCKS=0`; current suite passes (§4.1, §13); objective reaudit pending |
+| H8 | The dirtiness probe could execute a repository-configured FSMonitor hook or start its daemon | Corrected with `-c core.fsmonitor=false`; current suite passes (§4.2, §13); objective reaudit pending |
+| H9 | The Git probe inherited the caller's whole environment | Corrected with an explicit allowlisted child environment; current suite passes (§5.1, §13); objective reaudit pending |
+| H10 | The Git executable was chosen by ambient `PATH` | Corrected in the H9–H10 cycle; current suite passes (§5.2, §13); objective reaudit pending |
+| H11 | Trust admission was lexical | Corrected with physical-target containment; current suite passes (§6.1, §13); objective reaudit pending |
+| H12 | Executable identity was not bound to the process actually spawned | Corrected in the H11–H12 cycle; current suite passes (§6.2, §13); objective reaudit pending |
+| H13 | Invocation authority was process-global mutable state | Corrected with AsyncLocalStorage; current concurrency tests pass (§7.1, §13); objective reaudit pending |
+| H14 | Physical admission did not prove the executable was non-replaceable by the caller | Windows `DELETE` / `FILE_DELETE_CHILD` oracle and POSIX effective-write chain are implemented; current Windows fixtures and full suite pass (§10.7, §13); objective reaudit pending |
 
-The HIGH count is stated as 0 **at this head only**, on the strength of the re-run ladder in §13 and
-the tests in §2/§3/§4. It is not a claim that no further finding exists; that determination belongs
-to the objective reaudit.
+No executor severity count or approval is claimed for this correction. The objective reviewer owns
+the current CRITICAL/HIGH assessment and the final disposition.
 
 ### MEDIUM — 2 (carried, not introduced)
 
@@ -1714,7 +1794,7 @@ to the objective reaudit.
 | C4 | Constitutional version binding | Project Owner | Not expanded into WO-003, per the Work Order's known-findings section. |
 | M-H4 | `SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS` is a CLI-local allowlist (`[2]`) over the governance checkpoint's `schemaVersion`. It validates only the fields this command consumes. If the governance checkpoint version advances, the CLI must be updated in the same increment or `status` will fail closed. | WO-003 owner / next governance-checkpoint change | Deliberate: the correction explicitly forbids inventing a product-wide checkpoint schema. Fail-closed on an unknown version is the safe direction. |
 | M3 | Workspace lockfile was stale after the preflight runtime dependency was added | WO-003 (this cycle) | **Resolved** in §6.5: lockfile regenerated with the canonical npm workflow, diff limited to the expected lines, and two drift guards added. |
-| M-Oracle | **A privileged caller is refused.** On a token that genuinely holds  and  over the machine Git — a Windows administrator, a root POSIX user — the high-assurance policy withholds the executable, so Git-backed behaviour is unavailable there. The oracle proves the decision is consistent with the operating system; whether such a caller should be admitted is a threat-model question not yet answered. | Project Owner / architecture | Recorded, not decided here. On an unprivileged machine the machine Git is admitted and the full suite passes; the Windows assurance job reports the privileged case explicitly instead of asserting admission. |
+| M-Oracle | A privileged token that can replace the machine Git is refused by the same `DELETE` / `FILE_DELETE_CHILD` policy. The unresolved boundary is whether such a privileged token is inside the supported-use threat model; this does not generalize to ordinary Windows users. | Project Owner / architecture | Recorded for objective review. This unprivileged Windows token admits machine Git and passes the full suite; elevated-token refusal remains fail-closed and explicit. |
 
 ### LOW — 5
 
@@ -1748,14 +1828,15 @@ All work in this bundle is executor evidence. It is **not** self-approval and it
 `APPROVED`. The objective reviewer must return exactly one terminal disposition — `APPROVED`,
 `CORRECTION_REQUIRED` or `BLOCKED` — bound to the exact implementation head.
 
-This revision corrects objective reaudit review `5240757786` (Windows replacement rights) and stops as
-BLOCKED on the product-level consequence of failing closed there. It does not merge, tag,
-publish, force-push, rewrite history, touch `main`, move `v1.0.0`, or self-approve.
+This revision executes the bounded correction authorized after objective review `5241170498` recorded
+`BLOCKED` at `8e8801f…`. Local Windows validation and the exact-head hosted result are recorded in
+§§1 and 13 against implementation/test head `2175c2d94f122af8357a08be648a2fe9b5719795`. The evidence
+bundle is an evidence-only follow-up; the external objective reviewer owns the new severity assessment
+and terminal disposition. This bundle does not claim `APPROVED`.
+
+No merge, tag, publication, force-push or history rewrite was performed; `main` and `v1.0.0` were not
+changed.
 
 STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_REAUDIT_WINDOWS_RIGHTS_ORACLE`
-
-MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED
-
-
 
 MERGE NOT PERFORMED; OBJECTIVE REAUDIT REQUIRED
