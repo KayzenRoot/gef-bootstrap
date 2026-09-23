@@ -110,28 +110,50 @@ function downstreamFailureClosure(
   map: TestMap,
   failures: readonly FailureFingerprint[],
 ): { readonly tests: ReadonlySet<string>; readonly unknownFailure: boolean } {
-  const known = new Set(map.tests.map((test) => test.id));
-  const affected = new Set<string>();
+  const knownTests = new Map(map.tests.map((test) => [test.id, test]));
+  const affectedTests = new Set<string>();
+  const affectedSources = new Set<string>();
   let unknownFailure = false;
 
   for (const failure of failures) {
-    if (!known.has(failure.testId)) unknownFailure = true;
-    else affected.add(failure.testId);
+    const failedTest = knownTests.get(failure.testId);
+    if (failedTest === undefined) {
+      unknownFailure = true;
+      continue;
+    }
+    affectedTests.add(failedTest.id);
+    for (const sourceId of failedTest.sources) affectedSources.add(sourceId);
   }
 
+  // A current test failure may represent a problem in any source in that test's proven source
+  // closure. Widen through source dependencies first, then through tests sharing those sources and
+  // downstream test dependencies. This is intentionally more conservative than test-id-only reuse.
   let moved = true;
   while (moved) {
     moved = false;
+
+    for (const source of map.sources) {
+      if (affectedSources.has(source.id)) continue;
+      if ((source.dependsOn ?? []).some((dependency) => affectedSources.has(dependency))) {
+        affectedSources.add(source.id);
+        moved = true;
+      }
+    }
+
     for (const test of map.tests) {
-      if (affected.has(test.id)) continue;
-      if ((test.dependsOn ?? []).some((dependency) => affected.has(dependency))) {
-        affected.add(test.id);
+      if (affectedTests.has(test.id)) continue;
+      if (
+        test.sources.some((sourceId) => affectedSources.has(sourceId)) ||
+        (test.dependsOn ?? []).some((dependency) => affectedTests.has(dependency))
+      ) {
+        affectedTests.add(test.id);
+        for (const sourceId of test.sources) affectedSources.add(sourceId);
         moved = true;
       }
     }
   }
 
-  return { tests: affected, unknownFailure };
+  return { tests: affectedTests, unknownFailure };
 }
 
 function indexUnique<T extends { readonly testId: string }>(
