@@ -58,6 +58,36 @@ function dynamicMap() {
   return result.value;
 }
 
+function knownButUnmappedMap() {
+  const result = buildTestMap(
+    [
+      { id: "src:a", fingerprint: H("src:a") },
+      { id: "src:b", fingerprint: H("src:b") },
+    ],
+    [{ id: "test:b", fingerprint: H("test:b"), sources: ["src:b"] }],
+    options,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.equal(result.value.complete, true);
+  return result.value;
+}
+
+function boundaryMap() {
+  const result = buildTestMap(
+    [
+      { id: "src:a", fingerprint: H("src:a") },
+      { id: "src:b", fingerprint: H("src:b") },
+    ],
+    [
+      { id: "test:a", fingerprint: H("test:a"), sources: ["src:a"], boundaries: ["api:orders"] },
+      { id: "test:api", fingerprint: H("test:api"), sources: ["src:b"], boundaries: ["api:orders"] },
+    ],
+    options,
+  );
+  assert.equal(result.ok, true, JSON.stringify(result));
+  return result.value;
+}
+
 function capsule(overrides = {}) {
   return {
     state: "COMPILED",
@@ -107,16 +137,25 @@ test("known mapped change stays narrow when assurance and certainty permit", () 
   assert.equal(deniesMutationAuthority(result.value.handoff), true);
 });
 
-test("INC-VAL-01: unmapped changed source widens to L4 and never selects a smaller set", () => {
-  const result = compile({ changedSources: ["src:unmapped"] });
+test("INC-VAL-01: known changed source with no test mapping widens to L4 and never selects empty", () => {
+  const result = compile({
+    map: knownButUnmappedMap(),
+    changedSources: ["src:a"],
+  });
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.value.level, "L4");
   assert.equal(result.value.state, "WIDENED");
   assert.equal(result.value.uncertainty, "UNKNOWN");
   assert.equal(result.value.fullSuiteRequired, true);
   assert.equal(result.value.intermediateSuppression, "PROHIBITED");
-  assert.deepEqual(result.value.tests, ["test:a", "test:b", "test:extra"]);
-  assert.ok(result.value.reasons.includes("DEPENDENCY_UNKNOWN"));
+  assert.deepEqual(result.value.tests, ["test:b"]);
+  assert.ok(result.value.reasons.includes("CHANGED_SOURCE_UNMAPPED:src:a"));
+
+  const absentSource = compile({ changedSources: ["src:not-in-map"] });
+  assert.equal(absentSource.ok, true, JSON.stringify(absentSource));
+  assert.equal(absentSource.value.level, "L4");
+  assert.equal(absentSource.value.intermediateSuppression, "PROHIBITED");
+  assert.ok(absentSource.value.reasons.includes("DEPENDENCY_UNKNOWN"));
 });
 
 test("INC-VAL-02: selector confidence INDETERMINATE prohibits suppression and widens to L4", () => {
@@ -254,4 +293,40 @@ test("WO-006 does not issue proof-reuse verdicts", () => {
   assert.ok(["DEFER_TO_PROOF_REUSE", "PROHIBITED"].includes(result.value.intermediateSuppression));
   assert.equal("reusableTests" in result.value, false);
   assert.equal(result.value.handoff.authority, "READ_ONLY_TEST_IMPACT");
+});
+
+test("L3 closes over impacted boundary tests and unknown boundary knowledge escalates to L4", () => {
+  const withBoundary = compile({
+    map: boundaryMap(),
+    changedSources: ["src:a"],
+    assurance: { requiredLevel: "L3", policyDigest: H("policy"), profileDigest: H("profile") },
+    capsule: capsule({ ladderLevel: "L3" }),
+  });
+  assert.equal(withBoundary.ok, true, JSON.stringify(withBoundary));
+  assert.equal(withBoundary.value.level, "L3");
+  assert.deepEqual(withBoundary.value.tests, ["test:a", "test:api"]);
+  assert.ok(withBoundary.value.reasons.includes("BOUNDARY_CLOSURE_INCLUDED"));
+
+  const withoutBoundary = compile({
+    changedSources: ["src:a"],
+    assurance: { requiredLevel: "L3", policyDigest: H("policy"), profileDigest: H("profile") },
+    capsule: capsule({ ladderLevel: "L3" }),
+  });
+  assert.equal(withoutBoundary.ok, true, JSON.stringify(withoutBoundary));
+  assert.equal(withoutBoundary.value.level, "L4");
+  assert.equal(withoutBoundary.value.fullSuiteRequired, true);
+  assert.equal(withoutBoundary.value.intermediateSuppression, "PROHIBITED");
+  assert.ok(withoutBoundary.value.reasons.includes("BOUNDARY_KNOWLEDGE_INCOMPLETE"));
+});
+
+test("invalid assurance/capsule enum truth fails closed before selection", () => {
+  const badLevel = compile({
+    assurance: { requiredLevel: "L9", policyDigest: H("policy"), profileDigest: H("profile") },
+  });
+  assert.equal(failCode(badLevel), "INCREMENTAL_INPUT_INVALID");
+
+  const badCertainty = compile({
+    capsule: capsule({ certainty: "MAYBE" }),
+  });
+  assert.equal(failCode(badCertainty), "INCREMENTAL_INPUT_INVALID");
 });
