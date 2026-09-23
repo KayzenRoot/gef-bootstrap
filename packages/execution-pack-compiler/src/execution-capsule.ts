@@ -268,8 +268,8 @@ function normalizeSlug(value: string): string {
   return normalized.length === 0 ? "unknown" : normalized;
 }
 
-function capsuleId(repository: string, workOrderId: string): string {
-  return `gef.capsule.${normalizeSlug(repository)}.${normalizeSlug(workOrderId)}`;
+function capsuleId(repository: string, workOrderId: string, identityDigest: string): string {
+  return `gef.capsule.${normalizeSlug(repository)}.${normalizeSlug(workOrderId)}-${identityDigest}`;
 }
 
 function driftAction(drift: ExecutionCapsuleDriftClass): ExecutionCapsuleDriftAction {
@@ -619,6 +619,24 @@ export function compileExecutionCapsule(
     return fail("CAPSULE_FINGERPRINT_INVALID", "Base tree and scope digests must be SHA-256");
   }
 
+  // Capsule identity is content-derived, not an ad-hoc Work Order label. The full SHA-256
+  // binding digest is retained so any different exact binding produces a different capsuleId.
+  const identityDigest = rawDigest(options, {
+    repository: input.base.repository,
+    branch: input.base.branch,
+    headSha: input.base.headSha,
+    treeFingerprint,
+    workOrder: {
+      id: input.workOrder.id,
+      source: input.workOrder.source,
+      scopeDigest,
+      assurance: input.workOrder.assurance ?? null,
+    },
+    contextDigest: input.context.capsule.semanticDigest,
+    packDigest: input.compiledPack.pack.semanticDigest,
+  });
+  if (!identityDigest.ok) return identityDigest;
+
   const writeAllowed = sortedUnique(input.navigation.writeAllowed);
   const writeForbidden = sortedUnique(input.navigation.writeForbidden);
   const forbidden = new Set(writeForbidden);
@@ -705,7 +723,7 @@ export function compileExecutionCapsule(
 
   const preFingerprint = {
     schemaVersion: "1.0" as const,
-    capsuleId: capsuleId(input.base.repository, input.workOrder.id),
+    capsuleId: capsuleId(input.base.repository, input.workOrder.id, identityDigest.value),
     capsuleVersion: "1.0" as const,
     releaseLine: "1.1.x" as const,
     state,
