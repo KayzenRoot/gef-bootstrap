@@ -194,6 +194,108 @@ function makePlan(
   }));
 }
 
+export function verifyIncrementalValidationPlan(
+  plan: IncrementalValidationPlan,
+  options: OperationOptions,
+): Result<true> {
+  if (
+    !isSha(plan.digest) ||
+    !isSha(plan.bindings.candidateDigest) ||
+    !RAW_SHA256.test(plan.bindings.capsuleFingerprint) ||
+    !isSha(plan.bindings.mapDigest) ||
+    !isSha(plan.bindings.policyDigest) ||
+    !isSha(plan.bindings.profileDigest) ||
+    !plan.bindings.platform ||
+    !isSha(plan.result.digest) ||
+    !isSha(plan.result.selection.digest) ||
+    !isSha(plan.handoff.digest) ||
+    plan.handoff.authority !== "READ_ONLY_TEST_IMPACT" ||
+    plan.handoff.candidateDigest !== plan.bindings.candidateDigest ||
+    plan.handoff.resultDigest !== plan.result.digest ||
+    plan.result.state !== plan.state
+  ) {
+    return fail("INCREMENTAL_PLAN_INTEGRITY_INVALID", "Incremental validation plan binding/integrity shape is invalid.");
+  }
+
+  const selected = unique(plan.tests);
+  const reasons = unique(plan.reasons);
+  if (
+    selected.length !== plan.tests.length ||
+    reasons.length !== plan.reasons.length ||
+    plan.result.selection.level !== plan.level ||
+    plan.result.selection.uncertainty !== plan.uncertainty ||
+    plan.result.selection.tests.length !== selected.length ||
+    plan.result.selection.tests.some((testId, index) => testId !== selected[index]) ||
+    plan.result.selection.reasons.length !== reasons.length ||
+    plan.result.selection.reasons.some((reason, index) => reason !== reasons[index])
+  ) {
+    return fail("INCREMENTAL_PLAN_INTEGRITY_INVALID", "Incremental validation plan/result projection diverged.");
+  }
+
+  const selectionSeal = digest(options, "IVSEL11", {
+    tests: selected,
+    level: plan.level,
+    uncertainty: plan.uncertainty,
+    reasons,
+    mapDigest: plan.bindings.mapDigest,
+    candidateDigest: plan.bindings.candidateDigest,
+    capsuleFingerprint: plan.bindings.capsuleFingerprint,
+    policyDigest: plan.bindings.policyDigest,
+    profileDigest: plan.bindings.profileDigest,
+    platform: plan.bindings.platform,
+  });
+  if (!selectionSeal.ok) return selectionSeal;
+  if (selectionSeal.value !== plan.result.selection.digest) {
+    return fail("INCREMENTAL_PLAN_INTEGRITY_INVALID", "Incremental validation selection digest mismatch.");
+  }
+
+  const resultSeal = createTestImpactResult({
+    selection: plan.result.selection,
+    reusableTests: plan.result.reusableTests,
+    unresolved: plan.result.unresolved,
+    waves: plan.result.waves,
+    state: plan.result.state,
+  }, options);
+  if (!resultSeal.ok) return resultSeal;
+  if (resultSeal.value.digest !== plan.result.digest) {
+    return fail("INCREMENTAL_PLAN_INTEGRITY_INVALID", "Incremental validation result digest mismatch.");
+  }
+
+  const handoffSeal = createTestImpactHandoff(
+    "v11.incremental-validation",
+    plan.bindings.candidateDigest,
+    plan.result,
+    options,
+  );
+  if (!handoffSeal.ok) return handoffSeal;
+  if (handoffSeal.value.digest !== plan.handoff.digest) {
+    return fail("INCREMENTAL_PLAN_INTEGRITY_INVALID", "Incremental validation handoff digest mismatch.");
+  }
+
+  const body = {
+    state: plan.state,
+    tests: selected,
+    level: plan.level,
+    assuranceFloor: plan.assuranceFloor,
+    uncertainty: plan.uncertainty,
+    reasons,
+    intermediateSuppression: plan.intermediateSuppression,
+    fullSuiteRequired: plan.fullSuiteRequired,
+    finalSweepRequired: plan.finalSweepRequired,
+    bindings: plan.bindings,
+    resultDigest: plan.result.digest,
+    handoffDigest: plan.handoff.digest,
+    authority: plan.handoff.authority,
+  };
+  const planSeal = digest(options, "IVP11", body);
+  if (!planSeal.ok) return planSeal;
+  if (planSeal.value !== plan.digest) {
+    return fail("INCREMENTAL_PLAN_INTEGRITY_INVALID", "Incremental validation plan digest mismatch.");
+  }
+
+  return ok(true);
+}
+
 /**
  * V1.1 orchestration over M28.
  * It may widen validation, but it never decides whether historical proof can suppress execution.
