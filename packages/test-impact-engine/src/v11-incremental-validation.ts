@@ -260,7 +260,11 @@ export function compileIncrementalValidationPlan(
     return test !== undefined && platformRelevant(test, input.platform);
   });
 
-  const finalSweepRequired =
+  const capsuleEscalationFloor = input.capsule.escalation.reduce(
+    (floor, entry) => maxLevel(floor, entry.escalateTo),
+    "L0" as ValidationLevel,
+  );
+  let finalSweepRequired =
     input.capsule.finalSweepRequired ||
     assuranceFloor === "L5" ||
     input.assurance.requiredLevel === "L5" ||
@@ -395,6 +399,13 @@ export function compileIncrementalValidationPlan(
     }
   }
 
+  // Any observed uncertainty/widening must honor the strongest escalation floor carried
+  // by the Execution Capsule. Trigger-specific matching is intentionally not guessed here.
+  if (state !== "READY" || uncertainty !== "NONE") {
+    level = maxLevel(level, capsuleEscalationFloor);
+    if (level === "L5") finalSweepRequired = true;
+  }
+
   if (level === "L4" || level === "L5") fullSuiteRequired = true;
   if (finalSweepRequired && level === "L5") fullSuiteRequired = true;
 
@@ -404,6 +415,8 @@ export function compileIncrementalValidationPlan(
     intermediateSuppression = "PROHIBITED";
     fullSuiteRequired = true;
     reasons.push("NO_PLATFORM_TESTS_AVAILABLE");
+    level = maxLevel(level, capsuleEscalationFloor);
+    if (level === "L5") finalSweepRequired = true;
   }
 
   const selected = fullSuiteRequired
