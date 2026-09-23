@@ -1,0 +1,87 @@
+name: WO-004 Upgrade Recovery Assurance
+
+on:
+  pull_request:
+    paths:
+      - "packages/cli/**"
+      - ".engineering/evidence/GBS-V11-WO-004-EVIDENCE.md"
+      - "tests/v11-wo-004-*.test.mjs"
+      - "tests/v11-wo-002-*.test.mjs"
+      - "tests/v11-wo-003-*.test.mjs"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/wo-004-upgrade-recovery.yml"
+  push:
+    branches: [release/1.1]
+    paths:
+      - "packages/cli/**"
+      - "tests/v11-wo-004-*.test.mjs"
+      - ".github/workflows/wo-004-upgrade-recovery.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wo-004-upgrade-recovery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  upgrade-recovery:
+    name: Upgrade and recovery on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    env:
+      WO_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Assert checkout is the exact event head (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -ne $env:WO_EXPECTED_SHA) { throw "Checkout head $actual does not match event head $env:WO_EXPECTED_SHA" }
+
+      - name: Assert checkout is the exact event head (POSIX)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$WO_EXPECTED_SHA"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install exact locked dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build -- --force
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Windows effective-rights decision gate
+        id: rights
+        if: runner.os == 'Windows'
+        run: node packages/cli/scripts/rights-decision-gate.mjs
+
+      - name: WO-004 focused upgrade, compatibility and recovery cases
+        run: node --test tests/v11-wo-004-upgrade.test.mjs tests/v11-wo-004-package-smoke.test.mjs
+
+      - name: Full repository validation
+        if: runner.os != 'Windows' || steps.rights.outputs.parity == 'yes'
+        run: npm run validate
+
+      - name: Dependency audit
+        run: npm audit --audit-level=high
+
+      - name: Git-backed parity held by the Windows rights gate
+        if: runner.os == 'Windows' && steps.rights.outputs.parity != 'yes'
+        run: echo "The Windows token can replace the machine Git, so the effective-rights policy withholds that executable. Focused matrix, recovery, package and policy checks ran; Git-backed parity requires an unprivileged token."

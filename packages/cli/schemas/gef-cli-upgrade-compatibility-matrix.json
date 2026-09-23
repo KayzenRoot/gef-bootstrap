@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gef:schema:cli-upgrade-compatibility-matrix:1",
+  "schemaVersion": 1,
+  "product": "gef-bootstrap",
+  "supportedPlatforms": ["win32", "linux", "darwin"],
+  "minimumNodeMajor": 22,
+  "requiredCapabilities": ["trustedGit", "managedReceipt", "kernelTransaction", "jsonSchema2020-12"],
+  "compatibility": [
+    {
+      "from": "1.0.0",
+      "to": "1.1.0",
+      "stateSchemaMajor": 1,
+      "receiptSchemaMajor": 1,
+      "migrationId": "GEF-UPGRADE-STATE-V1-1",
+      "migrationOrder": ["PRECHECK", "CAPTURE_RECOVERY", "STAGE", "VERIFY_STAGE", "PROMOTE", "VERIFY_POST_STATE", "RECEIPT"],
+      "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
+      "evidenceState": "VERIFIED",
+      "evidenceRefs": [
+        "tests/v11-wo-004-upgrade.test.mjs#UPG-MIG-01",
+        "tests/v11-wo-004-upgrade.test.mjs#UPG-MIG-02",
+        "tests/v11-wo-004-upgrade.test.mjs#UPG-MIG-03",
+        "tests/v11-wo-004-upgrade.test.mjs#UPG-MIG-04",
+        "tests/v11-wo-004-upgrade.test.mjs#UPG-MIG-05",
+        "tests/v11-wo-004-upgrade.test.mjs#UPG-MIG-06",
+        "tests/v11-wo-004-upgrade.test.mjs#UPG-MIG-07",
+        "tests/v11-wo-004-upgrade.test.mjs#COMPAT-01",
+        "tests/v11-wo-004-upgrade.test.mjs#COMPAT-02",
+        "tests/v11-wo-004-upgrade.test.mjs#COMPAT-03",
+        "tests/v11-wo-004-upgrade.test.mjs#COMPAT-04",
+        "tests/v11-wo-004-upgrade.test.mjs#COMPAT-05",
+        "tests/v11-wo-004-upgrade.test.mjs#COMPAT-06"
+      ]
+    }
+  ]
+}

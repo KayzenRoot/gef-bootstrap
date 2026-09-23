@@ -236,7 +236,7 @@ function buildPorts(deps: RunDependencies): RuntimePorts {
         moduleOwner: "cli.transport",
         commandId: request.commandId,
         // Receipt persistence has its own admitted purpose; it never borrows the state purpose.
-        purpose: request.commandId === "gef.adopt.apply" ? "RECEIPT_ADOPT" : "RECEIPT_INIT",
+        purpose: request.commandId === "gef.upgrade.apply" ? "RECEIPT_UPGRADE" : request.commandId === "gef.adopt.apply" ? "RECEIPT_ADOPT" : "RECEIPT_INIT",
       });
       if (!applied.ok) {
         const error = applied.error ?? cliError({ category: "RECOVERY", reason: "receipt_transaction_failed", summary: "Receipt transaction did not apply", commandId: request.commandId, runId: request.runId, terminal: "RECOVERY_REQUIRED" });

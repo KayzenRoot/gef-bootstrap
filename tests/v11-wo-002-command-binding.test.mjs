@@ -73,7 +73,7 @@ test("H8: the admitted binding table is deterministic and self-consistent", () =
   assert.equal(new Set(keys).size, keys.length, "each command/purpose pair must be unique");
   assert.deepEqual([...ADMITTED_MUTATION_BINDINGS], ADMITTED_MUTATION_BINDINGS, "the table must be immutable");
   for (const binding of ADMITTED_MUTATION_BINDINGS) {
-    assert.ok(["init", "adopt"].includes(binding.verb));
+    assert.ok(["init", "adopt", "upgrade"].includes(binding.verb));
     assert.equal(bindingAllowsSurface(binding, binding.artifact), true);
     assert.equal(resolveMutationBinding({ commandId: binding.commandId, purpose: binding.purpose, policyRef: binding.policyRef, moduleOwner: binding.moduleOwner, surface: binding.artifact }), binding);
   }

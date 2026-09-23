@@ -129,5 +129,10 @@ export function buildReceiptDocument(input: ReceiptDocumentInput): ReceiptDocume
   };
 }
 
-/** Schema asset names as packaged; used by payload tests. */
-export const SCHEMA_ASSETS: readonly string[] = Object.freeze(["gef-cli-state.schema.json", "gef-cli-receipt.schema.json"]);
+/** Schema asset names as packaged; used by payload integrity tests. */
+export const SCHEMA_ASSETS: readonly string[] = Object.freeze([
+  "gef-cli-state.schema.json",
+  "gef-cli-receipt.schema.json",
+  "gef-cli-upgrade-state.schema.json",
+  "gef-cli-upgrade-compatibility-matrix.schema.json",
+]);
