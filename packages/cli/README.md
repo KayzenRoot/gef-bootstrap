@@ -2,12 +2,12 @@
 
 Thin operator CLI surface for GEF Bootstrap V1.1.
 
-This package is **transport and rendering only**. Command parsing, result rendering and the
-process boundary live here; all domain behaviour is delegated to existing V1 engines through
-the kernel `CommandRegistry`/`KernelRuntime`, and no business policy is implemented in CLI
-handlers.
+This package owns the command transport and process boundary, delegates existing V1 behaviour
+through the kernel `CommandRegistry`/`KernelRuntime`, and keeps the bounded WO-004 version matrix
+and migration preconditions in a separate application module. Product policy is not implemented
+in the renderer.
 
-## Admitted commands (WO-002 + WO-003 increments)
+## Admitted commands (WO-002 through WO-004 increments)
 
 | Command | Canonical command ID | Effect |
 | --- | --- | --- |
@@ -17,11 +17,10 @@ handlers.
 | `gef init --apply` | `gef.init.run` | governed initialization run |
 | `gef adopt` | `gef.adopt.preview` | read-only adoption preview |
 | `gef adopt --apply` | `gef.adopt.apply` | governed adoption run |
+| `gef upgrade` | `gef.upgrade.preview` | deterministic, read-only project-upgrade preview |
+| `gef upgrade --apply` | `gef.upgrade.apply` | explicit, governed project-state migration |
 | `gef doctor` | `gef.doctor.run` | read-only environment/repository/integrity diagnostics |
 | `gef status` | `gef.status.show` | read-only governed project/repository status |
-
-`upgrade` is **not** implemented; it arrives with its owning Work Order (WO-004) and is refused
-as a usage error rather than partially working.
 
 `doctor` and `status` are read-only and admit no mutation flag: `--apply` is refused on exit 10
 before the command is resolved, and their command input carries no apply key at all.
@@ -34,7 +33,8 @@ The CLI composes these verified V1 engines and adds no replacement semantics:
 | --- | --- |
 | `init` | `installPlan`, `repositoryState`, `githubBootstrap`, `detectDrift`, `resolveCanonical` |
 | `adopt` | `detectDrift`, `resolveCanonical`, `backupManifest`, `recoveryPlan`, `installPlan` |
-| both apply paths | the kernel transaction engine |
+| `upgrade` | maintenance-owned `upgradePreview`, `compatibility`, `installPlan`; safety-owned `backupManifest`, `recoveryPlan` |
+| all apply paths | the kernel transaction engine |
 | `doctor` | `doctor`, `repairSuggestion`, `invariantResult`, `dependencySecurity`, `githubSecurity`, `integritySnapshot`, `capabilityEnvelope`, `safetyDecision` |
 | `status` | `operatorStatus`, `repositoryState`, `documentationManifest`, `navigationPlan` |
 
@@ -44,6 +44,8 @@ introspection proves the delegation instead of leaving it implicit.
 ## Behaviour
 
 - Default `init`/`adopt` paths are read-only. Mutation requires an explicit `--apply`.
+- `upgrade` migrates a governed project state from the matrix-admitted V1.0 `1.0.0` row to V1.1 `1.1.0`; it never updates the installed CLI, contacts a registry or invokes a package manager.
+- Upgrade preserves the source state and its receipt byte-for-byte and creates a separate `.gef/upgrade-state.json` record through the kernel transaction path. Unsupported, conflicting, user-modified or unobservable inputs fail closed. A verified repeat returns `NOOP_APPLIED` and keeps the existing state bytes.
 - **Output selection:** a JSON envelope is emitted when `--json` is present **or** when stdout
   is not a TTY. The TTY capability is injected into the runner, never sniffed during parsing.
 - Exit codes are projected only through the kernel `projectExitCode` mapping.
@@ -103,6 +105,12 @@ introspection proves the delegation instead of leaving it implicit.
 - Persisted documents (`.gef/<verb>-state.json` and `.gef/receipts/<runId>.json`) are bound to
   JSON Schema 2020-12 contracts shipped in `schemas/`; an unsupported schema major version
   fails closed on read.
+- Upgrade previews bind the source state and receipt hashes, the observed Git identity, the ordered
+  compatibility row, and recovery requirements. The kernel commit barrier rechecks those exact
+  source and repository-identity bindings before creating the new state record. A post-promotion
+  transaction failure attempts the kernel-certified rollback; `RECOVERED` is reported only after
+  the restored absence of the new state is verified, otherwise the command reports
+  `RECOVERY_REQUIRED`.
 
 ### Doctor and status
 
@@ -213,7 +221,7 @@ The tarball is self-contained: the verified engine modules are vendored under `v
 and the runtime packages the CLI depends on are bundled, so an install needs no registry and no
 surrounding source checkout. The package directory is never used as a scratch area — the
 distribution is assembled in a staging directory. `vendor/MANIFEST.json` records the sha256 of
-every vendored artefact.
+every vendored artefact and every CLI schema/compatibility asset.
 
 Six engine modules are vendored: `m48-m54-maintenance`, `area-h-governance`,
 `security-reliability-integrations`, `m41-m47-platform`, `m55-m61-quality` and `m62-m63-final`.
