@@ -22,6 +22,7 @@ function mapFixture() {
     ],
     [
       { id: "test:a", fingerprint: H("test:a"), sources: ["src:a"] },
+      { id: "test:a-peer", fingerprint: H("test:a-peer"), sources: ["src:a"] },
       { id: "test:b", fingerprint: H("test:b"), sources: ["src:b"], dependsOn: ["test:a"] },
       { id: "test:c", fingerprint: H("test:c"), sources: ["src:c"] },
       { id: "test:windows", fingerprint: H("test:windows"), sources: ["src:c"], platforms: ["windows"] },
@@ -189,8 +190,9 @@ test("PROOF-INV-02: targeted source invalidation affects only the proven overlap
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.value.state, "READY");
   assert.deepEqual(result.value.reusedTests, ["test:c"]);
-  assert.deepEqual(result.value.testsToRun, ["test:a", "test:b"]);
+  assert.deepEqual(result.value.testsToRun, ["test:a", "test:a-peer", "test:b"]);
   assert.equal(result.value.decisions.find(x => x.testId === "test:a").state, "INVALIDATED_SOURCE");
+  assert.equal(result.value.decisions.find(x => x.testId === "test:a-peer").state, "INVALIDATED_SOURCE");
   assert.equal(result.value.decisions.find(x => x.testId === "test:b").state, "INVALIDATED_SOURCE");
   assert.equal(result.value.decisions.find(x => x.testId === "test:c").state, "REUSABLE");
 });
@@ -229,19 +231,24 @@ test("PROOF-INV-04: stale toolchain and platform mismatch refuse reuse", () => {
   assert.equal(platformMismatch.value.decisions[0].state, "PLATFORM_MISMATCH");
   assert.equal(platformMismatch.value.decisions[0].suppressed, false);
 });
-test("PROOF-INV-05: current failure invalidates failed test and transitive downstream overlap", () => {
+test("PROOF-INV-05: current failure invalidates failed, shared-source and downstream proof overlap", () => {
   const map = mapFixture();
+  const validation = validationPlan({
+    map,
+    tests: ["test:a", "test:a-peer", "test:b", "test:c"],
+  });
   const result = compile({
     map,
+    validation,
     currentFailures: [{ testId: "test:a", fingerprint: H("failure:a") }],
   });
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.deepEqual(result.value.reusedTests, ["test:c"]);
-  assert.deepEqual(result.value.testsToRun, ["test:a", "test:b"]);
+  assert.deepEqual(result.value.testsToRun, ["test:a", "test:a-peer", "test:b"]);
   assert.equal(result.value.decisions.find(x => x.testId === "test:a").state, "INVALIDATED_FAILURE");
+  assert.equal(result.value.decisions.find(x => x.testId === "test:a-peer").state, "INVALIDATED_FAILURE");
   assert.equal(result.value.decisions.find(x => x.testId === "test:b").state, "INVALIDATED_FAILURE");
 });
-
 test("missing receipt or current binding keeps the test runnable", () => {
   const map = mapFixture();
   const base = reuseInput({ map });
