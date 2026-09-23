@@ -42,10 +42,10 @@ test("CLI-E2E-01: help is deterministic, exits 0 and comes from the engine inven
 
   const envelope = JSON.parse(first.stdout);
   const ids = envelope.commands.map((command) => command.id);
-  assert.deepEqual(ids, ["gef.adopt.apply", "gef.adopt.preview", "gef.doctor.run", "gef.init.plan", "gef.init.run", "gef.status.show"]);
+  assert.deepEqual(ids, ["gef.adopt.apply", "gef.adopt.preview", "gef.doctor.run", "gef.init.plan", "gef.init.run", "gef.status.show", "gef.upgrade.apply", "gef.upgrade.preview"]);
   assert.deepEqual(ids, [...ids].sort(), "the engine inventory is sorted by id");
 
-  for (const verb of ["init", "adopt"]) assert.equal(gef([verb, "--help"]).code, 0);
+  for (const verb of ["init", "adopt", "upgrade"]) assert.equal(gef([verb, "--help"]).code, 0);
   assert.equal(gef(["init", "--apply", "--help"]).code, 0);
 
   // No network capability is reachable from the shipped runtime.
@@ -72,8 +72,8 @@ test("CLI-E2E-03: unknown command and malformed flags exit 10 with no mutation",
     assert.equal(gef(["bogus", "--target", target]).code, 10);
     assert.equal(gef(["init", "--nope", "--target", target]).code, 10);
     assert.equal(gef(["init", "--target"]).code, 10);
-    // `doctor` and `status` were admitted by WO-003; `upgrade` remains WO-004.
-    assert.equal(gef(["upgrade", "--target", target]).code, 10, "upgrade must stay deferred");
+    // `upgrade` is admitted by WO-004 but malformed upgrade input stays on the usage path.
+    assert.equal(gef(["upgrade", "--nope", "--target", target]).code, 10, "malformed upgrade input must remain a usage failure");
     for (const readOnly of ["doctor", "status"]) assert.equal(gef([readOnly, "--apply", "--target", target]).code, 10, `${readOnly} must not admit a mutation flag`);
     assert.deepEqual(readdirSync(target), before);
     assert.ok(!existsSync(join(target, ".gef")));
