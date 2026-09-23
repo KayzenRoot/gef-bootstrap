@@ -34,14 +34,27 @@ test('WO-002 objective approval is promoted before WO-003 admission', () => {
   assert.equal(completed.highFindings, 0);
 });
 
-test('machine and human checkpoint agree on admitted WO-003', () => {
-  assert.equal(checkpoint.v11.status, 'GBS_V11_WO_003_ADMITTED');
-  assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-003');
-  assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
-  assert.equal(checkpoint.v11.implementationBranch, 'feat/1.1/wo-003-doctor-status');
-  assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_003_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
-  assert.ok(checkpointMd.includes('Active Work Order after this governance merge: `GBS-V11-WO-003`'));
-  assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_WO_003_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`'));
+test('machine and human checkpoint preserve WO-003 admission or prove its objective promotion before WO-004', () => {
+  const legal = ['GBS_V11_WO_003_ADMITTED', 'GBS_V11_WO_004_ADMITTED'];
+  assert.ok(legal.includes(checkpoint.v11.status), `unexpected V1.1 state: ${checkpoint.v11.status}`);
+  if (checkpoint.v11.status === 'GBS_V11_WO_003_ADMITTED') {
+    assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-003');
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
+    assert.equal(checkpoint.v11.implementationBranch, 'feat/1.1/wo-003-doctor-status');
+    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_003_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
+  } else {
+    const completed = checkpoint.v11.completedWorkOrders['GBS-V11-WO-003'];
+    assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
+    assert.equal(completed.implementationPr, 284);
+    assert.equal(completed.auditedHead, 'acb632a5f3b1770a50a3cce039473c5266c7b3b7');
+    assert.equal(completed.objectiveReview, 5285940414);
+    assert.equal(completed.implementationMerge, '22c5ce65443f1a7855a2967ff7837aadb98e0ba1');
+    assert.equal(completed.criticalFindings, 0);
+    assert.equal(completed.highFindings, 0);
+    assert.ok(checkpointMd.includes('Completed V1.1 increment — WO-003'));
+    assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-004');
+    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_004_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
+  }
 });
 
 test('WO-003 is read-only doctor/status scope and preserves future ownership', () => {
@@ -53,7 +66,7 @@ test('WO-003 is read-only doctor/status scope and preserves future ownership', (
   assert.ok(wo.includes('STOP CONDITION: `GBS_V11_WO_003_READY_FOR_OBJECTIVE_AUDIT`'));
 });
 
-test('WO-003 Context Lock is anchored to the exact WO-002 merge and immutable production refs', () => {
+test('WO-003 Context Lock remains an immutable historical admission record', () => {
   assert.equal(lock.baseSha, '9ee390180cb12ef6568ab77673e52514e13cf0c7');
   assert.equal(lock.productionShaAtLock, '72c17bd3e7e421790ac382022b1f0ebbb0275ea4');
   assert.equal(lock.v100TagTargetAtLock, '866fe3af8cccc65c929aaf6a47a924401fa448b3');
