@@ -128,7 +128,7 @@ GEF V1 must include the capability and telemetry needed to measure token/time/en
 V1 does not require fabricating a universal percentage improvement before representative baseline data exists. Where comparable baseline data is available before V1 acceptance, measured results must be reported truthfully, including regressions and confidence. Optimization claims remain targets until proven.
 
 ## Optional integrations
-UADS, Hive, UGAS and other ecosystem adapters are optional integrations unless independently admitted into a target profile.
+External ecosystem adapters are optional integrations unless independently admitted into a target profile.
 
 Core V1 DONE must be provable with those integrations absent. Optional integration failure may block that adapter/profile, but may not block the independent Bootstrap core unless a frozen V1 scope decision explicitly changes the boundary.
 

@@ -191,7 +191,7 @@ The initialized target project must be prepared to provide, at minimum:
     - the optimization system must compare before/after execution cost and quality.
 
 12. **Optional integrations, never hidden dependencies**
-    - UADS, Hive, UGAS and future systems may be detected or referenced through governed adapters/instructions;
+    - external ecosystems may be detected or referenced through governed adapters/instructions;
     - GEF Bootstrap remains independently usable without them;
     - improvements developed here are not automatically pushed into those projects.
 
@@ -269,7 +269,7 @@ Missing permissions, unsupported capabilities, absent checks or unresolved sourc
 GEF Bootstrap is a versioned engineering instruction system. It may guide ChatGPT, Codex and future executors, but its canonical knowledge must not depend on one specific executor product.
 
 ### P18 — Independent core, optional ecosystem
-The bootstrap may cooperate with UADS, Hive, UGAS and future systems, but the core remains independent.
+The bootstrap may cooperate with external ecosystems, but the core remains independent.
 
 ### P19 — Versioned evolution
 Protocols, templates, schemas, GEF compatibility and migration instructions are versioned. Behavioral changes must be explicit.

@@ -27,7 +27,7 @@ Stable IDs are preserved while canonical names become:
 Physical path renames occur later through governed migration after Architecture determines the safe approach.
 
 ### ADR-0001-D3 — Ecosystem adapters are official but non-blocking
-UADS, Hive and UGAS adapters remain official supported adapter tracks implemented over the Generic Adapter API, but are separately activatable. Independent `PRODUCTION_RELEASE_DONE` does not require those adapters to be installed or connected. An adapter can be claimed as shipped only after its own compatibility, tests, documentation and evidence pass.
+Optional ecosystem adapters remain separately activatable tracks implemented over the Generic Adapter API. Independent `PRODUCTION_RELEASE_DONE` does not require those adapters to be installed or connected. An adapter can be claimed as shipped only after its own compatibility, tests, documentation and evidence pass.
 
 ### ADR-0001-D4 — Experimental capability promotion is evidence-gated
 Advanced heuristic/learned technologies remain in the complete product program and must pass all applicable gates before production promotion:

@@ -16,7 +16,7 @@ This project-level Definition of Done derives from `GBS-CONSTITUTION-v1.1`, froz
 - `PRODUCTION_CANDIDATE`
 - `PRODUCTION_RELEASE_DONE`
 
-Optional UADS/Hive/UGAS adapters are tracked independently and do not block the independent product release unless a release claim explicitly includes them.
+Optional ecosystem adapters are tracked independently and do not block the independent product release unless a release claim explicitly includes them.
 
 ## Universal completion dimensions
 An admitted item/module is DONE only when all applicable dimensions are satisfied: scope/admission and stable IDs; requirements/acceptance; architecture/contracts; implementation/materialization where required; applicable T0–T7 proof; security/integrity; current exact-state evidence; documentation/runbook/operator updates; migration/recovery/compatibility where applicable; governed evidence/checkpoint promotion; and no unresolved blocker for the claimed surface.

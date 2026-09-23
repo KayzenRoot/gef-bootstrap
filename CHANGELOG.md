@@ -13,7 +13,7 @@ All notable release changes are documented here. GEF Bootstrap uses Semantic Ver
 - Evidence engine, proof graph, HEDS semantic delta review, assurance and test-impact engines.
 - Git/GitHub bootstrap, governance, CI and release governance foundations.
 - Security, policy safety, recovery, integrity and capability detection.
-- Optional UADS/Hive/UGAS adapters and generic adapter API.
+- Optional ecosystem adapters and generic adapter API.
 - Telemetry, audit ledger, baseline/benchmark, artifact and operator UX foundations.
 - Help, installation, upgrade, compatibility and self-doctor contracts.
 - Unit/integration harnesses, GitHub simulation, E2E, performance and adversarial security testing.
