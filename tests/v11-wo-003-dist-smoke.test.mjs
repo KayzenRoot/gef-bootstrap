@@ -190,6 +190,8 @@ test("the installed package keeps the read-only contract and the usage path", (t
     "gef.init.plan",
     "gef.init.run",
     "gef.status.show",
+    "gef.upgrade.apply",
+    "gef.upgrade.preview",
   ]);
 });
 
