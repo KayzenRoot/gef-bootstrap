@@ -546,14 +546,14 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   if (capsule.base.productionBranchTouched !== false || capsule.base.branch === "main") {
     return fail("CAPSULE_PRODUCTION_BRANCH_FORBIDDEN", "Compiled Execution Capsule may not target production main");
   }
-  if (rawSha(capsule.base.treeFingerprint) === null) {
+  if (!RAW_SHA256.test(capsule.base.treeFingerprint)) {
     return fail("CAPSULE_SCHEMA_INVALID", "Base tree fingerprint must be SHA-256");
   }
 
   if (!onlyKeys(capsule.workOrder, ["id", "source", "scopeDigest", "assurance"])) {
     return fail("CAPSULE_SCHEMA_INVALID", "Work Order contains an undeclared property");
   }
-  if (!WORK_ORDER_ID.test(capsule.workOrder.id) || !nonEmpty(capsule.workOrder.source) || rawSha(capsule.workOrder.scopeDigest) === null) {
+  if (!WORK_ORDER_ID.test(capsule.workOrder.id) || !nonEmpty(capsule.workOrder.source) || !RAW_SHA256.test(capsule.workOrder.scopeDigest)) {
     return fail("CAPSULE_SCHEMA_INVALID", "Work Order identity/source/fingerprint is invalid");
   }
   if (capsule.workOrder.assurance !== undefined && capsule.workOrder.assurance !== "STANDARD" && capsule.workOrder.assurance !== "ELEVATED") {
@@ -582,7 +582,7 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   if (!onlyKeys(capsule.affected, ["files", "symbols", "dependencies", "dependencyClosureDigest"])) {
     return fail("CAPSULE_SCHEMA_INVALID", "Affected projection contains an undeclared property");
   }
-  if (!Array.isArray(capsule.affected.files) || rawSha(capsule.affected.dependencyClosureDigest) === null) {
+  if (!Array.isArray(capsule.affected.files) || !RAW_SHA256.test(capsule.affected.dependencyClosureDigest)) {
     return fail("CAPSULE_SCHEMA_INVALID", "Affected files/dependency closure are invalid");
   }
   const filePaths = new Set<string>();
@@ -591,7 +591,7 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
       !onlyKeys(file, ["path", "mode", "fingerprint"]) ||
       !nonEmpty(file.path) ||
       !FILE_MODES.has(file.mode) ||
-      (file.fingerprint !== null && rawSha(file.fingerprint) === null) ||
+      (file.fingerprint !== null && !RAW_SHA256.test(file.fingerprint)) ||
       filePaths.has(file.path)
     ) {
       return fail("CAPSULE_SCHEMA_INVALID", "Affected file entry is invalid", file.path);
@@ -656,7 +656,7 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
       !onlyKeys(proof, ["proofId", "state", "bindsTo", "manufacturesProductionCredit"]) ||
       !nonEmpty(proof.proofId) ||
       !PROOF_STATES.has(proof.state) ||
-      rawSha(proof.bindsTo) === null ||
+      !RAW_SHA256.test(proof.bindsTo) ||
       proof.manufacturesProductionCredit !== false ||
       proofIds.has(proof.proofId)
     ) {
@@ -672,7 +672,7 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   }
   if (
     capsule.fingerprints.canonicalization !== "GEF-CANONICAL-JSON-CODEPOINT-v1" ||
-    rawSha(capsule.fingerprints.capsuleFingerprint) === null ||
+    !RAW_SHA256.test(capsule.fingerprints.capsuleFingerprint) ||
     !Array.isArray(capsule.fingerprints.inputs) ||
     capsule.fingerprints.inputs.length === 0
   ) {
@@ -683,7 +683,7 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
     if (
       !onlyKeys(item, ["ref", "fingerprint"]) ||
       !nonEmpty(item.ref) ||
-      rawSha(item.fingerprint) === null ||
+      !RAW_SHA256.test(item.fingerprint) ||
       fingerprintRefs.has(item.ref)
     ) {
       return fail("CAPSULE_SCHEMA_INVALID", "Input fingerprint is invalid", item.ref);
@@ -709,7 +709,11 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   if (
     capsule.invalidation.expiresAt !== undefined &&
     capsule.invalidation.expiresAt !== null &&
-    (typeof capsule.invalidation.expiresAt !== "string" || Number.isNaN(Date.parse(capsule.invalidation.expiresAt)))
+    (
+      typeof capsule.invalidation.expiresAt !== "string" ||
+      !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(capsule.invalidation.expiresAt) ||
+      Number.isNaN(Date.parse(capsule.invalidation.expiresAt))
+    )
   ) {
     return fail("CAPSULE_SCHEMA_INVALID", "Invalidation expiry is not a date-time");
   }
@@ -835,6 +839,12 @@ export function compileExecutionCapsule(
   const packDrift = findSealedDigestDrift(recomputedSeals.value, trustedPackSeals);
   const receipt = input.compiledPack.receipt;
   const receiptDrift =
+    receipt.packId !== input.compiledPack.pack.packId ||
+    receipt.taskIdentity !== input.compiledPack.pack.taskIdentity ||
+    receipt.contextIdentity !== input.compiledPack.pack.contextIdentity ||
+    receipt.contextDigest !== input.compiledPack.pack.contextDigest ||
+    receipt.policyVersion !== input.compiledPack.pack.policyVersion ||
+    receipt.capabilityIdentity !== input.compiledPack.pack.capabilityIdentity ||
     receipt.graphDigest !== trustedPackSeals.graphDigest ||
     receipt.toolPlanDigest !== trustedPackSeals.toolPlanDigest ||
     receipt.validationPlanDigest !== trustedPackSeals.validationPlanDigest ||
@@ -892,6 +902,8 @@ export function compileExecutionCapsule(
   // capsuleFingerprint and operational-only expiry metadata. This avoids circular hashing while
   // ensuring any semantic navigation/test/proof/constraint/binding change creates a new identity.
   const identityDigest = rawDigest(options, {
+    state,
+    certainty,
     base,
     workOrder,
     navigation,
