@@ -143,7 +143,7 @@
   "stopState": "GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088",
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_WO_007_ADMITTED",
+    "status": "GBS_V11_WO_008_ADMITTED",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -284,15 +284,35 @@
           "m28TestImpact": 35872917383,
           "incrementalValidation": 35872917260
         }
+      },
+      "GBS-V11-WO-007": {
+        "status": "OBJECTIVE_AUDIT_APPROVED_MERGED",
+        "implementationPr": 294,
+        "auditedHead": "5c85b974f8d76dd6ede8fafb9f68b305e3312549",
+        "objectiveAudit": "APPROVED",
+        "objectiveReview": 5292475178,
+        "implementationMerge": "d5b923f1aaf0c8319fc29285c76bda89a363aadf",
+        "criticalFindings": 0,
+        "highFindings": 0,
+        "assuranceRuns": {
+          "m01Validation": 35875616465,
+          "m41m47": 35875616508,
+          "m48m54": 35875616456,
+          "m55m61": 35875616475,
+          "m62m63Final": 35875616495,
+          "m28TestImpact": 35875616500,
+          "incrementalValidation": 35875616512,
+          "proofReuse": 35875616420
+        }
       }
     },
-    "activeWorkOrder": "GBS-V11-WO-007",
+    "activeWorkOrder": "GBS-V11-WO-008",
     "activeWorkOrderStatus": "ADMITTED",
-    "implementationBranch": "feat/1.1/wo-007-proof-reuse",
-    "contextLock": ".engineering/context-locks/GBS-V11-WO-007.json",
-    "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-007-DIRECT.md",
-    "nextLegalAction": "CREATE_WO_007_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE",
-    "stopState": "GBS_V11_WO_007_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH",
+    "implementationBranch": "feat/1.1/wo-008-performance-telemetry",
+    "contextLock": ".engineering/context-locks/GBS-V11-WO-008.json",
+    "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md",
+    "nextLegalAction": "CREATE_WO_008_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE",
+    "stopState": "GBS_V11_WO_008_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH",
     "ecosystemDetachment": {
       "decision": "D-0061",
       "adr": "ADR-0005",
