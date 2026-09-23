@@ -7,7 +7,7 @@ Status: `ACTIVE`
 - Status: APPROVED
 
 ## D-0002 — Independent product boundary
-- Decision: New GEF Bootstrap improvements remain in this project and are not automatically pushed into UADS, Hive, or UGAS. Those systems may later be optional integrations.
+- Decision: New GEF Bootstrap improvements remain in this project and are not automatically pushed into external ecosystems. Such ecosystems may later be optional integrations through separately governed contracts.
 - Status: APPROVED
 
 ## D-0003 — GEF V1 default
@@ -159,7 +159,7 @@ Status: `ACTIVE`
 - Status: APPROVED
 
 ## D-0040 — Optional integrations never silently block independent core completion
-- Decision: UADS, Hive, UGAS and other ecosystem integrations remain optional unless explicitly admitted into a target profile or future core scope. Their absence/failure may block the corresponding adapter/profile but cannot block independent GEF Bootstrap core completion under the current product boundary.
+- Decision: External ecosystem integrations remain optional unless explicitly admitted into a target profile or future core scope. Their absence/failure may block the corresponding adapter/profile but cannot block independent GEF Bootstrap core completion under the current product boundary.
 - Status: APPROVED
 
 ## D-0041 — CONST-F1 through CONST-F8 are stable constitutional group IDs
@@ -240,4 +240,9 @@ Status: `ACTIVE`
 
 ## D-0060 — Windows effective-rights oracle is admitted as a bounded corrective dependency
 - Decision: Windows replacement authority is governed by `DELETE` on the target object and `FILE_DELETE_CHILD` on its containing directory, which are independent of generic write access; the supported runtime exposes neither, so the previous Windows chain proof was unsound and the high-assurance policy failed closed there (head `8e8801f2f0292ed1617bc04ac19d36415b1c3ff2`, disposition `BLOCKED`). Permanent loss of Git-backed capability on Windows is not accepted, so a narrow Windows FFI adapter (Koffi, one exact pinned version, three `kernel32.dll` functions, OS access check as the authority) is admitted to prove those rights without weakening the policy. No semantic engine moves into native code, POSIX is unchanged, unknown native proof fails closed, and publication/release remain governed by later Work Orders. Full contract: `ADR-0004-WINDOWS-EFFECTIVE-RIGHTS-ORACLE.md`.
+- Status: APPROVED
+
+
+## D-0061 — Legacy ecosystem-specific bindings are detached before V1.1 completion
+- Decision: The V1.1 line removes ecosystem-specific bindings from M39/M40, runtime adapter exports, tests, planning and active product documentation. M39 becomes a reserved external-adapter slot and M40 becomes a reserved context-adapter slot. The Generic Adapter API remains the only neutral extension boundary. No future ecosystem, context service or memory system inherits the removed contracts automatically; any reintroduction requires a new governed decision, explicit capability/schema contract, compatibility evidence and its own Work Order.
 - Status: APPROVED
