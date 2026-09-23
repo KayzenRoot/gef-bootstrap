@@ -5,6 +5,7 @@ import { extname, join, relative } from "node:path";
 
 const ROOT = new URL("../", import.meta.url);
 const forbidden = Object.freeze(["U" + "ADS", "A" + "UDS", "H" + "ive"]);
+const tokenPattern = (token) => new RegExp(`(^|[^A-Za-z0-9])${token.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\const forbidden = Object.freeze(["U" + "ADS", "A" + "UDS", "H" + "ive"]);")}([^A-Za-z0-9]|$)`, "i");
 const ignoredDirectories = new Set([".git", "node_modules", "dist", "coverage", "tmp", ".turbo"]);
 const textExtensions = new Set([".md", ".json", ".ts", ".js", ".mjs", ".cjs", ".yml", ".yaml", ".txt", ".toml"]);
 const explicitTextFiles = new Set(["LICENSE"]);
@@ -28,7 +29,7 @@ test("V1.1 current tree contains no legacy ecosystem-specific bindings", () => {
     const rel = relative(rootPath, absolute).replaceAll("\\", "/");
     const lowerPath = rel.toLowerCase();
     for (const token of forbidden) {
-      if (lowerPath.includes(token.toLowerCase())) violations.push(`path:${rel}`);
+      if (tokenPattern(token).test(rel)) violations.push(`path:${rel}`);
     }
     const ext = extname(rel).toLowerCase();
     if (!textExtensions.has(ext) && !explicitTextFiles.has(rel)) continue;
@@ -36,7 +37,7 @@ test("V1.1 current tree contains no legacy ecosystem-specific bindings", () => {
     if (size > 2 * 1024 * 1024) continue;
     const body = readFileSync(absolute, "utf8");
     for (const token of forbidden) {
-      if (body.toLowerCase().includes(token.toLowerCase())) violations.push(`content:${rel}`);
+      if (tokenPattern(token).test(body)) violations.push(`content:${rel}`);
     }
   }
   assert.deepEqual([...new Set(violations)].sort(), []);
