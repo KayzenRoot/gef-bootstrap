@@ -87,8 +87,8 @@ This backlog is the canonical weighted production denominator for the single com
 ## Optional adapter track
 | Module | Class | E | R | I | P | Weight | State |
 |---|---|---:|---:|---:|---:|---:|---|
-| M39 UADS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
-| M40 Hive Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
+| M39 Reserved External Adapter Slot | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | RESERVED |
+| M40 Reserved Context Adapter Slot | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | RESERVED |
 | M41 UGAS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 
 ## Current audited production position
