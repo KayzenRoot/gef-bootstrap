@@ -99,15 +99,7 @@ function reuseInput(overrides = {}) {
     policyDigest: H("policy"),
     profileDigest: H("profile"),
     map,
-    validation: {
-      state: validation.state,
-      tests: validation.tests,
-      level: validation.level,
-      intermediateSuppression: validation.intermediateSuppression,
-      finalSweepRequired: validation.finalSweepRequired,
-      digest: validation.digest,
-      handoffDigest: validation.handoff.digest,
-    },
+    validation,
     receipts: selected.map(testId => receiptFor(map, testId)),
     currentBindings: selected.map(testId => currentBinding(map, testId)),
     changedSources: [],
@@ -115,15 +107,7 @@ function reuseInput(overrides = {}) {
     dependencyKnowledgeComplete: true,
     ...overrides,
     map,
-    validation: overrides.validation ?? {
-      state: validation.state,
-      tests: validation.tests,
-      level: validation.level,
-      intermediateSuppression: validation.intermediateSuppression,
-      finalSweepRequired: validation.finalSweepRequired,
-      digest: validation.digest,
-      handoffDigest: validation.handoff.digest,
-    },
+    validation: overrides.validation ?? validation,
   };
 }
 
@@ -171,15 +155,7 @@ test("PROOF-INV-01: every validator non-REUSABLE state suppresses nothing", () =
   for (const [expectedState, receiptOverrides] of scenarios) {
     const receipt = receiptFor(map, "test:a", receiptOverrides);
     const result = compileProofReusePlan({
-      ...reuseInput({ map, validation: {
-        state: validation.state,
-        tests: validation.tests,
-        level: validation.level,
-        intermediateSuppression: validation.intermediateSuppression,
-        finalSweepRequired: validation.finalSweepRequired,
-        digest: validation.digest,
-        handoffDigest: validation.handoff.digest,
-      }}),
+      ...reuseInput({ map, validation}),
       receipts: [receipt],
       currentBindings: [current],
     }, options);
@@ -193,15 +169,7 @@ test("PROOF-INV-01: every validator non-REUSABLE state suppresses nothing", () =
   const good = receiptFor(map, "test:a");
   const tampered = { ...good, digest: H("tampered-receipt") };
   const conflict = compileProofReusePlan({
-    ...reuseInput({ map, validation: {
-      state: validation.state,
-      tests: validation.tests,
-      level: validation.level,
-      intermediateSuppression: validation.intermediateSuppression,
-      finalSweepRequired: validation.finalSweepRequired,
-      digest: validation.digest,
-      handoffDigest: validation.handoff.digest,
-    }}),
+    ...reuseInput({ map, validation}),
     receipts: [tampered],
     currentBindings: [current],
   }, options);
@@ -215,15 +183,7 @@ test("PROOF-INV-02: targeted source invalidation affects only the proven overlap
   const validation = validationPlan({ map, changedSources: ["src:a"] });
   const result = compile({
     map,
-    validation: {
-      state: validation.state,
-      tests: validation.tests,
-      level: validation.level,
-      intermediateSuppression: validation.intermediateSuppression,
-      finalSweepRequired: validation.finalSweepRequired,
-      digest: validation.digest,
-      handoffDigest: validation.handoff.digest,
-    },
+    validation,
     changedSources: ["src:a"],
   });
   assert.equal(result.ok, true, JSON.stringify(result));
@@ -266,15 +226,7 @@ test("PROOF-INV-04: stale toolchain and platform mismatch refuse reuse", () => {
       ? currentBinding(map, "test:a", { platform: "windows" })
       : current;
     const result = compileProofReusePlan({
-      ...reuseInput({ map, validation: {
-        state: validation.state,
-        tests: validation.tests,
-        level: validation.level,
-        intermediateSuppression: validation.intermediateSuppression,
-        finalSweepRequired: validation.finalSweepRequired,
-        digest: validation.digest,
-        handoffDigest: validation.handoff.digest,
-      }}),
+      ...reuseInput({ map, validation}),
       ...topLevel,
       receipts: [adjustedReceipt],
       currentBindings: [adjustedCurrent],
@@ -362,15 +314,7 @@ test("L5 final exact-head sweep cannot be suppressed by reusable receipts", () =
   const validation = validationPlan({ map, level: "L5", finalSweepRequired: true });
   const result = compile({
     map,
-    validation: {
-      state: validation.state,
-      tests: validation.tests,
-      level: validation.level,
-      intermediateSuppression: validation.intermediateSuppression,
-      finalSweepRequired: validation.finalSweepRequired,
-      digest: validation.digest,
-      handoffDigest: validation.handoff.digest,
-    },
+    validation,
   });
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.value.state, "NO_REUSE");
@@ -386,15 +330,7 @@ test("WO-006 suppression-prohibited plan disables all reuse", () => {
   assert.equal(validation.intermediateSuppression, "PROHIBITED");
   const result = compile({
     map,
-    validation: {
-      state: validation.state,
-      tests: validation.tests,
-      level: validation.level,
-      intermediateSuppression: validation.intermediateSuppression,
-      finalSweepRequired: validation.finalSweepRequired,
-      digest: validation.digest,
-      handoffDigest: validation.handoff.digest,
-    },
+    validation,
   });
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.deepEqual(result.value.reusedTests, []);
@@ -425,15 +361,7 @@ test("receipt/binding/change/failure permutations are deterministic", () => {
   const validation = validationPlan({ map, changedSources: ["src:a", "src:c"] });
   const base = reuseInput({
     map,
-    validation: {
-      state: validation.state,
-      tests: validation.tests,
-      level: validation.level,
-      intermediateSuppression: validation.intermediateSuppression,
-      finalSweepRequired: validation.finalSweepRequired,
-      digest: validation.digest,
-      handoffDigest: validation.handoff.digest,
-    },
+    validation,
     changedSources: ["src:c", "src:a"],
     currentFailures: [{ testId: "test:a", fingerprint: H("failure:a") }],
   });
