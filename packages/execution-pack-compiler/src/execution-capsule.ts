@@ -619,24 +619,6 @@ export function compileExecutionCapsule(
     return fail("CAPSULE_FINGERPRINT_INVALID", "Base tree and scope digests must be SHA-256");
   }
 
-  // Capsule identity is content-derived, not an ad-hoc Work Order label. The full SHA-256
-  // binding digest is retained so any different exact binding produces a different capsuleId.
-  const identityDigest = rawDigest(options, {
-    repository: input.base.repository,
-    branch: input.base.branch,
-    headSha: input.base.headSha,
-    treeFingerprint,
-    workOrder: {
-      id: input.workOrder.id,
-      source: input.workOrder.source,
-      scopeDigest,
-      assurance: input.workOrder.assurance ?? null,
-    },
-    contextDigest: input.context.capsule.semanticDigest,
-    packDigest: input.compiledPack.pack.semanticDigest,
-  });
-  if (!identityDigest.ok) return identityDigest;
-
   const writeAllowed = sortedUnique(input.navigation.writeAllowed);
   const writeForbidden = sortedUnique(input.navigation.writeForbidden);
   const forbidden = new Set(writeForbidden);
@@ -720,6 +702,25 @@ export function compileExecutionCapsule(
     onDrift: driftAction(input.driftClass),
   };
   const openQuestions = sortedUnique(input.openQuestions ?? []);
+
+  // Identity covers the complete semantic execution projection except capsuleId itself,
+  // capsuleFingerprint and operational-only expiry metadata. This avoids circular hashing while
+  // ensuring any semantic navigation/test/proof/constraint/binding change creates a new identity.
+  const identityDigest = rawDigest(options, {
+    base,
+    workOrder,
+    navigation,
+    affected,
+    constraints: sortedUnique(input.constraints),
+    acceptanceCriteria: criteria.value,
+    selectedTests,
+    proofReferences: proofs.value,
+    fingerprintInputs: inputs.value,
+    invalidation: invalidationBase,
+    stopCondition: input.stopCondition,
+    openQuestions,
+  });
+  if (!identityDigest.ok) return identityDigest;
 
   const preFingerprint = {
     schemaVersion: "1.0" as const,
