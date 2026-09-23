@@ -74,19 +74,39 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Windows rights corrective decision: `ADR-0004` / `D-0060`
 - Production boundary preserved: `main` and `v1.0.0` unchanged; no publication or production promotion
 
+### V1.1 ecosystem detachment
+- Decision: `D-0061` / `ADR-0005`
+- Cleanup PR: `#287`
+- Exact audited head: `37242b8d85d6abb7bae91e981118b47a5c08f735`
+- Objective review: `5290922504`, `APPROVED`, CRITICAL `0`, HIGH `0`
+- Merge into `release/1.1`: `b97f2b454ef2647823b682da13b69a501d82c794`
+- Result: former product-specific M39/M40 bindings are detached; slots are neutral/reserved; future ecosystem/context integration requires a fresh governed contract.
+
+### Completed V1.1 increment — WO-004
+- Work Order: `GBS-V11-WO-004`
+- Objective: Upgrade + Compatibility + Recovery
+- Implementation PR: `#288`
+- Exact objectively audited head: `03a74d239958c456e1ed63b6cd210699a07f5798`
+- Objective audit: `APPROVED`
+- Objective review: `5291217891`
+- CRITICAL/HIGH: `0 / 0`
+- Implementation merge into `release/1.1`: `ab820243b6c44e2ce9c5b747a7a6a4c688d90fed`
+- Exact-head assurance: m01 `35862839238`, M41-M47 `35862839182`, M48-M54 `35862839200`, M55-M61 `35862839186`, M62-M63 `35862839229`, Windows Rights `35862839173`, Upgrade Recovery `35862839188`, all `SUCCESS`.
+- Test Matrix traceability: `UPG-MIG-01..07` and `COMPAT-01..06` aligned to frozen semantics.
+- Production boundary preserved: `main` and `v1.0.0` unchanged.
+
 ### Active V1.1 increment
-- Active Work Order after this governance merge: `GBS-V11-WO-004`
+- Active Work Order after this governance merge: `GBS-V11-WO-005`
 - Work Order status: `ADMITTED`
-- Objective: Upgrade + Compatibility + Recovery (`gef upgrade`, preview/apply, migration matrix, preservation-first recovery)
-- Assurance: `HIGH_ASSURANCE`
-- Implementation branch: `feat/1.1/wo-004-upgrade-recovery`
-- Executor: external executor allowed under `ADR-0003-D3` after branch creation from the exact governance/admission merge
-- Context Lock: `.engineering/context-locks/GBS-V11-WO-004.json`
-- Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-004-CODEX.md`
-- Mandatory test ownership: `UPG-MIG-01..07` and `COMPAT-01..06`
-- Preserve: WO-002 transaction/journal/ownership safety; WO-003 doctor/status and trusted-Git/process hardening
-- Explicitly deferred: Context Compiler → WO-005; incremental validation → WO-006; proof reuse → WO-007; telemetry → WO-008; integrated assurance/release → WO-009/010
-- Next legal action after this governance merge: create `feat/1.1/wo-004-upgrade-recovery` from the exact governance merge, verify Context Lock, then hand off to Codex
+- Objective: Context Compiler + deterministic Execution Capsule
+- Assurance: `ELEVATED`
+- Implementation branch: `feat/1.1/wo-005-execution-capsule`
+- Context Lock: `.engineering/context-locks/GBS-V11-WO-005.json`
+- Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-005-DIRECT.md`
+- Mandatory test ownership: `CTX-DET-01..08`
+- Preserve: M14 context authority, M15 execution-pack authority, M63 acceleration semantics, D-0061/ADR-0005 neutral ecosystem boundary.
+- Explicitly deferred: incremental validation -> WO-006; proof reuse -> WO-007; telemetry -> WO-008; integrated assurance/release -> WO-009/010.
+- Next legal action: create `feat/1.1/wo-005-execution-capsule` from the exact governance/admission merge.
 
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
@@ -99,7 +119,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action after governance merge: `CREATE_WO_004_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
+Next legal V1.1 action after governance merge: `CREATE_WO_005_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_WO_004_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
+V1.1 STOP CONDITION: `GBS_V11_WO_005_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
