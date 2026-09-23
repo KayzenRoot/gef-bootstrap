@@ -92,7 +92,22 @@ The full suite emitted host-capability notes that file symlink creation requires
 POSIX permission proofs are unavailable on Windows. These tests reported those platform evidence
 limits explicitly; no test was skipped and the required Windows replacement-rights oracle passed.
 
-## 5. External state and stop boundary
+## 5. Hosted macOS correction cycle
+
+The exact-head workflow run [35818694679](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/35818694679)
+tested PR head `0346c3cd3d9450c2e7d2f4643271b32008cec351`. Windows and Ubuntu passed. macOS exposed
+an outdated assertion in `tests/v11-wo-002-transaction-safety.test.mjs`: it assumed every non-Windows
+filesystem is case-sensitive. The filesystem probe correctly reported the hosted macOS volume's
+measured behavior, so the test-only correction in `735dd5630807539132833ed54aca4aef49865afb` removes
+that platform assumption while retaining the check that the result is a supported case mode and
+that the probe leaves no residue.
+
+At `HEAD=735dd5630807539132833ed54aca4aef49865afb`, the focused case-semantics test passed, the full
+suite passed (1,483 passed, 0 failed, 0 skipped), and `npm run typecheck` passed. The correction and
+this evidence update still require exact-head hosted qualification after publication; this earlier
+workflow run does not qualify the corrected head.
+
+## 6. External state and stop boundary
 
 - PR #286 remains open and draft for independent objective audit.
 - The implementation was not merged, tagged, published, or applied to `main` or `v1.0.0`.
