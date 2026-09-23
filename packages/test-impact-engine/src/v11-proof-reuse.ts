@@ -11,6 +11,8 @@ import type {
 import { buildTestMap } from "./s01-source-test-map.js";
 import { selectImpactedTests, validateReuse } from "./s02-selection-reuse.js";
 import { digest, fail, isSha, ok, unique, validId } from "./utils.js";
+import type { IncrementalValidationPlan } from "./v11-incremental-validation.js";
+import { verifyIncrementalValidationPlan } from "./v11-incremental-validation.js";
 
 export type ProofReusePlanState = "READY" | "NO_REUSE" | "INDETERMINATE" | "BLOCKED";
 export type ProofReuseDecisionState =
@@ -24,23 +26,13 @@ export type ProofReuseDecisionState =
   | "UPSTREAM_SUPPRESSION_PROHIBITED"
   | "FINAL_SWEEP_REQUIRED";
 
-export interface IncrementalValidationReuseProjection {
-  readonly state: "READY" | "WIDENED" | "INDETERMINATE" | "BLOCKED";
-  readonly tests: readonly string[];
-  readonly level: ValidationLevel;
-  readonly intermediateSuppression: "DEFER_TO_PROOF_REUSE" | "PROHIBITED";
-  readonly finalSweepRequired: boolean;
-  readonly digest: string;
-  readonly handoffDigest: string;
-}
-
 export interface CompileProofReuseInput {
   readonly candidateDigest: string;
   readonly platform: string;
   readonly policyDigest: string;
   readonly profileDigest: string;
   readonly map: TestMap;
-  readonly validation: IncrementalValidationReuseProjection;
+  readonly validation: IncrementalValidationPlan;
   readonly receipts: readonly ProofReuseReceipt[];
   readonly currentBindings: readonly CurrentBindings[];
   readonly changedSources: readonly string[];
@@ -183,8 +175,6 @@ export function compileProofReusePlan(
     !isSha(input.policyDigest) ||
     !isSha(input.profileDigest) ||
     !isSha(input.map.digest) ||
-    !isSha(input.validation.digest) ||
-    !isSha(input.validation.handoffDigest) ||
     !input.platform ||
     !LEVELS.has(input.validation.level) ||
     typeof input.validation.finalSweepRequired !== "boolean" ||
@@ -192,13 +182,19 @@ export function compileProofReusePlan(
   ) {
     return fail("PROOF_REUSE_BINDING_INVALID", "Proof reuse input binding is invalid.");
   }
+  const validationIntegrity = verifyIncrementalValidationPlan(input.validation, options);
+  if (!validationIntegrity.ok) return validationIntegrity;
   if (
-    !["READY", "WIDENED", "INDETERMINATE", "BLOCKED"].includes(input.validation.state) ||
-    !["DEFER_TO_PROOF_REUSE", "PROHIBITED"].includes(input.validation.intermediateSuppression) ||
-    !Array.isArray(input.validation.tests) ||
-    input.validation.tests.some((testId) => !validId(testId))
+    input.validation.bindings.candidateDigest !== input.candidateDigest ||
+    input.validation.bindings.mapDigest !== input.map.digest ||
+    input.validation.bindings.policyDigest !== input.policyDigest ||
+    input.validation.bindings.profileDigest !== input.profileDigest ||
+    input.validation.bindings.platform !== input.platform
   ) {
-    return fail("PROOF_REUSE_VALIDATION_PLAN_INVALID", "Incremental validation projection is invalid.");
+    return fail(
+      "PROOF_REUSE_VALIDATION_PLAN_MISMATCH",
+      "Incremental validation plan does not bind the current candidate/map/policy/profile/platform.",
+    );
   }
   if (
     input.changedSources.some((sourceId) => !validId(sourceId)) ||
@@ -409,7 +405,7 @@ export function compileProofReusePlan(
     candidateDigest: input.candidateDigest,
     mapDigest: input.map.digest,
     validationPlanDigest: input.validation.digest,
-    validationHandoffDigest: input.validation.handoffDigest,
+    validationHandoffDigest: input.validation.handoff.digest,
     policyDigest: input.policyDigest,
     profileDigest: input.profileDigest,
     platform: input.platform,
