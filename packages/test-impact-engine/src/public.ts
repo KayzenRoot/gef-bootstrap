@@ -6,3 +6,5 @@ export*from'./s03-regression-radius.js';
 export*from'./s04-uncertainty-handoff.js';
 
 export*from'./v11-incremental-validation.js';
+
+export*from'./v11-proof-reuse.js';
