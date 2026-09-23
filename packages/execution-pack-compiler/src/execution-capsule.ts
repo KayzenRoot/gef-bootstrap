@@ -503,46 +503,231 @@ function knownBindingState(input: ExecutionCapsuleCompileInput): ExecutionCapsul
   return state;
 }
 
+function onlyKeys(value: object, allowed: readonly string[]): boolean {
+  const allow = new Set(allowed);
+  return Object.keys(value).every((key) => allow.has(key));
+}
+
+function uniqueNonEmptyStrings(value: unknown): value is readonly string[] {
+  return Array.isArray(value) &&
+    value.every((item) => typeof item === "string" && nonEmpty(item)) &&
+    new Set(value).size === value.length;
+}
+
 export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Result<true> {
+  const raw = capsule as ExecutionCapsule & Record<string, unknown>;
+  if (!onlyKeys(raw, [
+    "schemaVersion", "capsuleId", "capsuleVersion", "releaseLine", "state", "certainty",
+    "base", "workOrder", "navigation", "affected", "constraints", "acceptanceCriteria",
+    "selectedTests", "proofReferences", "fingerprints", "invalidation", "stopCondition",
+    "openQuestions",
+  ])) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Execution Capsule contains an undeclared top-level property");
+  }
   if (capsule.schemaVersion !== "1.0" || capsule.capsuleVersion !== "1.0" || capsule.releaseLine !== "1.1.x") {
     return fail("CAPSULE_SCHEMA_INVALID", "Execution Capsule version identity is invalid");
   }
   if (!/^gef\.capsule\.[a-z0-9][a-z0-9-]*\.[a-z0-9][a-z0-9-]*$/.test(capsule.capsuleId)) {
     return fail("CAPSULE_SCHEMA_INVALID", "capsuleId does not conform to the V1.1 schema");
   }
-  if (!REPOSITORY_ID.test(capsule.base.repository) || !HEAD_SHA.test(capsule.base.headSha)) {
-    return fail("CAPSULE_SCHEMA_INVALID", "Base repository/head binding is invalid");
+  if (!new Set<ExecutionCapsuleState>(["COMPILED", "INDETERMINATE", "STALE", "REJECTED"]).has(capsule.state)) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Execution Capsule state is invalid");
+  }
+  if (!new Set<ExecutionCapsuleCertainty>(["SUFFICIENT", "INSUFFICIENT"]).has(capsule.certainty)) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Execution Capsule certainty is invalid");
+  }
+
+  if (!onlyKeys(capsule.base, ["repository", "branch", "headSha", "treeFingerprint", "productionBranchTouched"])) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Base contains an undeclared property");
+  }
+  if (!REPOSITORY_ID.test(capsule.base.repository) || !nonEmpty(capsule.base.branch) || !HEAD_SHA.test(capsule.base.headSha)) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Base repository/branch/head binding is invalid");
   }
   if (capsule.base.productionBranchTouched !== false || capsule.base.branch === "main") {
     return fail("CAPSULE_PRODUCTION_BRANCH_FORBIDDEN", "Compiled Execution Capsule may not target production main");
   }
-  if (rawSha(capsule.base.treeFingerprint) === null || rawSha(capsule.workOrder.scopeDigest) === null) {
-    return fail("CAPSULE_SCHEMA_INVALID", "Base/work-order fingerprints must be SHA-256");
+  if (rawSha(capsule.base.treeFingerprint) === null) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Base tree fingerprint must be SHA-256");
   }
-  if (!WORK_ORDER_ID.test(capsule.workOrder.id) || !nonEmpty(capsule.workOrder.source)) {
-    return fail("CAPSULE_SCHEMA_INVALID", "Work Order identity/source is invalid");
+
+  if (!onlyKeys(capsule.workOrder, ["id", "source", "scopeDigest", "assurance"])) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Work Order contains an undeclared property");
   }
-  if (capsule.constraints.length === 0 || capsule.acceptanceCriteria.length === 0) {
-    return fail("CAPSULE_SCHEMA_INVALID", "Constraints and acceptance criteria must be non-empty");
+  if (!WORK_ORDER_ID.test(capsule.workOrder.id) || !nonEmpty(capsule.workOrder.source) || rawSha(capsule.workOrder.scopeDigest) === null) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Work Order identity/source/fingerprint is invalid");
   }
-  if (capsule.selectedTests.escalation.length === 0) {
+  if (capsule.workOrder.assurance !== undefined && capsule.workOrder.assurance !== "STANDARD" && capsule.workOrder.assurance !== "ELEVATED") {
+    return fail("CAPSULE_SCHEMA_INVALID", "Work Order assurance is invalid");
+  }
+
+  if (!onlyKeys(capsule.navigation, ["mustRead", "readIfTriggered", "writeAllowed", "writeForbidden", "searchSuppressed"])) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Navigation contains an undeclared property");
+  }
+  if (
+    !uniqueNonEmptyStrings(capsule.navigation.mustRead) ||
+    !uniqueNonEmptyStrings(capsule.navigation.writeAllowed) ||
+    !uniqueNonEmptyStrings(capsule.navigation.writeForbidden) ||
+    capsule.navigation.searchSuppressed !== true
+  ) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Navigation lists/search suppression are invalid");
+  }
+  if (capsule.navigation.readIfTriggered !== undefined) {
+    if (!Array.isArray(capsule.navigation.readIfTriggered) || capsule.navigation.readIfTriggered.some((entry) =>
+      !onlyKeys(entry, ["path", "trigger"]) || !nonEmpty(entry.path) || !nonEmpty(entry.trigger)
+    )) {
+      return fail("CAPSULE_SCHEMA_INVALID", "Triggered navigation entries are invalid");
+    }
+  }
+
+  if (!onlyKeys(capsule.affected, ["files", "symbols", "dependencies", "dependencyClosureDigest"])) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Affected projection contains an undeclared property");
+  }
+  if (!Array.isArray(capsule.affected.files) || rawSha(capsule.affected.dependencyClosureDigest) === null) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Affected files/dependency closure are invalid");
+  }
+  const filePaths = new Set<string>();
+  for (const file of capsule.affected.files) {
+    if (
+      !onlyKeys(file, ["path", "mode", "fingerprint"]) ||
+      !nonEmpty(file.path) ||
+      !FILE_MODES.has(file.mode) ||
+      (file.fingerprint !== null && rawSha(file.fingerprint) === null) ||
+      filePaths.has(file.path)
+    ) {
+      return fail("CAPSULE_SCHEMA_INVALID", "Affected file entry is invalid", file.path);
+    }
+    filePaths.add(file.path);
+  }
+  if (!uniqueNonEmptyStrings(capsule.affected.symbols) || !uniqueNonEmptyStrings(capsule.affected.dependencies)) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Affected symbols/dependencies are invalid");
+  }
+
+  if (!uniqueNonEmptyStrings(capsule.constraints) || capsule.constraints.length === 0) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Constraints must be a non-empty unique string list");
+  }
+  if (!Array.isArray(capsule.acceptanceCriteria) || capsule.acceptanceCriteria.length === 0) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Acceptance criteria must be non-empty");
+  }
+  const criterionIds = new Set<string>();
+  for (const criterion of capsule.acceptanceCriteria) {
+    if (
+      !onlyKeys(criterion, ["id", "criterion", "proofObligation"]) ||
+      !nonEmpty(criterion.id) ||
+      !nonEmpty(criterion.criterion) ||
+      !nonEmpty(criterion.proofObligation) ||
+      criterionIds.has(criterion.id)
+    ) {
+      return fail("CAPSULE_SCHEMA_INVALID", "Acceptance criterion is invalid", criterion.id);
+    }
+    criterionIds.add(criterion.id);
+  }
+
+  if (!onlyKeys(capsule.selectedTests, ["ladderLevel", "tests", "escalation", "finalSweepRequired"])) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Selected tests contain an undeclared property");
+  }
+  if (!LADDER_LEVELS.has(capsule.selectedTests.ladderLevel) || !uniqueNonEmptyStrings(capsule.selectedTests.tests)) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Selected test ladder/list is invalid");
+  }
+  if (!Array.isArray(capsule.selectedTests.escalation) || capsule.selectedTests.escalation.length === 0) {
     return fail("CAPSULE_SCHEMA_INVALID", "Selected tests must declare escalation rules");
+  }
+  for (const escalation of capsule.selectedTests.escalation) {
+    if (
+      !onlyKeys(escalation, ["trigger", "escalateTo"]) ||
+      !nonEmpty(escalation.trigger) ||
+      !LADDER_LEVELS.has(escalation.escalateTo)
+    ) {
+      return fail("CAPSULE_SCHEMA_INVALID", "Escalation rule is invalid", escalation.trigger);
+    }
+  }
+  if (typeof capsule.selectedTests.finalSweepRequired !== "boolean") {
+    return fail("CAPSULE_SCHEMA_INVALID", "finalSweepRequired must be boolean");
   }
   if (capsule.selectedTests.ladderLevel === "L5" && capsule.selectedTests.finalSweepRequired !== true) {
     return fail("CAPSULE_FINAL_SWEEP_REQUIRED", "L5 selection must retain finalSweepRequired=true");
   }
+
+  if (!Array.isArray(capsule.proofReferences)) {
+    return fail("CAPSULE_SCHEMA_INVALID", "proofReferences must be an array");
+  }
+  const proofIds = new Set<string>();
+  for (const proof of capsule.proofReferences) {
+    if (
+      !onlyKeys(proof, ["proofId", "state", "bindsTo", "manufacturesProductionCredit"]) ||
+      !nonEmpty(proof.proofId) ||
+      !PROOF_STATES.has(proof.state) ||
+      rawSha(proof.bindsTo) === null ||
+      proof.manufacturesProductionCredit !== false ||
+      proofIds.has(proof.proofId)
+    ) {
+      return proof.manufacturesProductionCredit !== false
+        ? fail("CAPSULE_PRODUCTION_CREDIT_FORBIDDEN", "Proof references cannot manufacture production credit", proof.proofId)
+        : fail("CAPSULE_SCHEMA_INVALID", "Proof reference is invalid", proof.proofId);
+    }
+    proofIds.add(proof.proofId);
+  }
+
+  if (!onlyKeys(capsule.fingerprints, ["canonicalization", "capsuleFingerprint", "inputs"])) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Fingerprint block contains an undeclared property");
+  }
+  if (
+    capsule.fingerprints.canonicalization !== "GEF-CANONICAL-JSON-CODEPOINT-v1" ||
+    rawSha(capsule.fingerprints.capsuleFingerprint) === null ||
+    !Array.isArray(capsule.fingerprints.inputs) ||
+    capsule.fingerprints.inputs.length === 0
+  ) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Capsule fingerprint block is invalid");
+  }
+  const fingerprintRefs = new Set<string>();
+  for (const item of capsule.fingerprints.inputs) {
+    if (
+      !onlyKeys(item, ["ref", "fingerprint"]) ||
+      !nonEmpty(item.ref) ||
+      rawSha(item.fingerprint) === null ||
+      fingerprintRefs.has(item.ref)
+    ) {
+      return fail("CAPSULE_SCHEMA_INVALID", "Input fingerprint is invalid", item.ref);
+    }
+    fingerprintRefs.add(item.ref);
+  }
+
+  if (!onlyKeys(capsule.invalidation, ["driftClasses", "onDrift", "expiresAt"])) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Invalidation block contains an undeclared property");
+  }
+  const driftClasses = new Set<ExecutionCapsuleDriftClass>([
+    "NONE", "LOCAL_COMPATIBLE", "SEED_RECOMPILE_REQUIRED", "CONTEXT_EXPANSION_REQUIRED", "CONFLICT",
+  ]);
+  const driftActions = new Set<ExecutionCapsuleDriftAction>(["RECOMPILE", "EXPAND_CONTEXT", "ESCALATE", "HALT"]);
+  if (
+    !Array.isArray(capsule.invalidation.driftClasses) ||
+    capsule.invalidation.driftClasses.length === 0 ||
+    capsule.invalidation.driftClasses.some((drift) => !driftClasses.has(drift)) ||
+    !driftActions.has(capsule.invalidation.onDrift)
+  ) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Invalidation drift class/action is invalid");
+  }
+  if (
+    capsule.invalidation.expiresAt !== undefined &&
+    capsule.invalidation.expiresAt !== null &&
+    (typeof capsule.invalidation.expiresAt !== "string" || Number.isNaN(Date.parse(capsule.invalidation.expiresAt)))
+  ) {
+    return fail("CAPSULE_SCHEMA_INVALID", "Invalidation expiry is not a date-time");
+  }
+
+  if (!nonEmpty(capsule.stopCondition)) {
+    return fail("CAPSULE_SCHEMA_INVALID", "STOP CONDITION must be non-empty");
+  }
+  if (capsule.openQuestions !== undefined && !uniqueNonEmptyStrings(capsule.openQuestions)) {
+    return fail("CAPSULE_SCHEMA_INVALID", "openQuestions must be a unique non-empty string list");
+  }
+
   if (capsule.certainty === "INSUFFICIENT" && capsule.state !== "INDETERMINATE") {
     return fail("CAPSULE_SCHEMA_INVALID", "INSUFFICIENT certainty may only produce INDETERMINATE");
   }
   if (capsule.state === "COMPILED" && capsule.certainty !== "SUFFICIENT") {
     return fail("CAPSULE_SCHEMA_INVALID", "COMPILED requires SUFFICIENT certainty");
   }
-  if (rawSha(capsule.fingerprints.capsuleFingerprint) === null || capsule.fingerprints.inputs.length === 0) {
-    return fail("CAPSULE_SCHEMA_INVALID", "Capsule fingerprint/input fingerprints are invalid");
-  }
-  if (capsule.proofReferences.some((proof) => proof.manufacturesProductionCredit !== false)) {
-    return fail("CAPSULE_PRODUCTION_CREDIT_FORBIDDEN", "Proof references cannot manufacture production credit");
-  }
+
   return { ok: true, value: true };
 }
 
