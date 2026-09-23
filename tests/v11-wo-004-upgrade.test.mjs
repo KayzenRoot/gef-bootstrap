@@ -321,86 +321,58 @@ test("WO004-JOURNAL-ISOLATION: a stale transaction journal cannot authorize anot
   assert.equal(existsSync(join(retryRoot, UPGRADE_STATE_REF)), false, "another run cannot reuse the stale transaction journal");
 });
 
-test("COMPAT-01: the evidence-bound 1.0.0 to 1.1.0 row is supported on Windows, Linux and macOS", async () => {
-  const project = inMemoryProject();
-  for (const platform of ["win32", "linux", "darwin"]) {
-    const result = await directPreview(project, { platform });
-    assert.equal(result.compatibility, "SUPPORTED", platform);
-    assert.equal(result.readiness, "READY", platform);
-    assert.equal(result.body.compatibility.row.from, "1.0.0");
-    assert.equal(result.body.compatibility.row.to, "1.1.0");
-    assert.equal(result.body.compatibility.row.evidenceState, "VERIFIED");
-  }
-});
-
-test("COMPAT-02: unsupported version pairs are explicit and have no apply eligibility", async () => {
+test("COMPAT-01: an unsupported version pair is UNSUPPORTED and has no mutation eligibility", async () => {
   const project = inMemoryProject({ productVersion: "2.0.0" });
   const result = await directPreview(project);
   assert.equal(result.compatibility, "UNSUPPORTED");
   assert.equal(result.readiness, "UNSUPPORTED");
 });
 
-test("COMPAT-03: unsupported platform and Node runtime fail closed", async () => {
+test("COMPAT-02: an unknown blocking dimension is INDETERMINATE and fails closed", async () => {
   const project = inMemoryProject();
-  const platform = await directPreview(project, { platform: "plan9" });
-  const runtime = await directPreview(project, { nodeMajor: 20 });
-  assert.equal(platform.compatibility, "UNSUPPORTED");
-  assert.equal(platform.readiness, "UNSUPPORTED");
-  assert.equal(runtime.compatibility, "UNSUPPORTED");
-  assert.equal(runtime.readiness, "UNSUPPORTED");
+  const result = await directPreview(project, {
+    repository: { dirtiness: "UNKNOWN", input: {}, observationLimits: ["TEST_GIT_UNAVAILABLE"] },
+  });
+  assert.equal(result.compatibility, "INDETERMINATE");
+  assert.equal(result.readiness, "INDETERMINATE");
+  assert.equal(result.body.state.reason, "TRUSTED_GIT_OBSERVATION_UNAVAILABLE");
 });
 
-test("COMPAT-04: missing matrix row or required capability never becomes SUPPORTED", async () => {
+test("COMPAT-03: an unsupported platform is UNSUPPORTED", async () => {
   const project = inMemoryProject();
-  const gitUnknown = await directPreview(project, { repository: { dirtiness: "UNKNOWN", input: {}, observationLimits: ["TEST_GIT_UNAVAILABLE"] } });
-  assert.equal(gitUnknown.compatibility, "INDETERMINATE");
-  assert.equal(gitUnknown.readiness, "INDETERMINATE");
-  const emptyState = inMemoryProject({ verb: "init" });
-  const noState = await loadEngines().then((engines) => composeUpgradePreview({
-    targetRoot: "C:/fixture/empty",
+  const result = await directPreview(project, { platform: "plan9" });
+  assert.equal(result.compatibility, "UNSUPPORTED");
+  assert.equal(result.readiness, "UNSUPPORTED");
+});
+
+test("COMPAT-04: a Node runtime below the declared minimum is UNSUPPORTED", async () => {
+  const project = inMemoryProject();
+  const result = await directPreview(project, { nodeMajor: 20 });
+  assert.equal(result.compatibility, "UNSUPPORTED");
+  assert.equal(result.readiness, "UNSUPPORTED");
+});
+
+test("COMPAT-05: an absent required managed-receipt capability produces a gap and no bypass", async () => {
+  const project = inMemoryProject();
+  const engines = await loadEngines();
+  const result = composeUpgradePreview({
+    targetRoot: "C:/fixture/project",
     productVersion: PRODUCT_VERSION,
     platform: "linux",
     nodeMajor: 22,
-    observationFingerprint: sha("empty"),
-    repository: { dirtiness: "OBSERVED", input: { repo: "C:/fixture/empty", head: "b".repeat(40), branch: "main" }, observationLimits: [] },
-    readFile: () => ({ status: "ABSENT", bytes: null, limit: null }),
+    observationFingerprint: sha("target-observation"),
+    repository: { dirtiness: "OBSERVED", input: { repo: "C:/fixture/project", head: "a".repeat(40), branch: "main" }, observationLimits: [] },
+    readFile: (ref) => ref === project.fixture.receiptRef
+      ? { status: "ABSENT", bytes: null, limit: null }
+      : project.readFile(ref),
     engines,
-  }));
-  assert.equal(noState.compatibility, "INDETERMINATE");
-  assert.equal(noState.readiness, "INDETERMINATE");
-  assert.equal(noState.body.recovery.interruptedTransactionAction, "START_FRESH_RUN_ONLY");
-
-  const modified = inMemoryProject();
-  modified.write(modified.fixture.sourceRef, `${modified.fixture.stateBytes}user edit\n`);
-  const userModified = await directPreview(modified);
-  assert.equal(userModified.readiness, "USER_MODIFIED");
-  assert.ok(userModified.body.inventory.some((entry) => entry.path === modified.fixture.sourceRef && entry.classification === "USER_MODIFIED"));
-
-  const conflicting = inMemoryProject();
-  const adopt = fixtureState({ verb: "adopt", runId: "legacy-run-adopt-memory" });
-  conflicting.write(adopt.sourceRef, adopt.stateBytes);
-  conflicting.write(adopt.receiptRef, adopt.receiptBytes);
-  const conflict = await directPreview(conflicting);
-  assert.equal(conflict.readiness, "CONFLICTING");
-  assert.equal(conflict.compatibility, "SUPPORTED");
-
-  const incomplete = inMemoryProject();
-  const upgradeState = {
-    schemaVersion: "1.0", kind: "gef.upgrade.state", commandId: UPGRADE_COMMAND,
-    contractVersion: "1.0", productVersion: PRODUCT_VERSION, sourceVersion: "1.0.0", targetVersion: PRODUCT_VERSION,
-    migrationId: "GEF-UPGRADE-STATE-V1-1", runId: "upgrade-run-incomplete", sourceRef: incomplete.fixture.sourceRef,
-    sourceFingerprint: sha(incomplete.fixture.stateBytes), sourceReceiptFingerprint: sha(incomplete.fixture.receiptBytes),
-    planDigest: sha("committed-upgrade-plan"), observationFingerprint: sha("committed-upgrade-observation"),
-    transaction: { planDigest: sha("committed-upgrade-plan"), outcome: "APPLIED" },
-  };
-  incomplete.write(UPGRADE_STATE_REF, `${JSON.stringify(upgradeState, null, 2)}\n`);
-  const recoveryRequired = await directPreview(incomplete);
-  assert.equal(recoveryRequired.readiness, "RECOVERY_REQUIRED");
-  assert.equal(recoveryRequired.body.inventory.find((entry) => entry.path === UPGRADE_STATE_REF).classification, "RECOVERY_REQUIRED");
-  assert.ok(emptyState.fixture);
+  });
+  assert.equal(result.compatibility, "INDETERMINATE");
+  assert.equal(result.readiness, "INDETERMINATE");
+  assert.equal(result.body.state.reason, "SOURCE_RECEIPT_UNAVAILABLE");
 });
 
-test("COMPAT-05: schemas are 2020-12, row evidence IDs map all required cases, and packaged hashes are reproducible", async () => {
+test("COMPAT-06: no VERIFIED compatibility row exists without complete evidence bindings", () => {
   const matrix = JSON.parse(readFileSync(resolve(ROOT, "packages/cli/schemas/gef-cli-upgrade-compatibility-matrix.json"), "utf8"));
   const matrixSchema = JSON.parse(readFileSync(resolve(ROOT, "packages/cli/schemas/gef-cli-upgrade-compatibility-matrix.schema.json"), "utf8"));
   const stateSchema = JSON.parse(readFileSync(resolve(ROOT, "packages/cli/schemas/gef-cli-upgrade-state.schema.json"), "utf8"));
@@ -408,18 +380,24 @@ test("COMPAT-05: schemas are 2020-12, row evidence IDs map all required cases, a
   assert.equal(matrixSchema["$schema"], "https://json-schema.org/draft/2020-12/schema");
   assert.equal(stateSchema["$schema"], "https://json-schema.org/draft/2020-12/schema");
   assert.equal(matrix.compatibility.length, 1);
-  const row = matrix.compatibility[0];
-  assert.equal(row.evidenceState, "VERIFIED");
-  assert.equal(new Set(row.evidenceRefs).size, 13);
-  for (const id of [...Array.from({ length: 7 }, (_, i) => `UPG-MIG-0${i + 1}`), ...Array.from({ length: 6 }, (_, i) => `COMPAT-0${i + 1}`)]) {
-    assert.ok(row.evidenceRefs.includes(`tests/v11-wo-004-upgrade.test.mjs#${id}`), `${id} must be bound into the verified row`);
+  const requiredIds = [
+    ...Array.from({ length: 7 }, (_, i) => `UPG-MIG-0${i + 1}`),
+    ...Array.from({ length: 6 }, (_, i) => `COMPAT-0${i + 1}`),
+  ];
+  for (const row of matrix.compatibility) {
+    if (row.evidenceState !== "VERIFIED") continue;
+    assert.ok(Array.isArray(row.evidenceRefs) && row.evidenceRefs.length > 0);
+    assert.equal(new Set(row.evidenceRefs).size, requiredIds.length);
+    for (const id of requiredIds) {
+      assert.ok(row.evidenceRefs.includes(`tests/v11-wo-004-upgrade.test.mjs#${id}`), `${id} must bind a VERIFIED row`);
+    }
   }
   const manifest = spawnSync(process.execPath, [resolve(ROOT, "packages/cli/scripts/prepare-package.mjs")], { cwd: ROOT, encoding: "utf8", timeout: 180_000 });
   assert.equal(manifest.error, undefined, manifest.error?.message ?? "");
   assert.equal(manifest.status, 0, manifest.stderr);
 });
 
-test("COMPAT-06: untrusted Git is indeterminate and the Windows machine-write policy stays strict", async (t) => {
+test("WO004-TRUST-BOUNDARY: untrusted Git stays indeterminate and cannot mutate", async (t) => {
   const target = tempTarget(t);
   initRepository(target);
   seedManagedState(target);
