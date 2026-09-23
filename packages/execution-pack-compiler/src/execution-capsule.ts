@@ -711,7 +711,7 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
     capsule.invalidation.expiresAt !== null &&
     (
       typeof capsule.invalidation.expiresAt !== "string" ||
-      !/^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:\\d{2})$/.test(capsule.invalidation.expiresAt) ||
+      !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(capsule.invalidation.expiresAt) ||
       Number.isNaN(Date.parse(capsule.invalidation.expiresAt))
     )
   ) {
