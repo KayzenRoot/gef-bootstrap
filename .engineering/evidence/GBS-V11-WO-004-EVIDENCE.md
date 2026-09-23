@@ -11,20 +11,27 @@ Audit disposition: **executor evidence only; independent objective audit remains
 | Item | Value |
 |---|---|
 | Repository | `KayzenRoot/gef-bootstrap` |
-| Implementation branch | `feat/1.1/wo-004-upgrade-recovery` |
+| Implementation branch | `feat/1.1/wo-004-upgrade-recovery-clean` |
 | Base branch | `release/1.1` |
-| `origin/release/1.1` at execution | `f5141d6548474f41884f19ffd432bddd3d23f6fc` — verified ancestor of the implementation commit |
-| Handoff parent | `fc33612b4961ad365cd68264272a5074627f7c56` |
-| Implementation commit tested locally | `da00eaa83ec6c1df73bfcf9c8caf0bcfcfceb0c5` |
-| Pull request | [#286](https://github.com/KayzenRoot/gef-bootstrap/pull/286), base `release/1.1`, kept open and in draft |
+| Refreshed base | `b97f2b454ef2647823b682da13b69a501d82c794` |
+| Cleanup governance | PR #287, review `5290922504`, APPROVED 0/0 |
+| Cleanup decision | `D-0061` / `ADR-0005` |
+| Historical implementation/test head | `48baddcd82fd2013780c4fe75b6493b10f8d6997` |
+| Historical local qualification | 1,483 passed, 0 failed, 0 skipped |
+| Historical exact-head cross-platform upgrade assurance | run `35820242860`, SUCCESS |
+| Current implementation PR | #288, base `release/1.1`, draft pending refreshed qualification |
 | Production branch `main` | Not modified |
 | Release tag `v1.0.0` | Not moved |
 
-The implementation commit is an ancestor of the branch tip at evidence capture. The final evidence
-commit contains this report only. The pull-request workflow checks out `pull_request.head.sha`,
-asserts that exact SHA on all three operating systems, and runs the complete validation matrix for
-the final PR head. Its evidence must be reviewed at the current PR head before the stop condition is
-reported as reached.
+The original WO-004 implementation became stale only because the product owner first detached the
+legacy ecosystem-specific bindings from the V1.1 canonical Architecture/Scope/Decisions. The
+implementation files were replayed without semantic redesign onto a branch created from the exact
+post-cleanup base. The refreshed Context Lock fingerprints that new canonical base and includes
+ADR-0005. The cleanup does not change the admitted upgrade requirements.
+
+Current evidence is not promoted merely because the historical implementation passed. PR #288 must
+re-run exact-head assurance against the refreshed tree, including the current-tree detachment guard,
+before objective audit.
 
 ## 2. Implemented scope
 
@@ -109,8 +116,17 @@ workflow run does not qualify the corrected head.
 
 ## 6. External state and stop boundary
 
-- PR #286 remains open and draft for independent objective audit.
+- PR #288 remains open and draft for independent objective audit.
 - The implementation was not merged, tagged, published, or applied to `main` or `v1.0.0`.
 - Exact-head GitHub Actions for the final evidence commit must complete successfully before the
   executor reports `GBS_V11_WO_004_READY_FOR_OBJECTIVE_AUDIT`.
 - Required final boundary: **MERGE NOT PERFORMED; OBJECTIVE AUDIT REQUIRED**.
+
+
+## 7. Refreshed-baseline qualification requirement
+
+The final objective audit must bind to the current PR #288 head and verify that the replay preserves
+all historical WO-004 results **and** the post-cleanup D-0061/ADR-0005 boundary. A historical green
+run is provenance, not current proof. Exact-head workflow IDs and final test counts are appended only
+after the refreshed branch finishes CI.
+
