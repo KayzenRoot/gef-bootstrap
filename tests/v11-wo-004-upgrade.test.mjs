@@ -241,31 +241,51 @@ test("UPG-MIG-04: corrupted rollback material remains RECOVERY_REQUIRED with jou
   assert.ok(existsSync(join(target, ".gef-private", "journal")), "recovery journal evidence must remain available");
 });
 
-test("UPG-MIG-05: user-modified and conflicting managed state is never overwritten", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
+test("UPG-MIG-05: USER_MODIFIED managed state is never silently overwritten", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
   const modifiedTarget = tempTarget(t);
   initRepository(modifiedTarget);
   seedManagedState(modifiedTarget);
   writeFileSync(join(modifiedTarget, UPGRADE_STATE_REF), "user-owned upgrade document\n");
-  const modifiedBefore = snapshot(modifiedTarget);
-  const modifiedPreview = JSON.parse(gef(["upgrade", "--target", modifiedTarget, "--json"]).stdout).value.preview;
-  assert.equal(modifiedPreview.state.readiness, "USER_MODIFIED");
-  assert.ok(modifiedPreview.inventory.some((entry) => entry.path === UPGRADE_STATE_REF && entry.classification === "USER_MODIFIED"));
+  const before = snapshot(modifiedTarget);
+  const preview = JSON.parse(gef(["upgrade", "--target", modifiedTarget, "--json"]).stdout).value.preview;
+  assert.equal(preview.state.readiness, "USER_MODIFIED");
+  assert.ok(preview.inventory.some((entry) => entry.path === UPGRADE_STATE_REF && entry.classification === "USER_MODIFIED"));
   assert.notEqual(gef(["upgrade", "--apply", "--target", modifiedTarget, "--json"]).code, 0);
-  assert.deepEqual(snapshot(modifiedTarget), modifiedBefore);
-
-  const conflictTarget = tempTarget(t);
-  initRepository(conflictTarget);
-  seedManagedState(conflictTarget);
-  seedManagedState(conflictTarget, { verb: "adopt", runId: "legacy-run-adopt-001" });
-  const conflict = JSON.parse(gef(["upgrade", "--target", conflictTarget, "--json"]).stdout).value.preview;
-  assert.equal(conflict.state.readiness, "CONFLICTING");
-  assert.ok(conflict.inventory.filter((entry) => entry.path === ".gef/init-state.json" || entry.path === ".gef/adopt-state.json").every((entry) => entry.classification === "CONFLICTING"));
-  const beforeApply = snapshot(conflictTarget);
-  assert.notEqual(gef(["upgrade", "--apply", "--target", conflictTarget, "--json"]).code, 0);
-  assert.deepEqual(snapshot(conflictTarget), beforeApply);
+  assert.deepEqual(snapshot(modifiedTarget), before);
 });
 
-test("UPG-MIG-06: a repeated apply is idempotent and preserves the upgraded state bytes", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
+test("UPG-MIG-06: CONFLICTING managed state escalates and is never automatically resolved", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
+  const target = tempTarget(t);
+  initRepository(target);
+  seedManagedState(target);
+  seedManagedState(target, { verb: "adopt", runId: "legacy-run-adopt-001" });
+  const preview = JSON.parse(gef(["upgrade", "--target", target, "--json"]).stdout).value.preview;
+  assert.equal(preview.state.readiness, "CONFLICTING");
+  assert.ok(preview.inventory.filter((entry) => entry.path === ".gef/init-state.json" || entry.path === ".gef/adopt-state.json").every((entry) => entry.classification === "CONFLICTING"));
+  const before = snapshot(target);
+  assert.notEqual(gef(["upgrade", "--apply", "--target", target, "--json"]).code, 0);
+  assert.deepEqual(snapshot(target), before);
+});
+
+test("UPG-MIG-07: the admitted V1.0 to V1.1 migration row exists and applies", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
+  const target = tempTarget(t);
+  initRepository(target);
+  seedManagedState(target);
+  const preview = JSON.parse(gef(["upgrade", "--target", target, "--json"]).stdout).value.preview;
+  assert.equal(preview.compatibility.state, "SUPPORTED");
+  assert.equal(preview.compatibility.row.from, "1.0.0");
+  assert.equal(preview.compatibility.row.to, "1.1.0");
+  assert.equal(preview.compatibility.row.migrationId, "GEF-UPGRADE-STATE-V1-1");
+  const applied = gef(["upgrade", "--apply", "--target", target, "--json"]);
+  assert.equal(applied.code, 0, applied.stderr);
+  const value = JSON.parse(applied.stdout).value;
+  assert.equal(value.document.sourceVersion, "1.0.0");
+  assert.equal(value.document.targetVersion, "1.1.0");
+  assert.equal(value.document.migrationId, "GEF-UPGRADE-STATE-V1-1");
+  assert.equal(value.transaction.outcome, "APPLIED");
+});
+
+test("WO004-IDEMPOTENCE: a repeated apply is a no-op and preserves upgraded-state bytes", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
   const target = tempTarget(t);
   initRepository(target);
   seedManagedState(target);
@@ -278,7 +298,7 @@ test("UPG-MIG-06: a repeated apply is idempotent and preserves the upgraded stat
   assert.equal(readFileSync(join(target, UPGRADE_STATE_REF)).toString("utf8"), stateBefore.toString("utf8"));
 });
 
-test("UPG-MIG-07: a stale transaction journal cannot authorize another run", async (t) => {
+test("WO004-JOURNAL-ISOLATION: a stale transaction journal cannot authorize another run", async (t) => {
   const retryRoot = tempTarget(t);
   const content = "stale journal must not bind a different run\n";
   const request = {
