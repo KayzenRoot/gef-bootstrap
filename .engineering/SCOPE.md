@@ -81,8 +81,8 @@ A capability is never deferred merely because it takes longer to build. `EXPERIM
 
 ## Area J — Integrations
 - `GBS-M38 Capability Detection` — `CORE_REQUIRED`.
-- `GBS-M39 UADS Adapter` — `OPTIONAL_ADAPTER`.
-- `GBS-M40 Hive Adapter` — `OPTIONAL_ADAPTER`.
+- `GBS-M39 Reserved External Adapter Slot` — `OPTIONAL_ADAPTER`.
+- `GBS-M40 Reserved Context Adapter Slot` — `OPTIONAL_ADAPTER`.
 - `GBS-M41 UGAS Adapter` — `OPTIONAL_ADAPTER`.
 - `GBS-M42 Generic Adapter API` — `PRODUCT_INCLUDED`.
 
@@ -168,7 +168,7 @@ A second hosted provider such as GitLab or Bitbucket is **not mandatory** for `P
 The GitHub profile includes governed repository discovery, branch/PR lifecycle, checks/status evidence, CI integration, issues/templates where relevant, ruleset/permission-gap reporting, release surfaces and exact-head evidence binding. Unavailable administrative permissions produce truthful gap/block states rather than fabricated success.
 
 ## Optional adapter packaging
-`M39 UADS`, `M40 Hive` and `M41 UGAS` remain official supported adapter tracks but are **separately activatable packages/profiles** over the Generic Adapter API. Their absence cannot block independent `PRODUCTION_RELEASE_DONE`.
+`M39` and `M40` are reserved optional slots; `M41 UGAS` remains an optional adapter track over the Generic Adapter API. Optional adapter absence cannot block independent `PRODUCTION_RELEASE_DONE`.
 
 An adapter may be advertised as shipped/supported only when its own compatibility, tests, documentation and evidence pass. The complete core release must work without any of the three installed or connected.
 
