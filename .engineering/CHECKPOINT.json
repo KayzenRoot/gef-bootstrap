@@ -143,7 +143,7 @@
   "stopState": "GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088",
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_WO_004_ADMITTED",
+    "status": "GBS_V11_WO_005_ADMITTED",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -227,14 +227,44 @@
           "m62m63Final": 35805459318,
           "windowsRightsOracle": 35805459223
         }
+      },
+      "GBS-V11-WO-004": {
+        "status": "OBJECTIVE_AUDIT_APPROVED_MERGED",
+        "implementationPr": 288,
+        "auditedHead": "03a74d239958c456e1ed63b6cd210699a07f5798",
+        "objectiveAudit": "APPROVED",
+        "objectiveReview": 5291217891,
+        "implementationMerge": "ab820243b6c44e2ce9c5b747a7a6a4c688d90fed",
+        "criticalFindings": 0,
+        "highFindings": 0,
+        "assuranceRuns": {
+          "m01Validation": 35862839238,
+          "m41m47": 35862839182,
+          "m48m54": 35862839200,
+          "m55m61": 35862839186,
+          "m62m63Final": 35862839229,
+          "windowsRightsOracle": 35862839173,
+          "upgradeRecovery": 35862839188
+        }
       }
     },
-    "activeWorkOrder": "GBS-V11-WO-004",
+    "activeWorkOrder": "GBS-V11-WO-005",
     "activeWorkOrderStatus": "ADMITTED",
-    "implementationBranch": "feat/1.1/wo-004-upgrade-recovery",
-    "contextLock": ".engineering/context-locks/GBS-V11-WO-004.json",
-    "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-004-CODEX.md",
-    "nextLegalAction": "CREATE_WO_004_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE",
-    "stopState": "GBS_V11_WO_004_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH"
+    "implementationBranch": "feat/1.1/wo-005-execution-capsule",
+    "contextLock": ".engineering/context-locks/GBS-V11-WO-005.json",
+    "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-005-DIRECT.md",
+    "nextLegalAction": "CREATE_WO_005_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE",
+    "stopState": "GBS_V11_WO_005_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH",
+    "ecosystemDetachment": {
+      "decision": "D-0061",
+      "adr": "ADR-0005",
+      "cleanupPr": 287,
+      "auditedHead": "37242b8d85d6abb7bae91e981118b47a5c08f735",
+      "objectiveReview": 5290922504,
+      "merge": "b97f2b454ef2647823b682da13b69a501d82c794",
+      "state": "EFFECTIVE",
+      "criticalFindings": 0,
+      "highFindings": 0
+    }
   }
 }
