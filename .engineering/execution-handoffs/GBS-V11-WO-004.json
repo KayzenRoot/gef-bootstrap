@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-WO-004",
   "title": "Upgrade + Compatibility + Recovery",
-  "state": "EXECUTABLE_ON_ADMITTED_BRANCH",
+  "state": "EXECUTABLE_ON_REFRESHED_BASE",
   "repository": "KayzenRoot/gef-bootstrap",
   "releaseLine": "1.1.x",
   "assurance": "HIGH_ASSURANCE",
   "releaseRef": "release/1.1",
   "admissionMergeSha": "f5141d6548474f41884f19ffd432bddd3d23f6fc",
-  "implementationBranch": "feat/1.1/wo-004-upgrade-recovery",
-  "implementationBaseSha": "f5141d6548474f41884f19ffd432bddd3d23f6fc",
+  "implementationBranch": "feat/1.1/wo-004-upgrade-recovery-clean",
+  "implementationBaseSha": "b97f2b454ef2647823b682da13b69a501d82c794",
   "executorAuthority": "ADR-0003-D3",
   "objectiveGovernanceAudit": {
     "pullRequest": 285,
@@ -57,13 +57,15 @@
     "packed-install parity",
     "Windows Linux macOS upgrade assurance",
     "UPG-MIG-01 through UPG-MIG-07",
-    "COMPAT-01 through COMPAT-06"
+    "COMPAT-01 through COMPAT-06",
+    "preserve D-0061/ADR-0005 neutral reserved adapter boundary"
   ],
   "preserve": [
     "WO-002 transaction journal ownership rollback and filesystem safety",
     "WO-003 doctor status process environment and trusted-Git hardening",
     "ADR-0004 Windows effective-rights oracle",
-    "main and v1.0.0 production boundary"
+    "main and v1.0.0 production boundary",
+    "legacy ecosystem-specific bindings remain detached on the V1.1 current tree"
   ],
   "explicitlyForbidden": [
     "merge",
@@ -81,5 +83,16 @@
   ],
   "rediscoveryPolicy": "Use the minimum read set. Do not begin with repository-wide search. Expand only on evidence-backed import/type/test/dependency triggers and record expansions in the Evidence Bundle.",
   "executorStopCondition": "GBS_V11_WO_004_READY_FOR_OBJECTIVE_AUDIT",
-  "finalStatement": "MERGE NOT PERFORMED; OBJECTIVE AUDIT REQUIRED"
+  "finalStatement": "MERGE NOT PERFORMED; OBJECTIVE AUDIT REQUIRED",
+  "contextRefresh": {
+    "decision": "D-0061",
+    "adr": "ADR-0005",
+    "cleanupPr": 287,
+    "cleanupAuditedHead": "37242b8d85d6abb7bae91e981118b47a5c08f735",
+    "cleanupReview": 5290922504,
+    "cleanupMerge": "b97f2b454ef2647823b682da13b69a501d82c794",
+    "verdict": "APPROVED",
+    "criticalFindings": 0,
+    "highFindings": 0
+  }
 }
