@@ -17,7 +17,7 @@
     "D7": { "id": "D7", "name": "platform", "values": ["win32", "linux", "darwin"], "blocking": true },
     "D8": { "id": "D8", "name": "gitState", "values": ["clean", "dirty", "detached", "no-repo", "submodule", "worktree"], "blocking": false },
     "D9": { "id": "D9", "name": "providerCapability", "values": ["github-present", "github-absent", "github-partial"], "blocking": false },
-    "D10": { "id": "D10", "name": "optionalAdapters", "values": ["none", "uads", "hive", "ugas"], "blocking": false }
+    "D10": { "id": "D10", "name": "optionalAdapters", "values": ["none", "external-slot", "context-slot", "ugas"], "blocking": false }
   },
   "rowStates": {
     "UNVERIFIED": "planned row, no evidence yet; MUST NOT be read as supported",
