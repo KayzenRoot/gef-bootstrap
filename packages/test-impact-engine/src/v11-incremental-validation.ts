@@ -218,10 +218,15 @@ export function compileIncrementalValidationPlan(
   }
   if (
     !CAPSULE_STATES.has(input.capsule.state) ||
+    (input.capsule.certainty !== "SUFFICIENT" && input.capsule.certainty !== "INSUFFICIENT") ||
     !LEVELS.has(input.capsule.ladderLevel) ||
+    !LEVELS.has(input.assurance.requiredLevel) ||
     !BROWNFIELD_STATES.has(input.brownfieldPosture) ||
     (input.selectorConfidence !== "CERTAIN" && input.selectorConfidence !== "INDETERMINATE") ||
-    !input.platform
+    !input.platform ||
+    typeof input.capsule.finalSweepRequired !== "boolean" ||
+    !Array.isArray(input.capsule.tests) ||
+    input.capsule.tests.some((id) => typeof id !== "string" || id.length === 0)
   ) {
     return fail("INCREMENTAL_INPUT_INVALID", "Incremental validation input contains an unsupported enum/value.");
   }
@@ -296,6 +301,25 @@ export function compileIncrementalValidationPlan(
   );
   if (!baseSelection.ok) return baseSelection;
 
+  // A source can be a known map node while still having no reachable test. M28's structural
+  // completeness does not mean coverage completeness, so detect this before a narrow plan can pass.
+  const knownSourceIds = new Set(input.map.sources.map((source) => source.id));
+  const uncoveredChangedSources: string[] = [];
+  for (const sourceId of unique(input.changedSources)) {
+    if (!knownSourceIds.has(sourceId)) continue;
+    const single = selectImpactedTests(
+      input.map,
+      [sourceId],
+      input.platform,
+      { ...input.assurance, requiredLevel: "L1" },
+      options,
+    );
+    if (!single.ok) return single;
+    if (single.value.uncertainty === "NONE" && single.value.tests.length === 0) {
+      uncoveredChangedSources.push(sourceId);
+    }
+  }
+
   let level = baseSelection.value.level;
   let uncertainty = baseSelection.value.uncertainty;
   let state: IncrementalValidationState =
@@ -304,6 +328,15 @@ export function compileIncrementalValidationPlan(
   let fullSuiteRequired = level === "L4" || level === "L5";
   let intermediateSuppression: IntermediateSuppression =
     uncertainty === "NONE" ? "DEFER_TO_PROOF_REUSE" : "PROHIBITED";
+
+  if (uncoveredChangedSources.length > 0) {
+    level = maxLevel(level, "L4");
+    uncertainty = "UNKNOWN";
+    if (state === "READY") state = "WIDENED";
+    fullSuiteRequired = true;
+    intermediateSuppression = "PROHIBITED";
+    for (const sourceId of uncoveredChangedSources) reasons.push(`CHANGED_SOURCE_UNMAPPED:${sourceId}`);
+  }
 
   if (input.selectorConfidence === "INDETERMINATE") {
     level = maxLevel(level, "L4");
@@ -334,12 +367,48 @@ export function compileIncrementalValidationPlan(
     reasons.push(`CAPSULE_TEST_PLATFORM_FILTERED:${id}`);
   }
 
+  // L3 requires affected boundary coverage. Reuse M28's boundary tags to close over tests
+  // sharing an impacted boundary. If boundary knowledge is absent, fail closed upward to L4.
+  let boundaryTests: readonly string[] = [];
+  if (level === "L3") {
+    const impactedBoundaries = unique(
+      baseSelection.value.tests.flatMap((id) => byId.get(id)?.boundaries ?? []),
+    );
+    if (baseSelection.value.tests.length > 0 && impactedBoundaries.length === 0) {
+      level = "L4";
+      uncertainty = "UNKNOWN";
+      if (state === "READY") state = "WIDENED";
+      fullSuiteRequired = true;
+      intermediateSuppression = "PROHIBITED";
+      reasons.push("BOUNDARY_KNOWLEDGE_INCOMPLETE");
+    } else if (impactedBoundaries.length > 0) {
+      const boundarySet = new Set(impactedBoundaries);
+      boundaryTests = unique(
+        input.map.tests
+          .filter((test) =>
+            platformRelevant(test, input.platform) &&
+            (test.boundaries ?? []).some((boundary) => boundarySet.has(boundary)),
+          )
+          .map((test) => test.id),
+      );
+      reasons.push("BOUNDARY_CLOSURE_INCLUDED");
+    }
+  }
+
   if (level === "L4" || level === "L5") fullSuiteRequired = true;
   if (finalSweepRequired && level === "L5") fullSuiteRequired = true;
 
+  if (input.changedSources.length > 0 && platformSuite.length === 0) {
+    state = "INDETERMINATE";
+    uncertainty = "UNKNOWN";
+    intermediateSuppression = "PROHIBITED";
+    fullSuiteRequired = true;
+    reasons.push("NO_PLATFORM_TESTS_AVAILABLE");
+  }
+
   const selected = fullSuiteRequired
     ? unique([...platformSuite, ...mandatoryRelevant, ...unknownMandatory])
-    : unique([...baseSelection.value.tests, ...mandatoryRelevant]);
+    : unique([...baseSelection.value.tests, ...boundaryTests, ...mandatoryRelevant]);
 
   return makePlan(
     input,
