@@ -36,17 +36,30 @@ test("WO-006 objective approval is promoted before WO-007 admission", () => {
   assert.equal(completed.assuranceRuns.incrementalValidation, 35872917260);
 });
 
-test("machine and human checkpoint agree on admitted WO-007", () => {
-  assert.equal(checkpoint.v11.status, "GBS_V11_WO_007_ADMITTED");
-  assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-007");
-  assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
-  assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-007-proof-reuse");
-  assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-007.json");
-  assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-007-DIRECT.md");
-  assert.equal(checkpoint.v11.nextLegalAction, "CREATE_WO_007_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_007_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH");
-  assert.ok(checkpointMd.includes("Active Work Order after this governance merge: `GBS-V11-WO-007`"));
-  assert.ok(checkpointMd.includes("V1.1 STOP CONDITION: `GBS_V11_WO_007_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`"));
+test("WO-007 admission remains provable after objective promotion to later Work Orders", () => {
+  const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
+  const ordinal = match === null ? null : Number.parseInt(match[1], 10);
+  assert.ok(Number.isInteger(ordinal) && ordinal >= 7, `unexpected V1.1 state: ${checkpoint.v11.status}`);
+
+  if (ordinal === 7) {
+    assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-007");
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
+    assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-007-proof-reuse");
+    assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_007_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH");
+  } else {
+    const completed = checkpoint.v11.completedWorkOrders["GBS-V11-WO-007"];
+    assert.equal(completed.status, "OBJECTIVE_AUDIT_APPROVED_MERGED");
+    assert.equal(completed.implementationPr, 294);
+    assert.equal(completed.auditedHead, "5c85b974f8d76dd6ede8fafb9f68b305e3312549");
+    assert.equal(completed.objectiveReview, 5292475178);
+    assert.equal(completed.implementationMerge, "d5b923f1aaf0c8319fc29285c76bda89a363aadf");
+    assert.equal(completed.criticalFindings, 0);
+    assert.equal(completed.highFindings, 0);
+    const activeId = String(ordinal).padStart(3, "0");
+    assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${activeId}`);
+    assert.equal(checkpoint.v11.stopState, `GBS_V11_WO_${activeId}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`);
+    assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-007"));
+  }
 });
 
 test("WO-007 owns PROOF-INV while preserving M24/M25/M27 authority", () => {

@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-008",
+  "releaseLine": "1.1.x",
+  "assurance": "STANDARD",
+  "baseRef": "release/1.1",
+  "baseSha": "d5b923f1aaf0c8319fc29285c76bda89a363aadf",
+  "productionShaAtLock": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+  "v100TagTargetAtLock": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+  "implementationBranch": "feat/1.1/wo-008-performance-telemetry",
+  "authority": "ADR-0003-D3",
+  "canonicalSources": [
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "baseBlobSha": "18a288a426cd5d3976bbfcee591bada0194458dc",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "baseBlobSha": "65167869fd424b32e82bf912876821cf35d908b1",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md",
+      "baseBlobSha": "62a2e2ef2de3b4f60186f020708f37eee99ca787",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md",
+      "baseBlobSha": "786eba0313202f2f2648461a2fc4e6f81190969a",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-SCOPE.md",
+      "baseBlobSha": "b8d05dae2e9584b2fed6670c65751f493f698c8e",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "baseBlobSha": "c5eda022280e47ff4b45070193d196929a3a1ec0",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+      "baseBlobSha": "59e69438bef728f24ae96da292e3122a83d4ea76",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-TEST-MATRIX.md",
+      "baseBlobSha": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-PERFORMANCE-BENCHMARK-PROTOCOL.md",
+      "baseBlobSha": "a3e856bceb5cd0588b0e0bce4c78b859f0d9b778",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/m62-m63-final/src/index.mjs",
+      "baseBlobSha": "2245d08e7a2fc39844dce9ca2941f335238d3764",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/m41-m47-platform/src/index.mjs",
+      "baseBlobSha": "04997896b387102b047040aa8a346eef552eef7a",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/m55-m61-quality/src/index.mjs",
+      "baseBlobSha": "d68ca0fef820ff88ca0e74a3b95c9fc43bfe3245",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/v11-incremental-validation.ts",
+      "baseBlobSha": "0154dfa82ada56591dcdeb1ad24791ba39a6d278",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/v11-proof-reuse.ts",
+      "baseBlobSha": "470bc3d553d9c3bced7695a6e6997932ae5d946d",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/work-orders/GBS-V11-WO-008.md",
+      "baseBlobSha": "e397602a184bc7d577a2560484d7a33d2fdc0304",
+      "fingerprintKind": "git-blob-sha1"
+    }
+  ],
+  "requiredTestIds": [
+    "TELEM-01",
+    "TELEM-02",
+    "TELEM-03",
+    "TELEM-04",
+    "TELEM-05",
+    "TELEM-06"
+  ],
+  "requiredOwners": [
+    "M63 Executor Performance Engine",
+    "M57/M55-M61 benchmark summary and regression semantics",
+    "WO-005 Execution Capsule binding",
+    "WO-006 Incremental Validation binding",
+    "WO-007 Proof Reuse binding"
+  ],
+  "forbiddenWriteSurface": [
+    "main",
+    "tag:v1.0.0",
+    "registry publication",
+    "WO-009+ implementation",
+    "M24 evidence acceptance",
+    "M25 general proof verdict",
+    "M27 assurance verdict",
+    "legacy ecosystem-specific adapters"
+  ],
+  "staleIf": [
+    "release/1.1 advances before the WO-008 implementation branch is created",
+    "V1.1 benchmark protocol P1-P8 semantics change",
+    "TELEM-01..06 semantics change",
+    "M63/M57 benchmark primitives change incompatibly",
+    "WO-005/006/007 public acceleration bindings change incompatibly",
+    "WO-008 scope or acceptance criteria change"
+  ],
+  "stopCondition": "GBS_V11_WO_008_CONTEXT_LOCK_VALID_FOR_ADMISSION"
+}
