@@ -5,7 +5,7 @@ import { extname, join, relative } from "node:path";
 
 const ROOT = new URL("../", import.meta.url);
 const forbidden = Object.freeze(["U" + "ADS", "A" + "UDS", "H" + "ive"]);
-const tokenPattern = (token) => new RegExp(`(^|[^A-Za-z0-9])${token.replace(/[.*+?^$\{\}()|[\]\\]/g, "\\const forbidden = Object.freeze(["U" + "ADS", "A" + "UDS", "H" + "ive"]);")}([^A-Za-z0-9]|$)`, "i");
+const tokenPattern = (token) => new RegExp("(^|[^A-Za-z0-9])" + token + "([^A-Za-z0-9]|$)", "i");
 const ignoredDirectories = new Set([".git", "node_modules", "dist", "coverage", "tmp", ".turbo"]);
 const textExtensions = new Set([".md", ".json", ".ts", ".js", ".mjs", ".cjs", ".yml", ".yaml", ".txt", ".toml"]);
 const explicitTextFiles = new Set(["LICENSE"]);
