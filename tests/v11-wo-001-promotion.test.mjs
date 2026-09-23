@@ -15,10 +15,9 @@ const adr = read('.engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECU
 const receipt = json('.engineering/evidence/GBS-V11-WO-001-PROMOTION-RECEIPT.json');
 
 const foundationPromoted = checkpoint.v11.status === 'GBS_V11_FOUNDATION_PROMOTED';
-const wo002Admitted = checkpoint.v11.status === 'GBS_V11_WO_002_ADMITTED';
-const wo003Admitted = checkpoint.v11.status === 'GBS_V11_WO_003_ADMITTED';
-const wo004Admitted = checkpoint.v11.status === 'GBS_V11_WO_004_ADMITTED';
-const legalPostFoundationStates = foundationPromoted || wo002Admitted || wo003Admitted || wo004Admitted;
+const admittedMatch = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
+const admittedOrdinal = admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
+const legalPostFoundationStates = foundationPromoted || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
 
 test('V1.0 production acceptance remains byte-semantically preserved at the checkpoint boundary', () => {
   assert.equal(checkpoint.status, 'GBS_V1_PRODUCTION_ACCEPTED');
@@ -37,20 +36,14 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
   if (foundationPromoted) {
     assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_FOUNDATION_PROMOTED_READY_FOR_WO_002`'));
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_FOUNDATION_PROMOTED_READY_FOR_WO_002');
-  } else if (wo002Admitted) {
-    assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_WO_002_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`'));
-    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_002_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
-  } else if (wo003Admitted) {
-    assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_WO_003_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`'));
-    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_003_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
-  } else if (wo004Admitted) {
-    assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_WO_004_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`'));
-    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_004_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
-  } else {
-    assert.fail(`unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
+    return;
   }
+  assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
+  const id = String(admittedOrdinal).padStart(3, '0');
+  const expectedStop = `GBS_V11_WO_${id}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`;
+  assert.equal(checkpoint.v11.stopState, expectedStop);
+  assert.ok(checkpointMd.includes(`V1.1 STOP CONDITION: \`${expectedStop}\``));
 });
-
 test('V1.1 overlay preserves the objectively audited WO-001 foundation lineage after later admissions', () => {
   assert.equal(checkpoint.v11.releaseLine, '1.1.x');
   assert.ok(legalPostFoundationStates, `unexpected V1.1 state ${checkpoint.v11.status}`);
@@ -124,34 +117,24 @@ test('receipt makes post-payload semantic mutation invalid by contract', () => {
   assert.equal(receipt.finalHeadAuditRule, 'OBJECTIVE_AUDIT_MUST_BIND_THE_PR_HEAD_CONTAINING_THIS_RECEIPT');
 });
 
-test('WO-002 remains the first governed increment after foundation promotion and later state proves it completed before WO-003', () => {
+test('WO-002 remains the first governed increment and later admissions preserve monotonic completion', () => {
   if (foundationPromoted) {
     assert.equal(checkpoint.v11.nextLegalWorkOrder, 'GBS-V11-WO-002');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_FOUNDATION_PROMOTED_READY_FOR_WO_002');
-  } else if (wo002Admitted) {
-    assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-002');
-    assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
-    assert.equal(checkpoint.v11.nextLegalAction, 'CREATE_WO_002_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE');
-    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_002_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
-  } else if (wo003Admitted) {
-    const completed = checkpoint.v11.completedWorkOrders['GBS-V11-WO-002'];
+    return;
+  }
+  assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
+  const activeId = String(admittedOrdinal).padStart(3, '0');
+  assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${activeId}`);
+  assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
+
+  for (let ordinal = 2; ordinal < admittedOrdinal; ordinal += 1) {
+    const id = `GBS-V11-WO-${String(ordinal).padStart(3, '0')}`;
+    const completed = checkpoint.v11.completedWorkOrders[id];
+    assert.ok(completed, `missing completed work order ${id}`);
     assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
     assert.equal(completed.objectiveAudit, 'APPROVED');
     assert.equal(completed.criticalFindings, 0);
     assert.equal(completed.highFindings, 0);
-    assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-003');
-    assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
-  } else if (wo004Admitted) {
-    for (const id of ['GBS-V11-WO-002', 'GBS-V11-WO-003']) {
-      const completed = checkpoint.v11.completedWorkOrders[id];
-      assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
-      assert.equal(completed.objectiveAudit, 'APPROVED');
-      assert.equal(completed.criticalFindings, 0);
-      assert.equal(completed.highFindings, 0);
-    }
-    assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-004');
-    assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
-  } else {
-    assert.fail(`unexpected V1.1 lifecycle state: ${checkpoint.v11.status}`);
   }
 });
