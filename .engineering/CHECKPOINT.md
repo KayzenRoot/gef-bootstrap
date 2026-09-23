@@ -121,18 +121,31 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - INC-VAL cross-platform matrix: Ubuntu/Windows/macOS `SUCCESS`.
 - Production boundary preserved: `main` and `v1.0.0` unchanged.
 
-### Active V1.1 increment
-- Active Work Order after this governance merge: `GBS-V11-WO-007`
-- Work Order status: `ADMITTED`
+### Completed V1.1 increment — WO-007
+- Work Order: `GBS-V11-WO-007`
 - Objective: Proof Reuse + Targeted Invalidation
-- Assurance: `ELEVATED`
-- Implementation branch: `feat/1.1/wo-007-proof-reuse`
-- Context Lock: `.engineering/context-locks/GBS-V11-WO-007.json`
-- Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-007-DIRECT.md`
-- Mandatory test ownership: `PROOF-INV-01..05`
-- Preserve: M28 TPRR semantics, M24 evidence authority, M25 proof authority, M27 assurance authority, D-0061/ADR-0005 neutral ecosystem boundary.
-- Explicitly deferred: telemetry -> WO-008; integrated assurance/release -> WO-009/010.
-- Next legal action: create `feat/1.1/wo-007-proof-reuse` from the exact governance/admission merge.
+- Implementation PR: `#294`
+- Exact objectively audited head: `5c85b974f8d76dd6ede8fafb9f68b305e3312549`
+- Objective audit: `APPROVED`
+- Objective review: `5292475178`
+- CRITICAL/HIGH: `0 / 0`
+- Implementation merge into `release/1.1`: `d5b923f1aaf0c8319fc29285c76bda89a363aadf`
+- Exact-head assurance: m01 `35875616465`, M41-M47 `35875616508`, M48-M54 `35875616456`, M55-M61 `35875616475`, M62-M63 `35875616495`, M28 `35875616500`, Incremental Validation `35875616512`, Proof Reuse `35875616420`, all `SUCCESS`.
+- PROOF-INV cross-platform matrix: Ubuntu/Windows/macOS `SUCCESS`.
+- Production boundary preserved: `main` and `v1.0.0` unchanged.
+
+### Active V1.1 increment
+- Active Work Order after this governance merge: `GBS-V11-WO-008`
+- Work Order status: `ADMITTED`
+- Objective: Performance Telemetry + Benchmark
+- Assurance: `STANDARD`
+- Implementation branch: `feat/1.1/wo-008-performance-telemetry`
+- Context Lock: `.engineering/context-locks/GBS-V11-WO-008.json`
+- Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md`
+- Mandatory test ownership: `TELEM-01..06`
+- Preserve: V1.1 benchmark protocol P1-P8 comparability, M63 performance primitives, M57 summary/regression semantics, WO-005/006/007 acceleration evidence, and D-0061/ADR-0005 neutral ecosystem boundary.
+- Explicitly deferred: integrated security/regression/docs/runbooks -> WO-009; production acceptance/promotion -> WO-010.
+- Next legal action: create `feat/1.1/wo-008-performance-telemetry` from the exact governance/admission merge.
 
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
@@ -145,7 +158,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action after governance merge: `CREATE_WO_007_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
+Next legal V1.1 action after governance merge: `CREATE_WO_008_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_WO_007_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
+V1.1 STOP CONDITION: `GBS_V11_WO_008_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
