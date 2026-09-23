@@ -32,10 +32,10 @@ function mapFixture() {
   return result.value;
 }
 
-function validationPlan({ map = mapFixture(), changedSources = [], tests = ["test:a", "test:b", "test:c"], level = "L1", finalSweepRequired = false, brownfieldPosture = "GREENFIELD", selectorConfidence = "CERTAIN" } = {}) {
+function validationPlan({ map = mapFixture(), changedSources = [], tests = ["test:a", "test:b", "test:c"], level = "L1", finalSweepRequired = false, brownfieldPosture = "GREENFIELD", selectorConfidence = "CERTAIN", platform = "linux" } = {}) {
   const result = compileIncrementalValidationPlan({
     candidateDigest: H("candidate"),
-    platform: "linux",
+    platform,
     map,
     changedSources,
     assurance: { requiredLevel: level, policyDigest: H("policy"), profileDigest: H("profile") },
@@ -207,36 +207,28 @@ test("PROOF-INV-03: reuse cannot manufacture production credit", () => {
 
 test("PROOF-INV-04: stale toolchain and platform mismatch refuse reuse", () => {
   const map = mapFixture();
-  const validation = validationPlan({ map, tests: ["test:a"] });
-  for (const [field, value, expected] of [
-    ["toolchainDigest", H("toolchain-new"), "STALE_TOOLCHAIN"],
-    ["platform", "windows", "PLATFORM_MISMATCH"],
-  ]) {
-    const receipt = receiptFor(map, "test:a");
-    const current = currentBinding(map, "test:a", { [field]: value });
-    const topLevel = field === "platform"
-      ? { platform: "windows" }
-      : {};
-    // Current binding must represent current top-level truth, so platform mismatch is expressed by
-    // an old receipt while current/top-level platform move together.
-    const adjustedReceipt = field === "platform"
-      ? receiptFor(map, "test:a", { platform: "linux" })
-      : receipt;
-    const adjustedCurrent = field === "platform"
-      ? currentBinding(map, "test:a", { platform: "windows" })
-      : current;
-    const result = compileProofReusePlan({
-      ...reuseInput({ map, validation}),
-      ...topLevel,
-      receipts: [adjustedReceipt],
-      currentBindings: [adjustedCurrent],
-    }, options);
-    assert.equal(result.ok, true, JSON.stringify(result));
-    assert.equal(result.value.decisions[0].state, expected);
-    assert.equal(result.value.decisions[0].suppressed, false);
-  }
-});
 
+  const linuxValidation = validationPlan({ map, tests: ["test:a"], platform: "linux" });
+  const staleToolchain = compileProofReusePlan({
+    ...reuseInput({ map, validation: linuxValidation }),
+    receipts: [receiptFor(map, "test:a")],
+    currentBindings: [currentBinding(map, "test:a", { toolchainDigest: H("toolchain-new") })],
+  }, options);
+  assert.equal(staleToolchain.ok, true, JSON.stringify(staleToolchain));
+  assert.equal(staleToolchain.value.decisions[0].state, "STALE_TOOLCHAIN");
+  assert.equal(staleToolchain.value.decisions[0].suppressed, false);
+
+  const windowsValidation = validationPlan({ map, tests: ["test:a"], platform: "windows" });
+  const platformMismatch = compileProofReusePlan({
+    ...reuseInput({ map, validation: windowsValidation }),
+    platform: "windows",
+    receipts: [receiptFor(map, "test:a", { platform: "linux" })],
+    currentBindings: [currentBinding(map, "test:a", { platform: "windows" })],
+  }, options);
+  assert.equal(platformMismatch.ok, true, JSON.stringify(platformMismatch));
+  assert.equal(platformMismatch.value.decisions[0].state, "PLATFORM_MISMATCH");
+  assert.equal(platformMismatch.value.decisions[0].suppressed, false);
+});
 test("PROOF-INV-05: current failure invalidates failed test and transitive downstream overlap", () => {
   const map = mapFixture();
   const result = compile({
@@ -393,5 +385,28 @@ test("malformed receipts and failure fingerprints fail closed before eligibility
       currentFailures: [{ testId: "test:a", fingerprint: "bad" }],
     }, options)),
     "PROOF_REUSE_INPUT_INVALID",
+  );
+});
+
+
+test("WO-006 plan mix-and-match or digest tamper is rejected before reuse", () => {
+  const base = reuseInput();
+
+  const mixedPlatform = {
+    ...base.validation,
+    bindings: { ...base.validation.bindings, platform: "windows" },
+  };
+  assert.equal(
+    failCode(compileProofReusePlan({ ...base, validation: mixedPlatform }, options)),
+    "INCREMENTAL_PLAN_INTEGRITY_INVALID",
+  );
+
+  const wrongTopLevel = compileProofReusePlan({ ...base, platform: "windows" }, options);
+  assert.equal(failCode(wrongTopLevel), "PROOF_REUSE_VALIDATION_PLAN_MISMATCH");
+
+  const tamperedDigest = { ...base.validation, digest: H("tampered-plan") };
+  assert.equal(
+    failCode(compileProofReusePlan({ ...base, validation: tamperedDigest }, options)),
+    "INCREMENTAL_PLAN_INTEGRITY_INVALID",
   );
 });
