@@ -14,6 +14,10 @@ test('execution-pack-compiler import is startup-pure', async () => {
   assert.equal(typeof mod.computeExecutableWorkDag, 'function');
   assert.equal(typeof mod.computePackSemanticDigest, 'function');
   assert.equal(typeof mod.checkPreInvocationDrift, 'function');
+  assert.equal(typeof mod.compileExecutionCapsule, 'function');
+  assert.equal(typeof mod.serializeExecutionCapsuleCanonical, 'function');
+  assert.equal(typeof mod.verifyExecutionCapsuleFingerprint, 'function');
+  assert.equal(typeof mod.validateExecutionCapsuleContract, 'function');
   assert.equal(process.cwd(), cwd);
   assert.equal(process.env[key], 'stable');
 
