@@ -23,7 +23,7 @@ test('V1 production truth remains unchanged while V1.1 progresses beyond WO-002 
 });
 
 test('V1.1 checkpoint progression never regresses before WO-002 admission', () => {
-  const legal = ['GBS_V11_WO_002_ADMITTED', 'GBS_V11_WO_003_ADMITTED'];
+  const legal = ['GBS_V11_WO_002_ADMITTED', 'GBS_V11_WO_003_ADMITTED', 'GBS_V11_WO_004_ADMITTED'];
   assert.ok(legal.includes(checkpoint.v11.status), `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (checkpoint.v11.status === 'GBS_V11_WO_002_ADMITTED') {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-002');

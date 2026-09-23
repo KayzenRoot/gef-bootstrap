@@ -61,17 +61,32 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Exact-head assurance: m01 `35218580983`, M41-M47 `35218580883`, M48-M54 `35218581044`, M55-M61 `35218580905`, M62-M63 Final Assurance `35218580892`, all `SUCCESS`
 - Production boundary preserved: `main` and `v1.0.0` unchanged; no publication or production promotion
 
+### Completed V1.1 increment — WO-003
+- Work Order: `GBS-V11-WO-003`
+- Objective: Doctor 2.0 + Status (`gef doctor`, `gef status`, deterministic read-only diagnostics/status)
+- Implementation PR: `#284`
+- Exact objectively audited head: `acb632a5f3b1770a50a3cce039473c5266c7b3b7`
+- Objective re-audit: `APPROVED`
+- Objective review: `5285940414`
+- CRITICAL/HIGH: `0 / 0`
+- Implementation merge into `release/1.1`: `22c5ce65443f1a7855a2967ff7837aadb98e0ba1`
+- Exact-head assurance: m01 `35805459305`, M41-M47 `35805459319`, M48-M54 `35805459277`, M55-M61 `35805459241`, M62-M63 Final Assurance `35805459318`, Windows Rights Oracle `35805459223`, all `SUCCESS`
+- Windows rights corrective decision: `ADR-0004` / `D-0060`
+- Production boundary preserved: `main` and `v1.0.0` unchanged; no publication or production promotion
+
 ### Active V1.1 increment
-- Active Work Order after this governance merge: `GBS-V11-WO-003`
+- Active Work Order after this governance merge: `GBS-V11-WO-004`
 - Work Order status: `ADMITTED`
-- Objective: Doctor 2.0 + Status (`gef doctor`, `gef status`, deterministic read-only diagnostics/status, actionable remediation guidance)
-- Implementation branch: `feat/1.1/wo-003-doctor-status`
+- Objective: Upgrade + Compatibility + Recovery (`gef upgrade`, preview/apply, migration matrix, preservation-first recovery)
+- Assurance: `HIGH_ASSURANCE`
+- Implementation branch: `feat/1.1/wo-004-upgrade-recovery`
 - Executor: external executor allowed under `ADR-0003-D3` after branch creation from the exact governance/admission merge
-- Context Lock: `.engineering/context-locks/GBS-V11-WO-003.json`
-- Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-003-CODEX.md`
-- Carried WO-002 findings: F1 kernel/M05 exit classification remains deferred; F2 Git-unavailable capability must be surfaced by doctor/status; C4 and C8 retain their existing owners
-- Explicitly deferred: `upgrade` → WO-004; Context Compiler → WO-005; incremental validation/proof reuse → WO-006/007; telemetry → WO-008
-- Next legal action after this governance merge: create `feat/1.1/wo-003-doctor-status` from the exact governance merge, verify Context Lock, then hand off to Codex
+- Context Lock: `.engineering/context-locks/GBS-V11-WO-004.json`
+- Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-004-CODEX.md`
+- Mandatory test ownership: `UPG-MIG-01..07` and `COMPAT-01..06`
+- Preserve: WO-002 transaction/journal/ownership safety; WO-003 doctor/status and trusted-Git/process hardening
+- Explicitly deferred: Context Compiler → WO-005; incremental validation → WO-006; proof reuse → WO-007; telemetry → WO-008; integrated assurance/release → WO-009/010
+- Next legal action after this governance merge: create `feat/1.1/wo-004-upgrade-recovery` from the exact governance merge, verify Context Lock, then hand off to Codex
 
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
@@ -84,7 +99,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action after governance merge: `CREATE_WO_003_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
+Next legal V1.1 action after governance merge: `CREATE_WO_004_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_WO_003_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
+V1.1 STOP CONDITION: `GBS_V11_WO_004_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.

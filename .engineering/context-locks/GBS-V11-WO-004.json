@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-WO-004",
+  "title": "Upgrade + Compatibility + Recovery",
+  "releaseLine": "1.1.x",
+  "assurance": "HIGH_ASSURANCE",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "baseRef": "release/1.1",
+  "baseSha": "22c5ce65443f1a7855a2967ff7837aadb98e0ba1",
+  "productionRef": "main",
+  "productionShaAtLock": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+  "v100TagTargetAtLock": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+  "implementationBranch": "feat/1.1/wo-004-upgrade-recovery",
+  "executorAuthority": "ADR-0003-D3",
+  "executorAuthorityEffective": true,
+  "authorityPrecondition": "Executable only after the WO-003 promotion / WO-004 admission governance PR merges into release/1.1. The implementation branch must be created from that exact admission merge, not from this governance branch or the pre-admission base.",
+  "canonicalSources": [
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "baseBlobSha": "b09184d6ba5a520d6acb29982f524a1c2463ae45",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "baseBlobSha": "a1633144edcf9e68698731fb7c16f7986713d925",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md",
+      "baseBlobSha": "62a2e2ef2de3b4f60186f020708f37eee99ca787",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0004-WINDOWS-EFFECTIVE-RIGHTS-ORACLE.md",
+      "baseBlobSha": "396b098c1380eb2d12b3b8e24a1aedc9906ca519",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-SCOPE.md",
+      "baseBlobSha": "b8d05dae2e9584b2fed6670c65751f493f698c8e",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "baseBlobSha": "c2221b95f501b1a835e092e66c4121a7e97ee347",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-CLI-DISTRIBUTION-ARCHITECTURE.md",
+      "baseBlobSha": "dde3f82749161ad5c7b82415a160cca5d852e197",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-TEST-MATRIX.md",
+      "baseBlobSha": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "package.json",
+      "baseBlobSha": "c8e17d4121566250595a1966a9314c56272546ac",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "baseBlobSha": "2ae791155eae41a7d835b0758365356d6136af0c",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/cli/src/registry.ts",
+      "baseBlobSha": "d32fb3ee2c26f1694f1d8ecacbb3ddf806e2a766",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/work-orders/GBS-V11-WO-004.md",
+      "admissionBlobSha": "f89aaefc2cd36cf45a90ad49ac1d6112a44bccb2",
+      "fingerprintKind": "git-blob-sha1"
+    }
+  ],
+  "knownFindings": [
+    {
+      "id": "F1",
+      "severity": "MEDIUM",
+      "owner": "kernel/M05",
+      "rule": "Do not rewrite kernel physical-safety exit classification unless upgrade objectively requires it and governance is reopened."
+    },
+    {
+      "id": "C4",
+      "severity": "MEDIUM",
+      "owner": "Project Owner",
+      "rule": "Constitutional version binding remains outside WO-004."
+    },
+    {
+      "id": "M-H4",
+      "severity": "MEDIUM",
+      "owner": "governance/schema lifecycle",
+      "rule": "Do not broaden checkpoint schema-version allowlist work into upgrade migration unless a concrete migration dependency requires it."
+    },
+    {
+      "id": "M-ORACLE",
+      "severity": "MEDIUM",
+      "owner": "threat-model/release governance",
+      "rule": "Privileged callers may be refused by the trusted-Git policy by design; do not weaken the oracle to improve upgrade availability."
+    },
+    {
+      "id": "C8",
+      "severity": "MEDIUM",
+      "owner": "WO-009",
+      "rule": "Do not redesign repository-wide assurance in WO-004; add only upgrade-specific cross-platform assurance needed by the Test Matrix."
+    }
+  ],
+  "expectedWriteSurface": [
+    "packages/cli/src/parser.ts",
+    "packages/cli/src/registry.ts",
+    "packages/cli/src/main.ts",
+    "packages/cli/src/engines.ts",
+    "packages/cli/src/transaction.ts",
+    "packages/cli/src/schemas.ts",
+    "packages/cli/README.md",
+    "packages/cli/data/**",
+    "packages/cli/schemas/**",
+    "packages/cli/scripts/prepare-package.mjs",
+    "tests/v11-wo-004-*.test.mjs",
+    ".github/workflows/wo-004-upgrade-recovery.yml",
+    ".engineering/evidence/GBS-V11-WO-004-EVIDENCE.md"
+  ],
+  "forbiddenWriteSurface": [
+    "main",
+    "tag:v1.0.0",
+    "V1.0 accepted-history artifacts",
+    "silent CLI self-update or package-manager invocation",
+    "provider/GitHub mutation without an already-admitted provider contract",
+    "WO-005+ implementation",
+    "broad kernel refactor without governance escalation"
+  ],
+  "readPolicy": "Start from WO-004, this lock, checkpoint, current CLI/distribution architecture, merged WO-002/WO-003 CLI/transaction code, and the explicitly named upgrade/recovery engines. Do not begin with repository-wide rediscovery. Expand only on concrete import/type/test/dependency evidence and record every expansion.",
+  "staleIf": [
+    "release/1.1 advances before the WO-004 implementation branch is created",
+    "WO-004 scope or acceptance criteria change",
+    "ADR-0003-D3/D4/D5 changes",
+    "ADR-0004 changes incompatibly",
+    "CLI distribution architecture or V1.1 Test Matrix changes incompatibly",
+    "the merged WO-003 CLI/transaction surface changes before branch creation"
+  ],
+  "onStale": "STOP_AND_RECOMPILE_FROM_NEW_RELEASE_1_1_HEAD",
+  "stopCondition": "GBS_V11_WO_004_CONTEXT_LOCK_VALID_FOR_ADMISSION"
+}
