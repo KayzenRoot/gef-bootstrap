@@ -225,6 +225,26 @@ export function compileProofReusePlan(
     (testId) => receiptIndex.duplicates.has(testId) || bindingIndex.duplicates.has(testId),
   );
 
+  // CurrentBindings are authoritative only if they bind back to the current canonical map and
+  // top-level candidate/policy/platform identity. Receipt/current self-agreement is insufficient.
+  const currentMapByTest = new Map(input.map.tests.map((test) => [test.id, test]));
+  for (const binding of input.currentBindings) {
+    const currentTest = currentMapByTest.get(binding.testId);
+    if (currentTest === undefined) continue;
+    if (
+      binding.testFingerprint !== currentTest.fingerprint ||
+      binding.candidateDigest !== input.candidateDigest ||
+      binding.policyDigest !== input.policyDigest ||
+      binding.platform !== input.platform
+    ) {
+      return fail(
+        "PROOF_REUSE_CURRENT_BINDING_INVALID",
+        "Current binding does not match the canonical map/candidate/policy/platform identity.",
+        binding.testId,
+      );
+    }
+  }
+
   const impact = selectImpactedTests(
     input.map,
     unique(input.changedSources),
@@ -360,14 +380,30 @@ export function compileProofReusePlan(
   }
 
   decisions.sort((a, b) => a.testId < b.testId ? -1 : a.testId > b.testId ? 1 : 0);
-  const reusedTests = unique(reused);
-  const testsToRun = unique(toRun);
+  let reusedTests = unique(reused);
+  let testsToRun = unique(toRun);
 
   let state: ProofReusePlanState;
   if (input.validation.state === "BLOCKED") state = "BLOCKED";
   else if (indeterminate || input.validation.state === "INDETERMINATE") state = "INDETERMINATE";
   else if (reusedTests.length === 0) state = "NO_REUSE";
   else state = "READY";
+
+  // A globally non-executable plan may carry diagnostic compatibility decisions, but it may not
+  // authorize even partial suppression. This prevents consumers from ignoring the top-level state.
+  if (state === "INDETERMINATE" || state === "BLOCKED") {
+    reusedTests = [];
+    testsToRun = selectedTests;
+    for (let index = 0; index < decisions.length; index += 1) {
+      if (decisions[index]?.suppressed) {
+        decisions[index] = Object.freeze({
+          ...decisions[index],
+          suppressed: false,
+          reason: `GLOBAL_${state}_NO_SUPPRESSION:${decisions[index]?.reason ?? "UNKNOWN"}`,
+        });
+      }
+    }
+  }
 
   const bindings = {
     candidateDigest: input.candidateDigest,
@@ -395,8 +431,16 @@ export function compileProofReusePlan(
   const handoff = makeHandoff(input.candidateDigest, planDigest.value, options);
   if (!handoff.ok) return handoff;
 
+  const frozenDecisions = Object.freeze(decisions.map((entry) => Object.freeze({ ...entry })));
+  const frozenSelected = Object.freeze([...selectedTests]);
+  const frozenReused = Object.freeze([...reusedTests]);
+  const frozenToRun = Object.freeze([...testsToRun]);
   return ok(Object.freeze({
     ...body,
+    selectedTests: frozenSelected,
+    reusedTests: frozenReused,
+    testsToRun: frozenToRun,
+    decisions: frozenDecisions,
     bindings: Object.freeze(bindings),
     handoff: handoff.value,
     digest: planDigest.value,
