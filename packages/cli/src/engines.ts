@@ -8,9 +8,9 @@
  * This module is deliberately dependency-free within the CLI package so both the command
  * registry and the transaction driver can use it without a circular import.
  *
- * Constraint C5: colliding exports are bound by explicit module ownership. `compatibility`,
- * `redactSecrets` and the path-containment helpers are never consumed, and `digest` is never
- * imported from an engine.
+ * Constraint C5: the maintenance-owned `compatibility` export is explicitly bound for WO-004;
+ * the colliding safety export, `redactSecrets` and path-containment helpers are not consumed, and
+ * `digest` is never imported from an engine.
  * Constraint C3: the implemented package layout at the base is used as-is.
  */
 
@@ -48,7 +48,7 @@ export class EngineUnavailableError extends Error {
 }
 
 const REQUIRED_SYMBOLS: Readonly<Record<EngineKey, readonly string[]>> = Object.freeze({
-  maintenance: ["installPlan", "helpIndex", "doctor", "repairSuggestion", "invariantResult"],
+  maintenance: ["installPlan", "helpIndex", "doctor", "repairSuggestion", "invariantResult", "upgradePreview", "compatibility"],
   governance: ["repositoryState", "githubBootstrap"],
   safety: [
     "safetyDecision",
@@ -101,6 +101,19 @@ export interface InstallPlanInput {
   readonly version: string;
   readonly current?: string | null;
   readonly elevated?: boolean;
+}
+
+export interface UpgradePreviewResult {
+  readonly state: "READY" | "NOOP" | "INDETERMINATE";
+  readonly current?: string;
+  readonly candidate?: string;
+  readonly migrations: readonly string[];
+  readonly digest?: string;
+}
+
+export interface CompatibilityResult {
+  readonly state: "SUPPORTED" | "UNSUPPORTED";
+  readonly missing: readonly string[];
 }
 
 export type InstallPlanResult =
@@ -311,6 +324,8 @@ export interface NavigationPlanResult {
 
 export interface Engines {
   readonly installPlan: (input: InstallPlanInput) => InstallPlanResult;
+  readonly upgradePreview: (current: string | null | undefined, candidate: string | null | undefined, migrations?: readonly string[]) => UpgradePreviewResult;
+  readonly compatibility: (requirements: Readonly<Record<string, unknown>>, observed: Readonly<Record<string, unknown>>) => CompatibilityResult;
   readonly helpIndex: (commands: readonly HelpCommandDescriptor[]) => readonly HelpEntry[];
   readonly repositoryState: (input?: RepositoryStateInput) => RepositoryStateResult;
   readonly githubBootstrap: (current: GithubBootstrapInput, desired: GithubBootstrapInput) => GithubBootstrapResult;
@@ -353,6 +368,9 @@ export async function loadEngines(): Promise<Engines> {
   ]);
   return Object.freeze({
     installPlan: maintenance["installPlan"] as Engines["installPlan"],
+    // These colliding domain symbols are bound explicitly to their maintenance owner.
+    upgradePreview: maintenance["upgradePreview"] as Engines["upgradePreview"],
+    compatibility: maintenance["compatibility"] as Engines["compatibility"],
     helpIndex: maintenance["helpIndex"] as Engines["helpIndex"],
     repositoryState: governance["repositoryState"] as Engines["repositoryState"],
     githubBootstrap: governance["githubBootstrap"] as Engines["githubBootstrap"],
