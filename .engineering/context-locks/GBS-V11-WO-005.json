@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-005",
+  "releaseLine": "1.1.x",
+  "assurance": "ELEVATED",
+  "baseRef": "release/1.1",
+  "baseSha": "ab820243b6c44e2ce9c5b747a7a6a4c688d90fed",
+  "productionShaAtLock": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+  "v100TagTargetAtLock": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+  "implementationBranch": "feat/1.1/wo-005-execution-capsule",
+  "authority": "ADR-0003-D3",
+  "canonicalSources": [
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "baseBlobSha": "305a463f4465b9d23c0cf8705826bb3bcd672ef5",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "baseBlobSha": "65167869fd424b32e82bf912876821cf35d908b1",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md",
+      "baseBlobSha": "62a2e2ef2de3b4f60186f020708f37eee99ca787",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md",
+      "baseBlobSha": "786eba0313202f2f2648461a2fc4e6f81190969a",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-SCOPE.md",
+      "baseBlobSha": "b8d05dae2e9584b2fed6670c65751f493f698c8e",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "baseBlobSha": "c5eda022280e47ff4b45070193d196929a3a1ec0",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+      "baseBlobSha": "59e69438bef728f24ae96da292e3122a83d4ea76",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-EXECUTION-CAPSULE-CONTRACT.md",
+      "baseBlobSha": "f9db9bea5344da3c0e9403b57f8ee574bd9c0db8",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-TEST-MATRIX.md",
+      "baseBlobSha": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/schemas/execution-capsule.schema.json",
+      "baseBlobSha": "7a6d1b634c2273c2c9bcd33cbe6c94f9a1a98bb7",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/task-context-compiler/src/public.ts",
+      "baseBlobSha": "29028d9f8e1857be671f1036f51868bc3135e538",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/task-context-compiler/src/types.ts",
+      "baseBlobSha": "1f50794072fba694d1129fa0318e6dcad9f616b3",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/execution-pack-compiler/src/public.ts",
+      "baseBlobSha": "565d6caa7b8464feae5634af3ed2941479b294de",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/execution-pack-compiler/src/types.ts",
+      "baseBlobSha": "ad21168bf372754fc42d4984542d93d7dd491457",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/execution-pack-compiler/src/compile.ts",
+      "baseBlobSha": "d173b6a646b6b2006ec0456360457556a084e049",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/work-orders/GBS-V11-WO-005.md",
+      "baseBlobSha": "e4f89d9930e19370b10e30135f76bdb17df7f74e",
+      "fingerprintKind": "git-blob-sha1"
+    }
+  ],
+  "requiredTestIds": [
+    "CTX-DET-01",
+    "CTX-DET-02",
+    "CTX-DET-03",
+    "CTX-DET-04",
+    "CTX-DET-05",
+    "CTX-DET-06",
+    "CTX-DET-07",
+    "CTX-DET-08"
+  ],
+  "requiredOwners": [
+    "M14 Task Context Compiler",
+    "M15 Execution Pack Compiler",
+    "M63 acceleration projection"
+  ],
+  "forbiddenWriteSurface": [
+    "main",
+    "tag:v1.0.0",
+    "registry publication",
+    "legacy ecosystem-specific adapters",
+    "WO-006+ implementation"
+  ],
+  "staleIf": [
+    "release/1.1 advances before the WO-005 implementation branch is created",
+    "V1.1 Execution Capsule contract/schema changes",
+    "M14/M15 public binding semantics change",
+    "D-0061/ADR-0005 changes incompatibly",
+    "WO-005 scope or acceptance criteria change"
+  ],
+  "stopCondition": "GBS_V11_WO_005_CONTEXT_LOCK_VALID_FOR_ADMISSION"
+}

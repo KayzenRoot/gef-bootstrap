@@ -36,17 +36,17 @@ test('WO-003 objective approval is promoted before WO-004 admission', () => {
   assert.equal(completed.assuranceRuns.windowsRightsOracle, 35805459223);
 });
 
-test('machine and human checkpoint agree on admitted WO-004', () => {
-  assert.equal(checkpoint.v11.status, 'GBS_V11_WO_004_ADMITTED');
-  assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-004');
-  assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
-  assert.equal(checkpoint.v11.implementationBranch, 'feat/1.1/wo-004-upgrade-recovery');
-  assert.equal(checkpoint.v11.contextLock, '.engineering/context-locks/GBS-V11-WO-004.json');
-  assert.equal(checkpoint.v11.executionBrief, '.engineering/execution-briefs/GBS-V11-WO-004-CODEX.md');
-  assert.equal(checkpoint.v11.nextLegalAction, 'CREATE_WO_004_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE');
-  assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_004_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH');
-  assert.ok(checkpointMd.includes('Active Work Order after this governance merge: `GBS-V11-WO-004`'));
-  assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_WO_004_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`'));
+test('WO-004 promotion is preserved when the checkpoint advances to WO-005', () => {
+  const completed = checkpoint.v11.completedWorkOrders['GBS-V11-WO-004'];
+  assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
+  assert.equal(completed.implementationPr, 288);
+  assert.equal(completed.auditedHead, '03a74d239958c456e1ed63b6cd210699a07f5798');
+  assert.equal(completed.objectiveReview, 5291217891);
+  assert.equal(completed.implementationMerge, 'ab820243b6c44e2ce9c5b747a7a6a4c688d90fed');
+  assert.equal(completed.criticalFindings, 0);
+  assert.equal(completed.highFindings, 0);
+  assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-005');
+  assert.ok(checkpointMd.includes('### Completed V1.1 increment — WO-004'));
 });
 
 test('WO-004 scope is upgrade compatibility recovery and future ownership is preserved', () => {
