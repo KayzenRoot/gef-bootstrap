@@ -14,7 +14,7 @@ Audit disposition: **implementation evidence only; independent objective audit r
 | Repository | `KayzenRoot/gef-bootstrap` |
 | Admitted implementation base | `89018bbd417be204e0d9bdae6cf42f3cc2c44e3d` |
 | Implementation branch | `feat/1.1/wo-005-execution-capsule` |
-| Substantive candidate head before this evidence-only commit | `2029be472e5e02d5a8a5409480240cfe5c4d04bf` |
+| Substantive candidate head before this evidence-only commit | `aa1810d52a5893d28d7b708b5ef94909b23c7724` |
 | Governance PR / review | #289 / `5291367004`, APPROVED 0/0 |
 | Production `main` | `72c17bd3e7e421790ac382022b1f0ebbb0275ea4`, not modified |
 | `v1.0.0` tag object | `aac89f9c3f0c884474958025bf14828bc338b5ee`, not moved |
@@ -30,6 +30,9 @@ The evidence file itself is non-semantic product evidence. Final objective audit
 - Reused injected SHA-256 `OperationOptions`; no ambient crypto, filesystem, Git, network, process, provider or clock observation.
 - Projection consumes an admitted M14 context/handoff and an already compiled M15 pack/receipt.
 - M15 graph/tool/validation/semantic seals are recomputed before projection. A copied/tampered pack or mismatched receipt fails closed.
+- Every frozen M15 receipt binding (pack/task/context/policy/capability plus graph/tool/validation/semantic digests) is checked against the sealed pack before projection.
+- Runtime capsule validation enforces the frozen output shape, nested additional-property boundaries, enums, raw lowercase SHA-256 fields, date-time metadata, production-branch prohibition and proof-credit boundary.
+- `capsuleId` is derived from a full SHA-256 of the semantic execution projection, including resulting state/certainty and navigation/test/proof bindings; volatile metadata and expiry do not alter identity.
 - Navigation is explicit and search-suppressed.
 - Affected files/dependencies, constraints, acceptance proof obligations, selected tests, proof references and STOP CONDITION are carried deterministically.
 - Proof references are structurally sealed with `manufacturesProductionCredit:false`.
@@ -57,6 +60,9 @@ Focused source: `tests/v11-wo-005-execution-capsule.test.mjs`.
 - permutations of semantically unordered sets compile to identical canonical output;
 - stale or digest-mismatched M14 handoff cannot become `COMPILED`;
 - M15 receipt mismatch is rejected;
+- M15 policy/capability/task/context binding mismatch is rejected, not only digest mismatch;
+- output-schema validator rejects undeclared properties and malformed nested values;
+- schema SHA fields reject prefixed/uppercase non-conforming representations;
 - M15 pack content tamper is detected by recomputed sealed digests;
 - write-allowed/write-forbidden intersection is rejected;
 - proof references cannot manufacture production credit;
@@ -68,19 +74,19 @@ Focused source: `tests/v11-wo-005-execution-capsule.test.mjs`.
 
 ## 5. Substantive-head assurance
 
-Exact substantive head: `2029be472e5e02d5a8a5409480240cfe5c4d04bf`
+Exact substantive head: `aa1810d52a5893d28d7b708b5ef94909b23c7724`
 
 | Workflow | Run | Result |
 |---|---:|---|
-| m01-validation | `35865935465` | SUCCESS |
-| M41-M47 Integrated Assurance | `35865935474` | SUCCESS |
-| M48-M54 Integrated Assurance | `35865935611` | SUCCESS |
-| M55-M61 Integrated Assurance | `35865935475` | SUCCESS |
-| M62-M63 Final Assurance | `35865935462` | SUCCESS |
-| M15 Execution Pack Compiler | `35865935530` | SUCCESS |
-| WO-005 Execution Capsule Assurance | `35865935760` | SUCCESS |
+| m01-validation | `35869557331` | SUCCESS |
+| M41-M47 Integrated Assurance | `35869557228` | SUCCESS |
+| M48-M54 Integrated Assurance | `35869557261` | SUCCESS |
+| M55-M61 Integrated Assurance | `35869557314` | SUCCESS |
+| M62-M63 Final Assurance | `35869557247` | SUCCESS |
+| M15 Execution Pack Compiler | `35869557223` | SUCCESS |
+| WO-005 Execution Capsule Assurance | `35869557233` | SUCCESS |
 
-WO-005 dedicated matrix `35865935760` executed CTX-DET + M14/M15 integration on:
+WO-005 dedicated matrix `35869557233` executed CTX-DET + M14/M15 integration on:
 - Ubuntu: SUCCESS
 - Windows: SUCCESS
 - macOS: SUCCESS
