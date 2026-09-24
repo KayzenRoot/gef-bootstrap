@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   captureBaseline,
   capturePerformanceRecord,
@@ -307,4 +308,22 @@ test('comparable populations can produce improved, no-change, and regression out
   assert.equal(compareBenchmarks(baseline, record('verdict-improved', [80, 81, 79])).verdict, 'IMPROVED');
   assert.equal(compareBenchmarks(baseline, record('verdict-no-change', [100, 101, 99])).verdict, 'NO_CHANGE');
   assert.equal(compareBenchmarks(baseline, record('verdict-regression', [130, 131, 129])).verdict, 'REGRESSION');
+});
+
+test('the recorded CLI ROI artifact verifies against its matched records without claiming improvement', () => {
+  const artifact = JSON.parse(readFileSync(new URL('../.engineering/benchmarks/v1.1/cli-roi-result.json', import.meta.url), 'utf8'));
+  const { sourceWorkspace, cli } = artifact.records;
+
+  assert.equal(artifact.kind, 'GBS_V11_WO008_CLI_ROI_BENCHMARK');
+  assert.equal(artifact.measuredAtCommit, cli.population.P3.commitSha);
+  assert.equal(artifact.measuredTree, cli.population.P3.treeFingerprint);
+  assert.equal(verifyPerformanceRecord(sourceWorkspace), true);
+  assert.equal(verifyPerformanceRecord(cli), true);
+  assert.deepEqual(compareCliRoi(sourceWorkspace, cli), artifact.report);
+  assert.equal(sourceWorkspace.metrics['M-LAT-01'].summary.n, 7);
+  assert.equal(cli.metrics['M-LAT-01'].summary.n, 7);
+  assert.equal(sourceWorkspace.population.P8.timedRegion, cli.population.P8.timedRegion);
+  assert.equal(artifact.tokens.source, 'UNAVAILABLE');
+  assert.equal(artifact.report.verdict, 'NO_CHANGE');
+  assert.equal(artifact.report.optimizationClaimEligible, false);
 });
