@@ -1,6 +1,6 @@
 # GBS-V11-WO-008 — Evidence Bundle
 
-Status: `IMPLEMENTED_PENDING_FINAL_EVIDENCE_HEAD_CHECKS`
+Status: `IMPLEMENTED; OBJECTIVE AUDIT READINESS IS GATED BY EXACT PR CHECKS`
 Release line: `1.1.x`
 Assurance: `STANDARD`
 Stop condition: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`
@@ -69,26 +69,26 @@ P1-P8 match exactly on the measured source head: greenfield init plan; fixed emp
 | CLI/manual ROI smoke | PASS; both returned the same successful init plan digest |
 | `npm run validate` in this executor | Typecheck passed. Root-owned machine Git is intentionally refused by the high-assurance trust policy in privilege-sensitive integration cases; hosted full repository regressions below pass on the implementation head. |
 
-On evidence head `5b1ea4e…`, the M55 and M62 complete regression jobs each found one failure in `tests/v11-legacy-ecosystem-detachment.test.mjs`: the repository-wide source/documentation scan matched a reserved ecosystem name in this evidence prose. No implementation binding or telemetry test failed. The prose now uses the neutral phrase “Additional ecosystem-specific bindings,” and both that isolation test and all 14 telemetry tests pass locally. The new evidence head must pass its own hosted assurance checks before the stop condition is declared ready.
+On evidence head `5b1ea4e…`, the M55 and M62 complete regression jobs each found one failure in `tests/v11-legacy-ecosystem-detachment.test.mjs`: the repository-wide source/documentation scan matched a reserved ecosystem name in this evidence prose. No implementation binding or telemetry test failed. The prose now uses the neutral phrase “Additional ecosystem-specific bindings.” Both that isolation test and all 14 telemetry tests pass locally, and the corrected evidence head `d91fadc0ceef245651dde0061e26af557280ce7e` passed all eight hosted workflows listed below.
 
 The local full-suite limitation is environmental and was present at the admitted base. The accepted-base hosted Repository Validation run was [35895287991](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/35895287991).
 
-## 6. Hosted assurance on the implementation head
+## 6. Hosted assurance on the corrected evidence head
 
-All listed runs were attached to exact implementation head `cd2d2c6038260573a20b6d8135a76954decb8c80` and concluded successfully.
+All listed runs were attached to exact evidence head `d91fadc0ceef245651dde0061e26af557280ce7e` and concluded successfully. The implementation source remains `cd2d2c6038260573a20b6d8135a76954decb8c80`; the intervening changes only record and correct evidence prose.
 
 | Workflow | Run | Result | Elapsed from run start to completion |
 |---|---:|---|---:|
-| WO-008 Performance Telemetry | [36052912680](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36052912680) | Ubuntu, Windows, macOS PASS | 32 s |
-| m01-validation | [36052912606](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36052912606) | PASS | 55 s |
-| M41-M47 Integrated Assurance | [36052912783](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36052912783) | focused matrix + full regression PASS | 50 s |
-| M48-M54 Integrated Assurance | [36052912866](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36052912866) | PASS | 64 s |
-| M55-M61 Integrated Assurance | [36052912696](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36052912696) | focused matrix + full regression PASS | 46 s |
-| M62-M63 Final Assurance | [36052912945](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36052912945) | focused matrix + full `npm test` regression PASS | 62 s |
-| WO-004 Upgrade Recovery Assurance | [36052912870](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36052912870) | Windows, macOS, Ubuntu PASS | 86 s |
-| WO-003 Windows Rights Oracle | [36052912582](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36052912582) | Windows package/install and audit PASS | 215 s |
+| WO-008 Performance Telemetry | [36054702208](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36054702208) | Ubuntu, Windows, macOS PASS | 27 s |
+| m01-validation | [36054702246](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36054702246) | PASS | 50 s |
+| M41-M47 Integrated Assurance | [36054702400](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36054702400) | focused matrix + full regression PASS | 43 s |
+| M48-M54 Integrated Assurance | [36054702223](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36054702223) | PASS | 60 s |
+| M55-M61 Integrated Assurance | [36054702373](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36054702373) | focused matrix + full regression PASS | 58 s |
+| M62-M63 Final Assurance | [36054702207](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36054702207) | focused matrix + full `npm test` regression PASS | 59 s |
+| WO-004 Upgrade Recovery Assurance | [36054702322](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36054702322) | Windows, macOS, Ubuntu PASS | 101 s |
+| WO-003 Windows Rights Oracle | [36054702220](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36054702220) | Windows package/install and audit PASS | 229 s |
 
-The new TELEM matrix omits `npm ci` and TypeScript builds because its source-only ESM test has no third-party dependency. Existing workflows still own engine builds, audits, complete regressions and packaged-install proof. This avoids repeating those gates three times. On the admitted base, 37 observed workflow runs had median duration 124 s, p90 212 s and maximum 304 s. On this PR, all eight workflows ran concurrently and the slowest completed in 3 min 35 s; no 15–20 minute run was observed. Existing broad `.engineering/**` path filters still fan documentation changes into several assurance workflows; changing those filters requires a separate governed CI review so coverage is not accidentally lost.
+The new TELEM matrix omits `npm ci` and TypeScript builds because its source-only ESM test has no third-party dependency. Existing workflows still own engine builds, audits, complete regressions and packaged-install proof. On the admitted base, 37 observed workflow runs had median duration 124 s, p90 212 s and maximum 304 s. On this PR, all eight workflows ran concurrently and the slowest completed in 3 min 49 s; no 15–20 minute run was observed. Existing broad `.engineering/**` path filters still fan documentation changes into several assurance workflows; changing those filters requires a separate governed CI review so coverage is not accidentally lost. The exact current PR-head check set remains the source of truth after this evidence-only update.
 
 ## 7. Distribution correction
 
