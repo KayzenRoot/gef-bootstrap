@@ -27,7 +27,7 @@ The evidence commit also adds one test that verifies the persisted ROI records a
 
 Implemented the admitted telemetry layer within M62-M63. It uses the existing M41 `compareBenchmark`, M55-M61 `benchmarkSummary`/`performanceGate`, and M63 `performanceRegression` primitives. The new records and reports are derived, immutable, redacted, deterministic and read-only.
 
-No changes were made to WO-005/006/007 behavior, checkpoint state, `main`, or `v1.0.0`. No merge, tag, publication, objective approval or production acceptance was performed. Hive/Core-specific bindings remain outside this Work Order under D-0061 and ADR-0005; implementing them requires a separately admitted decision and Work Order.
+No changes were made to WO-005/006/007 behavior, checkpoint state, `main`, or `v1.0.0`. No merge, tag, publication, objective approval or production acceptance was performed. Additional ecosystem-specific bindings remain outside this Work Order under D-0061 and ADR-0005; implementing them requires a separately admitted decision and Work Order.
 
 ## 3. TELEM acceptance mapping
 
@@ -68,6 +68,8 @@ P1-P8 match exactly on the measured source head: greenfield init plan; fixed emp
 | Focused telemetry, M41/M55/M62, WO-005/006/007 and packed-install suites | PASS; 107/107 tests |
 | CLI/manual ROI smoke | PASS; both returned the same successful init plan digest |
 | `npm run validate` in this executor | Typecheck passed. Root-owned machine Git is intentionally refused by the high-assurance trust policy in privilege-sensitive integration cases; hosted full repository regressions below pass on the implementation head. |
+
+On evidence head `5b1ea4e…`, the M55 and M62 complete regression jobs each found one failure in `tests/v11-legacy-ecosystem-detachment.test.mjs`: the repository-wide source/documentation scan matched a reserved ecosystem name in this evidence prose. No implementation binding or telemetry test failed. The prose now uses the neutral phrase “Additional ecosystem-specific bindings,” and both that isolation test and all 14 telemetry tests pass locally. The new evidence head must pass its own hosted assurance checks before the stop condition is declared ready.
 
 The local full-suite limitation is environmental and was present at the admitted base. The accepted-base hosted Repository Validation run was [35895287991](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/35895287991).
 
