@@ -133,6 +133,11 @@ test("the packed payload vendors every engine doctor and status depend on", (t) 
   for (const artefact of manifest.artifacts.filter((entry) => entry.kind === "engine")) {
     assert.match(artefact.sha256, /^[0-9a-f]{64}$/, `${artefact.name} must carry a recorded digest`);
   }
+  const telemetryPath = "vendor/engines/m62-m63-final/src/v11-performance-telemetry.mjs";
+  assert.ok(existsSync(join(cliDir, telemetryPath)), "the M62 supporting telemetry module must be vendored");
+  const telemetryManifestEntry = manifest.artifacts.find((entry) => entry.kind === "engine-support" && entry.target === telemetryPath);
+  assert.ok(telemetryManifestEntry, "the M62 supporting telemetry module must be recorded in the vendor manifest");
+  assert.match(telemetryManifestEntry.sha256, /^[0-9a-f]{64}$/, "the telemetry module must carry a recorded digest");
   // No source-tree injection: build inputs and sources are not part of the payload.
   for (const forbidden of ["src", "tsconfig.json", "scripts"]) assert.ok(!existsSync(join(cliDir, forbidden)), `${forbidden} must not be packaged`);
   assert.equal(cliPackage.private, true, "the package stays private");

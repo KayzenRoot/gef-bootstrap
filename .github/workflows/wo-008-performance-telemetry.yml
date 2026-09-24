@@ -1,0 +1,39 @@
+name: WO-008 Performance Telemetry
+
+on:
+  pull_request:
+    branches: [release/1.1]
+    paths:
+      - 'packages/m62-m63-final/**'
+      - 'packages/m41-m47-platform/src/index.mjs'
+      - 'packages/m55-m61-quality/src/index.mjs'
+      - 'tests/v11-wo-008-performance-telemetry.test.mjs'
+      - '.engineering/benchmarks/v1.1/**'
+      - '.engineering/context-locks/GBS-V11-WO-008.json'
+      - '.engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md'
+      - '.engineering/releases/V1.1-PERFORMANCE-BENCHMARK-PROTOCOL.md'
+      - '.engineering/releases/V1.1-TEST-MATRIX.md'
+      - '.engineering/work-orders/GBS-V11-WO-008.md'
+      - '.engineering/evidence/GBS-V11-WO-008-EVIDENCE.md'
+      - '.github/workflows/wo-008-performance-telemetry.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  telemetry-cross-platform:
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The telemetry contract is dependency-free ESM. Existing M41/M55/M62 and WO-003
+      # workflows own their broader builds, regression suites, audits and packed-install tests.
+      # Keep this matrix scoped to the new contract instead of repeating those gates three times.
+      - run: node --test tests/v11-wo-008-performance-telemetry.test.mjs

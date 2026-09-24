@@ -46,3 +46,5 @@ export function performanceRegression(baseline,candidate,{latencyTolerance=.15,t
  const latencyDelta=(candidate.latencyMs-baseline.latencyMs)/baseline.latencyMs, tokenDelta=(candidate.tokens-baseline.tokens)/baseline.tokens;
  return {verdict:latencyDelta>latencyTolerance||tokenDelta>tokenTolerance?'REGRESSION':'PASS',latencyDelta,tokenDelta};
 }
+
+export * from './v11-performance-telemetry.mjs';
