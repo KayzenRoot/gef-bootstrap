@@ -152,7 +152,16 @@ test('WO-002 remains the first governed increment and later admissions preserve 
     return;
   }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
-  if (ownerGovernancePromoted) {
+  if (wo008Completed) {
+    const completed = checkpoint.v11.completedWorkOrders['GBS-V11-WO-008'];
+    assert.equal(completed.status, 'OWNER_AUDIT_APPROVED_MERGED');
+    assert.equal(completed.objectiveAudit, 'OWNER_APPROVED');
+    assert.equal(completed.criticalFindings, 0);
+    assert.equal(completed.highFindings, 0);
+    assert.equal(checkpoint.v11.activeWorkOrder, 'NONE');
+    assert.equal(checkpoint.v11.nextLegalAction, 'PLAN_AND_ADMIT_GBS_V11_WO_009');
+    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION');
+  } else if (ownerGovernancePromoted) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-008');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY');
