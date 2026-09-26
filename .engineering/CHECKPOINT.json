@@ -143,7 +143,7 @@
   "stopState": "GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088",
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_WO_008_ADMITTED",
+    "status": "GBS_V11_GOV_001_OWNER_POLICY_PENDING_PROMOTION_WO_008_OWNER_AUDIT_NEXT",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -168,22 +168,24 @@
       "state": "EFFECTIVE"
     },
     "executorAuthority": {
-      "decision": "ADR-0003-D3",
-      "state": "EFFECTIVE",
+      "decision": "D-0062 / ADR-0006",
+      "state": "OWNER_APPROVED_EFFECTIVE_ON_GBS-V11-GOV-001_MERGE",
+      "ownerAccount": "KayzenRoot",
       "allowedBranches": [
         "release/1.1",
         "subordinate V1.1 branches"
       ],
       "requiresAdmittedWorkOrder": true,
+      "requiresExactHeadOwnerAudit": true,
+      "requiresCollaboratorReview": false,
+      "ownerMayMergeAfterExactHeadAuditAndChecks": true,
       "prohibited": [
-        "main",
+        "direct main mutation",
         "v1.0.0 tag mutation",
-        "merge",
-        "tag",
-        "publish",
         "force-push",
         "history rewrite",
-        "self-approval",
+        "merge with failed, pending, stale or mismatched required checks",
+        "merge with unresolved CRITICAL/HIGH blockers",
         "V1.0.0 acceptance history mutation"
       ]
     },
@@ -307,12 +309,12 @@
       }
     },
     "activeWorkOrder": "GBS-V11-WO-008",
-    "activeWorkOrderStatus": "ADMITTED",
+    "activeWorkOrderStatus": "IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT",
     "implementationBranch": "feat/1.1/wo-008-performance-telemetry",
     "contextLock": ".engineering/context-locks/GBS-V11-WO-008.json",
     "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md",
-    "nextLegalAction": "CREATE_WO_008_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE",
-    "stopState": "GBS_V11_WO_008_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH",
+    "nextLegalAction": "PROMOTE_GBS_V11_GOV_001_THEN_OWNER_AUDIT_PR_296_EXACT_HEAD_C4A108059D5B77BAED43FAA28847828EA1F450A7",
+    "stopState": "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY",
     "ecosystemDetachment": {
       "decision": "D-0061",
       "adr": "ADR-0005",
@@ -323,6 +325,29 @@
       "state": "EFFECTIVE",
       "criticalFindings": 0,
       "highFindings": 0
+    },
+    "ownerGovernance": {
+      "workOrder": "GBS-V11-GOV-001",
+      "decision": "D-0062",
+      "adr": "ADR-0006",
+      "ownerAccount": "KayzenRoot",
+      "requiredCollaboratorReview": false,
+      "ownerAuditRequired": true,
+      "mergeAllowedAfter": "exact-head owner audit OWNER_APPROVED; all required checks successful; CRITICAL/HIGH=0; authorized target",
+      "effectiveOn": "GBS-V11-GOV-001 exact-head owner audit and promotion merge into release/1.1",
+      "rulesetSnapshot": {
+        "name": "Main Branch Protection",
+        "requiredApprovingReviewCount": 0,
+        "requiredStatusCheck": "Repository validation",
+        "checkedDate": "2026-09-26"
+      }
+    },
+    "activeImplementationPr": 296,
+    "activeImplementationHead": "c4a108059d5b77baed43faa28847828ea1f450a7",
+    "activeImplementationChecks": {
+      "count": 24,
+      "conclusion": "SUCCESS",
+      "head": "c4a108059d5b77baed43faa28847828ea1f450a7"
     }
   }
 }
