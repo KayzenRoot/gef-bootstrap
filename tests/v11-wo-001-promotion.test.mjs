@@ -16,9 +16,10 @@ const receipt = json('.engineering/evidence/GBS-V11-WO-001-PROMOTION-RECEIPT.jso
 
 const foundationPromoted = checkpoint.v11.status === 'GBS_V11_FOUNDATION_PROMOTED';
 const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
+const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
 const admittedMatch = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-const admittedOrdinal = ownerGovernancePromoted ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
-const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
+const admittedOrdinal = (ownerGovernancePromoted || wo008Completed) ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
+const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || wo008Completed || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
 
 test('V1.0 production acceptance remains byte-semantically preserved at the checkpoint boundary', () => {
   assert.equal(checkpoint.status, 'GBS_V1_PRODUCTION_ACCEPTED');
@@ -44,6 +45,20 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY');
     assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY`'));
+    return;
+  }
+  if (wo008Completed) {
+    const completed = checkpoint.v11.completedWorkOrders["GBS-V11-WO-008"];
+    assert.equal(completed.status, "OWNER_AUDIT_APPROVED_MERGED");
+    assert.equal(completed.implementationPr, 296);
+    assert.equal(completed.auditedHead, "c4a108059d5b77baed43faa28847828ea1f450a7");
+    assert.equal(completed.objectiveAudit, "OWNER_APPROVED");
+    assert.equal(completed.objectiveReview, 5848062290);
+    assert.equal(completed.implementationMerge, "ed69cc790c599674cc8ba845f3c393cd38964ef1");
+    assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
+    assert.equal(checkpoint.v11.nextLegalAction, "PLAN_AND_ADMIT_GBS_V11_WO_009");
+    assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
+    assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-008"));
     return;
   }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);

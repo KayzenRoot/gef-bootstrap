@@ -14,6 +14,7 @@ const governanceEvidence = read(".engineering/evidence/GBS-V11-GOV-001-PROMOTION
 const lock = json(".engineering/context-locks/GBS-V11-WO-008.json");
 const wo = read(".engineering/work-orders/GBS-V11-WO-008.md");
 const brief = read(".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md");
+const evidence = read(".engineering/evidence/GBS-V11-WO-008-EVIDENCE.md");
 
 test("V1 production truth remains immutable while WO-008 is admitted", () => {
   assert.equal(checkpoint.status, "GBS_V1_PRODUCTION_ACCEPTED");
@@ -37,23 +38,29 @@ test("WO-007 objective approval is promoted before WO-008 admission", () => {
   assert.equal(completed.assuranceRuns.proofReuse, 35875616420);
 });
 
-test("machine and human checkpoint agree on owner-only governance and WO-008 audit route", () => {
-  assert.equal(checkpoint.v11.status, "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY");
-  assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-008");
-  assert.equal(checkpoint.v11.activeWorkOrderStatus, "IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT");
-  assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-008-performance-telemetry");
-  assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-008.json");
-  assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md");
-  assert.equal(checkpoint.v11.nextLegalAction, "OWNER_AUDIT_PR_296_EXACT_HEAD_C4A108059D5B77BAED43FAA28847828EA1F450A7");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY");
-  assert.equal(checkpoint.v11.ownerGovernance.ownerAccount, "KayzenRoot");
+test("machine and human checkpoint record completed WO-008 and owner-only audit", () => {
+  const completed = checkpoint.v11.completedWorkOrders["GBS-V11-WO-008"];
+  assert.equal(checkpoint.v11.status, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT");
+  assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
+  assert.equal(checkpoint.v11.activeWorkOrderStatus, "NONE");
+  assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
+  assert.equal(checkpoint.v11.nextLegalAction, "PLAN_AND_ADMIT_GBS_V11_WO_009");
+  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
+  assert.equal(completed.status, "OWNER_AUDIT_APPROVED_MERGED");
+  assert.equal(completed.implementationPr, 296);
+  assert.equal(completed.auditedHead, "c4a108059d5b77baed43faa28847828ea1f450a7");
+  assert.equal(completed.objectiveAudit, "OWNER_APPROVED");
+  assert.equal(completed.auditIndependence, "NOT_INDEPENDENT");
+  assert.equal(completed.objectiveReview, 5848062290);
+  assert.equal(completed.implementationMerge, "ed69cc790c599674cc8ba845f3c393cd38964ef1");
+  assert.deepEqual(completed.exactHeadChecks, { count: 24, conclusion: "SUCCESS", head: "c4a108059d5b77baed43faa28847828ea1f450a7" });
+  assert.equal(checkpoint.v11.ownerGovernance.state, "EFFECTIVE");
   assert.equal(checkpoint.v11.ownerGovernance.requiredCollaboratorReview, false);
-  assert.equal(checkpoint.v11.ownerGovernance.requiredStatusCheck, undefined);
-  assert.equal(checkpoint.v11.ownerGovernance.rulesetSnapshot.requiredApprovingReviewCount, 0);
-  assert.equal(checkpoint.v11.ownerGovernance.rulesetSnapshot.requiredStatusCheck, "Repository validation");
+  assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-008"));
+  assert.ok(checkpointMd.includes("No WO-009 implementation has started"));
   assert.ok(checkpointMd.includes("Collaborator review/approval requirement: `NONE`"));
-  assert.ok(checkpointMd.includes("Implementation PR: [#296]"));
-  assert.ok(checkpointMd.includes("V1.1 STOP CONDITION: `GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY`"));
+  assert.ok(evidence.includes("24/24 SUCCESS"));
+  assert.ok(evidence.includes("OWNER_APPROVED"));
 });
 
 test("WO-008 owns TELEM and enforces comparability with owner-only merge authority", () => {
@@ -63,7 +70,8 @@ test("WO-008 owns TELEM and enforces comparability with owner-only merge authori
   assert.ok(wo.includes("optimizationClaimEligible:false"));
   assert.ok(wo.includes("Owner exact-head audit"));
   assert.ok(wo.includes("collaborator approval is not required"));
-  assert.ok(wo.includes("STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OWNER_AUDIT_AND_MERGE`"));
+  assert.ok(wo.includes("Status: `OWNER_AUDIT_APPROVED_MERGED`"));
+  assert.ok(wo.includes("STOP CONDITION: `GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION`"));
 });
 
 test("WO-008 Context Lock binds exact WO-007 merge and immutable production refs", () => {
@@ -78,12 +86,12 @@ test("WO-008 Context Lock binds exact WO-007 merge and immutable production refs
 });
 
 test("Direct Execution Brief freezes truthful telemetry boundaries", () => {
-  assert.ok(brief.includes("State: `IMPLEMENTED_PR_296_AWAITING_OWNER_AUDIT`"));
+  assert.ok(brief.includes("State: `OWNER_AUDIT_APPROVED_MERGED`"));
   assert.ok(brief.includes("P1-P8 population identity"));
   assert.ok(brief.includes("publish no speedup delta"));
   assert.ok(brief.includes("Unavailable tokens remain"));
   assert.ok(brief.includes("optimizationClaimEligible:false"));
-  assert.ok(brief.includes("GBS_V11_WO_008_READY_FOR_OWNER_AUDIT_AND_MERGE"));
+  assert.ok(brief.includes("GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION"));
 });
 
 test("owner-only governance promotion is bound to the exact audit and successful checks", () => {

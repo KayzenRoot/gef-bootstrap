@@ -1,9 +1,9 @@
 # GBS-V11-WO-008 — Evidence Bundle
 
-Status: `CORRECTION_DELTA_01_IMPLEMENTED; EXACT-HEAD CI AND OBJECTIVE AUDIT PENDING`
+Status: `OWNER_AUDIT_APPROVED_MERGED`
 Release line: `1.1.x`
 Assurance: `STANDARD`
-Stop condition: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`
+Stop condition: `GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION`
 
 ## 1. Exact binding
 
@@ -101,11 +101,7 @@ Exporting telemetry from the M62 index exposed that the CLI package assembler co
 
 ## 8. Audit and checkpoint delta
 
-Objective audit has **not** been performed by the executor. `CRITICAL` and `HIGH` counts are therefore **not self-assessed**. The independent reviewer should audit the final PR #296 head, which is the source implementation head plus this evidence-only report, and record one disposition: `APPROVED`, `CORRECTION_REQUIRED` or `BLOCKED`.
-
-No checkpoint delta is applied. After an external `APPROVED` audit and the separately authorized merge, the proposed delta is to append WO-008 under `v11.completedWorkOrders` with PR #296, exact audited head, objective review ID, severity counts, assurance run IDs and implementation merge SHA. V1 production state, `main`, and `v1.0.0` remain unchanged.
-
-STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT` after the final evidence-head checks pass.
+At the time this evidence section was first prepared, the owner audit and merge were still pending. That historical state has been superseded by the final owner audit, implementation merge and checkpoint receipt in Section 11. V1 production state, `main`, and `v1.0.0` remain unchanged.
 
 ## 9. Correction Delta 01 — baseline registry lineage integrity
 
@@ -113,7 +109,7 @@ The deeper review reproduced two malformed-registry cases that the original capt
 
 The correction is included on the same implementation branch at correction head `e71081bb2b46b7c438918694f7a3644b1c44197a`. `captureBaseline` now validates registry-wide ID uniqueness, parent presence, parent population identity, and exact ancestry continuity before retaining or appending records. Invalid registries fail closed as `BASELINE_REGISTRY_INVALID`; valid immutable captures retain their existing behavior.
 
-New tests reproduce duplicate IDs, forged/orphaned ancestry, and missing ancestors. The corrected focused telemetry suite passes 15/15; the M62-M63 focused suite passes 6/6; the distribution smoke suite passes 12/12; the TypeScript build and `git diff --check` pass against the correction source and test files included in `e71081bb2b46b7c438918694f7a3644b1c44197a`. All eight hosted workflows passed on that code head. This evidence-only update creates a new PR head, so its own exact-head checks must pass before the required independent objective audit. No audit disposition, severity count or checkpoint promotion is claimed here.
+New tests reproduce duplicate IDs, forged/orphaned ancestry, and missing ancestors. The corrected focused telemetry suite passes 15/15; the M62-M63 focused suite passes 6/6; the distribution smoke suite passes 12/12; the TypeScript build and `git diff --check` pass against the correction source and test files included in `e71081bb2b46b7c438918694f7a3644b1c44197a`. All eight hosted workflows passed on that code head. At that historical evidence revision, exact-head checks and the owner audit were still pending. The final checks and owner disposition are recorded in Section 11.
 
 Correction stop condition remains `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`, only after hosted checks pass for the final evidence head.
 
@@ -132,4 +128,48 @@ All eight listed workflows passed on correction code head `e71081bb2b46b7c438918
 | WO-004 Upgrade Recovery Assurance | `36244960654` | SUCCESS |
 | WO-003 Windows Rights Oracle | `36244960658` | SUCCESS |
 
-The current PR head includes this evidence-only update; live PR checks for that final head are authoritative and remain pending until they complete.
+At that historical evidence revision, live checks for the then-current PR head were pending. The final PR head and completed results are recorded in Section 11.
+
+
+## 11. Final owner audit and implementation merge
+
+- Final PR: [#296](https://github.com/KayzenRoot/gef-bootstrap/pull/296)
+- Exact PR head audited: `c4a108059d5b77baed43faa28847828ea1f450a7`
+- Owner audit: [comment #5848062290](https://github.com/KayzenRoot/gef-bootstrap/pull/296#issuecomment-5848062290), disposition `OWNER_APPROVED`.
+- Audit identity: `KayzenRoot`; this is a substantive owner audit, not an independent review.
+- Audit scope: 11 changed paths covering the telemetry module, P1-P8 comparability and baseline lineage, benchmark, CI matrix, package manifest, evidence, and tests.
+- Exact-head checks: `24/24 SUCCESS`, all bound to `c4a108059d5b77baed43faa28847828ea1f450a7`.
+- Findings: `CRITICAL=0`, `HIGH=0`.
+- Implementation merge: squash merge into `release/1.1` by `KayzenRoot` as `ed69cc790c599674cc8ba845f3c393cd38964ef1`.
+- Collaborator review: none requested or required.
+- CLI ROI remains `NO_CHANGE`; token counts remain `UNAVAILABLE`; no optimization claim is eligible.
+- Checkpoint: WO-008 is complete; next legal action is plan/admit WO-009. No implementation of WO-009 or WO-010 is included here.
+
+| Check run | Name | Result |
+|---:|---|---|
+| 108413194510 | Upgrade and recovery on windows-latest | SUCCESS |
+| 108413194508 | Upgrade and recovery on ubuntu-latest | SUCCESS |
+| 108413194424 | validate | SUCCESS |
+| 108413194379 | Upgrade and recovery on macos-latest | SUCCESS |
+| 108413194051 | focused (macos-latest) | SUCCESS |
+| 108413194042 | focused (ubuntu-latest) | SUCCESS |
+| 108413194030 | focused (windows-latest) | SUCCESS |
+| 108413193989 | focused (macos-latest) | SUCCESS |
+| 108413193971 | focused (windows-latest) | SUCCESS |
+| 108413193925 | focused (ubuntu-latest) | SUCCESS |
+| 108413193920 | regression | SUCCESS |
+| 108413193872 | telemetry-cross-platform (macos-latest) | SUCCESS |
+| 108413193867 | focused (windows-latest) | SUCCESS |
+| 108413193855 | telemetry-cross-platform (windows-latest) | SUCCESS |
+| 108413193840 | focused (macos-latest) | SUCCESS |
+| 108413193828 | focused (ubuntu-latest) | SUCCESS |
+| 108413193824 | focused (macos-latest) | SUCCESS |
+| 108413193818 | regression | SUCCESS |
+| 108413193810 | Windows rights oracle | SUCCESS |
+| 108413193780 | focused (ubuntu-latest) | SUCCESS |
+| 108413193741 | focused (windows-latest) | SUCCESS |
+| 108413193700 | regression | SUCCESS |
+| 108413193694 | telemetry-cross-platform (ubuntu-latest) | SUCCESS |
+| 108413193669 | regression | SUCCESS |
+
+STOP CONDITION: `GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION`

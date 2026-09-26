@@ -1,6 +1,6 @@
 # Direct Execution Brief — GBS-V11-WO-008
 
-State: `IMPLEMENTED_PR_296_AWAITING_OWNER_AUDIT`
+State: `OWNER_AUDIT_APPROVED_MERGED`
 Authority: `ADR-0003-D3 as boundedly superseded by D-0062/ADR-0006`
 Assurance: `STANDARD`
 Work Order: `.engineering/work-orders/GBS-V11-WO-008.md`
@@ -82,4 +82,4 @@ Do not:
 - accept M24 evidence, decide M25 general proof or issue M27 assurance;
 - add legacy ecosystem-specific adapters.
 
-STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OWNER_AUDIT_AND_MERGE`
+STOP CONDITION: `GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION`

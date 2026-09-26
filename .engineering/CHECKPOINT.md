@@ -150,21 +150,24 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Full receipt: `.engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md`.
 - Required CI, security, exact-head evidence and CRITICAL/HIGH blockers remain merge gates.
 
-### Active V1.1 increment
-- Active Work Order: `GBS-V11-WO-008`
-- Work Order status: `IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT`
+### Completed V1.1 increment — WO-008
+- Work Order: `GBS-V11-WO-008`
 - Objective: Performance Telemetry + Benchmark
-- Assurance: `STANDARD`
 - Implementation PR: [#296](https://github.com/KayzenRoot/gef-bootstrap/pull/296)
-- Implementation branch/head: `feat/1.1/wo-008-performance-telemetry` / `c4a108059d5b77baed43faa28847828ea1f450a7`
-- Exact-head check runs: `24/24 SUCCESS` on `c4a108059d5b77baed43faa28847828ea1f450a7`.
-- Context Lock: `.engineering/context-locks/GBS-V11-WO-008.json`
-- Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md`
-- Mandatory test ownership: `TELEM-01..06`
-- Preserve: V1.1 benchmark protocol P1-P8 comparability, M63 performance primitives, M57 summary/regression semantics, WO-005/006/007 acceleration evidence, and D-0061/ADR-0005 neutral ecosystem boundary.
-- Explicitly deferred: integrated security/regression/docs/runbooks -> WO-009; production acceptance/promotion -> WO-010.
-- Next legal action: owner exact-head audit PR #296 at `c4a108059d5b77baed43faa28847828ea1f450a7`; if `OWNER_APPROVED` and exact-head checks remain green, merge it into `release/1.1` as the project owner.
+- Owner-audited exact head: `c4a108059d5b77baed43faa28847828ea1f450a7`
+- Owner audit: `OWNER_APPROVED`, comment [#5848062290](https://github.com/KayzenRoot/gef-bootstrap/pull/296#issuecomment-5848062290); it is not represented as independent.
+- CRITICAL/HIGH: `0 / 0`
+- Implementation merge into `release/1.1`: `ed69cc790c599674cc8ba845f3c393cd38964ef1`
+- Exact-head GitHub checks: `24/24 SUCCESS`; TELEM Ubuntu/Windows/macOS, regression, validation, Windows rights oracle, package/install and dependency audit passed.
+- CLI ROI: `NO_CHANGE`; token counts `UNAVAILABLE`; `optimizationClaimEligible=false`.
+- Evidence: `.engineering/evidence/GBS-V11-WO-008-EVIDENCE.md`
+- Collaborator approval: not required or requested.
+- Production boundary preserved: `main` and `v1.0.0` unchanged.
 
+### V1.1 continuation
+- Active Work Order: `NONE`
+- Next Work Order: `GBS-V11-WO-009` (not admitted)
+- Next legal action: plan and admit WO-009; no WO-009 implementation has started.
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
 - M41-M47 Integrated Assurance: `35164467254` `SUCCESS`
@@ -176,7 +179,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action: owner-audit PR #296 at exact head `c4a108059d5b77baed43faa28847828ea1f450a7`, then merge through `KayzenRoot` if approved and all required checks pass.
+Next legal V1.1 action: plan and admit `GBS-V11-WO-009`; do not begin implementation until its scope and checkpoint are admitted.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY`.
+V1.1 STOP CONDITION: `GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION`.
