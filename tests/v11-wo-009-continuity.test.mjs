@@ -322,4 +322,7 @@ test("construction instructions make the canonical continuation mandatory for fr
   assert.match(agents, /one canonical next necessary action/i);
   assert.match(runbook, /Start every new project chat from canonical state/);
   assert.match(runbook, /NONE\/UNKNOWN/);
+  const escapedMarkdownDelimiter = String.fromCharCode(92) + "`";
+  assert.equal(agents.includes(escapedMarkdownDelimiter), false);
+  assert.equal(runbook.includes(escapedMarkdownDelimiter), false);
 });
