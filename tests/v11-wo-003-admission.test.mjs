@@ -36,7 +36,7 @@ test('WO-002 objective approval is promoted before WO-003 admission', () => {
 
 test('machine and human checkpoint preserve WO-003 admission or prove its objective promotion before later Work Orders', () => {
   const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
-const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
+  const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
   const ordinal = (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
   assert.ok(Number.isInteger(ordinal) && ordinal >= 3, `unexpected V1.1 state: ${checkpoint.v11.status}`);
@@ -61,7 +61,7 @@ const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APP
       assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
     } else {
       assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${activeId}`);
-      assert.equal(checkpoint.v11.stopState, ownerGovernancePromoted ? 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY' : `GBS_V11_WO-${activeId}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`);
+      assert.equal(checkpoint.v11.stopState, ownerGovernancePromoted ? 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY' : `GBS_V11_WO_${activeId}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`);
     }
   }
 });
