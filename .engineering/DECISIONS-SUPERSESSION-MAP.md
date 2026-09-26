@@ -64,6 +64,12 @@ Retained substantively, relabeled operationally as complete-product telemetry/be
 ### D-0051 Project Overview derived from Constitution v1.0
 Project Overview remains frozen and valid where not superseded. Constitution v1.1 plus later frozen Source Pack artifacts control any conflicting downstream interpretation.
 
+### D-0062 / ADR-0006 — owner-operated review and merge
+
+After the exact-head owner audit and promotion merge of GBS-V11-GOV-001 into `release/1.1`, the repository owner account `KayzenRoot` is the sole required GitHub write/review/merge identity. Collaborator approval and external human review are optional, never required. The owner records an exact-head substantive audit on the PR and may merge after all required checks succeed and no CRITICAL/HIGH blocker remains.
+
+This bounded supersession replaces ADR-0003-D3's external-audit and no-merge clauses for active/future V1.1 work and replaces incompatible active/future Work Order or template requirements for collaborator review. It does not rewrite historical records, weaken checks, authorize check bypass, permit force-push/history rewrite, change `main`/V1.0.0 release boundaries, or waive S4/security/recovery requirements. GEF-generated target-project workflows use the configured project-owner account and do not require collaborator approval.
+
 ## Agent rule
 When a historical D-* entry conflicts with this map or a later frozen controlling source in the same authority domain, the later governed source controls. Never delete the historical entry merely to simplify context. Never use newest-wins across different authority domains.
 
