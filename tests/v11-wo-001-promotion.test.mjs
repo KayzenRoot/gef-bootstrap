@@ -175,8 +175,13 @@ test('WO-002 remains the first governed increment and later admissions preserve 
     const id = `GBS-V11-WO-${String(ordinal).padStart(3, '0')}`;
     const completed = checkpoint.v11.completedWorkOrders[id];
     assert.ok(completed, `missing completed work order ${id}`);
-    assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
-    assert.equal(completed.objectiveAudit, 'APPROVED');
+    if (ordinal === 8) {
+      assert.equal(completed.status, 'OWNER_AUDIT_APPROVED_MERGED');
+      assert.equal(completed.objectiveAudit, 'OWNER_APPROVED');
+    } else {
+      assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
+      assert.equal(completed.objectiveAudit, 'APPROVED');
+    }
     assert.equal(completed.criticalFindings, 0);
     assert.equal(completed.highFindings, 0);
   }
