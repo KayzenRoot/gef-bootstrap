@@ -57,8 +57,10 @@ test('continuing Codex authority requires the D-0042 audit plus checkpoint-promo
     checkpoint.v11?.promotion?.decision === 'D-0059';
   assert.ok(prePromotionGate || promotedGate, 'authority must be either explicitly gated or backed by the completed D-0042 promotion chain');
   assert.ok(contextLock.codexAuthorizedScope.includes('until ADR-0003-D3 passes objective audit and checkpoint promotion'));
-  assert.equal(checkpoint.v11?.executorAuthority?.decision, 'ADR-0003-D3');
-  assert.ok(checkpoint.v11?.executorAuthority?.prohibited?.includes('main'));
+  assert.equal(checkpoint.v11?.executorAuthority?.decision, 'D-0062 / ADR-0006');
+  assert.equal(checkpoint.v11?.executorAuthority?.ownerAccount, 'KayzenRoot');
+  assert.equal(checkpoint.v11?.executorAuthority?.requiresCollaboratorReview, false);
+  assert.ok(checkpoint.v11?.executorAuthority?.prohibited?.includes('direct main mutation'));
 });
 
 test('deterministic ordering is delegated truthfully to WO-005 instead of claimed as already proven', () => {

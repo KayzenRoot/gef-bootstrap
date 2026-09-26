@@ -134,18 +134,32 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - PROOF-INV cross-platform matrix: Ubuntu/Windows/macOS `SUCCESS`.
 - Production boundary preserved: `main` and `v1.0.0` unchanged.
 
+### Owner-operated governance amendment — GBS-V11-GOV-001
+- Product Owner authorization: `2026-09-26`
+- Decision: `D-0062 / ADR-0006`
+- Work Order: `GBS-V11-GOV-001`
+- Branch: `governance/GBS-V11-GOV-001-owner-operated`
+- Exact base: `release/1.1` at `33671ba9a3d4962cea4371f5610bda23e4889e11`
+- Owner write/review/merge account: `KayzenRoot`
+- Collaborator review/approval requirement: `NONE`
+- Main ruleset evidence: `required_approving_review_count=0`; required check `Repository validation` retained.
+- Status: owner-approved policy, effective when this exact governance increment is promoted to `release/1.1`.
+- Required CI, security, exact-head evidence and CRITICAL/HIGH blockers remain merge gates.
+
 ### Active V1.1 increment
-- Active Work Order after this governance merge: `GBS-V11-WO-008`
-- Work Order status: `ADMITTED`
+- Active Work Order: `GBS-V11-WO-008`
+- Work Order status: `IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT`
 - Objective: Performance Telemetry + Benchmark
 - Assurance: `STANDARD`
-- Implementation branch: `feat/1.1/wo-008-performance-telemetry`
+- Implementation PR: [#296](https://github.com/KayzenRoot/gef-bootstrap/pull/296)
+- Implementation branch/head: `feat/1.1/wo-008-performance-telemetry` / `c4a108059d5b77baed43faa28847828ea1f450a7`
+- Exact-head check runs: `24/24 SUCCESS` on `c4a108059d5b77baed43faa28847828ea1f450a7`.
 - Context Lock: `.engineering/context-locks/GBS-V11-WO-008.json`
 - Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md`
 - Mandatory test ownership: `TELEM-01..06`
 - Preserve: V1.1 benchmark protocol P1-P8 comparability, M63 performance primitives, M57 summary/regression semantics, WO-005/006/007 acceleration evidence, and D-0061/ADR-0005 neutral ecosystem boundary.
 - Explicitly deferred: integrated security/regression/docs/runbooks -> WO-009; production acceptance/promotion -> WO-010.
-- Next legal action: create `feat/1.1/wo-008-performance-telemetry` from the exact governance/admission merge.
+- Next legal action after governance promotion: owner exact-head audit PR #296; if `OWNER_APPROVED` and checks remain green, merge it into `release/1.1` as the project owner.
 
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
@@ -158,7 +172,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action after governance merge: `CREATE_WO_008_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE`.
+Next legal V1.1 action: promote GBS-V11-GOV-001 under D-0062/ADR-0006, then owner-audit PR #296 at exact head `c4a108059d5b77baed43faa28847828ea1f450a7`.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_WO_008_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
+V1.1 STOP CONDITION: `GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY`.

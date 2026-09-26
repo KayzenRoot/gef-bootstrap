@@ -23,8 +23,9 @@ test('V1 production truth remains unchanged while V1.1 progresses beyond WO-002 
 });
 
 test('V1.1 checkpoint progression never regresses before WO-002 admission', () => {
+  const ownerGovernancePending = checkpoint.v11.status === 'GBS_V11_GOV_001_OWNER_POLICY_PENDING_PROMOTION_WO_008_OWNER_AUDIT_NEXT';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-  const ordinal = match === null ? null : Number.parseInt(match[1], 10);
+  const ordinal = ownerGovernancePending ? 8 : match === null ? null : Number.parseInt(match[1], 10);
   assert.ok(Number.isInteger(ordinal) && ordinal >= 2, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (ordinal === 2) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-002');
@@ -41,11 +42,15 @@ test('V1.1 checkpoint progression never regresses before WO-002 admission', () =
 });
 
 test('executor authority remains branch and Work-Order bounded', () => {
-  assert.equal(checkpoint.v11.executorAuthority.decision, 'ADR-0003-D3');
-  assert.equal(checkpoint.v11.executorAuthority.state, 'EFFECTIVE');
+  assert.equal(checkpoint.v11.executorAuthority.decision, 'D-0062 / ADR-0006');
+  assert.equal(checkpoint.v11.executorAuthority.state, 'OWNER_APPROVED_EFFECTIVE_ON_GBS-V11-GOV-001_MERGE');
+  assert.equal(checkpoint.v11.executorAuthority.ownerAccount, 'KayzenRoot');
   assert.equal(checkpoint.v11.executorAuthority.requiresAdmittedWorkOrder, true);
+  assert.equal(checkpoint.v11.executorAuthority.requiresExactHeadOwnerAudit, true);
+  assert.equal(checkpoint.v11.executorAuthority.requiresCollaboratorReview, false);
+  assert.equal(checkpoint.v11.executorAuthority.ownerMayMergeAfterExactHeadAuditAndChecks, true);
   assert.ok(checkpoint.v11.executorAuthority.allowedBranches.includes('release/1.1'));
-  for (const forbidden of ['main', 'merge', 'tag', 'publish', 'force-push', 'history rewrite', 'self-approval']) {
+  for (const forbidden of ['direct main mutation', 'v1.0.0 tag mutation', 'force-push', 'history rewrite', 'merge with failed, pending, stale or mismatched required checks', 'merge with unresolved CRITICAL/HIGH blockers']) {
     assert.ok(checkpoint.v11.executorAuthority.prohibited.includes(forbidden), `missing prohibition: ${forbidden}`);
   }
 });

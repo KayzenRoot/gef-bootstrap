@@ -9,3 +9,6 @@ Prefer execution packs that already contain decisions, file targets, dependency 
 Use progressive validation and evidence reuse. Preserve green independent nodes. If a check fails, identify the causal delta and rerun the smallest invalidated proof before broad regression. Full regression remains mandatory at the governed boundary defined by the Work Order/DoD.
 
 Never weaken tests, TypeScript strictness, security controls, exact-state bindings or fail-closed behavior to make CI green. Never claim completion from model confidence.
+
+## Owner review and merge
+For this repository, use `KayzenRoot` for every GitHub write. Follow D-0062/ADR-0006: no collaborator review is required; the owner records an exact-head audit and may merge only after all required checks pass and CRITICAL/HIGH blockers are zero. Preserve branch protections and never describe the owner audit as independent.

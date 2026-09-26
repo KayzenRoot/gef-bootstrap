@@ -1,6 +1,6 @@
 # GBS-V11-WO-008 — Performance Telemetry + Benchmark
 
-Status: `ADMISSION_CANDIDATE`
+Status: `ADMITTED; IMPLEMENTATION_PR_OPEN_AWAITING_OWNER_AUDIT`
 Release line: `1.1.x`
 Assurance: `STANDARD`
 Implementation branch after admission: `feat/1.1/wo-008-performance-telemetry`
@@ -104,7 +104,9 @@ Telemetry, summaries and reports grant no checkpoint, merge, publication, assura
 ## CONSTRAINTS
 
 - No mutation of `main` or `v1.0.0`.
-- No merge/tag/publish/force-push/history rewrite/self-approval by the executor.
+- No direct mutation of `main` or `v1.0.0`; no force-push/history rewrite.
+- Under D-0062/ADR-0006, `KayzenRoot` may merge this PR into `release/1.1` only after owner exact-head audit approval, successful required checks and zero CRITICAL/HIGH blockers. Collaborator approval is not required.
+- No tag, publish or production acceptance; those remain governed by WO-010.
 - No WO-009+ implementation.
 - No speedup percentage from incomparable or cherry-picked populations.
 - No quality regression hidden by latency/token improvement.
@@ -127,7 +129,7 @@ Telemetry, summaries and reports grant no checkpoint, merge, publication, assura
 13. Windows/Linux/macOS TELEM suite passes.
 14. Existing M57/M63 and WO-005/006/007 regressions remain green.
 15. Repository validation, applicable typecheck/build and dependency audit pass.
-16. Objective audit reports CRITICAL=0/HIGH=0.
+16. Owner exact-head audit reports CRITICAL=0/HIGH=0 and disposition `OWNER_APPROVED`; no collaborator review is required.
 17. `main`, `v1.0.0`, publication and production acceptance remain unchanged.
 
 ## TESTS
@@ -157,10 +159,10 @@ Prefer:
 
 ## REVIEW FORMAT
 
-Objective review in Brazilian Portuguese with exact head SHA, scope audit, TELEM-01..06 mapping, comparability/quality findings, cross-platform and regression evidence, CRITICAL/HIGH counts, production-boundary verification and one disposition: `APPROVED | CORRECTION_REQUIRED | BLOCKED`.
+Owner audit in Brazilian Portuguese with exact head SHA, scope audit, TELEM-01..06 mapping, comparability/quality findings, cross-platform and regression evidence, CRITICAL/HIGH counts, production-boundary verification and one disposition: `OWNER_APPROVED | CORRECTION_REQUIRED | BLOCKED`. Record it in the PR conversation. It is an owner audit, not an independent review; collaborator approval is not required.
 
 ## STOP CONDITION
 
-Stop after implementation, validation, evidence and PR update. Do not merge without objective audit.
+Stop after implementation, validation, evidence and exact-head owner audit. If the audit is `OWNER_APPROVED`, all required checks pass on that exact head and CRITICAL/HIGH are zero, the owner may merge into `release/1.1`; then promote the checkpoint before starting WO-009.
 
-STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`
+STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OWNER_AUDIT_AND_MERGE`
