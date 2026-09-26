@@ -47,6 +47,11 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const digest = { algorithm: "sha256", digest: value => createHash("sha256").update(value).digest("hex") };
 const options = { digest };
 const H = value => "sha256:" + createHash("sha256").update(value).digest("hex");
+const SOURCE_REPOSITORY = "KayzenRoot/gef-bootstrap";
+const SOURCE_REF = "refs/heads/release/1.1";
+const ADMISSION_HEAD_SHA = "e69d887a0f12b46218f40e849fdcf180e455eb3d";
+const STALE_HEAD_SHA = "2d6538c3d90b63107b0cb4a4f6255c44cbfa61d1";
+const sourceHeadIdentity = headSha => H(`git-ref:${SOURCE_REPOSITORY}:${SOURCE_REF}:${headSha}`);
 const matrixResult = defaultMetricOwnershipMatrix(options);
 assert.equal(matrixResult.ok, true);
 const matrix = matrixResult.value;
@@ -66,7 +71,7 @@ function checkpointInput(overrides = {}) {
     predecessorCheckpointDigest: H("previous-checkpoint"),
     admittedWorkOrderIds: ["GBS-V11-WO-009"],
     authorityBindings: [
-      { bindingId: "source", domain: "SOURCE", semanticIdentity: H("1"), authorityRef: "repo:release-1.1", required: true },
+      { bindingId: "source", domain: "SOURCE", semanticIdentity: sourceHeadIdentity(ADMISSION_HEAD_SHA), authorityRef: `repo:${SOURCE_REPOSITORY}:${SOURCE_REF}@${ADMISSION_HEAD_SHA}`, required: true },
       { bindingId: "policy", domain: "POLICY", semanticIdentity: H("2"), authorityRef: "policy:gef", required: true },
     ],
     policyBinding: {
@@ -94,7 +99,7 @@ function makeCheckpoint(overrides = {}) {
 }
 
 function canonical(checkpoint) {
-  const freshness = resultValue(buildCheckpointFreshnessVector(checkpoint, { source: H("1"), policy: H("2") }, options));
+  const freshness = resultValue(buildCheckpointFreshnessVector(checkpoint, { source: sourceHeadIdentity(ADMISSION_HEAD_SHA), policy: H("2") }, options));
   const portability = resultValue(buildCheckpointPortabilityEnvelope(checkpoint, ["node24"], options));
   const readiness = resultValue(buildResumeReadinessCertificate(checkpoint, freshness, portability, options));
   const handoff = resultValue(buildContinuationHandoffContract(checkpoint, readiness, options));
@@ -126,7 +131,7 @@ function observation(checkpoint, overrides = {}) {
     lineageId: checkpoint.lineageId,
     checkpointDigest: checkpoint.checkpointDigest,
     policyBindingDigest: checkpoint.policyBinding.bindingDigest,
-    authorityIdentities: { source: H("1"), policy: H("2") },
+    authorityIdentities: { source: sourceHeadIdentity(ADMISSION_HEAD_SHA), policy: H("2") },
     claimStates: { "claim-a": "ACTIVE:60", "claim-b": "DONE:100" },
     ...overrides,
   };
@@ -261,17 +266,26 @@ test("CONT-RESUME-02: checkpoint and handoff conflict rejects lineage and emits 
   assertSingularNextAction(response, "next_action=UNKNOWN");
 });
 
-test("CONT-RESUME-03: a stale observed head requires replan and has no legal successor", () => {
-  const staleObservedHead = H("branch-head-advanced");
-  const fixture = resumeFixture(makeCheckpoint(), { checkpointDigest: staleObservedHead });
+test("CONT-RESUME-03: a stale repository ref/head authority requires replan and has no legal successor", () => {
+  const staleHeadIdentity = sourceHeadIdentity(STALE_HEAD_SHA);
+  const fixture = resumeFixture(makeCheckpoint(), {
+    authorityIdentities: {
+      source: staleHeadIdentity,
+      policy: H("2"),
+    },
+  });
+  const sourceDrift = fixture.drift.entries.find(
+    entry => entry.dimension === "AUTHORITY" && entry.subject === "source",
+  );
+  assert.equal(sourceDrift?.state, "CHANGED");
+  assert.equal(sourceDrift?.expected, sourceHeadIdentity(ADMISSION_HEAD_SHA));
+  assert.equal(sourceDrift?.observed, staleHeadIdentity);
   assert.equal(fixture.drift.hasMaterialDrift, true);
   assert.equal(fixture.decision.status, "DRIFT_REQUIRES_REPLAN");
   assert.equal(fixture.handback.nextLegalAction, null);
   const response = responseFor(fixture, {
     nextState: "UNKNOWN",
     verdict: "INDETERMINATE",
-    observedCheckpointDigest: staleObservedHead,
-    checkpointFreshness: "STALE",
   });
   assert.equal(response.machine.verdict.verdict, "INDETERMINATE");
   assert.equal(response.machine.nextAction.actionRef, null);
