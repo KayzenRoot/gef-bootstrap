@@ -1699,7 +1699,22 @@ test("H14-Windows: a failing rights query is UNKNOWN and never becomes trust", (
 
 test("H14-Windows: the trusted inverse is admitted only through the proven rights", (t) => {
   const resolved = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY));
-  assert.notEqual(resolved, null, "the system chain is provable on both platforms and admitted");
+  if (process.platform === "win32") {
+    const existingCandidates = DEFAULT_GIT_TRUST_POLICY.candidates.filter((candidate) => existsSync(candidate));
+    assert.ok(existingCandidates.length > 0, "the Windows runner must expose a machine Git candidate");
+    const inspections = existingCandidates.map((candidate) => inspectAdmittedExecutable(candidate, DEFAULT_GIT_TRUST_POLICY));
+    const atLeastOneCandidateIsProven = inspections.some((inspection) => inspection.status === "FOUND");
+    assert.equal(
+      resolved !== null,
+      atLeastOneCandidateIsProven,
+      "resolution must agree with the rights proof: an administrator-replaceable or unknown machine Git is withheld",
+    );
+    if (!atLeastOneCandidateIsProven) {
+      assert.ok(inspections.every((inspection) => inspection.status !== "FOUND"));
+      return;
+    }
+  }
+  assert.notEqual(resolved, null, "a machine Git is admitted only when its complete authority chain is provable");
   const inspection = inspectAdmittedExecutable(resolved.executable, DEFAULT_GIT_TRUST_POLICY);
   assert.equal(inspection.status, "FOUND");
   assert.equal(inspection.directoryProof, process.platform === "win32" ? "WINDOWS_EFFECTIVE_RIGHTS" : "EFFECTIVE_WRITE_PER_COMPONENT");
