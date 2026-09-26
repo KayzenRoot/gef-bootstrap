@@ -38,14 +38,18 @@ test("WO-007 objective approval is promoted before WO-008 admission", () => {
   assert.equal(completed.assuranceRuns.proofReuse, 35875616420);
 });
 
-test("machine and human checkpoint record completed WO-008 and owner-only audit", () => {
+test("machine and human checkpoint record completed WO-008 and admitted WO-009", () => {
   const completed = checkpoint.v11.completedWorkOrders["GBS-V11-WO-008"];
-  assert.equal(checkpoint.v11.status, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT");
-  assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
-  assert.equal(checkpoint.v11.activeWorkOrderStatus, "NONE");
+  assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_ADMITTED");
+  assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
+  assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
   assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
-  assert.equal(checkpoint.v11.nextLegalAction, "PLAN_AND_ADMIT_GBS_V11_WO_009");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
+  assert.equal(checkpoint.v11.nextLegalAction, "CREATE_WO_009_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE");
+  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_009_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH");
+  assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
+  assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
+  assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
+  assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
   assert.equal(completed.status, "OWNER_AUDIT_APPROVED_MERGED");
   assert.equal(completed.implementationPr, 296);
   assert.equal(completed.auditedHead, "c4a108059d5b77baed43faa28847828ea1f450a7");

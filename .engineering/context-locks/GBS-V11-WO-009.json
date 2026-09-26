@@ -1,0 +1,264 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-009",
+  "releaseLine": "1.1.x",
+  "assurance": "ELEVATED",
+  "baseRef": "release/1.1",
+  "baseSha": "2d6538c3d90b63107b0cb4a4f6255c44cbfa61d1",
+  "productionShaAtLock": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+  "v100TagTargetAtLock": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+  "implementationBranch": "feat/1.1/wo-009-integrated-assurance",
+  "authority": "ADR-0003-D3 boundedly superseded by D-0062/ADR-0006",
+  "canonicalSources": [
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "baseBlobSha": "8d60859005f7cd918e4b19eed3800c9f94473f5f",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.md",
+      "baseBlobSha": "f37919a66a0f04b80e6ca96da243bdb471d1de24",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "baseBlobSha": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "baseBlobSha": "c5eda022280e47ff4b45070193d196929a3a1ec0",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DEFINITION-OF-DONE.md",
+      "baseBlobSha": "d9209765a268f0e21390a2c6c531c7dd771515b4",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/SECURITY.md",
+      "baseBlobSha": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+      "baseBlobSha": "59e69438bef728f24ae96da292e3122a83d4ea76",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-RELEASE-PLAN.md",
+      "baseBlobSha": "1caf2d9dacc310a2fb672e001454902a2f29ab2b",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-SCOPE.md",
+      "baseBlobSha": "b8d05dae2e9584b2fed6670c65751f493f698c8e",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-TEST-MATRIX.md",
+      "baseBlobSha": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-COMPATIBILITY-MIGRATION-CONTRACT.md",
+      "baseBlobSha": "c575e447064d311072a3f3cd3d1f67064a3c8e80",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-PERFORMANCE-BENCHMARK-PROTOCOL.md",
+      "baseBlobSha": "a3e856bceb5cd0588b0e0bce4c78b859f0d9b778",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md",
+      "baseBlobSha": "62a2e2ef2de3b4f60186f020708f37eee99ca787",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md",
+      "baseBlobSha": "786eba0313202f2f2648461a2fc4e6f81190969a",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md",
+      "baseBlobSha": "97bef59b15f557302a7fd625af30ceeb421c01a1",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/evidence/GBS-WO-M18-001-EVIDENCE.md",
+      "baseBlobSha": "dec288984bb0c3d42e56c24a34ed7298b53eac42",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/evidence/GBS-V11-WO-008-EVIDENCE.md",
+      "baseBlobSha": "505bdb27b0526f0fb3a10c8045416b6f6a3e449c",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "planning/modules/area-e-continuity/m18-resume-engine/S03-drift-reconciliation-and-safe-reentry.md",
+      "baseBlobSha": "e1c4182d99cf74bdb6c696b785057f94edfeaae7",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "planning/modules/area-e-continuity/m20-response-contract/S03-verdict-blockers-and-next-action.md",
+      "baseBlobSha": "ca8e590df89cfae7f050ee2c812cf50ade463f8f",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "planning/modules/area-e-continuity/m20-response-contract/S05-machine-human-handoff-and-compatibility.md",
+      "baseBlobSha": "79c1738ba06c3af3551941bd9d73b5b94599f6fa",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/m18-resume-engine.test.mjs",
+      "baseBlobSha": "34c3b7dcd29a6189270326dfef5a38270ac34f73",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/m20-response-contract.test.mjs",
+      "baseBlobSha": "46e71f0ab74b8921decc9865616f35f90b41d6cf",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/v11-wo-008-admission.test.mjs",
+      "baseBlobSha": "491f5c6c2d8be93d6e36fa056dc487d306404e4b",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/security-codeql.yml",
+      "baseBlobSha": "885d14d6f19237f25c71720b2fd03e1f8ba1dd56",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "package.json",
+      "baseBlobSha": "c8e17d4121566250595a1966a9314c56272546ac",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "README.md",
+      "baseBlobSha": "5056e55f5cddf24664274c16c8ae59a74d9b931d",
+      "fingerprintKind": "git-blob-sha1"
+    }
+  ],
+  "requiredSuiteIds": [
+    "UNIT",
+    "INT",
+    "CLI-E2E",
+    "DIST-SMOKE",
+    "UPG-MIG",
+    "COMPAT",
+    "CTX-DET",
+    "INC-VAL",
+    "PROOF-INV",
+    "TELEM",
+    "SEC-INT",
+    "REG"
+  ],
+  "requiredTestIds": [
+    "CLI-E2E-01",
+    "CLI-E2E-02",
+    "CLI-E2E-03",
+    "CLI-E2E-04",
+    "CLI-E2E-05",
+    "CLI-E2E-06",
+    "CLI-E2E-07",
+    "DIST-SMOKE-01",
+    "DIST-SMOKE-02",
+    "DIST-SMOKE-03",
+    "DIST-SMOKE-04",
+    "UPG-MIG-01",
+    "UPG-MIG-02",
+    "UPG-MIG-03",
+    "UPG-MIG-04",
+    "UPG-MIG-05",
+    "UPG-MIG-06",
+    "UPG-MIG-07",
+    "COMPAT-01",
+    "COMPAT-02",
+    "COMPAT-03",
+    "COMPAT-04",
+    "COMPAT-05",
+    "COMPAT-06",
+    "CTX-DET-01",
+    "CTX-DET-02",
+    "CTX-DET-03",
+    "CTX-DET-04",
+    "CTX-DET-05",
+    "CTX-DET-06",
+    "CTX-DET-07",
+    "CTX-DET-08",
+    "INC-VAL-01",
+    "INC-VAL-02",
+    "INC-VAL-03",
+    "INC-VAL-04",
+    "INC-VAL-05",
+    "PROOF-INV-01",
+    "PROOF-INV-02",
+    "PROOF-INV-03",
+    "PROOF-INV-04",
+    "PROOF-INV-05",
+    "TELEM-01",
+    "TELEM-02",
+    "TELEM-03",
+    "TELEM-04",
+    "TELEM-05",
+    "TELEM-06",
+    "SEC-INT-01",
+    "SEC-INT-02",
+    "SEC-INT-03",
+    "SEC-INT-04",
+    "SEC-INT-05",
+    "SEC-INT-06",
+    "REG-01",
+    "REG-02",
+    "REG-03",
+    "REG-04",
+    "REG-05",
+    "REG-06",
+    "REG-07",
+    "CONT-RESUME-01",
+    "CONT-RESUME-02",
+    "CONT-RESUME-03",
+    "CONT-RESUME-04",
+    "SEC-INT-07"
+  ],
+  "requiredOwners": [
+    "V1.1 Test Matrix and Work Orders 002-008",
+    "M01 Repository Validation",
+    "M18 Resume Engine",
+    "M20 Response Contract",
+    "M34-M40 security controls",
+    "M62-M63 final assurance",
+    "Security CodeQL and dependency audit",
+    "V1.1 install/upgrade/recovery documentation"
+  ],
+  "knownSecurityFinding": {
+    "source": "GitHub Advanced Security CodeQL check on PR #278",
+    "checkRunId": 108450457038,
+    "headSha": "2d6538c3d90b63107b0cb4a4f6255c44cbfa61d1",
+    "severity": "HIGH",
+    "reportedCount": 1,
+    "requiredDisposition": "identify_and_resolve_before_WO009_final_audit"
+  },
+  "forbiddenWriteSurface": [
+    "main",
+    "tag:v1.0.0",
+    "repository rulesets",
+    "release publication",
+    "production acceptance",
+    "WO-010 implementation",
+    "unrelated modules"
+  ],
+  "staleIf": [
+    "release/1.1 advances beyond the controlled WO-009 admission merge before the implementation branch is created",
+    "main or v1.0.0 tag object/target changes",
+    "V1.1 Test Matrix or release Definition of Done changes",
+    "ADR-0003/ADR-0005/ADR-0006 changes",
+    "M18 Resume or M20 Response Contract semantics change",
+    "the known HIGH CodeQL finding changes or its disposition cannot be verified",
+    "a required suite or source fingerprint no longer matches"
+  ],
+  "stopCondition": "GBS_V11_WO_009_CONTEXT_LOCK_VALID_FOR_ADMITTED_WORK"
+}

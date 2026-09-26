@@ -143,7 +143,7 @@
   "stopState": "GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088",
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT",
+    "status": "GBS_V11_WO_009_ADMITTED",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -363,13 +363,13 @@
         }
       }
     },
-    "activeWorkOrder": "NONE",
-    "activeWorkOrderStatus": "NONE",
-    "implementationBranch": "NONE",
-    "contextLock": "NONE",
-    "executionBrief": "NONE",
-    "nextLegalAction": "PLAN_AND_ADMIT_GBS_V11_WO_009",
-    "stopState": "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION",
+    "activeWorkOrder": "GBS-V11-WO-009",
+    "activeWorkOrderStatus": "ADMITTED",
+    "implementationBranch": "feat/1.1/wo-009-integrated-assurance",
+    "contextLock": ".engineering/context-locks/GBS-V11-WO-009.json",
+    "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md",
+    "nextLegalAction": "CREATE_WO_009_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE",
+    "stopState": "GBS_V11_WO_009_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH",
     "ecosystemDetachment": {
       "decision": "D-0061",
       "adr": "ADR-0005",

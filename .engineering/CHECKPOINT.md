@@ -164,10 +164,18 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Collaborator approval: not required or requested.
 - Production boundary preserved: `main` and `v1.0.0` unchanged.
 
-### V1.1 continuation
-- Active Work Order: `NONE`
-- Next Work Order: `GBS-V11-WO-009` (not admitted)
-- Next legal action: plan and admit WO-009. No WO-009 implementation has started.
+### Active V1.1 increment — WO-009
+- Active Work Order after governance/admission merge: `GBS-V11-WO-009`
+- Work Order status: `ADMITTED`
+- Objective: integrated assurance, security closure, documentation/runbooks and fresh-context continuation proof
+- Assurance: `ELEVATED`
+- Implementation branch: `feat/1.1/wo-009-integrated-assurance`
+- Context Lock: `.engineering/context-locks/GBS-V11-WO-009.json`
+- Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md`
+- Required coverage: all V1.1 Test Matrix suites/cases on Windows, Linux and macOS; continuation cases `CONT-RESUME-01..04`.
+- Security blocker to resolve: CodeQL check #108450457038 on PR #278 reports one HIGH alert at the current `release/1.1` head. A successful scanner job does not close this alert.
+- Production boundary: `main`, `v1.0.0`, publication and production acceptance remain unchanged.
+- Next legal action: create the implementation branch from the exact governance/admission merge. No WO-009 implementation has started.
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
 - M41-M47 Integrated Assurance: `35164467254` `SUCCESS`
@@ -179,7 +187,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action: plan and admit `GBS-V11-WO-009`; do not begin implementation until its scope and checkpoint are admitted.
+Next legal V1.1 action: create `feat/1.1/wo-009-integrated-assurance` from the exact governance/admission merge.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION`.
+V1.1 STOP CONDITION: `GBS_V11_WO_009_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`.
