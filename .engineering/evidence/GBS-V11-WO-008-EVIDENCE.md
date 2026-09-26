@@ -66,10 +66,11 @@ P1-P8 match exactly on the measured source head: greenfield init plan; fixed emp
 | `npm run typecheck` | PASS |
 | `npm audit --audit-level=high` | PASS; 0 vulnerabilities |
 | H4 pre-correction focused telemetry, engines, acceleration and packed-install suites | PASS; 107/107 tests |
-| Correction Delta 01 focused telemetry suite at source head `8273560f4b5ea0fd52d70b2d374eef058bcae92c` | PASS; 15/15 tests |
+| Correction Delta 01 focused telemetry suite at correction head `e71081bb2b46b7c438918694f7a3644b1c44197a` | PASS; 15/15 tests |
 | Correction Delta 01 M62-M63 focused suite | PASS; 6/6 tests |
 | Correction Delta 01 distribution smoke suite | PASS; 12/12 tests |
-| Correction Delta 01 exact-head hosted workflows | Pending; must pass on final PR head |
+| Correction Delta 01 hosted workflows on code head `e71081bb2b46b7c438918694f7a3644b1c44197a` | PASS; all 8 workflows |
+| Final evidence-head hosted workflows | Pending; this evidence update creates a new PR head |
 | CLI/manual ROI smoke | PASS; both returned the same successful init plan digest |
 | `npm run validate` in this executor | Typecheck passed. Root-owned machine Git is intentionally refused by the high-assurance trust policy in privilege-sensitive integration cases; hosted full repository regressions below pass on the implementation head. |
 
@@ -110,8 +111,25 @@ STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT` after the final evide
 
 The deeper review reproduced two malformed-registry cases that the original capture path accepted: duplicate baseline IDs could coexist, and a child baseline could carry an orphaned or inconsistent ancestor list that was then copied into later captures. Individual baseline digests alone cannot establish parent-chain integrity because the parent records are held by the registry.
 
-The correction is committed on the same implementation branch at source head `8273560f4b5ea0fd52d70b2d374eef058bcae92c`. `captureBaseline` now validates registry-wide ID uniqueness, parent presence, parent population identity, and exact ancestry continuity before retaining or appending records. Invalid registries fail closed as `BASELINE_REGISTRY_INVALID`; valid immutable captures retain their existing behavior.
+The correction is included on the same implementation branch at correction head `e71081bb2b46b7c438918694f7a3644b1c44197a`. `captureBaseline` now validates registry-wide ID uniqueness, parent presence, parent population identity, and exact ancestry continuity before retaining or appending records. Invalid registries fail closed as `BASELINE_REGISTRY_INVALID`; valid immutable captures retain their existing behavior.
 
-New tests reproduce duplicate IDs, forged/orphaned ancestry, and missing ancestors. The corrected focused telemetry suite passes 15/15; the M62-M63 focused suite passes 6/6; the distribution smoke suite passes 12/12; the TypeScript build and `git diff --check` pass. These are local checks on the correction source head. The evidence-only commit and exact PR head still require hosted exact-head workflows, followed by the required independent objective audit. No audit disposition, severity count or checkpoint promotion is claimed here.
+New tests reproduce duplicate IDs, forged/orphaned ancestry, and missing ancestors. The corrected focused telemetry suite passes 15/15; the M62-M63 focused suite passes 6/6; the distribution smoke suite passes 12/12; the TypeScript build and `git diff --check` pass against the correction source and test files included in `e71081bb2b46b7c438918694f7a3644b1c44197a`. All eight hosted workflows passed on that code head. This evidence-only update creates a new PR head, so its own exact-head checks must pass before the required independent objective audit. No audit disposition, severity count or checkpoint promotion is claimed here.
 
 Correction stop condition remains `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`, only after hosted checks pass for the final evidence head.
+
+## 10. Exact-head hosted workflows for Correction Delta 01
+
+All eight listed workflows passed on correction code head `e71081bb2b46b7c438918694f7a3644b1c44197a`:
+
+| Workflow | Run | Result |
+|---|---:|---|
+| WO-008 Performance Telemetry | `36244960635` | SUCCESS |
+| m01-validation | `36244960628` | SUCCESS |
+| M41-M47 Integrated Assurance | `36244960657` | SUCCESS |
+| M48-M54 Integrated Assurance | `36244960634` | SUCCESS |
+| M55-M61 Integrated Assurance | `36244960704` | SUCCESS |
+| M62-M63 Final Assurance | `36244960724` | SUCCESS |
+| WO-004 Upgrade Recovery Assurance | `36244960654` | SUCCESS |
+| WO-003 Windows Rights Oracle | `36244960658` | SUCCESS |
+
+The current PR head includes this evidence-only update; live PR checks for that final head are authoritative and remain pending until they complete.
