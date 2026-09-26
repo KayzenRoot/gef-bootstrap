@@ -46,3 +46,7 @@ The GitHub Release for `v1.0.0` provides generated source ZIP/TAR archives. Afte
 
 ## Important boundary
 Do not advertise or rely on `npm install -g gef-bootstrap` for V1.0.0. The workspace and `@gef-bootstrap/cli` package remain private workspace packages and the CLI surface is a library-facing implementation, not a published executable.
+
+## V1.1 operations and fresh-chat continuity
+
+V1.1 remains in development/release-candidate validation until WO-010. For the full project-construction, upgrade and recovery procedure, see [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md). Start every new chat from the canonical checkpoint, active Work Order, Context Lock and verified provider head; use M18/M20 to state exactly one next action or an explicit `NONE/UNKNOWN` stop state.

@@ -1,0 +1,37 @@
+name: V1.1 release assurance
+
+on:
+  pull_request:
+    branches: ["release/1.1"]
+  push:
+    branches: ["release/1.1"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v11-release-assurance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-assurance:
+    name: V1.1 release assurance / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@v4
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked workspace dependencies
+        run: npm ci
+      - name: Run full typecheck and regression suite
+        run: npm run validate
+      - name: Audit production dependency thresholds
+        run: npm audit --audit-level=high

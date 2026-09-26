@@ -41,3 +41,17 @@ For this repository, all GitHub writes use the owner account `KayzenRoot`. Never
 
 ## Completion
 A green test is evidence, not completion. A merged PR is not MODULE_DONE by itself. Follow the project DoD, owner exact-head audit, evidence bundle and checkpoint promotion rules.
+
+## Fresh-context construction routing
+
+During every governed application build, use canonical project/provider state to select work and direct the next stage. Chat history and conversational summaries are informational; they do not establish progress, approvals, branch state or authority.
+
+Before continuing after a new chat or a major handoff:
+
+1. Verify the repository, provider account, branch and exact HEAD.
+2. Read \`.engineering/CHECKPOINT.json\` and \`.engineering/CHECKPOINT.md\`, the active Work Order and Context Lock, source hierarchy, current evidence and required checks.
+3. Reconcile the checkpoint and observed provider state with the M18 resume rules. Stale bindings, conflicts, orphan work or unresolved blockers stop execution.
+4. Use the M20 response contract to report the verified project/phase, active module/Work Order/stage, exact checkpoint/head, blockers and prerequisites.
+5. State one canonical next necessary action. If none is safe or known, state \`NONE\` or \`UNKNOWN\` with the blocking evidence needed. Never select a successor from chat history or skip an admitted Work Order.
+
+For application construction, route the handoff through discovery, requirements/scope, admitted Work Order and Context Lock, preflight, implementation, tests/evidence, exact-head owner audit, checkpoint promotion and the next admitted Work Order. Each handoff ends with the single next legal action or an explicit stop state.
