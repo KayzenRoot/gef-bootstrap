@@ -1,7 +1,7 @@
 # Direct Execution Brief — GBS-V11-WO-008
 
-State: `NOT_EXECUTABLE_UNTIL_ADMISSION_MERGE`
-Authority: `ADR-0003-D3`
+State: `IMPLEMENTED_PR_296_AWAITING_OWNER_AUDIT`
+Authority: `ADR-0003-D3 as boundedly superseded by D-0062/ADR-0006`
 Assurance: `STANDARD`
 Work Order: `.engineering/work-orders/GBS-V11-WO-008.md`
 Context Lock: `.engineering/context-locks/GBS-V11-WO-008.json`
@@ -68,9 +68,13 @@ Also prove cold/warm separation, repeated-sample determinism, invalid sample rej
 
 ## HARD BOUNDARIES
 
+The exact-head semantic audit and authorized merge are performed by `KayzenRoot` under D-0062/ADR-0006. No collaborator review is required. Do not call the owner audit independent.
+
 Do not:
 - implement WO-009 or WO-010;
 - mutate `main` or `v1.0.0`;
+- merge before owner exact-head audit approval and all required exact-head checks pass;
+- merge to `main` or mutate `v1.0.0`;
 - tag, publish, force-push or rewrite history;
 - manufacture a performance claim from incomparable populations;
 - weaken quality/security/recovery/evidence gates;
@@ -78,4 +82,4 @@ Do not:
 - accept M24 evidence, decide M25 general proof or issue M27 assurance;
 - add legacy ecosystem-specific adapters.
 
-STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`
+STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OWNER_AUDIT_AND_MERGE`
