@@ -246,7 +246,7 @@ test("CONT-RESUME-01: a new context resumes the canonical WO-009 action with no 
 test("CONT-RESUME-02: checkpoint and handoff conflict rejects lineage and emits no successor", () => {
   const fixture = resumeFixture();
   const forgedHandoff = { ...fixture.handoff, nextLegalAction: "SKIP_TO_RELEASE" };
-  assert.equal(verifyContinuationHandoff(forgedHandoff, options).value, false);
+  assert.equal(verifyContinuationHandoff(forgedHandoff, options).ok, false);
   assert.equal(proveLineageContinuity(fixture.intent, fixture.checkpoint, forgedHandoff, options).ok, false);
   assert.equal(enforceResumeAuthorityBoundary(fixture.intent, fixture.checkpoint, forgedHandoff, options).ok, false);
   const conflict = resultValue(createStateConflictWitness(
