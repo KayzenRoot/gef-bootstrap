@@ -3,9 +3,12 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 
 const read = path => existsSync(path) ? readFileSync(path) : Buffer.alloc(0);
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
-const validation = read("validation.log").toString("utf8");
-const audit = read("dependency-audit.log").toString("utf8");
-const install = read("install.log").toString("utf8");
+const validationBytes = read("validation.log");
+const auditBytes = read("dependency-audit.log");
+const installBytes = read("install.log");
+const validation = validationBytes.toString("utf8");
+const audit = auditBytes.toString("utf8");
+const install = installBytes.toString("utf8");
 const summary = {};
 for (const [key, pattern] of Object.entries({
   tests: /(?:#|ℹ) tests\s+(\d+)/i,
@@ -33,9 +36,9 @@ const receipt = {
   regressionSummary: summary,
   npmAuditVulnerabilities: vulnerabilities ? Number(vulnerabilities[1]) : null,
   logs: {
-    install: { sha256: digest(read("install.log")), bytes: install.length },
-    validation: { sha256: digest(read("validation.log")), bytes: validation.length },
-    dependencyAudit: { sha256: digest(read("dependency-audit.log")), bytes: audit.length },
+    install: { sha256: digest(installBytes), bytes: installBytes.byteLength },
+    validation: { sha256: digest(validationBytes), bytes: validationBytes.byteLength },
+    dependencyAudit: { sha256: digest(auditBytes), bytes: auditBytes.byteLength },
   },
   frozenSuites: ["UNIT", "INT", "CLI-E2E", "DIST-SMOKE", "UPG-MIG", "COMPAT", "CTX-DET", "INC-VAL", "PROOF-INV", "TELEM", "SEC-INT", "REG"],
   numberedCases: {
