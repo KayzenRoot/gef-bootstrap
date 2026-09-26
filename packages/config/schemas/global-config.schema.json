@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gef:schema:global-config:1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "configVersion"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "configVersion": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+$"},
+    "extensions": {"type": "object"}
+  }
+}

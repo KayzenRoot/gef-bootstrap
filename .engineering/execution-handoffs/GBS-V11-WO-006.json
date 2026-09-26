@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-006",
+  "state": "EXECUTABLE_ON_ADMITTED_BRANCH",
+  "implementationBranch": "feat/1.1/wo-006-incremental-validation",
+  "admissionMergeSha": "928563abf4c4e1894b9125c21059f460c361b97a",
+  "implementationBaseSha": "928563abf4c4e1894b9125c21059f460c361b97a",
+  "authority": "ADR-0003-D3",
+  "governanceAudit": {
+    "pr": 291,
+    "auditedHead": "7bb58450e163ce15726f02ea1beaef24580b064a",
+    "review": 5292006961,
+    "verdict": "APPROVED",
+    "criticalFindings": 0,
+    "highFindings": 0
+  },
+  "productionBoundary": {
+    "mainSha": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+    "v100TagObject": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+    "v100TagTarget": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+    "mainMutationAuthorized": false,
+    "tagMutationAuthorized": false,
+    "publicationAuthorized": false
+  },
+  "scope": [
+    "M28-backed V1.1 incremental validation orchestration",
+    "INC-VAL-01..05",
+    "fail-closed widening",
+    "brownfield full-suite fallback",
+    "L5/final-sweep preservation",
+    "read-only deterministic handoff"
+  ],
+  "preserve": [
+    "M28 Test Impact authority",
+    "WO-005 Execution Capsule semantics",
+    "M63 progressive validation contract",
+    "D-0061/ADR-0005 legacy ecosystem detachment"
+  ],
+  "forbidden": [
+    "main mutation",
+    "v1.0.0 tag mutation",
+    "publish",
+    "force-push",
+    "history rewrite",
+    "proof reuse eligibility decisions",
+    "WO-007+ implementation",
+    "filesystem/network/Git/process/provider authority"
+  ],
+  "stopCondition": "GBS_V11_WO_006_READY_FOR_OBJECTIVE_AUDIT"
+}

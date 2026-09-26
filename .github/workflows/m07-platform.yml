@@ -1,0 +1,40 @@
+name: m07-platform
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/template-engine/**"
+      - "tests/m07-*.mjs"
+      - ".github/workflows/m07-platform.yml"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  template-proof:
+    name: template-proof-${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install exact locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+      - name: Typecheck and build
+        run: npm run typecheck && npm run build
+      - name: M07 focused deterministic portability and startup proof
+        run: node --test tests/m07-*.test.mjs

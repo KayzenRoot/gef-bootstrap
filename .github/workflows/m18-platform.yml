@@ -1,0 +1,41 @@
+name: M18 Resume Engine
+on:
+  pull_request:
+    paths:
+      - 'packages/resume-engine/**'
+      - 'tests/m18-*.mjs'
+      - '.engineering/work-orders/GBS-WO-M18-001.md'
+      - 'planning/modules/area-e-continuity/m18-resume-engine/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/m18-platform.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm run typecheck
+      - run: node --test tests/m18-resume-engine.test.mjs tests/m18-hardening.test.mjs tests/m18-startup-purity.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm test

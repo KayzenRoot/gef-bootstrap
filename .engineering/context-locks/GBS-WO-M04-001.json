@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-WO-M04-001",
+  "status": "FRESH",
+  "implementationBase": "04e711c7208476728187609c14ef9119530633ef",
+  "admissionCheckpoint": "READY_FOR_GBS_WO_M04_001",
+  "criticalFingerprints": {
+    "m04s01": "014c8acb0fa257f141c3830651f0a14dbf27f3db",
+    "m04s02": "e536cae93b5365561f6e844cd4e3344eef1e63be",
+    "m04s03": "3608211d3dc13fcd4318f70588e0b668240e49fc",
+    "m04s04": "42bdb16679df056c040d848e78ecf1a8d07db22d",
+    "m04s05": "22ccc8e94ba726f680edd0beec932797ca2e55ae",
+    "moduleGate": "33c85959ea4af0e8152ea92ad5e7440f764d5eac"
+  },
+  "reason": "Admission promotion changed the checkpoint after the original candidate lock; implementation is rebased to the admitted checkpoint without reopening frozen M04 planning sources."
+}

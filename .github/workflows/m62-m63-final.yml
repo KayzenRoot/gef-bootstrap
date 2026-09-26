@@ -1,0 +1,32 @@
+name: M62-M63 Final Assurance
+on:
+  pull_request:
+    paths:
+      - 'packages/m62-m63-final/**'
+      - 'tests/m62-m63-final.test.mjs'
+      - 'planning/modules/area-o-documentation-and-closure/m62-v1-final-acceptance/**'
+      - 'planning/modules/area-p-engineering-efficiency/m63-executor-performance-engine/**'
+      - '.engineering/**'
+      - '.github/workflows/m62-m63-final.yml'
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: node --test tests/m62-m63-final.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm test

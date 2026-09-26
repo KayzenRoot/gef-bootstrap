@@ -1,0 +1,1 @@
+import test from'node:test';import assert from'node:assert/strict';import{progressiveValidationLevel}from'../packages/test-impact-engine/dist/public.js';test('new stronger assurance policy widens prior local radius',()=>{assert.equal(progressiveValidationLevel({direct:true,closure:true,assuranceFloor:'L5'}),'L5')});

@@ -1,0 +1,45 @@
+name: M13 GEF Adoption Engine
+on:
+  pull_request:
+    paths:
+      - 'packages/adoption-engine/**'
+      - 'tests/m13-*.mjs'
+      - '.engineering/M13-MODULE-GATE.md'
+      - '.engineering/work-orders/GBS-WO-M13-001.md'
+      - '.engineering/GBS-WO-M13-001-ADMISSION.md'
+      - '.engineering/context-locks/GBS-WO-M13-001.json'
+      - '.engineering/evidence/GBS-WO-M13-001-EVIDENCE.md'
+      - 'planning/modules/area-d-gef-v1/m13-gef-adoption-engine/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/m13-platform.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm run typecheck
+      - run: node --test tests/m13-adoption-engine.test.mjs tests/m13-startup-purity.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm test

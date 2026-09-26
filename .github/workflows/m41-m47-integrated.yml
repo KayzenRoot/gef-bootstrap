@@ -1,0 +1,37 @@
+name: M41-M47 Integrated Assurance
+on:
+  pull_request:
+    paths:
+      - 'packages/m41-m47-platform/**'
+      - 'tests/m41-m47-platform.test.mjs'
+      - 'planning/modules/area-j-integrations/m4[12]-*/**'
+      - 'planning/modules/area-k-observability/**'
+      - 'planning/modules/area-l-artifacts-and-ux/m4[67]-*/**'
+      - '.engineering/**'
+      - '.github/workflows/m41-m47-integrated.yml'
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: node --test tests/m41-m47-platform.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test

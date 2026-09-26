@@ -1,0 +1,9 @@
+{
+  "name": "@gef-bootstrap/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}},
+  "types": "./dist/index.d.ts",
+  "dependencies": {"@gef-bootstrap/contracts": "0.0.0"}
+}

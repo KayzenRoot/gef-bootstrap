@@ -1,0 +1,36 @@
+name: M34-M40 Integrated Assurance
+on:
+  pull_request:
+    paths:
+      - 'packages/security-reliability-integrations/**'
+      - 'tests/m34-m40-integrated.test.mjs'
+      - 'planning/modules/area-i-security-and-reliability/**'
+      - 'planning/modules/area-j-integrations/**'
+      - '.engineering/**M3*'
+      - '.github/workflows/m34-m40-integrated.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test tests/m34-m40-integrated.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm test

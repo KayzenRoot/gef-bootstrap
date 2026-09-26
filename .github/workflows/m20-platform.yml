@@ -1,0 +1,42 @@
+name: M20 Response Contract
+on:
+  pull_request:
+    paths:
+      - 'packages/response-contract/**'
+      - 'tests/m20-*.mjs'
+      - '.engineering/work-orders/GBS-WO-M20-001.md'
+      - '.engineering/GBS-WO-M20-ADMISSION.md'
+      - 'planning/modules/area-e-continuity/m20-response-contract/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/m20-platform.yml'
+permissions:
+  contents: read
+jobs:
+  focused:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm run typecheck
+      - run: node --test tests/m20-response-contract.test.mjs tests/m20-hardening.test.mjs tests/m20-correction-01-high.test.mjs tests/m20-startup-purity.test.mjs
+  regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=low
+      - run: npm test

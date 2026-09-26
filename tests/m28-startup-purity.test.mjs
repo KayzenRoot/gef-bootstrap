@@ -1,0 +1,2 @@
+import test from'node:test';import assert from'node:assert/strict';
+test('M28 public import is startup-pure and exposes no ambient executor',async()=>{const before={cwd:process.cwd(),env:Object.keys(process.env).length};const m=await import('../packages/test-impact-engine/dist/public.js');assert.equal(m.M28_MECHANISMS.length,32);assert.equal(process.cwd(),before.cwd);assert.equal(Object.keys(process.env).length,before.env);assert.equal('exec'in m,false);assert.equal('writeFile'in m,false);assert.equal('git'in m,false)});

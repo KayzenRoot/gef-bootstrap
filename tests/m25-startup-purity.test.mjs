@@ -1,0 +1,3 @@
+import test from'node:test';
+import assert from'node:assert/strict';
+test('proof-graph import is startup-pure',async()=>{const originalNow=Date.now,originalFetch=globalThis.fetch;let touched=false;Date.now=()=>{touched=true;throw new Error('clock');};globalThis.fetch=async()=>{touched=true;throw new Error('network');};try{const mod=await import('../packages/proof-graph/dist/public.js');assert.equal(Array.isArray(mod.M25_MECHANISMS),true);assert.equal(mod.M25_MECHANISMS.length,42);assert.equal(new Set(mod.M25_MECHANISMS).size,42);assert.equal(touched,false);}finally{Date.now=originalNow;globalThis.fetch=originalFetch;}});
