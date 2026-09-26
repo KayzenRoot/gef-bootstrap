@@ -13,7 +13,7 @@ GEF Bootstrap is a local-first, contract-driven modular hybrid product with stri
 ### Planes
 1. **Semantic Plane** — governed repository state consumed by ChatGPT/compatible planning agents for product reasoning, requirement interpretation, scope/architecture intent, assurance policy and semantic review.
 2. **Deterministic Work Plane** — product code for bounded repeatable operations such as repository inspection, mutation planning/application, validation, fingerprints, state comparison, deterministic manifests/diffs, conformance and receipts.
-3. **Platform/Profile Plane** — provider/profile adapters such as GitHub plus optional UADS/Hive/UGAS adapters, isolated from core semantics.
+3. **Platform/Profile Plane** — provider/profile adapters such as GitHub plus optional ecosystem adapters, isolated from core semantics.
 4. **Evidence & Assurance Plane** — exact-state evidence, proof validity/invalidation, impacted validation, HEDS delta review, assurance gates and recovery proof.
 5. **Continuity & Knowledge Plane** — checkpoint/resume, project registry, governed engineering memory, fact/dependency maps and progressive brownfield knowledge.
 6. **Observability & Optimization Plane** — token/time/search/test/retry/review telemetry, baseline/benchmark and engineering ROI.
@@ -69,8 +69,8 @@ packages/
   cli/              # thin operator CLI over public application/library API
   distribution/     # packaging/update/release helpers
 adapters/
-  uads/
-  hive/
+  external/
+  context/
   ugas/
 schemas/
 fixtures/
@@ -145,7 +145,7 @@ GitHub PR/check/Actions/issues/rulesets/releases/permission-gap operations. It d
 Core code communicates with hosted providers through neutral ports/interfaces. Provider receipts preserve provider-specific fields in namespaced extension sections without contaminating the common contract.
 
 ## A7 — Optional adapter isolation
-UADS/Hive/UGAS adapters use the **Generic Adapter API/SDK** and are separately activatable packages.
+Optional ecosystem adapters use the **Generic Adapter API/SDK** and are separately activatable packages.
 
 For trust and stability:
 - core never imports adapter implementation packages;
@@ -243,7 +243,7 @@ A module may own requirements in multiple test boundaries, but test code must ma
                            ▼             ▼
                         GitHub       Adapter SDK
                                          │
-                                 UADS/Hive/UGAS
+                                 optional ecosystems
 
         continuity + observability span all governed operations
 ```

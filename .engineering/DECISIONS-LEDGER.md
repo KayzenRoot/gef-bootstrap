@@ -7,7 +7,7 @@ Status: `ACTIVE`
 - Status: APPROVED
 
 ## D-0002 — Independent product boundary
-- Decision: New GEF Bootstrap improvements remain in this project and are not automatically pushed into UADS, Hive, or UGAS. Those systems may later be optional integrations.
+- Decision: New GEF Bootstrap improvements remain in this project and are not automatically pushed into external ecosystems. Such ecosystems may later be optional integrations through separately governed contracts.
 - Status: APPROVED
 
 ## D-0003 — GEF V1 default
@@ -159,7 +159,7 @@ Status: `ACTIVE`
 - Status: APPROVED
 
 ## D-0040 — Optional integrations never silently block independent core completion
-- Decision: UADS, Hive, UGAS and other ecosystem integrations remain optional unless explicitly admitted into a target profile or future core scope. Their absence/failure may block the corresponding adapter/profile but cannot block independent GEF Bootstrap core completion under the current product boundary.
+- Decision: External ecosystem integrations remain optional unless explicitly admitted into a target profile or future core scope. Their absence/failure may block the corresponding adapter/profile but cannot block independent GEF Bootstrap core completion under the current product boundary.
 - Status: APPROVED
 
 ## D-0041 — CONST-F1 through CONST-F8 are stable constitutional group IDs
@@ -205,3 +205,52 @@ Status: `ACTIVE`
 ## D-0051 — Project Overview is frozen
 - Decision: `.engineering/PROJECT-OVERVIEW.md` is frozen as the canonical product overview derived from `GBS-CONSTITUTION-v1.0`, including mission, logical roles, universal/profile boundaries, platform boundary, minimum brownfield value, optimization measurement requirements and explicit non-goals. Detailed requirements, scope and architecture remain delegated to their ordered Source Pack stages.
 - Status: APPROVED
+
+## D-0052 — `main` is the latest PRODUCTION_APPROVED release channel
+- Decision: `main` is the currently production-approved release and the only branch permitted to represent production. V1.1 development occurs on `release/1.1` and subordinate branches and is integration-only until production acceptance. Promotion is exact-head and evidence-bound; release tags are immutable. A V1.0 defect is corrected on a `1.0.x` hotfix lineage and forward-ported into `release/1.1` where still applicable. Detailed contract: `ADR-0003-D1`/`D2`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0053 — External executor authority for this repository is bounded and V1.1-scoped
+- Decision: `ADR-0002-D8` (Codex must not build this repository) is superseded for the V1.1 release line only, by `ADR-0003-D3`, after an explicit conflict report. The external executor may work on `release/1.1` and subordinate branches under mandatory bounds: admitted Work Order required, no merge/tag/publish/force-push/history rewrite, no modification of V1.0.0 acceptance history or production checkpoint state, external objective audit, and no self-approval. The permanent implementation model remains an owner decision for V1.1 closure.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0054 — The V1.1 CLI is admitted as the thin mechanical layer of D-0047
+- Decision: The `gef` CLI surface admitted by `V1.1-SCOPE.md` NECESSARY #1 is the thin deterministic tooling layer contemplated by `D-0047`, not a reversal of `D-0004`. It is a transport/rendering surface over the application API, holds no business logic, and is never semantic authority for architecture, scope admission, requirements, risk acceptance or review verdicts. Admission carries a measurable-ROI obligation under the V1.1 benchmark protocol. Detailed contract: `ADR-0003-D4`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0055 — Distribution claims distinguish designed from proven
+- Decision: V1.1 may design an installable distribution model, but no publication, package registration, binary artifact or install command may be described as available until proven by release evidence. The source-workspace path remains the supported distribution until proven otherwise. Detailed contract: `ADR-0003-D5`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0056 — Execution Capsules are deterministic, fingerprinted and fail closed
+- Decision: The V1.1 Execution Capsule is a compiled, deterministic, fingerprinted projection of the existing acceleration mechanisms (`ENM`, `DCC`, `IST`/`FIC`/`BPIC`, validation ladder, `TPRR`, `SDS`), not a competing source of truth. Repeat compilation from identical inputs must be byte-identical. `certainty: INSUFFICIENT` cannot produce a compiled capsule. Drift invalidates by drift class with no optimistic continuation. Contract: `.engineering/releases/V1.1-EXECUTION-CAPSULE-CONTRACT.md`; schema: `urn:gef:schema:execution-capsule:1`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0057 — Incremental validation may narrow execution but never assurance or credit
+- Decision: Validation selection may reduce repeated intermediate work only when the selector can positively prove a test unaffected; uncertain impact widens or escalates and never narrows. Proof reuse requires valid lineage, fingerprints, dependency impact, configuration, toolchain, platform, fixture, policy and validity bindings, and may never manufacture production credit, participate in production accounting or waive a required exact-head sweep. Contract: `.engineering/releases/V1.1-INCREMENTAL-VALIDATION-PROOF-REUSE-CONTRACT.md`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0058 — Incomparable benchmark populations are reported as incomparable
+- Decision: Performance claims require matching population identity across workload, base state, toolchain, platform, assurance policy, cache/proof posture and measurement boundary. A mismatch forbids any speedup claim. Metrics distinguish MEASURED, ESTIMATED and UNAVAILABLE. A quality-gate failure voids an apparent gain. Contract: `.engineering/releases/V1.1-PERFORMANCE-BENCHMARK-PROTOCOL.md`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0059 — V1.1 foundation decisions are promoted after objective audit
+- Decision: The proposal states recorded by D-0052 through D-0058 are historical. Objective re-audit of `GBS-V11-WO-001` at exact head `989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635` returned `APPROVED` with CRITICAL=0/HIGH=0, and PR #279 merged that audited candidate into `release/1.1` as `c5890620a98f2b23c794d65234824ad2ea084036`. This governance increment performs the checkpoint-promotion step required by D-0042. On merge of the checkpoint-promotion PR into `release/1.1`, D-0052 through D-0058 and ADR-0003-D1 through D5 become effective for the V1.1 release line under their declared bounds. In particular, ADR-0003-D3 authorizes external-executor implementation only on `release/1.1` and subordinate branches, only for admitted Work Orders, and never authorizes merge/tag/publish/force-push/history rewrite or mutation of `main`/V1.0.0 accepted history.
+- Status: APPROVED
+
+## D-0060 — Windows effective-rights oracle is admitted as a bounded corrective dependency
+- Decision: Windows replacement authority is governed by `DELETE` on the target object and `FILE_DELETE_CHILD` on its containing directory, which are independent of generic write access; the supported runtime exposes neither, so the previous Windows chain proof was unsound and the high-assurance policy failed closed there (head `8e8801f2f0292ed1617bc04ac19d36415b1c3ff2`, disposition `BLOCKED`). Permanent loss of Git-backed capability on Windows is not accepted, so a narrow Windows FFI adapter (Koffi, one exact pinned version, three `kernel32.dll` functions, OS access check as the authority) is admitted to prove those rights without weakening the policy. No semantic engine moves into native code, POSIX is unchanged, unknown native proof fails closed, and publication/release remain governed by later Work Orders. Full contract: `ADR-0004-WINDOWS-EFFECTIVE-RIGHTS-ORACLE.md`.
+- Status: APPROVED
+
+
+## D-0061 — Legacy ecosystem-specific bindings are detached before V1.1 completion
+- Decision: The V1.1 line removes ecosystem-specific bindings from M39/M40, runtime adapter exports, tests, planning and active product documentation. M39 becomes a reserved external-adapter slot and M40 becomes a reserved context-adapter slot. The Generic Adapter API remains the only neutral extension boundary. No future ecosystem, context service or memory system inherits the removed contracts automatically; any reintroduction requires a new governed decision, explicit capability/schema contract, compatibility evidence and its own Work Order.
+- Status: APPROVED
+
+## D-0062 — Owner-operated review and merge authority
+- Decision: `KayzenRoot` is the sole account for GitHub writes, semantic audit, approval decisions and merge operations in this GEF Bootstrap repository. Collaborator review/approval is optional advice and is never a required gate. The owner performs a substantive exact-head audit recorded on the PR; it is not called independent. The owner may merge only after all Work Order-required checks are successful on the exact head, the audit is `OWNER_APPROVED`, the branch is mergeable and CRITICAL/HIGH blockers are zero. Required CI, security, evidence, release boundaries, no-force-push/history-rewrite and explicit S4 controls remain unchanged. GEF-generated target-project workflows default to the configured project-owner account and must not require collaborators to advance.
+- Supersedes, bounded: ADR-0003-D3 clauses prohibiting owner merge and requiring the audit to be external; conflicting independent-collaborator review requirements in the active WO-008 contract and future GEF templates. Historical approved audit records are preserved.
+- Authority source: explicit Product Owner instruction dated 2026-09-26; full impact and controls in `.engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md`.
+- Effective: PR #298 owner-audited exact head `03f81da4c85fe06310ad4c94a79af20e71747681`; 30/30 checks succeeded; promotion merge into `release/1.1` was `d52dcca0840465324582b022c53b5a12fd0a3840`.
+- Owner audit: comment #5847950958; evidence `.engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md`.
+- Status: `EFFECTIVE`

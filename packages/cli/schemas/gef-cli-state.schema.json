@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gef:schema:cli-state:1",
+  "title": "GEF CLI governed state document",
+  "description": "Persisted state artifact written by a guided gef init --apply / gef adopt --apply run. Emitted by the CLI after a kernel transaction promotes the artifact; consumers must fail closed on an unsupported schemaVersion major.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "verb",
+    "commandId",
+    "contractVersion",
+    "productVersion",
+    "runId",
+    "planDigest",
+    "observationFingerprint",
+    "transaction"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0",
+      "description": "Explicit document schema version. A consumer that does not support the major version must fail closed."
+    },
+    "kind": { "enum": ["gef.init.state", "gef.adopt.state"] },
+    "verb": { "enum": ["init", "adopt"] },
+    "commandId": { "enum": ["gef.init.run", "gef.adopt.apply"] },
+    "contractVersion": { "const": "1.0" },
+    "productVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$" },
+    "runId": { "type": "string", "minLength": 1 },
+    "planDigest": { "$ref": "#/$defs/sha256" },
+    "observationFingerprint": {
+      "$ref": "#/$defs/sha256",
+      "description": "Fingerprint of the target observation recorded at apply time. A later reader compares it with a fresh observation to detect drift."
+    },
+    "transaction": { "$ref": "#/$defs/transactionSummary" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "transactionSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["planDigest", "outcome"],
+      "properties": {
+        "planDigest": { "$ref": "#/$defs/sha256" },
+        "receiptDigest": { "$ref": "#/$defs/sha256" },
+        "outcome": { "enum": ["APPLIED", "NOOP_APPLIED"] },
+        "postFingerprint": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

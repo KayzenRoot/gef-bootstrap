@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-WO-003",
+  "title": "Doctor 2.0 + Status",
+  "state": "EXECUTABLE_ON_ADMITTED_BRANCH",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "releaseLine": "1.1.x",
+  "releaseRef": "release/1.1",
+  "admissionMergeSha": "7592624f7c9bf8726a7a460629f5e862a35a857d",
+  "implementationBranch": "feat/1.1/wo-003-doctor-status",
+  "implementationBaseSha": "7592624f7c9bf8726a7a460629f5e862a35a857d",
+  "executorAuthority": "ADR-0003-D3",
+  "objectiveGovernanceAudit": {
+    "pullRequest": 283,
+    "auditedHead": "68b27a43c81c7820ef0941e9a682f26f83ad6466",
+    "reviewId": 5235573879,
+    "verdict": "APPROVED",
+    "criticalFindings": 0,
+    "highFindings": 0
+  },
+  "productionBoundary": {
+    "mainShaAtHandoff": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+    "v100TagObjectAtHandoff": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+    "v100TagTargetAtHandoff": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+    "mainAuthorized": false,
+    "tagMutationAuthorized": false,
+    "publicationAuthorized": false
+  },
+  "requiredFirstReads": [
+    ".engineering/work-orders/GBS-V11-WO-003.md",
+    ".engineering/context-locks/GBS-V11-WO-003.json",
+    ".engineering/execution-briefs/GBS-V11-WO-003-CODEX.md",
+    ".engineering/CHECKPOINT.json",
+    ".engineering/releases/V1.1-CLI-DISTRIBUTION-ARCHITECTURE.md"
+  ],
+  "scope": [
+    "gef doctor / gef.doctor.run",
+    "gef status / gef.status.show",
+    "read-only deterministic diagnostics and status",
+    "human and JSON projections",
+    "local packed-install parity",
+    "focused E2E and regression evidence"
+  ],
+  "explicitlyForbidden": [
+    "merge",
+    "tag",
+    "publish",
+    "force-push",
+    "history rewrite",
+    "main mutation",
+    "v1.0.0 mutation",
+    "destructive automatic repair",
+    "upgrade or migration implementation",
+    "WO-005+ implementation",
+    "self-approval"
+  ],
+  "rediscoveryPolicy": "Use the minimum read set. Do not begin with repository-wide search. Expand only on evidence-backed import/type/test/dependency triggers and record expansions in the Evidence Bundle.",
+  "executorStopCondition": "GBS_V11_WO_003_READY_FOR_OBJECTIVE_AUDIT",
+  "finalStatement": "MERGE NOT PERFORMED; OBJECTIVE AUDIT REQUIRED"
+}

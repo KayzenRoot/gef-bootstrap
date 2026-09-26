@@ -78,8 +78,8 @@ Unplanned sessions may remain intentionally empty placeholders. Files marked `OW
 
 ## Area J — Integrations
 - **GBS-M38 — Capability Detection** — 4 sessions
-- **GBS-M39 — UADS Adapter** — 4 sessions
-- **GBS-M40 — Hive Adapter** — 3 sessions
+- **GBS-M39 — Reserved External Adapter Slot** — 4 sessions
+- **GBS-M40 — Reserved Context Adapter Slot** — 3 sessions
 - **GBS-M41 — UGAS Adapter** — 3 sessions
 - **GBS-M42 — Generic Adapter API** — 4 sessions
 

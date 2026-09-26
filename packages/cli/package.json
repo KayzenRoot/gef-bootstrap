@@ -1,9 +1,48 @@
 {
   "name": "@gef-bootstrap/cli",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "private": true,
+  "description": "GEF Bootstrap thin operator CLI surface (transport and rendering only)",
   "type": "module",
-  "exports": {".": {"types": "./dist/index.d.ts", "import": "./dist/index.js"}},
+  "license": "UNLICENSED",
+  "bin": {
+    "gef": "./bin/gef.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "vendor",
+    "schemas",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "types": "./dist/index.d.ts",
-  "dependencies": {"@gef-bootstrap/contracts": "0.0.0", "@gef-bootstrap/kernel": "0.0.0"}
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@gef-bootstrap/contracts": "0.0.0",
+    "@gef-bootstrap/kernel": "0.0.0",
+    "@gef-bootstrap/preflight": "0.0.0",
+    "koffi": "3.3.0"
+  },
+  "bundleDependencies": [
+    "@gef-bootstrap/contracts",
+    "@gef-bootstrap/kernel",
+    "@gef-bootstrap/preflight",
+    "koffi",
+    "@koromix/koffi-win32-x64"
+  ],
+  "scripts": {
+    "verify-package": "node scripts/prepare-package.mjs"
+  },
+  "optionalDependencies": {
+    "@koromix/koffi-win32-x64": "3.3.0"
+  }
 }

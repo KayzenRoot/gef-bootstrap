@@ -37,6 +37,7 @@ The GEF Bootstrap repository itself is built through ChatGPT and connected proje
 - `GBS-M00-S05 — Frozen Decisions`
 - `.engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md`
 - `.engineering/DECISIONS-LEDGER.md`
+- `.engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md`
 - `.engineering/TECHNOLOGY-LEDGER.md`
 
 ## History
@@ -51,7 +52,7 @@ Only governed evidence-backed triggers may initiate reopening:
 
 `SOURCE_DRIFT`, `CONTRADICTION_DISCOVERED`, `SECURITY_OR_INTEGRITY_DEFECT`, `DEPENDENCY_INVALIDATED`, `V1_SCOPE_SUPERSESSION`, `MEASURED_FAILURE`, or `EXPLICIT_USER_PRODUCT_DECISION`.
 
-An explicit product-owner decision initiates a governed supersession process; it does not silently mutate the Constitution.
+An explicit product-owner decision initiates a governed supersession process; it does not silently mutate the Constitution. The owner-operated review/merge policy is the bounded, evidence-bound supersession recorded by D-0062/ADR-0006; the other frozen constitutional groups remain unchanged.
 
 ## Consumption rule
 Downstream work should consume the smallest relevant set of `CONST-F*`, amendment and `D-*` references first, expanding to full canonical sources only when validity, ambiguity, conflict or assurance requires it.

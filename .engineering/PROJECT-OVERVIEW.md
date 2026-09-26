@@ -131,7 +131,7 @@ V1 must be able to measure or explicitly classify unavailable/estimated token, t
 - replacing ChatGPT/planning semantics with hard-coded planner logic;
 - making a CLI interface itself the semantic source of truth;
 - requiring an always-on daemon/service unless later architecture proves necessity;
-- requiring UADS/Hive/UGAS to function;
+- requiring optional external ecosystems to function;
 - rewriting target architecture solely for GEF naming;
 - full brownfield normalization before use;
 - cross-project memory authority without dedicated provenance/security design;
@@ -139,7 +139,7 @@ V1 must be able to measure or explicitly classify unavailable/estimated token, t
 - universal improvement claims without evidence.
 
 ## Integration boundary
-UADS, Hive, UGAS and future ecosystems remain optional adapters/capabilities unless a future governed scope decision changes that boundary.
+External ecosystems remain optional adapters/capabilities unless a future governed scope decision changes that boundary.
 
 ## Success model
 GEF Bootstrap succeeds when it can initialize or progressively govern target repositories, compile bounded work from canonical sources, safely reduce rediscovery/context/test cost, produce evidence-bound review/completion, preserve cross-chat continuity and demonstrate measurable engineering-cost behavior when data exists.

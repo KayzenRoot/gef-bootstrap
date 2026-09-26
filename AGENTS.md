@@ -35,5 +35,9 @@ The executor should execute, not rediscover product intent.
 - Keep GitHub/provider automation as an acceleration and evidence layer. Runtime product correctness must not depend on GitHub unless the product scope explicitly requires it.
 - The completed product must remain operable when the repository is private and GitHub automation is disabled, except for repository hosting/version-control functions explicitly chosen by the operator.
 
+## Owner-operated review and merge
+
+For this repository, all GitHub writes use the owner account `KayzenRoot`. Never request or wait for collaborator review and never switch to another connected account. The owner performs and records the exact-head semantic audit; do not label it independent. The owner may merge only after all Work Order-required checks pass on the exact head, CRITICAL/HIGH blockers are zero and the target branch is authorized. Preserve branch protections and required checks; do not bypass a failing or pending check.
+
 ## Completion
-A green test is evidence, not completion. A merged PR is not MODULE_DONE by itself. Follow the project DoD, exact-head semantic audit, evidence bundle and checkpoint promotion rules.
+A green test is evidence, not completion. A merged PR is not MODULE_DONE by itself. Follow the project DoD, owner exact-head audit, evidence bundle and checkpoint promotion rules.

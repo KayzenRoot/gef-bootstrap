@@ -61,7 +61,7 @@ GEF Bootstrap itself is built through ChatGPT and connected project tools. Codex
 ## Platform/profile
 - `REQ-PLAT-001` GitHub first-class profile using applicable PR/check/Actions/issues/ruleset/governance surfaces and truthful permission gaps.
 - `REQ-PLAT-002` Core semantic portability to equivalent version-controlled platforms satisfying identity/change/evidence/continuity contracts.
-- `REQ-PLAT-003` UADS/Hive/UGAS/other ecosystem integrations remain optional unless future governed scope admits them.
+- `REQ-PLAT-003` External ecosystem integrations remain optional unless future governed scope admits them.
 
 ## Security, recovery and compatibility
 - `REQ-SEC-001` Destructive/irreversible operations require explicit safety policy, scope validation and risk-appropriate recovery behavior.
@@ -84,7 +84,7 @@ Every NECESSARY requirement must ultimately map: `REQ-ID -> Scope owner/classifi
 This is the initial frozen V1 requirement baseline. A later REQ requires unique ID, canonical basis, applicability, dependency/impact analysis, Scope/Architecture/DoD impact, review and checkpoint promotion. It does not silently enter the V1 completion denominator until Scope admits it.
 
 ## Explicit non-requirements
-No specific CLI framework, always-on daemon/service, fixed language before Architecture, mandatory UADS/Hive/UGAS integration, GitHub semantics for all platforms, cross-project memory authority, universal percentage gain guarantee, full brownfield normalization before use, or premature final Source Capsule/Execution Pack schema.
+No specific CLI framework, always-on daemon/service, fixed language before Architecture, mandatory external ecosystem integration, GitHub semantics for all platforms, cross-project memory authority, universal percentage gain guarantee, full brownfield normalization before use, or premature final Source Capsule/Execution Pack schema.
 
 ## Closed design questions
 1. Applicability is assigned by Scope; no duplicate requirement priority system.

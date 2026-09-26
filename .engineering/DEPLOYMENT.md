@@ -19,7 +19,7 @@ The product remains local-first and usable from a checked-out Git repository/fil
 4. **Repository checkout/development install** remains a supported contributor/recovery path.
 5. **GitHub Releases** publish release notes, exact-source manifest, checksums and optional downloadable artifacts.
 6. **Standalone executable** is separately promotable and is not required for initial independent `PRODUCTION_RELEASE_DONE` unless its own promotion gates later pass and Scope is explicitly amended.
-7. Optional UADS/Hive/UGAS adapters remain separately activatable packages/profiles and do not block independent production completion.
+7. Optional ecosystem adapters remain separately activatable packages/profiles and do not block independent production completion.
 
 ## Primary build/distribution flow
 ```text
