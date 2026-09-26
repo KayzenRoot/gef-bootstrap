@@ -167,7 +167,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 ### V1.1 continuation
 - Active Work Order: `NONE`
 - Next Work Order: `GBS-V11-WO-009` (not admitted)
-- Next legal action: plan and admit WO-009; no WO-009 implementation has started.
+- Next legal action: plan and admit WO-009. No WO-009 implementation has started.
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
 - M41-M47 Integrated Assurance: `35164467254` `SUCCESS`
