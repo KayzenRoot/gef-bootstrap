@@ -36,7 +36,14 @@ const ENGINES = [
   { name: "security-reliability-integrations", source: "packages/security-reliability-integrations/src/index.js", target: "src/index.js" },
   { name: "m41-m47-platform", source: "packages/m41-m47-platform/src/index.mjs", target: "src/index.mjs" },
   { name: "m55-m61-quality", source: "packages/m55-m61-quality/src/index.mjs", target: "src/index.mjs" },
-  { name: "m62-m63-final", source: "packages/m62-m63-final/src/index.mjs", target: "src/index.mjs" },
+  {
+    name: "m62-m63-final",
+    source: "packages/m62-m63-final/src/index.mjs",
+    target: "src/index.mjs",
+    supportingFiles: [
+      { source: "packages/m62-m63-final/src/v11-performance-telemetry.mjs", target: "src/v11-performance-telemetry.mjs" },
+    ],
+  },
 ];
 
 /** Workspace runtime packages bundled into the tarball. */
@@ -86,6 +93,21 @@ export function stage() {
       target: `vendor/engines/${engine.name}/${engine.target}`,
       sha256: sha256(target),
     });
+
+    for (const support of engine.supportingFiles ?? []) {
+      const supportSource = join(repositoryRoot, support.source);
+      if (!existsSync(supportSource)) throw new Error(`Engine support source is missing: ${support.source}`);
+      const supportTarget = join(staging, "vendor", "engines", engine.name, support.target);
+      mkdirSync(dirname(supportTarget), { recursive: true });
+      cpSync(supportSource, supportTarget);
+      manifest.artifacts.push({
+        kind: "engine-support",
+        name: `${engine.name}/${support.target}`,
+        source: support.source,
+        target: `vendor/engines/${engine.name}/${support.target}`,
+        sha256: sha256(supportTarget),
+      });
+    }
   }
 
   for (const name of CLI_SCHEMA_ASSETS) {
