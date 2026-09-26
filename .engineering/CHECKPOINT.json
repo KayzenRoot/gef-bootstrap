@@ -143,7 +143,7 @@
   "stopState": "GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088",
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY",
+    "status": "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -312,15 +312,64 @@
           "incrementalValidation": 35875616512,
           "proofReuse": 35875616420
         }
+      },
+      "GBS-V11-WO-008": {
+        "status": "OWNER_AUDIT_APPROVED_MERGED",
+        "implementationPr": 296,
+        "implementationBranch": "feat/1.1/wo-008-performance-telemetry",
+        "auditedHead": "c4a108059d5b77baed43faa28847828ea1f450a7",
+        "objectiveAudit": "OWNER_APPROVED",
+        "auditIndependence": "NOT_INDEPENDENT",
+        "objectiveReview": 5848062290,
+        "implementationMerge": "ed69cc790c599674cc8ba845f3c393cd38964ef1",
+        "criticalFindings": 0,
+        "highFindings": 0,
+        "exactHeadChecks": {
+          "count": 24,
+          "conclusion": "SUCCESS",
+          "head": "c4a108059d5b77baed43faa28847828ea1f450a7"
+        },
+        "contextLock": ".engineering/context-locks/GBS-V11-WO-008.json",
+        "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md",
+        "assuranceRuns": {
+          "m01Validation": 108413194424,
+          "telemetryUbuntu": 108413193694,
+          "telemetryWindows": 108413193855,
+          "telemetryMacos": 108413193872,
+          "windowsRightsOracle": 108413193810,
+          "upgradeRecoveryUbuntu": 108413194508,
+          "upgradeRecoveryWindows": 108413194510,
+          "upgradeRecoveryMacos": 108413194379,
+          "regression": [
+            108413193669,
+            108413193700,
+            108413193818,
+            108413193920
+          ],
+          "focused": [
+            108413193780,
+            108413193741,
+            108413193828,
+            108413193840,
+            108413193824,
+            108413193867,
+            108413193925,
+            108413193971,
+            108413193989,
+            108413194030,
+            108413194042,
+            108413194051
+          ]
+        }
       }
     },
-    "activeWorkOrder": "GBS-V11-WO-008",
-    "activeWorkOrderStatus": "IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT",
-    "implementationBranch": "feat/1.1/wo-008-performance-telemetry",
-    "contextLock": ".engineering/context-locks/GBS-V11-WO-008.json",
-    "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md",
-    "nextLegalAction": "OWNER_AUDIT_PR_296_EXACT_HEAD_C4A108059D5B77BAED43FAA28847828EA1F450A7",
-    "stopState": "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY",
+    "activeWorkOrder": "NONE",
+    "activeWorkOrderStatus": "NONE",
+    "implementationBranch": "NONE",
+    "contextLock": "NONE",
+    "executionBrief": "NONE",
+    "nextLegalAction": "PLAN_AND_ADMIT_GBS_V11_WO_009",
+    "stopState": "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION",
     "ecosystemDetachment": {
       "decision": "D-0061",
       "adr": "ADR-0005",
@@ -363,12 +412,6 @@
         "head": "03f81da4c85fe06310ad4c94a79af20e71747681"
       }
     },
-    "activeImplementationPr": 296,
-    "activeImplementationHead": "c4a108059d5b77baed43faa28847828ea1f450a7",
-    "activeImplementationChecks": {
-      "count": 24,
-      "conclusion": "SUCCESS",
-      "head": "c4a108059d5b77baed43faa28847828ea1f450a7"
-    }
+    "nextWorkOrder": "GBS-V11-WO-009"
   }
 }

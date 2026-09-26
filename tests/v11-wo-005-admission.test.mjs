@@ -46,8 +46,9 @@ test("legacy ecosystem detachment remains effective before WO-005", () => {
 
 test("WO-005 admission remains provable after objective promotion to later Work Orders", () => {
   const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
+  const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-  const ordinal = ownerGovernancePromoted ? 8 : match === null ? null : Number.parseInt(match[1], 10);
+  const ordinal = (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
   assert.ok(Number.isInteger(ordinal) && ordinal >= 5, `unexpected V1.1 state: ${checkpoint.v11.status}`);
 
   if (ordinal === 5) {
@@ -65,8 +66,13 @@ test("WO-005 admission remains provable after objective promotion to later Work 
     assert.equal(completed.criticalFindings, 0);
     assert.equal(completed.highFindings, 0);
     const activeId = String(ordinal).padStart(3, "0");
-    assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${activeId}`);
-    assert.equal(checkpoint.v11.stopState, ownerGovernancePromoted ? 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY' : `GBS_V11_WO_${activeId}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`);
+    if (wo008Completed) {
+      assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
+      assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
+    } else {
+      assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${activeId}`);
+      assert.equal(checkpoint.v11.stopState, ownerGovernancePromoted ? 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY' : `GBS_V11_WO_${activeId}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`);
+    }
     assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-005"));
   }
 });

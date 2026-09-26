@@ -1,6 +1,6 @@
 # GBS-V11-WO-008 — Performance Telemetry + Benchmark
 
-Status: `ADMITTED; IMPLEMENTATION_PR_OPEN_AWAITING_OWNER_AUDIT`
+Status: `OWNER_AUDIT_APPROVED_MERGED`
 Release line: `1.1.x`
 Assurance: `STANDARD`
 Implementation branch after admission: `feat/1.1/wo-008-performance-telemetry`
@@ -165,4 +165,17 @@ Owner audit in Brazilian Portuguese with exact head SHA, scope audit, TELEM-01..
 
 Stop after implementation, validation, evidence and exact-head owner audit. If the audit is `OWNER_APPROVED`, all required checks pass on that exact head and CRITICAL/HIGH are zero, the owner may merge into `release/1.1`; then promote the checkpoint before starting WO-009.
 
-STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OWNER_AUDIT_AND_MERGE`
+STOP CONDITION: `GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION`
+
+
+## FINAL OUTCOME
+
+Status: `OWNER_AUDIT_APPROVED_MERGED`
+- Implementation PR: #296.
+- Exact owner-audited head: `c4a108059d5b77baed43faa28847828ea1f450a7`.
+- Owner audit: comment #5848062290, `OWNER_APPROVED`; this is not an independent review.
+- Exact-head checks: 24/24 `SUCCESS`.
+- Findings: CRITICAL=0, HIGH=0.
+- Merge by `KayzenRoot` into `release/1.1`: `ed69cc790c599674cc8ba845f3c393cd38964ef1`.
+- Final evidence: `.engineering/evidence/GBS-V11-WO-008-EVIDENCE.md`.
+- The checkpoint now records WO-008 complete. Next legal action is to plan and admit WO-009; implementation remains outside this Work Order.

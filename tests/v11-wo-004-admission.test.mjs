@@ -38,8 +38,9 @@ test('WO-003 objective approval is promoted before WO-004 admission', () => {
 
 test('WO-004 promotion is preserved after every later V1.1 admission', () => {
   const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
+  const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-  const ordinal = ownerGovernancePromoted ? 8 : match === null ? null : Number.parseInt(match[1], 10);
+  const ordinal = (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
   assert.ok(Number.isInteger(ordinal) && ordinal >= 5, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   const completed = checkpoint.v11.completedWorkOrders['GBS-V11-WO-004'];
   assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
@@ -49,7 +50,12 @@ test('WO-004 promotion is preserved after every later V1.1 admission', () => {
   assert.equal(completed.implementationMerge, 'ab820243b6c44e2ce9c5b747a7a6a4c688d90fed');
   assert.equal(completed.criticalFindings, 0);
   assert.equal(completed.highFindings, 0);
-  assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${String(ordinal).padStart(3, '0')}`);
+  if (wo008Completed) {
+    assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
+    assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
+  } else {
+    assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${String(ordinal).padStart(3, '0')}`);
+  }
   assert.ok(checkpointMd.includes('### Completed V1.1 increment — WO-004'));
 });
 
