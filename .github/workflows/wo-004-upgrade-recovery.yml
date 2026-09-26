@@ -11,12 +11,14 @@ on:
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/wo-004-upgrade-recovery.yml"
+      - ".engineering/evidence/GBS-V11-WO-009-EVIDENCE.md"
   push:
     branches: [release/1.1]
     paths:
       - "packages/cli/**"
       - "tests/v11-wo-004-*.test.mjs"
       - ".github/workflows/wo-004-upgrade-recovery.yml"
+      - ".engineering/evidence/GBS-V11-WO-009-EVIDENCE.md"
   workflow_dispatch:
 
 permissions:

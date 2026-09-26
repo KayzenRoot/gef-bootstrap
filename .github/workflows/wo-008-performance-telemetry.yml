@@ -16,12 +16,15 @@ on:
       - '.engineering/work-orders/GBS-V11-WO-008.md'
       - '.engineering/evidence/GBS-V11-WO-008-EVIDENCE.md'
       - '.github/workflows/wo-008-performance-telemetry.yml'
+      - '.engineering/evidence/GBS-V11-WO-009-EVIDENCE.md'
 
 permissions:
   contents: read
 
 jobs:
   telemetry-cross-platform:
+    env:
+      WO_EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     timeout-minutes: 5
     strategy:
       fail-fast: false
@@ -30,9 +33,21 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - name: Assert exact event head (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $actual = (git rev-parse HEAD).Trim()
+          if ($actual -ne $env:WO_EXPECTED_SHA) { throw "Checkout SHA mismatch" }
+      - name: Assert exact event head (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$WO_EXPECTED_SHA"
       # The telemetry contract is dependency-free ESM. Existing M41/M55/M62 and WO-003
       # workflows own their broader builds, regression suites, audits and packed-install tests.
       # Keep this matrix scoped to the new contract instead of repeating those gates three times.
