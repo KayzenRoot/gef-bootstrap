@@ -1,6 +1,6 @@
 # GBS-V11-GOV-001 — Owner-operated review and merge authority
 
-Status: `OWNER_ADMITTED`
+Status: `PROMOTED_TO_RELEASE_1.1`
 Release line: `1.1.x`
 Assurance: `STANDARD`
 Implementation branch: `governance/GBS-V11-GOV-001-owner-operated`
@@ -121,3 +121,15 @@ Owner audit in Brazilian Portuguese, bound to exact head SHA. Report changed fil
 Stop after the governance PR is exact-head owner-audited, all required checks pass, it is merged into `release/1.1`, and the checkpoint routes WO-008 to owner audit.
 
 STOP CONDITION: `GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY`
+
+
+## PROMOTION RESULT
+
+Status: `PROMOTED_TO_RELEASE_1.1`
+- Promotion PR: #298.
+- Audited exact head: `03f81da4c85fe06310ad4c94a79af20e71747681`.
+- Owner audit: comment #5847950958, `OWNER_APPROVED`; CRITICAL=0/HIGH=0.
+- Exact-head check runs: 30/30 `SUCCESS`.
+- Squash merge by `KayzenRoot`: `d52dcca0840465324582b022c53b5a12fd0a3840`.
+- Evidence: `.engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md`.
+- Next legal action: owner exact-head audit of PR #296 at `c4a108059d5b77baed43faa28847828ea1f450a7`; collaborator review is not required.

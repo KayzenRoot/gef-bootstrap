@@ -143,7 +143,7 @@
   "stopState": "GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088",
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_GOV_001_OWNER_POLICY_PENDING_PROMOTION_WO_008_OWNER_AUDIT_NEXT",
+    "status": "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -169,7 +169,7 @@
     },
     "executorAuthority": {
       "decision": "D-0062 / ADR-0006",
-      "state": "OWNER_APPROVED_EFFECTIVE_ON_GBS-V11-GOV-001_MERGE",
+      "state": "EFFECTIVE",
       "ownerAccount": "KayzenRoot",
       "allowedBranches": [
         "release/1.1",
@@ -187,7 +187,13 @@
         "merge with failed, pending, stale or mismatched required checks",
         "merge with unresolved CRITICAL/HIGH blockers",
         "V1.0.0 acceptance history mutation"
-      ]
+      ],
+      "effectivePromotion": {
+        "pullRequest": 298,
+        "auditedHead": "03f81da4c85fe06310ad4c94a79af20e71747681",
+        "ownerAuditComment": 5847950958,
+        "mergeSha": "d52dcca0840465324582b022c53b5a12fd0a3840"
+      }
     },
     "cliAdmission": {
       "decision": "ADR-0003-D4",
@@ -313,7 +319,7 @@
     "implementationBranch": "feat/1.1/wo-008-performance-telemetry",
     "contextLock": ".engineering/context-locks/GBS-V11-WO-008.json",
     "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md",
-    "nextLegalAction": "PROMOTE_GBS_V11_GOV_001_THEN_OWNER_AUDIT_PR_296_EXACT_HEAD_C4A108059D5B77BAED43FAA28847828EA1F450A7",
+    "nextLegalAction": "OWNER_AUDIT_PR_296_EXACT_HEAD_C4A108059D5B77BAED43FAA28847828EA1F450A7",
     "stopState": "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY",
     "ecosystemDetachment": {
       "decision": "D-0061",
@@ -334,12 +340,27 @@
       "requiredCollaboratorReview": false,
       "ownerAuditRequired": true,
       "mergeAllowedAfter": "exact-head owner audit OWNER_APPROVED; all required checks successful; CRITICAL/HIGH=0; authorized target",
-      "effectiveOn": "GBS-V11-GOV-001 exact-head owner audit and promotion merge into release/1.1",
+      "effectiveOn": "PR #298 owner-audited at exact head 03f81da4c85fe06310ad4c94a79af20e71747681, 30/30 checks successful, then merged into release/1.1 as d52dcca0840465324582b022c53b5a12fd0a3840",
       "rulesetSnapshot": {
         "name": "Main Branch Protection",
         "requiredApprovingReviewCount": 0,
         "requiredStatusCheck": "Repository validation",
-        "checkedDate": "2026-09-26"
+        "checkedDate": "2026-09-26",
+        "rulesetId": 23566111,
+        "appliesTo": "refs/heads/main",
+        "deletionProtection": true,
+        "nonFastForwardProtection": true,
+        "currentUserCanBypass": "never"
+      },
+      "state": "EFFECTIVE",
+      "promotionPr": 298,
+      "auditedHead": "03f81da4c85fe06310ad4c94a79af20e71747681",
+      "ownerAuditComment": 5847950958,
+      "promotionMerge": "d52dcca0840465324582b022c53b5a12fd0a3840",
+      "exactHeadChecks": {
+        "count": 30,
+        "conclusion": "SUCCESS",
+        "head": "03f81da4c85fe06310ad4c94a79af20e71747681"
       }
     },
     "activeImplementationPr": 296,

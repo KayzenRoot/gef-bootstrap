@@ -1,6 +1,6 @@
 # ADR-0006 — Owner-operated review and merge authority
 
-Status: `OWNER_APPROVED; EFFECTIVE_ON_GBS-V11-GOV-001_MERGE`
+Status: `EFFECTIVE`
 Release line: `1.1.x`
 Decision owner: `KayzenRoot` (GitHub user ID `114633702`)
 Authorization date: `2026-09-26`
@@ -48,4 +48,4 @@ Tradeoff: the semantic audit is not independent. Mitigation is an explicit exact
 
 ## Promotion
 
-The Product Owner explicitly requested this change on 2026-09-26. Under D-0042, the decision becomes durable authority only when GBS-V11-GOV-001 is exact-head audited by the owner, all required checks pass, and its promotion PR merges into `release/1.1`. The promoted checkpoint then routes WO-008 to owner audit and owner-authorized merge.
+The Product Owner explicitly requested this change on 2026-09-26. Under D-0042, the decision became durable authority after GBS-V11-GOV-001 was owner-audited at exact head `03f81da4c85fe06310ad4c94a79af20e71747681`, all 30 required check runs succeeded, and promotion PR #298 merged into `release/1.1` as `d52dcca0840465324582b022c53b5a12fd0a3840`. The checkpoint now routes WO-008 to owner audit and owner-authorized merge. The audit record is comment #5847950958 and `.engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md`.

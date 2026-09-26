@@ -251,5 +251,6 @@ Status: `ACTIVE`
 - Decision: `KayzenRoot` is the sole account for GitHub writes, semantic audit, approval decisions and merge operations in this GEF Bootstrap repository. Collaborator review/approval is optional advice and is never a required gate. The owner performs a substantive exact-head audit recorded on the PR; it is not called independent. The owner may merge only after all Work Order-required checks are successful on the exact head, the audit is `OWNER_APPROVED`, the branch is mergeable and CRITICAL/HIGH blockers are zero. Required CI, security, evidence, release boundaries, no-force-push/history-rewrite and explicit S4 controls remain unchanged. GEF-generated target-project workflows default to the configured project-owner account and must not require collaborators to advance.
 - Supersedes, bounded: ADR-0003-D3 clauses prohibiting owner merge and requiring the audit to be external; conflicting independent-collaborator review requirements in the active WO-008 contract and future GEF templates. Historical approved audit records are preserved.
 - Authority source: explicit Product Owner instruction dated 2026-09-26; full impact and controls in `.engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md`.
-- Effective: upon exact-head owner audit, required checks and promotion merge of `GBS-V11-GOV-001` into `release/1.1`.
-- Status: `OWNER_APPROVED_EFFECTIVE_ON_GBS-V11-GOV-001_MERGE`
+- Effective: PR #298 owner-audited exact head `03f81da4c85fe06310ad4c94a79af20e71747681`; 30/30 checks succeeded; promotion merge into `release/1.1` was `d52dcca0840465324582b022c53b5a12fd0a3840`.
+- Owner audit: comment #5847950958; evidence `.engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md`.
+- Status: `EFFECTIVE`
