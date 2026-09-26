@@ -15,10 +15,10 @@ const adr = read('.engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECU
 const receipt = json('.engineering/evidence/GBS-V11-WO-001-PROMOTION-RECEIPT.json');
 
 const foundationPromoted = checkpoint.v11.status === 'GBS_V11_FOUNDATION_PROMOTED';
-const ownerGovernancePending = checkpoint.v11.status === 'GBS_V11_GOV_001_OWNER_POLICY_PENDING_PROMOTION_WO_008_OWNER_AUDIT_NEXT';
+const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
 const admittedMatch = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-const admittedOrdinal = ownerGovernancePending ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
-const legalPostFoundationStates = foundationPromoted || ownerGovernancePending || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
+const admittedOrdinal = ownerGovernancePromoted ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
+const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
 
 test('V1.0 production acceptance remains byte-semantically preserved at the checkpoint boundary', () => {
   assert.equal(checkpoint.status, 'GBS_V1_PRODUCTION_ACCEPTED');
@@ -39,7 +39,7 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_FOUNDATION_PROMOTED_READY_FOR_WO_002');
     return;
   }
-  if (ownerGovernancePending) {
+  if (ownerGovernancePromoted) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-008');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY');
@@ -68,7 +68,7 @@ test('D-0042 promotion is explicit and does not self-authorize main', () => {
   assert.equal(checkpoint.v11.promotion.decision, 'D-0059');
   assert.equal(checkpoint.v11.promotion.adr, 'ADR-0003');
   assert.equal(checkpoint.v11.executorAuthority.decision, 'D-0062 / ADR-0006');
-  assert.equal(checkpoint.v11.executorAuthority.state, 'OWNER_APPROVED_EFFECTIVE_ON_GBS-V11-GOV-001_MERGE');
+  assert.equal(checkpoint.v11.executorAuthority.state, 'EFFECTIVE');
   assert.equal(checkpoint.v11.executorAuthority.ownerAccount, 'KayzenRoot');
   assert.equal(checkpoint.v11.executorAuthority.requiresAdmittedWorkOrder, true);
   assert.equal(checkpoint.v11.executorAuthority.requiresExactHeadOwnerAudit, true);
@@ -137,7 +137,7 @@ test('WO-002 remains the first governed increment and later admissions preserve 
     return;
   }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
-  if (ownerGovernancePending) {
+  if (ownerGovernancePromoted) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-008');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY');

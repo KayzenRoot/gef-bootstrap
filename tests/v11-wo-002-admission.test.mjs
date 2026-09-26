@@ -23,9 +23,9 @@ test('V1 production truth remains unchanged while V1.1 progresses beyond WO-002 
 });
 
 test('V1.1 checkpoint progression never regresses before WO-002 admission', () => {
-  const ownerGovernancePending = checkpoint.v11.status === 'GBS_V11_GOV_001_OWNER_POLICY_PENDING_PROMOTION_WO_008_OWNER_AUDIT_NEXT';
+  const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-  const ordinal = ownerGovernancePending ? 8 : match === null ? null : Number.parseInt(match[1], 10);
+  const ordinal = ownerGovernancePromoted ? 8 : match === null ? null : Number.parseInt(match[1], 10);
   assert.ok(Number.isInteger(ordinal) && ordinal >= 2, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (ordinal === 2) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-002');
@@ -43,7 +43,7 @@ test('V1.1 checkpoint progression never regresses before WO-002 admission', () =
 
 test('executor authority remains branch and Work-Order bounded', () => {
   assert.equal(checkpoint.v11.executorAuthority.decision, 'D-0062 / ADR-0006');
-  assert.equal(checkpoint.v11.executorAuthority.state, 'OWNER_APPROVED_EFFECTIVE_ON_GBS-V11-GOV-001_MERGE');
+  assert.equal(checkpoint.v11.executorAuthority.state, 'EFFECTIVE');
   assert.equal(checkpoint.v11.executorAuthority.ownerAccount, 'KayzenRoot');
   assert.equal(checkpoint.v11.executorAuthority.requiresAdmittedWorkOrder, true);
   assert.equal(checkpoint.v11.executorAuthority.requiresExactHeadOwnerAudit, true);

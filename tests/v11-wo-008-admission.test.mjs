@@ -10,6 +10,7 @@ const json = (path) => JSON.parse(read(path));
 
 const checkpoint = json(".engineering/CHECKPOINT.json");
 const checkpointMd = read(".engineering/CHECKPOINT.md");
+const governanceEvidence = read(".engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md");
 const lock = json(".engineering/context-locks/GBS-V11-WO-008.json");
 const wo = read(".engineering/work-orders/GBS-V11-WO-008.md");
 const brief = read(".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md");
@@ -37,13 +38,13 @@ test("WO-007 objective approval is promoted before WO-008 admission", () => {
 });
 
 test("machine and human checkpoint agree on owner-only governance and WO-008 audit route", () => {
-  assert.equal(checkpoint.v11.status, "GBS_V11_GOV_001_OWNER_POLICY_PENDING_PROMOTION_WO_008_OWNER_AUDIT_NEXT");
+  assert.equal(checkpoint.v11.status, "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY");
   assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-008");
   assert.equal(checkpoint.v11.activeWorkOrderStatus, "IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT");
   assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-008-performance-telemetry");
   assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-008.json");
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-008-DIRECT.md");
-  assert.equal(checkpoint.v11.nextLegalAction, "PROMOTE_GBS_V11_GOV_001_THEN_OWNER_AUDIT_PR_296_EXACT_HEAD_C4A108059D5B77BAED43FAA28847828EA1F450A7");
+  assert.equal(checkpoint.v11.nextLegalAction, "OWNER_AUDIT_PR_296_EXACT_HEAD_C4A108059D5B77BAED43FAA28847828EA1F450A7");
   assert.equal(checkpoint.v11.stopState, "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY");
   assert.equal(checkpoint.v11.ownerGovernance.ownerAccount, "KayzenRoot");
   assert.equal(checkpoint.v11.ownerGovernance.requiredCollaboratorReview, false);
@@ -83,4 +84,19 @@ test("Direct Execution Brief freezes truthful telemetry boundaries", () => {
   assert.ok(brief.includes("Unavailable tokens remain"));
   assert.ok(brief.includes("optimizationClaimEligible:false"));
   assert.ok(brief.includes("GBS_V11_WO_008_READY_FOR_OWNER_AUDIT_AND_MERGE"));
+});
+
+test("owner-only governance promotion is bound to the exact audit and successful checks", () => {
+  assert.equal(checkpoint.v11.ownerGovernance.state, "EFFECTIVE");
+  assert.equal(checkpoint.v11.ownerGovernance.promotionPr, 298);
+  assert.equal(checkpoint.v11.ownerGovernance.auditedHead, "03f81da4c85fe06310ad4c94a79af20e71747681");
+  assert.equal(checkpoint.v11.ownerGovernance.ownerAuditComment, 5847950958);
+  assert.equal(checkpoint.v11.ownerGovernance.promotionMerge, "d52dcca0840465324582b022c53b5a12fd0a3840");
+  assert.deepEqual(checkpoint.v11.ownerGovernance.exactHeadChecks, {
+    count: 30,
+    conclusion: "SUCCESS",
+    head: "03f81da4c85fe06310ad4c94a79af20e71747681"
+  });
+  assert.ok(governanceEvidence.includes("30/30 SUCCESS"));
+  assert.ok(governanceEvidence.includes("required approving reviews"));
 });

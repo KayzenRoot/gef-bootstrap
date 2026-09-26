@@ -37,9 +37,9 @@ test('WO-003 objective approval is promoted before WO-004 admission', () => {
 });
 
 test('WO-004 promotion is preserved after every later V1.1 admission', () => {
-  const ownerGovernancePending = checkpoint.v11.status === 'GBS_V11_GOV_001_OWNER_POLICY_PENDING_PROMOTION_WO_008_OWNER_AUDIT_NEXT';
+  const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-  const ordinal = ownerGovernancePending ? 8 : match === null ? null : Number.parseInt(match[1], 10);
+  const ordinal = ownerGovernancePromoted ? 8 : match === null ? null : Number.parseInt(match[1], 10);
   assert.ok(Number.isInteger(ordinal) && ordinal >= 5, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   const completed = checkpoint.v11.completedWorkOrders['GBS-V11-WO-004'];
   assert.equal(completed.status, 'OBJECTIVE_AUDIT_APPROVED_MERGED');
