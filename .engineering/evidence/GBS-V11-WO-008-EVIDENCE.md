@@ -1,6 +1,6 @@
 # GBS-V11-WO-008 — Evidence Bundle
 
-Status: `IMPLEMENTED; OBJECTIVE AUDIT READINESS IS GATED BY EXACT PR CHECKS`
+Status: `CORRECTION_DELTA_01_IMPLEMENTED; EXACT-HEAD CI AND OBJECTIVE AUDIT PENDING`
 Release line: `1.1.x`
 Assurance: `STANDARD`
 Stop condition: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`
@@ -65,7 +65,11 @@ P1-P8 match exactly on the measured source head: greenfield init plan; fixed emp
 | `npm run build -- --force` | PASS |
 | `npm run typecheck` | PASS |
 | `npm audit --audit-level=high` | PASS; 0 vulnerabilities |
-| Focused telemetry, M41/M55/M62, WO-005/006/007 and packed-install suites | PASS; 107/107 tests |
+| H4 pre-correction focused telemetry, engines, acceleration and packed-install suites | PASS; 107/107 tests |
+| Correction Delta 01 focused telemetry suite at source head `8273560f4b5ea0fd52d70b2d374eef058bcae92c` | PASS; 15/15 tests |
+| Correction Delta 01 M62-M63 focused suite | PASS; 6/6 tests |
+| Correction Delta 01 distribution smoke suite | PASS; 12/12 tests |
+| Correction Delta 01 exact-head hosted workflows | Pending; must pass on final PR head |
 | CLI/manual ROI smoke | PASS; both returned the same successful init plan digest |
 | `npm run validate` in this executor | Typecheck passed. Root-owned machine Git is intentionally refused by the high-assurance trust policy in privilege-sensitive integration cases; hosted full repository regressions below pass on the implementation head. |
 
@@ -101,3 +105,13 @@ Objective audit has **not** been performed by the executor. `CRITICAL` and `HIGH
 No checkpoint delta is applied. After an external `APPROVED` audit and the separately authorized merge, the proposed delta is to append WO-008 under `v11.completedWorkOrders` with PR #296, exact audited head, objective review ID, severity counts, assurance run IDs and implementation merge SHA. V1 production state, `main`, and `v1.0.0` remain unchanged.
 
 STOP CONDITION: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT` after the final evidence-head checks pass.
+
+## 9. Correction Delta 01 — baseline registry lineage integrity
+
+The deeper review reproduced two malformed-registry cases that the original capture path accepted: duplicate baseline IDs could coexist, and a child baseline could carry an orphaned or inconsistent ancestor list that was then copied into later captures. Individual baseline digests alone cannot establish parent-chain integrity because the parent records are held by the registry.
+
+The correction is committed on the same implementation branch at source head `8273560f4b5ea0fd52d70b2d374eef058bcae92c`. `captureBaseline` now validates registry-wide ID uniqueness, parent presence, parent population identity, and exact ancestry continuity before retaining or appending records. Invalid registries fail closed as `BASELINE_REGISTRY_INVALID`; valid immutable captures retain their existing behavior.
+
+New tests reproduce duplicate IDs, forged/orphaned ancestry, and missing ancestors. The corrected focused telemetry suite passes 15/15; the M62-M63 focused suite passes 6/6; the distribution smoke suite passes 12/12; the TypeScript build and `git diff --check` pass. These are local checks on the correction source head. The evidence-only commit and exact PR head still require hosted exact-head workflows, followed by the required independent objective audit. No audit disposition, severity count or checkpoint promotion is claimed here.
+
+Correction stop condition remains `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`, only after hosted checks pass for the final evidence head.

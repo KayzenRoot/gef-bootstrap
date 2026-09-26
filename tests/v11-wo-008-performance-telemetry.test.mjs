@@ -6,6 +6,7 @@ import {
   capturePerformanceRecord,
   compareBenchmarks,
   compareCliRoi,
+  digest,
   verifyBaseline,
   verifyPerformanceRecord,
 } from '../packages/m62-m63-final/src/index.mjs';
@@ -157,6 +158,51 @@ test('TELEM-05: recapture creates a new immutable identity and preserves prior l
   assert.deepEqual(second.baseline.lineageIds, ['baseline-01']);
   assert.equal(verifyBaseline(first.baseline), true);
   assert.equal(verifyBaseline(second.baseline), true);
+});
+
+test('baseline capture rejects duplicate IDs and inconsistent or incomplete ancestry', () => {
+  const recordInput = (recordId, samples) => ({
+    recordId,
+    population: population(),
+    metrics: { 'M-LAT-01': { unit: 'ms', source: 'MEASURED', samples } },
+    qualityGate: passingGate,
+  });
+  const root = captureBaseline([], { baselineId: 'lineage-root', recordInput: recordInput('lineage-root-record', [100, 101, 99]) }).baseline;
+  const duplicateRoot = captureBaseline([], { baselineId: 'lineage-root', recordInput: recordInput('duplicate-root-record', [90, 91, 89]) }).baseline;
+  const duplicate = captureBaseline([root, duplicateRoot], {
+    baselineId: 'lineage-child',
+    parentBaselineId: 'lineage-root',
+    recordInput: recordInput('lineage-child-record', [80, 81, 79]),
+  });
+  assert.equal(duplicate.state, 'INVALID');
+  assert.equal(duplicate.reasonCode, 'BASELINE_REGISTRY_INVALID');
+
+  const child = captureBaseline([root], {
+    baselineId: 'lineage-child',
+    parentBaselineId: 'lineage-root',
+    recordInput: recordInput('lineage-child-record', [80, 81, 79]),
+  }).baseline;
+  const inconsistent = JSON.parse(JSON.stringify(child));
+  inconsistent.lineageIds = ['orphan-baseline', 'lineage-root'];
+  delete inconsistent.digest;
+  inconsistent.digest = digest('GBS-V11-TELEM-BASELINE', inconsistent);
+  assert.equal(verifyBaseline(inconsistent), true, 'a single baseline cannot prove its parent chain without the registry');
+
+  const brokenChain = captureBaseline([root, inconsistent], {
+    baselineId: 'lineage-grandchild',
+    parentBaselineId: 'lineage-child',
+    recordInput: recordInput('lineage-grandchild-record', [70, 71, 69]),
+  });
+  assert.equal(brokenChain.state, 'INVALID');
+  assert.equal(brokenChain.reasonCode, 'BASELINE_REGISTRY_INVALID');
+
+  const missingAncestor = captureBaseline([child], {
+    baselineId: 'lineage-grandchild',
+    parentBaselineId: 'lineage-child',
+    recordInput: recordInput('lineage-grandchild-record', [70, 71, 69]),
+  });
+  assert.equal(missingAncestor.state, 'INVALID');
+  assert.equal(missingAncestor.reasonCode, 'BASELINE_REGISTRY_INVALID');
 });
 
 test('TELEM-06: CLI ROI compares the same workload honestly, including adverse and incomparable outcomes', () => {

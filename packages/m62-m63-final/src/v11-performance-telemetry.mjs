@@ -254,10 +254,30 @@ export function verifyBaseline(baseline) {
   return digest('GBS-V11-TELEM-BASELINE', baselineBody(baseline)) === baseline.digest;
 }
 
+function verifyBaselineRegistry(registry) {
+  if (!Array.isArray(registry)) return false;
+  const byId = new Map();
+  for (const baseline of registry) {
+    if (!verifyBaseline(baseline) || byId.has(baseline.baselineId)) return false;
+    byId.set(baseline.baselineId, baseline);
+  }
+  for (const baseline of registry) {
+    if (baseline.parentBaselineId === null) {
+      if (baseline.lineageIds.length !== 0) return false;
+      continue;
+    }
+    const parent = byId.get(baseline.parentBaselineId);
+    if (!parent
+      || parent.record.populationDigest !== baseline.record.populationDigest
+      || JSON.stringify(baseline.lineageIds) !== JSON.stringify([...parent.lineageIds, parent.baselineId])) return false;
+  }
+  return true;
+}
+
 /** Append an immutable baseline snapshot; recaptures of the same population require a parent ID. */
 export function captureBaseline(existingBaselines, input) {
   if (!Array.isArray(existingBaselines) || !isObject(input) || !ID.test(input.baselineId ?? '')) return fail('INVALID', 'BASELINE_INPUT_INVALID');
-  if (existingBaselines.some(item => !verifyBaseline(item))) return fail('INVALID', 'BASELINE_REGISTRY_INVALID');
+  if (!verifyBaselineRegistry(existingBaselines)) return fail('INVALID', 'BASELINE_REGISTRY_INVALID');
   if (existingBaselines.some(item => item.baselineId === input.baselineId)) return fail('INVALID', 'BASELINE_ID_ALREADY_EXISTS');
   const recordResult = capturePerformanceRecord(input.recordInput);
   if (recordResult.state !== 'CAPTURED') return recordResult;
