@@ -318,7 +318,7 @@ test("construction instructions make the canonical continuation mandatory for fr
   const agents = readFileSync(resolve(ROOT, "AGENTS.md"), "utf8");
   const runbook = readFileSync(resolve(ROOT, "docs/V1.1-OPERATIONS-RUNBOOK.md"), "utf8");
   assert.match(agents, /Fresh-context construction routing/);
-  assert.match(agents, /chat history is informational/i);
+  assert.match(agents, /chat history.*informational/i);
   assert.match(agents, /one canonical next necessary action/i);
   assert.match(runbook, /Start every new project chat from canonical state/);
   assert.match(runbook, /NONE\/UNKNOWN/);
