@@ -111,7 +111,7 @@ The correction is included on the same implementation branch at correction head 
 
 New tests reproduce duplicate IDs, forged/orphaned ancestry, and missing ancestors. The corrected focused telemetry suite passes 15/15; the M62-M63 focused suite passes 6/6; the distribution smoke suite passes 12/12; the TypeScript build and `git diff --check` pass against the correction source and test files included in `e71081bb2b46b7c438918694f7a3644b1c44197a`. All eight hosted workflows passed on that code head. At that historical evidence revision, exact-head checks and the owner audit were still pending. The final checks and owner disposition are recorded in Section 11.
 
-Correction stop condition remains `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`, only after hosted checks pass for the final evidence head.
+Historical correction-stage stop condition: `GBS_V11_WO_008_READY_FOR_OBJECTIVE_AUDIT`. Section 11 records its later supersession by the owner-approved audit and merge.
 
 ## 10. Exact-head hosted workflows for Correction Delta 01
 
