@@ -30,6 +30,18 @@ jobs:
         with:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Prepare trusted Trivy policy outside PR checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          policy_dir="$RUNNER_TEMP/trivy-pilot-policy"
+          mkdir -p "$policy_dir"
+          printf '{}\n' > "$policy_dir/trivy.yaml"
+          : > "$policy_dir/.trivyignore"
+          if [ -e "$GITHUB_WORKSPACE/trivyignores" ] || [ -L "$GITHUB_WORKSPACE/trivyignores" ]; then
+            echo "::error::Untrusted candidate provides reserved Trivy ignore output path"
+            exit 1
+          fi
       - name: Scan for HIGH/CRITICAL vulnerabilities and misconfigurations
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -39,6 +51,8 @@ jobs:
           format: table
           severity: HIGH,CRITICAL
           exit-code: "1"
+          trivy-config: ${{ runner.temp }}/trivy-pilot-policy/trivy.yaml
+          trivyignores: ${{ runner.temp }}/trivy-pilot-policy/.trivyignore
 
   gitleaks:
     name: Gitleaks secrets

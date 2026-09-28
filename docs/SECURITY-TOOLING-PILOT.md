@@ -47,6 +47,10 @@ The last corrected-head CodeRabbit review established a real policy-bypass risk:
 
 The CR-04 candidate requires fresh exact-head CI logs confirming both policy checksum and binary checksum, actual scanner results, and review of new external findings. Scans of an untrusted candidate cannot substitute for protecting the trusted workflow definition itself: branch protections and code ownership for security workflows remain a separate follow-up if desired.
 
+## Correction Delta CR-05: prevent untrusted Trivy suppressions
+
+The pinned Trivy Action accepts explicit `trivy-config` and `trivyignores` inputs, which it passes to the scanner as `TRIVY_CONFIG` and `TRIVY_IGNOREFILE`. The pilot now creates an empty trusted YAML configuration and empty ignore file under `RUNNER_TEMP` outside the PR checkout before launching Trivy. It fails closed if an untrusted candidate pre-creates `trivyignores`, the temporary combined ignore-file output path used by the pinned Action. This prevents a candidate's `.trivyignore` or `trivy.yaml` from silently weakening this pilot's intended scan policy. Exact-version behavior was verified against the pinned Trivy Action's `action.yaml` and `entrypoint.sh`, and actual execution on the corrected head must pass before approval. These protections do not prevent an attacker with permission to edit the CI workflow itself; enforce CODEOWNERS and branch rules separately.
+
 ## First PR validation procedure
 
 1. Open the pilot PR and verify changed files are limited to the Work Order, Context Lock, this document and `.github/workflows/free-security-pilot.yml`.
