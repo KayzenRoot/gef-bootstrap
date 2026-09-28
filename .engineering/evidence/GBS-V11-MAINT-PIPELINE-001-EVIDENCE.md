@@ -1,17 +1,18 @@
 # Evidence Bundle — GBS-V11-MAINT-PIPELINE-001
 
-Status: `IN_PROGRESS`
+Status: `PASS`
 
 ## Exact-state bindings
 
 - Base `release/1.1`: `e69d887a0f12b46218f40e849fdcf180e455eb3d`
+- Post-merge `release/1.1`: `44c6618ece1593365fb6c7f559d13c7166e7df26`
 - Main baseline: `73ab68f3f33f894027fb7a04c2696b02b839060a`
 - Shared ancestor: `72c17bd3e7e421790ac382022b1f0ebbb0275ea4`
 - Implementation branch: `feat/1.1/maint-pipeline-001`
-- Candidate SHA: `0af66d00280c22f789ea2cd64d36983e7333a244` (implementation plus default-branch Scorecard guard; Evidence Bundle update follows this validated candidate)
+- Final PR candidate SHA: `a29986a715e11be91b24065775cd79752a51d3d4` (implementation `0af66d00280c22f789ea2cd64d36983e7333a244` plus exact-head Evidence Bundle update)
 - PR: [#309](https://github.com/KayzenRoot/gef-bootstrap/pull/309)
-- Owner audit: pending
-- Merge SHA / post-merge checks: pending
+- Owner audit: [`OWNER_APPROVED`, not independent](https://github.com/KayzenRoot/gef-bootstrap/pull/309#issuecomment-5880190800)
+- Merge SHA: `44c6618ece1593365fb6c7f559d13c7166e7df26`; nine applicable post-merge workflows passed.
 
 ## Initial discovery
 
@@ -34,11 +35,13 @@ The pre-existing CodeQL HIGH `js/clear-text-logging`, identified in the WO-009 a
 | CodeQL | PASS | [analysis run 36493219075](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219075), plus exact-head CodeQL check `109167022995` with 0 annotations, head `0af66d00280c22f789ea2cd64d36983e7333a244` | 0 new high-severity finding in changed code; inherited WO-009 issue remains release-blocking |
 | Harden Runner | PASS | audit pre/run/post steps succeeded in both jobs in [run 36493219209](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219209); `continue-on-error`, telemetry non-blocking | best-effort; no network blocking enabled |
 | Dependency Review | PASS | [run 36493219166](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219166), check `109166489898`, head `0af66d00280c22f789ea2cd64d36983e7333a244` | GitHub Action; no newly introduced HIGH/CRITICAL dependency blocker |
-| OpenSSF Scorecard | NOT_VERIFIED | [manual run 36492033264](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36492033264) failed at `c118c2984fbeeadd25aec980c62b095ec378b29e`: upstream rejects non-default refs; SARIF upload skipped. Workflow guard added for default branch only; successful `main` run remains pending after promotion. | supply-chain signal, not a release gate; public Scorecard API publication disabled |
+| OpenSSF Scorecard | PASS | [run 36485873871](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36485873871) on default branch SHA `73ab68f3f33f894027fb7a04c2696b02b839060a`; Scorecard scan and private repository SARIF upload succeeded. | supply-chain signal, not a release gate; public Scorecard API publication disabled; high maturity findings are triaged below |
 | Codecov | NOT_APPLICABLE | Node 24.19 LCOV probe: 234 records, including 224 generated `dist` JS files, one test fixture, and zero TypeScript records; no source-only coverage claim is safe | optional; no Codecov workflow added |
 | SonarCloud | PASS | [PR #309 Quality Gate](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=309); 0 new/accepted issues, 0 hotspots, 0% duplication on new code at the candidate head | optional; not a branch-protection requirement |
 | Socket | PASS | [Project report](https://socket.dev/dashboard/org/nexlabs/sbom/ece2d4bd-2b70-48cd-8836-93d886647686) and `Socket Security: Pull Request Alerts` passed on PR #309 | optional; not a branch-protection requirement |
-| CodeRabbit / Greptile | NOT_VERIFIED | no required reviewer automation | optional; no Codex auto-review |
+| CodeRabbit | BLOCKED | Billing page shows Advanced trial and estimated US$90/month after 12 Oct 2026; user requested cancellation, but the final cancel control requires a manual account-owner click. | optional; not a branch requirement; no payment method observed; no paid upgrade or usage billing enabled |
+| Greptile | BLOCKED | Current trial hit its 50-credit limit; account page says add a payment method to continue after trial. | optional; not a branch requirement; do not add a card; no permanent free continuity confirmed for this `UNLICENSED` project |
+| StepSecurity app scope | NOT_VERIFIED | App is installed and Harden Runner passed in audit mode; GitHub required sudo reauthentication before repository selection could be read. | workflow remains `audit` + `continue-on-error`; this integration cannot block CI |
 
 ## Validation ledger
 
@@ -53,9 +56,9 @@ The pre-existing CodeQL HIGH `js/clear-text-logging`, identified in the WO-009 a
 | Targeted validation | `0af66d0…` | YAML parse for 42 workflow files, 127 full-SHA `uses` entries, `git diff --check`; local `npm ci --ignore-scripts` and `npm run build` were separately recorded against the locked base | PASS |
 | PR exact-head checks | `0af66d0…` / PR #309 | 128/128 checks successful at this head; see [PR #309 checks](https://github.com/KayzenRoot/gef-bootstrap/pull/309/checks) | PASS |
 | Scorecard non-default dispatch diagnostic | `c118c298…` / run 36492033264 | Failed before scanning because the upstream Action only supports default branch `main`; `0af66d0…` restricts the job to `main`, and Pipeline Integrity passed | FAIL (expected-ref mismatch; no Scorecard artifact was produced) |
-| Scorecard supported-branch run | post-merge exact `main` SHA | pending | NOT_VERIFIED |
-| Owner audit | pending | pending | NOT_VERIFIED |
-| Post-merge check state | pending | pending | NOT_VERIFIED |
+| Scorecard supported-branch run | `main` / `73ab68f3f33f894027fb7a04c2696b02b839060a` | [run 36485873871](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36485873871); scan and SARIF upload succeeded; `publish_results: false` | PASS |
+| Owner audit | `a29986a715e11be91b24065775cd79752a51d3d4` / PR #309 | [`OWNER_APPROVED`, not independent](https://github.com/KayzenRoot/gef-bootstrap/pull/309#issuecomment-5880190800); 132/132 exact-head checks and zero review threads | PASS |
+| Post-merge check state | `44c6618ece1593365fb6c7f559d13c7166e7df26` | [Pipeline Integrity](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36495266671), [Free Security Pilot](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36495266550), [Repository Validation](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36495266676), [CodeQL](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36495266604), and WO-003..WO-007 run IDs recorded in the checkpoint | PASS |
 
 ## Profiling and claims
 
@@ -67,4 +70,30 @@ No provider install or billing change is authorized by this Work Order. The pipe
 
 ## Closeout
 
-Complete only after exact-head checks, owner-operated audit (`OWNER_APPROVED`, not independent), squash merge into `release/1.1`, and post-merge verification. Preserve check URLs, run IDs, commit SHA, findings and unresolved optional-tier limitations here. Next legal action after closeout: refresh WO-009 Context Lock and revalidate its candidate against the new `release/1.1` base.
+Completed: exact-head checks passed on `a29986a715e11be91b24065775cd79752a51d3d4`, the owner-operated audit was `OWNER_APPROVED` (not independent), PR #309 was squash-merged at `44c6618ece1593365fb6c7f559d13c7166e7df26`, and all nine applicable post-merge workflows passed. No release promotion or production acceptance was performed. The next legal action is to refresh the separate WO-009 Context Lock and revalidate its candidate against the new `release/1.1` base.
+
+## Post-merge findings, free continuity, and stop condition
+
+### Scorecard findings on `main`
+
+Scorecard completed on `main` SHA `73ab68f3f33f894027fb7a04c2696b02b839060a`. The repository code-scanning API returned 15 total findings, including three open HIGH Scorecard maturity findings:
+
+| Alert | Rule | Observed result | Triage |
+|---|---|---|---|
+| [#3](https://github.com/KayzenRoot/gef-bootstrap/security/code-scanning/3) | BranchProtectionID | Score 3: stale-review dismissal, approver requirement, CODEOWNERS review, last-push approval and up-to-date branches are not all enabled. | Do not add a mandatory independent approver while the repo has no authorized independent reviewer. Existing PR requirement, four mandatory checks, thread resolution, no-delete/no-force-push and zero bypass actors remain active. Reassess governance when an independent reviewer is authorized. |
+| [#13](https://github.com/KayzenRoot/gef-bootstrap/security/code-scanning/13) | CodeReviewID | Score 0: no approved changesets were detected in the first 30 sampled changesets. | Consistent with owner-only review under ADR-0006 and the current lack of an authorized independent reviewer; keep the pilot ready for independent review before rollout. |
+| [#14](https://github.com/KayzenRoot/gef-bootstrap/security/code-scanning/14) | MaintainedID | Score 0 because the repository is less than 90 days old. | Time-dependent maturity signal; no code change can resolve the repository-age condition. |
+
+These are Scorecard governance/maturity signals, not newly introduced product vulnerabilities. The original `js/clear-text-logging` CodeQL rule does not appear in the current `state=all` code-scanning alert list; that does not clear the still-open WO-009 release gate on `release/1.1` without the separate exact-head WO-009 audit.
+
+### Tier and cost continuity
+
+- No subscription, paid feature, payment method, credit purchase or trial extension was activated by this Work Order. GitHub-native Actions checks remain the required pipeline path.
+- SonarQube Cloud, Socket and Codecov account pages showed their free plans. Their analyses remain optional: Sonar/Socket checks passed where configured; Codecov was not added because the existing LCOV contains generated JavaScript and no TypeScript source records.
+- StepSecurity is best-effort only. Harden Runner completed in audit mode; the account's exact repository scope and post-trial plan remain `NOT_VERIFIED` because GitHub requested sudo reauthentication.
+- CodeRabbit cancellation remains pending owner action. The billing UI exposes a “Cancel subscription” control that downgrades the current Advanced trial at its end; this workflow did not click the final consequential billing control. Greptile trial usage is exhausted and its free continuity is not established for this unlicensed repository. Neither app is a required check.
+- A machine-readable summary of final app plans and their official free-tier references is in `docs/MASTER-ENGINEERING-PIPELINE-PILOT.md` on `main`; no account-wide app scope was expanded.
+
+### Stop condition
+
+`GBS_V11_PIPELINE_ADOPTED_EXACT_HEAD_AND_POST_MERGE_VERIFIED` is satisfied for the pipeline forward-port. This does not satisfy WO-009 product acceptance, clear its inherited release blocker, promote `main`, authorize the corporate rollout, or replace the required independent review before rollout.
