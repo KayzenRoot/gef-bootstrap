@@ -33,6 +33,10 @@ Gitleaks' upstream Action is free without a license key for a repository owned b
 
 Independent Codex review of initial head `d5c68672c70e6e04900e89370a505b962f20d888` identified two high-priority workflow faults: default checkout would scan the synthetic PR merge tree instead of the evidenced head; and cancellation by `refs/heads/main` would interrupt a previous push-range secret scan. Corrective implementation pins both checkouts to the PR head, makes push/schedule/manual concurrency groups unique while allowing only superseded PR runs to cancel, fails closed for Gitleaks' 30-commit PR API pagination limit, and disables the action's job summary, which otherwise links to exposed secret locations. Initial-head PASS results remain historical only; re-run all required checks on the corrected exact head before approval. This is a correction within the same Work Order and PR, not a new phase.
 
+## Correction Delta CR-02: scan PRs retargeted to `main`
+
+The second Codex review of corrected head `f5518d17e07eaf28a4d2469fc8cd4b67eabc52bd` identified that the default `pull_request` activity set omits `edited`. Retargeting an existing PR from another branch to `main` therefore could bypass both scanner jobs until the PR's next push. The workflow now explicitly accepts `opened`, `synchronize`, `reopened`, `edited` and `ready_for_review`, combined with `branches: [main]`. This ensures retargeting to the protected base triggers scanning; other edits to existing main-targeting PRs can also rerun the scanners. The fix uses the same Work Order and requires fresh exact-head CI/review evidence. This is a trigger-contract correction, not a claim that a real retarget event was exercised in this pilot.
+
 ## First PR validation procedure
 
 1. Open the pilot PR and verify changed files are limited to the Work Order, Context Lock, this document and `.github/workflows/free-security-pilot.yml`.
