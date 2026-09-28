@@ -2,18 +2,6 @@
 name: OpenSSF Scorecard
 
 on:
-  # Scan the exact pushed commit only when security/pipeline policy changes.
-  # This enables pre-merge evidence without running Scorecard on every source commit.
-  push:
-    branches:
-      - "**"
-    paths:
-      - ".github/workflows/**"
-      - ".github/actions/**"
-      - ".github/dependabot.yml"
-      - ".github/CODEOWNERS"
-      - "CODEOWNERS"
-      - "SECURITY.md"
   schedule:
     - cron: "37 6 * * 1"
   workflow_dispatch:
