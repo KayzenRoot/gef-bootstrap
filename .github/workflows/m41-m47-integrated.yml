@@ -1,4 +1,8 @@
 name: M41-M47 Integrated Assurance
+
+permissions:
+  contents: read
+
 on:
   pull_request:
     paths:
