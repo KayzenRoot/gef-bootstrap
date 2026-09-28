@@ -35,3 +35,6 @@ Product code, V1 accepted 1088/1088 history, V1.1 development, runtime dependenc
 
 ## STOP CONDITION
 Do not merge until exact-head CI is green and changed-file review confirms only bounded pipeline/governance changes. After merge, update the main ruleset to require `Pipeline integrity`, `Gitleaks secrets`, and `Trivy filesystem and configuration` only after each exact check name has been observed successfully. `Pipeline integrity` intentionally runs on every PR to avoid required-check deadlocks.
+
+## CORRECTION DELTA SEC-002-CR-01 (2026-09-28)
+Greptile final review found three valid parser bypasses in the first Pipeline Integrity implementation: flow-style/multiline YAML could hide a mutable `uses`, quoted/commented `permissions: write-all` could evade text matching, and permitted local actions outside `.github/actions/` could escape metadata scanning. Replace line-oriented regex inspection with Ruby Psych semantic YAML parsing, recursively inspect every `uses` and `permissions` key, restrict local actions to canonical `.github/actions/<name>/` directories with action metadata, scan those action metadata files recursively, and fail closed on YAML parse errors or oversized policy inputs. Re-run the full exact-head matrix and external review before merge.

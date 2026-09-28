@@ -28,50 +28,105 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - name: Enforce immutable workflow dependencies
-        shell: python
+        shell: bash
         run: |
-          from pathlib import Path
-          import re
-          import sys
+          set -euo pipefail
+          ruby <<'RUBY'
+          require "yaml"
+          require "pathname"
 
-          roots = [Path(".github/workflows"), Path(".github/actions")]
-          files = []
-          for root in roots:
-              if not root.exists():
-                  continue
-              files.extend(p for p in root.rglob("*") if p.is_file() and p.suffix in {".yml", ".yaml"})
+          roots = [Pathname(".github/workflows")]
+          actions_root = Pathname(".github/actions")
+          files = roots.flat_map { |root| root.exist? ? root.glob("**/*.{yml,yaml}") : [] }
+          if actions_root.exist?
+            files.concat(actions_root.glob("**/{action.yml,action.yaml}"))
+          end
+          files = files.uniq.sort
 
-          uses_re = re.compile(r"^\s*(?:-\s*)?uses:\s*['\"]?([^'\"\s#]+)")
-          sha40 = re.compile(r"^[0-9a-fA-F]{40}$")
-          sha256 = re.compile(r"^[0-9a-fA-F]{64}$")
+          sha40 = /\A[0-9a-fA-F]{40}\z/
+          sha256 = /\A[0-9a-fA-F]{64}\z/
           violations = []
 
-          for path in sorted(files):
-              text = path.read_text(encoding="utf-8")
-              for number, line in enumerate(text.splitlines(), 1):
-                  stripped = line.strip()
-                  if re.match(r"^pull_request_target\s*:", stripped):
-                      violations.append(f"{path}:{number}: pull_request_target is forbidden")
-                  if re.match(r"^permissions:\s*write-all\s*$", stripped):
-                      violations.append(f"{path}:{number}: permissions: write-all is forbidden")
-                  match = uses_re.match(line)
-                  if not match:
-                      continue
-                  ref = match.group(1)
-                  if ref.startswith("./"):
-                      continue
-                  if ref.startswith("docker://"):
-                      if "@sha256:" not in ref or not sha256.fullmatch(ref.rsplit("@sha256:", 1)[1]):
-                          violations.append(f"{path}:{number}: Docker action must use @sha256 digest: {ref}")
-                      continue
-                  if "@" not in ref:
-                      violations.append(f"{path}:{number}: external action has no immutable ref: {ref}")
-                      continue
-                  version = ref.rsplit("@", 1)[1]
-                  if not sha40.fullmatch(version):
-                      violations.append(f"{path}:{number}: action ref must be a 40-hex commit SHA: {ref}")
+          validate_uses = lambda do |raw, path, trail|
+            unless raw.is_a?(String)
+              violations << "#{path}:#{trail}: uses must be a string"
+              next
+            end
 
-          if violations:
-              print("\n".join(violations))
-              sys.exit(1)
-          print(f"Pipeline integrity OK: scanned {len(files)} workflow/action YAML files.")
+            ref = raw.strip
+            if ref.start_with?("./")
+              clean = Pathname(ref).cleanpath.to_s.sub(%r{\A\./}, "")
+              unless clean.start_with?(".github/actions/") && !clean.split("/").include?("..")
+                violations << "#{path}:#{trail}: local actions are restricted to .github/actions/: #{ref}"
+                next
+              end
+              local = Pathname(clean)
+              unless local.directory? && (local.join("action.yml").file? || local.join("action.yaml").file?)
+                violations << "#{path}:#{trail}: local action metadata not found: #{ref}"
+              end
+              next
+            end
+
+            if ref.start_with?("docker://")
+              digest = ref.split("@sha256:", 2)[1]
+              unless digest && digest.match?(sha256)
+                violations << "#{path}:#{trail}: Docker action must use @sha256 digest: #{ref}"
+              end
+              next
+            end
+
+            owner_action, version = ref.rsplit("@", 2) rescue [nil, nil]
+            unless owner_action && !owner_action.empty? && version&.match?(sha40)
+              violations << "#{path}:#{trail}: external action ref must be a 40-hex commit SHA: #{ref}"
+            end
+          end
+
+          walk = lambda do |node, path, trail|
+            case node
+            when Hash
+              node.each do |key, value|
+                key_s = key.to_s
+                child = trail.empty? ? key_s : "#{trail}.#{key_s}"
+
+                if key_s == "pull_request_target"
+                  violations << "#{path}:#{child}: pull_request_target is forbidden"
+                end
+                if key_s == "permissions" && value.is_a?(String) && value.strip == "write-all"
+                  violations << "#{path}:#{child}: permissions: write-all is forbidden"
+                end
+                validate_uses.call(value, path, child) if key_s == "uses"
+                walk.call(value, path, child)
+              end
+            when Array
+              node.each_with_index { |value, index| walk.call(value, path, "#{trail}[#{index}]") }
+            end
+          end
+
+          files.each do |path|
+            if path.size > 524_288
+              violations << "#{path}: workflow/action YAML exceeds 512 KiB policy limit"
+              next
+            end
+
+            begin
+              document = YAML.safe_load(
+                path.read,
+                permitted_classes: [],
+                permitted_symbols: [],
+                aliases: true
+              )
+            rescue Psych::Exception => error
+              violations << "#{path}: YAML parse failed: #{error.message.lines.first.to_s.strip}"
+              next
+            end
+
+            walk.call(document, path, "")
+          end
+
+          if violations.any?
+            warn violations.join("\n")
+            exit 1
+          end
+
+          puts "Pipeline integrity OK: semantically scanned #{files.length} workflow/action YAML files."
+          RUBY

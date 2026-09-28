@@ -37,3 +37,10 @@ The first staged candidate would have upgraded every historical v4 Action to v7 
 
 ## Required-check liveness
 A required status check must be emitted for every PR subject to the ruleset. Therefore `Pipeline integrity` has no path filter. Security scanners also run for every PR to `main`; CodeQL and Codecov remain conditional/advisory and must not be made globally required while their path filters remain.
+
+## Semantic YAML enforcement
+The integrity gate parses workflow and local-action YAML semantically with Ruby Psych rather than relying on line-oriented regexes. This covers block mappings, flow-style mappings, quoted scalars, comments and multiline formatting. Every recursive `uses` value is validated. `permissions: write-all` and `pull_request_target` are rejected from parsed mappings.
+
+Local actions are allowed only under `.github/actions/<name>/` and must resolve to a directory containing `action.yml` or `action.yaml`. Their metadata is included in the semantic scan, closing the transitive mutable-action gap. YAML parse failures and workflow/action metadata larger than 512 KiB fail closed.
+
+This correction supersedes the earlier regex-only scanner described by the first SEC-002 candidate.
