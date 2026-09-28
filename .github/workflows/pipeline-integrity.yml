@@ -104,9 +104,16 @@ jobs:
                 action_step = location.length == 4 && location[0] == "runs" &&
                               location[1] == "steps" && location[2].is_a?(Integer)
 
-                if workflow && location.length == 2 && ["on", "true"].include?(location[0]) &&
-                   key_s == "pull_request_target"
-                  violations << "#{path}:#{child}: pull_request_target is forbidden"
+                if workflow && segments.empty? && ["on", "true"].include?(key_s)
+                  events = case value
+                           when String then [value]
+                           when Array then value
+                           when Hash then value.keys
+                           else []
+                           end
+                  if events.any? { |event| event.to_s.strip == "pull_request_target" }
+                    violations << "#{path}:#{child}: pull_request_target is forbidden in any on: form"
+                  end
                 end
                 if workflow && (location.length == 1 || job_node) && key_s == "permissions" &&
                    value.is_a?(String) && value.strip == "write-all"
@@ -122,6 +129,30 @@ jobs:
               node.each_with_index { |value, index| walk.call(value, path, "#{trail}[#{index}]", segments + [index]) }
             end
           end
+
+          # Verify policy semantics independently of the current repository contents.
+          fixtures = {
+            "forbidden scalar event" => ["on: pull_request_target", true],
+            "forbidden list event" => ["on: [push, pull_request_target]", true],
+            "forbidden map event" => ["on: {push: {}, pull_request_target: {}}", true],
+            "allowed list events" => ["on: [pull_request, push]", false],
+            "quoted write-all" => ["permissions: 'write-all'", true],
+            "commented write-all" => ["permissions: write-all # comment", true],
+            "mutable flow-style action" => ["jobs: {bad: {steps: [{uses: owner/action@v4}]}}", true],
+            "ordinary uses input" => [
+              "jobs: {safe: {steps: [{uses: 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1', with: {uses: 'regular input'}}]}}",
+              false
+            ],
+            "hidden local action" => ["jobs: {bad: {steps: [{uses: './.github/actions/.hidden'}]}}", true]
+          }
+          fixtures.each do |label, (yaml, should_fail)|
+            violations.clear
+            parsed = YAML.safe_load(yaml, permitted_classes: [], permitted_symbols: [], aliases: true)
+            walk.call(parsed, Pathname(".github/workflows/_policy_fixture.yml"), "", [])
+            raise "Pipeline integrity self-test failed: #{label}" unless violations.any? == should_fail
+          end
+          violations.clear
+          puts "Pipeline integrity self-tests passed: #{fixtures.size} cases."
 
           files.each do |path|
             if path.size > 524_288
