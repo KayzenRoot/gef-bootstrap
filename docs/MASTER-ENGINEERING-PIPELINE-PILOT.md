@@ -97,9 +97,17 @@ O Codecov recebeu LCOV em `3c4455a080055fb65fee7d7021b72c3d40c5ae52`: `tests/` d
 4. Se Harden Runner apontar tráfego inesperado, mantenha modo de auditoria, valide domínio, processo e job, documente justificativa e só proponha política de rede em outro escopo.
 5. Se Dependency Review falhar, confirme o delta de dependências e a origem no advisory database; não bloqueie histórico preexistente por esta execução.
 6. Se CodeQL/Codecov não rodarem por filtros, mantenha `NOT_VERIFIED` para aquele SHA, sem tornar o check obrigatório.
-7. Não use Codex review nem auto-merge. A revisão independente e autorização para merge são gates separados.
+7. Não use Codex review nem auto-merge. A auditoria exata do proprietário KayzenRoot e a decisão de merge são gates separados conforme ADR-0006; a auditoria não é independente.
 8. Não promova o checkpoint de manutenção nem edite o checkpoint histórico da V1 antes da aceitação independente e do merge permitido.
 
 ## Decisão de promoção
 
-Este MASTER é um registro de reconstrução, não autorização de rollout. O piloto só pode ser considerado completo quando os gates pendentes estiverem vinculados ao head exato e a revisão independente tiver sido tratada. A aplicação a qualquer outro repositório requer nova aprovação específica e preflight por repositório.
+Este MASTER é um registro de reconstrução, não autorização de rollout. O piloto só pode ser considerado completo quando os gates pendentes estiverem vinculados ao head exato e a auditoria do proprietário prevista no ADR-0006 tiver sido registrada. Essa auditoria não é independente. A aplicação a qualquer outro repositório requer nova aprovação específica e preflight por repositório.
+
+## Adendo de continuidade e operação best effort — 2026-09-28
+
+As capturas de billing fornecidas pelo proprietário confirmam Codecov Developer Free (0/250 uploads no período mostrado), Socket Free e a organização SonarQube Cloud no plano Free. O Sonar oferecia iniciar trial Team, mas o trial não foi iniciado; a elegibilidade permanente do projeto com licença `UNLICENSED` ainda não foi confirmada. O trial Advanced do CodeRabbit teve o cancelamento/downgrade agendado para 12 de outubro de 2026 por autorização do proprietário; a elegibilidade desse repositório `UNLICENSED` ao plano gratuito permanece incerta. Greptile informa que encerra após o trial, não tinha método de pagamento na captura e seu Starter Free (1 desenvolvedor ativo, 50 créditos/mês) não foi comprovado para a organização. StepSecurity Community é publicado como gratuito para repositórios públicos, mas o downgrade desta conta a partir do trial Enterprise não foi confirmado. Esses quatro serviços ficam `BLOCKED / OPTIONAL` para continuidade gratuita e não são checks exigidos pela ruleset.
+
+Os seis passos `step-security/harden-runner` permanecem em `egress-policy: audit` e agora usam `continue-on-error: true`. O Harden Runner fornece telemetria best effort e uma indisponibilidade/entitlement do StepSecurity não pode interromper Repository Validation, Trivy, Gitleaks, CodeQL ou cobertura. Nenhum pagamento, forma de pagamento, crédito ou extensão de trial foi habilitado.
+
+O gate de merge deste piloto usa a auditoria exata do proprietário conforme ADR-0006. Esse registro é owner-operated e **não é revisão independente**. Nenhum rollout além do repositório piloto está autorizado por este Work Order.
