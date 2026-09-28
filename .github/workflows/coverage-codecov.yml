@@ -1,0 +1,84 @@
+# GBS-MAINT-CI-002 — coverage analysis is independent of mandatory security gates.
+name: Codecov Coverage Pilot
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+      - ".github/workflows/coverage-codecov.yml"
+  push:
+    branches: [main]
+    paths:
+      - "packages/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig*.json"
+      - ".github/workflows/coverage-codecov.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codecov-coverage-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Node coverage LCOV
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write # Scoped to this job: Codecov OIDC authentication, no API token.
+    steps:
+      - name: Check out candidate
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Setup Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22.17.0"
+          cache: npm
+      - name: Install project dependencies
+        run: npm ci
+      - name: Build unchanged production code
+        run: npm run build
+      - name: Run Node's native test coverage and generate LCOV
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p coverage
+          node --test --experimental-test-coverage \
+            --test-reporter=spec \
+            --test-reporter=lcov \
+            --test-reporter-destination=stdout \
+            --test-reporter-destination=coverage/lcov.info \
+            tests/*.test.mjs
+      - name: Validate LCOV exists and contains actual source hit counts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s coverage/lcov.info
+          grep -q '^SF:' coverage/lcov.info
+          grep -q '^DA:' coverage/lcov.info
+          printf 'Non-empty LCOV report generated; coverage percentages must be inspected before any gate is imposed.\n'
+      - name: Upload coverage to Codecov via GitHub OIDC (advisory until proven)
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        continue-on-error: true
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        with:
+          use_oidc: true
+          files: ./coverage/lcov.info
+          disable_search: true
+          fail_ci_if_error: false
+          flags: node22-native
+          verbose: false
