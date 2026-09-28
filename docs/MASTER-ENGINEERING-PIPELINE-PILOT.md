@@ -77,7 +77,7 @@ Nenhuma assinatura paga, forma de pagamento, crédito ou extensão de trial foi 
 ## Workflows introduzidos ou ajustados
 
 1. `dependency-review.yml`: revisa alterações de dependências em pull requests para `main`; falha em HIGH e CRITICAL; usa `pull_request`, permissões `contents: read`, não publica comentário e não impõe licenças sem política aceita.
-2. `scorecard.yml`: auditoria semanal às segundas-feiras e execução manual na branch padrão; Action fixada por SHA; `publish_results: false`; SARIF limitado ao mecanismo de code scanning do repositório. O evento `push` de C4 foi removido após o Action rejeitar execução em branch de PR; `pull_request` e `workflow_dispatch` não são usados. O run de `main` 36485873871 concluiu com sucesso.
+2. `scorecard.yml`: auditoria semanal às segundas-feiras e execução manual via `workflow_dispatch`; a execução manual pode selecionar uma branch, mas o arquivo do workflow deve existir na branch padrão; Action fixada por SHA; `publish_results: false`; SARIF limitado ao mecanismo de code scanning do repositório. O evento `push` de C4 foi removido após o Action rejeitar execução em branch de PR; `pull_request` não é usado. O run de `main` 36485873871 concluiu com sucesso.
 3. Harden Runner v2.21.1 foi fixado em `e14015d583714f6e62063499dc959a02595150a1`, explicitamente `egress-policy: audit`, nos jobs Linux relevantes de validação, segurança, CodeQL, Codecov e Scorecard. Não há bloqueio de egress nem endpoint privilegiado.
 4. `repository-validation.yml` usa `npm run validate`, que combina o mesmo `tsc -b` usado em `typecheck` com a suíte de testes; o comando anterior executava `tsc -b` uma segunda vez via `npm test`.
 
