@@ -3,7 +3,7 @@
 Work Order: `GBS-MAINT-SEC-002`.
 
 ## Immutable references
-The repository uses exact Git commit SHAs for external GitHub Actions. The new `Pipeline integrity` job rejects mutable tags/branches and unpinned Docker Action images. Local actions referenced through `./` remain permitted.
+The repository uses exact Git commit SHAs for external GitHub Actions. The new `Pipeline integrity` job runs on every PR and main push, rejecting mutable tags/branches and unpinned Docker Action images. Local actions referenced through `./` remain permitted. It is intentionally always-on so the check can be required by the main ruleset without deadlocking ordinary product PRs.
 
 Verified migration pins:
 - `actions/checkout` v4.4.0 -> `11d5960a326750d5838078e36cf38b85af677262`; existing v7 workflows remain on v7.0.1 -> `3d3c42e5aac5ba805825da76410c181273ba90b1`.
@@ -34,3 +34,6 @@ Automatic Codex PR review is intentionally disabled by the owner. Pipeline Integ
 
 ## Compatibility correction
 The first staged candidate would have upgraded every historical v4 Action to v7 while pinning. Before merge, this was corrected: immutable pinning now preserves the major line each workflow already used. This keeps SEC-002 a supply-chain hardening change rather than a hidden runtime upgrade.
+
+## Required-check liveness
+A required status check must be emitted for every PR subject to the ruleset. Therefore `Pipeline integrity` has no path filter. Security scanners also run for every PR to `main`; CodeQL and Codecov remain conditional/advisory and must not be made globally required while their path filters remain.

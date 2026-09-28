@@ -5,18 +5,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review]
     branches: [main]
-    paths:
-      - ".github/workflows/**"
-      - ".github/actions/**"
-      - ".github/dependabot.yml"
-      - ".github/CODEOWNERS"
   push:
     branches: [main]
-    paths:
-      - ".github/workflows/**"
-      - ".github/actions/**"
-      - ".github/dependabot.yml"
-      - ".github/CODEOWNERS"
   workflow_dispatch:
 
 permissions:
