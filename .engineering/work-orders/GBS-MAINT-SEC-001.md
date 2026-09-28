@@ -53,3 +53,5 @@ Work Order, Context Lock, two-scanner workflow, operator guide, GitHub PR and a 
 
 ## STOP CONDITION
 Do not merge or promote the checkpoint until exact-head CI plus security review supports APPROVED. If a HIGH/CRITICAL finding appears, resolve it or record BLOCKED under current policy before advancing.
+## CORRECTION DELTA CR-01 (2026-09-28)
+Codex's initial-head review established two high-priority configuration faults: cancel-in-progress could discard a push-range secret scan when successive pushes occur, and default PR checkout did not bind both scanners to the exact PR head SHA. Within this same Work Order and PR, correct concurrency to cancel only superseded PR runs; make push/manual/schedule groups unique; check out `github.event.pull_request.head.sha || github.sha` in both jobs. Because the pinned Gitleaks Action reads only the first 30 PR commits, fail closed for larger PRs. Disable public action summaries containing direct links to suspected secret locations. Retain previous checks as historical evidence only; replace with passing exact-head evidence and fresh external review before APPROVED.
