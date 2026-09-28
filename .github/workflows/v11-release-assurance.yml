@@ -38,14 +38,14 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          npm ci 2>&1 | tee install.log
+          npm ci --ignore-scripts 2>&1 | tee install.log
       - name: Install locked workspace dependencies (Windows)
         id: install_windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          npm.cmd ci *>&1 | Tee-Object -FilePath install.log
+          npm.cmd ci --ignore-scripts *>&1 | Tee-Object -FilePath install.log
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Run full validation as an unprivileged Windows user
         id: validate_windows

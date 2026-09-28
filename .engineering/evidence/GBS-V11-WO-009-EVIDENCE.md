@@ -59,6 +59,14 @@ Focused Windows verification at the exact candidate tree: `node --test tests/v11
 
 Disposition: `RESOLVED_ON_PR302_CANDIDATE`; candidate changed-code CodeQL HIGH count is 0. Final closure must still be rechecked after merge on the exact `release/1.1` SHA; do not claim the protected release branch is clear before that scan completes.
 
+## Sonar workflow-install remediation
+
+The PR #302 Sonar analysis at candidate `ef0cba4cacf6666e92d8c51d33dbe880ab903a2d` failed the new-code Security Rating because GitHub Actions rule `githubactions:S6505` found `npm ci` without `--ignore-scripts` in `.github/workflows/v11-release-assurance.yml`. Both the Linux/macOS and Windows install commands now pass `--ignore-scripts`, preventing implicit dependency lifecycle scripts during the assurance install.
+
+The lockfile identifies `koffi@3.3.0` as the only package with an install script and includes exact per-platform `@koromix/koffi-*` optional binary packages. Local Windows verification after `npm ci --ignore-scripts` loaded Koffi 3.3.0 from the prebuilt package, reported `rights oracle available: true`, and passed `tests/v11-wo-009-codeql-remediation.test.mjs` 2/2. `npm ci` reported 0 vulnerabilities. The new exact-head Sonar analysis and cross-platform assurance remain required before owner audit.
+
+Local full validation ran under Node 24.19 in a managed Git worktree and reported 1,592/1,594 tests passed. The two failures are checkout-layout assumptions: one test requires a physical `.git` directory, while this worktree has a `.git` file; the other directly opens `.git/index` under that worktree path. This result is not treated as a pass or as a product regression. Exact-head GitHub validation on the candidate's standard runner checkouts is the acceptance evidence.
+
 ## Dependency and regression receipts
 
 For each platform, preserve the workflow artifact containing install.log, validation.log, dependency-audit.log and assurance-receipt.json. The receipt captures exact candidate SHA, run ID/attempt, OS, Node, typecheck/full-test outcome, parsed regression counts, npm audit outcome and log digests. The run's artifact list and owner audit provide the exact workflow run IDs. A receipt with a missing log, missing test count, nonzero failure count, failed step, mismatched SHA, or missing audit result is not a pass.
