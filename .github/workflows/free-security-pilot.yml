@@ -68,6 +68,18 @@ jobs:
           chmod 0755 "$install_dir/gitleaks"
           "$install_dir/gitleaks" version
           echo "$install_dir" >> "$GITHUB_PATH"
+      - name: Pin scanner policy outside PR checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          policy_dir="$RUNNER_TEMP/gitleaks-pilot-policy"
+          mkdir -p "$policy_dir"
+          curl --fail --show-error --silent --location --retry 3 \
+            "https://raw.githubusercontent.com/gitleaks/gitleaks/83d9cd684c87d95d656c1458ef04895a7f1cbd8e/config/gitleaks.toml" \
+            --output "$policy_dir/gitleaks.toml"
+          echo "e163e53b9e7e8a8511e77271e2b323ed057759542a6d988258afe3a1fa329caf  $policy_dir/gitleaks.toml" | sha256sum --check
+          : > "$policy_dir/.gitleaksignore"
+          echo "GITLEAKS_PILOT_POLICY_DIR=$policy_dir" >> "$GITHUB_ENV"
       - name: Scan complete event commit range without first-parent exclusions
         shell: bash
         env:
@@ -122,4 +134,7 @@ jobs:
           # Includes side-branch commits and merge diffs; no --first-parent or --no-merges.
           # Gitleaks redacts possible secret values. No results artifact or PR comments.
           gitleaks git --redact=100 --no-color --no-banner \
+            --config "$GITLEAKS_PILOT_POLICY_DIR/gitleaks.toml" \
+            --gitleaks-ignore-path "$GITLEAKS_PILOT_POLICY_DIR/.gitleaksignore" \
+            --ignore-gitleaks-allow \
             --exit-code=1 --log-opts="$log_opts" .
