@@ -1,0 +1,164 @@
+# GBS-MAINT-SEC-001 — additive public-repository security checks.
+# New third-party Actions and binary downloads are pinned to immutable digests.
+name: Free Security Pilot
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+    branches: [main, release/1.1]
+  push:
+    branches: [main, release/1.1]
+  schedule:
+    - cron: "19 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: free-security-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  trivy:
+    name: Trivy filesystem and configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Harden runner in audit mode
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        continue-on-error: true # StepSecurity remains best effort until free continuity is verified.
+        with:
+          egress-policy: audit
+      - name: Check out exact candidate
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Prepare trusted Trivy policy outside PR checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          policy_dir="$RUNNER_TEMP/trivy-pilot-policy"
+          mkdir -p "$policy_dir"
+          printf '{}\n' > "$policy_dir/trivy.yaml"
+          : > "$policy_dir/.trivyignore"
+          if [ -e "$GITHUB_WORKSPACE/trivyignores" ] || [ -L "$GITHUB_WORKSPACE/trivyignores" ]; then
+            echo "::error::Untrusted candidate provides reserved Trivy ignore output path"
+            exit 1
+          fi
+      - name: Scan for HIGH/CRITICAL vulnerabilities and misconfigurations
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          trivy-config: ${{ runner.temp }}/trivy-pilot-policy/trivy.yaml
+          trivyignores: ${{ runner.temp }}/trivy-pilot-policy/.trivyignore
+
+  gitleaks:
+    name: Gitleaks secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Harden runner in audit mode
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        continue-on-error: true # StepSecurity remains best effort until free continuity is verified.
+        with:
+          egress-policy: audit
+      - name: Check out exact candidate and complete Git history
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Install pinned Gitleaks CLI with verified release checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/gitleaks_8.30.1_linux_x64.tar.gz"
+          install_dir="$RUNNER_TEMP/gitleaks-bin"
+          mkdir -p "$install_dir"
+          curl --fail --show-error --silent --location --retry 3 \
+            "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz" \
+            --output "$archive"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $archive" | sha256sum --check
+          tar -xzf "$archive" -C "$install_dir" gitleaks
+          chmod 0755 "$install_dir/gitleaks"
+          "$install_dir/gitleaks" version
+          echo "$install_dir" >> "$GITHUB_PATH"
+      - name: Pin scanner policy outside PR checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          policy_dir="$RUNNER_TEMP/gitleaks-pilot-policy"
+          mkdir -p "$policy_dir"
+          curl --fail --show-error --silent --location --retry 3 \
+            "https://raw.githubusercontent.com/gitleaks/gitleaks/83d9cd684c87d95d656c1458ef04895a7f1cbd8e/config/gitleaks.toml" \
+            --output "$policy_dir/gitleaks.toml"
+          echo "e163e53b9e7e8a8511e77271e2b323ed057759542a6d988258afe3a1fa329caf  $policy_dir/gitleaks.toml" | sha256sum --check
+          : > "$policy_dir/.gitleaksignore"
+          echo "GITLEAKS_PILOT_POLICY_DIR=$policy_dir" >> "$GITHUB_ENV"
+      - name: Scan complete event commit range without first-parent exclusions
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          EVENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          valid_sha() { [[ "$1" =~ ^[0-9a-f]{40}$ ]]; }
+          zero_sha="0000000000000000000000000000000000000000"
+
+          case "$EVENT_NAME" in
+            pull_request)
+              valid_sha "$PR_BASE_SHA" && valid_sha "$PR_HEAD_SHA" || {
+                echo "::error::Invalid PR base or head SHA"; exit 1;
+              }
+              test "$(git rev-parse HEAD)" = "$PR_HEAD_SHA" || {
+                echo "::error::Checkout does not match PR head"; exit 1;
+              }
+              git fetch --no-tags origin "$PR_BASE_SHA"
+              merge_base="$(git merge-base "$PR_BASE_SHA" "$PR_HEAD_SHA")" || {
+                echo "::error::Cannot establish PR merge base"; exit 1;
+              }
+              log_opts="$merge_base..$PR_HEAD_SHA --diff-merges=separate"
+              ;;
+            push)
+              valid_sha "$EVENT_SHA" && valid_sha "$PUSH_BEFORE_SHA" || {
+                echo "::error::Invalid push event SHA"; exit 1;
+              }
+              test "$(git rev-parse HEAD)" = "$EVENT_SHA" || {
+                echo "::error::Checkout does not match push head"; exit 1;
+              }
+              if [ "$PUSH_BEFORE_SHA" = "$zero_sha" ]; then
+                log_opts="--all --diff-merges=separate"
+              else
+                git cat-file -e "$PUSH_BEFORE_SHA^{commit}" || {
+                  echo "::error::Prior push commit unavailable; full scan required"; exit 1;
+                }
+                log_opts="$PUSH_BEFORE_SHA..$EVENT_SHA --diff-merges=separate"
+              fi
+              ;;
+            schedule|workflow_dispatch)
+              log_opts="--all --diff-merges=separate"
+              ;;
+            *)
+              echo "::error::Unsupported security scan event"; exit 1
+              ;;
+          esac
+
+          # Includes side-branch commits and merge diffs; no --first-parent or --no-merges.
+          # Gitleaks redacts possible secret values. No results artifact or PR comments.
+          gitleaks git --redact=100 --no-color --no-banner \
+            --config "$GITLEAKS_PILOT_POLICY_DIR/gitleaks.toml" \
+            --gitleaks-ignore-path "$GITLEAKS_PILOT_POLICY_DIR/.gitleaksignore" \
+            --ignore-gitleaks-allow \
+            --exit-code=1 --log-opts="$log_opts" .
