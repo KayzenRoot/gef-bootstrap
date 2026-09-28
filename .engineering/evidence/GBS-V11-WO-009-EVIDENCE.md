@@ -49,9 +49,15 @@ This map identifies the governing controls; it does not claim a control passed u
 
 ## CodeQL and security disposition
 
-Remediation: removed logging of process.env["USERNAME"] from packages/cli/scripts/rights-diagnostics.mjs and added synthetic-marker non-disclosure regression. Security CodeQL now scans relevant JavaScript/TypeScript/test paths on release/1.1. The PR scan on completed heads reported no new changed-code alerts and zero annotations; this is not proof that historical alert #2 is closed.
+Finding: CodeQL `js/clear-text-logging` at `packages/cli/scripts/rights-diagnostics.mjs:23`, originally reported on PR #278 by [check `108450457038`](https://github.com/KayzenRoot/gef-bootstrap/runs/108450457038) at head `2d6538c3d90b63107b0cb4a4f6255c44cbfa61d1`. Its annotation states that the code logged sensitive process-environment data in clear text. The finding was a PR check annotation; it does not appear as a persistent alert in the current Code Scanning Alerts API response.
 
-Finding: CodeQL js/clear-text-logging at packages/cli/scripts/rights-diagnostics.mjs:23, originally reported on PR #278 by check 108450457038. The connected GitHub integration currently cannot retrieve the alert object's state from the code-scanning alerts API. The historical finding's open/closed state is therefore UNKNOWN; do not claim HIGH=0 or mark SEC-INT-07 passed from the successful scan alone. Final exact-head disposition is BLOCKED until GitHub evidence proves closure or a conclusive safe disposition. The PR #278 inline review thread is not the alert state and is not used as a substitute.
+Remediation in candidate commit `8693d46`: removed the `process.env["USERNAME"]` log from `rights-diagnostics.mjs`. This diagnostic remains read-only and still reports Windows rights-oracle availability and per-candidate rights. The test `tests/v11-wo-009-codeql-remediation.test.mjs` sets a unique `USERNAME` sentinel and asserts it never appears in stdout or stderr.
+
+Exact candidate evidence: PR #302 head `aad4b9a4da16996a48bf2acd90e378c123c762cb`; [CodeQL check `108491218529`](https://github.com/KayzenRoot/gef-bootstrap/runs/108491218529) completed `success`, title `No new alerts in code changed by this pull request`, with 0 annotations. The paired [Analyze TypeScript run `36273239974`](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36273239974/job/108491031776) completed `success`; its only annotation is the Ubuntu runner-image migration notice. GitHub Code Scanning alerts queried with `state=all` currently show one CodeQL alert, `js/identity-replacement`, severity `medium`, on `main`; no CodeQL CRITICAL/HIGH alert is open in that API response.
+
+Focused Windows verification at the exact candidate tree: `node --test tests/v11-wo-009-codeql-remediation.test.mjs` passed 2/2; `node --test tests/v11-wo-003-doctor-status.test.mjs` passed 72/72. Running `rights-diagnostics.mjs` exited 0, retained the rights-oracle header and candidate report, and did not print a caller field. A source search found no remaining environment-value logging in `packages/cli/scripts`; `USERNAME` appears only in the regression test. This demonstrates the original issue no longer reproduces on the candidate while the diagnostic output remains useful.
+
+Disposition: `RESOLVED_ON_PR302_CANDIDATE`; candidate changed-code CodeQL HIGH count is 0. Final closure must still be rechecked after merge on the exact `release/1.1` SHA; do not claim the protected release branch is clear before that scan completes.
 
 ## Dependency and regression receipts
 
@@ -65,4 +71,4 @@ The V1.1 Operations Runbook is linked from README, Installation and Quickstart. 
 
 ## Proposed Checkpoint Delta
 
-After exact-head requirements and owner audit pass: mark WO-009 complete on the audited candidate; attach the per-platform matrix, focused workflow, security and dependency receipts; retain the exact findings disposition; promote only the release/1.1 checkpoint; then admit/plan WO-010. Until the historical HIGH closure is verified, keep WO-009 blocked and do not merge or promote. Production acceptance, main promotion, v1.1.0 tagging and publication remain WO-010 scope.
+After exact-head requirements and owner audit pass: mark WO-009 complete on the audited candidate; attach the per-platform matrix, focused workflow, security and dependency receipts; retain the exact findings disposition; promote only the release/1.1 checkpoint; then admit/plan WO-010. The CodeQL finding is verified resolved on the PR #302 candidate; recheck exact `release/1.1` closure after merge before checkpoint promotion. Production acceptance, main promotion, v1.1.0 tagging and publication remain WO-010 scope.
