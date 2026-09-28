@@ -17,3 +17,7 @@ All new Actions are commit-SHA pinned: checkout v6.0.2, setup-node v4.4.0 and Co
 
 ## Decision after pilot
 If provider upload is verified: inspect LCOV file paths and legitimate baseline coverage; only then design a future bounded Work Order for coverage thresholds and quality gates. If it fails: keep the verified native LCOV path, record the exact provider error, and request only the minimum Codecov dashboard action needed, without weakening tests or requiring an uncreated external check.
+
+## CR-01: fork isolation and supported Action runtime
+
+The coverage job has `id-token: write` only for Codecov OIDC. It now skips **entirely** for forked PRs so untrusted fork build scripts cannot request an OIDC token during `npm ci` or `npm run build`. Fork PRs continue through the independently existing security/validation workflows. Same-repository PRs and main pushes produce coverage and attempt the Codecov upload. `actions/setup-node` has been SHA-pinned to v7.0.0 to avoid the deprecated Node 20 Action runtime; project tests remain on Node 22.17.0. This policy is a scoped hardening correction and requires a fresh exact-head CI run. A skipped job for a fork is not proof that Codecov verified that fork's coverage.

@@ -29,3 +29,6 @@ Load `AGENTS.md`, `.engineering/SOURCE-HIERARCHY.md`, frozen Security, Scope, Do
 
 ## Stop condition
 Create reviewable PR and pass exact-head local LCOV-generation tests. If Codecov external linkage is unavailable, deliver a truthful `PROVIDER_SETUP_PENDING` without claiming the upload succeeded or adding a nonexistent required check. No autonomous merge.
+
+## CORRECTION DELTA CR-01 — restrict OIDC execution and avoid deprecated runtime
+External upload uses job-scoped `id-token: write`. Even when the upload step is skipped for fork PRs, code supplied by a fork could otherwise execute earlier `npm` scripts in the same job. Skip the **entire coverage job** for fork PRs while keeping existing independent repository validation/security workflows running for those contributions. Same-repository PRs, main pushes and manual dispatch still execute coverage. Update `actions/setup-node` to SHA-pinned v7.0.0 (Node 24 Action runtime) while retaining the tested Node 22.17.0 project runtime. Validate all corrected-head jobs before integration. No Codex reviews requested.
