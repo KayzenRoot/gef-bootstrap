@@ -8,7 +8,7 @@ Status: `IN_PROGRESS`
 - Main baseline: `73ab68f3f33f894027fb7a04c2696b02b839060a`
 - Shared ancestor: `72c17bd3e7e421790ac382022b1f0ebbb0275ea4`
 - Implementation branch: `feat/1.1/maint-pipeline-001`
-- Candidate SHA: `c118c2984fbeeadd25aec980c62b095ec378b29e` (first CI-validated candidate; follow-up guard change pending)
+- Candidate SHA: `0af66d00280c22f789ea2cd64d36983e7333a244` (implementation plus default-branch Scorecard guard; Evidence Bundle update follows this validated candidate)
 - PR: [#309](https://github.com/KayzenRoot/gef-bootstrap/pull/309)
 - Owner audit: pending
 - Merge SHA / post-merge checks: pending
@@ -27,16 +27,17 @@ The pre-existing CodeQL HIGH `js/clear-text-logging`, identified in the WO-009 a
 
 | Component | Status | Exact evidence | Tier / limitation |
 |---|---|---|---|
-| Repository Validation | PASS | [run 36491387445](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36491387445), check `109160558210`, head `c118c2984fbeeadd25aec980c62b095ec378b29e` | repository workflow |
-| Pipeline Integrity | PASS | [run 36491387123](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36491387123), check `109160557285`, head `c118c2984fbeeadd25aec980c62b095ec378b29e` | repository workflow |
-| Gitleaks | PASS | [run 36491387155](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36491387155), check `109160557486`, head `c118c2984fbeeadd25aec980c62b095ec378b29e` | repository workflow |
-| Trivy | PASS | [run 36491387155](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36491387155), check `109160557106`, head `c118c2984fbeeadd25aec980c62b095ec378b29e` | repository workflow |
-| CodeQL | PASS | [run 36491387541](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36491387541), check `109160559356`, head `c118c2984fbeeadd25aec980c62b095ec378b29e` | repository workflow; inherited WO-009 finding remains separately release-blocking |
-| Harden Runner | PASS | audit pre/run/post steps succeeded in both jobs in [run 36491387155](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36491387155); `continue-on-error`, telemetry non-blocking | best-effort; no network blocking enabled |
-| Dependency Review | PASS | [run 36491387341](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36491387341), check `109160558201`, head `c118c2984fbeeadd25aec980c62b095ec378b29e` | GitHub Action |
+| Repository Validation | PASS | [run 36493219288](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219288), check `109166491162`, head `0af66d00280c22f789ea2cd64d36983e7333a244` | repository workflow |
+| Pipeline Integrity | PASS | [run 36493219299](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219299), check `109166489654`, head `0af66d00280c22f789ea2cd64d36983e7333a244` | repository workflow |
+| Gitleaks | PASS | [run 36493219209](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219209), check `109166489261`, head `0af66d00280c22f789ea2cd64d36983e7333a244` | repository workflow; no leak finding reported |
+| Trivy | PASS | [run 36493219209](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219209), check `109166489450`, head `0af66d00280c22f789ea2cd64d36983e7333a244` | repository workflow; no HIGH/CRITICAL threshold finding reported |
+| CodeQL | PASS | [analysis run 36493219075](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219075), plus exact-head CodeQL check `109167022995` with 0 annotations, head `0af66d00280c22f789ea2cd64d36983e7333a244` | 0 new high-severity finding in changed code; inherited WO-009 issue remains release-blocking |
+| Harden Runner | PASS | audit pre/run/post steps succeeded in both jobs in [run 36493219209](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219209); `continue-on-error`, telemetry non-blocking | best-effort; no network blocking enabled |
+| Dependency Review | PASS | [run 36493219166](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36493219166), check `109166489898`, head `0af66d00280c22f789ea2cd64d36983e7333a244` | GitHub Action; no newly introduced HIGH/CRITICAL dependency blocker |
 | OpenSSF Scorecard | NOT_VERIFIED | [manual run 36492033264](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36492033264) failed at `c118c2984fbeeadd25aec980c62b095ec378b29e`: upstream rejects non-default refs; SARIF upload skipped. Workflow guard added for default branch only; successful `main` run remains pending after promotion. | supply-chain signal, not a release gate; public Scorecard API publication disabled |
 | Codecov | NOT_APPLICABLE | Node 24.19 LCOV probe: 234 records, including 224 generated `dist` JS files, one test fixture, and zero TypeScript records; no source-only coverage claim is safe | optional; no Codecov workflow added |
-| SonarCloud / Socket | NOT_VERIFIED | current WO-009 checks passed on `8169464…`, but neither is a branch-protection requirement | optional; tier continuity must be rechecked |
+| SonarCloud | PASS | [PR #309 Quality Gate](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=309); 0 new/accepted issues, 0 hotspots, 0% duplication on new code at the candidate head | optional; not a branch-protection requirement |
+| Socket | PASS | [Project report](https://socket.dev/dashboard/org/nexlabs/sbom/ece2d4bd-2b70-48cd-8836-93d886647686) and `Socket Security: Pull Request Alerts` passed on PR #309 | optional; not a branch-protection requirement |
 | CodeRabbit / Greptile | NOT_VERIFIED | no required reviewer automation | optional; no Codex auto-review |
 
 ## Validation ledger
@@ -49,16 +50,16 @@ The pre-existing CodeQL HIGH `js/clear-text-logging`, identified in the WO-009 a
 | Local test execution during coverage probe | working tree at base, Node 24.19 | `node --test --experimental-test-coverage ...` exit code 1 in linked worktree; not accepted as product test evidence | NOT_VERIFIED |
 | YAML syntax | 42 workflow YAML files | parsed locally with Prettier 3.6.2; corrective diff parsed again before staging | PASS |
 | Immutable Action policy | 127 `uses` entries / 42 workflow YAML files | local immutable-SHA scan | PASS |
-| Targeted validation | `c118c298…` | YAML parse for 42 workflow files, 127 full-SHA `uses` entries, `git diff --check`, `npm run build`; local run of `git diff --check` and YAML parse repeated for the corrective diff before staging | PASS |
-| PR exact-head checks | `c118c298…` / PR #309 | 128/128 checks successful at this head; see [PR #309 checks](https://github.com/KayzenRoot/gef-bootstrap/pull/309/checks) | PASS |
-| Scorecard non-default dispatch diagnostic | `c118c298…` / run 36492033264 | Failed before scanning because the upstream Action only supports default branch `main`; workflow now guards the job to that ref | FAIL (expected-ref mismatch; correction pending CI) |
+| Targeted validation | `0af66d0…` | YAML parse for 42 workflow files, 127 full-SHA `uses` entries, `git diff --check`; local `npm ci --ignore-scripts` and `npm run build` were separately recorded against the locked base | PASS |
+| PR exact-head checks | `0af66d0…` / PR #309 | 128/128 checks successful at this head; see [PR #309 checks](https://github.com/KayzenRoot/gef-bootstrap/pull/309/checks) | PASS |
+| Scorecard non-default dispatch diagnostic | `c118c298…` / run 36492033264 | Failed before scanning because the upstream Action only supports default branch `main`; `0af66d0…` restricts the job to `main`, and Pipeline Integrity passed | FAIL (expected-ref mismatch; no Scorecard artifact was produced) |
 | Scorecard supported-branch run | post-merge exact `main` SHA | pending | NOT_VERIFIED |
 | Owner audit | pending | pending | NOT_VERIFIED |
 | Post-merge check state | pending | pending | NOT_VERIFIED |
 
 ## Profiling and claims
 
-The workflow-only PR produced 128 successful checks at candidate `c118c2984fbeeadd25aec980c62b095ec378b29e`; the core measured jobs were Pipeline Integrity 6 s, Dependency Review 10 s, Gitleaks 12 s, Trivy 25 s, Repository Validation 44 s, and CodeQL 85 s. Their summed execution time is 182 s across parallel runs; the overall window from common run start (22:16:22Z) to the last of these core jobs completing (22:18:43Z) was 141 s. GitHub's queried run metadata showed `created_at == run_started_at`, but per-job queue time and billed minutes were not exposed by the inspected endpoint. No before/after cost or runtime population is comparable, so no percentage saving is claimed. The only implemented optimization removes a duplicate build from Repository Validation after confirming the V1.1 `validate` script covers the required path. The PR also demonstrates that `.engineering/**`/workflow path inclusions fan out to more than 100 checks; do not weaken those frozen assurance triggers in this Work Order.
+The workflow-only PR produced 128 successful checks at candidate `0af66d00280c22f789ea2cd64d36983e7333a244`; the core measured jobs were Pipeline Integrity 7 s, Dependency Review 11 s, Gitleaks 14 s, Trivy 23 s, Repository Validation 66 s, and CodeQL Analyze TypeScript 93 s. Their summed execution time is 214 s across parallel runs; the common run batch began at 22:34:48Z and the last of these core jobs completed at 22:36:26Z (98 s wall time). The workflow-run API reports `created_at == run_started_at`; the inspected API does not expose per-job queue time or billed minutes. The repository is public and these jobs use standard GitHub-hosted runners; no larger runner or paid provider is required. No comparable before/after timing/cost population exists, so no percentage saving is claimed. The only implemented optimization removes a duplicate build from Repository Validation after confirming the V1.1 `validate` script covers the required path. The PR also demonstrates that `.engineering/**`/workflow path inclusions fan out to more than 100 checks; do not weaken those frozen assurance triggers in this Work Order.
 
 ## Security, free-tier and scope
 
