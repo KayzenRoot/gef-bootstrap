@@ -1,6 +1,6 @@
 # Context Lock — GBS-MAINT-PLATFORM-001
 
-Status: LOCKED for execution at exact base; revalidate immediately before PR publication and before audit.
+Status: LOCKED to the exact main base; execution is active in the pilot PR. Revalidate the live main and candidate before each audit gate.
 Repository: \`KayzenRoot/gef-bootstrap\` (public).
 Base ref/SHA: \`refs/heads/main\` / \`dfe14590521aead09ab0d8360fefbaea3e230aff\`.
 Base tree: \`9dd4d05aef418a215ea12b6d9a65b8d1703ebab7\`.
@@ -33,7 +33,10 @@ Separate local checkout \`D:\Projects\gef\` is V1.1 and contains untracked \`tmp
 - Dependency Graph, Dependabot alerts, Dependabot security updates, and version updates are enabled. No Dependency Review workflow currently exists in main.
 - SonarQube project \`KayzenRoot_gef-bootstrap\` was imported as a public project and Automatic Analysis completed main plus five PR tasks successfully. Current Quality Gate is the built-in organization default Sonar way; New Code is Previous version. The first main analysis has Quality Gate \`Not Computed\`; do not claim PASS or install a parallel scanner.
 - Socket Free dashboard includes \`gef-bootstrap\`, 29 npm dependencies, zero current alerts, and a real main scan on the locked SHA. No workflow duplication is needed.
-- StepSecurity Actions Security app is already installed with all-repository access. The app has not been expanded in this task. Official OAuth approval screen asks for read-only email scope; stop before authorizing and await account owner.
+- StepSecurity Actions Security app was already installed with all-repository access; the app scope was not expanded. Dashboard access is now confirmed for the selected PR jobs; the trial banner and cost uncertainty are documented in the Evidence Bundle. No OAuth scope change was approved.
+- User addendum requires every used provider to keep functioning after trial only on free plans. Current browser observation: Greptile's organization portal says its service terminates after the trial, and its one-developer Free tier is not verified for the existing multi-contributor organization. StepSecurity showed an active Enterprise trial and its account downgrade is unverified. Sonar project analysis passed but account billing and eligibility for this `UNLICENSED` project are unverified. Do not add payment, extend trials, or broaden app scope; these providers are BLOCKED for guaranteed free continuity until the owner confirms a supported path. No paid tier or billing change was activated by this pilot.
+- Scorecard workflow exists only on the PR branch. GitHub Actions showed “This workflow does not exist” when opening its dispatch page against the default branch, so manual execution is not available before merge. Keep Scorecard NOT_VERIFIED; do not merge solely to make the workflow dispatchable.
+- Pilot PR #307 was opened from this base. Initial candidate C1 was `14769a9dc01411b71039ac4beb12a3014a0350bc`; C1 checks and provider results are historical once the PR head advances. Always use the live PR `commits` and `checks` links in the Evidence Bundle.
 - Codecov has a real accepted commit coverage result on 3c4455a; it reports 8,231 tracked lines, including 8,030 under \`tests/\` and 201 under \`packages/\`. The 97.86% aggregate is not source-only. No threshold is authorized.
 - Dependabot PR #196 is open and separate; do not merge or modify it.
 - The historical V1 checkpoint remains 1088/1088 with active Work Order NONE at admission. No checkpoint file will be edited.
@@ -44,4 +47,4 @@ The user-level MASTER WORK ORDER explicitly authorized the main ruleset change, 
 
 ## Staleness and invalidation
 
-Any change to main, the locked source files above, the required-check configuration, or the relevant workflows invalidates dependent evidence. Capture the candidate parent/head SHA and recompute local checks immediately before PR creation. Never transfer checks or provider evidence across commits. Do not alter \`D:\Projects\gef\`, historical checkpoints, or other repositories.
+Any change to main, the locked source files above, the required-check configuration, or the relevant workflows invalidates dependent evidence. Capture the candidate parent/head SHA and recompute local checks before each candidate audit. Never transfer checks or provider evidence across commits. Do not alter \`D:\Projects\gef\`, historical checkpoints, or other repositories.

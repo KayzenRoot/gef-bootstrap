@@ -8,10 +8,10 @@ Evidence Bundle: [GBS-MAINT-PLATFORM-001](../.engineering/GBS-MAINT-PLATFORM-001
 
 ## Resultado e limite
 
-Este arquivo reconstrói o piloto Next Labs no repositório `KayzenRoot/gef-bootstrap`. A base verificada foi `main` em `dfe14590521aead09ab0d8360fefbaea3e230aff`. O estado da proposta deve ser consultado no PR e na aba Checks, que sempre mostram o SHA corrente:
+Este arquivo reconstrói o piloto Next Labs no repositório `KayzenRoot/gef-bootstrap`. A base verificada foi `main` em `dfe14590521aead09ab0d8360fefbaea3e230aff`. A proposta está publicada em [PR #307](https://github.com/KayzenRoot/gef-bootstrap/pull/307), com [lista de commits](https://github.com/KayzenRoot/gef-bootstrap/pull/307/commits), [checks do head](https://github.com/KayzenRoot/gef-bootstrap/pull/307/checks) e [reviews](https://github.com/KayzenRoot/gef-bootstrap/pull/307/reviews):
 
-- PR do piloto: **PENDENTE DE PUBLICAÇÃO**.
-- Checks do SHA corrente: **PENDENTE DE PUBLICAÇÃO**.
+- Primeiro candidato verificado: `14769a9dc01411b71039ac4beb12a3014a0350bc`; os resultados vinculados a ele não valem para commits seguintes.
+- Estado de integração: PR permanece aberto; não houve merge nem auto-merge.
 - Regras administrativas: atualizadas uma vez e relidas pela API.
 - Expansão para outros repositórios: **NÃO EXECUTADA**.
 - Checkpoints históricos V1, inclusive 1088/1088: preservados.
@@ -40,18 +40,35 @@ Não considere um check verde como aceitação do produto. O estado de prontidã
 | Pipeline Integrity | PASS | [Run 36429957306](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36429957306) na base | Custo de Actions não exposto | Também valida YAML e SHA no candidato |
 | Gitleaks e Trivy | PASS | [Run 36429957225](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36429957225) na base | Sem assinatura própria confirmada | Check existente preservado |
 | CodeQL | PASS | [Run 36429957513](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36429957513) na base | Custo faturado não disponível | Permanece condicional por filtros de caminhos |
-| SonarQube Cloud | NOT_VERIFIED | [Projeto](https://sonarcloud.io/project/overview?id=KayzenRoot_gef-bootstrap), [tarefas](https://sonarcloud.io/project/background_tasks?id=KayzenRoot_gef-bootstrap) | Nenhuma cobrança observada; plano e elegibilidade de licença ainda não verificados | AutoScan importou o projeto público e concluiu análises da base e cinco PRs; Quality Gate da primeira análise principal “Not Computed”; Sonar way e New Code “Previous version” |
-| Socket Security | PASS | [Scan](https://socket.dev/dashboard/org/nexlabs/sbom/59dcf573-6288-4f6d-9341-487bb9d526e7) | Dashboard indicou `NexLabs Free`; nenhum plano pago ativado | SHA da base, 29 dependências, nenhum alerta atual |
-| StepSecurity app/telemetria | BLOCKED | [Autorização oficial do StepSecurity](https://github.com/apps/stepsecurity-actions-security) | Plano/uso faturado não confirmado; nenhuma compra feita | Action em auditoria será observada no PR. Tela OAuth exige ação do titular para ler e-mail; não foi aprovada pelo agente |
-| Harden Runner | NOT_VERIFIED | Fluxos candidatos após publicação do PR | Sem custo separado confirmado | Adicionado apenas em modo `audit`; sem bloqueio de rede |
-| GitHub Dependency Review | NOT_VERIFIED | `.github/workflows/dependency-review.yml`; execução do PR ainda pendente | Action pública; faturação de Actions não disponível | HIGH/CRITICAL, somente leitura, PR seguro para fork, sem escrita de comentário e sem política de licença |
-| OpenSSF Scorecard | NOT_VERIFIED | `.github/workflows/scorecard.yml`; execução manual/semanal ainda pendente | Action pública; faturação de Actions não disponível | Sem publicação na API pública; SARIF enviado ao code scanning do repositório |
-| Codecov | NOT_VERIFIED | [Projeto](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap) e [run de upload](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36425475294) | Plano/custo não confirmado | Upload real aceito no SHA `3c4455a`; 8.231 linhas agregadas incluem 8.030 de testes e 201 de `packages`; 97,86% não é cobertura exclusiva do produto |
+| SonarQube Cloud | BLOCKED | [Projeto](https://sonarcloud.io/project/overview?id=KayzenRoot_gef-bootstrap); [Quality Gate do PR #307](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=307) aprovado, 0 novos issues | Plano da conta e elegibilidade gratuita da licença `UNLICENSED` não confirmados; nenhuma cobrança foi observada | Análise real concluída; primeira análise de main “Not Computed”; Sonar way e New Code “Previous version”; confirmar Free permanente |
+| Socket Security | PASS | [Scan da base](https://socket.dev/dashboard/org/nexlabs/sbom/59dcf573-6288-4f6d-9341-487bb9d526e7); [relatório do PR](https://socket.dev/dashboard/org/nexlabs/sbom/5eedee81-4523-459c-9e89-7995b63ffc79) | Dashboard indicou `NexLabs Free`; nenhum plano pago ativado | Base: 29 dependências e 0 alertas; o PR não alterou dependências |
+| StepSecurity app/telemetria | PASS | [Dashboard de Repository Validation](https://app.stepsecurity.io/github/KayzenRoot/gef-bootstrap/actions/runs/36442782874) e [Free Security Pilot](https://app.stepsecurity.io/github/KayzenRoot/gef-bootstrap/actions/runs/36442782940) | UI mostrou “Enterprise Free Trial, 13 days left”; nenhuma instalação ou ativação foi feita nesta execução. Community é gratuito para repositórios públicos com runners GitHub-hosted, sem cartão, segundo [pricing](https://www.stepsecurity.io/pricing); billing/transição da conta não foi confirmado | Aplicativo já abrangia todos os repositórios; este escopo não foi ampliado |
+| Harden Runner | PASS | [Free Security Pilot](https://app.stepsecurity.io/github/KayzenRoot/gef-bootstrap/actions/runs/36442782940): 4 destinos, 45 HTTPS, 5 Actions, 0 detecções. [CodeQL](https://app.stepsecurity.io/github/KayzenRoot/gef-bootstrap/actions/runs/36442782838): 3 destinos, 40 HTTPS, 3 Actions, 0 detecções | Sem custo separado confirmado; monitorar o estado do trial | Somente `audit`, egress permitido. Um 404 de feature flags apareceu no log, sem impedir coleta. Uma amostra é insuficiente para baseline de anomalias |
+| GitHub Dependency Review | PASS | [Run 36442782888](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36442782888) passou no PR real C1 | Action pública; custo de Actions não exposto | HIGH/CRITICAL; somente leitura, seguro para fork, sem comentário/escrita e sem regra de licença |
+| OpenSSF Scorecard | NOT_VERIFIED | `.github/workflows/scorecard.yml`; a página Actions informou “This workflow does not exist” na branch default, pois o arquivo existe somente no branch do PR | Action pública; custo de Actions não disponível | `workflow_dispatch` não pode ser usado antes da integração; não fazer merge para contornar isso. Sem publicação na API pública; SARIF previsto somente no code scanning do repositório |
+| Codecov | PASS | [Projeto](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap); [run 36442783038](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36442783038) e comentário do bot no [PR #307](https://github.com/KayzenRoot/gef-bootstrap/pull/307) | Tier gratuito publicado para repositórios públicos ([pricing](https://about.codecov.io/pricing/)); billing da conta não foi consultado | C1 aceitou LCOV e bot confirmou linhas alteradas cobertas; relatório agregado antigo inclui 8.030 de 8.231 linhas em `tests/`, então não há threshold de cobertura de produto |
 | Dependabot | PASS | [Configuração](https://github.com/KayzenRoot/gef-bootstrap/network/updates) | Serviço GitHub; custo faturado não disponível | Alertas, security updates e version updates ativos; nenhuma duplicação com Renovate |
-| CodeRabbit / Greptile | NOT_VERIFIED | Revisões do PR corrente, se produzidas | Plano e limites não confirmados | Nenhum novo revisor adicionado; resultado precisa ser independente e atual para o SHA final |
+| CodeRabbit | PASS | [Reviews](https://github.com/KayzenRoot/gef-bootstrap/pull/307/reviews): não gerou comentários acionáveis no C1; renovar no head atual | Revisão gratuita publicada para repositórios públicos ([pricing](https://www.coderabbit.ai/pricing)); nenhum add-on pago habilitado | Nenhum novo revisor adicionado |
+| Greptile | BLOCKED | Portal da organização informa que o serviço encerra ao fim do trial; P2 anterior no MASTER foi corrigido; revisar head atual em [reviews](https://github.com/KayzenRoot/gef-bootstrap/pull/307/reviews) | Starter gratuito limita-se a 1 desenvolvedor ativo e 50 créditos/mês ([pricing](https://www.greptile.com/pricing)); a organização tem múltiplos colaboradores e quatro repos, sem migração gratuita segura verificada. O piloto não ativou plano pago nem alterou billing | Administrador precisa confirmar migração suportada sem afetar demais usuários/repos ou aceitar interrupção |
 | SBOM, procedência e assinatura de release | NOT_APPLICABLE | Não existe neste Work Order artefato de distribuição a atestar | Sem custo novo | Não se fabricaram atestações nem artefatos |
 | Rollout corporativo | PASS | [Plano de rollout](NEXT-LABS-ROLLOUT-READY-PLAN.md) | Sem custo novo | Projeto apenas preparado; nenhum outro repositório foi alterado |
 | Adaptadores web/runtime | PASS | [Guia de adaptadores](NEXT-LABS-PRODUCT-ADAPTERS.md) | Sem instalação | Playwright, Chromatic, Vercel, Sentry e OpenTelemetry só para produtos elegíveis |
+
+## Continuidade em planos gratuitos
+
+O usuário acrescentou que todos os fluxos devem continuar depois do término dos trials, sempre em plano gratuito. Um plano Free anunciado pelo fornecedor não comprova o estado da conta atual nem seu downgrade.
+
+| Serviço | Status | Verificação gratuita e pendência |
+| --- | --- | --- |
+| GitHub Actions, Dependabot e checks nativos | PASS | Workflows continuam nos recursos do GitHub; faturamento/minutos da conta não foram expostos, e nenhuma cobrança foi ativada pelo piloto. |
+| Socket Security | PASS | Dashboard exibiu `NexLabs Free`; [plano publicado](https://socket.dev/pricing). |
+| Codecov | PASS | Upload de LCOV funcionou; [plano gratuito para repositórios públicos](https://about.codecov.io/pricing/). Conta não alterada. |
+| CodeRabbit | PASS | [Oferta gratuita para repositórios públicos](https://www.coderabbit.ai/pricing); nenhum recurso on-demand pago usado. |
+| SonarQube Cloud | BLOCKED | Quality Gate funcionou, mas billing da conta não foi confirmado e a licença do projeto é `UNLICENSED`. Confirmar elegibilidade permanente conforme [planos oficiais](https://docs.sonarsource.com/sonarqube-cloud/administering-sonarcloud/managing-subscription/subscription-plans). |
+| StepSecurity | BLOCKED | Painel mostrou trial Enterprise ativo. Community é gratuito para repositórios públicos com runners GitHub-hosted ([pricing](https://www.stepsecurity.io/pricing)), mas o downgrade da conta não foi verificado; confirmar antes do fim do trial. |
+| Greptile | BLOCKED | O portal informa que o serviço termina após o trial. Starter limita-se a 1 desenvolvedor ativo e 50 créditos ([pricing](https://www.greptile.com/pricing)); a conta atual é uma organização com múltiplos colaboradores e quatro repos. Migração sem impacto não verificada; o piloto não alterou billing. |
+
+Nenhum cartão, trial adicional, crédito ou plano pago foi ativado. Os checks essenciais não dependem de Sonar, StepSecurity, Greptile ou revisores de IA como contexts obrigatórios. O pipeline GitHub pode continuar, mas a exigência de manter todos os aplicativos usados no piloto em Free ainda está **BLOCKED** até o administrador confirmar a elegibilidade/transição de Sonar e StepSecurity e resolver o Greptile.
 
 ## Workflows introduzidos ou ajustados
 
@@ -66,14 +83,16 @@ As ações Dependency Review v5.0.0 (`a1d282b36b6f3519aa1f3fc636f609c47dddb294`)
 
 Na base, os quatro workflows principais terminaram SUCCESS: Repository Validation 29 s, Pipeline Integrity 12 s, Free Security Pilot 20 s e CodeQL 131 s. A API não indicou fila mensurável; execução serial agregada observada: 192 segundos de runner; tempo de parede concorrente observado: 131 segundos. Isso é uma amostra, não uma média histórica nem um custo faturado. Não havia telemetria suficiente para frequência de falha, minutos mensais, custos monetários, cache hit rate ou tempos por suíte.
 
-Em execução local, `npm ci` terminou em 17 s com 0 vulnerabilidades. `npm run validate` compilou e passou 1.153 testes, com 0 falhas; os testes Node relataram 7,186 s, sem tentativa A/B controlada do fluxo antigo. `npm audit --audit-level=high` terminou com 0 vulnerabilidades. A economia esperada é uma execução redundante do TypeScript build por validação; nenhuma porcentagem ou redução faturada foi estimada.
+Em execução local, `npm ci` terminou em 17 s com 0 vulnerabilidades. Medição sequencial única do fluxo antigo: `npm run typecheck` 1,14 s e `npm test` 7,84 s (total 8,98 s). O fluxo novo `npm run validate` levou 8,50 s; ambos passaram os mesmos 1.153 testes e compilaram com `tsc -b`. O delta observado foi 0,48 s nesta amostra e pode ser ruído; nenhuma economia percentual ou faturada foi estimada. `npm audit --audit-level=high` terminou com 0 vulnerabilidades.
+
+As quatro matrizes M41–M63 rodaram porque seus filtros incluem `.engineering/**`, que coincidiu com Work Order/Context Lock/Evidence deste piloto. Os tempos de jobs foram: M41–M47 62 s, M48–M54 64 s, M55–M61 102 s e M62–M63 68 s (296 s de runner no total; 28–73 s de parede, em paralelo). Evidências: [M41–M47](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36442782957), [M48–M54](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36442782793), [M55–M61](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36442782834), [M62–M63](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36442782745). Os filtros foram preservados porque ainda não há mapeamento comprovado de quais artefatos de governança podem ser excluídos sem perder validação relevante.
 
 O Codecov recebeu LCOV em `3c4455a080055fb65fee7d7021b72c3d40c5ae52`: `tests/` domina o conjunto agregado. Não foi configurado threshold. CodeQL e Codecov mantêm seus filtros e não se tornam checks obrigatórios globais.
 
 ## Manutenção e recuperação
 
 1. Leia este MASTER, o Work Order e o Context Lock antes de retomar. Compare `main` e o head do PR; qualquer mudança de SHA invalida evidência de CI e revisão anterior.
-2. Consulte sempre [PR e checks](PENDENTE_DE_LINK) para o SHA corrente; não transfira resultados entre commits.
+2. Consulte sempre [PR #307](https://github.com/KayzenRoot/gef-bootstrap/pull/307), seus [commits](https://github.com/KayzenRoot/gef-bootstrap/pull/307/commits) e [checks](https://github.com/KayzenRoot/gef-bootstrap/pull/307/checks) para o SHA corrente; não transfira resultados entre commits.
 3. Corrija vulnerabilidades confirmadas; trate alertas incertos com triagem documentada. Não use exceção para esconder resultado nem mude regras da main sem Work Order e backup.
 4. Se Harden Runner apontar tráfego inesperado, mantenha modo de auditoria, valide domínio, processo e job, documente justificativa e só proponha política de rede em outro escopo.
 5. Se Dependency Review falhar, confirme o delta de dependências e a origem no advisory database; não bloqueie histórico preexistente por esta execução.

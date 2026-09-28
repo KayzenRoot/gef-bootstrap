@@ -25,7 +25,7 @@ Complete a cost-bounded, evidence-led CI/security pilot for \`KayzenRoot/gef-boo
 3. Preserve existing Socket Security. Record the real pilot scan at exact main commit and observed plan/result. Do not add Socket workflows or duplicate scans.
 4. Add an immutable-SHA GitHub Dependency Review workflow for every PR to \`main\`, with HIGH/CRITICAL severity enforcement, read-only token permissions, fork-safe \`pull_request\`, no license policy until accepted licenses are defined, and no PR write/comment permission.
 5. Add weekly and manual OpenSSF Scorecard analysis using a verified immutable commit SHA. Keep public API publication disabled. Store results through GitHub's repository code-scanning mechanism only if exact workflow validation proves the supported permissions and upload path.
-6. Add StepSecurity Harden-Runner to a small, relevant set of Linux CI jobs in explicit audit mode only. Pin by verified immutable SHA. Do not set blocking egress, policy store, API keys, or broaden GitHub App access. StepSecurity dashboard OAuth/telemetry remains NOT_VERIFIED until the owner completes the official email-read authorization screen.
+6. Add StepSecurity Harden-Runner to a small, relevant set of Linux CI jobs in explicit audit mode only. Pin by verified immutable SHA. Do not set blocking egress, policy store, API keys, or broaden GitHub App access. Confirm telemetry through the currently authorized dashboard; if access would require new consent or a broader installation scope, mark NOT_VERIFIED and continue without approving it.
 7. Remove the redundant second TypeScript build from mandatory Repository Validation only if local and exact-head CI evidence confirms \`npm run validate\` runs the same build/typecheck and test suite as the prior \`npm run typecheck\` + \`npm test\` sequence.
 8. Audit current workflows, immutable refs, permissions, triggers, cancellation, CodeQL, Codecov, Dependabot, CodeRabbit, Greptile, and present CI runtime data. Do not convert any conditional provider into a required check.
 9. Publish this Work Order and Context Lock, an exact-head Evidence Bundle, a MASTER reconstruction document, a pilot-only rollout manifest/design, and targeted adapter/supply-chain guidance for future applicable web/runtime products.
@@ -41,6 +41,16 @@ Complete a cost-bounded, evidence-led CI/security pilot for \`KayzenRoot/gef-boo
 - Checkpoint history edits, force-push, auto-merge, branch protection weakening, or global rollout.
 - Required Sonar, Socket, StepSecurity, Dependency Review, Codecov, CodeQL, or Scorecard contexts unless exact-state liveness is independently proven for every applicable PR.
 
+## USER ADDENDUM — FREE-TIER CONTINUITY
+
+The user clarified that the entire workflow must continue after any existing trial ends using free plans only. This is an acceptance condition for this pilot:
+
+- Do not add a payment method, enable usage billing, activate a paid tier, consume paid credits, or accept a trial extension.
+- For every existing external provider used by the pilot, record the observed account tier, the provider's published free-tier limits, and whether post-trial downgrade/continuity was directly verified.
+- Mark a provider BLOCKED when the current service will terminate or its free-tier eligibility/transition cannot be verified. Keep the GitHub-native validation and security pipeline independent of that provider where possible.
+- Do not convert multi-user/team services to an individual free plan if that could disrupt other repositories or users. Record the narrow owner action needed to resolve the blocker.
+- The app or workflow must not be called free-continuous solely because its public pricing page advertises a free tier.
+
 ## ACCEPTANCE
 
 - Static checks show the new Actions use immutable, verified SHA references; least-privilege workflow/job permissions; supported event forms; and no secrets.
@@ -51,6 +61,7 @@ Complete a cost-bounded, evidence-led CI/security pilot for \`KayzenRoot/gef-boo
 - Existing mandatory contexts plus relevant existing security checks pass on the exact candidate SHA; CodeQL and Codecov remain non-required when path filters can omit them.
 - Codecov evidence distinguishes all-code coverage (including \`tests/\`) from TypeScript source coverage. No threshold is introduced.
 - No paid plan is activated, no additional app scope is granted, no source/product code changes are present, and the global rollout is not executed.
+- Every provider used by the pilot has an explicit free-continuity status. Any trial whose end-of-trial behavior or account eligibility remains uncertain is reported as BLOCKED, and no component is represented as guaranteed free without evidence.
 - MASTER report and Evidence Bundle link every verifiable execution and mark external/administrative limits honestly.
 - External independent review and any merge/promotion remain separate gates; do not invoke Codex review or auto-merge.
 
@@ -62,6 +73,7 @@ Complete a cost-bounded, evidence-led CI/security pilot for \`KayzenRoot/gef-boo
 4. Create one reviewable PR from this exact base; inspect all check runs and job logs bound to the candidate SHA.
 5. Inspect the exact head's combined check suite, code scan/dependency review output, external review state, and diff before deciding any next step.
 6. Capture post-merge state only if all applicable gates and independent review permit integration. Otherwise leave a reviewable open PR and record the blocking gate.
+7. Verify all application plans against current provider policy and account billing state without changing billing. Recheck free-tier eligibility and post-trial behavior before claiming long-term continuity.
 
 ## STOP CONDITION
 
