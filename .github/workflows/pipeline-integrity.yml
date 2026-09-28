@@ -1,0 +1,87 @@
+# GBS-MAINT-SEC-002 — immutable CI dependency policy.
+name: Pipeline Integrity
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/dependabot.yml"
+      - ".github/CODEOWNERS"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/dependabot.yml"
+      - ".github/CODEOWNERS"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pipeline-integrity-${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  immutable-actions:
+    name: Pipeline integrity
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out exact candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Enforce immutable workflow dependencies
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          import sys
+
+          roots = [Path(".github/workflows"), Path(".github/actions")]
+          files = []
+          for root in roots:
+              if not root.exists():
+                  continue
+              files.extend(p for p in root.rglob("*") if p.is_file() and p.suffix in {".yml", ".yaml"})
+
+          uses_re = re.compile(r"^\s*(?:-\s*)?uses:\s*['\"]?([^'\"\s#]+)")
+          sha40 = re.compile(r"^[0-9a-fA-F]{40}$")
+          sha256 = re.compile(r"^[0-9a-fA-F]{64}$")
+          violations = []
+
+          for path in sorted(files):
+              text = path.read_text(encoding="utf-8")
+              for number, line in enumerate(text.splitlines(), 1):
+                  stripped = line.strip()
+                  if re.match(r"^pull_request_target\s*:", stripped):
+                      violations.append(f"{path}:{number}: pull_request_target is forbidden")
+                  if re.match(r"^permissions:\s*write-all\s*$", stripped):
+                      violations.append(f"{path}:{number}: permissions: write-all is forbidden")
+                  match = uses_re.match(line)
+                  if not match:
+                      continue
+                  ref = match.group(1)
+                  if ref.startswith("./"):
+                      continue
+                  if ref.startswith("docker://"):
+                      if "@sha256:" not in ref or not sha256.fullmatch(ref.rsplit("@sha256:", 1)[1]):
+                          violations.append(f"{path}:{number}: Docker action must use @sha256 digest: {ref}")
+                      continue
+                  if "@" not in ref:
+                      violations.append(f"{path}:{number}: external action has no immutable ref: {ref}")
+                      continue
+                  version = ref.rsplit("@", 1)[1]
+                  if not sha40.fullmatch(version):
+                      violations.append(f"{path}:{number}: action ref must be a 40-hex commit SHA: {ref}")
+
+          if violations:
+              print("\n".join(violations))
+              sys.exit(1)
+          print(f"Pipeline integrity OK: scanned {len(files)} workflow/action YAML files.")

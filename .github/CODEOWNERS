@@ -1,0 +1,8 @@
+# Security-sensitive automation ownership.
+# Enforcement requires the main branch ruleset to enable code-owner approval.
+/.github/workflows/ @KayzenRoot
+/.github/actions/ @KayzenRoot
+/.github/dependabot.yml @KayzenRoot
+/.github/CODEOWNERS @KayzenRoot
+/.engineering/ @KayzenRoot
+/AGENTS.md @KayzenRoot
