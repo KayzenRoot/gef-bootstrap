@@ -37,9 +37,11 @@ jobs:
 
           roots = [Pathname(".github/workflows")]
           actions_root = Pathname(".github/actions")
-          files = roots.flat_map { |root| root.exist? ? root.glob("**/*.{yml,yaml}") : [] }
+          files = roots.flat_map do |root|
+            root.exist? ? Dir.glob(root.join("**/*.{yml,yaml}").to_s).map { |item| Pathname(item) } : []
+          end
           if actions_root.exist?
-            files.concat(actions_root.glob("**/{action.yml,action.yaml}"))
+            files.concat(Dir.glob(actions_root.join("**/{action.yml,action.yaml}").to_s).map { |item| Pathname(item) })
           end
           files = files.uniq.sort
 
@@ -75,7 +77,9 @@ jobs:
               next
             end
 
-            owner_action, version = ref.rsplit("@", 2) rescue [nil, nil]
+            separator = ref.rindex("@")
+            owner_action = separator ? ref[0...separator] : nil
+            version = separator ? ref[(separator + 1)..] : nil
             unless owner_action && !owner_action.empty? && version&.match?(sha40)
               violations << "#{path}:#{trail}: external action ref must be a 40-hex commit SHA: #{ref}"
             end
