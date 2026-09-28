@@ -44,3 +44,7 @@ The integrity gate parses workflow and local-action YAML semantically with Ruby 
 Local actions are allowed only under `.github/actions/<name>/` and must resolve to a directory containing `action.yml` or `action.yaml`. Their metadata is included in the semantic scan, closing the transitive mutable-action gap. YAML parse failures and workflow/action metadata larger than 512 KiB fail closed.
 
 This correction supersedes the earlier regex-only scanner described by the first SEC-002 candidate.
+
+## Greptile correction CR-02: hidden paths and semantic key locations
+
+The semantic scanner now uses `File::FNM_DOTMATCH` for workflows and local-action metadata, including hidden directories. A local Action reference must target a **direct, non-hidden, non-symlinked** directory `.github/actions/<name>/` containing `action.yml` or `action.yaml`; nested aliases are rejected. A semantic `uses` reference is evaluated only at workflow job/step and composite-action `runs.steps[]` locations, not when a benign Action input happens to be named `with.uses`. Equivalent context restrictions apply to `permissions: write-all` and `pull_request_target`. All changes require an exact-head passing `Pipeline integrity` and baseline CI run; no Codex review is requested. Local reusable workflows remain outside this bounded local-action path allowance until separately governed.

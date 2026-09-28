@@ -38,10 +38,10 @@ jobs:
           roots = [Pathname(".github/workflows")]
           actions_root = Pathname(".github/actions")
           files = roots.flat_map do |root|
-            root.exist? ? Dir.glob(root.join("**/*.{yml,yaml}").to_s).map { |item| Pathname(item) } : []
+            root.exist? ? Dir.glob(root.join("**/*.{yml,yaml}").to_s, File::FNM_DOTMATCH).map { |item| Pathname(item) } : []
           end
           if actions_root.exist?
-            files.concat(Dir.glob(actions_root.join("**/{action.yml,action.yaml}").to_s).map { |item| Pathname(item) })
+            files.concat(Dir.glob(actions_root.join("**/{action.yml,action.yaml}").to_s, File::FNM_DOTMATCH).map { |item| Pathname(item) })
           end
           files = files.uniq.sort
 
@@ -58,12 +58,16 @@ jobs:
             ref = raw.strip
             if ref.start_with?("./")
               clean = Pathname(ref).cleanpath.to_s.sub(%r{\A\./}, "")
-              unless clean.start_with?(".github/actions/") && !clean.split("/").include?("..")
+              parts = clean.split("/")
+              unless parts.length == 3 && parts[0, 2] == [".github", "actions"] &&
+                     parts[2].match?(/\A[A-Za-z0-9][A-Za-z0-9._-]*\z/)
                 violations << "#{path}:#{trail}: local actions are restricted to .github/actions/: #{ref}"
                 next
               end
               local = Pathname(clean)
-              unless local.directory? && (local.join("action.yml").file? || local.join("action.yaml").file?)
+              if actions_root.symlink? || local.symlink?
+                violations << "#{path}:#{trail}: symlinked local Action is forbidden: #{ref}"
+              elsif !local.directory? || !(local.join("action.yml").file? || local.join("action.yaml").file?)
                 violations << "#{path}:#{trail}: local action metadata not found: #{ref}"
               end
               next
@@ -85,24 +89,37 @@ jobs:
             end
           end
 
-          walk = lambda do |node, path, trail|
+          walk = lambda do |node, path, trail, segments|
             case node
             when Hash
               node.each do |key, value|
                 key_s = key.to_s
                 child = trail.empty? ? key_s : "#{trail}.#{key_s}"
+                location = segments + [key_s]
+                workflow = path.to_s.start_with?(".github/workflows/")
+                metadata = path.to_s.start_with?(".github/actions/")
+                job_node = location.length == 3 && location[0] == "jobs"
+                step_node = location.length == 5 && location[0] == "jobs" &&
+                            location[2] == "steps" && location[3].is_a?(Integer)
+                action_step = location.length == 4 && location[0] == "runs" &&
+                              location[1] == "steps" && location[2].is_a?(Integer)
 
-                if key_s == "pull_request_target"
+                if workflow && location.length == 2 && ["on", "true"].include?(location[0]) &&
+                   key_s == "pull_request_target"
                   violations << "#{path}:#{child}: pull_request_target is forbidden"
                 end
-                if key_s == "permissions" && value.is_a?(String) && value.strip == "write-all"
+                if workflow && (location.length == 1 || job_node) && key_s == "permissions" &&
+                   value.is_a?(String) && value.strip == "write-all"
                   violations << "#{path}:#{child}: permissions: write-all is forbidden"
                 end
-                validate_uses.call(value, path, child) if key_s == "uses"
-                walk.call(value, path, child)
+                if key_s == "uses" && ((workflow && (job_node || step_node)) ||
+                                      (metadata && action_step))
+                  validate_uses.call(value, path, child)
+                end
+                walk.call(value, path, child, location)
               end
             when Array
-              node.each_with_index { |value, index| walk.call(value, path, "#{trail}[#{index}]") }
+              node.each_with_index { |value, index| walk.call(value, path, "#{trail}[#{index}]", segments + [index]) }
             end
           end
 
@@ -124,7 +141,7 @@ jobs:
               next
             end
 
-            walk.call(document, path, "")
+            walk.call(document, path, "", [])
           end
 
           if violations.any?
