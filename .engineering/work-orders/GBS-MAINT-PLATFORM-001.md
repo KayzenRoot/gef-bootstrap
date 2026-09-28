@@ -24,7 +24,7 @@ Complete a cost-bounded, evidence-led CI/security pilot for \`KayzenRoot/gef-boo
 2. Keep SonarQube Cloud on Automatic Analysis for the single public pilot project; record the observed plan/project visibility, New Code definition, Sonar way default gate, first analysis result, and its Quality Gate limitation. No Sonar CI token or duplicate CI analysis.
 3. Preserve existing Socket Security. Record the real pilot scan at exact main commit and observed plan/result. Do not add Socket workflows or duplicate scans.
 4. Add an immutable-SHA GitHub Dependency Review workflow for every PR to \`main\`, with HIGH/CRITICAL severity enforcement, read-only token permissions, fork-safe \`pull_request\`, no license policy until accepted licenses are defined, and no PR write/comment permission.
-5. Add weekly and manual OpenSSF Scorecard analysis using a verified immutable commit SHA. Keep public API publication disabled. Store results through GitHub's repository code-scanning mechanism only if exact workflow validation proves the supported permissions and upload path.
+5. Add weekly and manual OpenSSF Scorecard analysis using a verified immutable commit SHA. Add a supported `push` path filter for security/pipeline policy files so the exact candidate can be audited before merge without scanning every source commit. Keep public API publication disabled. Store results through GitHub's repository code-scanning mechanism only if exact workflow validation proves the supported permissions and upload path; skip the Scorecard job in fork repositories because the official action does not support fork runs.
 6. Add StepSecurity Harden-Runner to a small, relevant set of Linux CI jobs in explicit audit mode only. Pin by verified immutable SHA. Do not set blocking egress, policy store, API keys, or broaden GitHub App access. Confirm telemetry through the currently authorized dashboard; if access would require new consent or a broader installation scope, mark NOT_VERIFIED and continue without approving it.
 7. Remove the redundant second TypeScript build from mandatory Repository Validation only if local and exact-head CI evidence confirms \`npm run validate\` runs the same build/typecheck and test suite as the prior \`npm run typecheck\` + \`npm test\` sequence.
 8. Audit current workflows, immutable refs, permissions, triggers, cancellation, CodeQL, Codecov, Dependabot, CodeRabbit, Greptile, and present CI runtime data. Do not convert any conditional provider into a required check.
@@ -56,7 +56,7 @@ The user clarified that the entire workflow must continue after any existing tri
 - Static checks show the new Actions use immutable, verified SHA references; least-privilege workflow/job permissions; supported event forms; and no secrets.
 - Local tests cover the optimized existing validation command and the workflow/YAML/immutable-action policy.
 - The PR emits Dependency Review on a real, safe PR and the action returns a verifiable result for the exact PR head.
-- Scorecard runs on a scheduled/manual event, reports an exact commit, and does not publish to the public Scorecard API.
+- Scorecard runs on its weekly schedule and the supported, path-filtered `push` event (with manual dispatch retained for the default branch), reports the exact candidate commit, and does not publish to the public Scorecard API. The policy filter must not run it on ordinary source-only commits.
 - Harden-Runner runs in audit mode in selected Linux jobs without blocking network egress or introducing regressions. External dashboard visibility must be separately evidenced; an OAuth screen or installed app alone is not PASS.
 - Existing mandatory contexts plus relevant existing security checks pass on the exact candidate SHA; CodeQL and Codecov remain non-required when path filters can omit them.
 - Codecov evidence distinguishes all-code coverage (including \`tests/\`) from TypeScript source coverage. No threshold is introduced.
@@ -74,6 +74,7 @@ The user clarified that the entire workflow must continue after any existing tri
 5. Inspect the exact head's combined check suite, code scan/dependency review output, external review state, and diff before deciding any next step.
 6. Capture post-merge state only if all applicable gates and independent review permit integration. Otherwise leave a reviewable open PR and record the blocking gate.
 7. Verify all application plans against current provider policy and account billing state without changing billing. Recheck free-tier eligibility and post-trial behavior before claiming long-term continuity.
+8. Confirm the push-filtered Scorecard run analyzes the exact candidate SHA and uploads repository SARIF; inspect the paths filter to verify ordinary source-only changes do not trigger it. Do not use a merge or a manual event unavailable on the default branch to manufacture pre-merge evidence.
 
 ## STOP CONDITION
 

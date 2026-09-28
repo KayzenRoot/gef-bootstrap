@@ -2,6 +2,18 @@
 name: OpenSSF Scorecard
 
 on:
+  # Scan the exact pushed commit only when security/pipeline policy changes.
+  # This enables pre-merge evidence without running Scorecard on every source commit.
+  push:
+    branches:
+      - "**"
+    paths:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+      - ".github/dependabot.yml"
+      - ".github/CODEOWNERS"
+      - "CODEOWNERS"
+      - "SECURITY.md"
   schedule:
     - cron: "37 6 * * 1"
   workflow_dispatch:
@@ -14,6 +26,7 @@ jobs:
     name: OpenSSF Scorecard
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    if: github.event.repository.fork == false
     permissions:
       contents: read
       security-events: write
@@ -22,7 +35,7 @@ jobs:
         uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
         with:
           egress-policy: audit
-      - name: Check out exact workflow revision
+      - name: Check out triggering commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
