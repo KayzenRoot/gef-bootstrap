@@ -14,7 +14,8 @@ jobs:
     name: OpenSSF Scorecard
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    if: github.event.repository.fork == false
+    # Scorecard currently analyzes only the default branch. A manual run on any other ref is unsupported.
+    if: github.event.repository.fork == false && github.ref == 'refs/heads/main'
     permissions:
       contents: read
       security-events: write
