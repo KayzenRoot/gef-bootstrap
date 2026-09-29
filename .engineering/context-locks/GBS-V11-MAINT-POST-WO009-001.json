@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-POST-WO009-001",
+  "releaseLine": "1.1.x",
+  "assurance": "ELEVATED",
+  "baseRef": "release/1.1",
+  "baseSha": "cb6cf5cf4f27d9d717921aa833ee342863f0d172",
+  "productionMainShaAtAdmission": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+  "candidateBranch": "gbs/v11/post-wo009-release-gates-001",
+  "verifiedImplementationPr": 316,
+  "verifiedImplementationCandidate": "a04a6b239ccc81c9662830cd9074c70381c84b4e",
+  "knownBlockers": [
+    "release CHECKPOINT.md/.json still carry pre-WO009 handoff",
+    "PR278 release-to-main mergeable_state dirty",
+    "PR278 cumulative Sonar Quality Gate fails Security C, Reliability D, 3.0 percent new-code duplication",
+    "post-merge provider CodeQL alert disposition requires exact-head inventory verification"
+  ],
+  "authorizedWrites": [
+    "this Work Order",
+    "this Context Lock",
+    "this admission evidence"
+  ],
+  "forbiddenWrites": [
+    "main",
+    "v1.0.0 tag",
+    "package publication",
+    "WO010 implementation",
+    "Sonar/CodeQL suppression",
+    "Hive runtime or development dependencies"
+  ],
+  "staleIf": [
+    "release/1.1 head advances beyond exact admission base",
+    "main head changes",
+    "verified risk facts differ from current provider reports"
+  ],
+  "stopCondition": "GBS_V11_POST_WO009_BLOCKERS_EVIDENCE_BOUND_BEFORE_PROMOTION"
+}
