@@ -96,3 +96,25 @@ Each admitted execution pack contains, in this order:
 - False-positive triage time; flaky test incident rate; recovery time.
 - Operator review events per complete audited batch and percentage requiring correction.
 Any performance gain with material quality/security regression FAILS promotion.
+
+## Owner-requested V1.2 expansion (planning only, not new admitted WOs)
+The 2026-09-29 follow-on owner request makes three additional behaviors required **for owner consideration at WO-000**: (a) built-in product discovery interview and UI direction before new-project coding; (b) a compact pt-BR project/release status and empirically governed ETA panel in every substantive response; (c) installer/default-profile activation so future new projects inherit the agreed process. These are CANDIDATES for NECESSARY classification until formally admitted by future Scope/DoD; this document does not revise the frozen V1/V1.1 Scope.
+
+Proposed deltas to existing provisional WOs:
+- **WO-000 planning**: inspect actual existing M09–M15/M20–M23 and current CLI/adoption rules. Establish canonical owner interview questions, UX/source pack rules, startup profile and estimate/response semantic contracts. Do a V1.1 release cohort baseline before forecasting.
+- **WO-001 orchestration**: add interview-answer/context binding, resolved design decision capsules and visual approval freshness to Marathon pack compilation, rather than a second Q/A engine.
+- **WO-002 quality**: add UI state-transition/property/contract expectations where matching profiles apply. Do not burden UI-free backend profiles.
+- **WO-003 delta assurance**: invalidate affected screen/visual tests and estimate snapshots when design token/Scope changes; keep proof reuse conservative and release exact-head proof.
+- **WO-004 audit + GitHub**: include an exact-evidence consolidated response panel linked to M20/M21/M22/M23; in an incremental plan-only integration, define stable status check names and advisory new tools before making gates mandatory. Codex alone writes code/tests/CI.
+- **WO-005 pilot and installation**: adaptive GUIDED/FAST/DEEP onboarding, gap-only brownfield questions, owner-approved wireflow/design-token generation, design system, Storybook/Playwright/a11y where applicable, actual preview, future versioned startup profile and installation/upgrade/integration tests. Evaluate 18 optimization candidates from THROUGHPUT-OPTIMIZATIONS.md and admit only those with measured ROI.
+- **WO-006 production gate**: compare released V1.1 versus V1.2 on comparable NEW_PROJECT/BROWNFIELD apps, include owner interaction/rework, confirmed UI quality, accepted progress panel and honest calibrated ETA/no-baseline behavior. Demonstrate installed default profile actually runs the defined workflow without manual master prompt; support rollback and installed-app runtime independence.
+
+Additional mandatory acceptance proposals for formal review:
+1. Compact status includes exact source/checkpoint timestamps and SHA, approved weighted progress, remaining work, work status, qualified blocker counts, recent delta, next legal action and reproducible links; never silently translate unapproved planning into product completion.
+2. Forecast bound to M22 and at least 3 independent valid temporal samples; with insufficient baseline use NOT_YET_BASELINED, with uncertain capacity provide executor-hours interval but no unsupported calendar date, and when scope changes flag STALE.
+3. Adaptive interview asks only relevant unanswered material questions; brownfield retains current governance/approved design until explicit owner adoption; answers are documented in canonical Source Pack with correct authority and no fabricated choices.
+4. Owner approves important visual directions, screen flows and UX acceptance before expensive UI coding where relevant. Design system tokens, responsive states, keyboard/accessibility, Playwright visual/journey and approved snapshots back the UI DoD. An existing healthy approved UI is preserved.
+5. Proposed installer/startup profile is only considered available after packaged V1.2 acceptance, installation verification, opt-out/recovery and both NEW_PROJECT/BROWNFIELD end-to-end pilot. Never claim current bootstrap supports this profile.
+6. Throughput optimizations require comparable baseline and no material quality/security regression. Open-source/proprietary tools remain optional profile-scoped; vendor free-plan availability must be verified at adoption.
+
+These added behaviors remain within the provisional 7 WO IDs WO-000 through WO-006 for planning; actual Work Order boundaries may be split after authorized source freeze based on risk and implementation DAG, not on arbitrary prompt size.
