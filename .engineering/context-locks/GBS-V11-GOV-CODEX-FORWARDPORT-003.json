@@ -1,0 +1,580 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-GOV-CODEX-FORWARDPORT-003",
+  "title": "Release governance forward-port",
+  "admissionStatus": "APPROVED_FOR_BOUNDED_GOVERNANCE_DOCUMENT_EXECUTION",
+  "ownerAudit": "NOT_INDEPENDENT",
+  "capturedAtUtc": "2026-09-29T20:26:36.9820750Z",
+  "admission": {
+    "issue": "https://github.com/KayzenRoot/gef-bootstrap/issues/340",
+    "approvalSection": "OWNER OBJECTIVE ADMISSION REVIEW — 2026-09-29",
+    "approvalEvidenceComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/340#issuecomment-5897697149",
+    "approvedBaselineMain": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "approvedBaselineRelease": "f3b9ce62fe4e7a4ef64e5ad36e4569cecca658be",
+    "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+    "approvalVerifiedLive": true
+  },
+  "execution": {
+    "branch": "codex/gbs-v11-forwardport-003",
+    "targetBranch": "release/1.1",
+    "exactStartingHead": "f3b9ce62fe4e7a4ef64e5ad36e4569cecca658be",
+    "startingHeadEqualsTargetBase": true,
+    "baseCommit": "f3b9ce62fe4e7a4ef64e5ad36e4569cecca658be",
+    "baseTree": "1c7f88946c60defe175e065b241e2862a3933cbf",
+    "oneImplementationPullRequest": true,
+    "mergeAuthorized": false,
+    "checkpointPromotionAuthorized": false,
+    "releaseEffectivenessAuthorized": false
+  },
+  "liveRefs": {
+    "main": {
+      "ref": "refs/heads/main",
+      "commit": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+      "tree": "0413bf3e8d706738f73c93578c81630ce027f4ec"
+    },
+    "release_1_1": {
+      "ref": "refs/heads/release/1.1",
+      "commit": "f3b9ce62fe4e7a4ef64e5ad36e4569cecca658be",
+      "tree": "1c7f88946c60defe175e065b241e2862a3933cbf"
+    },
+    "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+    "divergenceMainOnlyReleaseOnly": [
+      2,
+      72
+    ],
+    "observedByFetchAndLsRemote": true
+  },
+  "history": {
+    "planningPR336": {
+      "merge": "d892d2cb03719dd661bcab86bec995aecc8f4894",
+      "approvedHead": "d67b10cd9f065016a5e9ecb52498edc58fc65064",
+      "state": "MERGED",
+      "contribution": "planning only"
+    },
+    "admissionPR339": {
+      "merge": "f3b9ce62fe4e7a4ef64e5ad36e4569cecca658be",
+      "candidateHead": "97eb41372038f9e8c6ec0ef29beae2b6473b1d27",
+      "state": "MERGED",
+      "contribution": "admission lock and evidence only; no ADR-0008 release adoption"
+    },
+    "PR278": {
+      "state": "CLOSED_NOT_MERGED",
+      "historicalChecksTransferable": false
+    }
+  },
+  "authorityAndDecisions": {
+    "sourceHierarchy": "Identical at merge base, main and release tips; current state flows through branch checkpoint; decisions remain branch-local and exact-state bound.",
+    "D0062_main": "Historical main meaning is branch-qualified and bound to immutable source blob 687ee037d2dcd4936d118a23666665fc66410aed.",
+    "D0062_release": "Effective release meaning remains owner-operated exact-head review/merge under release ADR-0006 blob 97bef59b15f557302a7fd625af30ceeb421c01a1.",
+    "D0062GlobalRemapping": "FORBIDDEN; preserve both branch-qualified meanings.",
+    "D0063_ADR0008_main": "Approved/effective on main; ADR-0008 source blob 7d6ec3885fb3d029586dc0b7f99aa32b033170e1.",
+    "D0063_ADR0008_release": "PENDING_RELEASE_ADOPTION / NOT_EFFECTIVE until separate exact-head owner audit and checkpoint promotion.",
+    "D0064_ADR0009": "UNALLOCATED; no new ID or global mapping authorized.",
+    "releaseAcceptedHistory": "ADR-0003..0006 and V1.1 WO-001..009 preserved; WO-010 NOT_ADMITTED; main V1.0 accepted production history 1088/1088 preserved."
+  },
+  "contextArtifacts": {
+    "workOrder": {
+      "path": ".engineering/work-orders/GBS-V11-GOV-CODEX-FORWARDPORT-003.md",
+      "gitBlob": "2b0d60c0752206286210df4a449d206057d0b14e",
+      "mustBeCommittedBeforeNormativeEdits": true
+    },
+    "contextLockPath": ".engineering/context-locks/GBS-V11-GOV-CODEX-FORWARDPORT-003.json",
+    "contextLockSelfFingerprint": "Not self-referential; identify its containing first commit in the Evidence Bundle."
+  },
+  "sourceFingerprintMatrix": {
+    "sourceCount": 44,
+    "comparisons": 132,
+    "valueCountNonAbsent": 97,
+    "algorithm": "git rev-parse <exact-commit>:<path>; ABSENT only where path is absent at that exact ref",
+    "sources": [
+      {
+        "sourceKey": "AGENTS.md",
+        "path": "AGENTS.md",
+        "fingerprints": {
+          "mergeBase": "722ce876e05ff8d6f24d9c60794e0aa6be3c936c",
+          "main": "2d017b22eb9e860856b6d390d62a8120d22d4ba4",
+          "release_1_1": "854400e2dccc59e55351e2d8e2e0e4d2a338f678"
+        }
+      },
+      {
+        "sourceKey": "SOURCE-HIERARCHY",
+        "path": ".engineering/SOURCE-HIERARCHY.md",
+        "fingerprints": {
+          "mergeBase": "bedc10c97d28154efe59ff43fc1d175add37f568",
+          "main": "bedc10c97d28154efe59ff43fc1d175add37f568",
+          "release_1_1": "bedc10c97d28154efe59ff43fc1d175add37f568"
+        }
+      },
+      {
+        "sourceKey": "CHECKPOINT.md",
+        "path": ".engineering/CHECKPOINT.md",
+        "fingerprints": {
+          "mergeBase": "38a3d851a1037e4866a0b22019e3b782f17dcb94",
+          "main": "a495f3ee30e586a7e8e57ca63d20fa8ecf1bd97f",
+          "release_1_1": "a8550e4ebc45ce7d1a1aa528366458d9657e92f5"
+        }
+      },
+      {
+        "sourceKey": "CHECKPOINT.json",
+        "path": ".engineering/CHECKPOINT.json",
+        "fingerprints": {
+          "mergeBase": "0026989d7feebf2b96ef456ef950f625a7308db8",
+          "main": "d3ca8edcfe6ab2db9b8c637fcd2a6d4e9dcb16f3",
+          "release_1_1": "bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6"
+        }
+      },
+      {
+        "sourceKey": "DECISIONS-LEDGER",
+        "path": ".engineering/DECISIONS-LEDGER.md",
+        "fingerprints": {
+          "mergeBase": "303bfcbd8e75a7c27d7bda51d5e9032e91237f49",
+          "main": "035a7a1f0e8f374784e06bc1b6a3bb10ee6854f6",
+          "release_1_1": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537"
+        }
+      },
+      {
+        "sourceKey": "DECISIONS-SUPERSESSION-MAP",
+        "path": ".engineering/DECISIONS-SUPERSESSION-MAP.md",
+        "fingerprints": {
+          "mergeBase": "85613c8945c654e7449222a661325a883684c959",
+          "main": "85613c8945c654e7449222a661325a883684c959",
+          "release_1_1": "cb30173f011e6b62ebd3a3fafb13ccb012355aa2"
+        }
+      },
+      {
+        "sourceKey": "CONSTITUTION-LOCK",
+        "path": ".engineering/CONSTITUTION-LOCK.md",
+        "fingerprints": {
+          "mergeBase": "27c915872ad978fa0950ccd24457659c79269822",
+          "main": "29e3e8e8b1f7c39d37bbd165d130ee3910c3b073",
+          "release_1_1": "37289514800ca80603ff37e0236a5e243cba3bf7"
+        }
+      },
+      {
+        "sourceKey": "CONSTITUTION-AMENDMENT-0001",
+        "path": ".engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md",
+        "fingerprints": {
+          "mergeBase": "6bd1d34065f808ab2566c56c76dfd5453bc44daa",
+          "main": "437d7f371f13079e7af2858ff85e107163f0eede",
+          "release_1_1": "6bd1d34065f808ab2566c56c76dfd5453bc44daa"
+        }
+      },
+      {
+        "sourceKey": "PROJECT-OVERVIEW",
+        "path": ".engineering/PROJECT-OVERVIEW.md",
+        "fingerprints": {
+          "mergeBase": "ef323fdf5f2638c9d50050f057cc1a306463749e",
+          "main": "4ed6793a257fc3af5ebfe5972e8a6a7cef2095be",
+          "release_1_1": "6b65d243017934f5da207ce3ac4bdeb3d5e40196"
+        }
+      },
+      {
+        "sourceKey": "REQUIREMENTS",
+        "path": ".engineering/REQUIREMENTS.md",
+        "fingerprints": {
+          "mergeBase": "6117f4d35258cd8782062acb80b445e08736465f",
+          "main": "61367fcc2ebb338e3ff75b630314804bb1d29e22",
+          "release_1_1": "1933341d4546164fbaf7b415bfa1708067f5e53d"
+        }
+      },
+      {
+        "sourceKey": "SCOPE",
+        "path": ".engineering/SCOPE.md",
+        "fingerprints": {
+          "mergeBase": "5b6c5a9805d0a79e7539beaa5f5d6e018e6a7fb9",
+          "main": "ed48ed36d7028f9a6606bed8b56fa9f413fab5b1",
+          "release_1_1": "5aad68fdbd57b850ec05e5c44e74e5e5a3b94a29"
+        }
+      },
+      {
+        "sourceKey": "ARCHITECTURE",
+        "path": ".engineering/ARCHITECTURE.md",
+        "fingerprints": {
+          "mergeBase": "65cee9aa5ca31e663437a407aaa4f5452258dad1",
+          "main": "09105c912f294fa50ee4163e4a27f6933d359408",
+          "release_1_1": "c5eda022280e47ff4b45070193d196929a3a1ec0"
+        }
+      },
+      {
+        "sourceKey": "SECURITY",
+        "path": ".engineering/SECURITY.md",
+        "fingerprints": {
+          "mergeBase": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+          "main": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+          "release_1_1": "09b8aa12244791b509ecb50ba5c96db867a0797d"
+        }
+      },
+      {
+        "sourceKey": "TEST-BENCHMARK-PLAN",
+        "path": ".engineering/TEST-BENCHMARK-PLAN.md",
+        "fingerprints": {
+          "mergeBase": "a7b5618ead1a483275a0b0e72126258523349f01",
+          "main": "a7b5618ead1a483275a0b0e72126258523349f01",
+          "release_1_1": "a7b5618ead1a483275a0b0e72126258523349f01"
+        }
+      },
+      {
+        "sourceKey": "DEFINITION-OF-DONE",
+        "path": ".engineering/DEFINITION-OF-DONE.md",
+        "fingerprints": {
+          "mergeBase": "cc9fd107afa135a23f410739d41af875d6079197",
+          "main": "150ec0a83ccb7d192bc20cde3cb73358e6197ddb",
+          "release_1_1": "d9209765a268f0e21390a2c6c531c7dd771515b4"
+        }
+      },
+      {
+        "sourceKey": "EXECUTOR-ACCELERATION-CONTRACT",
+        "path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+        "fingerprints": {
+          "mergeBase": "59e69438bef728f24ae96da292e3122a83d4ea76",
+          "main": "bf1451ad628ca397bacae2bb333837ed2e9b3097",
+          "release_1_1": "59e69438bef728f24ae96da292e3122a83d4ea76"
+        }
+      },
+      {
+        "sourceKey": "README.md",
+        "path": "README.md",
+        "fingerprints": {
+          "mergeBase": "5056e55f5cddf24664274c16c8ae59a74d9b931d",
+          "main": "9b014a82cb32a616d0ad1526c62ad4bd90a33671",
+          "release_1_1": "cbf06d49212b3bacf3ad77a54c9ab058a4efe58a"
+        }
+      },
+      {
+        "sourceKey": "main-only GitHub-first workflow",
+        "path": ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "d061fff8e13bbb13fab6cdafb8bf001921905a61",
+          "release_1_1": "ABSENT"
+        }
+      },
+      {
+        "sourceKey": "ADR-0001",
+        "path": ".engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md",
+        "fingerprints": {
+          "mergeBase": "95f9e86ba1d3e7ff0b9ae312d1902f11b1b85873",
+          "main": "52ef68b48fd92c6a38367c99ea91dd9df2d28c33",
+          "release_1_1": "51e6e2d233afdf1b7626eb670008ad44e23fa958"
+        }
+      },
+      {
+        "sourceKey": "ADR-0002",
+        "path": ".engineering/decisions/ADR-0002-PLANNING-TO-EXECUTION-ACCELERATION.md",
+        "fingerprints": {
+          "mergeBase": "f971226ee6e7a9b16b4c6bceb9009fae961b3bfa",
+          "main": "a46e6bf27ee985575aa7e52cf047260fea73569b",
+          "release_1_1": "f971226ee6e7a9b16b4c6bceb9009fae961b3bfa"
+        }
+      },
+      {
+        "sourceKey": "release ADR-0003",
+        "path": ".engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "62a2e2ef2de3b4f60186f020708f37eee99ca787"
+        }
+      },
+      {
+        "sourceKey": "release ADR-0004",
+        "path": ".engineering/decisions/ADR-0004-WINDOWS-EFFECTIVE-RIGHTS-ORACLE.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "396b098c1380eb2d12b3b8e24a1aedc9906ca519"
+        }
+      },
+      {
+        "sourceKey": "release ADR-0005",
+        "path": ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "786eba0313202f2f2648461a2fc4e6f81190969a"
+        }
+      },
+      {
+        "sourceKey": "release ADR-0006",
+        "path": ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "97bef59b15f557302a7fd625af30ceeb421c01a1"
+        }
+      },
+      {
+        "sourceKey": "D-0062@main ADR-0007 historical source",
+        "provenanceNote": "Exact active-text path omitted; resolve the immutable source by D-0062@main qualification and the recorded Git blob.",
+        "fingerprints": {
+          "mergeBase": "687ee037d2dcd4936d118a23666665fc66410aed",
+          "main": "687ee037d2dcd4936d118a23666665fc66410aed",
+          "release_1_1": "ABSENT"
+        }
+      },
+      {
+        "sourceKey": "main ADR-0008",
+        "path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "7d6ec3885fb3d029586dc0b7f99aa32b033170e1",
+          "release_1_1": "ABSENT"
+        }
+      },
+      {
+        "sourceKey": "merged planning lineage #336",
+        "path": ".engineering/lineage/GBS-V11-GOV-CODEX-FORWARDPORT-001.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "b2b686b2b305cacaa358bf7d5726615d920c006e"
+        }
+      },
+      {
+        "sourceKey": "merged planning Work Order #336",
+        "path": ".engineering/work-orders/GBS-V11-GOV-CODEX-FORWARDPORT-001.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "6a8afdee5a1ed14f92ab17d1509a89af8b09f59d"
+        }
+      },
+      {
+        "sourceKey": "historical admission Context Lock #339",
+        "path": ".engineering/context-locks/GBS-V11-GOV-CODEX-ADMISSION-002.json",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "81c1b46a354bcb737a16c850750c493043d14815"
+        }
+      },
+      {
+        "sourceKey": "historical admission Evidence Bundle #339",
+        "path": ".engineering/evidence/GBS-V11-GOV-CODEX-ADMISSION-002-EVIDENCE.md",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "2b8c4def5bb6ed1082af215ec012c62a0ceb744d"
+        }
+      },
+      {
+        "sourceKey": "package manifest",
+        "path": "package.json",
+        "fingerprints": {
+          "mergeBase": "e4f0272e62570e56f280bdaca56534e8462b72c1",
+          "main": "e4f0272e62570e56f280bdaca56534e8462b72c1",
+          "release_1_1": "c8e17d4121566250595a1966a9314c56272546ac"
+        }
+      },
+      {
+        "sourceKey": "legacy detachment validation",
+        "path": "tests/v11-legacy-ecosystem-detachment.test.mjs",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "a1fbe51463a55496db8d4c4943eec6ff585ea518"
+        }
+      },
+      {
+        "sourceKey": "WO-001 audit correction validation",
+        "path": "tests/v11-wo-001-audit-corrections.test.mjs",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "959d74776a83bfefe02e36db9184c10b58405e22"
+        }
+      },
+      {
+        "sourceKey": "WO-001 foundation validation",
+        "path": "tests/v11-wo-001-foundation.test.mjs",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "90739227046c6537d7a3781524d1abcd61ff0bb0"
+        }
+      },
+      {
+        "sourceKey": "WO-001 promotion validation",
+        "path": "tests/v11-wo-001-promotion.test.mjs",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "98c61aef470b184899fd03cc3b103383281cc1d7"
+        }
+      },
+      {
+        "sourceKey": "WO-002 admission validation",
+        "path": "tests/v11-wo-002-admission.test.mjs",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "01185aec99240faeba0e0dbaf4dcb0e0010a26fc"
+        }
+      },
+      {
+        "sourceKey": "repository validation workflow",
+        "path": ".github/workflows/repository-validation.yml",
+        "fingerprints": {
+          "mergeBase": "bb81dc5450105da47e8f16f57a0617ef7026d727",
+          "main": "bb81dc5450105da47e8f16f57a0617ef7026d727",
+          "release_1_1": "38c801e6009663448194045ab27ef25c7dcbf0f0"
+        }
+      },
+      {
+        "sourceKey": "pipeline integrity workflow",
+        "path": ".github/workflows/pipeline-integrity.yml",
+        "fingerprints": {
+          "mergeBase": "a711e9467bd4e4e348ab45f712e331b4c9197dbf",
+          "main": "a711e9467bd4e4e348ab45f712e331b4c9197dbf",
+          "release_1_1": "8a7f58eefe47240b42b890c18f4f5f30c3e84eec"
+        }
+      },
+      {
+        "sourceKey": "V1.1 release assurance workflow",
+        "path": ".github/workflows/v11-release-assurance.yml",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "1fd986a32dfe1aa0ba9bbe6fe14d7ef366cc6f98"
+        }
+      },
+      {
+        "sourceKey": "CodeQL security workflow",
+        "path": ".github/workflows/security-codeql.yml",
+        "fingerprints": {
+          "mergeBase": "a956f3053710f1e8336e5ab0abc7e351935d34bf",
+          "main": "a956f3053710f1e8336e5ab0abc7e351935d34bf",
+          "release_1_1": "554e26bf9d16aceee708d48f86251495bd74e993"
+        }
+      },
+      {
+        "sourceKey": "dependency review workflow",
+        "path": ".github/workflows/dependency-review.yml",
+        "fingerprints": {
+          "mergeBase": "93f9f7d54c7ab5370c7eac47da10dad0490f10a1",
+          "main": "93f9f7d54c7ab5370c7eac47da10dad0490f10a1",
+          "release_1_1": "3d34f93903798345abcbd345640f1e04f5e0d424"
+        }
+      },
+      {
+        "sourceKey": "coverage workflow",
+        "path": ".github/workflows/coverage-codecov.yml",
+        "fingerprints": {
+          "mergeBase": "850d86ee0399b11f31663a648f61403a51a2822e",
+          "main": "850d86ee0399b11f31663a648f61403a51a2822e",
+          "release_1_1": "005e04fe7d3306ef64613317f89115adf67c7791"
+        }
+      },
+      {
+        "sourceKey": "scorecard workflow",
+        "path": ".github/workflows/scorecard.yml",
+        "fingerprints": {
+          "mergeBase": "912137ce232acdc5e8ce871fbd472a90528d43fe",
+          "main": "912137ce232acdc5e8ce871fbd472a90528d43fe",
+          "release_1_1": "497c3da1ab34964e77363061a51f82f090cae0e0"
+        }
+      },
+      {
+        "sourceKey": "Windows unprivileged validation helper",
+        "path": ".github/scripts/run-v11-unprivileged-validation.ps1",
+        "fingerprints": {
+          "mergeBase": "ABSENT",
+          "main": "ABSENT",
+          "release_1_1": "075d1187d5131081dde034ffde5d8951e617e22a"
+        }
+      }
+    ]
+  },
+  "mergeAndSemanticConflicts": {
+    "literal": [
+      {
+        "path": ".engineering/CHECKPOINT.json",
+        "baseBlob": "0026989d7feebf2b96ef456ef950f625a7308db8",
+        "mainBlob": "d3ca8edcfe6ab2db9b8c637fcd2a6d4e9dcb16f3",
+        "releaseBlob": "bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6",
+        "handling": "WRITE_FORBIDDEN; retain current release checkpoint and prepare unapplied factual delta only."
+      },
+      {
+        "path": ".engineering/DECISIONS-LEDGER.md",
+        "baseBlob": "303bfcbd8e75a7c27d7bda51d5e9032e91237f49",
+        "mainBlob": "035a7a1f0e8f374784e06bc1b6a3bb10ee6854f6",
+        "releaseBlob": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537",
+        "handling": "Resolve only the bounded ledger hunks; preserve D-0062@release unchanged and do not allocate D-0064."
+      }
+    ],
+    "semanticOverlap": [
+      "AGENTS.md",
+      ".engineering/ARCHITECTURE.md",
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CONSTITUTION-LOCK.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/PROJECT-OVERVIEW.md",
+      ".engineering/REQUIREMENTS.md",
+      ".engineering/SCOPE.md",
+      ".engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md",
+      "README.md"
+    ],
+    "releaseOnlyAndMainOnlyLineage": "Preserve release overlays, ADR-0003..0006 and accepted work; preserve main-only historical decision by blob/provenance and never copy its retired provider name into active release documents."
+  },
+  "checkpointDrift": {
+    "releaseMarkdownBlob": "a8550e4ebc45ce7d1a1aa528366458d9657e92f5",
+    "releaseJsonBlob": "bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6",
+    "describesPR278As": "merge-conflicted / next action",
+    "livePR278": "CLOSED_NOT_MERGED",
+    "classification": "KNOWN_PROJECT_STATE_DRIFT",
+    "checkpointFilesWriteForbidden": true,
+    "requiredEvidence": "Factual proposed checkpoint delta in Evidence Bundle, unapplied and separately reviewable."
+  },
+  "scope": {
+    "allowedPaths": [
+      "Work Order",
+      "Context Lock",
+      "AGENTS.md",
+      ".engineering/CONSTITUTION-LOCK.md",
+      ".engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md",
+      ".engineering/PROJECT-OVERVIEW.md",
+      ".engineering/REQUIREMENTS.md",
+      ".engineering/SCOPE.md",
+      ".engineering/ARCHITECTURE.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+      "README.md",
+      ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+      ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md",
+      ".engineering/DECISIONS-LEDGER.md",
+      ".engineering/DECISIONS-SUPERSESSION-MAP.md",
+      ".engineering/evidence/GBS-V11-GOV-CODEX-FORWARDPORT-003-EVIDENCE.md"
+    ],
+    "forbidden": [
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".engineering/SOURCE-HIERARCHY.md",
+      ".engineering/SECURITY.md",
+      ".engineering/TEST-BENCHMARK-PLAN.md",
+      "existing ADR-0001..0007",
+      "product source, tests, CI/workflows, dependency manifests, coverage configuration, release tags/publication, main, merge, checkpoint promotion, D-0064/ADR-0009 allocation"
+    ],
+    "thresholdChangeAllowed": false,
+    "productOrCIChangesAllowed": false,
+    "mergeOrPromotionAllowed": false
+  },
+  "acceptance": {
+    "local": [
+      "targeted legacy detachment test",
+      "JSON parse and exact 44-source/132-value fingerprint recomputation",
+      "required document/heading/coherence checks",
+      "git diff --check",
+      "npm run validate (typecheck and all tests/*.test.mjs)"
+    ],
+    "githubExactHead": [
+      "current required Repository validation",
+      "Pipeline integrity",
+      "security and dependency checks",
+      "V1.1 release assurance on Ubuntu, Windows, macOS",
+      "no pending, stale or failing required check; no unresolved CRITICAL/HIGH"
+    ],
+    "coverageBoundary": "Do not change coverage threshold/config; closed PR #278 checks are historical; cumulative release-to-main coverage work remains separate.",
+    "evidenceBundlePath": ".engineering/evidence/GBS-V11-GOV-CODEX-FORWARDPORT-003-EVIDENCE.md"
+  },
+  "stopCondition": "GBS_V11_GOV_CODEX_FORWARDPORT_003_EXACT_HEAD_READY_FOR_OWNER_AUDIT"
+}
