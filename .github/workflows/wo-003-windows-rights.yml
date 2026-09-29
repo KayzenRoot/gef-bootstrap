@@ -24,11 +24,13 @@ on:
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/wo-003-windows-rights.yml"
+      - ".engineering/evidence/GBS-V11-WO-009-EVIDENCE.md"
   push:
     branches: [release/1.1]
     paths:
       - "packages/cli/**"
       - ".github/workflows/wo-003-windows-rights.yml"
+      - ".engineering/evidence/GBS-V11-WO-009-EVIDENCE.md"
   workflow_dispatch:
 
 permissions:

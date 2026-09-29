@@ -4,21 +4,21 @@
   "releaseLine": "1.1.x",
   "assurance": "ELEVATED",
   "baseRef": "release/1.1",
-  "baseSha": "2d6538c3d90b63107b0cb4a4f6255c44cbfa61d1",
-  "productionShaAtLock": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "baseSha": "5ea917ae50cc8ce45022b76695c1b8cc2c2fc37d",
+  "productionShaAtLock": "e23311e77d79b84f3c70671072a22a6f8896d13d",
   "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
   "v100TagTargetAtLock": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
-  "implementationBranch": "feat/1.1/wo-009-integrated-assurance",
+  "implementationBranch": "feat/1.1/wo-009-integrated-assurance-clean-history",
   "authority": "ADR-0003-D3 boundedly superseded by D-0062/ADR-0006",
   "canonicalSources": [
     {
       "path": ".engineering/CHECKPOINT.json",
-      "baseBlobSha": "8d60859005f7cd918e4b19eed3800c9f94473f5f",
+      "baseBlobSha": "3b3d8a07ef787f57b2ad2f4580941145a4d94f07",
       "fingerprintKind": "git-blob-sha1"
     },
     {
       "path": ".engineering/CHECKPOINT.md",
-      "baseBlobSha": "f37919a66a0f04b80e6ca96da243bdb471d1de24",
+      "baseBlobSha": "717cc83278ffe82977ff6c5ea59a15bba512229d",
       "fingerprintKind": "git-blob-sha1"
     },
     {
@@ -48,7 +48,7 @@
     },
     {
       "path": ".engineering/releases/V1.1-RELEASE-PLAN.md",
-      "baseBlobSha": "1caf2d9dacc310a2fb672e001454902a2f29ab2b",
+      "baseBlobSha": "074c99c57f09a13cb2e71cce883e46ee500909ed",
       "fingerprintKind": "git-blob-sha1"
     },
     {
@@ -123,12 +123,12 @@
     },
     {
       "path": "tests/v11-wo-008-admission.test.mjs",
-      "baseBlobSha": "491f5c6c2d8be93d6e36fa056dc487d306404e4b",
+      "baseBlobSha": "6c3ce91dd821d6d8063a2324777fa48a68c13b56",
       "fingerprintKind": "git-blob-sha1"
     },
     {
       "path": ".github/workflows/security-codeql.yml",
-      "baseBlobSha": "885d14d6f19237f25c71720b2fd03e1f8ba1dd56",
+      "baseBlobSha": "bb85590de2ae831b388a5c7078b6657f6b88972d",
       "fingerprintKind": "git-blob-sha1"
     },
     {
@@ -252,13 +252,14 @@
     "unrelated modules"
   ],
   "staleIf": [
-    "release/1.1 advances beyond the controlled WO-009 admission merge before the implementation branch is created",
+    "release/1.1 advances beyond the exact baseSha recorded by this refreshed Context Lock",
     "main or v1.0.0 tag object/target changes",
     "V1.1 Test Matrix or release Definition of Done changes",
     "ADR-0003/ADR-0005/ADR-0006 changes",
     "M18 Resume or M20 Response Contract semantics change",
     "the known HIGH CodeQL finding changes or its disposition cannot be verified",
-    "a required suite or source fingerprint no longer matches"
+    "a required suite or source fingerprint no longer matches",
+    "the observed main head no longer matches productionShaAtLock"
   ],
   "stopCondition": "GBS_V11_WO_009_CONTEXT_LOCK_VALID_FOR_ADMITTED_WORK"
 }
