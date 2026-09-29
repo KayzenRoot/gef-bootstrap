@@ -1,4 +1,7 @@
 name: M48-M54 Integrated Assurance
+
+permissions:
+  contents: read
 on:
   pull_request:
     paths: ['packages/m48-m54-maintenance/**','tests/m48-m54-maintenance.test.mjs','planning/modules/area-l-artifacts-and-ux/m48-help-system/**','planning/modules/area-m-distribution-and-maintenance/**','planning/modules/area-n-bootstrap-quality/m5[34]-*/**','.engineering/**','.github/workflows/m48-m54-integrated.yml']
