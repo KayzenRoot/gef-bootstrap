@@ -13,7 +13,7 @@ The active product model is:
 - Codex may be used only in target repositories under GEF governance, not to build this repository;
 - deterministic tooling is a required product component but never semantic authority;
 - GitHub is the reference hosted profile, not a universal semantic dependency;
-- 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED block independent-product release; M39/M41 are the remaining optional adapter tracks; the former third adapter is retired by ADR-0003.
+- 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED block independent-product release; M39 and M41 remain ecosystem-specific optional tracks; M40 is the third, provider-neutral reserved context slot under ADR-0007, aligned with V1.1 ADR-0005/D-0061.
 
 Controlling sources, in their applicable authority domains:
 1. `GBS-CONSTITUTION-v1.1` + hybrid amendment;
@@ -41,7 +41,7 @@ Superseded for construction of this repository by the current construction invar
 Superseded in mechanics by the hybrid product model. The target-repository materialization goal remains valid, but materialization is now supported by the required deterministic work plane rather than instruction-only behavior.
 
 ### D-0027 / D-0029 reduced-V1 admission model
-Superseded for the current release denominator by frozen complete-production Scope. The historical freeze inventory was 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED + 3 OPTIONAL_ADAPTER. The current inventory is 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED + 2 OPTIONAL_ADAPTER after ADR-0003. PRODUCT_INCLUDED is release-blocking for the one complete production version.
+Superseded for the current release denominator by frozen complete-production Scope. The historical and prospective inventory retain 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED + 3 OPTIONAL_ADAPTER; M40 becomes a neutral reserved context slot under ADR-0007. No Hive-specific adapter is active. PRODUCT_INCLUDED is release-blocking for the one complete production version.
 
 ### D-0031 / D-0032 “V1” wording
 Retained only as historical terminology. Current scope carrying cost/classification is interpreted through complete-production Scope, Architecture, DoD and weighted backlog.
@@ -65,7 +65,7 @@ Retained substantively, relabeled operationally as complete-product telemetry/be
 Project Overview remains frozen and valid where not superseded. Constitution v1.1 plus later frozen Source Pack artifacts control any conflicting downstream interpretation.
 
 ### D-0002 / D-0040 / ADR-0001-D3 — retired Hive adapter
-Owner decision D-0052 and ADR-0003 supersede only the prospective Hive-specific integration permission. The M40 stable ID is retired and must not be re-used; the code, active module index, sessions, distribution and development instructions can no longer include Hive. The original decision and accepted historic receipts/tags remain intact. Current active optional adapters are M39 UADS and M41 UGAS. The 61-module/1088-weight independent product denominator is unchanged. PR #297 was closed because it proposed Hive-first executor context.
+Owner decision D-0062 and ADR-0007 supersede only the prospective Hive-specific integration permission, aligning with V1.1's pre-existing D-0061/ADR-0005. M40 remains a neutral RESERVED context slot, with no Hive identity, protocol, schema, code or activation; active code, deployment and operator instructions can no longer include Hive. Original decisions and accepted receipts/tags remain intact. M39 UADS and M41 UGAS are unrelated optional adapters. The 64-ID/282-session inventory and 61-module/1088-weight production denominator are unchanged. PR #297 was closed because it proposed Hive-first executor context.
 
 ## Agent rule
 When a historical D-* entry conflicts with this map or a later frozen controlling source in the same authority domain, the later governed source controls. Never delete the historical entry merely to simplify context. Never use newest-wins across different authority domains.
