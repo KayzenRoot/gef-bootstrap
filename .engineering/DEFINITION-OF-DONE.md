@@ -117,4 +117,7 @@ Progress percentage is not DONE. Partial credit may use only the frozen weighted
 - construction readiness gate explicit: PASS
 - open DoD questions: 0
 
+## Owner-directed process overlay (ADR-0008; proposed until promoted)
+After the governed amendment becomes effective, any implementation admission must identify the Codex-only code executor, stable GitHub issue/Work Order, legal branch/base, precise file/read/write map and Context Lock. Planning-only PRs do not earn implementation credit. Every construction-response status must separate frozen-denominator release credit from Work Order counts, disclose blockers/unknowns and cite exact-state evidence. Existing exact-head assurance/security/test/rollback criteria are unchanged; this overlay does not retroactively alter V1 acceptance.
+
 STOP CONDITION: `READY_FOR_DOD_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.

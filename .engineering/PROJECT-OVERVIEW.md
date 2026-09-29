@@ -32,9 +32,7 @@ The plane may perform deterministic tasks such as:
 - other bounded transformations from known governed inputs.
 
 ## Self-construction policy
-GEF Bootstrap itself is built **entirely through ChatGPT in this project**, using the connected GitHub and available development/deployment tools. Codex is not used as an implementation executor for this repository.
-
-This restriction is specific to building GEF Bootstrap. Target repositories initialized by GEF may use Codex or other executors under governed execution contracts.
+GEF Bootstrap and new GEF-governed software projects use **Codex as the sole code/test/CI/migration executor** under owner-directed ADR-0008 / D-0063 after its governed promotion. ChatGPT owns architecture, canonical planning, approved governance documentation, GitHub task/PR coordination, objective code/security review and progress reporting; GitHub CI runs checks but is not a separate code author. Existing projects adopt through their own source authority without silently changing active Work Orders.
 
 ## Problem being solved
 AI-assisted software construction repeatedly pays costs that should not need to be paid again: broad rereads, rediscovery of settled architecture, repetitive searches, unnecessary test breadth, verbose evidence, reopened decisions, lost chat continuity and brownfield restarts.
@@ -113,7 +111,7 @@ V1 must be able to measure or explicitly classify unavailable/estimated token, t
 12. Optional ecosystem integrations do not silently become core.
 13. Accepted work should reduce comparable future rediscovery.
 14. The deterministic work plane is a product component but is authoritative only for bounded mechanical operations.
-15. ChatGPT is the construction executor for the GEF Bootstrap repository itself; Codex is not used to build this project.
+15. Codex is the sole code implementation/correction executor for this repository under promoted ADR-0008; ChatGPT handles bounded planning, governance and review.
 
 ## Product boundary
 ### Core product

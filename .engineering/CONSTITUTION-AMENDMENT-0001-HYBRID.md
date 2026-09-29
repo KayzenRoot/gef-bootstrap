@@ -22,6 +22,8 @@ May own repeatable mechanical operations such as artifact materialization, schem
 
 The deterministic plane never silently becomes semantic authority.
 
+> HISTORICAL SUPERSESSION NOTICE: The self-construction actor policy in this amendment is prospectively superseded **only for the actor restriction** by ADR-0008 / D-0063 after governed audit and checkpoint promotion. Its product-boundary, safety, release and frozen-history decisions remain valid. Historical policy text below is retained for audit.
+
 ## Self-construction policy
 For the GEF Bootstrap repository itself, planning, implementation, tests, documentation, reviews, releases and production preparation are performed through ChatGPT in this project using the connected GitHub/tooling surfaces. **Codex is not used to build GEF Bootstrap.**
 

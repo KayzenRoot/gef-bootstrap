@@ -2,6 +2,8 @@
 
 Status: `APPROVED`
 
+> HISTORICAL SUPERSESSION NOTICE (2026-09-29): This approved historical ADR retains its original text and evidence. Its **GEF self-construction actor restriction only** is prospectively superseded by owner-directed ADR-0008 / D-0063 after exact-head approval and checkpoint promotion. Other decisions remain unchanged. See issue #331.
+
 ## Trigger
 `EXPLICIT_USER_PRODUCT_DECISION`
 

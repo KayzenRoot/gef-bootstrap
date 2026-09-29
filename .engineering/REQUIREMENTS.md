@@ -6,7 +6,7 @@ Status: `FROZEN`
 Derived from `GBS-CONSTITUTION-v1.1`, `CONSTITUTION-AMENDMENT-0001-HYBRID` and frozen `.engineering/PROJECT-OVERVIEW.md`. These define V1 capability, not implementation architecture, language, final schemas or detailed Scope ownership.
 
 ## Construction constraint
-GEF Bootstrap itself is built through ChatGPT and connected project tools. Codex is not used to implement this repository. Target repositories may use Codex or other executors under GEF governance.
+After promotion of owner-directed ADR-0008 / D-0063, Codex is the sole code/test/CI/migration executor for this repository and new GEF-governed projects. ChatGPT plans and coordinates GitHub issues, Work Orders, meaningful planning-only draft PRs, objective review and evidence-based response statistics; only admitted exact-base Work Orders authorize Codex implementation.
 
 ## Requirement classes
 `GOV`, `CONT`, `FUNC`, `DET`, `ASSURE`, `BROWN`, `PERF`, `OBS`, `PLAT`, `SEC`, `COMPAT`.
@@ -99,7 +99,7 @@ No specific CLI framework, always-on daemon/service, fixed language before Archi
 - Constitution v1.1 compatibility: PASS
 - hybrid semantic/deterministic boundary: PASS
 - physical deterministic V1 capability: PASS
-- ChatGPT-only self-construction rule preserved: PASS
+- Owner-directed Codex-only implementation and GitHub-first planning rule recorded in prospective ADR-0008; effectiveness requires exact-head audit and checkpoint promotion, not an automatic historical reclassification.
 - brownfield first-class capability: PASS
 - token/latency optimization: PASS
 - security/recovery floor: PASS
