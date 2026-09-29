@@ -516,7 +516,7 @@ function uniqueNonEmptyStrings(value: unknown): value is readonly string[] {
     new Set(value).size === value.length;
 }
 
-export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Result<true> {
+function validateCapsuleIdentity(capsule: ExecutionCapsule): Result<true> {
   const raw = capsule as ExecutionCapsule & Record<string, unknown>;
   if (!onlyKeys(raw, [
     "schemaVersion", "capsuleId", "capsuleVersion", "releaseLine", "state", "certainty",
@@ -538,7 +538,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   if (!new Set<ExecutionCapsuleCertainty>(["SUFFICIENT", "INSUFFICIENT"]).has(capsule.certainty)) {
     return fail("CAPSULE_SCHEMA_INVALID", "Execution Capsule certainty is invalid");
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleBaseWorkOrder(capsule: ExecutionCapsule): Result<true> {
   if (!onlyKeys(capsule.base, ["repository", "branch", "headSha", "treeFingerprint", "productionBranchTouched"])) {
     return fail("CAPSULE_SCHEMA_INVALID", "Base contains an undeclared property");
   }
@@ -561,7 +564,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   if (capsule.workOrder.assurance !== undefined && capsule.workOrder.assurance !== "STANDARD" && capsule.workOrder.assurance !== "ELEVATED") {
     return fail("CAPSULE_SCHEMA_INVALID", "Work Order assurance is invalid");
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleNavigation(capsule: ExecutionCapsule): Result<true> {
   if (!onlyKeys(capsule.navigation, ["mustRead", "readIfTriggered", "writeAllowed", "writeForbidden", "searchSuppressed"])) {
     return fail("CAPSULE_SCHEMA_INVALID", "Navigation contains an undeclared property");
   }
@@ -580,7 +586,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
       return fail("CAPSULE_SCHEMA_INVALID", "Triggered navigation entries are invalid");
     }
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleAffected(capsule: ExecutionCapsule): Result<true> {
   if (!onlyKeys(capsule.affected, ["files", "symbols", "dependencies", "dependencyClosureDigest"])) {
     return fail("CAPSULE_SCHEMA_INVALID", "Affected projection contains an undeclared property");
   }
@@ -603,7 +612,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   if (!uniqueNonEmptyStrings(capsule.affected.symbols) || !uniqueNonEmptyStrings(capsule.affected.dependencies)) {
     return fail("CAPSULE_SCHEMA_INVALID", "Affected symbols/dependencies are invalid");
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleAcceptance(capsule: ExecutionCapsule): Result<true> {
   if (!uniqueNonEmptyStrings(capsule.constraints) || capsule.constraints.length === 0) {
     return fail("CAPSULE_SCHEMA_INVALID", "Constraints must be a non-empty unique string list");
   }
@@ -623,7 +635,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
     }
     criterionIds.add(criterion.id);
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleSelectedTests(capsule: ExecutionCapsule): Result<true> {
   if (!onlyKeys(capsule.selectedTests, ["ladderLevel", "tests", "escalation", "finalSweepRequired"])) {
     return fail("CAPSULE_SCHEMA_INVALID", "Selected tests contain an undeclared property");
   }
@@ -648,7 +663,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   if (capsule.selectedTests.ladderLevel === "L5" && capsule.selectedTests.finalSweepRequired !== true) {
     return fail("CAPSULE_FINAL_SWEEP_REQUIRED", "L5 selection must retain finalSweepRequired=true");
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleProofReferences(capsule: ExecutionCapsule): Result<true> {
   if (!Array.isArray(capsule.proofReferences)) {
     return fail("CAPSULE_SCHEMA_INVALID", "proofReferences must be an array");
   }
@@ -668,7 +686,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
     }
     proofIds.add(proof.proofId);
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleFingerprints(capsule: ExecutionCapsule): Result<true> {
   if (!onlyKeys(capsule.fingerprints, ["canonicalization", "capsuleFingerprint", "inputs"])) {
     return fail("CAPSULE_SCHEMA_INVALID", "Fingerprint block contains an undeclared property");
   }
@@ -692,7 +713,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
     }
     fingerprintRefs.add(item.ref);
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleInvalidation(capsule: ExecutionCapsule): Result<true> {
   if (!onlyKeys(capsule.invalidation, ["driftClasses", "onDrift", "expiresAt"])) {
     return fail("CAPSULE_SCHEMA_INVALID", "Invalidation block contains an undeclared property");
   }
@@ -719,7 +743,10 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   ) {
     return fail("CAPSULE_SCHEMA_INVALID", "Invalidation expiry is not a date-time");
   }
+  return { ok: true, value: true };
+}
 
+function validateCapsuleTerminal(capsule: ExecutionCapsule): Result<true> {
   if (!nonEmpty(capsule.stopCondition)) {
     return fail("CAPSULE_SCHEMA_INVALID", "STOP CONDITION must be non-empty");
   }
@@ -733,7 +760,29 @@ export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Res
   if (capsule.state === "COMPILED" && capsule.certainty !== "SUFFICIENT") {
     return fail("CAPSULE_SCHEMA_INVALID", "COMPILED requires SUFFICIENT certainty");
   }
-
+  return { ok: true, value: true };
+}
+export function validateExecutionCapsuleContract(capsule: ExecutionCapsule): Result<true> {
+  const phase1 = validateCapsuleIdentity(capsule);
+  if (!phase1.ok) return phase1;
+  const phase2 = validateCapsuleBaseWorkOrder(capsule);
+  if (!phase2.ok) return phase2;
+  const phase3 = validateCapsuleNavigation(capsule);
+  if (!phase3.ok) return phase3;
+  const phase4 = validateCapsuleAffected(capsule);
+  if (!phase4.ok) return phase4;
+  const phase5 = validateCapsuleAcceptance(capsule);
+  if (!phase5.ok) return phase5;
+  const phase6 = validateCapsuleSelectedTests(capsule);
+  if (!phase6.ok) return phase6;
+  const phase7 = validateCapsuleProofReferences(capsule);
+  if (!phase7.ok) return phase7;
+  const phase8 = validateCapsuleFingerprints(capsule);
+  if (!phase8.ok) return phase8;
+  const phase9 = validateCapsuleInvalidation(capsule);
+  if (!phase9.ok) return phase9;
+  const phase10 = validateCapsuleTerminal(capsule);
+  if (!phase10.ok) return phase10;
   return { ok: true, value: true };
 }
 

@@ -106,6 +106,34 @@ function validReceipt(receipt: ProofReuseReceipt): boolean {
   );
 }
 
+function growAffectedSourceClosure(map: TestMap, affectedSources: Set<string>): boolean {
+  let changed = false;
+  for (const source of map.sources) {
+    if (affectedSources.has(source.id)) continue;
+    if ((source.dependsOn ?? []).some((dependency) => affectedSources.has(dependency))) {
+      affectedSources.add(source.id);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
+function growAffectedTestClosure(map: TestMap, affectedSources: Set<string>, affectedTests: Set<string>): boolean {
+  let changed = false;
+  for (const test of map.tests) {
+    if (affectedTests.has(test.id)) continue;
+    if (
+      test.sources.some((sourceId) => affectedSources.has(sourceId)) ||
+      (test.dependsOn ?? []).some((dependency) => affectedTests.has(dependency))
+    ) {
+      affectedTests.add(test.id);
+      for (const sourceId of test.sources) affectedSources.add(sourceId);
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 function downstreamFailureClosure(
   map: TestMap,
   failures: readonly FailureFingerprint[],
@@ -130,27 +158,9 @@ function downstreamFailureClosure(
   // downstream test dependencies. This is intentionally more conservative than test-id-only reuse.
   let moved = true;
   while (moved) {
-    moved = false;
-
-    for (const source of map.sources) {
-      if (affectedSources.has(source.id)) continue;
-      if ((source.dependsOn ?? []).some((dependency) => affectedSources.has(dependency))) {
-        affectedSources.add(source.id);
-        moved = true;
-      }
-    }
-
-    for (const test of map.tests) {
-      if (affectedTests.has(test.id)) continue;
-      if (
-        test.sources.some((sourceId) => affectedSources.has(sourceId)) ||
-        (test.dependsOn ?? []).some((dependency) => affectedTests.has(dependency))
-      ) {
-        affectedTests.add(test.id);
-        for (const sourceId of test.sources) affectedSources.add(sourceId);
-        moved = true;
-      }
-    }
+    const sourcesChanged = growAffectedSourceClosure(map, affectedSources);
+    const testsChanged = growAffectedTestClosure(map, affectedSources, affectedTests);
+    moved = sourcesChanged || testsChanged;
   }
 
   return { tests: affectedTests, unknownFailure };
