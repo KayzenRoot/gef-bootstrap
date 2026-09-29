@@ -58,7 +58,6 @@ import type {
   TransactionJournalPort,
   TransactionPorts,
   TransactionStatePort,
-  VerificationObligation,
 } from "@gef-bootstrap/kernel";
 
 export const TRANSACTION_PRIVATE_DIRECTORY = PRIVATE_DIRECTORY;
