@@ -168,7 +168,7 @@ A second hosted provider such as GitLab or Bitbucket is **not mandatory** for `P
 The GitHub profile includes governed repository discovery, branch/PR lifecycle, checks/status evidence, CI integration, issues/templates where relevant, ruleset/permission-gap reporting, release surfaces and exact-head evidence binding. Unavailable administrative permissions produce truthful gap/block states rather than fabricated success.
 
 ## Optional adapter packaging
-`M39 UADS` and `M41 UGAS` remain optional adapter tracks, while `M40` remains a neutral reserved context slot with no provider identity or runtime. These tracks but are **separately activatable packages/profiles** over the Generic Adapter API. Their absence cannot block independent `PRODUCTION_RELEASE_DONE`.
+`M39 UADS` and `M41 UGAS` remain optional adapter tracks, while `M40` remains a neutral reserved context slot with no provider identity or runtime. M39 and M41 remain separately activatable packages/profiles over the Generic Adapter API; M40 remains strictly reserved and inactive. Their absence cannot block independent `PRODUCTION_RELEASE_DONE`.
 
 An adapter may be advertised as shipped/supported only when its own compatibility, tests, documentation and evidence pass. The complete core release must work without any external adapter installed or connected.
 
