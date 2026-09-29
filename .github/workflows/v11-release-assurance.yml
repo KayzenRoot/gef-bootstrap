@@ -96,6 +96,55 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
+
+  cumulative-sonar-evidence:
+    # Release-bound read-only diagnostics for PR #278; no checkout, no secret
+    # access, no candidate code execution and no Sonar quality-gate override.
+    name: Cumulative Sonar diagnostics
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Inspect cumulative release-to-main Sonar annotations
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GH_REPO" = "KayzenRoot/gef-bootstrap" || { echo "::error::Wrong repository"; exit 1; }
+          release_sha="$(gh api "repos/$GH_REPO/git/ref/heads/release/1.1" --jq '.object.sha')"
+          pr_sha="$(gh api "repos/$GH_REPO/pulls/278" --jq '.head.sha')"
+          printf 'Current release SHA: %s\nPR #278 head SHA: %s\n' "$release_sha" "$pr_sha"
+          if [ "$release_sha" != "$pr_sha" ]; then
+            echo "::warning::PR #278 is not bound to the current release tip: STALE; do not infer quality-gate closure"
+            exit 0
+          fi
+          checks="$RUNNER_TEMP/release-checks.json"
+          gh api --paginate "repos/$GH_REPO/commits/$pr_sha/check-runs?per_page=100" | jq -s '[.[] | .check_runs[]]' > "$checks" || {
+            echo "::warning::GitHub check inventory unavailable: NOT_VERIFIED"
+            exit 0
+          }
+          sonar_id="$(jq -r '[.[] | select(.name == "SonarCloud Code Analysis") | select(.app.slug == "sonarqubecloud")] | sort_by(.completed_at) | last | .id // empty' "$checks")"
+          if [ -z "$sonar_id" ]; then
+            echo "::warning::Cumulative PR #278 Sonar check has not arrived for the current release head: NOT_VERIFIED"
+            exit 0
+          fi
+          jq -c --argjson id "$sonar_id" '[.[] | select(.id == $id) | {id, status, conclusion, head_sha, annotation_count: .output.annotations_count}]' "$checks"
+          annotations="$RUNNER_TEMP/sonar-annotations.json"
+          gh api --paginate "repos/$GH_REPO/check-runs/$sonar_id/annotations?per_page=100" | jq -s 'add // []' > "$annotations" || {
+            echo "::warning::Cumulative PR #278 annotation inventory unavailable: NOT_VERIFIED"
+            exit 0
+          }
+          echo "PR #278 Sonar annotations by path/rule/line (metadata only; no code snippets or messages):"
+          jq -c '[.[] | {path, start_line, end_line, annotation_level, title}] | sort_by(.path, .start_line, .title)' "$annotations"
+          echo "Annotation count:"
+          jq 'length' "$annotations"
+          echo "This inventory is diagnostic, never approval. Original Sonar Quality Gate remains authoritative."
+
   codeql-alert-evidence:
     # Read-only provider query; this job never checks out PR code or executes
     # a candidate-provided script, and logs only controlled alert metadata.
