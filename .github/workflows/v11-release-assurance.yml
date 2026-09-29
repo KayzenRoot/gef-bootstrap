@@ -1,0 +1,142 @@
+name: V1.1 release assurance
+
+on:
+  pull_request:
+    branches: ["release/1.1"]
+  push:
+    branches: ["release/1.1"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v11-release-assurance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-assurance:
+    name: V1.1 release assurance / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out exact candidate head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Set up Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked workspace dependencies (Linux/macOS)
+        id: install_unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -o pipefail
+          npm ci --ignore-scripts 2>&1 | tee install.log
+      - name: Install locked workspace dependencies (Windows)
+        id: install_windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          npm.cmd ci --ignore-scripts *>&1 | Tee-Object -FilePath install.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run full validation as an unprivileged Windows user
+        id: validate_windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./.github/scripts/run-v11-unprivileged-validation.ps1
+      - name: Run full typecheck and regression suite (Linux/macOS)
+        id: validate_unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate 2>&1 | tee validation.log
+      - name: Audit dependency vulnerabilities (Windows)
+        id: audit_windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          npm.cmd audit --audit-level=high *>&1 | Tee-Object -FilePath dependency-audit.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Audit dependency vulnerabilities (Linux/macOS)
+        id: audit_unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -o pipefail
+          npm audit --audit-level=high 2>&1 | tee dependency-audit.log
+      - name: Write exact-head assurance receipt
+        if: always()
+        env:
+          GEF_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GEF_HEAD_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          GEF_INSTALL_OUTCOME: ${{ runner.os == 'Windows' && steps.install_windows.outcome || steps.install_unix.outcome }}
+          GEF_VALIDATE_OUTCOME: ${{ runner.os == 'Windows' && steps.validate_windows.outcome || steps.validate_unix.outcome }}
+          GEF_AUDIT_OUTCOME: ${{ runner.os == 'Windows' && steps.audit_windows.outcome || steps.audit_unix.outcome }}
+        run: node .github/scripts/write-v11-assurance-receipt.mjs
+      - name: Upload exact-head logs and receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: v11-assurance-${{ matrix.os }}-${{ github.run_id }}
+          path: |
+            install.log
+            validation.log
+            dependency-audit.log
+            assurance-receipt.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  codeql-alert-evidence:
+    # Read-only provider query; this job never checks out PR code or executes
+    # a candidate-provided script, and logs only controlled alert metadata.
+    name: CodeQL tracked alert evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      GEF_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Inspect historical alert and branch-scoped security evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GH_REPO" = "KayzenRoot/gef-bootstrap" || { echo "::error::Wrong repository"; exit 1; }
+          printf 'Exact candidate head: %s\n' "$GEF_CANDIDATE_SHA"
+          all="$RUNNER_TEMP/codeql-all-alerts.json"
+          release_alerts="$RUNNER_TEMP/codeql-release-alerts.json"
+          tracked="$RUNNER_TEMP/codeql-tracked-alert.json"
+          gh api --paginate "repos/$GH_REPO/code-scanning/alerts?state=all&per_page=100" | jq -s 'add // []' > "$all" || {
+            echo "::error::Complete provider alert inventory unavailable; disposition remains BLOCKED"
+            exit 1
+          }
+          gh api --paginate "repos/$GH_REPO/code-scanning/alerts?ref=refs%2Fheads%2Frelease%2F1.1&state=all&per_page=100" | jq -s 'add // []' > "$release_alerts" || {
+            echo "::error::Release-scoped provider alert inventory unavailable; disposition remains BLOCKED"
+            exit 1
+          }
+          echo "Historical #2 direct provider lookup (metadata only):"
+          if gh api "repos/$GH_REPO/code-scanning/alerts/2" > "$tracked" 2>/dev/null; then
+            jq -c '{number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, updatedAt: .updated_at}' "$tracked"
+          else
+            echo "::warning::Historical alert #2 unavailable by direct provider lookup; owner disposition remains required"
+          fi
+          echo "All current open HIGH/CRITICAL alert metadata:"
+          jq -c '[.[] | select(.state == "open" and (.rule.security_severity_level == "high" or .rule.security_severity_level == "critical")) | {number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, ref: .most_recent_instance.ref, file: .most_recent_instance.location.path}]' "$all"
+          echo "Release/1.1 alert metadata (all states):"
+          jq -c '[.[] | {number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, ref: .most_recent_instance.ref, file: .most_recent_instance.location.path}]' "$release_alerts"
+          # Successful inventory retrieval establishes provider access only;
+          # owner audit must still decide exact-candidate applicability and close
+          # or disposition any unresolved finding before WO-009 promotion.

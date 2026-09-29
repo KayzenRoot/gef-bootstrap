@@ -57,6 +57,7 @@ GEF V1 is a framework/workspace foundation. Start by reading:
 3. `.engineering/CHECKPOINT.md` for accepted V1 state.
 4. `.engineering/GBS-V1-PRODUCTION-ACCEPTANCE.md` for the release boundary.
 5. `docs/INSTALLATION.md` and `docs/QUICKSTART.md` for setup and adoption.
+6. `docs/V1.1-OPERATIONS-RUNBOOK.md` for recovery, fresh-chat continuity and V1.1 release boundaries.
 
 For a new project, establish canonical sources and a Work Order before mutation. For an existing project, perform discovery, collision/preservation analysis and preview first. Never delete or overwrite user work merely to satisfy bootstrap structure.
 
