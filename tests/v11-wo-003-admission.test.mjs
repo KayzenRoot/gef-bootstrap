@@ -41,7 +41,6 @@ test('machine and human checkpoint preserve WO-003 admission or prove its object
   const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
   const ordinal = (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
-  assert.ok(Number.isInteger(ordinal) && ordinal >= 3, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (ordinal === 3) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-003');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
@@ -57,12 +56,7 @@ test('machine and human checkpoint preserve WO-003 admission or prove its object
     assert.equal(completed.criticalFindings, 0);
     assert.equal(completed.highFindings, 0);
     assert.ok(checkpointMd.includes('Completed V1.1 increment — WO-003'));
-    if (wo008Completed) {
-      assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
-      assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
-    } else {
-      assertLaterActiveWorkOrder(checkpoint, ordinal, ownerGovernancePromoted);
-    }
+    assertLaterActiveWorkOrder(checkpoint, ordinal, ownerGovernancePromoted, 3, wo008Completed);
   }
 });
 
