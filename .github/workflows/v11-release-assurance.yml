@@ -281,4 +281,25 @@ jobs:
           if [ "$final_release" != "$release_sha" ] || [ "$final_pr" != "$pr_sha" ]; then
             echo "::warning::STALE: provider refs changed during diagnostics; discard this run"
           fi
+# Candidate-specific issue metadata helps resolve a new security rating
+          # on this diagnostic PR, without printing messages or source snippets.
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            candidate_pr="$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH")"
+            if [ -n "$candidate_pr" ]; then
+              candidate_issues="$RUNNER_TEMP/candidate-issues.json"
+              if curl --silent --show-error --fail --location --max-time 30 --get \
+                --data-urlencode 'componentKeys=KayzenRoot_gef-bootstrap' \
+                --data-urlencode "pullRequest=$candidate_pr" \
+                --data-urlencode 'resolved=false' --data-urlencode 'ps=100' \
+                'https://sonarcloud.io/api/issues/search' > "$candidate_issues"; then
+                echo "Current diagnostic PR issue metadata (up to 60; no messages/snippets):"
+                jq -c '[.issues[]? | {
+                  rule, type, severity, component, line, status,
+                  impacts: [.impacts[]? | {softwareQuality, severity}]
+                }] | .[:60]' "$candidate_issues"
+              else
+                echo "::warning::NOT_VERIFIED: candidate Sonar issue metadata is inaccessible"
+              fi
+            fi
+          fi
           echo "Diagnostic only: never overrides the original Sonar Quality Gate."
