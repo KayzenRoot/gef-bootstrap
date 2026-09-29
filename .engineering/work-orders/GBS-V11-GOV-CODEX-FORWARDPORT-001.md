@@ -1,6 +1,6 @@
 # GBS-V11-GOV-CODEX-FORWARDPORT-001 — planning-only Work Order
 
-Status: `PLANNING_READY_NOT_ADMITTED`; evidence revalidated `2026-09-29`; owner audit still required. GitHub issue: [#335](https://github.com/KayzenRoot/gef-bootstrap/issues/335). Owner: KayzenRoot. Risk: STANDARD governance with release-lineage impact.
+Status: PLANNING_READY_FOR_REAUDIT; NOT ADMITTED FOR RELEASE-LINE MUTATION; evidence revalidated 2026-09-29; owner audit not yet performed. GitHub issue: [#335](https://github.com/KayzenRoot/gef-bootstrap/issues/335). Owner: KayzenRoot. Risk: STANDARD governance with release-lineage impact.
 
 ## OBJECTIVE
 
@@ -13,7 +13,7 @@ Prepare, but do not execute, the governed forward-port of main's approved ADR-00
 - Merge base: `e23311e77d79b84f3c70671072a22a6f8896d13d`; main has 2 unique commits and release has 62.
 - Main's governance promotion followed #332 and #333; the current main SHA is the promoted state. Re-fetch all refs and source fingerprints before any future admission.
 - PR #278 is `CLOSED`, `mergedAt=null`, base `e23311e77d79b84f3c70671072a22a6f8896d13d`, head `bbd83a179dd4c11f2f8653251db2b574d0266880`. No replacement cumulative release-to-main PR was present in the current open-PR listing.
-- PR #336 is draft and planning-only, based on `release/1.1`. Its previous head `7eb07452b14b5147a33f1e07403a0717eefd4424` had 29/29 listed checks succeed. Those results are bound to that prior head and do not satisfy checks for this update.
+- PR #336 remains OPEN/DRAFT, based on release/1.1. The exact head reviewed in review 5356233070 was 73f26501ad54375fd396f2155979c58b1b05b0f3; all 31/31 listed checks succeeded there ([check results](https://github.com/KayzenRoot/gef-bootstrap/pull/336/checks), [Windows release assurance](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36604896124)). Those results are head-bound and do not apply to the Correction Delta commit; validate the resulting exact head before re-audit.
 - Canonical blob fingerprints and semantic merge map are recorded in `.engineering/lineage/GBS-V11-GOV-CODEX-FORWARDPORT-001.md`.
 
 ## OBJECTIVE EVIDENCE — ISSUE #334 AND PROPOSED ISSUE #337
@@ -38,9 +38,48 @@ Any production source, test, workflow, threshold, coverage configuration, checkp
 - Preserve release-only ADR-0003 through ADR-0006, accepted WO-001 through WO-009, adapter-neutral boundaries and the V1.1 overlay. Preserve main's V1.0 accepted 1,088/1,088 state without rewriting it.
 - Keep planning, implementation, exact-head audit and checkpoint promotion as distinct gates.
 
+## FILES / SOURCES TO READ
+
+MUST_READ before any later forward-port or admission; use the exact branch versions and Context Lock:
+
+- Both main and release/1.1 copies of AGENTS.md; .engineering/SOURCE-HIERARCHY.md; .engineering/CHECKPOINT.md and .engineering/CHECKPOINT.json; .engineering/CONSTITUTION-LOCK.md; .engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md; .engineering/DECISIONS-LEDGER.md; .engineering/PROJECT-OVERVIEW.md; .engineering/REQUIREMENTS.md; .engineering/SCOPE.md; .engineering/ARCHITECTURE.md; .engineering/SECURITY.md; .engineering/TEST-BENCHMARK-PLAN.md; .engineering/DEFINITION-OF-DONE.md; and .engineering/EXECUTOR-ACCELERATION-CONTRACT.md.
+- ADR-0001, ADR-0002, ADR-0003, ADR-0005, ADR-0006, ADR-0007 and ADR-0008, as present on each branch; also main's .engineering/GITHUB-FIRST-CODEX-WORKFLOW.md.
+- Issue #335; PRs #332 and #333 with their evidence; release maintenance PRs #278 and #330; Issue #334 and its exact-SHA diagnostic evidence; and PR #336 with its current exact-head review and checks.
+- Read release .engineering/execution-handoffs only if a specific source conflict requires it.
+
+For this Correction Delta, the exact-state lineage/conflict map at .engineering/lineage/GBS-V11-GOV-CODEX-FORWARDPORT-001.md is READ_ONLY and supplies the recorded blob fingerprints and conflict inventory. No other source is added by this section.
+
+## CONSTRAINTS
+
+- Phase remains PLANNING_ONLY. This Work Order and PR #336 confer no release/1.1 implementation or forward-port authority. Any future source synchronization requires a separate governed admission, current Context Lock and exact-head audit.
+- For this Correction Delta, only .engineering/work-orders/GBS-V11-GOV-CODEX-FORWARDPORT-001.md is WRITE_ALLOWED in the repository. Updating PR #336's description/evidence is allowed for this task. The companion lineage map and every other repository path are READ_ONLY.
+- WRITE_FORBIDDEN: every repository path except this Work Order, including AGENTS.md, Source Hierarchy, both Checkpoints, Constitution/Amendment, Decisions Ledger/Supersession Map, Project Overview, Requirements, Scope, Architecture, Security, Test Plan, DoD, Executor Acceleration Contract, GitHub-first workflow, ADRs, evidence and execution handoffs; all product source, tests, CI/workflows, migrations, thresholds and coverage configuration; accepted Work Orders and V1.0 history; release state, tags and publication. Do not allocate D-0064, rewrite/delete branch history or aliases, replace either checkpoint or ledger wholesale, admit WO-010, reopen/replace PR #278, force-push, reset a branch or merge.
+- Keep D-0062@main / ADR-0007 and D-0062@release/1.1 / ADR-0006 branch-qualified. D-0064 remains only a candidate pending a fresh collision check and explicit audited approval. Do not alter decision meanings, recorded fingerprints, approved scope or the separate Issue #337 proposal.
+- Preserve owner-operated exact-head review, NOT_INDEPENDENT classification, branch protections, and all required checks. Do not claim completion or inherit any result from a different head.
+
+## ACCEPTANCE CRITERIA
+
+For this planning Correction Delta:
+
+1. This Work Order contains explicit FILES / SOURCES TO READ, CONSTRAINTS, ACCEPTANCE CRITERIA and TESTS sections, and can be invoked without inferring those fields from chat.
+2. The read list and write prohibition stay within Issue #335 and the exact-state lineage map; the current correction changes only this Work Order.
+3. Its context references agree with the revalidated main/release SHAs and the map's base/main/release fingerprints. The map names both literal conflicts (.engineering/CHECKPOINT.json and .engineering/DECISIONS-LEDGER.md), records their branch provenance, and exposes the D-0062 collision and ADR-0007 deletion hazard without overwriting either decision or allocating D-0064.
+4. It states PR #278 is CLOSED_NOT_MERGED; Issue #334's line-versus-branch cause is proved on its exact SHA; and Issue #337 remains a separate PROPOSED / NOT ADMITTED correction.
+5. PR #336 remains a real-diff planning-only draft. Required checks must be SUCCESS on the exact Correction Delta head, the PR evidence must record that head and its checks, and only then is the Work Order ready for owner re-audit.
+6. The STOP state is GBS_V11_CODEX_GITHUB_FIRST_FORWARDPORT_PLAN_READY_FOR_REAUDIT. This stop requests re-audit only; it does not admit source mutation, forward-port, WO-010, checkpoint promotion or merge.
+
+Any future cumulative integration must use a new exact Context Lock and re-evaluate its current Codecov, Sonar and security checks on that integrated head. Historical PR #278 results are not inherited.
+
+## TESTS
+
+- For this Markdown-only Correction Delta, run git diff --check and verify the changed-path allowlist, required section headings, and consistency of all referenced SHAs with the Issue #335 Context Lock and the companion lineage map.
+- Run the repository's current required GitHub checks on the exact commit produced by this Correction Delta, including exact-head documentation/repository validation and applicable required CI/security checks. Record the candidate SHA, check count, outcomes and evidence links in PR #336. A pass on review head 73f26501ad54375fd396f2155979c58b1b05b0f3 is historical input only and cannot substitute.
+- No product source, test, CI/workflow or coverage-configuration files or behavior may be changed, and no tests may be added. Existing jobs included in the required GitHub checks may execute and must be reported; do not run unrelated product tests for this docs-only correction. For any separately admitted integrated forward-port, run the required cross-branch validation and re-evaluate Codecov, Sonar and security only on its new exact integrated state.
+- Owner semantic audit follows successful exact-head checks and remains NOT_INDEPENDENT. Do not perform or claim that audit in this Correction Delta.
+
 ## VALIDATION AND EVIDENCE STATUS
 
-The exact refs, canonical blobs, PR #278 closure state, #334 proof, #337 admission state, and Git `merge-tree` conflict paths were revalidated for this update. No repository tests or source validation were run manually. The 29/29 checks previously reported for PR #336 belong only to head `7eb07452b14b5147a33f1e07403a0717eefd4424`; the changed head needs fresh checks. After those checks, a separate objective owner audit remains required.
+The exact refs and source fingerprints, PR #278 closure, Issue #334 proof, Issue #337 admission state and merge-tree conflicts are recorded in the companion map. Review head 73f26501ad54375fd396f2155979c58b1b05b0f3 had 31/31 listed checks SUCCESS. The Correction Delta changes the Work Order and therefore requires fresh checks on its resulting exact head; do not inherit review-head results. Record the new SHA and CI evidence in PR #336. After those checks pass, the next gate is owner re-audit, NOT_INDEPENDENT. No release mutation, admission or merge is implied.
 
 ## DELIVERABLES
 
@@ -52,4 +91,4 @@ Português brasileiro; exact main/release/base and candidate SHAs, changed paths
 
 ## STOP CONDITION
 
-`GBS_V11_CODEX_GITHUB_FIRST_FORWARDPORT_PLAN_READY_NOT_ADMITTED`. The current work stops at the owner-audit gate. No approval, source mutation, release admission, merge or checkpoint promotion is implied.
+GBS_V11_CODEX_GITHUB_FIRST_FORWARDPORT_PLAN_READY_FOR_REAUDIT. This Work Order remains PLANNING_ONLY / NOT ADMITTED. Return to owner re-audit after the Correction Delta's exact-head checks pass. No source mutation, forward-port, checkpoint promotion or merge is authorized.
