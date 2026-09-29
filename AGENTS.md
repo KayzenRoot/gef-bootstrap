@@ -2,6 +2,10 @@
 
 This repository is governed by GEF Bootstrap. This file is an executor-facing acceleration layer, not a replacement for canonical project authority.
 
+## Prospective actor and GitHub-first handoff (ADR-0008 / D-0063; pending release adoption)
+
+The owner-directed ADR-0008 / D-0063 prepares Codex as the sole code, test, CI and migration author for this repository and new GEF-governed projects after a separate exact-head owner audit and checkpoint promotion. On release/1.1 this adoption is PENDING and NOT_EFFECTIVE; current release authority remains controlled by its promoted checkpoint and ADR-0006. ChatGPT prepares approved governance documents and issue-backed Work Orders, coordinates GitHub and performs objective review. A planning document or unadmitted issue never authorizes implementation. See .engineering/GITHUB-FIRST-CODEX-WORKFLOW.md.
+
 ## Authority
 1. Resolve facts through `.engineering/SOURCE-HIERARCHY.md`.
 2. Read `.engineering/CHECKPOINT.md` and `.engineering/CHECKPOINT.json` for current promoted state.
