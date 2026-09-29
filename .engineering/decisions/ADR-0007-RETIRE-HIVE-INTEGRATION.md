@@ -1,6 +1,6 @@
 # ADR-0007 — Retire Hive as a Bootstrap development and integration dependency
 
-Status: OWNER APPROVED (2026-09-28); technical implementation awaits exact-head CI and objective audit under GBS-MAINT-HIVE-REMOVAL-001.
+Status: APPROVED AND MERGED. Owner approved 2026-09-28; technical exact-head approval at `5407ad7d0e87aea935705216f3308b87aea58056`; protected-main merge `3c5f1fb96e9d5f3d8a07acdf024687063f82d9d2` via PR #313. Evidence: `.engineering/evidence/GBS-MAINT-HIVE-REMOVAL-001-EVIDENCE.md`.
 
 ## Existing authority and collision avoidance
 The V1.1 release line already approved ADR-0005 (legacy ecosystem detachment) and D-0061, retaining neutral reserved M39/M40 slots without binding any prior external provider. The main-line Work Order is a forward-compatible removal of the named Hive implementation and active mentions; it MUST NOT countermand the approved V1.1 neutral M40 slot. This ADR uses number 0007 and companion D-0062 to avoid collision with V1.1 ADR-0003 through 0006 and D-0052 through D-0061.

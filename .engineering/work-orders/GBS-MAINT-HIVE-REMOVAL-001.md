@@ -1,6 +1,6 @@
 # GBS-MAINT-HIVE-REMOVAL-001 — Retire Hive from GEF Bootstrap
 
-Status: OWNER-REQUESTED / ADMITTED FOR MAINTENANCE; implementation and promotion require exact-head evidence.
+Status: APPROVED AND MERGED. Implementation PR #313 passed all eleven exact-head checks at `5407ad7d0e87aea935705216f3308b87aea58056` and merged to main as `3c5f1fb96e9d5f3d8a07acdf024687063f82d9d2`. The same Work Order's separate documentation/checkpoint closeout records the accepted state without reopening scope.
 
 ## OBJECTIVE
 Remove every active Hive dependency, optional adapter, execution instruction, module advertisement, test, workflow binding and active planning/documentation requirement from GEF Bootstrap. Bootstrap development must be fully independent of any Hive installation, service, MCP, API, context store or runtime. Preserve verified functionality of the core and unrelated adapters.
