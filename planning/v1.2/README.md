@@ -54,3 +54,11 @@ The owner requested a consistent progress/forecast panel in every substantive co
 
 ## Further research expansion — application operability and launch quality
 The owner's request for still more innovation added two planning files to the prior eleven-document pack (now **thirteen research documents**): release/operations/data safety and API/performance/decision intelligence. These include fourteen additional candidate capabilities, but they are NOT necessarily fourteen new GEF engines or mandatory installs; duplicate-free adaptation of accepted engines is preferred and owner admission/benchmarks decide final scope. The current GEF binary does not implement these ideas, and the research PR does not modify active V1.1 workflows, package manifests, protected main or release tags.
+
+## Domain-profile research additions
+- WEB3-FACTORY-PROFILE.md: EVM/Solana architectures, smart-contract testing, wallets and approved deployment safety.
+- GAME-FACTORY-PROFILE.md: browser and multiplayer game technology, server authority, gameplay/asset/visual proof and game-performance testing.
+- DOMAIN-ROUTER-AND-HYBRID-PROFILES.md: evidence-based detection, domain-specific setup, app interviews, and optional combined game plus Web3 profiles.
+- REMAINING-GAPS-AND-OPTIMIZATION-AUDIT.md: high-value open research decisions, release-scope control and representative validation experiments.
+
+Total versioned research files: 17. These are candidate documents, not an approved 17-module scope. Domain toolchains are installed only if the corresponding owner-approved future profile requires them. Current GEF and V1.1 are unchanged.
