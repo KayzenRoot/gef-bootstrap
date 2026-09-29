@@ -73,3 +73,12 @@ All four are FUTURE CANDIDATE profiles; no new tools or financial/chain operatio
 
 ## Additional cross-domain risk dossier
 - SAAS-WEB3-CROSS-DOMAIN-AND-GAPS.md: joint fiat payment ledger/onchain ledger and provider-statement reconciliation; event idempotency and finality/reorg, value precision, privacy metadata and evolving risk controls for SaaS + Web3 hybrids. Research only, no contract deployment, regulated financial classification or user assets transferred.
+
+## OWNER IDEA PHASE CLOSED — consolidated candidate baseline (2026-09-29)
+The owner explicitly closed further V1.2 feature ideation after including every previously discussed capability. The complete candidate catalog is now **25 versioned Markdown files** (subject to verification against the exact branch head). The three final governance files are:
+- V12-CANDIDATE-SCOPE-FREEZE.md: C01–C12 universal core proposals; D01–D12 CONDITIONAL SaaS, finance, Web3, games/MMO/hybrid and AI-target-app profile contracts; R01–R05 experiment/defer categories. Defines concept-freeze semantics and rejects unbounded feature creep.
+- V12-CANDIDATE-ACCEPTANCE-AND-RELEASE-GATES.md: G0–G6 objective admission, app experience, source-bound reporting and forecast, safe Codex speed, domain-specific pilots, cross-domain security and actual release proof, including fail-closed negative fixtures.
+- V12-IDEA-CLOSURE-AND-HANDOFF.md: inventory of all 25 files, outstanding future owner *product choice* questions, exact future legal steps and the explicit ideation STOP CONDITION.
+The additional SAAS-WEB3-CROSS-DOMAIN-AND-GAPS.md covers private ledger + PSP + optional chain double-credit/reorg consistency, signing/key/privacy and the final cross-domain risk audit. This is not a new mandatory runtime subsystem.
+
+**Interpretation:** V1.2 concept collection is closed and all previously agreed categories are recorded, but technical admission and the release scope are intentionally NOT frozen until the actual V1.1 production gate and future WO-000 source/benchmark/owner review. These 25 planning files are not 25 implemented features. PR #344 stays DRAFT, issue #343 tracks handoff; zero v1.2 production completion or empirical ETA is implied. New speculative enhancements go to a future extension/change-control queue, except a demonstrated high-risk omission that must enter an owner-reviewed scope-change gate. All code/test/CI/migration implementation belongs to Codex after admission.
