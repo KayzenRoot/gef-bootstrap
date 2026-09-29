@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { assertWo009ContextLockRefreshHandoff, assertWo009BranchReconciliationNote } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,10 +36,9 @@ test("Checkpoint names one admitted V1.1 action with branch and source reference
   assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
   assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
-  assert.equal(checkpoint.v11.nextLegalAction, "CREATE_WO_009_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_009_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH");
+  assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
   assert.ok(checkpointMd.includes("### Active V1.1 increment — WO-009"));
-  assert.ok(checkpointMd.includes("No WO-009 implementation has started."));
+  assertWo009BranchReconciliationNote(checkpointMd);
 });
 
 test("WO-009 locks integrated assurance and new-context continuation cases", () => {
@@ -48,8 +48,8 @@ test("WO-009 locks integrated assurance and new-context continuation cases", () 
   for (const id of ["SEC-INT-01","SEC-INT-06","REG-01","REG-07","CONT-RESUME-01","CONT-RESUME-04","SEC-INT-07"]) {
     assert.ok(lock.requiredTestIds.includes(id), "missing case " + id);
   }
-  assert.equal(lock.baseSha, "2d6538c3d90b63107b0cb4a4f6255c44cbfa61d1");
-  assert.equal(lock.productionShaAtLock, "72c17bd3e7e421790ac382022b1f0ebbb0275ea4");
+  assert.equal(lock.baseSha, "5ea917ae50cc8ce45022b76695c1b8cc2c2fc37d");
+  assert.equal(lock.productionShaAtLock, "e23311e77d79b84f3c70671072a22a6f8896d13d");
   assert.equal(lock.v100TagTargetAtLock, "866fe3af8cccc65c929aaf6a47a924401fa448b3");
   assert.equal(lock.knownSecurityFinding.checkRunId, 108450457038);
   assert.equal(lock.knownSecurityFinding.severity, "HIGH");
@@ -74,5 +74,4 @@ test("fresh-context steering routes governed build work from canonical state", (
   assert.ok(wo.includes("chat history"));
   for (const id of ["CONT-RESUME-01","CONT-RESUME-02","CONT-RESUME-03","CONT-RESUME-04"]) assert.ok(wo.includes(id));
   assert.ok(brief.includes("A new chat reconstructs from canonical repository/provider state"));
-  assert.equal(checkpoint.v11.nextLegalAction, "CREATE_WO_009_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE");
 });
