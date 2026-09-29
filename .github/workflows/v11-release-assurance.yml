@@ -190,7 +190,7 @@ jobs:
           # owner audit must still decide exact-candidate applicability and close
           # or disposition any unresolved finding before WO-009 promotion.
 
-cumulative-duplication-inventory:
+  cumulative-duplication-inventory:
     # Read-only, no checkout, no private Sonar token: diagnostic for the
     # cumulative release-to-main gate. Missing provider data is NOT_VERIFIED.
     name: Cumulative Sonar duplicate blocks
