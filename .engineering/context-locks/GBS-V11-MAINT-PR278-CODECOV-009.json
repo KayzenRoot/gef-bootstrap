@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-CODECOV-009",
+  "parent": "GBS-V11-MAINT-POST-WO009-001",
+  "owner": "KayzenRoot",
+  "baseRef": "release/1.1",
+  "baseSha": "849d79d1743b4628179bcac21b9884aaf2649825",
+  "branch": "gbs/v11/maint-pr278-codecov-source-009",
+  "assurance": "ELEVATED",
+  "fingerprints": {
+    ".engineering/CHECKPOINT.md": "a8550e4ebc45ce7d1a1aa528366458d9657e92f5",
+    ".engineering/CHECKPOINT.json": "bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6",
+    ".engineering/DECISIONS-LEDGER.md": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537",
+    ".engineering/DEFINITION-OF-DONE.md": "d9209765a268f0e21390a2c6c531c7dd771515b4",
+    ".engineering/work-orders/GBS-V11-MAINT-POST-WO009-001.md": "5c5d49f2cfb3fefff509379e5ac9ccdbb1aecae5",
+    ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md": "786eba0313202f2f2648461a2fc4e6f81190969a",
+    ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md": "97bef59b15f557302a7fd625af30ceeb421c01a1",
+    ".github/workflows/coverage-codecov.yml": "005e04fe7d3306ef64613317f89115adf67c7791",
+    "packages/cli/scripts/rights-diagnostics.mjs": "61e6399131360fbe7d68260cd552588735b5a457",
+    "packages/cli/scripts/prepare-package.mjs": "10e659ccce15045ed37ffa3e82d06a8408b8f734"
+  },
+  "allowedPaths": [
+    "packages/cli/scripts/rights-diagnostics.mjs",
+    "tests/v11-codecov-patch-coverage.test.mjs",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-CODECOV-009.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-CODECOV-009.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-CODECOV-009-EVIDENCE.md"
+  ],
+  "providerBaseline": {
+    "cumulativePr": 278,
+    "sonar": "SUCCESS",
+    "codecov": "FAILURE",
+    "priorPatchPercent": 85.81,
+    "providerTargetPercent": 97.85
+  },
+  "forbidden": [
+    "production main or historical tag mutations",
+    "lowering quality thresholds or tests",
+    "dependency/lockfile or CI workflow changes",
+    "reintroducing retired integrations",
+    "publication"
+  ],
+  "stopCondition": "GBS_V11_CODE_COVERAGE_BOUNDED_EXACT_HEAD_AND_PROVIDER_VERIFIED"
+}
