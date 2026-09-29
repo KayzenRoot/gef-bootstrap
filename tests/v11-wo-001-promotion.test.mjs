@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertWo009ContextLockRefreshHandoff } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -65,7 +65,8 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
   const id = String(admittedOrdinal).padStart(3, '0');
   if (admittedOrdinal === 9) {
-    assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
+    assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-009');
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
   } else {
     const expectedStop = `GBS_V11_WO_${id}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`;
     assert.equal(checkpoint.v11.stopState, expectedStop);

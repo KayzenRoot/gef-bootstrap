@@ -274,7 +274,7 @@
   "sharedTestAssertionHelper": {
     "path": "tests/helpers/v11-context-lock-refresh-assertions.mjs",
     "baseState": "ABSENT",
-    "purpose": "Single exact implementation for the WO-009 handoff, earlier active-admission transitions, and current branch/PR reconciliation checkpoint note"
+    "purpose": "Single implementation for the WO-009 handoff and current branch/PR reconciliation note, plus the repeated later active-Work-Order transition assertion"
   },
   "intermediateCandidateEvidence": {
     "candidateSha": "2fe61ed73c901bd08ea6b826eb0a3a567df0df1c",
@@ -298,6 +298,20 @@
         "checkRun": 109351579124,
         "conclusion": "FAILURE",
         "finding": "33.3% duplication on new code; required <=3%; repeated active-admission branch and two-work-order checkpoint note are centralized in the shared test helper"
+      }
+    },
+    "finalDuplicationRefactor": {
+      "intent": "Keep the complete WO-009 handoff/stop and branch-note assertion in the dedicated WO-009 test; centralize the generic later active-Work-Order assertion to avoid repeated branch blocks"
+    },
+    "thirdHead": {
+      "candidateSha": "631d43287121c515649cfbda86f3759672ddac11",
+      "checkCount": 39,
+      "passedAtObservation": 35,
+      "pendingAtObservation": 3,
+      "sonarCloud": {
+        "checkRun": 109353742990,
+        "conclusion": "FAILURE",
+        "finding": "5.7% duplication on new code; required <=3%; shared handoff/helper calls are kept in a single dedicated test while common active-Work-Order logic is centralized"
       }
     }
   }

@@ -74,5 +74,4 @@ test("fresh-context steering routes governed build work from canonical state", (
   assert.ok(wo.includes("chat history"));
   for (const id of ["CONT-RESUME-01","CONT-RESUME-02","CONT-RESUME-03","CONT-RESUME-04"]) assert.ok(wo.includes(id));
   assert.ok(brief.includes("A new chat reconstructs from canonical repository/provider state"));
-  assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
 });

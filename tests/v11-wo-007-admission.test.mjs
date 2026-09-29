@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assertV11AdmissionCheckpointState } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+import { assertLaterActiveWorkOrder } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -62,7 +63,7 @@ test("WO-007 admission remains provable after objective promotion to later Work 
       assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
       assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
     } else {
-      assertV11AdmissionCheckpointState(checkpoint, checkpointMd, ordinal, ownerGovernancePromoted);
+      assertLaterActiveWorkOrder(checkpoint, ordinal, ownerGovernancePromoted);
     }
     assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-007"));
   }
