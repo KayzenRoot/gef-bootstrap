@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-CODEQL-002",
+  "assurance": "ELEVATED",
+  "baseRef": "release/1.1",
+  "baseSha": "5ea917ae50cc8ce45022b76695c1b8cc2c2fc37d",
+  "productionShaAtLock": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+  "implementationBranch": "gbs/v11/maint/codeql-cleartext-002",
+  "knownFinding": {
+    "number": 2,
+    "tool": "CodeQL",
+    "rule": "js/clear-text-logging",
+    "severity": "HIGH",
+    "ref": "refs/heads/release/1.1",
+    "path": "packages/cli/scripts/rights-diagnostics.mjs",
+    "stateAtAdmission": "open",
+    "verificationRun": 36562294791
+  },
+  "canonicalSources": [
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "baseBlobSha": "3b3d8a07ef787f57b2ad2f4580941145a4d94f07",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/SECURITY.md",
+      "baseBlobSha": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DEFINITION-OF-DONE.md",
+      "baseBlobSha": "d9209765a268f0e21390a2c6c531c7dd771515b4",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/security-codeql.yml",
+      "baseBlobSha": "bb85590de2ae831b388a5c7078b6657f6b88972d",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/cli/scripts/rights-diagnostics.mjs",
+      "baseBlobSha": "0f2e3420f36ce598e3797c4bed5e884f28179aaa",
+      "fingerprintKind": "git-blob-sha1"
+    }
+  ],
+  "allowedWritePaths": [
+    "packages/cli/scripts/rights-diagnostics.mjs",
+    ".github/workflows/security-codeql.yml",
+    "tests/v11-wo-009-codeql-remediation.test.mjs",
+    ".engineering/work-orders/GBS-V11-MAINT-CODEQL-002.md",
+    ".engineering/context-locks/GBS-V11-MAINT-CODEQL-002.json",
+    ".engineering/evidence/GBS-V11-MAINT-CODEQL-002-EVIDENCE.md"
+  ],
+  "forbiddenWriteSurface": [
+    "main",
+    "tag:v1.0.0",
+    "release publication",
+    "WO-010",
+    "unrelated modules"
+  ],
+  "stopCondition": "GBS_V11_MAINT_CODEQL_002_MERGED_RELEASE_ALERT_VERIFIED"
+}
