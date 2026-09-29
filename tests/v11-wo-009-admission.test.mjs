@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { assertWo009ContextLockRefreshHandoff } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,12 +36,11 @@ test("Checkpoint names one admitted V1.1 action with branch and source reference
   assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
   assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
-  assert.equal(checkpoint.v11.nextLegalAction, "REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT");
-  assert.ok(checkpointMd.includes("Next legal action: after this checkpoint reconciliation merges, refresh the WO-009 Context Lock against the exact current `release/1.1` tip"));
-  assert.ok(checkpointMd.includes("V1.1 STOP CONDITION: `GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT`"));
+  assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
   assert.ok(checkpointMd.includes("### Active V1.1 increment — WO-009"));
-  assert.ok(checkpointMd.includes("No WO-009 implementation has started."));
+  assert.ok(checkpointMd.includes("WO-009 implementation branch exists as `feat/1.1/wo-009-integrated-assurance`"));
+  assert.ok(checkpointMd.includes("PR #302 still needs reconciliation"));
+  assert.ok(checkpointMd.includes("Earlier checks do not transfer to a refreshed candidate."));
 });
 
 test("WO-009 locks integrated assurance and new-context continuation cases", () => {
@@ -76,5 +76,5 @@ test("fresh-context steering routes governed build work from canonical state", (
   assert.ok(wo.includes("chat history"));
   for (const id of ["CONT-RESUME-01","CONT-RESUME-02","CONT-RESUME-03","CONT-RESUME-04"]) assert.ok(wo.includes(id));
   assert.ok(brief.includes("A new chat reconstructs from canonical repository/provider state"));
-  assert.equal(checkpoint.v11.nextLegalAction, "REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD");
+  assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
 });

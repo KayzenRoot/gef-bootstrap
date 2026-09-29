@@ -22,7 +22,7 @@ Make the V1.1 checkpoint handoff and its frozen regression assertions accurate a
 
 ## Scope
 
-1. Update only the terminal V1.1 checkpoint assertions in the seven listed governance tests to recognize the exact WO-009 Context Lock refresh handoff while retaining the existing assertions for earlier Work Orders and historical completions.
+1. Update the terminal V1.1 checkpoint assertions in the seven listed governance tests to recognize the exact WO-009 Context Lock refresh handoff. In the two human-checkpoint assertions, replace the obsolete claim that no implementation started with the checkpoint's current fact that the implementation branch exists and PR #302 needs reconciliation. Retain the existing assertions for earlier Work Orders and historical completions.
 2. Update only `.engineering/CHECKPOINT.json`'s V1.1 `nextLegalAction` and the matching human-readable Next legal action sentence. Use `REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD`: after this PR merges, the next refresh must bind the exact current `release/1.1` tip. Preserve the current status, active Work Order, completed history, and stop state.
 3. Add this Work Order, its Context Lock, a Direct Execution Brief, and its Evidence Bundle.
 4. Run `npm run validate` and all applicable exact-head repository, regression, security, and workflow checks. Record results without claiming the inherited WO-009 CodeQL HIGH is resolved.
@@ -35,6 +35,8 @@ The seven test files are:
 - `tests/v11-wo-007-admission.test.mjs`
 - `tests/v11-wo-008-admission.test.mjs`
 - `tests/v11-wo-009-admission.test.mjs`
+
+Shared assertion helper: `tests/helpers/v11-context-lock-refresh-assertions.mjs`.
 
 ## Explicit exclusions
 
@@ -53,11 +55,11 @@ At the corrective candidate, machine and human checkpoints agree that V1.1 remai
 
 ### R2 — Fail-closed regression assertions
 
-The changed tests accept the refresh handoff only for the exact WO-009 admitted state and assert its exact next action and stop state. Earlier admitted ordinals keep their previous stop-state expectations. The WO-001 and WO-002 through WO-008 history, owner-audit disposition, and immutable V1.0 baseline remain asserted.
+The changed tests accept the refresh handoff only for the exact WO-009 admitted state and assert its exact next action and stop state. Earlier admitted ordinals keep their previous stop-state expectations. The WO-001 and WO-002 through WO-008 history, owner-audit disposition, and immutable V1.0 baseline remain asserted. The tests also assert the checkpoint's current note that the WO-009 implementation branch exists and PR #302 needs reconciliation; they do not claim that implementation has not started.
 
 ### R3 — Exact-head validation and evidence
 
-At the final PR head, `npm run validate`, Repository Validation, M41–M47, M48–M54, M55–M61, M62–M63, Pipeline Integrity, Gitleaks, Trivy, Dependency Review, and every other configured required/applicable repository workflow pass. Record the exact candidate and check/run references. No new CRITICAL/HIGH finding may be introduced by this delta. The pre-existing WO-009 CodeQL HIGH remains explicitly unresolved and release-blocking; this Work Order does not claim security-clean V1.1.
+At the final PR head, `npm run validate`, Repository Validation, M41–M47, M48–M54, M55–M61, M62–M63, Pipeline Integrity, Gitleaks, Trivy, Dependency Review, SonarCloud Quality Gate when triggered, and every other configured required/applicable repository workflow pass. Record the exact candidate and check/run references. No new CRITICAL/HIGH finding may be introduced by this delta. The pre-existing WO-009 CodeQL HIGH remains explicitly unresolved and release-blocking; this Work Order does not claim security-clean V1.1.
 
 ### R4 — Owner audit and integration
 

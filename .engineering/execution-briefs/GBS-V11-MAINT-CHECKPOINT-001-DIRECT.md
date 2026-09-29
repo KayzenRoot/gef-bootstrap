@@ -8,7 +8,7 @@ The user authorized this corrective increment after PR #310's blocked checks. Do
 
 ## Implementation target
 
-- Change the seven frozen governance tests only at the WO-009 terminal-state branch. Assert `REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD` and the exact retained stop state; keep earlier state/history assertions unchanged.
+- Change the seven frozen governance tests only at the WO-009 terminal-state branch and centralize that exact state assertion in `tests/helpers/v11-context-lock-refresh-assertions.mjs`. Assert `REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD` and the retained stop state; keep earlier state/history assertions unchanged. Replace the two obsolete `No WO-009 implementation has started` checks with assertions for the branch and PR #302 reconciliation note in the checkpoint.
 - In the checkpoint, change only `v11.nextLegalAction` and its human-readable sentence so the lock refresh resolves the actual release tip after this corrective PR merges.
 - Add/update this Work Order, Context Lock, Direct Execution Brief, and Evidence Bundle.
 

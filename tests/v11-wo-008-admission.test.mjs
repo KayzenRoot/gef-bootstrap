@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { assertWo009ContextLockRefreshHandoff } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -44,10 +45,7 @@ test("machine and human checkpoint record completed WO-008 and admitted WO-009",
   assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
   assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
   assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
-  assert.equal(checkpoint.v11.nextLegalAction, "REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT");
-  assert.ok(checkpointMd.includes("Next legal action: after this checkpoint reconciliation merges, refresh the WO-009 Context Lock against the exact current `release/1.1` tip"));
-  assert.ok(checkpointMd.includes("V1.1 STOP CONDITION: `GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT`"));
+  assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
   assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
   assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
@@ -63,7 +61,9 @@ test("machine and human checkpoint record completed WO-008 and admitted WO-009",
   assert.equal(checkpoint.v11.ownerGovernance.state, "EFFECTIVE");
   assert.equal(checkpoint.v11.ownerGovernance.requiredCollaboratorReview, false);
   assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-008"));
-  assert.ok(checkpointMd.includes("No WO-009 implementation has started"));
+  assert.ok(checkpointMd.includes("WO-009 implementation branch exists as `feat/1.1/wo-009-integrated-assurance`"));
+  assert.ok(checkpointMd.includes("PR #302 still needs reconciliation"));
+  assert.ok(checkpointMd.includes("Earlier checks do not transfer to a refreshed candidate."));
   assert.ok(checkpointMd.includes("Collaborator review/approval requirement: `NONE`"));
   assert.ok(evidence.includes("24/24 SUCCESS"));
   assert.ok(evidence.includes("OWNER_APPROVED"));

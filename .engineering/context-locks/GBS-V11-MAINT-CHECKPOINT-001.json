@@ -207,6 +207,7 @@
     ]
   },
   "allowedWriteSurface": [
+    "tests/helpers/v11-context-lock-refresh-assertions.mjs: shared exact WO-009 handoff assertion",
     "tests/v11-wo-001-promotion.test.mjs",
     "tests/v11-wo-003-admission.test.mjs",
     "tests/v11-wo-005-admission.test.mjs",
@@ -254,7 +255,8 @@
     "Gitleaks",
     "Trivy",
     "Dependency Review",
-    "all other configured required/applicable repository workflows"
+    "all other configured required/applicable repository workflows",
+    "SonarCloud Quality Gate when triggered"
   ],
   "inheritedSecurityFinding": {
     "source": "CodeQL check run 108450457038 / PR #278",
@@ -268,5 +270,25 @@
     "V1.1 checkpoint status, active Work Order, active status, or stop state changes",
     "a new CRITICAL/HIGH finding appears or the inherited WO-009 CodeQL disposition materially changes"
   ],
-  "stopCondition": "GBS_V11_MAINT_CHECKPOINT_ASSERTIONS_RECONCILED_EXACT_HEAD_VERIFIED"
+  "stopCondition": "GBS_V11_MAINT_CHECKPOINT_ASSERTIONS_RECONCILED_EXACT_HEAD_VERIFIED",
+  "sharedTestAssertionHelper": {
+    "path": "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+    "baseState": "ABSENT",
+    "purpose": "Single exact assertion for the checkpoint transition shared by the seven frozen governance test files"
+  },
+  "intermediateCandidateEvidence": {
+    "candidateSha": "2fe61ed73c901bd08ea6b826eb0a3a567df0df1c",
+    "remainingAssertions": "two stale human-checkpoint claims in WO-008 and WO-009 admission tests",
+    "regressionRuns": [
+      36550724923,
+      36550724972,
+      36550724956,
+      36550725047
+    ],
+    "sonarCloud": {
+      "checkRun": 109348167340,
+      "conclusion": "FAILURE",
+      "finding": "67.8% duplication on new code; required <=3%; repeated handoff assertions are extracted to the shared test helper"
+    }
+  }
 }
