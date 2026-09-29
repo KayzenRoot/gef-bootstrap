@@ -319,7 +319,8 @@ function expectedBindingsMatch(recordBindings, expected) {
 }
 
 function finalReport(body) {
-  const { reportDigest: ignored, ...payload } = body;
+  const payload = { ...body };
+  delete payload.reportDigest;
   return freezeDeep({ ...payload, reportDigest: digest('GBS-V11-TELEM-REPORT', payload) });
 }
 
@@ -390,12 +391,12 @@ function compareCore(baselineInput, candidateInput, options = {}, mode = 'BENCHM
   const tolerance = options.tolerance ?? 0.15;
   const metricTolerance = options.metricTolerance ?? 0.02;
   if (![tolerance, metricTolerance].every(value => Number.isFinite(value) && value >= 0 && value < 1)) return baseReport(mode, 'INDETERMINATE', 'TOLERANCE_INVALID');
-  const ids = [...new Set([...Object.keys(baseline.metrics), ...Object.keys(candidate.metrics)])].sort();
+  const ids = [...new Set([...Object.keys(baseline.metrics), ...Object.keys(candidate.metrics)])].sort(compareKeys);
   const metrics = {};
   let anyImprovement = false;
   let anyRegression = false;
   let anyMeasured = false;
-  const requiredSet = new Set(required);
+
 
   for (const id of ids) {
     const before = baseline.metrics[id];
