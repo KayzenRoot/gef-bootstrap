@@ -22,7 +22,7 @@ Make the V1.1 checkpoint handoff and its frozen regression assertions accurate a
 
 ## Scope
 
-1. Update the terminal V1.1 checkpoint assertions in the seven listed governance tests to recognize the exact WO-009 Context Lock refresh handoff. In the two human-checkpoint assertions, replace the obsolete claim that no implementation started with the checkpoint's current fact that the implementation branch exists and PR #302 needs reconciliation. Retain the existing assertions for earlier Work Orders and historical completions.
+1. Update the terminal V1.1 checkpoint assertions in the seven listed governance tests to recognize the exact WO-009 Context Lock refresh handoff, using a shared helper for common admission-state checks. In the two human-checkpoint assertions, replace the obsolete claim that no implementation started with the checkpoint's current fact that the implementation branch exists and PR #302 needs reconciliation, using a shared assertion. Retain the existing assertions for earlier Work Orders and historical completions.
 2. Update only `.engineering/CHECKPOINT.json`'s V1.1 `nextLegalAction` and the matching human-readable Next legal action sentence. Use `REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD`: after this PR merges, the next refresh must bind the exact current `release/1.1` tip. Preserve the current status, active Work Order, completed history, and stop state.
 3. Add this Work Order, its Context Lock, a Direct Execution Brief, and its Evidence Bundle.
 4. Run `npm run validate` and all applicable exact-head repository, regression, security, and workflow checks. Record results without claiming the inherited WO-009 CodeQL HIGH is resolved.
@@ -55,7 +55,7 @@ At the corrective candidate, machine and human checkpoints agree that V1.1 remai
 
 ### R2 — Fail-closed regression assertions
 
-The changed tests accept the refresh handoff only for the exact WO-009 admitted state and assert its exact next action and stop state. Earlier admitted ordinals keep their previous stop-state expectations. The WO-001 and WO-002 through WO-008 history, owner-audit disposition, and immutable V1.0 baseline remain asserted. The tests also assert the checkpoint's current note that the WO-009 implementation branch exists and PR #302 needs reconciliation; they do not claim that implementation has not started.
+The changed tests accept the refresh handoff only for the exact WO-009 admitted state and assert its exact next action and stop state. Earlier admitted ordinals keep their previous stop-state expectations. The WO-001 and WO-002 through WO-008 history, owner-audit disposition, and immutable V1.0 baseline remain asserted. The tests also assert the checkpoint's current note that the WO-009 implementation branch exists and PR #302 needs reconciliation; they do not claim that implementation has not started. Common active-admission and branch-reconciliation checks are centralized to keep one exact implementation of those assertions.
 
 ### R3 — Exact-head validation and evidence
 

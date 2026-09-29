@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assertWo009ContextLockRefreshHandoff } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+import { assertWo009ContextLockRefreshHandoff, assertWo009BranchReconciliationNote } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -38,9 +38,7 @@ test("Checkpoint names one admitted V1.1 action with branch and source reference
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
   assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
   assert.ok(checkpointMd.includes("### Active V1.1 increment — WO-009"));
-  assert.ok(checkpointMd.includes("WO-009 implementation branch exists as `feat/1.1/wo-009-integrated-assurance`"));
-  assert.ok(checkpointMd.includes("PR #302 still needs reconciliation"));
-  assert.ok(checkpointMd.includes("Earlier checks do not transfer to a refreshed candidate."));
+  assertWo009BranchReconciliationNote(checkpointMd);
 });
 
 test("WO-009 locks integrated assurance and new-context continuation cases", () => {

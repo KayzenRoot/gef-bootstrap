@@ -274,7 +274,7 @@
   "sharedTestAssertionHelper": {
     "path": "tests/helpers/v11-context-lock-refresh-assertions.mjs",
     "baseState": "ABSENT",
-    "purpose": "Single exact assertion for the checkpoint transition shared by the seven frozen governance test files"
+    "purpose": "Single exact implementation for the WO-009 handoff, earlier active-admission transitions, and current branch/PR reconciliation checkpoint note"
   },
   "intermediateCandidateEvidence": {
     "candidateSha": "2fe61ed73c901bd08ea6b826eb0a3a567df0df1c",
@@ -289,6 +289,16 @@
       "checkRun": 109348167340,
       "conclusion": "FAILURE",
       "finding": "67.8% duplication on new code; required <=3%; repeated handoff assertions are extracted to the shared test helper"
+    },
+    "followUpHead": {
+      "candidateSha": "0d0376128c63d6d5465ececc0fa12e9a3632cb21",
+      "checkCount": 44,
+      "passedAtObservation": 41,
+      "sonarCloud": {
+        "checkRun": 109351579124,
+        "conclusion": "FAILURE",
+        "finding": "33.3% duplication on new code; required <=3%; repeated active-admission branch and two-work-order checkpoint note are centralized in the shared test helper"
+      }
     }
   }
 }
