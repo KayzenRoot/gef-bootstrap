@@ -24,10 +24,8 @@ import type { PolicyPort, ReceiptPort, RuntimePorts, TargetBindingPort, Verifica
 
 import { CLI_CONTRACT_VERSION, parseArgv } from "./parser.js";
 import { renderHelp, renderHelpJson, renderResultHuman, renderResultJson, renderUsageFailureHuman, renderUsageFailureJson, renderVersion, renderVersionJson } from "./render.js";
-import { buildRegistry, loadEngines, observeTarget } from "./registry.js";
-import type { CliVerb, HelpEntry } from "./registry.js";
-import { DEFAULT_GIT_TRUST_POLICY, withGitToolInvocation } from "./registry.js";
-import type { GitExecutableTrustPolicy } from "./registry.js";
+import { DEFAULT_GIT_TRUST_POLICY, buildRegistry, loadEngines, observeTarget, withGitToolInvocation } from "./registry.js";
+import type { CliVerb, GitExecutableTrustPolicy, HelpEntry } from "./registry.js";
 import { UnsupportedDocumentVersionError, buildReceiptDocument, requireSupportedSchemaVersion } from "./schemas.js";
 import type { TransactionSummary } from "./schemas.js";
 import { applyGovernedCreate } from "./transaction.js";

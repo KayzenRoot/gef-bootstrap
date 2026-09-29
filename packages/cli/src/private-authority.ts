@@ -24,8 +24,7 @@
  * like a symlink or reparse point replacement: the token differs and the entry is left untouched.
  */
 
-import { randomBytes } from "node:crypto";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { lstat, mkdir, open, readFile, realpath, rm, rmdir, writeFile } from "node:fs/promises";
 import type { FileHandle } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";

@@ -11,10 +11,10 @@ const audit = auditBytes.toString("utf8");
 const install = installBytes.toString("utf8");
 const summary = {};
 for (const [key, pattern] of Object.entries({
-  tests: /(?:#|ℹ) tests\s+(\d+)/i,
-  passed: /(?:#|ℹ) pass\s+(\d+)/i,
-  failed: /(?:#|ℹ) fail\s+(\d+)/i,
-  skipped: /(?:#|ℹ) skipped\s+(\d+)/i,
+  tests: /[#ℹ] tests\s+(\d+)/i,
+  passed: /[#ℹ] pass\s+(\d+)/i,
+  failed: /[#ℹ] fail\s+(\d+)/i,
+  skipped: /[#ℹ] skipped\s+(\d+)/i,
 })) {
   const match = validation.match(pattern);
   summary[key] = match ? Number(match[1]) : null;

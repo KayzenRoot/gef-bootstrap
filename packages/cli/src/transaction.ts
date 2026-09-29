@@ -20,12 +20,12 @@
  * while `visibilityAtomic` is declared false.
  */
 
-import { createHash, randomBytes } from "node:crypto";
+import { createHash } from "node:crypto";
 import { link, lstat, mkdir, open, readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
 import { existsSync } from "node:fs";
 
-import { PrivateAuthorityError, createPrivateArea, fingerprintOf, measureCaseSemantics, PRIVATE_DIRECTORY, PROBE_DIRECTORY, safeSegment } from "./private-authority.js";
+import { PrivateAuthorityError, createPrivateArea, fingerprintOf, measureCaseSemantics, PRIVATE_DIRECTORY } from "./private-authority.js";
 import type { OwnedDirectory, OwnedFile, OwnedJournal, PrivateArea } from "./private-authority.js";
 
 import { loadEngines } from "./engines.js";
@@ -35,7 +35,6 @@ import {
   applyTransaction,
   authorizeFilesystemPath,
   compileTransactionPlan,
-  composeFilesystemPhysicalSafety,
   createFilesystemEffectAdapter,
   evaluateFilesystemOverwrite,
   proveFilesystemTraversal,
@@ -342,7 +341,6 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
 
   return {
     async observe(path: FilesystemPathCapsule, _context: FilesystemExecutionContext) {
-      void _context;
       return ok(await observeChain(path));
     },
 
