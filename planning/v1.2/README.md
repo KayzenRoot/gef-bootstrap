@@ -61,4 +61,12 @@ The owner's request for still more innovation added two planning files to the pr
 - DOMAIN-ROUTER-AND-HYBRID-PROFILES.md: evidence-based detection, domain-specific setup, app interviews, and optional combined game plus Web3 profiles.
 - REMAINING-GAPS-AND-OPTIMIZATION-AUDIT.md: high-value open research decisions, release-scope control and representative validation experiments.
 
-Total versioned research files: 17. These are candidate documents, not an approved 17-module scope. Domain toolchains are installed only if the corresponding owner-approved future profile requires them. Current GEF and V1.1 are unchanged.
+Total versioned research files before the SaaS/financial expansion: 17. These are candidate documents, not an approved 17-module scope. Domain toolchains are installed only if the corresponding owner-approved future profile requires them. Current GEF and V1.1 are unchanged.
+
+## SaaS financial and Web3 data security research expansion
+Four additional documents respond to the owner's request for complete SaaS financial operations, new privacy/security approaches for Web3 and an explicit audit of any neglected product areas. The research dossier now contains **21 versioned files**, not 21 released modules.
+- SAAS-FINANCE-FACTORY.md: risk-classified subscriptions, usage-based monetization, financial ledger if needed, webhook orchestration, reconciliation, fraud controls, per-tenant unit economics and legal/accounting handoff. Candidates Lago, OpenMeter, Formance and Temporal are selected by risk/ROI, not installed wholesale.
+- SAAS-TENANT-AND-DATA-GOVERNANCE.md: SaaS data isolation from API to RLS, cache/vector/queues, identities, MFA/passkeys, privacy lifecycle, encryption/backup and customer security evidence.
+- WEB3-DATA-SECURITY.md: public-chain/offchain confidentiality, HSM/KMS/threshold authority, trusted signing intent, confidential proof/FHE pilot, economic risk, governance and cryptographic agility.
+- SAAS-WEB3-REMAINING-AREAS.md: product/legal/fiscal classification, revenue operations, go-to-market/onboarding, disaster readiness, cross-border/treasury, transaction metadata, oracles/bridges, formal methods and cost-of-quality research.
+All four are FUTURE CANDIDATE profiles; no new tools or financial/chain operations are authorized. Their admission must occur after the V1.1 production release evidence and formal V1.2 Source Pack decision, benchmarking and owner confirmation. Privacy/compliance documents are issue-spotting aids, not legal/tax/accounting or audit certifications.
