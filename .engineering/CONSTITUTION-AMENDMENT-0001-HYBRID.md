@@ -22,6 +22,8 @@ May own repeatable mechanical operations such as artifact materialization, schem
 
 The deterministic plane never silently becomes semantic authority.
 
+> HISTORICAL SUPERSESSION NOTICE: ADR-0008 / D-0063 prospectively supersedes only the construction-actor restriction below after a separate exact-head owner audit and checkpoint promotion. On release/1.1 adoption is PENDING and NOT_EFFECTIVE; the existing product-boundary, safety, release and frozen-history decisions remain in force. The historical policy below is retained for lineage.
+
 ## Self-construction policy
 For the GEF Bootstrap repository itself, planning, implementation, tests, documentation, reviews, releases and production preparation are performed through ChatGPT in this project using the connected GitHub/tooling surfaces. **Codex is not used to build GEF Bootstrap.**
 
