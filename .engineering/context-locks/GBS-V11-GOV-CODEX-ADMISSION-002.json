@@ -119,7 +119,7 @@
       "reason": "Textual auto-merge does not establish semantic compatibility."
     },
     {
-      "path": ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md",
+      "path": "ADR-0007 — retired named integration decision (main-only)",
       "reason": "Main-only accepted decision; absent on release and exposed to deletion/loss in cumulative merge."
     },
     {
@@ -138,9 +138,9 @@
   "branchQualifiedDecisions": {
     "main": {
       "decision": "D-0062",
-      "adr": "ADR-0007-RETIRE-HIVE-INTEGRATION.md",
+      "adr": "ADR-0007 (retired named integration decision; main-only)",
       "adrBlobSha": "687ee037d2dcd4936d118a23666665fc66410aed",
-      "meaning": "Retire Hive-specific development/integration dependency while preserving the neutral reserved M40 slot.",
+      "meaning": "Remove the retired named integration as a development/integration dependency while preserving the neutral reserved M40 slot.",
       "state": "APPROVED_AND_MERGED_ON_MAIN"
     },
     "release": {
@@ -181,7 +181,7 @@
     {"path":".engineering/decisions/ADR-0004-WINDOWS-EFFECTIVE-RIGHTS-ORACLE.md","mergeBase":null,"main":null,"release":"396b098c1380eb2d12b3b8e24a1aedc9906ca519"},
     {"path":".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md","mergeBase":null,"main":null,"release":"786eba0313202f2f2648461a2fc4e6f81190969a"},
     {"path":".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md","mergeBase":null,"main":null,"release":"97bef59b15f557302a7fd625af30ceeb421c01a1"},
-    {"path":".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md","mergeBase":"687ee037d2dcd4936d118a23666665fc66410aed","main":"687ee037d2dcd4936d118a23666665fc66410aed","release":null},
+    {"source":"D-0062@main / ADR-0007 (retired named integration decision)","mergeBase":"687ee037d2dcd4936d118a23666665fc66410aed","main":"687ee037d2dcd4936d118a23666665fc66410aed","release":null},
     {"path":".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md","mergeBase":null,"main":"7d6ec3885fb3d029586dc0b7f99aa32b033170e1","release":null}
   ],
   "proposedCheckpointDelta": {

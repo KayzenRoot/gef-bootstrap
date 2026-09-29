@@ -52,7 +52,7 @@ Additional lineage hazards remain explicit:
 
 | Branch | Decision identity | Provenance / meaning | Current state |
 |---|---|---|---|
-| main | D-0062 / ADR-0007 | Retire Hive-specific development/integration dependency; preserve the neutral reserved M40 slot. ADR blob 687ee037d2dcd4936d118a23666665fc66410aed. | APPROVED_AND_MERGED_ON_MAIN |
+| main | D-0062 / ADR-0007 | Remove the retired named integration from development/integration dependencies; preserve the neutral reserved M40 slot. ADR blob 687ee037d2dcd4936d118a23666665fc66410aed. | APPROVED_AND_MERGED_ON_MAIN |
 | release/1.1 | D-0062 / ADR-0006 | Owner-operated exact-head audit, review, and merge authority for the V1.1 line. ADR blob 97bef59b15f557302a7fd625af30ceeb421c01a1. | EFFECTIVE_ON_RELEASE_1_1 |
 
 These are distinct accepted decisions sharing an identifier on divergent histories. Keep them branch-qualified; do not combine, supersede, or renumber them in this preparation. D-0064 remains proposed only: the current main/release decision ledgers and ADR paths contain no D-0064 entry or ADR-0009 allocation. That negative search is evidence of current non-allocation, not approval to allocate it.
