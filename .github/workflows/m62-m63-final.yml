@@ -1,4 +1,7 @@
 name: M62-M63 Final Assurance
+
+permissions:
+  contents: read
 on:
   pull_request:
     paths:
