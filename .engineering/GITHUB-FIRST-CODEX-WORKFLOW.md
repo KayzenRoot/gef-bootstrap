@@ -1,6 +1,6 @@
 # GitHub-First ChatGPT ↔ Codex Construction Workflow
 
-Status: PROPOSED under ADR-0008; effective only upon governed audit, merge and checkpoint promotion.
+Status: APPROVED by ADR-0008 and PR #332; EFFECTIVE on protected main upon the separately audited checkpoint-promotion merge. Other branches follow their own canonical source/adoption state.
 Owner: Project Owner / ChatGPT semantic planning / Codex sole code executor.
 Tracking: issue #331, Work Order GBS-GOV-CODEX-ISSUES-001.
 This document is the compact operational protocol, not a substitute for any project's own Source Pack or current checkpoint.

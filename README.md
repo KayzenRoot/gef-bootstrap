@@ -6,9 +6,9 @@ A production-accepted, evidence-first engineering bootstrap for starting **new p
 
 > **V1 status:** `PRODUCTION_ACCEPTED` · M00-M63 complete · `1088 / 1088 = 100%` · final release-blocking CRITICAL/HIGH: `0 / 0`.
 
-## Project construction: GitHub-first / Codex-only proposal
+## Project construction: GitHub-first / Codex-only
 
-Owner-directed governance issue [#331](https://github.com/KayzenRoot/gef-bootstrap/issues/331) proposes Codex as the sole code executor for GEF and newly governed projects. ChatGPT plans modules and files, prepares GitHub-backed issues/Work Orders and meaningful planning-only draft PRs, reviews the resulting code/security/tests and reports evidence-based project progress. No routine PDF prompt handoff. See `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md` and ADR-0008. **Proposal only until exact-head audit and canonical checkpoint promotion; historical V1.0 release acceptance is unchanged.**
+Owner-directed governance issue [#331](https://github.com/KayzenRoot/gef-bootstrap/issues/331) and objectively audited/merged documentation [PR #332](https://github.com/KayzenRoot/gef-bootstrap/pull/332) establish Codex as the sole code executor for GEF and newly governed projects, effective on main after the separately reviewed checkpoint-promotion merge. ChatGPT plans modules and files, prepares GitHub-backed issues/Work Orders and meaningful planning-only draft PRs, reviews the resulting code/security/tests and reports evidence-based project progress. No routine PDF prompt handoff. See `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md` and ADR-0008. Historical V1.0 release acceptance remains unchanged; release/1.1 requires its own governed forward-port.
 
 ## Why GEF Bootstrap
 

@@ -42,7 +42,7 @@ Under owner-directed ADR-0008 / D-0063 (effective only after exact-head audit/me
 ## History
 - `GBS-CONSTITUTION-v1.0` — original instruction-first constitutional freeze.
 - `GBS-CONSTITUTION-v1.1` — hybrid product amendment triggered by explicit Product Owner decision.
-- `ADR-0008 / D-0063` — proposed narrow construction-actor supersession (effective only upon separate objective audit and checkpoint promotion).
+- `ADR-0008 / D-0063` — approved narrow construction-actor supersession: governance PR #332 objectively owner-audited and merged, effective on protected main upon the separately reviewed checkpoint-promotion merge recorded in current CHECKPOINT.
 
 ## Validity
 The lock is valid only for the exact governed constitutional state it references. A deterministic constitution fingerprint is still required later from the owning Source Pack/Integrity mechanism. No placeholder or fabricated hash is permitted.

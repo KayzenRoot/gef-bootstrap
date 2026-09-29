@@ -1,6 +1,6 @@
 # ADR-0008 — Codex-Only Implementation and GitHub-First Planning
 
-Status: PROPOSED, pending exact-head owner audit and checkpoint promotion
+Status: APPROVED by governance PR #332; effective on main only after the separately reviewed checkpoint-promotion PR merges
 Trigger: EXPLICIT_USER_PRODUCT_DECISION, 2026-09-29
 Work Order: GBS-GOV-CODEX-ISSUES-001
 Tracking issue: #331
@@ -39,7 +39,12 @@ Companion: `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`.
 Checkpoint change: proposed in `.engineering/checkpoint-deltas/GBS-GOV-CODEX-ISSUES-001-PROPOSED.md`.
 No source-code, test, CI or runtime changes are admitted by this ADR.
 
+## Governance decision evidence
+- Approved proposal PR #332, audited head `7ff0118fcbb29dfd42434e18e68eed0b0c27de2e`, tree `5bdbf42dca1ce081453e4e6ae61ba750a8c551ee`, owner audit comment `5894096435` (`NOT_INDEPENDENT`).
+- 28/28 exact-head GitHub checks SUCCESS; merged on main as `419b9cd713d4817c05582287ec10793fc7fdc130`.
+- Canonical promotion evidence is separately recorded in `.engineering/CHECKPOINT.md`/`.json` and the GBS-GOV-CODEX-ISSUES-001 Evidence Bundle; adoption by release/1.1 requires an independently gated forward-port/reconciliation.
+
 ## Acceptance
-Governance docs consistent; exact source supersession traceable; all required doc/repository/branch checks successful on reviewed head; objective owner audit without unresolved HIGH/CRITICAL; separately promoted checkpoint. Before these gates: PROPOSED_ONLY.
+Governance docs consistent; exact source supersession traceable; all required doc/repository/branch checks successful on reviewed head; objective owner audit without unresolved HIGH/CRITICAL; separately promoted checkpoint. Governance PR #332 has met its gates. Effectiveness is conditional on the separate exact-head checkpoint-promotion merge; other branches require their own adoption.
 
 STOP CONDITION: GBS-GOV-CODEX-ISSUES-001_GOVERNANCE_PR_READY_FOR_EXACT_HEAD_AUDIT
