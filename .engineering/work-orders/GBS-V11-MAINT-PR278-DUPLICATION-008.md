@@ -33,7 +33,7 @@ Other duplicates, change to filesystem transaction authorization, runtime public
 ## REQUIREMENTS / ARCHITECTURE RULES / CONSTRAINTS
 1. Error fields (id, category, reason, severity, retryability, recoverability, terminal, commandId, runId, metadata and remediation) remain byte-for-byte logically identical, and the CLI vs diagnostic summaries remain distinct.
 2. `createAlias` fallback must still try directory symlink first, reject non-permission errors, then junction, returning the same unknown marker if unavailable. Test helper must never enter shipped runtime or create a provider dependency.
-3. No scope expansion, security boundary relaxation or modification of admitted contracts. Preserve reserved neutral M39/M40 and fully detached Hive dependency.
+3. No scope expansion, security boundary relaxation or modification of admitted contracts. Preserve reserved neutral M39/M40 and fully detached former ecosystem dependency.
 4. Context Lock source fingerprints fail closed on material source drift; owner audit is NOT_INDEPENDENT.
 
 ## ACCEPTANCE CRITERIA / TESTS
