@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-GOV-CODEX-ADMISSION-002",
+  "issue": 338,
+  "status": "PREPARED_FOR_OBJECTIVE_AUDIT_NOT_ADMITTED",
+  "releaseLine": "1.1.x",
+  "preparationBranch": "codex/gbs-v11-admission-338-prep",
+  "sourceRefs": {
+    "main": {
+      "ref": "refs/heads/main",
+      "sha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+      "treeSha": "0413bf3e8d706738f73c93578c81630ce027f4ec"
+    },
+    "release": {
+      "ref": "refs/heads/release/1.1",
+      "sha": "bbd83a179dd4c11f2f8653251db2b574d0266880",
+      "treeSha": "bb141e900f953d725c4bc6272c640ece1fbeaf92"
+    },
+    "mergeBaseSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+    "divergence": {
+      "mainOnlyCommits": 2,
+      "releaseOnlyCommits": 62
+    }
+  },
+  "planningPr336": {
+    "url": "https://github.com/KayzenRoot/gef-bootstrap/pull/336",
+    "state": "OPEN_DRAFT_NOT_MERGED",
+    "baseRef": "release/1.1",
+    "baseSha": "bbd83a179dd4c11f2f8653251db2b574d0266880",
+    "headRef": "planning/gbs-v11-codex-governance-forwardport-001",
+    "headSha": "d67b10cd9f065016a5e9ecb52498edc58fc65064",
+    "headTreeSha": "0807519c4c4143092a30a48226c3a6de52cc358f",
+    "changedPaths": [
+      ".engineering/lineage/GBS-V11-GOV-CODEX-FORWARDPORT-001.md",
+      ".engineering/work-orders/GBS-V11-GOV-CODEX-FORWARDPORT-001.md"
+    ],
+    "planningArtifactBlobs": {
+      ".engineering/lineage/GBS-V11-GOV-CODEX-FORWARDPORT-001.md": "b2b686b2b305cacaa358bf7d5726615d920c006e",
+      ".engineering/work-orders/GBS-V11-GOV-CODEX-FORWARDPORT-001.md": "6a8afdee5a1ed14f92ab17d1509a89af8b09f59d"
+    },
+    "exactHeadChecks": {
+      "success": 31,
+      "total": 31,
+      "nonSuccess": 0,
+      "observedAt": "2026-09-29"
+    },
+    "openReviewThreads": 0,
+    "ownerAudit": {
+      "reviewId": 5356467736,
+      "url": "https://github.com/KayzenRoot/gef-bootstrap/pull/336#pullrequestreview-5356467736",
+      "apiReviewState": "COMMENTED",
+      "bodyDisposition": "APPROVED_PLANNING_ONLY_NOT_INDEPENDENT",
+      "auditedHeadSha": "d67b10cd9f065016a5e9ecb52498edc58fc65064"
+    },
+    "priorCorrectionReview": {
+      "reviewId": 5356233070,
+      "scope": "Correction Delta resolved by the approved planning revision"
+    },
+    "planningMergeReceipt": {
+      "status": "NOT_AVAILABLE",
+      "reason": "PR #336 remains OPEN and DRAFT with no merge commit; its planning audit is not a merge receipt."
+    }
+  },
+  "relatedState": {
+    "issue335": "OPEN_PLANNING_SOURCE",
+    "issue334": "OPEN_DIAGNOSTIC_SOURCE",
+    "issue337": "OPEN_PROPOSED_SEPARATE_WORK",
+    "pr278": "CLOSED_NOT_MERGED"
+  },
+  "literalMergeConflicts": [
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "mergeBaseBlobSha": "0026989d7feebf2b96ef456ef950f625a7308db8",
+      "mainBlobSha": "d3ca8edcfe6ab2db9b8c637fcd2a6d4e9dcb16f3",
+      "releaseBlobSha": "bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "mergeBaseBlobSha": "303bfcbd8e75a7c27d7bda51d5e9032e91237f49",
+      "mainBlobSha": "035a7a1f0e8f374784e06bc1b6a3bb10ee6854f6",
+      "releaseBlobSha": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537"
+    }
+  ],
+  "semanticMergeHazards": [
+    {
+      "path": "AGENTS.md",
+      "reason": "Main actor lock and release owner-operated controls are branch-specific and both remain applicable."
+    },
+    {
+      "path": ".engineering/CONSTITUTION-LOCK.md",
+      "reason": "Branch-specific governance state must be reconciled by authority domain."
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "reason": "Both branches changed this source from the merge base."
+    },
+    {
+      "path": ".engineering/SCOPE.md",
+      "reason": "Both branches changed this source from the merge base."
+    },
+    {
+      "path": ".engineering/REQUIREMENTS.md",
+      "reason": "Both branches changed this source from the merge base."
+    },
+    {
+      "path": ".engineering/DEFINITION-OF-DONE.md",
+      "reason": "Both branches changed this source from the merge base."
+    },
+    {
+      "path": ".engineering/CHECKPOINT.md",
+      "reason": "Textual auto-merge does not resolve branch-specific project-state meaning."
+    },
+    {
+      "path": ".engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md",
+      "reason": "Both branches changed this source from the merge base."
+    },
+    {
+      "path": "README.md",
+      "reason": "Textual auto-merge does not establish semantic compatibility."
+    },
+    {
+      "path": ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md",
+      "reason": "Main-only accepted decision; absent on release and exposed to deletion/loss in cumulative merge."
+    },
+    {
+      "path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+      "reason": "Main-only approved governance decision; not yet forwarded to release."
+    },
+    {
+      "path": ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md",
+      "reason": "Main-only workflow source; not yet forwarded to release."
+    },
+    {
+      "path": ".engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md through ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md",
+      "reason": "Release-only accepted ADRs; preserve their content and authority."
+    }
+  ],
+  "branchQualifiedDecisions": {
+    "main": {
+      "decision": "D-0062",
+      "adr": "ADR-0007-RETIRE-HIVE-INTEGRATION.md",
+      "adrBlobSha": "687ee037d2dcd4936d118a23666665fc66410aed",
+      "meaning": "Retire Hive-specific development/integration dependency while preserving the neutral reserved M40 slot.",
+      "state": "APPROVED_AND_MERGED_ON_MAIN"
+    },
+    "release": {
+      "decision": "D-0062",
+      "adr": "ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md",
+      "adrBlobSha": "97bef59b15f557302a7fd625af30ceeb421c01a1",
+      "meaning": "Owner-operated review, exact-head audit and merge authority for release/1.1.",
+      "state": "EFFECTIVE_ON_RELEASE_1_1"
+    },
+    "mapping": "UNRESOLVED_KEEP_BRANCH_QUALIFIED",
+    "d0064": {
+      "state": "NOT_ALLOCATED",
+      "evidence": "No D-0064 entry or ADR-0009 allocation was found in the current main/release decision ledgers and ADR paths. This absence does not approve an allocation."
+    }
+  },
+  "sourceFingerprints": [
+    {"path":"AGENTS.md","mergeBase":"722ce876e05ff8d6f24d9c60794e0aa6be3c936c","main":"2d017b22eb9e860856b6d390d62a8120d22d4ba4","release":"854400e2dccc59e55351e2d8e2e0e4d2a338f678"},
+    {"path":".engineering/SOURCE-HIERARCHY.md","mergeBase":"bedc10c97d28154efe59ff43fc1d175add37f568","main":"bedc10c97d28154efe59ff43fc1d175add37f568","release":"bedc10c97d28154efe59ff43fc1d175add37f568"},
+    {"path":".engineering/CHECKPOINT.md","mergeBase":"38a3d851a1037e4866a0b22019e3b782f17dcb94","main":"a495f3ee30e586a7e8e57ca63d20fa8ecf1bd97f","release":"a8550e4ebc45ce7d1a1aa528366458d9657e92f5"},
+    {"path":".engineering/CHECKPOINT.json","mergeBase":"0026989d7feebf2b96ef456ef950f625a7308db8","main":"d3ca8edcfe6ab2db9b8c637fcd2a6d4e9dcb16f3","release":"bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6"},
+    {"path":".engineering/DECISIONS-LEDGER.md","mergeBase":"303bfcbd8e75a7c27d7bda51d5e9032e91237f49","main":"035a7a1f0e8f374784e06bc1b6a3bb10ee6854f6","release":"e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537"},
+    {"path":".engineering/DECISIONS-SUPERSESSION-MAP.md","mergeBase":"85613c8945c654e7449222a661325a883684c959","main":"85613c8945c654e7449222a661325a883684c959","release":"cb30173f011e6b62ebd3a3fafb13ccb012355aa2"},
+    {"path":".engineering/CONSTITUTION-LOCK.md","mergeBase":"27c915872ad978fa0950ccd24457659c79269822","main":"29e3e8e8b1f7c39d37bbd165d130ee3910c3b073","release":"37289514800ca80603ff37e0236a5e243cba3bf7"},
+    {"path":".engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md","mergeBase":"6bd1d34065f808ab2566c56c76dfd5453bc44daa","main":"437d7f371f13079e7af2858ff85e107163f0eede","release":"6bd1d34065f808ab2566c56c76dfd5453bc44daa"},
+    {"path":".engineering/PROJECT-OVERVIEW.md","mergeBase":"ef323fdf5f2638c9d50050f057cc1a306463749e","main":"4ed6793a257fc3af5ebfe5972e8a6a7cef2095be","release":"6b65d243017934f5da207ce3ac4bdeb3d5e40196"},
+    {"path":".engineering/REQUIREMENTS.md","mergeBase":"6117f4d35258cd8782062acb80b445e08736465f","main":"61367fcc2ebb338e3ff75b630314804bb1d29e22","release":"1933341d4546164fbaf7b415bfa1708067f5e53d"},
+    {"path":".engineering/SCOPE.md","mergeBase":"5b6c5a9805d0a79e7539beaa5f5d6e018e6a7fb9","main":"ed48ed36d7028f9a6606bed8b56fa9f413fab5b1","release":"5aad68fdbd57b850ec05e5c44e74e5e5a3b94a29"},
+    {"path":".engineering/ARCHITECTURE.md","mergeBase":"65cee9aa5ca31e663437a407aaa4f5452258dad1","main":"09105c912f294fa50ee4163e4a27f6933d359408","release":"c5eda022280e47ff4b45070193d196929a3a1ec0"},
+    {"path":".engineering/SECURITY.md","mergeBase":"09b8aa12244791b509ecb50ba5c96db867a0797d","main":"09b8aa12244791b509ecb50ba5c96db867a0797d","release":"09b8aa12244791b509ecb50ba5c96db867a0797d"},
+    {"path":".engineering/TEST-BENCHMARK-PLAN.md","mergeBase":"a7b5618ead1a483275a0b0e72126258523349f01","main":"a7b5618ead1a483275a0b0e72126258523349f01","release":"a7b5618ead1a483275a0b0e72126258523349f01"},
+    {"path":".engineering/DEFINITION-OF-DONE.md","mergeBase":"cc9fd107afa135a23f410739d41af875d6079197","main":"150ec0a83ccb7d192bc20cde3cb73358e6197ddb","release":"d9209765a268f0e21390a2c6c531c7dd771515b4"},
+    {"path":".engineering/EXECUTOR-ACCELERATION-CONTRACT.md","mergeBase":"59e69438bef728f24ae96da292e3122a83d4ea76","main":"bf1451ad628ca397bacae2bb333837ed2e9b3097","release":"59e69438bef728f24ae96da292e3122a83d4ea76"},
+    {"path":".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md","mergeBase":null,"main":"d061fff8e13bbb13fab6cdafb8bf001921905a61","release":null},
+    {"path":"README.md","mergeBase":"5056e55f5cddf24664274c16c8ae59a74d9b931d","main":"9b014a82cb32a616d0ad1526c62ad4bd90a33671","release":"cbf06d49212b3bacf3ad77a54c9ab058a4efe58a"},
+    {"path":".engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md","mergeBase":"95f9e86ba1d3e7ff0b9ae312d1902f11b1b85873","main":"52ef68b48fd92c6a38367c99ea91dd9df2d28c33","release":"51e6e2d233afdf1b7626eb670008ad44e23fa958"},
+    {"path":".engineering/decisions/ADR-0002-PLANNING-TO-EXECUTION-ACCELERATION.md","mergeBase":"f971226ee6e7a9b16b4c6bceb9009fae961b3bfa","main":"a46e6bf27ee985575aa7e52cf047260fea73569b","release":"f971226ee6e7a9b16b4c6bceb9009fae961b3bfa"},
+    {"path":".engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md","mergeBase":null,"main":null,"release":"62a2e2ef2de3b4f60186f020708f37eee99ca787"},
+    {"path":".engineering/decisions/ADR-0004-WINDOWS-EFFECTIVE-RIGHTS-ORACLE.md","mergeBase":null,"main":null,"release":"396b098c1380eb2d12b3b8e24a1aedc9906ca519"},
+    {"path":".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md","mergeBase":null,"main":null,"release":"786eba0313202f2f2648461a2fc4e6f81190969a"},
+    {"path":".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md","mergeBase":null,"main":null,"release":"97bef59b15f557302a7fd625af30ceeb421c01a1"},
+    {"path":".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md","mergeBase":"687ee037d2dcd4936d118a23666665fc66410aed","main":"687ee037d2dcd4936d118a23666665fc66410aed","release":null},
+    {"path":".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md","mergeBase":null,"main":"7d6ec3885fb3d029586dc0b7f99aa32b033170e1","release":null}
+  ],
+  "proposedCheckpointDelta": {
+    "status": "PROPOSAL_ONLY_NOT_APPLIED",
+    "afterPlanningPr336Merge": {
+      "requiredFacts": [
+        "Record the actual PR #336 merge SHA and resulting release/1.1 HEAD and tree SHA.",
+        "Record PR #336's planning-only merge receipt separately from owner audit review #5356467736.",
+        "Mark the planning artifacts as approved planning context only; they do not admit ADR-0008/D-0063 to release/1.1."
+      ],
+      "preserve": [
+        "Current V1.1 accepted WO-001 through WO-009 history and release-specific governance.",
+        "D-0062@release/ADR-0006 as effective owner-operated authority.",
+        "Main production acceptance history at 1088/1088; no release action changes that denominator."
+      ],
+      "mustNotClaim": [
+        "ADR-0008/D-0063 is effective on release/1.1.",
+        "WO-010 or the #337 correction is admitted.",
+        "A release forward-port or checkpoint promotion has happened."
+      ],
+      "exactPostMergeReleaseSha": null,
+      "checkpointFilesChangedByThisPreparation": false
+    }
+  },
+  "staleIf": [
+    "main ref or tree changes",
+    "release/1.1 ref or tree changes",
+    "PR #336 head/base/state or exact-head check results change",
+    "any listed canonical source fingerprint changes",
+    "the PR #336 merge occurs; the resulting release SHA requires a new Context Lock",
+    "D-0062 branch lineage or its authority changes"
+  ],
+  "scope": {
+    "preparedArtifactsOnly": [
+      ".engineering/context-locks/GBS-V11-GOV-CODEX-ADMISSION-002.json",
+      ".engineering/evidence/GBS-V11-GOV-CODEX-ADMISSION-002-EVIDENCE.md"
+    ],
+    "forbidden": [
+      "product code, tests, CI, coverage behavior",
+      "main or release checkpoint/decision mutation",
+      "merge, forward-port, publication, WO-010 admission",
+      "D-0064 allocation or D-0062 mapping approval"
+    ]
+  },
+  "stopCondition": "GBS_V11_GOV_CODEX_ADMISSION_002_READY_FOR_OBJECTIVE_AUDIT"
+}
