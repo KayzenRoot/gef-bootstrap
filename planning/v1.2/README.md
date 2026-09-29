@@ -22,6 +22,11 @@ Capture the owner's proposal to make GEF the startup's high-reliability applicat
 - TOOLING-AND-GITHUB-SETUP.md: baseline tools vs new/free candidates, step-by-step owner/Codex setup checklist, costs and security.
 - ROADMAP-AND-WORK-ORDERS.md: classified scope, planned large Work Orders, stage-gates, handoff, benchmark and Definition-of-Done candidate.
 - EXPERIMENTS-AND-DECISIONS.md: experiments, measurable gates, research dependencies, non-goals and decisions still requiring formal admission.
+- OPERATOR-RESPONSE-AND-FORECAST.md: always-visible pt-BR evidence dashboard, M21/M22/M23 integration, correct percentages and conditional empirical ETA.
+- PRODUCT-DISCOVERY-INTERVIEW.md: adaptive guided/fast/deep product interview, canonical question/answer capture, scope and owner-approved visual discovery.
+- UI-UX-DESIGN-FACTORY.md: discovery-to-wireflow-to-design-token-to-working-preview pipeline, open-source component/browser/a11y/visual tests and design approval.
+- THROUGHPUT-OPTIMIZATIONS.md: 18 additional high-leverage research candidates for critical path, vertical slices, deterministic caches, proof-aware CI and low-rework delivery.
+- STARTUP-DEFAULT-PROFILE.md: future installer/adoption default activating interview, design, Codex Marathon packs, quality gates and progress reporting when V1.2 is objectively ready.
 
 ## Proposed outcomes (NOT measured claims)
 - Higher objectively accepted useful progress per Codex hour and per execution, without oversized unreviewable diffs.
@@ -41,3 +46,6 @@ F. Complete all release DoD gates, evidence-bound benchmarks, independently requ
 
 ## Safety bar
 No claim of zero bugs or guaranteed speed-up. Any missed HIGH/CRITICAL blocker by selective testing demotes the corresponding optimization to SHADOW and requires root-cause repair. No quiet acceptance of stale PASS receipts, unsupported tools, unavailable billing claims, fabricated test results, auto-generated architectural decisions or unattended destructive merges.
+
+## Owner expansion — adaptive interview, visual quality and visible progress
+The owner requested a consistent progress/forecast panel in every substantive construction response, adaptive interviews about the actual application and front-end preferences, rigorously verified UI delivery, fast critical-path construction and default activation through the eventually installed V1.2 startup profile. The five documents above expand the original six-file dossier to eleven planning files. These are research/draft artifacts and do not grant V1.2 production, installation or implementation credit. M20–M23/M43/M45 and the existing architecture must be extended rather than replaced. Forecasts require valid M22 historical measurements; unsupported dates must show NOT_YET_BASELINED.
