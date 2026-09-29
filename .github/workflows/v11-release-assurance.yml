@@ -95,3 +95,38 @@ jobs:
             assurance-receipt.json
           if-no-files-found: warn
           retention-days: 30
+
+  codeql-alert-evidence:
+    # Isolated read-only API query: no checkout, no untrusted workspace code,
+    # no secrets or raw alert descriptions published to the workflow logs.
+    name: CodeQL tracked alert evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      GEF_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Read historical alert and open HIGH/CRITICAL from provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GH_REPO" = "KayzenRoot/gef-bootstrap" || { echo "::error::Wrong repository"; exit 1; }
+          printf 'Exact candidate head: %s\\n' "$GEF_CANDIDATE_SHA"
+          all="$RUNNER_TEMP/codeql-all-alerts.json"
+          gh api --paginate "repos/$GH_REPO/code-scanning/alerts?state=all&per_page=100" | jq -s 'add // []' > "$all" || {
+            echo "::error::Code Scanning alert inventory unavailable; disposition remains BLOCKED"
+            exit 1
+          }
+          echo "Tracked historical alert #2, metadata only:"
+          jq -c '[.[] | select(.number == 2) | {number, state, ruleId: .rule.id, severity: .rule.security_severity_level, updatedAt: .updated_at}]' "$all"
+          echo "Open HIGH/CRITICAL alert metadata:"
+          jq -c '[.[] | select(.state == "open" and (.rule.security_severity_level == "high" or .rule.security_severity_level == "critical")) | {number, state, ruleId: .rule.id, severity: .rule.security_severity_level, ref: .most_recent_instance.ref}]' "$all"
+          if [ "$(jq '[.[] | select(.number == 2)] | length' "$all")" -ne 1 ]; then
+            echo "::warning::Historical alert #2 not present in complete provider inventory; manual alert identity/disposition verification required"
+          fi
+          # Evidence-retrieval job success means API access, not a declaration
+          # that any open finding is safe. WO-009 owner audit owns disposition.
