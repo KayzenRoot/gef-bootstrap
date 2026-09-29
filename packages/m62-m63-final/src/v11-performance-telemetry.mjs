@@ -128,7 +128,7 @@ function normalizeMetric(id, input) {
 function normalizeMetrics(input) {
   if (!isObject(input) || Object.keys(input).length === 0) return fail('INVALID', 'METRICS_MISSING');
   const normalized = {};
-  for (const id of Object.keys(input).sort()) {
+  for (const id of Object.keys(input).sort(compareKeys)) {
     const result = normalizeMetric(id, input[id]);
     if (result.state !== 'VALID') return result;
     normalized[id] = result.value;
@@ -139,7 +139,7 @@ function normalizeMetrics(input) {
 function normalizeRequiredMetrics(input) {
   const values = input === undefined ? DEFAULT_REQUIRED_METRICS : input;
   if (!Array.isArray(values) || values.length === 0 || values.some(id => typeof id !== 'string' || !METRIC_ID.test(id))) return null;
-  return [...new Set(values)].sort();
+  return [...new Set(values)].sort(compareKeys);
 }
 
 function normalizeQualityGate(input) {
@@ -169,7 +169,8 @@ function normalizeBindings(input) {
 }
 
 function recordBody(record) {
-  const { digest: ignored, ...body } = record;
+  const body = { ...record };
+  delete body.digest;
   return body;
 }
 
@@ -246,7 +247,8 @@ export function verifyPerformanceRecord(record) {
 }
 
 function baselineBody(baseline) {
-  const { digest: ignored, ...body } = baseline;
+  const body = { ...baseline };
+  delete body.digest;
   return body;
 }
 
