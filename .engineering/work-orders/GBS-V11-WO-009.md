@@ -1,6 +1,6 @@
 # GBS-V11-WO-009 — Integrated Assurance, Security, Documentation and Runbooks
 
-Status: `ADMITTED`
+Status: `OWNER_AUDIT_APPROVED_MERGED` on release/1.1. Historical admission base and conditions below remain preserved; implementation PR #316 merged at `cb6cf5cf4f27d9d717921aa833ee342863f0d172` after exact-head owner audit #5889695018. WO-010 production acceptance remains unadmitted and separate.
 Release line: `1.1.x`
 Assurance: `ELEVATED`
 Implementation branch after admission (clean-lineage replacement): `feat/1.1/wo-009-integrated-assurance-clean-history`

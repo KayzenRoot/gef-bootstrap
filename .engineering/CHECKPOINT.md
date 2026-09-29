@@ -164,21 +164,17 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Collaborator approval: not required or requested.
 - Production boundary preserved: `main` and `v1.0.0` unchanged.
 
-### Active V1.1 increment — WO-009
-- Active Work Order after governance/admission merge: `GBS-V11-WO-009`
-- Work Order status: `ADMITTED`
-- Objective: integrated assurance, security closure, documentation/runbooks and fresh-context continuation proof
-- Assurance: `ELEVATED`
-- Implementation branch: `feat/1.1/wo-009-integrated-assurance`
-- Context Lock: `.engineering/context-locks/GBS-V11-WO-009.json`
-- Direct Execution Brief: `.engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md`
-- Pipeline maintenance forward-port: `GBS-V11-MAINT-PIPELINE-001` completed by [PR #309](https://github.com/KayzenRoot/gef-bootstrap/pull/309), merge SHA `44c6618ece1593365fb6c7f559d13c7166e7df26`; all nine applicable post-merge workflows passed. Evidence: `.engineering/evidence/GBS-V11-MAINT-PIPELINE-001-EVIDENCE.md`.
-- OpenSSF Scorecard completed on the supported default branch at `main` SHA `73ab68f3f33f894027fb7a04c2696b02b839060a`: [run 36485873871](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36485873871). Findings and limits are triaged in the maintenance Evidence Bundle.
-- Required coverage: all V1.1 Test Matrix suites/cases on Windows, Linux and macOS; continuation cases `CONT-RESUME-01..04`.
-- Security blocker to resolve: CodeQL check #108450457038 on PR #278 reports one HIGH alert at the current `release/1.1` head. A successful scanner job does not close this alert.
-- Production boundary: V1 production remains accepted at 1088/1088; `v1.0.0` is unchanged. Pipeline PR #309 changed only `release/1.1`; it did not promote V1.1 to production.
-- WO-009 implementation branch exists as `feat/1.1/wo-009-integrated-assurance`; PR #302 still needs reconciliation because its original base `e69d887a0f12b46218f40e849fdcf180e455eb3d` is behind the new release base `44c6618ece1593365fb6c7f559d13c7166e7df26`. Earlier checks do not transfer to a refreshed candidate.
-- Next legal action: after this checkpoint reconciliation merges, refresh the WO-009 Context Lock against the exact current `release/1.1` tip, then validate the refreshed candidate before any WO-009 audit or merge. If the release branch advances before the lock refresh is complete, restart that refresh against its new exact tip.
+### Completed V1.1 increment — WO-009
+- Work Order: `GBS-V11-WO-009`; state: `OWNER_AUDIT_APPROVED_MERGED` on the V1.1 release line only.
+- Purpose: integrated Windows/Linux/macOS release assurance, T1–T12 security, fresh-context M18/M20 continuation tests, source-workspace installation/upgrade/recovery runbooks.
+- Approved implementation: [PR #316](https://github.com/KayzenRoot/gef-bootstrap/pull/316), exact owner-audited head `a04a6b239ccc81c9662830cd9074c70381c84b4e`, audit comment `5889695018`, merge `cb6cf5cf4f27d9d717921aa833ee342863f0d172`. Owner audit is NOT independent.
+- Security prerequisite: [PR #317](https://github.com/KayzenRoot/gef-bootstrap/pull/317), merge `0172d774719d10ab8d7aab5de9ef0ace2cb5878d`. Exact release-head run `36564379434`, job `109392631943`, returned historical CodeQL #2 `js/clear-text-logging` HIGH as `fixed` on `release/1.1`. A distinct CodeQL MEDIUM #1 is still open and Scorecard HIGH metadata #14/#13/#3 belongs to `main`; preserve their separate governance.
+- PR #316 candidate Sonar Quality Gate: `SUCCESS`. The cumulative [PR #278](https://github.com/KayzenRoot/gef-bootstrap/pull/278) from `release/1.1` to `main` remains merge-conflicted and its current Sonar Quality Gate `FAILURE` (Security C, Reliability D, new-code duplication displayed 3.0%). These release blockers are NOT waived by WO-009's accepted candidate.
+- Historical WO-009 Context Lock remains at `.engineering/context-locks/GBS-V11-WO-009.json` for lineage and does not claim the pre-merge admission base is current.
+- Current admitted maintenance: `GBS-V11-MAINT-POST-WO009-001`, admitted from `release/1.1` base `cb6cf5cf4f27d9d717921aa833ee342863f0d172` via [PR #318](https://github.com/KayzenRoot/gef-bootstrap/pull/318), merge `903fdf2004307c52fec02269bf0272c983fad475`.
+- Next candidate product Work Order: `GBS-V11-WO-010`, NOT admitted. No V1.1 production approval, promotion to `main`, tag, package publication or benchmark speedup claim exists.
+- Next legal V1.1 action: resolve PR #278's cumulative Sonar findings and branch conflict under admitted maintenance before WO-010 admission, preserving neutral provider boundaries and the accepted production baseline.
+
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
 - M41-M47 Integrated Assurance: `35164467254` `SUCCESS`
@@ -190,7 +186,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action: refresh `.engineering/context-locks/GBS-V11-WO-009.json` against `release/1.1` SHA `44c6618ece1593365fb6c7f559d13c7166e7df26` and revalidate the resulting candidate.
+Next legal V1.1 action: resolve PR #278 cumulative Sonar and release-to-main merge conflict under admitted maintenance `GBS-V11-MAINT-POST-WO009-001`; admit WO-010 only after all prerequisite release gates close.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT`.
+V1.1 STOP CONDITION: `GBS_V11_WO009_MERGED_PR278_RELEASE_GATES_BLOCK_WO010`.
