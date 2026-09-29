@@ -1,6 +1,6 @@
 # GBS-MAINT-HIVE-REMOVAL-001 — Evidence Bundle & Review
 
-Status: IMPLEMENTATION CANDIDATE AUDITED; PR #313 merge and final exact-head verification pending.
+Status: APPROVED AND MERGED after full exact-head CI, technical audit and verified protected-main merge.
 Reviewed implementation commit: `3255bd13459e60b270547cbbf7fff2a7b73fe6ad`.
 Admission base: `27aa76f75d6a914aa80bdc2a9c73843084189552`.
 Admission tree: `25c2f0a82e201725a0623e65bdf8cbe8b00fe695`.
@@ -38,7 +38,7 @@ A newer duplicate Pipeline Integrity, Free Security Pilot and Dependency Review 
 - Retired external adapter not an exported symbol in the reviewed candidate: focused test PASS.
 - Active runtime, CI and operator surface anti-reintroduction scan: PASS under bounded exact token semantics, avoiding false positives in unrelated words.
 - No unexplained failing workflow on the audited candidate.
-- Exact last documentation/checkpoint commit itself MUST also pass its PR checks before merge.
+- The final implementation/documentation/checkpoint PR head passed all eleven workflows listed in the final section below before merge.
 
 ## Findings and disposition
 - CORRECTION-001: initial anti-regression regex matched `archived` as a false positive. Fixed to whole-token and adapter-name patterns in the same PR; regression suite PASS.
@@ -51,7 +51,25 @@ Maintain V1.0 `GBS_V1_PRODUCTION_ACCEPTED`, unchanged 1088/1088 and original evi
 - implementation candidate `3255bd13459e60b270547cbbf7fff2a7b73fe6ad`, PR #313;
 - Hive runtime/instructions/planning retired, M40 neutral RESERVED;
 - exact candidate CI PASS as enumerated above;
-- final promotion/merge subject to final PR head checks and protected-branch rules; no unsupported release claim.
+- final PR head passed all checks, received PT-BR technical audit review and was squashed into protected main at the verified merge SHA; original V1 production claims unchanged.
 
 ## Review verdict
-IMPLEMENTATION APPROVED on the reviewed implementation candidate under the owner-authorized Work Order, conditional on green exact-head final PR checks and lawful merge. The maintenance increment is **not complete** before #313 is merged into protected `main`. After merge, confirm main's exact merge SHA and the archived V1.0 acceptance values.
+APPROVED AND MERGED. Final PR head and main merge SHA were verified through GitHub after all exact-head workflows succeeded. This follow-up documentation PR records the completed checkpoint delta; its own docs-only CI remains subject to protected-branch rules.
+
+## Final exact-head closure (PR #313)
+- Exact reviewed PR head: `5407ad7d0e87aea935705216f3308b87aea58056`.
+- Technical audit review: https://github.com/KayzenRoot/gef-bootstrap/pull/313#pullrequestreview-5346938386 (PT-BR, no known HIGH/CRITICAL defects in change).
+- GitHub reported PR #313 `merged: true`; protected `main` commit: `3c5f1fb96e9d5f3d8a07acdf024687063f82d9d2`. Merge strategy: squash; historical V1 release tags and acceptance receipts unchanged.
+- At that exact PR head, all 11 workflows completed SUCCESS:
+  - m01-validation: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056675
+  - Repository Validation: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056692
+  - M34–M39 Integrated Assurance (focused Linux/Windows/macOS + regression): https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056700
+  - M41–M47 Integrated Assurance: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056687
+  - M48–M54 Integrated Assurance: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056771
+  - M55–M61 Integrated Assurance: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056681
+  - M62–M63 Final Assurance: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056679
+  - Pipeline Integrity: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056691
+  - Free Security Pilot: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056703
+  - Dependency Review: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056694
+  - Codecov Coverage Pilot: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36512056676
+- Accepted checkpoint delta: `maintenance.status=APPROVED_AND_MERGED`; `maintenance.mergeSha` equals the verified protected-main SHA above. This metadata closeout is the final bookkeeping step under the SAME Work Order, not a new feature increment.
