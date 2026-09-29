@@ -11,32 +11,47 @@
  */
 
 import { existsSync, openSync, closeSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { DEFAULT_GIT_TRUST_POLICY, probeWindowsRight, windowsRightsOracleAvailable } from "../dist/index.js";
 
-if (process.platform !== "win32") {
-  console.log(`rights oracle: not applicable on ${process.platform} (the POSIX effective-write chain is the proof)`);
-  process.exit(0);
+/**
+ * Report observed operating-system rights without participating in a trust decision.
+ * Explicit dependencies allow native coverage of Windows-only diagnostics on POSIX.
+ */
+export function reportWindowsRights({
+  platform = process.platform,
+  candidates = DEFAULT_GIT_TRUST_POLICY.candidates,
+  pathExists = existsSync,
+  openFile = openSync,
+  closeFile = closeSync,
+  right = probeWindowsRight,
+  available = windowsRightsOracleAvailable,
+  log = console.log,
+} = {}) {
+  if (platform !== "win32") {
+    log(`rights oracle: not applicable on ${platform} (the POSIX effective-write chain is the proof)`);
+    return;
+  }
+  log("rights oracle available:", available());
+  for (const candidate of candidates) {
+    if (!pathExists(candidate)) {
+      log(`${candidate}: ABSENT`);
+      continue;
+    }
+    let contentWritable = false;
+    try {
+      closeFile(openFile(candidate, "r+"));
+      contentWritable = true;
+    } catch {
+      contentWritable = false;
+    }
+    const targetDelete = right(candidate, "DELETE", false);
+    const parentDeleteChild = right(dirname(candidate), "FILE_DELETE_CHILD", true);
+    log(`${candidate}: DELETE=${targetDelete} FILE_DELETE_CHILD=${parentDeleteChild} content-writable=${String(contentWritable)}`);
+  }
 }
 
-console.log("rights oracle available:", windowsRightsOracleAvailable());
-
-
-for (const candidate of DEFAULT_GIT_TRUST_POLICY.candidates) {
-  if (!existsSync(candidate)) {
-    console.log(`${candidate}: ABSENT`);
-    continue;
-  }
-  let contentWritable = false;
-  try {
-    closeSync(openSync(candidate, "r+"));
-    contentWritable = true;
-  } catch {
-    contentWritable = false;
-  }
-  const targetDelete = probeWindowsRight(candidate, "DELETE", false);
-  const parentDeleteChild = probeWindowsRight(dirname(candidate), "FILE_DELETE_CHILD", true);
-  console.log(
-    `${candidate}: DELETE=${targetDelete} FILE_DELETE_CHILD=${parentDeleteChild} content-writable=${String(contentWritable)}`,
-  );
+if (process.argv[1] !== undefined && resolve(process.argv[1]) === resolve(fileURLToPath(import.meta.url))) {
+  reportWindowsRights();
 }
