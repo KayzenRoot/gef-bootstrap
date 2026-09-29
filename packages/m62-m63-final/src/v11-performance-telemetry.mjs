@@ -10,7 +10,7 @@ import { benchmarkSummary, performanceGate } from '../../m55-m61-quality/src/ind
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
 const TOKEN = /^[A-Za-z0-9][A-Za-z0-9 ._:+-]{0,95}$/;
 const SHA = /^(?:sha256:)?(?:[a-f0-9]{40}|[a-f0-9]{64})$/i;
-const METRIC_ID = /^M-(?:LAT|CTX|VAL|RWK|OUT|TOK)-[0-9]{2}$/;
+const METRIC_ID = /^M-(?:LAT|CTX|VAL|RWK|OUT|TOK)-\d{2}$/;
 const METRIC_UNITS = new Set(['ms', 'count', 'bytes', 'ratio', 'tokens', 'enum']);
 const POPULATION_KEYS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'];
 const BINDING_KEYS = ['executionCapsule', 'incrementalValidation', 'proofReuse'];
@@ -20,8 +20,10 @@ function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+const compareKeys = (left, right) => left.localeCompare(right, 'en');
+
 function exactKeys(value, expected) {
-  return isObject(value) && JSON.stringify(Object.keys(value).sort()) === JSON.stringify([...expected].sort());
+  return isObject(value) && JSON.stringify(Object.keys(value).sort(compareKeys)) === JSON.stringify([...expected].sort(compareKeys));
 }
 
 function freezeDeep(value) {

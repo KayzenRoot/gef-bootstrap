@@ -264,7 +264,9 @@ function sameStringSet(left: readonly string[], right: readonly string[]): boole
 }
 
 function normalizeSlug(value: string): string {
-  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const separated = value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const withoutLeadingSeparator = separated.startsWith("-") ? separated.slice(1) : separated;
+  const normalized = withoutLeadingSeparator.endsWith("-") ? withoutLeadingSeparator.slice(0, -1) : withoutLeadingSeparator;
   return normalized.length === 0 ? "unknown" : normalized;
 }
 

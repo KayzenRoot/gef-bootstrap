@@ -22,7 +22,7 @@
 
 import { AsyncLocalStorage } from "node:async_hooks";
 import { createHash } from "node:crypto";
-import { probeWindowsRight, windowsRightsOracleAvailable } from "./windows-rights.js";
+import { probeWindowsRight } from "./windows-rights.js";
 import { accessSync, closeSync, constants, fstatSync, lstatSync, openSync, readSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, isAbsolute, join, parse, relative, resolve, sep } from "node:path";
@@ -33,10 +33,10 @@ import type { CommandRegistration, ExecutionContext } from "@gef-bootstrap/kerne
 import { ToolObservationSession } from "@gef-bootstrap/preflight/toolchain";
 // Type-only: the frozen contract shapes come from the package root and are erased at compile time,
 // so importing them costs the packaged CLI no runtime dependency beyond the toolchain module.
-import type { MutablePreflightCounters, ToolDescriptor, ToolObservation, ToolObservationPort, ToolPresenceStatus, ToolProbeResult, ToolProbeSpec, ToolResolutionResult } from "@gef-bootstrap/preflight";
+import type { MutablePreflightCounters, ToolDescriptor, ToolObservation, ToolPresenceStatus, ToolProbeResult, ToolProbeSpec, ToolResolutionResult } from "@gef-bootstrap/preflight";
 
 import { CLI_CONTRACT_VERSION } from "./parser.js";
-import { buildStateDocument, requireSupportedSchemaVersion, UnsupportedDocumentVersionError } from "./schemas.js";
+import { buildStateDocument, requireSupportedSchemaVersion } from "./schemas.js";
 import { applyGovernedCreate } from "./transaction.js";
 import { buildUpgradeStateDocument, composeUpgradePreview, UPGRADE_MIGRATION_ID, UPGRADE_STATE_REF, upgradePreconditionKey, upgradeRepositoryIdentityFingerprint, upgradeStateFingerprint } from "./upgrade.js";
 
