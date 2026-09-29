@@ -41,6 +41,12 @@ test("WO-007 objective approval is promoted before WO-008 admission", () => {
 
 test("machine and human checkpoint record completed WO-008 and admitted WO-009", () => {
   const completed = checkpoint.v11.completedWorkOrders["GBS-V11-WO-008"];
+  if (checkpoint.v11.status === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT") {
+    assert.equal(checkpoint.v11.completedWorkOrders["GBS-V11-WO-009"].implementationPr, 316);
+    assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-MAINT-POST-WO009-001");
+    assert.equal(checkpoint.v11.nextWorkOrder, "NONE");
+    assert.equal(checkpoint.v11.stopState, "GBS_V11_WO009_MERGED_PR278_RELEASE_GATES_BLOCK_WO010");
+  } else {
   assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_ADMITTED");
   assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
   assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
@@ -49,6 +55,7 @@ test("machine and human checkpoint record completed WO-008 and admitted WO-009",
   assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
   assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
+  }
   assert.equal(completed.status, "OWNER_AUDIT_APPROVED_MERGED");
   assert.equal(completed.implementationPr, 296);
   assert.equal(completed.auditedHead, "c4a108059d5b77baed43faa28847828ea1f450a7");

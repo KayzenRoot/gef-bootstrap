@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-WO009-CP-002",
+  "parentWorkOrder": "GBS-V11-MAINT-POST-WO009-001",
+  "baseRef": "release/1.1",
+  "baseSha": "903fdf2004307c52fec02269bf0272c983fad475",
+  "branch": "gbs/v11/wo009-checkpoint-reconcile-002",
+  "assurance": "ELEVATED",
+  "productionMainShaAtLock": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+  "wo009ImplementationPr": 316,
+  "wo009AuditedHead": "a04a6b239ccc81c9662830cd9074c70381c84b4e",
+  "wo009Merge": "cb6cf5cf4f27d9d717921aa833ee342863f0d172",
+  "releaseCodeqlEvidence": {
+    "run": 36564379434,
+    "job": 109392631943,
+    "alert": 2,
+    "state": "fixed"
+  },
+  "cumulativePr278": {
+    "mergeableState": "dirty",
+    "sonar": "FAILURE"
+  },
+  "authorizedPaths": [
+    ".engineering/CHECKPOINT.json",
+    ".engineering/CHECKPOINT.md",
+    ".engineering/work-orders/GBS-V11-WO-009.md",
+    "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+    "tests/v11-wo-001-promotion.test.mjs",
+    "tests/v11-wo-003-admission.test.mjs",
+    "tests/v11-wo-005-admission.test.mjs",
+    "tests/v11-wo-006-admission.test.mjs",
+    "tests/v11-wo-007-admission.test.mjs",
+    "tests/v11-wo-008-admission.test.mjs",
+    "tests/v11-wo-009-admission.test.mjs",
+    ".engineering/work-orders/GBS-V11-MAINT-WO009-CP-002.md",
+    ".engineering/context-locks/GBS-V11-MAINT-WO009-CP-002.json",
+    ".engineering/evidence/GBS-V11-MAINT-WO009-CP-002-EVIDENCE.md",
+    "tests/v11-wo-002-admission.test.mjs",
+    "tests/v11-wo-004-admission.test.mjs"
+  ],
+  "forbidden": [
+    "main",
+    "v1.0.0",
+    "WO010 admission",
+    "production acceptance",
+    "pipeline/security bypass",
+    "retired integrations"
+  ],
+  "stopCondition": "GBS_V11_WO009_CHECKPOINT_RECONCILED_MAINTENANCE_ACTIVE"
+}
