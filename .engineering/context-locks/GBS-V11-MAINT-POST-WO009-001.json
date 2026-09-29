@@ -26,7 +26,7 @@
     "package publication",
     "WO010 implementation",
     "Sonar/CodeQL suppression",
-    "Hive runtime or development dependencies"
+    "retired provider runtime or development dependencies"
   ],
   "staleIf": [
     "release/1.1 head advances beyond exact admission base",
