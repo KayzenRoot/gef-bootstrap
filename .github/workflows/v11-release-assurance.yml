@@ -232,7 +232,7 @@ jobs:
           jq -c --argjson id "$sonar_id" \
             '[.[] | select(.id == $id) | {id, status, conclusion, head_sha, summary: .output.title}]' "$checks"
           tree="$RUNNER_TEMP/sonar-duplication-tree.json"
-          if ! curl --silent --show-error --fail --location --max-time 30 --get \
+          if ! curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' --max-time 30 --get \
             --data-urlencode 'component=KayzenRoot_gef-bootstrap' \
             --data-urlencode 'metricKeys=new_duplicated_lines,new_duplicated_lines_density' \
             --data-urlencode 'qualifiers=FIL' --data-urlencode 'ps=500' \
@@ -265,7 +265,7 @@ jobs:
             [ -n "$component_key" ] || continue
             encoded_key="$(jq -nr --arg key "$component_key" '$key | @uri')"
             blocks="$RUNNER_TEMP/sonar-duplication-blocks.json"
-            if ! curl --silent --show-error --fail --location --max-time 20 \
+            if ! curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' --max-time 20 \
               "https://sonarcloud.io/api/duplications/show?key=$encoded_key&pullRequest=278" > "$blocks"; then
               echo "::warning::NOT_VERIFIED: duplication blocks unavailable for one listed file"
               continue
@@ -287,7 +287,7 @@ jobs:
             candidate_pr="$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH")"
             if [ -n "$candidate_pr" ]; then
               candidate_issues="$RUNNER_TEMP/candidate-issues.json"
-              if curl --silent --show-error --fail --location --max-time 30 --get \
+              if curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' --max-time 30 --get \
                 --data-urlencode 'componentKeys=KayzenRoot_gef-bootstrap' \
                 --data-urlencode "pullRequest=$candidate_pr" \
                 --data-urlencode 'resolved=false' --data-urlencode 'ps=100' \
