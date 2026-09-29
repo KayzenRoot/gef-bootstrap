@@ -28,7 +28,7 @@ GEF Bootstrap is a local-first, contract-driven modular hybrid product with stri
 - Assurance overrides token/time/search/test budgets.
 - Exact-state evidence and targeted invalidation are required where applicable.
 - One complete production target is built, not an MVP-first product line.
-- GEF Bootstrap itself is implemented through ChatGPT + connected tools, not Codex.
+- After promoted ADR-0008, Codex exclusively writes and fixes GEF Bootstrap implementation/test/CI code. ChatGPT retains semantic planning, approved governance artifacts, GitHub issue/PR orchestration and objective review; no change to deterministic-plane product architecture.
 
 # Frozen implementation architecture
 
@@ -43,7 +43,7 @@ Reasons:
 - straightforward cross-platform Windows/Linux/macOS support;
 - suitable CLI + library distribution model;
 - strong test ecosystem;
-- low friction for ChatGPT-based implementation and review;
+- low friction for Codex implementation and ChatGPT-based planning/review;
 - mature package/workspace tooling;
 - broad compatibility with target software repositories.
 
@@ -340,7 +340,7 @@ Detailed threat models/policies belong to Security planning, but Architecture ma
 - cross-platform distribution strategy: PASS
 - independently testable boundaries: PASS
 - no functional code implemented: PASS
-- no Codex implementation path introduced: PASS
+- Codex-only code authorship and GitHub-first planning are the prospective owner-directed governance amendment ADR-0008; architecture remains subject to exact-head audit/promotion.
 - open Architecture questions: 0
 
 STOP CONDITION: `READY_FOR_ARCHITECTURE_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.

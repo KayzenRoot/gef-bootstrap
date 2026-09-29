@@ -176,7 +176,7 @@ An adapter may be advertised as shipped/supported only when its own compatibilit
 The single production release requires semantic/governance conformance, deterministic work-plane correctness, unit/integration/E2E evidence, security/secret-safety, mutation recovery, compatibility/upgrade proof, brownfield preservation, GitHub-profile simulation/integration, token/time/performance benchmark path, user/engineering documentation, operational runbooks and exact-state production acceptance.
 
 ## Construction invariant
-All GEF Bootstrap planning, implementation, tests, documentation, reviews, releases and production preparation are performed through ChatGPT and connected project tools. Codex is not an implementation executor for this repository.
+After the owner-directed ADR-0008 / D-0063 is objectively audited and promoted, **Codex exclusively authors implementation, tests, fixtures, CI/build scripts, migrations and corrective code** for GEF Bootstrap and new governed software projects. ChatGPT authors approved planning/governance documentation, freezes detailed issue-backed Work Orders and qualified planning-only PRs as each module is planned, coordinates GitHub and conducts exact-head code/bug/security review. Codex implementation remains subject to legal admission, precise file maps and current Context Locks; release safety and historical V1 acceptance are unchanged. See `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`.
 
 ## Out-of-scope product identities
 - general-purpose IDE/editor;
@@ -240,7 +240,7 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 - weighted baseline method defined without fabricating current percentage: PASS
 - stable module names synchronized with Master Module Index: PASS
 - governed supersession ADR present: PASS
-- ChatGPT-only Bootstrap implementation rule preserved: PASS
+- owner-directed construction-actor supersession registered by ADR-0008; effect is conditional on exact-head audit and checkpoint promotion; historical V1 acceptance unchanged
 - Architecture not prematurely selected: PASS
 - implementation not started: PASS
 - remaining Scope closure questions: 0

@@ -354,7 +354,7 @@ Acceleration MUST NOT:
 - let a long prompt hide multiple unauditable changes;
 - convert missing dependency knowledge into a smaller test radius;
 - treat prompt length or elapsed executor time as progress;
-- let Codex build the `gef-bootstrap` repository itself.
+- let ChatGPT or another assistant author implementation/test/CI/migration code; Codex is the sole code executor after ADR-0008 promotion.
 
 ## 17. Default target-project behavior
 Unless a target project explicitly selects a stricter compatible profile, GEF SHOULD default to:
@@ -365,5 +365,8 @@ Unless a target project explicitly selects a stricter compatible profile, GEF SH
 - impact-first validation during implementation;
 - proof-preserving reuse of unchanged green tests;
 - exact-head assurance before acceptance.
+
+## 18. Codex-only, GitHub-first handoff (owner-directed ADR-0008)
+Upon audited promotion, ChatGPT opens issue-backed Work Orders immediately after each module plan is approved; it may open isolated planning-only draft PRs when they have an actual plan diff. Codex alone authors implementation/tests/CI/migrations after legal admission and Context Lock binding. The default user handoff is a short GitHub issue + Work Order + PR pointer, not a PDF. Each ChatGPT construction response carries objective, current progress and blocker statistics under `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`. No planning PR grants implementation authority; no throughput claim without baseline/proof. All existing selective-test/full-release safety contracts remain in force.
 
 STOP CONDITION: `EXECUTOR_ACCELERATION_OWNER_DIRECTIVE_MATERIALIZED`.
