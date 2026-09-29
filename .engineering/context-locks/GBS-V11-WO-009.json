@@ -4,7 +4,7 @@
   "releaseLine": "1.1.x",
   "assurance": "ELEVATED",
   "baseRef": "release/1.1",
-  "baseSha": "5ea917ae50cc8ce45022b76695c1b8cc2c2fc37d",
+  "baseSha": "0172d774719d10ab8d7aab5de9ef0ace2cb5878d",
   "productionShaAtLock": "e23311e77d79b84f3c70671072a22a6f8896d13d",
   "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
   "v100TagTargetAtLock": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
@@ -128,7 +128,7 @@
     },
     {
       "path": ".github/workflows/security-codeql.yml",
-      "baseBlobSha": "bb85590de2ae831b388a5c7078b6657f6b88972d",
+      "baseBlobSha": "554e26bf9d16aceee708d48f86251495bd74e993",
       "fingerprintKind": "git-blob-sha1"
     },
     {

@@ -48,7 +48,7 @@ test("WO-009 locks integrated assurance and new-context continuation cases", () 
   for (const id of ["SEC-INT-01","SEC-INT-06","REG-01","REG-07","CONT-RESUME-01","CONT-RESUME-04","SEC-INT-07"]) {
     assert.ok(lock.requiredTestIds.includes(id), "missing case " + id);
   }
-  assert.equal(lock.baseSha, "5ea917ae50cc8ce45022b76695c1b8cc2c2fc37d");
+  assert.equal(lock.baseSha, "0172d774719d10ab8d7aab5de9ef0ace2cb5878d");
   assert.equal(lock.productionShaAtLock, "e23311e77d79b84f3c70671072a22a6f8896d13d");
   assert.equal(lock.v100TagTargetAtLock, "866fe3af8cccc65c929aaf6a47a924401fa448b3");
   assert.equal(lock.knownSecurityFinding.checkRunId, 108450457038);

@@ -74,3 +74,8 @@ STOP CONDITION: `GBS_V11_WO_009_READY_FOR_OWNER_AUDIT`
 ## 2026-09-29 exact-base lineage correction
 
 For the clean-lineage replacement only, use `release/1.1` at `5ea917ae50cc8ce45022b76695c1b8cc2c2fc37d` as the exact parent. The old implementation branch and PR #302 are preserved for audit and will not be force-updated. Scan the full new commit range; do not suppress or exclude findings. The historical CodeQL HIGH disposition remains a required independent security input before any owner approval.
+
+
+## 2026-09-29 post-maintenance WO-009 execution base
+
+The preceding base references describe superseded admission lineage. **Current exact authoritative release parent and Context Lock base:** `0172d774719d10ab8d7aab5de9ef0ace2cb5878d` after focused CodeQL remediation PR #317 (owner-audited exact head `447cb34fc1fdc19d0d230b7972cfbde76bfedd50`). Continue only from the merged reconciliation branch `feat/1.1/wo-009-integrated-assurance-clean-history` and updated lock. The CodeQL #2 release disposition and all new exact-head assurance results are mandatory, not inferred from previous runs.

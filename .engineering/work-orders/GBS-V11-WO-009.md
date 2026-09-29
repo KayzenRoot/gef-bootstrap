@@ -166,3 +166,8 @@ STOP CONDITION: `GBS_V11_WO_009_READY_FOR_OWNER_AUDIT`
 ## 2026-09-29 owner lineage correction
 
 PR #302's ancestor source-restore commit `83a7d926d559741a7e0d09b6f9a7ee3fff22e65a` causes the complete-range Gitleaks gate to re-detect six already-present, unchanged planning/test fixtures even though those files are absent from the PR net diff. To preserve the full security scan without exceptions, a clean child branch of `5ea917ae50cc8ce45022b76695c1b8cc2c2fc37d` carries the identical net implementation tree. Keep PR #302 as a superseded audit trail, without force-push or rewritten history; do not infer security clearance until the clean exact-head checks and CodeQL alert disposition succeed. The Work Order scope, release boundary and all acceptance gates are unchanged.
+
+
+## 2026-09-29 release security prerequisite reconciliation
+
+Narrow security PR #317 was owner-audited on candidate `447cb34fc1fdc19d0d230b7972cfbde76bfedd50` with 12/12 required workflows and three post-ready rechecks successful. Its squash merge to `release/1.1`, `0172d774719d10ab8d7aab5de9ef0ace2cb5878d`, applied the CodeQL #2 source fix, SEC-INT-07 regression and expanded CodeQL coverage before WO-009 completion. This Work Order now resumes on the ancestry-preserving reconciled clean branch with Context Lock bound to `0172d774719d10ab8d7aab5de9ef0ace2cb5878d`, pending exact-head full assurance and provider-verified historical alert disposition. Do not merge to `main` or claim V1.1 production acceptance.
