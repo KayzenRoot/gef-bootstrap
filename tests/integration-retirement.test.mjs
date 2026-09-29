@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const retired = ['hi', 've'].join('');
-const forbidden = [new RegExp(retired, 'i'), /m34-m40/i, /\\bM40\\b/];
+const forbidden = [new RegExp(`(^|[^A-Za-z0-9])${retired}([^A-Za-z0-9]|$)`, 'i'), new RegExp(`${retired}Adapter`, 'i'), /m34-m40/i];
 const activeFiles = [
   'README.md',
   '.engineering/ARCHITECTURE.md',

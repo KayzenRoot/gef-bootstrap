@@ -10,9 +10,9 @@ Owner explicitly retired Hive on 2026-09-28. Base: `27aa76f75d6a914aa80bdc2a9c73
 
 ## SCOPE
 - Audit active code, manifests, lockfiles, CI, templates, GitHub instructions, scripts, tests, runtime, setup and canonical Source Pack.
-- Delete the Hive-specific M40 integration and its three planning sessions; remove its production exports and two adapter tests; retain generic adapter API and UADS/UGAS.
-- Retire M40 from prospective modules, active source hierarchy, requirements, scope, architecture, deployment, backlog, DoD, module index and outward-facing docs. Do not renumber stable historical module IDs.
-- Supersede historical decisions prospectively via ADR and Decisions Ledger, retaining audit-grade historical evidence, accepted receipts and release tags.
+- Delete the Hive-specific M40 integration and replace its three Hive-specific planning sessions with neutral reserved-context planning, consistent with the approved V1.1 ADR-0005; remove its production exports and two adapter tests; retain generic adapter API and UADS/UGAS.
+- Retire the Hive-specific M40 *implementation and identity* from active sources, retaining the neutral reserved M40 context slot established by V1.1 ADR-0005. Keep the original stable IDs and unchanged 64-module/282-session inventory; M40 reserved carries no Hive semantics and no production-denominator credit.
+- Reconcile release/1.1 ADR-0005 and D-0061, superseding historical decisions prospectively via a conflict-free ADR/decision ID and Decisions Ledger, retaining audit-grade historical evidence, accepted receipts and release tags.
 - Include a regression test that fails if the retired integration is accidentally re-exported or reintroduced in active runtime packages.
 - Review open PRs for Hive reintroduction; close or mark conflicting Hive-first work without rewriting approved history.
 
@@ -24,7 +24,7 @@ Priority: `.engineering/CHECKPOINT.{md,json}`, `.engineering/DECISIONS-LEDGER.md
 
 ## REQUIREMENTS
 R1 No first-party Hive code or Hive dependency in main's active build/runtime/config/CI or operator instructions.
-R2 No Hive module advertised or required by prospective architecture, Scope, Requirements, DoD, Backlog, Deployment or current user documentation.
+R2 No Hive-specific module advertised or required by prospective architecture, Scope, Requirements, DoD, Backlog, Deployment or current user documentation. M40 remains an inactive neutral context slot, consistent with release/1.1 ADR-0005.
 R3 Generic adapter API, UADS/UGAS and deterministic local context continue to work without external service.
 R4 No active Hive-first PR can be merged unwittingly.
 R5 Historical accepted evidence, decisions, receipts and release lineage remain traceable, with supersession indicated.

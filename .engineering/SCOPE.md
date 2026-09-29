@@ -1,6 +1,6 @@
 # Scope
 
-Status: `FROZEN`, with owner-directed maintenance amendment (2026-09-28; ADR-0003).
+Status: `FROZEN`, with owner-directed maintenance amendment (2026-09-28; ADR-0007).
 
 ## Binding
 Scope is derived from `GBS-CONSTITUTION-v1.1`, frozen Project Overview, frozen Requirements and the Project Owner decision that GEF Bootstrap targets **one complete production version**, not a deliberately reduced V1/MVP slice.
@@ -82,6 +82,7 @@ A capability is never deferred merely because it takes longer to build. `EXPERIM
 ## Area J — Integrations
 - `GBS-M38 Capability Detection` — `CORE_REQUIRED`.
 - `GBS-M39 UADS Adapter` — `OPTIONAL_ADAPTER`.
+- `GBS-M40 Reserved Context Adapter Slot` — `OPTIONAL_ADAPTER`, RESERVED; no provider or implementation.
 - `GBS-M41 UGAS Adapter` — `OPTIONAL_ADAPTER`.
 - `GBS-M42 Generic Adapter API` — `PRODUCT_INCLUDED`.
 
@@ -123,11 +124,11 @@ Architecture may share harness infrastructure to reduce duplication; proof oblig
 ## Classification summary
 - `CORE_REQUIRED`: 47 modules.
 - `PRODUCT_INCLUDED`: 14 modules.
-- `OPTIONAL_ADAPTER`: 2 active modules (`M39`, `M41`).
+- `OPTIONAL_ADAPTER`: 3 tracked slots (`M39`, neutral reserved `M40`, `M41`).
 - `EXPERIMENTAL_GATED`: applied primarily at technology/capability level rather than whole-module exclusion.
 - `OUT_OF_SCOPE`: 0 current inventory modules.
 
-Current inventory is 63 active modules: 47 CORE_REQUIRED, 14 PRODUCT_INCLUDED and 2 OPTIONAL_ADAPTER. Stable historical IDs are not renumbered. The accepted 61-module production denominator and its evidence remain unchanged.
+Inventory remains 64 stable module IDs: 47 CORE_REQUIRED, 14 PRODUCT_INCLUDED and 3 OPTIONAL_ADAPTER including neutral reserved M40. The old M40 provider-specific contract is removed without renumbering or changing the accepted 61-module production denominator.
 
 ## Stable module reframes
 | Stable ID | Legacy name | Complete-product name |
@@ -167,9 +168,9 @@ A second hosted provider such as GitLab or Bitbucket is **not mandatory** for `P
 The GitHub profile includes governed repository discovery, branch/PR lifecycle, checks/status evidence, CI integration, issues/templates where relevant, ruleset/permission-gap reporting, release surfaces and exact-head evidence binding. Unavailable administrative permissions produce truthful gap/block states rather than fabricated success.
 
 ## Optional adapter packaging
-`M39 UADS` and `M41 UGAS` remain official supported adapter tracks but are **separately activatable packages/profiles** over the Generic Adapter API. Their absence cannot block independent `PRODUCTION_RELEASE_DONE`.
+`M39 UADS` and `M41 UGAS` remain optional adapter tracks, while `M40` remains a neutral reserved context slot with no provider identity or runtime. These tracks but are **separately activatable packages/profiles** over the Generic Adapter API. Their absence cannot block independent `PRODUCTION_RELEASE_DONE`.
 
-An adapter may be advertised as shipped/supported only when its own compatibility, tests, documentation and evidence pass. The complete core release must work without either installed or connected.
+An adapter may be advertised as shipped/supported only when its own compatibility, tests, documentation and evidence pass. The complete core release must work without any external adapter installed or connected.
 
 ## Production quality boundary
 The single production release requires semantic/governance conformance, deterministic work-plane correctness, unit/integration/E2E evidence, security/secret-safety, mutation recovery, compatibility/upgrade proof, brownfield preservation, GitHub-profile simulation/integration, token/time/performance benchmark path, user/engineering documentation, operational runbooks and exact-state production acceptance.
@@ -219,7 +220,7 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 
 ## Frozen Scope decisions
 1. Single complete production target, not MVP/small-V1.
-2. Original freeze classified 64 IDs; the owner-directed amendment retains 63 active modules: 47 CORE_REQUIRED, 14 PRODUCT_INCLUDED and 2 OPTIONAL_ADAPTER. Original release acceptance history is preserved.
+2. Original 64 stable IDs and 282 sessions are preserved: 47 CORE_REQUIRED, 14 PRODUCT_INCLUDED and 3 OPTIONAL_ADAPTER, including an inactive, provider-neutral reserved M40 context slot. Original release acceptance history is preserved.
 3. Stable reframes: M01/M47/M49/M62 canonical names changed; IDs remain stable.
 4. Ecosystem adapters are official, separately activatable and non-blocking.
 5. Experimental technologies use Utility, Assurance, Validity/Stability and Engineering ROI production gates.
@@ -229,8 +230,8 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 
 ## Freeze audit
 - single complete production target: PASS
-- original frozen inventory classified at the time: PASS; post-amendment 63-module inventory requires exact-head audit
-- current active count: 63; release-blocking denominator remains 61 and is unchanged
+- 64 stable IDs preserved, with neutral reserved M40 slot pending exact-head audit
+- tracked count: 64; release-blocking denominator remains 61 and is unchanged
 - hybrid semantic + deterministic product preserved: PASS
 - no schedule-based feature deferral: PASS
 - optional integrations non-blocking: PASS
