@@ -19,3 +19,7 @@ Reconcile the human and machine V1.1 checkpoints after WO-009's accepted exact-h
 No product source, workflow, dependency, ruleset, historic tag, `main`, package publication, V1.1 production promotion or optimization benefit claim. No supression or downgrading of security findings, no reactivation of retired integrations. Exact-head focused test and full CI/security/release assurance on Windows, Linux, macOS, Sonar, CodeQL alert evidence, Gitleaks, Trivy, pipeline integrity and owner audit are mandatory before merge. Fail closed if current release base moves, relevant security evidence conflicts or a required check fails or remains pending.
 
 STOP CONDITION: `GBS_V11_WO009_CHECKPOINT_RECONCILED_MAINTENANCE_ACTIVE`.
+
+## Corrective evidence after first exact-head candidate
+
+Candidate `c30138cb9da877bc834511dbc97ba6cd4c01966c` correctly failed historical WO-002 and WO-004 progression assertions that recognized only the previous admission status, despite retaining their earlier completed Work Order proofs. The narrow correction adds the explicit merged WO-009 lifecycle state to these two additional test owners; WO-004 also verifies active maintenance instead of falsely requiring a product Work Order after WO-009 completed. All failed previous candidate checks are invalidated, and the complete exact-head matrix must rerun. No assertion is removed or skipped.

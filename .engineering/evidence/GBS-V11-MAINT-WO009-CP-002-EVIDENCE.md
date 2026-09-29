@@ -15,3 +15,7 @@ Both checkpoint views now mark WO-009 as owner-audited and merged, preserve V1.0
 ## Validation and disposition
 
 Candidate admission only: no CI outcome is asserted in this source-committed document, since workflow IDs are generated after the final commit. Exact-head CI/security/release assurance and a non-independent owner audit must be recorded in the PR before any merge. CRITICAL/HIGH attribution is candidate-scoped; cumulative PR #278 quality findings remain hard release blockers.
+
+## Failed initial candidate and precise repair
+
+The initial checkpoint candidate `c30138cb9da877bc834511dbc97ba6cd4c01966c` triggered legitimate two-case regression failures, in the WO-002 and WO-004 historical progression tests: both rejected the new exact approved/merged WO-009 state because they only recognized earlier admitted states. The corrective candidate updates precisely these two test owners, retains historical Work Order/production assertions, extends this sub-Work Order Context Lock to cover the added paths, and invalidates ALL prior checks and outcomes. Final result is not claimed until the new exact-head full matrix passes.
