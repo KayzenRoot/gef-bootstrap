@@ -21,7 +21,7 @@
 
 import { createHash } from "node:crypto";
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
@@ -194,16 +194,28 @@ export function stage() {
   return staging;
 }
 
+function resolveNpmCli() {
+  const platformCandidate = process.platform === "win32"
+    ? join(dirname(process.execPath), "node_modules", "npm", "bin", "npm-cli.js")
+    : resolve(dirname(process.execPath), "..", "lib", "node_modules", "npm", "bin", "npm-cli.js");
+  const candidates = [process.env.npm_execpath, platformCandidate];
+  const npmCli = candidates.find((candidate) => typeof candidate === "string" && isAbsolute(candidate) && existsSync(candidate));
+  if (npmCli === undefined) throw new Error("Unable to resolve npm CLI from the active Node.js installation");
+  return npmCli;
+}
+
 /** Pack the staged package, leaving the package directory untouched. */
 export function pack(destination) {
   const staging = stage();
   try {
     mkdirSync(destination, { recursive: true });
-    // npm ships as a `.cmd` shim on Windows, which needs a shell; elsewhere argv is passed directly.
-    const packed =
-      process.platform === "win32"
-        ? spawnSync(`npm pack --ignore-scripts --pack-destination "${destination}"`, { cwd: staging, encoding: "utf8", timeout: 300_000, shell: true })
-        : spawnSync("npm", ["pack", "--ignore-scripts", "--pack-destination", destination], { cwd: staging, encoding: "utf8", timeout: 300_000 });
+    // Execute npm through the current Node binary so command lookup never depends on PATH
+    // and no command shell is involved on any platform.
+    const packed = spawnSync(
+      process.execPath,
+      [resolveNpmCli(), "pack", "--ignore-scripts", "--pack-destination", destination],
+      { cwd: staging, encoding: "utf8", timeout: 300_000 },
+    );
     if (packed.status !== 0) throw new Error(`npm pack failed: ${packed.stderr}`);
     const tarball = packed.stdout.trim().split("\n").pop().trim();
     const produced = join(destination, tarball);

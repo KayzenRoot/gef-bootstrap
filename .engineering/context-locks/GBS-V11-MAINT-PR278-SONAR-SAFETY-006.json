@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-SONAR-SAFETY-006",
+  "parent": "GBS-V11-MAINT-POST-WO009-001",
+  "baseRef": "release/1.1",
+  "baseSha": "08bd9f18ca3993ff450785a1aeeeaf3c71fef50f",
+  "branch": "gbs/v11/maint-pr278-sonar-safety-006",
+  "owner": "KayzenRoot",
+  "assurance": "ELEVATED",
+  "sonarProviderEvidence": {
+    "pullRequest": 278,
+    "diagnosticJob": 109459863174,
+    "annotationCount": 50,
+    "qualityGate": "FAILURE",
+    "securityRating": "B",
+    "reliabilityRating": "D",
+    "duplication": "3.1%"
+  },
+  "authorizedPaths": [
+    "packages/cli/scripts/prepare-package.mjs",
+    "packages/cli/src/transaction.ts",
+    "packages/m62-m63-final/src/v11-performance-telemetry.mjs",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-SONAR-SAFETY-006.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-SONAR-SAFETY-006.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-SONAR-SAFETY-006-EVIDENCE.md"
+  ],
+  "forbidden": [
+    "main",
+    "v1.0.0 tag",
+    "Sonar threshold/rule changes",
+    "dependency or lockfile changes",
+    "retired integration",
+    "release publication"
+  ],
+  "stopCondition": "GBS_V11_PR278_SONAR_SAFETY_006_EXACT_HEAD_VERIFIED_OR_BLOCKED"
+}

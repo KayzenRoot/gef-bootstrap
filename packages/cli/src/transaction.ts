@@ -33,10 +33,8 @@ import { loadEngines } from "./engines.js";
 import type { GefError } from "@gef-bootstrap/contracts";
 import {
   applyTransaction,
-  authorizeFilesystemPath,
   compileTransactionPlan,
   createFilesystemEffectAdapter,
-  evaluateFilesystemOverwrite,
   proveFilesystemTraversal,
   rollbackTransaction,
 } from "@gef-bootstrap/kernel";
@@ -298,17 +296,6 @@ async function claimStaging(privateArea: PrivateArea, registry: Map<string, Owne
 export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhysicalPort {
   const prepared = new Map<string, PreparedIntent>();
   const stagingDirectories = new Map<string, OwnedDirectory>();
-
-  const rootDescriptor = {
-    rootRef: options.rootRef,
-    rootKind: "project-directory",
-    physicalRoot: options.targetRoot,
-    pathFlavor: (sep === "\\" ? "WINDOWS" : "POSIX") as "WINDOWS" | "POSIX",
-    caseSemantics: options.caseSemantics,
-    allowedOperations: ["READ", "CREATE", "STAGE"] as const,
-    policyRef: options.policyRef,
-    pathSemanticsRef: `cli:${process.platform}:v1`,
-  };
 
   const requirePrepared = (intent: TransactionIntent): PreparedIntent | undefined => prepared.get(intent.intentId);
   const verifyCapturedRecovery = async (request: {
@@ -971,8 +958,7 @@ export interface GovernedCreateOutcome {
   readonly error?: GefError;
 }
 
-function resolverFor(request: GovernedCreateRequest, caseSemantics: "SENSITIVE" | "INSENSITIVE", _privateArea: PrivateArea): FilesystemIntentResolver {
-  void _privateArea;
+function resolverFor(request: GovernedCreateRequest, caseSemantics: "SENSITIVE" | "INSENSITIVE"): FilesystemIntentResolver {
   const root = {
     rootRef: `target:${request.targetRoot}`,
     rootKind: "project-directory",
@@ -1156,7 +1142,7 @@ export async function applyGovernedCreate(request: GovernedCreateRequest, overri
   const payloads = new Map<string, string>([[request.relativePath, request.content]]);
   const baseEffects = createFilesystemEffectAdapter({
     transactionId: request.transactionId,
-    resolver: resolverFor(request, caseSemantics, privateArea),
+    resolver: resolverFor(request, caseSemantics),
     physical: createPhysicalPort({ targetRoot: request.targetRoot, rootRef: `target:${request.targetRoot}`, transactionId: request.transactionId, caseSemantics, privateArea, payloads, policyRef: request.policyRef }),
   });
   const effects: TransactionEffectPort = overrides?.failPostStateVerification === true || overrides?.failRollbackRecoveryVerification === true
