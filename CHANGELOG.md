@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- Retired Hive from GEF Bootstrap's active optional integration track, development instructions, runtime API and planning. Historical V1 receipts and decisions remain traceable; the core production denominator is unchanged. See ADR-0003 and GBS-MAINT-HIVE-REMOVAL-001.
+
 All notable release changes are documented here. GEF Bootstrap uses Semantic Versioning.
 
 ## [1.0.0] - 2026-09-16

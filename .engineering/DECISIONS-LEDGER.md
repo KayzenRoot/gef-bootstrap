@@ -205,3 +205,8 @@ Status: `ACTIVE`
 ## D-0051 — Project Overview is frozen
 - Decision: `.engineering/PROJECT-OVERVIEW.md` is frozen as the canonical product overview derived from `GBS-CONSTITUTION-v1.0`, including mission, logical roles, universal/profile boundaries, platform boundary, minimum brownfield value, optimization measurement requirements and explicit non-goals. Detailed requirements, scope and architecture remain delegated to their ordered Source Pack stages.
 - Status: APPROVED
+
+## D-0052 — Retire Hive from all active GEF Bootstrap surfaces
+- Decision: On 2026-09-28 the owner explicitly retired Hive as a development integration and supported GEF Bootstrap adapter. Remove the first-party M40 adapter, planned sessions, operator instructions and all active runtime/CI/configuration dependencies. Keep unrelated adapters and the standalone governed core. Never silently reintroduce Hive via an old PR or an inherited development prompt. Supersede the Hive-specific parts of D-0002/D-0040 and ADR-0001-D3 only for the current/future active product; retain their historical text and accepted release evidence. Do not reuse stable M40 ID. Release-blocking denominator remains 61 modules/1088 weight.
+- Authority: project owner request (2026-09-28); ADR-0003; Work Order GBS-MAINT-HIVE-REMOVAL-001.
+- Status: APPROVED by owner; technical acceptance pending exact-head proof and audit.
