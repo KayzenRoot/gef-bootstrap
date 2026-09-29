@@ -47,3 +47,13 @@ Q10 What rollout can be safely shadowed rather than adopted early? New optimizer
 
 ## Candidate evidence handoff
 At V1.1 accepted release, open GBS-V12-WO-000 with exact canonical context and this dossier as non-authoritative input. OWNER admission selects NECESSARY features, formal ADR/Source Pack deltas and scoped baseline thresholds. Only after APPROVED + Context Lock can Codex start WO-001. Proposal remains versioned and editable as research until adoption.
+
+## Additional financial and confidential-data pilots, not yet approved
+E15 Subscription sandbox: replay reordered and duplicated payment webhooks under plan upgrade/cancel/refund with tenant access and correct non-duplicated billing; measure accepted workflows/time, defects and CI cost.
+E16 Usage-based AI SaaS: compare OpenMeter/Lago/approved existing provider for idempotent late events, plan entitlements and hard budget cutoffs on synthetic usage; measure per-tenant contribution margin and compute overhead without logging prompt payloads.
+E17 Ledger and reconciliation: only on money-moving sample; atomic balanced postings, no negative/duplicate credit, partial refund/chargeback, provider settlement fees and reversible audit corrections. Compare simpler DB-first pattern before adopting Formance.
+E18 Tenant leak corpus: IDOR/BOLA cross-tenant API, RLS owner-bypass, cache, report exports, event queues, billing webhooks and vector retrieval. Any cross-tenant sensitive exposure is a hard failure.
+E19 Web3 confidential-data corpus: synthetic offchain private record with envelope encryption, revoked role, key-rotation recovery, forbidden PII onchain/metadata correlation, malicious wallet signature and incorrect chain/finality reconciliation. Never test with real customer data or real signing assets.
+E20 Advanced confidential compute OPTIONAL: benchmark one narrowly scoped ZK or FHEVM scenario against simple encrypted offchain storage on privacy threat, proof/circuit soundness, trusted infrastructure, gas, latency, hardware and operational maintenance. Do not presume ZK or FHE mandatory.
+E21 Compliance/operational handoff: demonstrate payment-provider scope documentation, owner-reviewed jurisdiction/regulatory flags, verified backup restoration, redacted incident evidence and independent qualified review at the actual financial/custody risk level. No claim of an outside certification merely because checks passed.
+All comparisons require identical admitted product Scope/DoD, pinned toolchain and representative source cohort. Unknown billing/CI costs are UNKNOWN, never 0. New research does not add earned M21 progress or establish an M22 ETA.
