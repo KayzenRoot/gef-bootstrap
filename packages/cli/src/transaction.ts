@@ -428,7 +428,8 @@ export function createPhysicalPort(options: PhysicalPortOptions): FilesystemPhys
       if (request.desiredFingerprint !== undefined && observed !== request.desiredFingerprint) {
         return portError(request.intent, "stage_fingerprint_mismatch", "Staged content does not match the admitted desired fingerprint", "VERIFICATION");
       }
-      for (const obligation of request.obligations as readonly VerificationObligation[]) void obligation;
+      // The parent transaction engine enforces admitted verification obligations.
+      // This physical port verifies only the staged content and its fingerprint.
       return ok(true);
     },
 
