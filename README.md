@@ -6,6 +6,10 @@ A production-accepted, evidence-first engineering bootstrap for starting **new p
 
 > **V1 status:** `PRODUCTION_ACCEPTED` · M00-M63 complete · `1088 / 1088 = 100%` · final release-blocking CRITICAL/HIGH: `0 / 0`.
 
+## Project construction: GitHub-first / Codex-only
+
+Owner-directed ADR-0008 / D-0063 is effective on main and is prepared for separate release/1.1 adoption. On release/1.1 it remains PENDING and NOT_EFFECTIVE until an exact-head owner audit and checkpoint promotion; current release authority is unchanged. The proposed workflow assigns implementation authorship to Codex after admission and keeps planning, approved governance documentation, GitHub coordination and objective review with ChatGPT. See [ADR-0008](.engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md) and the [GitHub-first workflow](.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md). Historical V1.0 acceptance and the V1.1 operations runbook remain unchanged.
+
 ## Why GEF Bootstrap
 
 GEF turns project construction into a governed pipeline instead of an unstructured sequence of prompts and edits:

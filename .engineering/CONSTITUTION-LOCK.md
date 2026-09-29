@@ -26,7 +26,7 @@ GEF Bootstrap is a hybrid product with two governed planes:
 The deterministic work plane is part of the product but never silently becomes semantic authority. CLI is a possible interface, not the constitutional requirement itself.
 
 ## Self-construction constraint
-The GEF Bootstrap repository itself is built through ChatGPT and connected project tools. Codex is not used as an implementation executor for this repository. This does not prohibit target projects from using Codex under GEF governance.
+Owner-directed ADR-0008 / D-0063 prospectively defines Codex as the sole code, test, CI and migration author for GEF Bootstrap and new GEF-governed projects after a distinct exact-head owner audit and checkpoint promotion. Release/1.1 adoption is PENDING and NOT_EFFECTIVE; current release authority remains unchanged until that gate. ChatGPT retains semantic planning, approved governance-document authorship, GitHub coordination, objective review and evidence reporting. The hybrid product boundary and accepted V1 history remain unchanged.
 
 ## Canonical sources
 
@@ -42,6 +42,7 @@ The GEF Bootstrap repository itself is built through ChatGPT and connected proje
 
 ## History
 - `GBS-CONSTITUTION-v1.0` — original instruction-first constitutional freeze.
+- ADR-0008 / D-0063 — approved and effective on main after its separate checkpoint promotion; release/1.1 adoption is pending a distinct exact-head owner audit and checkpoint promotion.
 - `GBS-CONSTITUTION-v1.1` — hybrid product amendment triggered by explicit Product Owner decision.
 
 ## Validity

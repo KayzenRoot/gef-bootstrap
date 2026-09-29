@@ -254,3 +254,9 @@ Status: `ACTIVE`
 - Effective: PR #298 owner-audited exact head `03f81da4c85fe06310ad4c94a79af20e71747681`; 30/30 checks succeeded; promotion merge into `release/1.1` was `d52dcca0840465324582b022c53b5a12fd0a3840`.
 - Owner audit: comment #5847950958; evidence `.engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md`.
 - Status: `EFFECTIVE`
+
+## D-0063@main / ADR-0008 — main source provenance only on release
+
+- Main source: commit f6738292c038eb6f0d08d1d32b3752c5c7dc417a; ADR-0008 Git blob 7d6ec3885fb3d029586dc0b7f99aa32b033170e1.
+- Release disposition: NOT_EFFECTIVE_ON_RELEASE; any release adoption requires a separate exact-head owner audit and checkpoint promotion.
+- This branch-qualified reference does not create a new release decision, change D-0062@release / ADR-0006, or allocate D-0064.
