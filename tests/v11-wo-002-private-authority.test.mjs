@@ -8,10 +8,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { tmpdir } from "node:os";
 
+import { createAlias } from "./helpers/directory-alias.mjs";
 import { PRIVATE_DIRECTORY, applyGovernedCreate, createPrivateArea, detectCaseSemantics, fingerprintOf } from "../packages/cli/dist/index.js";
 
 const sha = (value) => createHash("sha256").update(value).digest("hex");
@@ -57,22 +58,6 @@ function treeIdentity(root) {
   };
   walk(root);
   return entries.sort();
-}
-
-/** Create a directory alias with the strongest primitive the host allows. */
-function createAlias(target, linkPath) {
-  try {
-    symlinkSync(target, linkPath, "dir");
-    return "symlink";
-  } catch (cause) {
-    if (cause?.code !== "EPERM" && cause?.code !== "EACCES") throw cause;
-  }
-  try {
-    symlinkSync(target, linkPath, "junction");
-    return "junction";
-  } catch (cause) {
-    return `unavailable:${cause?.code ?? "UNKNOWN"}`;
-  }
 }
 
 const ALLOW = { authorize: () => ({ ok: true, value: true }) };
