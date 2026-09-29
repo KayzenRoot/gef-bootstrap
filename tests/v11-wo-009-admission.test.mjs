@@ -35,8 +35,10 @@ test("Checkpoint names one admitted V1.1 action with branch and source reference
   assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
   assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
-  assert.equal(checkpoint.v11.nextLegalAction, "CREATE_WO_009_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_009_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH");
+  assert.equal(checkpoint.v11.nextLegalAction, "REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD");
+  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT");
+  assert.ok(checkpointMd.includes("Next legal action: after this checkpoint reconciliation merges, refresh the WO-009 Context Lock against the exact current `release/1.1` tip"));
+  assert.ok(checkpointMd.includes("V1.1 STOP CONDITION: `GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT`"));
   assert.ok(checkpointMd.includes("### Active V1.1 increment — WO-009"));
   assert.ok(checkpointMd.includes("No WO-009 implementation has started."));
 });
@@ -74,5 +76,5 @@ test("fresh-context steering routes governed build work from canonical state", (
   assert.ok(wo.includes("chat history"));
   for (const id of ["CONT-RESUME-01","CONT-RESUME-02","CONT-RESUME-03","CONT-RESUME-04"]) assert.ok(wo.includes(id));
   assert.ok(brief.includes("A new chat reconstructs from canonical repository/provider state"));
-  assert.equal(checkpoint.v11.nextLegalAction, "CREATE_WO_009_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE");
+  assert.equal(checkpoint.v11.nextLegalAction, "REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD");
 });

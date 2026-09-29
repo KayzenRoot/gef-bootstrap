@@ -178,7 +178,7 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Security blocker to resolve: CodeQL check #108450457038 on PR #278 reports one HIGH alert at the current `release/1.1` head. A successful scanner job does not close this alert.
 - Production boundary: V1 production remains accepted at 1088/1088; `v1.0.0` is unchanged. Pipeline PR #309 changed only `release/1.1`; it did not promote V1.1 to production.
 - WO-009 implementation branch exists as `feat/1.1/wo-009-integrated-assurance`; PR #302 still needs reconciliation because its original base `e69d887a0f12b46218f40e849fdcf180e455eb3d` is behind the new release base `44c6618ece1593365fb6c7f559d13c7166e7df26`. Earlier checks do not transfer to a refreshed candidate.
-- Next legal action: refresh the WO-009 Context Lock against release SHA `44c6618ece1593365fb6c7f559d13c7166e7df26`, then validate the refreshed candidate before any WO-009 audit or merge.
+- Next legal action: after this checkpoint reconciliation merges, refresh the WO-009 Context Lock against the exact current `release/1.1` tip, then validate the refreshed candidate before any WO-009 audit or merge. If the release branch advances before the lock refresh is complete, restart that refresh against its new exact tip.
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
 - M41-M47 Integrated Assurance: `35164467254` `SUCCESS`

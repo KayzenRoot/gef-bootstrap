@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-CHECKPOINT-001",
+  "releaseLine": "1.1.x",
+  "assurance": "ELEVATED",
+  "baseRef": "gbs/maint/pipeline-closeout",
+  "baseSha": "8c9fefae8adf39a5944f52599a9dc4b4b786ae65",
+  "targetRef": "release/1.1",
+  "targetBaseSha": "44c6618ece1593365fb6c7f559d13c7166e7df26",
+  "previousPullRequest": 310,
+  "implementationBranch": "gbs/maint/checkpoint-sync-001",
+  "authority": "User-authorized continuation following PR #310 blocked validation; exact-head owner audit/merge under D-0062 / ADR-0006",
+  "activeProductWorkOrder": "GBS-V11-WO-009",
+  "checkpointStateAtBase": {
+    "status": "GBS_V11_WO_009_ADMITTED",
+    "activeWorkOrder": "GBS-V11-WO-009",
+    "activeWorkOrderStatus": "ADMITTED",
+    "nextLegalAction": "REFRESH_WO_009_CONTEXT_LOCK_FOR_RELEASE_1_1_44C6618",
+    "stopState": "GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT"
+  },
+  "canonicalSources": [
+    {
+      "path": "AGENTS.md",
+      "baseBlobSha": "523aed24ec7039859b75aa51b8a2efaa11e8884b",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/SOURCE-HIERARCHY.md",
+      "baseBlobSha": "bedc10c97d28154efe59ff43fc1d175add37f568",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.md",
+      "baseBlobSha": "32bf61e6e4e8ee31fb1a38c38c0caa63b983608f",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "baseBlobSha": "75f5c5e5bcb76d175d448955550d5c4cd9e3bc4d",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "baseBlobSha": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "baseBlobSha": "c5eda022280e47ff4b45070193d196929a3a1ec0",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DEFINITION-OF-DONE.md",
+      "baseBlobSha": "d9209765a268f0e21390a2c6c531c7dd771515b4",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/SECURITY.md",
+      "baseBlobSha": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md",
+      "baseBlobSha": "97bef59b15f557302a7fd625af30ceeb421c01a1",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-RELEASE-PLAN.md",
+      "baseBlobSha": "074c99c57f09a13cb2e71cce883e46ee500909ed",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-SCOPE.md",
+      "baseBlobSha": "b8d05dae2e9584b2fed6670c65751f493f698c8e",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-TEST-MATRIX.md",
+      "baseBlobSha": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/work-orders/GBS-V11-MAINT-PIPELINE-001.md",
+      "baseBlobSha": "c108d312aa0dbe58d723e5352332cd559a492a5c",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/context-locks/GBS-V11-MAINT-PIPELINE-001.json",
+      "baseBlobSha": "690d75273f1d2848276d6c144b06f2371f2c2d74",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/evidence/GBS-V11-MAINT-PIPELINE-001-EVIDENCE.md",
+      "baseBlobSha": "2fb774261a6d416279eae2f603e0e53325df2eb5",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/work-orders/GBS-V11-WO-009.md",
+      "baseBlobSha": "7c6e7c39265f23ac4942175a922923c0c4326c6f",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/context-locks/GBS-V11-WO-009.json",
+      "baseBlobSha": "3b2af5e9db908d9d266d94ee4e26ee2fe8db6b6f",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "package.json",
+      "baseBlobSha": "c8e17d4121566250595a1966a9314c56272546ac",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "package-lock.json",
+      "baseBlobSha": "f7fccd5a338feae645d7c31de6905d6e0e97d998",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/repository-validation.yml",
+      "baseBlobSha": "f9fd25e7d4643952575bf06dd40135a98eaad157",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/m41-m47-integrated.yml",
+      "baseBlobSha": "c498a2d46ae3f0411e4c983d5b30a8f691579c8a",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/m48-m54-integrated.yml",
+      "baseBlobSha": "93034c369252608a37cbd89d6b9c2a8ab380e64a",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/m55-m61-integrated.yml",
+      "baseBlobSha": "ce4f1f815ac438fb7eeaf3e84d6a7bbc84858051",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/m62-m63-final.yml",
+      "baseBlobSha": "5c60f4904570c59fddcb6fec1e84e8de39114014",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/pipeline-integrity.yml",
+      "baseBlobSha": "8a7f58eefe47240b42b890c18f4f5f30c3e84eec",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/free-security-pilot.yml",
+      "baseBlobSha": "c951da7a88885e9116ce5171c35cff6e71bcf8aa",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/dependency-review.yml",
+      "baseBlobSha": "3d34f93903798345abcbd345640f1e04f5e0d424",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".github/workflows/security-codeql.yml",
+      "baseBlobSha": "bb85590de2ae831b388a5c7078b6657f6b88972d",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/v11-wo-001-promotion.test.mjs",
+      "baseBlobSha": "f211a80a70a39a05723675b57d84797389ba06a0",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/v11-wo-003-admission.test.mjs",
+      "baseBlobSha": "1164acd51ece421dff2ca83811a62bc63910c773",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/v11-wo-005-admission.test.mjs",
+      "baseBlobSha": "b349889380fd34d7cb4e247932cc260bdd5069ed",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/v11-wo-006-admission.test.mjs",
+      "baseBlobSha": "b584503b3761048df636a30aea43b60fec079c8e",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/v11-wo-007-admission.test.mjs",
+      "baseBlobSha": "cc73831f64a355d7c16053ceb0311a92f5ce9ea8",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/v11-wo-008-admission.test.mjs",
+      "baseBlobSha": "93133cc4f1ec03e9fb26eaac640980be7ef736b9",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "tests/v11-wo-009-admission.test.mjs",
+      "baseBlobSha": "068d8a93a6adac53d661742dd969f4e744e58f62",
+      "fingerprintKind": "git-blob-sha1"
+    }
+  ],
+  "failedBaseline": {
+    "candidateSha": "8c9fefae8adf39a5944f52599a9dc4b4b786ae65",
+    "repositoryValidationRun": 36498559315,
+    "failedAssertions": 8,
+    "regressionRuns": [
+      36498559300,
+      36498559351,
+      36498559376,
+      36498559391
+    ]
+  },
+  "allowedWriteSurface": [
+    "tests/v11-wo-001-promotion.test.mjs",
+    "tests/v11-wo-003-admission.test.mjs",
+    "tests/v11-wo-005-admission.test.mjs",
+    "tests/v11-wo-006-admission.test.mjs",
+    "tests/v11-wo-007-admission.test.mjs",
+    "tests/v11-wo-008-admission.test.mjs",
+    "tests/v11-wo-009-admission.test.mjs",
+    ".engineering/CHECKPOINT.json: v11.nextLegalAction only",
+    ".engineering/CHECKPOINT.md: matching V1.1 Next legal action sentence only",
+    ".engineering/work-orders/GBS-V11-MAINT-CHECKPOINT-001.md",
+    ".engineering/context-locks/GBS-V11-MAINT-CHECKPOINT-001.json",
+    ".engineering/execution-briefs/GBS-V11-MAINT-CHECKPOINT-001-DIRECT.md",
+    ".engineering/evidence/GBS-V11-MAINT-CHECKPOINT-001-EVIDENCE.md"
+  ],
+  "forbiddenWriteSurface": [
+    "product source and product behavior",
+    "package.json, package-lock.json, dependency versions, or build/test scripts",
+    ".github/workflows/* and repository rulesets",
+    "checkpoint fields other than the explicitly allowed V1.1 nextLegalAction and matching human sentence",
+    "GBS-V11-MAINT-PIPELINE-001 scope, status, or evidence",
+    "GBS-V11-WO-009, its Context Lock, Direct Execution Brief, implementation branch, or product scope",
+    "main",
+    "tag:v1.0.0",
+    "release artifacts, publication, or production acceptance",
+    "security finding suppression/dismissal/severity changes",
+    "other repositories"
+  ],
+  "requiredTestFiles": [
+    "tests/v11-wo-001-promotion.test.mjs",
+    "tests/v11-wo-003-admission.test.mjs",
+    "tests/v11-wo-005-admission.test.mjs",
+    "tests/v11-wo-006-admission.test.mjs",
+    "tests/v11-wo-007-admission.test.mjs",
+    "tests/v11-wo-008-admission.test.mjs",
+    "tests/v11-wo-009-admission.test.mjs"
+  ],
+  "requiredCheckGroups": [
+    "npm run validate",
+    "Repository Validation",
+    "M41-M47 Integrated Assurance",
+    "M48-M54 Integrated Assurance",
+    "M55-M61 Integrated Assurance",
+    "M62-M63 Final Assurance",
+    "Pipeline Integrity",
+    "Gitleaks",
+    "Trivy",
+    "Dependency Review",
+    "all other configured required/applicable repository workflows"
+  ],
+  "inheritedSecurityFinding": {
+    "source": "CodeQL check run 108450457038 / PR #278",
+    "severity": "HIGH",
+    "disposition": "unresolved and release-blocking under WO-009; do not suppress or claim resolved here"
+  },
+  "staleIf": [
+    "release/1.1 advances beyond 44c6618ece1593365fb6c7f559d13c7166e7df26 before corrective integration",
+    "PR #310 head changes from 8c9fefae8adf39a5944f52599a9dc4b4b786ae65 before the corrective branch is finalized",
+    "any canonical source or required test/workflow fingerprint listed in this lock changes",
+    "V1.1 checkpoint status, active Work Order, active status, or stop state changes",
+    "a new CRITICAL/HIGH finding appears or the inherited WO-009 CodeQL disposition materially changes"
+  ],
+  "stopCondition": "GBS_V11_MAINT_CHECKPOINT_ASSERTIONS_RECONCILED_EXACT_HEAD_VERIFIED"
+}

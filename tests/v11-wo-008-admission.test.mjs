@@ -44,8 +44,10 @@ test("machine and human checkpoint record completed WO-008 and admitted WO-009",
   assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
   assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
   assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
-  assert.equal(checkpoint.v11.nextLegalAction, "CREATE_WO_009_IMPLEMENTATION_BRANCH_FROM_EXACT_ADMISSION_MERGE");
-  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_009_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH");
+  assert.equal(checkpoint.v11.nextLegalAction, "REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD");
+  assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT");
+  assert.ok(checkpointMd.includes("Next legal action: after this checkpoint reconciliation merges, refresh the WO-009 Context Lock against the exact current `release/1.1` tip"));
+  assert.ok(checkpointMd.includes("V1.1 STOP CONDITION: `GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT`"));
   assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
   assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");

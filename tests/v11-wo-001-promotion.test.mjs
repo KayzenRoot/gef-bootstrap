@@ -63,9 +63,19 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
   }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
   const id = String(admittedOrdinal).padStart(3, '0');
-  const expectedStop = `GBS_V11_WO_${id}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`;
-  assert.equal(checkpoint.v11.stopState, expectedStop);
-  assert.ok(checkpointMd.includes(`V1.1 STOP CONDITION: \`${expectedStop}\``));
+  if (admittedOrdinal === 9) {
+    assert.equal(checkpoint.v11.status, 'GBS_V11_WO_009_ADMITTED');
+    assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-009');
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
+    assert.equal(checkpoint.v11.nextLegalAction, 'REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD');
+    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT');
+    assert.ok(checkpointMd.includes('Next legal action: after this checkpoint reconciliation merges, refresh the WO-009 Context Lock against the exact current `release/1.1` tip'));
+    assert.ok(checkpointMd.includes('V1.1 STOP CONDITION: `GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT`'));
+  } else {
+    const expectedStop = `GBS_V11_WO_${id}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`;
+    assert.equal(checkpoint.v11.stopState, expectedStop);
+    assert.ok(checkpointMd.includes(`V1.1 STOP CONDITION: \`${expectedStop}\``));
+  }
 });
 test('V1.1 overlay preserves the objectively audited WO-001 foundation lineage after later admissions', () => {
   assert.equal(checkpoint.v11.releaseLine, '1.1.x');

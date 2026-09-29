@@ -387,7 +387,7 @@
     "implementationBranch": "feat/1.1/wo-009-integrated-assurance",
     "contextLock": ".engineering/context-locks/GBS-V11-WO-009.json",
     "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md",
-    "nextLegalAction": "REFRESH_WO_009_CONTEXT_LOCK_FOR_RELEASE_1_1_44C6618",
+    "nextLegalAction": "REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD",
     "stopState": "GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT",
     "ecosystemDetachment": {
       "decision": "D-0061",
