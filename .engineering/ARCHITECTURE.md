@@ -28,7 +28,7 @@ GEF Bootstrap is a local-first, contract-driven modular hybrid product with stri
 - Assurance overrides token/time/search/test budgets.
 - Exact-state evidence and targeted invalidation are required where applicable.
 - One complete production target is built, not an MVP-first product line.
-- After separate exact-head owner audit and checkpoint promotion of ADR-0008 / D-0063, Codex is the sole implementation/test/CI author; release/1.1 adoption remains PENDING and NOT_EFFECTIVE, with current owner and release controls unchanged.
+- ADR-0008 / D-0063 makes Codex the sole implementation/test/CI author on release/1.1 exactly when this exact-head owner-audited promotion PR is merged; before that event, D-0062 / ADR-0006 and current owner/release controls remain in force.
 
 # Frozen implementation architecture
 
@@ -341,7 +341,7 @@ Detailed threat models/policies belong to Security planning, but Architecture ma
 - cross-platform distribution strategy: PASS
 - independently testable boundaries: PASS
 - no functional code implemented: PASS
-- construction-actor amendment ADR-0008 / D-0063 is prospective; release adoption is PENDING exact-head owner audit and checkpoint promotion.
+- construction-actor amendment ADR-0008 / D-0063 becomes effective on release/1.1 exactly at the governed merge of this exact-head owner-audited promotion PR; it is not effective before that event.
 - open Architecture questions: 0
 
 STOP CONDITION: `READY_FOR_ARCHITECTURE_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.

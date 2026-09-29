@@ -1,6 +1,6 @@
 # GitHub-First ChatGPT ↔ Codex Construction Workflow
 
-Status: APPROVED on main by ADR-0008 and PR #332; PENDING_RELEASE_ADOPTION and NOT_EFFECTIVE on release/1.1 until a separate exact-head owner audit and checkpoint promotion.
+Status: APPROVED on main by ADR-0008 and PR #332; on release/1.1, this copy becomes effective exactly at the governed merge of this exact-head owner-audited promotion PR; D-0062 / ADR-0006 remains authoritative until then.
 Source lineage: main commit f6738292c038eb6f0d08d1d32b3752c5c7dc417a; Git blob d061fff8e13bbb13fab6cdafb8bf001921905a61.
 Owner: Project Owner / ChatGPT semantic planning / Codex sole code executor.
 Tracking: issue #331, Work Order GBS-GOV-CODEX-ISSUES-001.
@@ -54,6 +54,6 @@ Use a short, stable view with:
 For a V1.0-accepted product under V1.1 development, display historical V1.0 100% separately from V1.1 increment/quality/release gates. Do not present WO count as quality-adjusted release completion.
 
 ## Branch/release separation
-Current GEF main V1.0 acceptance remains 1088/1088. Current V1.1 uses release/1.1; WO-009 remains accepted and WO-010 remains NOT_ADMITTED. PR #278 is closed without merge; its checks are historical and do not transfer to a later cumulative integration. This prospective companion does not supersede the current release checkpoint or authorize release.
+Current GEF main V1.0 acceptance remains 1088/1088. Current V1.1 uses release/1.1; WO-009 remains accepted and WO-010 remains NOT_ADMITTED. PR #278 is closed without merge; its checks are historical and do not transfer to a later cumulative integration. This companion's release adoption is effective only at its governed promotion merge; it does not by itself authorize product release.
 
-STOP CONDITION: GITHUB_FIRST_CODEX_WORKFLOW_DOCUMENTED_PENDING_PROMOTION
+STOP CONDITION: GITHUB_FIRST_CODEX_WORKFLOW_DOCUMENTED_RELEASE_EFFECT_AT_GOVERNED_PROMOTION_MERGE

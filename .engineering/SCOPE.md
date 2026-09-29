@@ -176,7 +176,7 @@ An adapter may be advertised as shipped/supported only when its own compatibilit
 The single production release requires semantic/governance conformance, deterministic work-plane correctness, unit/integration/E2E evidence, security/secret-safety, mutation recovery, compatibility/upgrade proof, brownfield preservation, GitHub-profile simulation/integration, token/time/performance benchmark path, user/engineering documentation, operational runbooks and exact-state production acceptance.
 
 ## Construction invariant
-After separate exact-head owner audit and checkpoint promotion of ADR-0008 / D-0063, Codex exclusively authors implementation, tests, fixtures, CI/build scripts, migrations and corrective code for GEF Bootstrap and new governed software projects. On release/1.1 the adoption is PENDING and NOT_EFFECTIVE; admitted Work Orders, precise file maps and current Context Locks remain mandatory. ChatGPT authors approved planning/governance documents, coordinates GitHub and conducts exact-head review. Release safety and historical V1 acceptance remain unchanged.
+On release/1.1, Codex exclusively authors implementation, tests, fixtures, CI/build scripts, migrations and corrective code for GEF Bootstrap and new governed software projects exactly at the governed merge of this exact-head owner-audited ADR-0008 / D-0063 promotion PR. Until then D-0062 / ADR-0006 remains effective. Admitted Work Orders, precise file maps and current Context Locks remain mandatory. ChatGPT authors approved planning/governance documents, coordinates GitHub and conducts exact-head review. Release safety and historical V1 acceptance remain unchanged.
 
 ## Out-of-scope product identities
 - general-purpose IDE/editor;
@@ -240,7 +240,7 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 - weighted baseline method defined without fabricating current percentage: PASS
 - stable module names synchronized with Master Module Index: PASS
 - governed supersession ADR present: PASS
-- ADR-0008 / D-0063 construction-actor change: PENDING release adoption; exact-head owner audit and checkpoint promotion required; historical V1 acceptance unchanged.
+- ADR-0008 / D-0063 construction-actor change: release effect begins exactly at the governed merge of this exact-head owner-audited promotion PR; historical V1 acceptance unchanged.
 - Architecture not prematurely selected: PASS
 - implementation not started: PASS
 - remaining Scope closure questions: 0

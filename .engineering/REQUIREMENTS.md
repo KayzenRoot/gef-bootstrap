@@ -6,7 +6,7 @@ Status: `FROZEN`
 Derived from `GBS-CONSTITUTION-v1.1`, `CONSTITUTION-AMENDMENT-0001-HYBRID` and frozen `.engineering/PROJECT-OVERVIEW.md`. These define V1 capability, not implementation architecture, language, final schemas or detailed Scope ownership.
 
 ## Construction constraint
-After separate exact-head owner audit and checkpoint promotion of ADR-0008 / D-0063, Codex is the sole code, test, CI and migration author for this repository and new GEF-governed projects. Release/1.1 adoption remains PENDING and NOT_EFFECTIVE; only admitted exact-base Work Orders authorize implementation, while ChatGPT owns planning, approved governance documents, GitHub coordination and objective review.
+On release/1.1, Codex is the sole code, test, CI and migration author for this repository and new GEF-governed projects exactly at the governed merge of this exact-head owner-audited ADR-0008 / D-0063 promotion PR. Until then D-0062 / ADR-0006 remains effective; only admitted exact-base Work Orders authorize implementation, while ChatGPT owns planning, approved governance documents, GitHub coordination and objective review.
 
 ## Requirement classes
 `GOV`, `CONT`, `FUNC`, `DET`, `ASSURE`, `BROWN`, `PERF`, `OBS`, `PLAT`, `SEC`, `COMPAT`.
@@ -99,7 +99,7 @@ No specific CLI framework, always-on daemon/service, fixed language before Archi
 - Constitution v1.1 compatibility: PASS
 - hybrid semantic/deterministic boundary: PASS
 - physical deterministic V1 capability: PASS
-- ADR-0008 / D-0063 construction-actor change: PENDING release adoption; exact-head owner audit and checkpoint promotion required; no historical reclassification.
+- ADR-0008 / D-0063 construction-actor change: release effect begins exactly at the governed merge of this exact-head owner-audited promotion PR; no historical reclassification.
 - brownfield first-class capability: PASS
 - token/latency optimization: PASS
 - security/recovery floor: PASS

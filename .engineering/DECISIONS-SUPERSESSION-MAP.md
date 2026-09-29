@@ -70,11 +70,11 @@ After the exact-head owner audit and promotion merge of GBS-V11-GOV-001 into `re
 
 This bounded supersession replaces ADR-0003-D3's external-audit and no-merge clauses for active/future V1.1 work and replaces incompatible active/future Work Order or template requirements for collaborator review. It does not rewrite historical records, weaken checks, authorize check bypass, permit force-push/history rewrite, change `main`/V1.0.0 release boundaries, or waive S4/security/recovery requirements. GEF-generated target-project workflows use the configured project-owner account and do not require collaborator approval.
 
-## Pending branch adoption
+## Branch-qualified promotion status
 
 ### D-0063@main / ADR-0008 — release/1.1 applicability
 
-The main decision is recorded by Git blob 7d6ec3885fb3d029586dc0b7f99aa32b033170e1 at main commit f6738292c038eb6f0d08d1d32b3752c5c7dc417a. On release/1.1, adoption remains PENDING_RELEASE_ADOPTION and NOT_EFFECTIVE until a separate exact-head owner audit and checkpoint promotion. This note preserves branch provenance; it does not supersede D-0062@release / ADR-0006, remap either D-0062 meaning, or allocate D-0064.
+The main decision is recorded by Git blob 7d6ec3885fb3d029586dc0b7f99aa32b033170e1 at main commit f6738292c038eb6f0d08d1d32b3752c5c7dc417a. On release/1.1, adoption takes effect exactly at the governed merge of this exact-head owner-audited promotion PR; before then D-0062@release / ADR-0006 remains effective. This note preserves branch provenance, does not remap D-0062@main / ADR-0007 or D-0062@release / ADR-0006, and does not allocate D-0064.
 
 ## Agent rule
 When a historical D-* entry conflicts with this map or a later frozen controlling source in the same authority domain, the later governed source controls. Never delete the historical entry merely to simplify context. Never use newest-wins across different authority domains.
