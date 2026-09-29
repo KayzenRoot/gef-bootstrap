@@ -118,3 +118,10 @@ Additional mandatory acceptance proposals for formal review:
 6. Throughput optimizations require comparable baseline and no material quality/security regression. Open-source/proprietary tools remain optional profile-scoped; vendor free-plan availability must be verified at adoption.
 
 These added behaviors remain within the provisional 7 WO IDs WO-000 through WO-006 for planning; actual Work Order boundaries may be split after authorized source freeze based on risk and implementation DAG, not on arbitrary prompt size.
+
+## Operations/release follow-on research candidate mapping
+Further owner request captured in `OPERATIONS-AND-RELEASE-INNOVATIONS.md` (OPS01–OPS06) and `API-PERFORMANCE-AND-DECISION-INNOVATIONS.md` (INN01–INN08), **not yet Scope-admitted**. Candidate WO-000 must reconcile this fourteen-capability research list against existing M23–M28/M29–M38/M43–M45/M63 and first dossier mechanisms, deduplicate and classify NECESSARY/IMPORTANT/FUTURE/OUT_OF_SCOPE. Do not simply increase v1.2 denominator or number of formal WOs due to new idea count.
+
+After source audit, group by verified change surface: WO-002 may pilot Schemathesis API adversarial tests only for API app profiles; WO-003 may use Data Guardian disposable migrations and narrow recovery proofs where project risk requires; WO-004 can pilot GitHub Artifact Attestations and npm trusted publishing if actual public/private entitlement and release policy permit; WO-005 can include Production Radar/OpenTelemetry and k6/Lighthouse performance budgets in representative app pilot, plus Decision Impact Simulator over existing M11/M15/M22 and optional verified starter recipes. WO-006 must check end-to-end preview, deployment health, artifact identity, synthetic recovery and post-release feedback on exact candidate only where declared DoD requires them. Formal plan may regroup modules after proof of ROI and approval.
+
+Research STOP: documentation may expand on this planning-only draft PR, but V1.1 remains active and no v1.2 implementation or release claims follow from a new Markdown file.
