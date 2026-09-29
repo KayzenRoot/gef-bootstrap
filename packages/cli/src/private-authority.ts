@@ -506,23 +506,26 @@ export function createPrivateArea(targetRoot: string, options: PrivateAreaOption
  * is created, so the measurement cannot produce a project-visible effect — which matters because it
  * runs before the transaction authorization gate. Ambiguity fails closed as `UNKNOWN`.
  */
+async function compareFlippedIdentity(path: string): Promise<"SENSITIVE" | "INSENSITIVE" | "UNKNOWN" | null> {
+  const flipped = flipBasename(path);
+  if (flipped === path) return null;
+  const original = await identityOf(path);
+  let alternative: EntryIdentity | undefined;
+  try {
+    alternative = await identityOf(flipped);
+  } catch {
+    return "UNKNOWN";
+  }
+  if (original === undefined) return null;
+  if (alternative === undefined) return "SENSITIVE";
+  return original.token === alternative.token ? "INSENSITIVE" : "UNKNOWN";
+}
+
 export async function measureCaseSemantics(targetRoot: string): Promise<"SENSITIVE" | "INSENSITIVE" | "UNKNOWN"> {
   let current = resolve(targetRoot);
   for (let depth = 0; depth < MAX_ALIAS_DEPTH; depth += 1) {
-    const flipped = flipBasename(current);
-    if (flipped !== current) {
-      const original = await identityOf(current);
-      let alternative: EntryIdentity | undefined;
-      try {
-        alternative = await identityOf(flipped);
-      } catch {
-        return "UNKNOWN";
-      }
-      if (original !== undefined && alternative === undefined) return "SENSITIVE";
-      if (original !== undefined && alternative !== undefined) {
-        return original.token === alternative.token ? "INSENSITIVE" : "UNKNOWN";
-      }
-    }
+    const result = await compareFlippedIdentity(current);
+    if (result !== null) return result;
     const parent = dirname(current);
     if (parent === current) break;
     current = parent;

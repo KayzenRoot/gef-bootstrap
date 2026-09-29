@@ -66,20 +66,18 @@ function parseArguments(argv) {
   return { pack: argv.includes("--pack"), destination: destinationIndex === -1 ? undefined : argv[destinationIndex + 1] };
 }
 
-/** Assemble the staged package and return its directory. */
-export function stage() {
-  const staging = join(tmpdir(), `gef-cli-package-${process.pid.toString(36)}-${Date.now().toString(36)}`);
-  rmSync(staging, { recursive: true, force: true });
-  mkdirSync(staging, { recursive: true });
-
+/** Copy the immutable CLI package payload into the isolated staging directory. */
+function stagePayload(staging) {
   for (const entry of PAYLOAD) {
     const source = join(cliRoot, entry);
     if (!existsSync(source)) throw new Error(`Package payload is missing: ${entry} (build the workspace first)`);
     cpSync(source, join(staging, entry), { recursive: true });
   }
 
-  const manifest = { schemaVersion: 1, kind: "gef.cli.vendored-artifacts", artifacts: [] };
+}
 
+/** Preserve the exact engine and supporting-file manifest order. */
+function stageEngines(staging, manifest) {
   for (const engine of ENGINES) {
     const source = join(repositoryRoot, engine.source);
     if (!existsSync(source)) throw new Error(`Engine source is missing: ${engine.source}`);
@@ -110,6 +108,10 @@ export function stage() {
     }
   }
 
+}
+
+/** Hash the schema assets already copied with the package payload. */
+function stageSchemaAssets(staging, manifest) {
   for (const name of CLI_SCHEMA_ASSETS) {
     const target = join(staging, "schemas", name);
     if (!existsSync(target)) throw new Error(`CLI schema asset is missing: schemas/${name}`);
@@ -122,6 +124,10 @@ export function stage() {
     });
   }
 
+}
+
+/** Bundle only the installed native packages, including the host's required binary. */
+function stageNativeRuntime(staging, manifest) {
   // Koffi and its platform prebuilt binary are runtime dependencies of the Windows rights oracle.
   // Koffi resolves its native binary as a sibling of its own package directory, so both entries
   // must be installed together for the installed CLI to load the adapter.
@@ -143,6 +149,10 @@ export function stage() {
     manifest.artifacts.push({ kind: "native-runtime", name, version: declared.version, target: `node_modules/${name}` });
   }
 
+}
+
+/** Copy built workspace modules with their packaged manifests. */
+function stageWorkspaceRuntime(staging, manifest) {
   for (const name of RUNTIME_PACKAGES) {
     const packageDirectory = join(repositoryRoot, "packages", name);
     const dist = join(packageDirectory, "dist");
@@ -155,11 +165,31 @@ export function stage() {
     manifest.artifacts.push({ kind: "runtime-package", name: `@gef-bootstrap/${name}`, version: declared.version, target: `node_modules/@gef-bootstrap/${name}` });
   }
 
+}
+
+/** Include the repository's license in the exact staging manifest. */
+function stageLegalPayload(staging, manifest) {
   const license = join(repositoryRoot, "LICENSE");
   if (!existsSync(license)) throw new Error("Repository LICENSE is missing");
   cpSync(license, join(staging, "LICENSE"));
   manifest.artifacts.push({ kind: "legal", name: "LICENSE", source: "LICENSE", target: "LICENSE", sha256: sha256(join(staging, "LICENSE")) });
 
+}
+
+/** Assemble the staged package and return its directory. */
+export function stage() {
+  const staging = join(tmpdir(), `gef-cli-package-${process.pid.toString(36)}-${Date.now().toString(36)}`);
+  rmSync(staging, { recursive: true, force: true });
+  mkdirSync(staging, { recursive: true });
+
+  stagePayload(staging);
+  const manifest = { schemaVersion: 1, kind: "gef.cli.vendored-artifacts", artifacts: [] };
+
+  stageEngines(staging, manifest);
+  stageSchemaAssets(staging, manifest);
+  stageNativeRuntime(staging, manifest);
+  stageWorkspaceRuntime(staging, manifest);
+  stageLegalPayload(staging, manifest);
   writeFileSync(join(staging, "vendor", "MANIFEST.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return staging;
 }
