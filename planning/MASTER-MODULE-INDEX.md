@@ -8,8 +8,8 @@ Unplanned sessions may remain intentionally empty placeholders. Files marked `OW
 
 ## Counts
 - Areas: 16 (A–P)
-- Modules: 64 (GBS-M00–GBS-M63)
-- Sessions: 282
+- Modules: 64 stable IDs (M40 is a provider-neutral reserved context slot; no legacy integration)
+- Sessions: 282 (three M40 sessions replaced by neutral reservations)
 
 ## Area A — Foundation & Governance
 - **GBS-M00 — Bootstrap Constitution** — 5 sessions
@@ -79,7 +79,7 @@ Unplanned sessions may remain intentionally empty placeholders. Files marked `OW
 ## Area J — Integrations
 - **GBS-M38 — Capability Detection** — 4 sessions
 - **GBS-M39 — UADS Adapter** — 4 sessions
-- **GBS-M40 — Hive Adapter** — 3 sessions
+- **GBS-M40 — Reserved Context Adapter Slot** — 3 neutral sessions (no provider dependency)
 - **GBS-M41 — UGAS Adapter** — 3 sessions
 - **GBS-M42 — Generic Adapter API** — 4 sessions
 
@@ -138,4 +138,4 @@ Existing-project adoption is first-class, owned by GBS-M13 and exercised by late
 Legacy names for M01, M47, M49 and M62 remain valid historical references by stable ID. Canonical display names above follow the complete hybrid production model. Physical folder/file renames are deferred to governed repository migration when Architecture selects the safest path.
 
 ### Source Pack closure note
-The complete Source Pack closure audit reconciled this index with frozen Scope, Architecture, DoD, weighted Backlog Baseline and the hybrid constitutional model. Counts and stable IDs remain unchanged. Later explicit owner directives may refine planned future-module obligations without earning weight or silently reopening completed modules; such directives require their own canonical decision record and future planning reconciliation.
+The complete Source Pack closure audit reconciled this index with frozen Scope, Architecture, DoD, weighted Backlog Baseline and the hybrid constitutional model. Original 64-module/282-session inventory remains intact; the owner-directed amendment removes the retired provider identity and keeps M40 neutral and reserved, without renumbering stable IDs. Later explicit owner directives may refine planned future-module obligations without earning weight or silently reopening completed modules; such directives require their own canonical decision record and future planning reconciliation.

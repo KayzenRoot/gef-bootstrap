@@ -205,3 +205,8 @@ Status: `ACTIVE`
 ## D-0051 — Project Overview is frozen
 - Decision: `.engineering/PROJECT-OVERVIEW.md` is frozen as the canonical product overview derived from `GBS-CONSTITUTION-v1.0`, including mission, logical roles, universal/profile boundaries, platform boundary, minimum brownfield value, optimization measurement requirements and explicit non-goals. Detailed requirements, scope and architecture remain delegated to their ordered Source Pack stages.
 - Status: APPROVED
+
+## D-0062 — Retire the Hive-specific development and integration contract
+- Decision: On 2026-09-28 the project owner explicitly disallowed Hive as a GEF Bootstrap development integration, MCP/context dependency or product adapter. Retire all Hive-specific first-party runtime exports, tests, active automation and active Source Pack claims. Keep the previously approved V1.1 neutral, inactive M40 Reserved Context Adapter Slot without inherited Hive identity/protocol/schema, reconciling ADR-0005 (V1.1) and D-0061. Preserve the generic adapter boundary, UADS/UGAS where separately admitted, and the original 64 stable IDs/282 sessions and accepted 61-module/1088-weight release denominator. PR #297 is closed as superseded. Supersede Hive-specific prospective permission in D-0002/D-0040 and ADR-0001-D3 without rewriting approved historical evidence or release tags.
+- Authority: explicit owner request (2026-09-28); ADR-0007; Work Order GBS-MAINT-HIVE-REMOVAL-001. Allocated D-0062 to avoid collision with D-0052 through D-0061 already approved on release/1.1; when release/1.1 is merged, reconcile lineage by SHA rather than duplicating entries.
+- Status: OWNER APPROVED; technical promotion pending exact-head proof and audit.

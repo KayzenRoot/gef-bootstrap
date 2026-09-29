@@ -33,6 +33,13 @@ Status: `GBS_V1_PRODUCTION_ACCEPTED`
 ## Production acceptance
 All release-blocking weighted points are evidence-bound. M62 acceptance remains fail-closed by contract and the promotion records the proven candidate lineage rather than treating implementation activity as acceptance. M63 final execution/performance primitives distinguish cycles, missing dependencies, incomparable populations and insufficient data without optimistic coercion.
 
+## GBS-MAINT-HIVE-REMOVAL-001 — approved implementation, merge pending
+- Owner decision: `D-0062`; source amendment: `ADR-0007`.
+- Work Order: `GBS-MAINT-HIVE-REMOVAL-001`, PR `#313`, reviewed implementation candidate: `3255bd13459e60b270547cbbf7fff2a7b73fe6ad`.
+- The named Hive product adapter and active development dependency have been removed; M40 is now an inactive provider-neutral reserved context slot consistent with V1.1 ADR-0005/D-0061. Original 64 stable IDs and 282 sessions preserved.
+- Exact reviewed candidate: full repository validation, all focused cross-platform assurance suites, dependency review, pipeline integrity and security pilot SUCCESS. Evidence: `.engineering/evidence/GBS-MAINT-HIVE-REMOVAL-001-EVIDENCE.md`.
+- Final technical state: `IMPLEMENTATION_APPROVED_PENDING_FINAL_HEAD_CI_AND_MERGE`. Do not claim final merged completion without verifying protected main's merged SHA. Historical V1 production acceptance, release receipts and denominator are unchanged.
+
 ## Boundary
 GEF Bootstrap V1 release-blocking construction is complete. Future changes are maintenance, release engineering, or a separately authorized next-version scope and must not rewrite this acceptance history.
 
