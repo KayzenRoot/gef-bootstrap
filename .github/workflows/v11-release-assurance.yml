@@ -281,7 +281,7 @@ jobs:
           if [ "$final_release" != "$release_sha" ] || [ "$final_pr" != "$pr_sha" ]; then
             echo "::warning::STALE: provider refs changed during diagnostics; discard this run"
           fi
-# Candidate-specific issue metadata helps resolve a new security rating
+          # Candidate-specific issue metadata helps resolve a new security rating
           # on this diagnostic PR, without printing messages or source snippets.
           if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
             candidate_pr="$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH")"
