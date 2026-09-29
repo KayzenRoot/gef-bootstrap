@@ -87,37 +87,42 @@ function normalizePopulation(input) {
   };
 }
 
+function normalizeUnavailableMetric(input, direction) {
+  if (input.value !== undefined && input.value !== null) return fail('INVALID', 'UNAVAILABLE_METRIC_HAS_VALUE');
+  if (input.samples !== undefined) return fail('INVALID', 'UNAVAILABLE_METRIC_HAS_SAMPLES');
+  return { state: 'VALID', value: { value: null, unit: input.unit, source: 'UNAVAILABLE', direction, summary: null } };
+}
+
+function normalizeEnumMetric(input, direction) {
+  if (input.samples !== undefined || typeof input.value !== 'string' || !ID.test(input.value)) return fail('INVALID', 'ENUM_METRIC_INVALID');
+  return { state: 'VALID', value: { value: input.value, unit: input.unit, source: input.source, direction, summary: null } };
+}
+
+function normalizeMeasuredSamples(input, direction) {
+  if (!Array.isArray(input.samples) || input.samples.length === 0 || input.samples.some(value => !Number.isFinite(value) || value < 0)) {
+    return fail('INVALID', 'SAMPLE_INVALID');
+  }
+  const summary = benchmarkSummary(input.samples);
+  if (summary.verdict === 'INSUFFICIENT_DATA') return fail('INVALID', 'SAMPLE_INVALID');
+  if (input.value !== undefined && input.value !== summary.median) return fail('INVALID', 'METRIC_VALUE_DOES_NOT_MATCH_MEDIAN');
+  return { state: 'VALID', value: { value: summary.median, unit: input.unit, source: input.source, direction, summary } };
+}
+
+function normalizeNumericMetric(input, direction) {
+  if (input.source === 'ESTIMATED' && input.samples !== undefined) return fail('INVALID', 'ESTIMATED_METRIC_HAS_SAMPLES');
+  if (!Number.isFinite(input.value) || input.value < 0) return fail('INVALID', 'METRIC_VALUE_INVALID');
+  const summary = input.source === 'MEASURED' ? benchmarkSummary([input.value]) : null;
+  return { state: 'VALID', value: { value: input.value, unit: input.unit, source: input.source, direction, summary } };
+}
+
 function normalizeMetric(id, input) {
   if (!METRIC_ID.test(id) || !isObject(input) || !METRIC_UNITS.has(input.unit)) return fail('INVALID', 'METRIC_SHAPE_INVALID');
   if (!['MEASURED', 'ESTIMATED', 'UNAVAILABLE'].includes(input.source)) return fail('INVALID', 'METRIC_SOURCE_INVALID');
   const direction = metricDirection(id, input.unit);
-
-  if (input.source === 'UNAVAILABLE') {
-    if (input.value !== undefined && input.value !== null) return fail('INVALID', 'UNAVAILABLE_METRIC_HAS_VALUE');
-    if (input.samples !== undefined) return fail('INVALID', 'UNAVAILABLE_METRIC_HAS_SAMPLES');
-    return { state: 'VALID', value: { value: null, unit: input.unit, source: 'UNAVAILABLE', direction, summary: null } };
-  }
-
-  if (input.unit === 'enum') {
-    if (input.samples !== undefined || typeof input.value !== 'string' || !ID.test(input.value)) return fail('INVALID', 'ENUM_METRIC_INVALID');
-    return { state: 'VALID', value: { value: input.value, unit: input.unit, source: input.source, direction, summary: null } };
-  }
-
-  if (input.source === 'MEASURED' && input.samples !== undefined) {
-    if (!Array.isArray(input.samples) || input.samples.length === 0 || input.samples.some(value => !Number.isFinite(value) || value < 0)) {
-      return fail('INVALID', 'SAMPLE_INVALID');
-    }
-    const summary = benchmarkSummary(input.samples);
-    if (summary.verdict === 'INSUFFICIENT_DATA') return fail('INVALID', 'SAMPLE_INVALID');
-    if (input.value !== undefined && input.value !== summary.median) return fail('INVALID', 'METRIC_VALUE_DOES_NOT_MATCH_MEDIAN');
-    return { state: 'VALID', value: { value: summary.median, unit: input.unit, source: input.source, direction, summary } };
-  }
-
-  if (input.source === 'ESTIMATED' && input.samples !== undefined) return fail('INVALID', 'ESTIMATED_METRIC_HAS_SAMPLES');
-
-  if (!Number.isFinite(input.value) || input.value < 0) return fail('INVALID', 'METRIC_VALUE_INVALID');
-  const summary = input.source === 'MEASURED' ? benchmarkSummary([input.value]) : null;
-  return { state: 'VALID', value: { value: input.value, unit: input.unit, source: input.source, direction, summary } };
+  if (input.source === 'UNAVAILABLE') return normalizeUnavailableMetric(input, direction);
+  if (input.unit === 'enum') return normalizeEnumMetric(input, direction);
+  if (input.source === 'MEASURED' && input.samples !== undefined) return normalizeMeasuredSamples(input, direction);
+  return normalizeNumericMetric(input, direction);
 }
 
 function normalizeMetrics(input) {
