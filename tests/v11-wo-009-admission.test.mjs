@@ -29,15 +29,22 @@ test("WO-008 stays owner-audited and merged while the V1 production baseline sta
 });
 
 test("Checkpoint names one admitted V1.1 action with branch and source references", () => {
-  assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_ADMITTED");
-  assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
-  assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
-  assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
-  assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
+  if (checkpoint.v11.status === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_WO_010_ADMISSION_NEXT") {
+    assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, "NONE");
+    assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-010");
+    assert.equal(checkpoint.v11.implementationBranch, "NONE");
+  } else {
+    assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_ADMITTED");
+    assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
+    assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
+    assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
+  }
   assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
   assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
   assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
-  assert.ok(checkpointMd.includes("### Active V1.1 increment — WO-009"));
+  assert.ok(checkpointMd.includes(checkpoint.v11.status === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_WO_010_ADMISSION_NEXT" ? "### Completed V1.1 increment — WO-009" : "### Active V1.1 increment — WO-009"));
   assertWo009BranchReconciliationNote(checkpointMd);
 });
 

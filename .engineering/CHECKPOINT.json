@@ -143,7 +143,7 @@
   "stopState": "GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088",
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_WO_009_ADMITTED",
+    "status": "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_WO_010_ADMISSION_NEXT",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -361,10 +361,96 @@
             108413194051
           ]
         }
+      },
+      "GBS-V11-WO-009": {
+        "status": "OWNER_AUDIT_APPROVED_MERGED",
+        "implementationPr": 316,
+        "implementationBranch": "feat/1.1/wo-009-integrated-assurance-clean-history",
+        "auditedHead": "a04a6b239ccc81c9662830cd9074c70381c84b4e",
+        "objectiveAudit": "OWNER_APPROVED",
+        "auditIndependence": "NOT_INDEPENDENT",
+        "objectiveReview": 5889695018,
+        "implementationMerge": "cb6cf5cf4f27d9d717921aa833ee342863f0d172",
+        "criticalFindings": 0,
+        "highFindings": 0,
+        "exactHeadChecks": {
+          "count": 20,
+          "githubCheckRuns": 51,
+          "conclusion": "SUCCESS",
+          "head": "a04a6b239ccc81c9662830cd9074c70381c84b4e"
+        },
+        "contextLock": ".engineering/context-locks/GBS-V11-WO-009.json",
+        "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md",
+        "assuranceRuns": {
+          "v11Matrix": 36563282570,
+          "v11MatrixAttempt": 2,
+          "repositoryValidation": 36563282655,
+          "m01": 36563282568,
+          "m41m47": 36563282666,
+          "m48m54": 36563282587,
+          "m55m61": 36563282694,
+          "m62m63": 36563282785,
+          "windowsRights": 36563282700,
+          "upgradeRecovery": 36563282715,
+          "executionCapsule": 36563282681,
+          "incrementalValidation": 36563282629,
+          "proofReuse": 36563282652,
+          "performanceTelemetry": 36563282660,
+          "codeQL": 36563282645,
+          "freeSecurity": 36563282606,
+          "freeSecurityPostReady": 36563959196,
+          "dependencyReviewPostReady": 36563959177,
+          "pipelineIntegrityPostReady": 36563959126
+        },
+        "matrixResults": {
+          "windows": {
+            "tests": 1594,
+            "pass": 1594,
+            "fail": 0,
+            "skipped": 0,
+            "artifactId": 11030514317
+          },
+          "ubuntu": {
+            "tests": 1594,
+            "pass": 1590,
+            "fail": 0,
+            "skipped": 4,
+            "artifactId": 11030493270
+          },
+          "macos": {
+            "tests": 1594,
+            "pass": 1590,
+            "fail": 0,
+            "skipped": 4,
+            "artifactId": 11031025573
+          }
+        },
+        "securityPrerequisite": {
+          "workOrder": "GBS-V11-MAINT-CODEQL-002",
+          "pullRequest": 317,
+          "mergeSha": "0172d774719d10ab8d7aab5de9ef0ace2cb5878d",
+          "alertId": 2,
+          "rule": "js/clear-text-logging",
+          "severity": "HIGH",
+          "disposition": "fixed",
+          "postFixCodeQLRun": 36563141935,
+          "providerEvidenceRun": 36562294791,
+          "providerEvidenceAttempt": 2
+        },
+        "securityResiduals": {
+          "codeQLMediumAlertOpen": [
+            1
+          ],
+          "scorecardHighOnMainOpen": [
+            14,
+            13,
+            3
+          ]
+        }
       }
     },
-    "activeWorkOrder": "GBS-V11-WO-009",
-    "activeWorkOrderStatus": "ADMITTED",
+    "activeWorkOrder": "NONE",
+    "activeWorkOrderStatus": "NONE",
     "maintenanceForwardPort": {
       "workOrder": "GBS-V11-MAINT-PIPELINE-001",
       "status": "COMPLETED",
@@ -384,11 +470,11 @@
       "scorecardMainRun": 36485873871,
       "evidence": ".engineering/evidence/GBS-V11-MAINT-PIPELINE-001-EVIDENCE.md"
     },
-    "implementationBranch": "feat/1.1/wo-009-integrated-assurance",
+    "implementationBranch": "NONE",
     "contextLock": ".engineering/context-locks/GBS-V11-WO-009.json",
     "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md",
-    "nextLegalAction": "REFRESH_WO_009_CONTEXT_LOCK_FOR_CURRENT_RELEASE_HEAD",
-    "stopState": "GBS_V11_WO_009_CONTEXT_LOCK_REFRESH_REQUIRED_AFTER_PIPELINE_FORWARD_PORT",
+    "nextLegalAction": "PLAN_AND_ADMIT_GBS_V11_WO_010",
+    "stopState": "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_010_ADMISSION",
     "ecosystemDetachment": {
       "decision": "D-0061",
       "adr": "ADR-0005",
@@ -431,6 +517,7 @@
         "head": "03f81da4c85fe06310ad4c94a79af20e71747681"
       }
     },
-    "nextWorkOrder": "GBS-V11-WO-009"
+    "nextWorkOrder": "GBS-V11-WO-010",
+    "lastCompletedWorkOrder": "GBS-V11-WO-009"
   }
 }

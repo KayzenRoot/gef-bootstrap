@@ -19,9 +19,10 @@ const receipt = json('.engineering/evidence/GBS-V11-WO-001-PROMOTION-RECEIPT.jso
 const foundationPromoted = checkpoint.v11.status === 'GBS_V11_FOUNDATION_PROMOTED';
 const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
 const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
+const wo009Completed = checkpoint.v11.status === 'GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_WO_010_ADMISSION_NEXT';
 const admittedMatch = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-const admittedOrdinal = (ownerGovernancePromoted || wo008Completed) ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
-const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || wo008Completed || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
+const admittedOrdinal = wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
+const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || wo008Completed || wo009Completed || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
 
 test('V1.0 production acceptance remains byte-semantically preserved at the checkpoint boundary', () => {
   assert.equal(checkpoint.status, 'GBS_V1_PRODUCTION_ACCEPTED');
@@ -61,6 +62,14 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
     assert.equal(checkpoint.v11.nextLegalAction, "PLAN_AND_ADMIT_GBS_V11_WO_009");
     assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
     assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-008"));
+    return;
+  }
+  if (wo009Completed) {
+    assert.equal(checkpoint.v11.completedWorkOrders['GBS-V11-WO-009'].objectiveAudit, 'OWNER_APPROVED');
+    assert.equal(checkpoint.v11.activeWorkOrder, 'NONE');
+    assert.equal(checkpoint.v11.nextLegalAction, 'PLAN_AND_ADMIT_GBS_V11_WO_010');
+    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_010_ADMISSION');
+    assert.ok(checkpointMd.includes('### Completed V1.1 increment — WO-009'));
     return;
   }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
@@ -167,6 +176,10 @@ test('WO-002 remains the first governed increment and later admissions preserve 
     assert.equal(checkpoint.v11.activeWorkOrder, 'NONE');
     assert.equal(checkpoint.v11.nextLegalAction, 'PLAN_AND_ADMIT_GBS_V11_WO_009');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION');
+  } else if (wo009Completed) {
+    assert.equal(checkpoint.v11.activeWorkOrder, 'NONE');
+    assert.equal(checkpoint.v11.nextLegalAction, 'PLAN_AND_ADMIT_GBS_V11_WO_010');
+    assert.equal(checkpoint.v11.stopState, 'GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_010_ADMISSION');
   } else if (ownerGovernancePromoted) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-008');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT');
@@ -181,7 +194,7 @@ test('WO-002 remains the first governed increment and later admissions preserve 
     const id = `GBS-V11-WO-${String(ordinal).padStart(3, '0')}`;
     const completed = checkpoint.v11.completedWorkOrders[id];
     assert.ok(completed, `missing completed work order ${id}`);
-    if (ordinal === 8) {
+    if (ordinal >= 8) {
       assert.equal(completed.status, 'OWNER_AUDIT_APPROVED_MERGED');
       assert.equal(completed.objectiveAudit, 'OWNER_APPROVED');
     } else {

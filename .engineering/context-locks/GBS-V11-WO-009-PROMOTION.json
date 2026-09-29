@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-009-PROMOTION",
+  "baseRef": "release/1.1",
+  "baseSha": "cb6cf5cf4f27d9d717921aa833ee342863f0d172",
+  "productionShaAtLock": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+  "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+  "owner": "KayzenRoot",
+  "scope": "WO-009 post-merge checkpoint promotion and nonregressing historical admission assertions",
+  "approvedImplementation": {
+    "pr": 316,
+    "head": "a04a6b239ccc81c9662830cd9074c70381c84b4e",
+    "auditComment": 5889695018,
+    "mergeSha": "cb6cf5cf4f27d9d717921aa833ee342863f0d172",
+    "codeQLHighDisposition": "fixed"
+  },
+  "canonicalSources": [
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "baseBlobSha": "3b3d8a07ef787f57b2ad2f4580941145a4d94f07",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.md",
+      "baseBlobSha": "717cc83278ffe82977ff6c5ea59a15bba512229d",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/evidence/GBS-V11-WO-009-EVIDENCE.md",
+      "baseBlobSha": "12bf035ef89f307070b2843bcd00ea0ac5bd05c2",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "baseBlobSha": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DEFINITION-OF-DONE.md",
+      "baseBlobSha": "d9209765a268f0e21390a2c6c531c7dd771515b4",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-RELEASE-PLAN.md",
+      "baseBlobSha": "074c99c57f09a13cb2e71cce883e46ee500909ed",
+      "fingerprintKind": "git-blob-sha1"
+    }
+  ],
+  "allowedWritePaths": [
+    ".engineering/CHECKPOINT.json",
+    ".engineering/CHECKPOINT.md",
+    ".engineering/evidence/GBS-V11-WO-009-EVIDENCE.md",
+    ".engineering/evidence/GBS-V11-WO-009-PROMOTION-EVIDENCE.md",
+    ".engineering/context-locks/GBS-V11-WO-009-PROMOTION.json",
+    "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+    "tests/v11-wo-001-promotion.test.mjs",
+    "tests/v11-wo-008-admission.test.mjs",
+    "tests/v11-wo-009-admission.test.mjs",
+    "tests/v11-wo-002-admission.test.mjs",
+    "tests/v11-wo-003-admission.test.mjs",
+    "tests/v11-wo-004-admission.test.mjs",
+    "tests/v11-wo-005-admission.test.mjs",
+    "tests/v11-wo-006-admission.test.mjs",
+    "tests/v11-wo-007-admission.test.mjs",
+    "tests/v11-wo-009-promotion.test.mjs"
+  ],
+  "forbiddenWriteSurface": [
+    "main",
+    "tag:v1.0.0",
+    "production acceptance",
+    "release publication",
+    "WO-010 implementation",
+    "unrelated modules"
+  ],
+  "stopCondition": "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_010_ADMISSION"
+}
