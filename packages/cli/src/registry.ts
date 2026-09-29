@@ -1622,7 +1622,7 @@ export function observeDocumentation(targetRef: string, budget: number = DIAGNOS
 // Failure projections
 // ---------------------------------------------------------------------------
 
-function engineFailure(error: unknown, commandId: string, runId: string): GefError {
+function unavailableEngineFailure(error: unknown, commandId: string, runId: string, summary: string): GefError {
   const detail = error instanceof EngineUnavailableError ? error.detail : error instanceof Error ? error.message : String(error);
   const engine = error instanceof EngineUnavailableError ? error.engine : "unknown";
   return createGefError({
@@ -1630,7 +1630,7 @@ function engineFailure(error: unknown, commandId: string, runId: string): GefErr
     category: "CAPABILITY",
     reason: "engine_unavailable",
     severity: "ERROR",
-    summary: "A required CLI engine is unavailable",
+    summary,
     retryability: "MANUAL_ONLY",
     recoverability: "NONE_REQUIRED",
     terminal: "BLOCKED",
@@ -1639,6 +1639,10 @@ function engineFailure(error: unknown, commandId: string, runId: string): GefErr
     metadata: { engine, detail },
     remediations: [{ actionId: "gef.cli.verify_installation" }],
   });
+}
+
+function engineFailure(error: unknown, commandId: string, runId: string): GefError {
+  return unavailableEngineFailure(error, commandId, runId, "A required CLI engine is unavailable");
 }
 
 function transactionFailure(error: GefError, commandId: string, runId: string): GefError {
@@ -2153,22 +2157,7 @@ function statusComposition(engines: Engines, targetRef: string, observation: Tar
 }
 
 function diagnosisEnginesFailure(error: unknown, commandId: string, runId: string): GefError {
-  const detail = error instanceof EngineUnavailableError ? error.detail : error instanceof Error ? error.message : String(error);
-  const engine = error instanceof EngineUnavailableError ? error.engine : "unknown";
-  return createGefError({
-    id: `cli-engine-${commandId}`,
-    category: "CAPABILITY",
-    reason: "engine_unavailable",
-    severity: "ERROR",
-    summary: "A required diagnostic engine is unavailable",
-    retryability: "MANUAL_ONLY",
-    recoverability: "NONE_REQUIRED",
-    terminal: "BLOCKED",
-    commandId,
-    runId,
-    metadata: { engine, detail },
-    remediations: [{ actionId: "gef.cli.verify_installation" }],
-  });
+  return unavailableEngineFailure(error, commandId, runId, "A required diagnostic engine is unavailable");
 }
 
 async function diagnosisHandler(verb: DiagnosisVerb, input: DiagnosisInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
