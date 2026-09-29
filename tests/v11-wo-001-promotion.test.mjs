@@ -1,5 +1,7 @@
 import test from 'node:test';
+import { assertLaterActiveWorkOrder } from './helpers/v11-context-lock-refresh-assertions.mjs';
 import assert from 'node:assert/strict';
+
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -63,9 +65,13 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
   }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
   const id = String(admittedOrdinal).padStart(3, '0');
-  const expectedStop = `GBS_V11_WO_${id}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`;
-  assert.equal(checkpoint.v11.stopState, expectedStop);
-  assert.ok(checkpointMd.includes(`V1.1 STOP CONDITION: \`${expectedStop}\``));
+  if (admittedOrdinal === 9) {
+    assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
+  } else {
+    const expectedStop = `GBS_V11_WO_${id}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`;
+    assert.equal(checkpoint.v11.stopState, expectedStop);
+    assert.ok(checkpointMd.includes(`V1.1 STOP CONDITION: \`${expectedStop}\``));
+  }
 });
 test('V1.1 overlay preserves the objectively audited WO-001 foundation lineage after later admissions', () => {
   assert.equal(checkpoint.v11.releaseLine, '1.1.x');
