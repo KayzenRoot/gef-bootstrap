@@ -97,8 +97,8 @@ jobs:
           retention-days: 30
 
   codeql-alert-evidence:
-    # Isolated read-only API query: no checkout, no untrusted workspace code,
-    # no secrets or raw alert descriptions published to the workflow logs.
+    # Read-only provider query; this job never checks out PR code or executes
+    # a candidate-provided script, and logs only controlled alert metadata.
     name: CodeQL tracked alert evidence
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -110,23 +110,33 @@ jobs:
       GH_REPO: ${{ github.repository }}
       GEF_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - name: Read historical alert and open HIGH/CRITICAL from provider
+      - name: Inspect historical alert and branch-scoped security evidence
         shell: bash
         run: |
           set -euo pipefail
           test "$GH_REPO" = "KayzenRoot/gef-bootstrap" || { echo "::error::Wrong repository"; exit 1; }
-          printf 'Exact candidate head: %s\\n' "$GEF_CANDIDATE_SHA"
+          printf 'Exact candidate head: %s\n' "$GEF_CANDIDATE_SHA"
           all="$RUNNER_TEMP/codeql-all-alerts.json"
+          release_alerts="$RUNNER_TEMP/codeql-release-alerts.json"
+          tracked="$RUNNER_TEMP/codeql-tracked-alert.json"
           gh api --paginate "repos/$GH_REPO/code-scanning/alerts?state=all&per_page=100" | jq -s 'add // []' > "$all" || {
-            echo "::error::Code Scanning alert inventory unavailable; disposition remains BLOCKED"
+            echo "::error::Complete provider alert inventory unavailable; disposition remains BLOCKED"
             exit 1
           }
-          echo "Tracked historical alert #2, metadata only:"
-          jq -c '[.[] | select(.number == 2) | {number, state, ruleId: .rule.id, severity: .rule.security_severity_level, updatedAt: .updated_at}]' "$all"
-          echo "Open HIGH/CRITICAL alert metadata:"
-          jq -c '[.[] | select(.state == "open" and (.rule.security_severity_level == "high" or .rule.security_severity_level == "critical")) | {number, state, ruleId: .rule.id, severity: .rule.security_severity_level, ref: .most_recent_instance.ref}]' "$all"
-          if [ "$(jq '[.[] | select(.number == 2)] | length' "$all")" -ne 1 ]; then
-            echo "::warning::Historical alert #2 not present in complete provider inventory; manual alert identity/disposition verification required"
+          gh api --paginate "repos/$GH_REPO/code-scanning/alerts?ref=refs%2Fheads%2Frelease%2F1.1&state=all&per_page=100" | jq -s 'add // []' > "$release_alerts" || {
+            echo "::error::Release-scoped provider alert inventory unavailable; disposition remains BLOCKED"
+            exit 1
+          }
+          echo "Historical #2 direct provider lookup (metadata only):"
+          if gh api "repos/$GH_REPO/code-scanning/alerts/2" > "$tracked" 2>/dev/null; then
+            jq -c '{number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, updatedAt: .updated_at}' "$tracked"
+          else
+            echo "::warning::Historical alert #2 unavailable by direct provider lookup; owner disposition remains required"
           fi
-          # Evidence-retrieval job success means API access, not a declaration
-          # that any open finding is safe. WO-009 owner audit owns disposition.
+          echo "All current open HIGH/CRITICAL alert metadata:"
+          jq -c '[.[] | select(.state == "open" and (.rule.security_severity_level == "high" or .rule.security_severity_level == "critical")) | {number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, ref: .most_recent_instance.ref, file: .most_recent_instance.location.path}]' "$all"
+          echo "Release/1.1 alert metadata (all states):"
+          jq -c '[.[] | {number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, ref: .most_recent_instance.ref, file: .most_recent_instance.location.path}]' "$release_alerts"
+          # Successful inventory retrieval establishes provider access only;
+          # owner audit must still decide exact-candidate applicability and close
+          # or disposition any unresolved finding before WO-009 promotion.

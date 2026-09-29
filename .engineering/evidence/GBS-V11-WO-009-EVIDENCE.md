@@ -92,3 +92,8 @@ This candidate recreates exactly the PR #302 net tree changes, including the met
 ## Direct provider CodeQL alert evidence retrieval
 
 A read-only `codeql-alert-evidence` job has been added to the exact-head V1.1 release assurance workflow. It uses only the GitHub Actions runtime token with `security-events: read`, does not checkout or execute candidate code and queries the provider's complete code-scanning alert inventory. Logs contain only alert number, state, rule ID, severity, update timestamp, and for open HIGH/CRITICAL the most recent ref. This is diagnostic evidence, **not automatic closure**, and any unavailable or unverified historical alert continues to block final owner approval.
+
+
+## Provider-inventory refinement
+
+The first read-only alert inventory run `36562063636` on predecessor head `6baa862a06df9757150f88f9211685ed7530f425` successfully retrieved provider state. It reported historic alert #2 **absent** from that list and three other open HIGH IDs `14`, `13`, `3` on `refs/heads/main` with rules `MaintainedID`, `CodeReviewID`, and `BranchProtectionID`. Their tool and V1.1 applicability were not established by that first run. The amended read-only job additionally checks the direct #2 endpoint, includes tool attribution, and queries the `release/1.1`-scoped inventory. No security finding is assumed resolved merely because an inventory query succeeds.
