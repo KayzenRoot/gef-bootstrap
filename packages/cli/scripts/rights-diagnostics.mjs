@@ -20,7 +20,7 @@ if (process.platform !== "win32") {
 }
 
 console.log("rights oracle available:", windowsRightsOracleAvailable());
-console.log("caller:", process.env["USERNAME"] ?? "unknown");
+
 
 for (const candidate of DEFAULT_GIT_TRUST_POLICY.candidates) {
   if (!existsSync(candidate)) {
