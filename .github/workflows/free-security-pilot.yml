@@ -157,8 +157,22 @@ jobs:
 
           # Includes side-branch commits and merge diffs; no --first-parent or --no-merges.
           # Gitleaks redacts possible secret values. No results artifact or PR comments.
+          # Keep the raw redacted report ephemeral, outside the checkout. Only emit
+          # non-secret finding coordinates to aid review; never publish Match/Secret.
+          report_path="$RUNNER_TEMP/gitleaks-redacted-report.json"
+          set +e
           gitleaks git --redact=100 --no-color --no-banner \
             --config "$GITLEAKS_PILOT_POLICY_DIR/gitleaks.toml" \
             --gitleaks-ignore-path "$GITLEAKS_PILOT_POLICY_DIR/.gitleaksignore" \
             --ignore-gitleaks-allow \
+            --report-format=json --report-path="$report_path" \
             --exit-code=1 --log-opts="$log_opts" .
+          scan_status=$?
+          set -e
+          if [ -s "$report_path" ]; then
+            echo "::group::Gitleaks redacted finding coordinates (no secrets)"
+            jq -c '.[] | {ruleId: .RuleID, file: .File, line: .StartLine, commit: .Commit, fingerprint: .Fingerprint}' "$report_path"
+            echo "::endgroup::"
+          fi
+          # Preserve fail-closed scanning, including CLI errors and all findings.
+          exit "$scan_status"
