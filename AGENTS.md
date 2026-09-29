@@ -2,7 +2,7 @@
 
 This repository is governed by GEF Bootstrap. This file is an executor-facing acceleration layer, not a replacement for canonical project authority.
 
-## Actor lock (ADR-0008, pending governed promotion)
+## Actor lock (ADR-0008, approved; effective with main checkpoint promotion)
 For GEF Bootstrap and newly governed software projects, **Codex is the only code/test/CI/migration implementation and correction author** once the owner-directed amendment is objectively approved and promoted. ChatGPT is the architect, Work Order/issue/planning-PR author, objective code/security auditor, GitHub coordinator and reporter. Never treat a documentation-planning PR or unadmitted issue as code-execution authority. Use `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`; short user prompts point to GitHub issue/Work Order/PR rather than PDFs. In this repository, keep V1.0 accepted evidence immutable and respect release/1.1's separate admission constraints.
 
 ## Authority

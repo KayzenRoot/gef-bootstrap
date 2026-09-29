@@ -41,6 +41,16 @@ All release-blocking weighted points are evidence-bound. M62 acceptance remains 
 - Final technical state: `APPROVED_AND_MERGED`, confirmed protected `main` at exact merge SHA `3c5f1fb96e9d5f3d8a07acdf024687063f82d9d2`. GitHub audit review `5346938386` found no open HIGH/CRITICAL issue. Historical V1 production acceptance, release receipts and denominator remain unchanged.
 - Maintenance stop condition: `GBS-MAINT-HIVE-REMOVAL-001_APPROVED_AND_MERGED`.
 
+## GBS-GOV-CODEX-ISSUES-001 — APPROVED GOVERNANCE AND PROMOTED PROCESS
+
+- Owner directive: 2026-09-29. Decision `D-0063`, ADR `ADR-0008`. Prospective supersession of the former GEF self-construction actor restriction ONLY; all V1.0 product/acceptance history remains frozen.
+- Planning/governance issue: [#331](https://github.com/KayzenRoot/gef-bootstrap/issues/331).
+- Exact-head documentation implementation: PR [#332](https://github.com/KayzenRoot/gef-bootstrap/pull/332), reviewed head `7ff0118fcbb29dfd42434e18e68eed0b0c27de2e`, tree `5bdbf42dca1ce081453e4e6ae61ba750a8c551ee`, owner objective audit comment `5894096435` (NOT_INDEPENDENT), required/candidate checks after ready: `28/28 SUCCESS`, CRITICAL/HIGH known for this doc-only diff `0/0`, squash merge to main `419b9cd713d4817c05582287ec10793fc7fdc130`.
+- Canonical execution rule upon integration of this separately audited checkpoint-promotion PR into protected `main`: **Codex alone authors and fixes code, tests, fixtures, CI/build scripts and migrations**. ChatGPT owns planning, versioned governance/docs, issue/Work Order and planning-only PR coordination, exact-head code/security review and evidence-based status reporting. No routine PDF prompt.
+- This promotion is **governance-only**, not V1.1 production acceptance or implementation credit. Existing project work retains its canonical flow until adopted, and the V1.1 branch requires separately reviewed forward-port with `D-0062` lineage reconciliation.
+- Evidence: `.engineering/evidence/GBS-GOV-CODEX-ISSUES-001-EVIDENCE.md`; next project-construction action remains bounded by the target branch's own admitted Work Order and Context Lock. Historical V1.0: `1088/1088 = 100%`, unchanged.
+- Governance STOP CONDITION after promotion merge: `GBS_GOV_CODEX_ONLY_GITHUB_FIRST_PROMOTED_MAIN`.
+
 ## Boundary
 GEF Bootstrap V1 release-blocking construction is complete. Future changes are maintenance, release engineering, or a separately authorized next-version scope and must not rewrite this acceptance history.
 
