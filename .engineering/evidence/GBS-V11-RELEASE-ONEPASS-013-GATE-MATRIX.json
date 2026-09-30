@@ -2,13 +2,16 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-09-30T09:10:55Z",
+  "capturedAtUtc": "2026-09-30T13:16:08Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
-    "release_1_1": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
+    "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
     "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
-    "mainOnlyReleaseOnly": [2, 79]
+    "mainOnlyReleaseOnly": [
+      2,
+      84
+    ]
   },
   "gates": [
     {
@@ -21,17 +24,17 @@
       "auditIndependence": "NOT_INDEPENDENT",
       "exactHeadChecks": "16/16 SUCCESS (provider result recorded in Issue #337 and PR #347)",
       "mergeSha": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
-      "remainingDebt": "CHECKPOINT.json actualMergeSha=null and mergeReceipt=PENDING_REAL_MERGE; narrow separately audited WO-004 update required before final WO-010 acceptance"
+      "remainingDebt": "The release checkpoint still had the stale PR #347 actualMergeSha receipt at the source ref; the admitted Gate 2 candidate is reconciling it with provider evidence. Candidate state is not promoted until audit and a later authorized merge."
     },
     {
       "gate": 1,
       "name": "Issue #337 tests-only package branch coverage correction",
-      "state": "EXACT_HEAD_PROVIDER_GREEN_AWAITING_OWNER_AUDIT",
+      "state": "MERGED",
       "childWorkOrder": "GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012",
       "executionBase": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
-      "reviewedCandidateHead": "a2348d39bcd77951900d7d24e2a45a33e67fe9a8",
+      "reviewedCandidateHead": "ab81172a009a699542c63c54d80358226d075ab2",
       "ownerCorrectionReview": 5363391120,
-      "providerRunSummary": "At the reviewed candidate SHA, 14 workflow runs expanded to 33 jobs; 33/33 jobs succeeded. New documentation-only HEAD checks must independently complete before re-audit.",
+      "providerRunSummary": "At owner audit/merge, 20 workflow runs returned and all completed SUCCESS on exact PR #349 head ab81172a009a699542c63c54d80358226d075ab2; Repository Validation 1603 total / 1599 PASS / 0 FAIL / 4 SKIPPED. The normal merge to release/1.1 is 4b2f66724ea5df94ddd8fda2d8088b12b9708c10. These results do not transfer to Gate 2.",
       "criticalScriptBlob": "10e659ccce15045ed37ffa3e82d06a8408b8f734",
       "criticalTestBlob": "2441961628d20dcc9404d2e51cc1d97b03543137",
       "allowedSourceChanges": [
@@ -52,21 +55,31 @@
         "codeqlTrackedAlertEvidence": "PASS (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038478)",
         "sonarDiagnosticsAndDuplication": "PASS; quality gate pass, 7 MAJOR code smells in tests remain disclosed (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038618; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038605)",
         "securityFindingScope": "No open HIGH/CRITICAL code-scanning alerts on candidate or release/1.1. Repository-wide inventory separately has three open HIGH Scorecard alerts on main only (#14 MaintainedID, #13 CodeReviewID, #3 BranchProtectionID); release HIGH #2 is fixed and release MEDIUM #1 remains open.",
-        "newDocumentationHeadChecks": "Must be checked on the final PR #349 HEAD before re-audit; prior candidate evidence above is not transferred as a new-SHA check. Live exact-head check page: https://github.com/KayzenRoot/gef-bootstrap/pull/349/checks"
+        "newDocumentationHeadChecks": "Final pre-merge exact-head set: 20/20 workflow runs SUCCESS on ab81172a009a699542c63c54d80358226d075ab2; no evidence transfers to the cumulative candidate."
       },
       "cumulativeCodecov": "NOT_RUN_NOT_CREDITED; Gate 2 requires a fresh release-to-main PR exact SHA >=97.85%",
-      "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_EVIDENCE_LOCK_SYNC_READY_FOR_REAUDIT"
+      "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_EVIDENCE_LOCK_SYNC_READY_FOR_REAUDIT",
+      "implementationPr": 349,
+      "mergeSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+      "ownerReview": 5364744639
     },
     {
       "gate": 2,
       "name": "Fresh cumulative release-to-main integration",
-      "state": "READ_ONLY_PREPARATION_RECORDED_NOT_ADMITTED",
+      "state": "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT",
       "sourceRefs": {
         "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
-        "release_1_1": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
-        "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d"
+        "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+        "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+        "mainTree": "0413bf3e8d706738f73c93578c81630ce027f4ec",
+        "releaseTree": "15bdf8462e67daab84152f096a0ab629be25ffc9",
+        "mergeBaseTree": "39d8b61cb70020e87c65f2443ce3790af1c2b5c4",
+        "divergenceMainOnlyReleaseOnly": [
+          2,
+          84
+        ]
       },
-      "dryRun": "git merge-tree --write-tree --name-only --messages; 14 textual conflicts, 12 content and 2 add/add",
+      "dryRun": "git merge-tree --write-tree --name-only --messages; result tree 797545a324c17e5e14da9ddbc6819f5134bfb21d; 14 textual conflicts (12 content, 2 add/add), all within the approved class; 2 additional semantic overlaps.",
       "textualConflicts": [
         ".engineering/ARCHITECTURE.md",
         ".engineering/CHECKPOINT.json",
@@ -88,19 +101,237 @@
         ".engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md"
       ],
       "branchQualifiedDecisions": {
-        "D-0062@main": "ADR-0007 retirement of main-branch external integration",
-        "D-0062@release/1.1": "ADR-0006 owner-operated audit and merge",
-        "D-0064": "UNALLOCATED",
-        "D-0063@release/1.1": "effective at real PR #347 merge"
+        "D-0062@main": "ADR-0007: retire Hive-specific development/integration contract; preserve main lineage.",
+        "D-0062@release/1.1": "ADR-0006: owner-operated exact-head audit and merge authority; preserve release lineage.",
+        "D-0063@main": "ADR-0008 effective on main at promotion merge 419b9cd713d4817c05582287ec10793fc7fdc130.",
+        "D-0063@release/1.1": "ADR-0008 effective on release at PR #347 merge 9f6f069c977868ade34a19cddb346f7bea9a95fe.",
+        "D-0064": "UNALLOCATED"
       },
       "requiredFutureGates": [
-        "Phase 1 exact-head audit and merge",
-        "fresh source/ancestry/conflict Context Lock",
-        "separate implementation admission and exact write allowlist",
-        "new exact-head cumulative Codecov patch >=97.85%",
-        "current Sonar, security, quality, compatibility and required CI all successful"
+        "Resolve only the admitted governance/source-document conflicts according to the committed per-path Context Lock.",
+        "Complete full build, validation, package/install/upgrade/recovery and release tests.",
+        "Obtain current Ubuntu/macOS/Windows, Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Sonar and applicable assurance checks on the exact cumulative PR HEAD.",
+        "Codecov acceptance: numeric patch >=97.85% when defined; otherwise N/A_ZERO_DENOMINATOR is permitted only under owner Option B exact-base/head, successful exact-head LCOV upload, provider SUCCESS+zero eligible patch lines/not-affected, no weakened coverage semantics, all other required gates green, and fresh owner exact-head audit.",
+        "Owner exact-head audit; no merge to main under Gate 2."
       ],
-      "currentCumulativeCodecovSonar": "NOT_RUN_FOR_A_NEW_REPLACEMENT_PR"
+      "currentCumulativeCodecovSonar": "Sonar Quality Gate PASS. Owner Option B applies: numeric Codecov patch must remain >=97.85% when a numeric denominator exists; when the provider reports zero eligible patch lines / Patch N/A / Coverage not affected on exact bound base/head with successful exact-head LCOV upload and SUCCESS patch status, record N/A_ZERO_DENOMINATOR (never 100%) and require all other exact-head gates green plus owner audit.",
+      "sourceAdmissionIssue": 348,
+      "candidateBranch": "codex/gbs-v11-release-integration-014",
+      "preResolutionPlanCommit": "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+      "gate2ContextLock": ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json",
+      "integrationMerge": "NORMAL_TWO_PARENT_MERGE_COMMITTED_CANDIDATE_NOT_PROMOTED sha=554b2627de324058e2264b78c10114eb4c652a9d; tree=01acb6c2379304235b6213e3e9c7a2f87078069b; parents=aa4af40bfd297742bf100f94fbfeda3ef411a35b,4b2f66724ea5df94ddd8fda2d8088b12b9708c10; resolved=14; unresolved=0",
+      "mergeCommit": "554b2627de324058e2264b78c10114eb4c652a9d",
+      "mergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+      "resolvedConflictCount": 14,
+      "unresolvedConflictCount": 0,
+      "correctionDeltas": [
+        {
+          "issue": 348,
+          "comment": 5909649467,
+          "paths": [
+            "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+            "tests/v11-wo-008-admission.test.mjs",
+            "tests/v11-wo-009-admission.test.mjs"
+          ],
+          "result": "updated stale checkpoint assertions to actual Gate 0/Gate 1 receipts and Gate 2 stop state"
+        },
+        {
+          "issue": 348,
+          "comment": 5909922552,
+          "paths": [
+            "tests/v11-legacy-ecosystem-detachment.test.mjs"
+          ],
+          "result": "bounded historical-governance exclusion to exact canonical receipt paths; active surfaces remain scanned"
+        },
+        {
+          "issue": 348,
+          "comment": 5909940063,
+          "paths": [
+            ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md",
+            ".engineering/context-locks/GBS-MAINT-HIVE-REMOVAL-001.md",
+            ".engineering/evidence/GBS-MAINT-HIVE-REMOVAL-001-EVIDENCE.md",
+            ".engineering/work-orders/GBS-MAINT-HIVE-REMOVAL-001.md"
+          ],
+          "result": "restored byte-for-byte from admitted main source f6738292c038eb6f0d08d1d32b3752c5c7dc417a"
+        },
+        {
+          "issue": 348,
+          "review": 5366327642,
+          "paths": [
+            ".github/workflows/v11-release-assurance.yml",
+            ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json",
+            ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013.json",
+            ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json",
+            ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE2-EVIDENCE.md",
+            ".engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md",
+            "pull request #350 description"
+          ],
+          "result": "Only pull_request trigger now includes main and release/1.1; jobs and push trigger unchanged. Provider-bound Codecov diagnosis found no numeric patch percent and no justified mapping-fix hunk; exact cause remains provider/diff mapping limitation. 145/145 checks passed on measured head 07a723cfe30b324b500b46618cef4e451705f39a. Stop OWNER_DECISION_REQUIRED."
+        },
+        {
+          "issue": 348,
+          "review": 5367412324,
+          "sourceHead": "db33e42ca38386be6a601a11bcddaf963cb90a94",
+          "priorReviewedHead": "1d340b6f52d1f61bd887f93e7c228b77018dab5a",
+          "paths": [
+            "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+            "tests/v11-wo-008-admission.test.mjs"
+          ],
+          "result": "Recognize Option B only on the exact ownerDecision value; preserve strict historical assertions when absent. No runtime, workflow, threshold, exclusion, CI or other test path changed."
+        }
+      ],
+      "localValidation": {
+        "dependencyInstall": {
+          "command": "npm ci --ignore-scripts",
+          "result": "PASS",
+          "packagesAdded": 33,
+          "reportedVulnerabilities": 0
+        },
+        "build": {
+          "command": "npm run build",
+          "result": "PASS",
+          "sourceHead": "96ca391e61002c494fcb3d408a344251ef1d2748"
+        },
+        "fullValidation": {
+          "command": "npm run validate",
+          "result": "PASS",
+          "typecheck": "PASS",
+          "tests": 1603,
+          "passed": 1603,
+          "failed": 0,
+          "skipped": 0,
+          "sourceHead": "96ca391e61002c494fcb3d408a344251ef1d2748"
+        },
+        "focusedAdmissionTests": {
+          "command": "node --test tests/v11-wo-009-admission.test.mjs tests/v11-wo-008-admission.test.mjs",
+          "result": "PASS",
+          "passed": 12,
+          "failed": 0
+        },
+        "historicalDetachmentScanner": {
+          "command": "node --test tests/v11-legacy-ecosystem-detachment.test.mjs",
+          "result": "PASS",
+          "passed": 1,
+          "failed": 0
+        },
+        "correctionDelta5": {
+          "sourceHead": "db33e42ca38386be6a601a11bcddaf963cb90a94",
+          "platform": "Windows",
+          "node": "v24.19.0",
+          "dependencyInstall": {
+            "command": "npm ci --ignore-scripts",
+            "result": "PASS",
+            "packagesAdded": 33,
+            "reportedVulnerabilities": 0
+          },
+          "focusedCheckpointTests": {
+            "command": "node --test tests/v11-wo-001-promotion.test.mjs tests/v11-wo-003-admission.test.mjs tests/v11-wo-005-admission.test.mjs tests/v11-wo-006-admission.test.mjs tests/v11-wo-007-admission.test.mjs tests/v11-wo-008-admission.test.mjs tests/v11-wo-009-admission.test.mjs",
+            "result": "PASS",
+            "passed": 48,
+            "failed": 0,
+            "skipped": 0
+          },
+          "fullValidation": {
+            "command": "npm run validate",
+            "typecheck": "PASS",
+            "tests": 1603,
+            "passed": 1603,
+            "failed": 0,
+            "skipped": 0,
+            "result": "PASS"
+          }
+        }
+      },
+      "providerChecks": {
+        "pullRequest": "OPEN_DRAFT https://github.com/KayzenRoot/gef-bootstrap/pull/350",
+        "providerEvidenceHeadSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
+        "exactHead": "145/145 status contexts SUCCESS; CodeRabbit remains non-audit; https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks",
+        "gitleaks": "PASS exact head; workflow 36737779435",
+        "trivy": "PASS exact head; workflow 36737779435",
+        "codeql": "PASS exact head; run 109964564820",
+        "dependencyReview": "PASS exact head; workflow 36737779307",
+        "pipelineIntegrity": "PASS exact head; workflow 36737779650",
+        "crossPlatformAssurance": "PASS exact head; V1.1 release assurance Ubuntu/macOS/Windows, workflow 36737779630",
+        "sonarQualityGateAndDuplication": "PASS exact head; SonarCloud Code Analysis and cumulative diagnostics/duplicate-block checks succeeded",
+        "codecovPatch": "N/A_ZERO_DENOMINATOR under owner Option B: exact base/head bound; LCOV upload succeeded; provider codecov/patch SUCCESS run 109964904340 says Coverage not affected; patch files=31, lines=0, hits=0, misses=0, partials=0; base coverage=97.85%, head coverage=95.26%; no numeric patch percent",
+        "codecovUploadRuns": [
+          36709709431,
+          36710842657,
+          36711283623,
+          36719357762,
+          36737779260
+        ]
+      },
+      "latestExactHeadEvidence": {
+        "headSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
+        "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+        "mergeBaseSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+        "checks": "145/145 SUCCESS",
+        "releaseAssurance": "Ubuntu/macOS/Windows PASS",
+        "releaseAssuranceRun": 36737779630,
+        "codecovRun": 36737779260,
+        "codecovPatchCheckRun": 109964904340,
+        "codecovPatchFiles": 31,
+        "codecovPatchLines": 0,
+        "codecovPatchHits": 0,
+        "codecovPatchMisses": 0,
+        "codecovPatchPartials": 0,
+        "numericPatchPercent": null,
+        "patchDisposition": "N/A_ZERO_DENOMINATOR",
+        "baseCoveragePercent": 97.85,
+        "headCoveragePercent": 95.26,
+        "codecovPatchSummary": "Coverage not affected when comparing f673829...5c0aa73",
+        "stopCondition": "SUPERSEDED_BY_EVIDENCE_SYNC_DOCS_ONLY_HEAD_REQUIRING_EXACT_HEAD_REVALIDATION"
+      },
+      "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT",
+      "ownerSemanticAmendment": {
+        "decision": "OPTION_B_APPROVED",
+        "date": "2026-09-30",
+        "source": "Issue #348 owner decision after review #5366930854",
+        "numericRule": "patch >=97.85% when numeric patch denominator exists",
+        "zeroDenominatorRule": "N/A_ZERO_DENOMINATOR accepted only for exact base/head + exact-head LCOV upload SUCCESS + provider patch status SUCCESS + zero eligible patch lines / not affected + visible head/project coverage + no weakened threshold/exclusion/coverage definition + all other required gates green + owner exact-head audit",
+        "prohibitedInterpretation": "N/A is never 100% and never numeric threshold satisfaction",
+        "currentCandidateBeforeDocsHead": "4884b2aded8130e2af0bd0083caa54e11ce8eca6",
+        "state": "APPLIED_AWAITING_NEW_HEAD_CHECKS_AND_OWNER_REAUDIT"
+      },
+      "latestReview": {
+        "review": 5367412324,
+        "reviewedHead": "1d340b6f52d1f61bd887f93e7c228b77018dab5a",
+        "verdict": "CORRECTION_REQUIRED / NOT_INDEPENDENT",
+        "staleAssertionFailures": 8,
+        "previousSuite": {
+          "total": 1603,
+          "passed": 1591,
+          "failed": 8,
+          "skipped": 4
+        },
+        "failedRuns": {
+          "repositoryValidation": 36726398183,
+          "m01Validation": 36726398316,
+          "codecovCoveragePilot": 36726398023
+        },
+        "disposition": "Superseded by correctionDelta5 source head; do not carry these failures or earlier-head passes to the next exact-head audit."
+      },
+      "postDelta5ExactHeadChecks": {
+        "state": "SUCCESS_ON_5c0aa73; DOCUMENTATION_FOLLOWUP_REQUIRES_EXACT_HEAD_REVALIDATION",
+        "headSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
+        "checks": "145/145 SUCCESS",
+        "codecovDisposition": "N/A_ZERO_DENOMINATOR",
+        "releaseAssurance": "Ubuntu/macOS/Windows PASS",
+        "required": [
+          "Codecov exact-head LCOV upload and provider patch status",
+          "V1.1 release assurance Ubuntu/macOS/Windows",
+          "Gitleaks and Trivy",
+          "CodeQL",
+          "Sonar",
+          "Dependency Review",
+          "Pipeline Integrity",
+          "all other required exact-head workflows"
+        ],
+        "next": "Revalidate the documentation-only Gate Matrix/Evidence follow-up HEAD, then stop for owner reauditoria",
+        "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_TEST_ASSERTIONS_READY_FOR_REAUDIT"
+      }
     },
     {
       "gate": 3,
@@ -108,7 +339,12 @@
       "state": "PREPARATION_ONLY_NOT_ADMITTED",
       "workOrder": "GBS-V11-WO-010",
       "workOrderPresent": false,
-      "packageMetadata": {"rootPrivate": true, "rootLicense": "UNLICENSED", "cliPrivate": true, "cliLicense": "UNLICENSED"},
+      "packageMetadata": {
+        "rootPrivate": true,
+        "rootLicense": "UNLICENSED",
+        "cliPrivate": true,
+        "cliLicense": "UNLICENSED"
+      },
       "ownerActions": {
         "licenseDistributionChoice": "UNKNOWN",
         "npmNamespaceRegistryOwnership": "UNKNOWN_IF_CLAIMED",
@@ -116,16 +352,28 @@
         "finalS4PublicationApproval": "NOT_GRANTED"
       },
       "authorizedActivityNow": "read-only source inventory only",
-      "forbiddenNow": ["code or CI changes", "main promotion", "tag", "package publication"]
+      "forbiddenNow": [
+        "code or CI changes",
+        "main promotion",
+        "tag",
+        "package publication"
+      ]
     }
   ],
   "historicalFacts": {
     "v1Accepted": "1088/1088; unchanged",
     "pr278": "CLOSED_NOT_MERGED; historic head bbd83a179dd4c11f2f8653251db2b574d0266880; checks and Codecov result do not transfer",
     "issue334Cause": "LCOV DA line coverage 238/238 versus 14 uncovered BRDA branch outcomes; Codecov changed-line mapping is branch-aware, not an SHA/path mismatch",
-    "pr336": {"state": "MERGED", "mergeSha": "d892d2cb03719dd661bcab86bec995aecc8f4894"}
+    "pr336": {
+      "state": "MERGED",
+      "mergeSha": "d892d2cb03719dd661bcab86bec995aecc8f4894"
+    }
   },
   "phase1EvidenceBundle": ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md",
   "mergeAuthorized": false,
-  "publicationAuthorized": false
+  "publicationAuthorized": false,
+  "currentGate": 2,
+  "currentGateState": "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT",
+  "currentCandidateBranch": "codex/gbs-v11-release-integration-014",
+  "mainMergeAuthorized": false
 }

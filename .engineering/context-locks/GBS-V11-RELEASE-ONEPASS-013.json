@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "issue": 348,
-  "status": "PHASE1_ADMITTED_EXECUTION_IN_PROGRESS",
-  "capturedAtUtc": "2026-09-30T01:37:44Z",
-  "capturedLocalDate": "2026-09-29",
+  "status": "GATE2_BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
+  "capturedAtUtc": "2026-09-30T13:16:08Z",
+  "capturedLocalDate": "2026-09-30",
   "timezone": "America/Sao_Paulo",
   "repository": "KayzenRoot/gef-bootstrap",
   "owner": "KayzenRoot",
@@ -28,8 +28,16 @@
       "commit": "e23311e77d79b84f3c70671072a22a6f8896d13d",
       "tree": "39d8b61cb70020e87c65f2443ce3790af1c2b5c4"
     },
-    "divergenceMainOnlyReleaseOnly": [2, 79],
-    "verifiedBy": ["git fetch", "git rev-parse", "git merge-base", "git rev-list"]
+    "divergenceMainOnlyReleaseOnly": [
+      2,
+      79
+    ],
+    "verifiedBy": [
+      "git fetch",
+      "git rev-parse",
+      "git merge-base",
+      "git rev-list"
+    ]
   },
   "phase0": {
     "state": "MERGED",
@@ -37,7 +45,10 @@
     "reviewedHead": "ab02b706b4ab7de941cdcc1f849fc07003d92949",
     "ownerAuditReview": 5360335310,
     "auditIndependence": "NOT_INDEPENDENT",
-    "exactHeadChecks": {"passed": 16, "total": 16},
+    "exactHeadChecks": {
+      "passed": 16,
+      "total": 16
+    },
     "mergeSha": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
     "d0063ReleaseEffect": "EFFECTIVE_AT_REAL_GOVERNED_MERGE",
     "checkpointReceiptDebt": {
@@ -45,7 +56,8 @@
       "blob": "42aa40765523e10a46fe65430169bbfa4f735bf8",
       "actualMergeSha": null,
       "mergeReceipt": "PENDING_REAL_MERGE",
-      "disposition": "TRACK_FOR_SEPARATELY_AUDITED_NARROW_WO004_UPDATE; OUTSIDE_PHASE1"
+      "disposition": "RECONCILE_IN_ADMITTED_GATE2_CANDIDATE; candidate receipt is not promoted until owner audit and authorized later merge",
+      "candidatePath": ".engineering/CHECKPOINT.json in the cumulative Gate 2 candidate"
     }
   },
   "phase1": {
@@ -64,7 +76,10 @@
       "tests/v11-codecov-patch-coverage.test.mjs",
       "tests/v11-pack-branch-negative.test.mjs"
     ],
-    "productionSource": {"path": "packages/cli/scripts/prepare-package.mjs", "permission": "READ_ONLY"},
+    "productionSource": {
+      "path": "packages/cli/scripts/prepare-package.mjs",
+      "permission": "READ_ONLY"
+    },
     "forbiddenSurfaces": [
       "other production or test files",
       "package manifests or lockfile",
@@ -77,33 +92,83 @@
     ],
     "testPlan": "See exact line and behavior matrix in the child Work Order; verify native Node 22.17.0 LCOV DA/BRDA against the exact source blob and final PR head.",
     "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT",
-    "fallbackStop": "BLOCKED_NEEDS_BOUNDED_OWNER_DELTA"
+    "fallbackStop": "BLOCKED_NEEDS_BOUNDED_OWNER_DELTA",
+    "state": "MERGED",
+    "implementationPr": 349,
+    "mergedHead": "ab81172a009a699542c63c54d80358226d075ab2",
+    "mergeSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+    "ownerReview": 5364744639
   },
   "phase2ReadOnlyPreparation": {
-    "state": "PREPARED_READ_ONLY_NOT_ADMITTED",
+    "state": "GATE2_INTEGRATION_COMMITTED_BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
-    "release_1_1": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
+    "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
     "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
-    "divergenceMainOnlyReleaseOnly": [2, 79],
+    "divergenceMainOnlyReleaseOnly": [
+      2,
+      84
+    ],
     "changedOnBothSinceMergeBase": 16,
     "dryRun": {
       "operation": "git merge-tree --write-tree --name-only --messages origin/main origin/release/1.1",
-      "result": "14 textual conflicts: 12 content, 2 add/add; no refs/index/worktree changes",
+      "result": "14 textual conflicts (12 content, 2 add/add), all within the approved reconciliation surface; no product/runtime/test/CI/security-policy conflict.",
       "textualConflictPaths": [
-        {"path": ".engineering/ARCHITECTURE.md", "class": "content"},
-        {"path": ".engineering/CHECKPOINT.json", "class": "content"},
-        {"path": ".engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md", "class": "content"},
-        {"path": ".engineering/CONSTITUTION-LOCK.md", "class": "content"},
-        {"path": ".engineering/DECISIONS-LEDGER.md", "class": "content"},
-        {"path": ".engineering/DEFINITION-OF-DONE.md", "class": "content"},
-        {"path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md", "class": "content"},
-        {"path": ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md", "class": "add/add"},
-        {"path": ".engineering/PROJECT-OVERVIEW.md", "class": "content"},
-        {"path": ".engineering/REQUIREMENTS.md", "class": "content"},
-        {"path": ".engineering/SCOPE.md", "class": "content"},
-        {"path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md", "class": "add/add"},
-        {"path": "AGENTS.md", "class": "content"},
-        {"path": "README.md", "class": "content"}
+        {
+          "path": ".engineering/ARCHITECTURE.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/CHECKPOINT.json",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/CONSTITUTION-LOCK.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/DECISIONS-LEDGER.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/DEFINITION-OF-DONE.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md",
+          "class": "add/add"
+        },
+        {
+          "path": ".engineering/PROJECT-OVERVIEW.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/REQUIREMENTS.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/SCOPE.md",
+          "class": "content"
+        },
+        {
+          "path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+          "class": "add/add"
+        },
+        {
+          "path": "AGENTS.md",
+          "class": "content"
+        },
+        {
+          "path": "README.md",
+          "class": "content"
+        }
       ],
       "semanticOverlapsWithoutTextConflict": [
         ".engineering/CHECKPOINT.md",
@@ -112,7 +177,7 @@
       "decisionLineage": {
         "main": {
           "id": "D-0062",
-          "adr": "ADR-0007-RETIRE-\u0048IVE-INTEGRATION",
+          "adr": "ADR-0007-RETIRE-HIVE-INTEGRATION",
           "sourceCommit": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
           "adrBlob": "687ee037d2dcd4936d118a23666665fc66410aed",
           "meaning": "retire the main-branch external development/integration contract"
@@ -131,16 +196,117 @@
           "releaseAdrBlob": "6d877fce27566018b921cb2838204b8f0caa8c83"
         }
       },
-      "pr336": {"state": "MERGED", "mergeSha": "d892d2cb03719dd661bcab86bec995aecc8f4894"},
-      "pr278": {"state": "CLOSED_NOT_MERGED", "historicHead": "bbd83a179dd4c11f2f8653251db2b574d0266880"},
+      "pr336": {
+        "state": "MERGED",
+        "mergeSha": "d892d2cb03719dd661bcab86bec995aecc8f4894"
+      },
+      "pr278": {
+        "state": "CLOSED_NOT_MERGED",
+        "historicHead": "bbd83a179dd4c11f2f8653251db2b574d0266880"
+      },
       "cumulativeReplacementPr": "NOT_FOUND_AT_CAPTURE",
-      "currentCumulativeCodecovOrSonar": "NOT_RUN_FOR_A_NEW_RELEASE_TO_MAIN_CANDIDATE"
+      "currentCumulativeCodecovOrSonar": "PR #350 Sonar Quality Gate PASS; Codecov exact tested head 5dfc1663ed5550d650b45e88acbce30b34c24381 Patch is dash with API denominator 0 lines; >=97.85% is not proven.",
+      "resultTree": "797545a324c17e5e14da9ddbc6819f5134bfb21d"
+    },
+    "sourceAdmissionIssue": "https://github.com/KayzenRoot/gef-bootstrap/issues/348",
+    "phaseId": "GBS-V11-RELEASE-INTEGRATION-014",
+    "candidateBranch": "codex/gbs-v11-release-integration-014",
+    "preResolutionContextLock": ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json",
+    "preResolutionPlanCommit": "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+    "cumulativeCodecov": "BLOCKED at tested PR #350 head 5dfc1663ed5550d650b45e88acbce30b34c24381: provider report has no eligible patch lines and no numeric result; >=97.85 percent remains required.",
+    "semanticOverlapsVerified": [
+      ".engineering/CHECKPOINT.md",
+      ".engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md"
+    ],
+    "execution": {
+      "mergeCommit": "554b2627de324058e2264b78c10114eb4c652a9d",
+      "mergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+      "parents": [
+        "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+        "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+      ],
+      "resolvedTextualConflicts": 14,
+      "unresolvedTextualConflicts": 0,
+      "correctionDeltas": [
+        {
+          "issue": 348,
+          "comment": 5909649467,
+          "paths": [
+            "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+            "tests/v11-wo-008-admission.test.mjs",
+            "tests/v11-wo-009-admission.test.mjs"
+          ],
+          "result": "updated stale checkpoint assertions to actual Gate 0/Gate 1 receipts and Gate 2 stop state"
+        },
+        {
+          "issue": 348,
+          "comment": 5909922552,
+          "paths": [
+            "tests/v11-legacy-ecosystem-detachment.test.mjs"
+          ],
+          "result": "bounded historical-governance exclusion to exact canonical receipt paths; active surfaces remain scanned"
+        },
+        {
+          "issue": 348,
+          "comment": 5909940063,
+          "paths": [
+            ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md",
+            ".engineering/context-locks/GBS-MAINT-HIVE-REMOVAL-001.md",
+            ".engineering/evidence/GBS-MAINT-HIVE-REMOVAL-001-EVIDENCE.md",
+            ".engineering/work-orders/GBS-MAINT-HIVE-REMOVAL-001.md"
+          ],
+          "result": "restored byte-for-byte from admitted main source f6738292c038eb6f0d08d1d32b3752c5c7dc417a"
+        }
+      ],
+      "localValidation": {
+        "dependencyInstall": {
+          "command": "npm ci --ignore-scripts",
+          "result": "PASS",
+          "packagesAdded": 33,
+          "reportedVulnerabilities": 0
+        },
+        "build": {
+          "command": "npm run build",
+          "result": "PASS",
+          "sourceHead": "96ca391e61002c494fcb3d408a344251ef1d2748"
+        },
+        "fullValidation": {
+          "command": "npm run validate",
+          "result": "PASS",
+          "typecheck": "PASS",
+          "tests": 1603,
+          "passed": 1603,
+          "failed": 0,
+          "skipped": 0,
+          "sourceHead": "96ca391e61002c494fcb3d408a344251ef1d2748"
+        },
+        "focusedAdmissionTests": {
+          "command": "node --test tests/v11-wo-009-admission.test.mjs tests/v11-wo-008-admission.test.mjs",
+          "result": "PASS",
+          "passed": 12,
+          "failed": 0
+        },
+        "historicalDetachmentScanner": {
+          "command": "node --test tests/v11-legacy-ecosystem-detachment.test.mjs",
+          "result": "PASS",
+          "passed": 1,
+          "failed": 0
+        }
+      },
+      "providerChecks": "PR #350 exact tested head 5dfc1663ed5550d650b45e88acbce30b34c24381: 139/139 GitHub checks SUCCESS, except Codecov threshold is not established because the provider report has zero patch lines; see the Gate 2 Evidence Bundle.",
+      "mainPromotion": "NOT_AUTHORIZED",
+      "tagOrPublication": "NOT_AUTHORIZED"
     }
   },
   "phase3ReadOnlyPreparation": {
     "state": "PREPARATION_ONLY_NOT_ADMITTED",
     "wo010": "NOT_ADMITTED_AND_NOT_PRESENT_IN_CURRENT_RELEASE_TREE",
-    "currentPackageMetadata": {"rootPrivate": true, "rootLicense": "UNLICENSED", "cliPrivate": true, "cliLicense": "UNLICENSED"},
+    "currentPackageMetadata": {
+      "rootPrivate": true,
+      "rootLicense": "UNLICENSED",
+      "cliPrivate": true,
+      "cliLicense": "UNLICENSED"
+    },
     "ownerDecisions": {
       "licenseAndDistributionTerms": "UNKNOWN_OWNER_ACTION_REQUIRED",
       "npmNamespaceRegistryOwnership": "UNKNOWN_OWNER_ACTION_REQUIRED_IF_NPM_IS_CLAIMED",
@@ -169,37 +335,192 @@
     "publicationOrTagMutation": "FORBIDDEN"
   },
   "readOnlyFingerprintMatrix": [
-    {"path": ".engineering/SOURCE-HIERARCHY.md", "base": "bedc10c97d28154efe59ff43fc1d175add37f568", "main": "bedc10c97d28154efe59ff43fc1d175add37f568", "release_1_1": "bedc10c97d28154efe59ff43fc1d175add37f568"},
-    {"path": ".engineering/CHECKPOINT.md", "base": "38a3d851a1037e4866a0b22019e3b782f17dcb94", "main": "a495f3ee30e586a7e8e57ca63d20fa8ecf1bd97f", "release_1_1": "2de36ed69ac259a8ef4b5d99528be9ba231e397a"},
-    {"path": ".engineering/CHECKPOINT.json", "base": "0026989d7feebf2b96ef456ef950f625a7308db8", "main": "d3ca8edcfe6ab2db9b8c637fcd2a6d4e9dcb16f3", "release_1_1": "42aa40765523e10a46fe65430169bbfa4f735bf8"},
-    {"path": ".engineering/REQUIREMENTS.md", "base": "6117f4d35258cd8782062acb80b445e08736465f", "main": "61367fcc2ebb338e3ff75b630314804bb1d29e22", "release_1_1": "373f4dc0cd11d964dba4684a0571b1a57f1b8649"},
-    {"path": ".engineering/SCOPE.md", "base": "5b6c5a9805d0a79e7539beaa5f5d6e018e6a7fb9", "main": "ed48ed36d7028f9a6606bed8b56fa9f413fab5b1", "release_1_1": "7331dda878419cd950e07c4956c820e176edf546"},
-    {"path": ".engineering/ARCHITECTURE.md", "base": "65cee9aa5ca31e663437a407aaa4f5452258dad1", "main": "09105c912f294fa50ee4163e4a27f6933d359408", "release_1_1": "6c1f1d5f233e77e598a7eb7fc6155f24dc8abb21"},
-    {"path": ".engineering/SECURITY.md", "base": "09b8aa12244791b509ecb50ba5c96db867a0797d", "main": "09b8aa12244791b509ecb50ba5c96db867a0797d", "release_1_1": "09b8aa12244791b509ecb50ba5c96db867a0797d"},
-    {"path": ".engineering/TEST-BENCHMARK-PLAN.md", "base": "a7b5618ead1a483275a0b0e72126258523349f01", "main": "a7b5618ead1a483275a0b0e72126258523349f01", "release_1_1": "a7b5618ead1a483275a0b0e72126258523349f01"},
-    {"path": ".engineering/DEFINITION-OF-DONE.md", "base": "cc9fd107afa135a23f410739d41af875d6079197", "main": "150ec0a83ccb7d192bc20cde3cb73358e6197ddb", "release_1_1": "7fe5d33429017d3927f6a0fdf498f8fd2f4fb04d"},
-    {"path": ".engineering/DECISIONS-LEDGER.md", "base": "303bfcbd8e75a7c27d7bda51d5e9032e91237f49", "main": "035a7a1f0e8f374784e06bc1b6a3bb10ee6854f6", "release_1_1": "d6aab21d009cf3dde3f98998c200b56d5be0ef02"},
-    {"path": ".engineering/decisions/ADR-0007-RETIRE-\u0048IVE-INTEGRATION.md", "base": "687ee037d2dcd4936d118a23666665fc66410aed", "main": "687ee037d2dcd4936d118a23666665fc66410aed", "release_1_1": "ABSENT"},
-    {"path": ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md", "base": "ABSENT", "main": "ABSENT", "release_1_1": "97bef59b15f557302a7fd625af30ceeb421c01a1"},
-    {"path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md", "base": "ABSENT", "main": "7d6ec3885fb3d029586dc0b7f99aa32b033170e1", "release_1_1": "6d877fce27566018b921cb2838204b8f0caa8c83"},
-    {"path": "packages/cli/scripts/prepare-package.mjs", "base": "ABSENT", "main": "ABSENT", "release_1_1": "10e659ccce15045ed37ffa3e82d06a8408b8f734"},
-    {"path": "tests/v11-codecov-patch-coverage.test.mjs", "base": "ABSENT", "main": "ABSENT", "release_1_1": "2441961628d20dcc9404d2e51cc1d97b03543137"},
-    {"path": ".github/workflows/coverage-codecov.yml", "base": "850d86ee0399b11f31663a648f61403a51a2822e", "main": "850d86ee0399b11f31663a648f61403a51a2822e", "release_1_1": "005e04fe7d3306ef64613317f89115adf67c7791"},
-    {"path": "package.json", "base": "e4f0272e62570e56f280bdaca56534e8462b72c1", "main": "e4f0272e62570e56f280bdaca56534e8462b72c1", "release_1_1": "c8e17d4121566250595a1966a9314c56272546ac"},
-    {"path": "packages/cli/package.json", "base": "8be138f480a1f3b35eab868cdbc3753a73433f3a", "main": "8be138f480a1f3b35eab868cdbc3753a73433f3a", "release_1_1": "2ae791155eae41a7d835b0758365356d6136af0c"},
-    {"path": "package-lock.json", "base": "3a4722d1872ffcf9250ee7d4aa87976d20c89310", "main": "3a4722d1872ffcf9250ee7d4aa87976d20c89310", "release_1_1": "f7fccd5a338feae645d7c31de6905d6e0e97d998"},
-    {"path": "LICENSE", "base": "648cad75d20c617b197af5d3a685f7736e5da037", "main": "648cad75d20c617b197af5d3a685f7736e5da037", "release_1_1": "648cad75d20c617b197af5d3a685f7736e5da037"},
-    {"path": "CHANGELOG.md", "base": "cfcbdcd433f9d1cb4175c21955f5bb0f6d2fb0cc", "main": "cfcbdcd433f9d1cb4175c21955f5bb0f6d2fb0cc", "release_1_1": "9cb95d6c5a6ea845f3040d22237e14a57ed419d0"},
-    {"path": "README.md", "base": "5056e55f5cddf24664274c16c8ae59a74d9b931d", "main": "9b014a82cb32a616d0ad1526c62ad4bd90a33671", "release_1_1": "29fec90f7a15d7a00318ebda0ae0a19140a41b3a"},
-    {"path": "packages/cli/README.md", "base": "ABSENT", "main": "ABSENT", "release_1_1": "8ec72261f66694ff3fb66ca7749c6d9408bfd230"},
-    {"path": "docs/INSTALLATION.md", "base": "0ac1b8170f990819b10b1254d838ecab43d7222d", "main": "0ac1b8170f990819b10b1254d838ecab43d7222d", "release_1_1": "378b2e22b4acdc245b8fd6203ed5c86eba309779"},
-    {"path": "docs/QUICKSTART.md", "base": "f121640ab774556d3e5f6ffc490339e4493981a1", "main": "f121640ab774556d3e5f6ffc490339e4493981a1", "release_1_1": "fb88468a7f10ed6e8b386595fca560060fc0b39c"},
-    {"path": "docs/V1.1-OPERATIONS-RUNBOOK.md", "base": "ABSENT", "main": "ABSENT", "release_1_1": "c48bed8ade87a27ecea164cd331e314ac5b5cbf1"},
-    {"path": ".engineering/releases/V1.1-RELEASE-PLAN.md", "base": "ABSENT", "main": "ABSENT", "release_1_1": "074c99c57f09a13cb2e71cce883e46ee500909ed"},
-    {"path": ".engineering/releases/V1.1-CLI-DISTRIBUTION-ARCHITECTURE.md", "base": "ABSENT", "main": "ABSENT", "release_1_1": "dde3f82749161ad5c7b82415a160cca5d852e197"},
-    {"path": ".engineering/releases/V1.1-TEST-MATRIX.md", "base": "ABSENT", "main": "ABSENT", "release_1_1": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74"},
-    {"path": ".github/workflows/repository-validation.yml", "base": "bb81dc5450105da47e8f16f57a0617ef7026d727", "main": "bb81dc5450105da47e8f16f57a0617ef7026d727", "release_1_1": "38c801e6009663448194045ab27ef25c7dcbf0f0"},
-    {"path": ".github/workflows/dependency-review.yml", "base": "93f9f7d54c7ab5370c7eac47da10dad0490f10a1", "main": "93f9f7d54c7ab5370c7eac47da10dad0490f10a1", "release_1_1": "3d34f93903798345abcbd345640f1e04f5e0d424"}
+    {
+      "path": ".engineering/SOURCE-HIERARCHY.md",
+      "base": "bedc10c97d28154efe59ff43fc1d175add37f568",
+      "main": "bedc10c97d28154efe59ff43fc1d175add37f568",
+      "release_1_1": "bedc10c97d28154efe59ff43fc1d175add37f568"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.md",
+      "base": "38a3d851a1037e4866a0b22019e3b782f17dcb94",
+      "main": "a495f3ee30e586a7e8e57ca63d20fa8ecf1bd97f",
+      "release_1_1": "2de36ed69ac259a8ef4b5d99528be9ba231e397a"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "base": "0026989d7feebf2b96ef456ef950f625a7308db8",
+      "main": "d3ca8edcfe6ab2db9b8c637fcd2a6d4e9dcb16f3",
+      "release_1_1": "42aa40765523e10a46fe65430169bbfa4f735bf8"
+    },
+    {
+      "path": ".engineering/REQUIREMENTS.md",
+      "base": "6117f4d35258cd8782062acb80b445e08736465f",
+      "main": "61367fcc2ebb338e3ff75b630314804bb1d29e22",
+      "release_1_1": "373f4dc0cd11d964dba4684a0571b1a57f1b8649"
+    },
+    {
+      "path": ".engineering/SCOPE.md",
+      "base": "5b6c5a9805d0a79e7539beaa5f5d6e018e6a7fb9",
+      "main": "ed48ed36d7028f9a6606bed8b56fa9f413fab5b1",
+      "release_1_1": "7331dda878419cd950e07c4956c820e176edf546"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "base": "65cee9aa5ca31e663437a407aaa4f5452258dad1",
+      "main": "09105c912f294fa50ee4163e4a27f6933d359408",
+      "release_1_1": "6c1f1d5f233e77e598a7eb7fc6155f24dc8abb21"
+    },
+    {
+      "path": ".engineering/SECURITY.md",
+      "base": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+      "main": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+      "release_1_1": "09b8aa12244791b509ecb50ba5c96db867a0797d"
+    },
+    {
+      "path": ".engineering/TEST-BENCHMARK-PLAN.md",
+      "base": "a7b5618ead1a483275a0b0e72126258523349f01",
+      "main": "a7b5618ead1a483275a0b0e72126258523349f01",
+      "release_1_1": "a7b5618ead1a483275a0b0e72126258523349f01"
+    },
+    {
+      "path": ".engineering/DEFINITION-OF-DONE.md",
+      "base": "cc9fd107afa135a23f410739d41af875d6079197",
+      "main": "150ec0a83ccb7d192bc20cde3cb73358e6197ddb",
+      "release_1_1": "7fe5d33429017d3927f6a0fdf498f8fd2f4fb04d"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "base": "303bfcbd8e75a7c27d7bda51d5e9032e91237f49",
+      "main": "035a7a1f0e8f374784e06bc1b6a3bb10ee6854f6",
+      "release_1_1": "d6aab21d009cf3dde3f98998c200b56d5be0ef02"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md",
+      "base": "687ee037d2dcd4936d118a23666665fc66410aed",
+      "main": "687ee037d2dcd4936d118a23666665fc66410aed",
+      "release_1_1": "ABSENT"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md",
+      "base": "ABSENT",
+      "main": "ABSENT",
+      "release_1_1": "97bef59b15f557302a7fd625af30ceeb421c01a1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+      "base": "ABSENT",
+      "main": "7d6ec3885fb3d029586dc0b7f99aa32b033170e1",
+      "release_1_1": "6d877fce27566018b921cb2838204b8f0caa8c83"
+    },
+    {
+      "path": "packages/cli/scripts/prepare-package.mjs",
+      "base": "ABSENT",
+      "main": "ABSENT",
+      "release_1_1": "10e659ccce15045ed37ffa3e82d06a8408b8f734"
+    },
+    {
+      "path": "tests/v11-codecov-patch-coverage.test.mjs",
+      "base": "ABSENT",
+      "main": "ABSENT",
+      "release_1_1": "2441961628d20dcc9404d2e51cc1d97b03543137"
+    },
+    {
+      "path": ".github/workflows/coverage-codecov.yml",
+      "base": "850d86ee0399b11f31663a648f61403a51a2822e",
+      "main": "850d86ee0399b11f31663a648f61403a51a2822e",
+      "release_1_1": "005e04fe7d3306ef64613317f89115adf67c7791"
+    },
+    {
+      "path": "package.json",
+      "base": "e4f0272e62570e56f280bdaca56534e8462b72c1",
+      "main": "e4f0272e62570e56f280bdaca56534e8462b72c1",
+      "release_1_1": "c8e17d4121566250595a1966a9314c56272546ac"
+    },
+    {
+      "path": "packages/cli/package.json",
+      "base": "8be138f480a1f3b35eab868cdbc3753a73433f3a",
+      "main": "8be138f480a1f3b35eab868cdbc3753a73433f3a",
+      "release_1_1": "2ae791155eae41a7d835b0758365356d6136af0c"
+    },
+    {
+      "path": "package-lock.json",
+      "base": "3a4722d1872ffcf9250ee7d4aa87976d20c89310",
+      "main": "3a4722d1872ffcf9250ee7d4aa87976d20c89310",
+      "release_1_1": "f7fccd5a338feae645d7c31de6905d6e0e97d998"
+    },
+    {
+      "path": "LICENSE",
+      "base": "648cad75d20c617b197af5d3a685f7736e5da037",
+      "main": "648cad75d20c617b197af5d3a685f7736e5da037",
+      "release_1_1": "648cad75d20c617b197af5d3a685f7736e5da037"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "base": "cfcbdcd433f9d1cb4175c21955f5bb0f6d2fb0cc",
+      "main": "cfcbdcd433f9d1cb4175c21955f5bb0f6d2fb0cc",
+      "release_1_1": "9cb95d6c5a6ea845f3040d22237e14a57ed419d0"
+    },
+    {
+      "path": "README.md",
+      "base": "5056e55f5cddf24664274c16c8ae59a74d9b931d",
+      "main": "9b014a82cb32a616d0ad1526c62ad4bd90a33671",
+      "release_1_1": "29fec90f7a15d7a00318ebda0ae0a19140a41b3a"
+    },
+    {
+      "path": "packages/cli/README.md",
+      "base": "ABSENT",
+      "main": "ABSENT",
+      "release_1_1": "8ec72261f66694ff3fb66ca7749c6d9408bfd230"
+    },
+    {
+      "path": "docs/INSTALLATION.md",
+      "base": "0ac1b8170f990819b10b1254d838ecab43d7222d",
+      "main": "0ac1b8170f990819b10b1254d838ecab43d7222d",
+      "release_1_1": "378b2e22b4acdc245b8fd6203ed5c86eba309779"
+    },
+    {
+      "path": "docs/QUICKSTART.md",
+      "base": "f121640ab774556d3e5f6ffc490339e4493981a1",
+      "main": "f121640ab774556d3e5f6ffc490339e4493981a1",
+      "release_1_1": "fb88468a7f10ed6e8b386595fca560060fc0b39c"
+    },
+    {
+      "path": "docs/V1.1-OPERATIONS-RUNBOOK.md",
+      "base": "ABSENT",
+      "main": "ABSENT",
+      "release_1_1": "c48bed8ade87a27ecea164cd331e314ac5b5cbf1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-RELEASE-PLAN.md",
+      "base": "ABSENT",
+      "main": "ABSENT",
+      "release_1_1": "074c99c57f09a13cb2e71cce883e46ee500909ed"
+    },
+    {
+      "path": ".engineering/releases/V1.1-CLI-DISTRIBUTION-ARCHITECTURE.md",
+      "base": "ABSENT",
+      "main": "ABSENT",
+      "release_1_1": "dde3f82749161ad5c7b82415a160cca5d852e197"
+    },
+    {
+      "path": ".engineering/releases/V1.1-TEST-MATRIX.md",
+      "base": "ABSENT",
+      "main": "ABSENT",
+      "release_1_1": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74"
+    },
+    {
+      "path": ".github/workflows/repository-validation.yml",
+      "base": "bb81dc5450105da47e8f16f57a0617ef7026d727",
+      "main": "bb81dc5450105da47e8f16f57a0617ef7026d727",
+      "release_1_1": "38c801e6009663448194045ab27ef25c7dcbf0f0"
+    },
+    {
+      "path": ".github/workflows/dependency-review.yml",
+      "base": "93f9f7d54c7ab5370c7eac47da10dad0490f10a1",
+      "main": "93f9f7d54c7ab5370c7eac47da10dad0490f10a1",
+      "release_1_1": "3d34f93903798345abcbd345640f1e04f5e0d424"
+    }
   ],
   "invalidationRules": [
     "Any relevant main/release ref, merge-base, critical blob or owner decision change invalidates the dependent Context Lock section.",
@@ -207,5 +528,8 @@
     "Phase 2 and Phase 3 inventories are read-only snapshots and require a new bind at their separate admission gates."
   ],
   "mergeAuthorized": false,
-  "publicationAuthorized": false
+  "publicationAuthorized": false,
+  "currentGate": "Gate 2: OWNER_DECISION_REQUIRED; Codecov upload is accepted but the exact-head provider comparison has denominator 0 and no numeric patch percentage.",
+  "currentGateState": "OWNER_DECISION_REQUIRED_CODECOV_PATCH_NUMERIC_PERCENTAGE_UNAVAILABLE",
+  "gate2ContextLock": ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json"
 }

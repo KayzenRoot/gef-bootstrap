@@ -25,7 +25,7 @@ Captured at `2026-09-30T01:37:44Z` (`2026-09-29`, `America/Sao_Paulo`):
 - PR #336 is `MERGED` at `d892d2cb03719dd661bcab86bec995aecc8f4894`; Issue #335 remains the planning lineage. PR #278 is `CLOSED_NOT_MERGED`; its old Codecov/Sonar checks are historical and never satisfy a new integration candidate.
 - Issue #334 comment #5894818858 proves the historical #278 discrepancy at `bbd83a179dd4c11f2f8653251db2b574d0266880`: LCOV hit 238/238 lines but missed 14/37 branch outcomes; Codecov mapped those outcomes to 13 uncovered and one partial changed line. Cause: line coverage versus branch-aware patch coverage, not a source-path or SHA mismatch.
 - Issue #337 now contains a post-#347 owner source admission for tests only, bound to release SHA `9f6f069c977868ade34a19cddb346f7bea9a95fe`, main SHA `f6738292c038eb6f0d08d1d32b3752c5c7dc417a`, merge base `e23311e77d79b84f3c70671072a22a6f8896d13d`, and exact critical blobs recorded in the child Context Lock.
-- Known factual checkpoint debt remains: release `CHECKPOINT.json` blob `42aa40765523e10a46fe65430169bbfa4f735bf8` still says `codexOnlyAdoption.actualMergeSha=null` and `mergeReceipt=PENDING_REAL_MERGE`. Track this for the separately audited, narrow WO-004 correction before final WO-010 acceptance. It is outside Phase 1 and this Work Order does not authorize editing the checkpoint.
+- At this initial plan snapshot, the release checkpoint had a stale PR #347 merge receipt. Gate 2's admitted candidate reconciles it to the verified PR #347 merge and audit evidence while preserving V1.0 production truth; no V1.1 production promotion is claimed.
 
 ## Phase 0 — governance promotion
 
@@ -45,7 +45,7 @@ No cumulative Codecov credit is inferred from local test coverage. After Phase 1
 
 ## Phase 2 — fresh cumulative `release/1.1` to `main` integration
 
-**State: `READ_ONLY_PREPARATION_RECORDED / NOT_ADMITTED`.** The current merge-base and refs above were freshly compared after Gate 0. `git merge-tree --write-tree --name-only --messages origin/main origin/release/1.1` reported 14 textual conflicts: 12 content conflicts and 2 add/add conflicts. The dry run used an external temporary object directory; it did not change refs, index, worktree or branch state.
+**State at initial master-plan capture: `READ_ONLY_PREPARATION_RECORDED / NOT_ADMITTED`; superseded by the approved Issue #348 Gate 2 source admission and execution record below.** The initial merge-base/ref comparison found 14 textual conflicts: 12 content conflicts and 2 add/add conflicts.
 
 Current textual conflict map:
 
@@ -94,9 +94,9 @@ WO-010 acceptance remains a distinct gate for the complete frozen DoD: current f
 
 | Gate | Required proof | Current state |
 |---|---|---|
-| 0 | Exact-head owner audit, required checks and real merge receipt for governance promotion | `MERGED`; checkpoint receipt debt tracked |
-| 1 | Actual fail-closed branch cases; native Node 22.17.0 DA/BRDA on exact candidate; build/validate; package/integration/security; exact-head cross-platform and security checks | `ADMITTED_IN_PROGRESS`; Phase 1 Evidence Bundle owns results |
-| 2 | Fresh ancestry/conflict reconciliation; cumulative Codecov >=97.85%; current Sonar/security/quality and all required checks on one exact integration head | `NOT_ADMITTED` |
+| 0 | Exact-head owner audit, required checks and real merge receipt for governance promotion | `MERGED` at `9f6f069c977868ade34a19cddb346f7bea9a95fe` |
+| 1 | Actual fail-closed branch cases; native Node 22.17.0 DA/BRDA on exact candidate; build/validate; package/integration/security; exact-head cross-platform and security checks | `MERGED` at `4b2f66724ea5df94ddd8fda2d8088b12b9708c10` |
+| 2 | Fresh ancestry/conflict reconciliation; Codecov numeric patch >=97.85% when defined, or governed `N/A_ZERO_DENOMINATOR` only under the exact owner Option B conditions; current Sonar/security/quality and all required checks on one exact integration head | `OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT`; details in the Gate 2 Evidence Bundle |
 | 3 | Full WO-010 production DoD, supported consumer/install/upgrade/recovery matrix, secure reproducible release artifacts, owner decisions and verified post-publication receipts if publication is authorized | `NOT_ADMITTED`; legal/registry/OIDC decisions unknown |
 
 Unrun evidence is `NOT_RUN`; missing or inaccessible evidence is `UNKNOWN/BLOCKED`; failed or stale exact-head evidence is not a pass. Preserve the historical V1 `1088/1088` denominator and state. “9/10 WOs” is a milestone count, never a production completion percentage.
@@ -105,12 +105,72 @@ Unrun evidence is `NOT_RUN`; missing or inaccessible evidence is `UNKNOWN/BLOCKE
 
 - Phase 1 MUST_READ: root `AGENTS.md`; `.engineering/SOURCE-HIERARCHY.md`, checkpoint views, Scope, Requirements, Architecture, Security, Test & Benchmark Plan, Definition of Done, Deployment, Constitution/decisions and applicable ADRs; Issue #334 proof; Issue #337 admission; Issue #348; Issue #335 and merged PR #336 lineage; the exact script, existing coverage test, coverage workflow and pipeline documentation; test/package guidance.
 - Phase 1 WRITE_ALLOWED: the two admitted test files above and the versioned artifacts named in the child Work Order. Everything else is read-only or forbidden as specifically listed there.
-- Phase 2/3 during this Work Order: read-only source/status/fingerprint collection only. No implementation, conflict resolution, checkpoint update, WO-010 admission or release operation.
+- At initial master-plan capture, Phase 2/3 activity was read-only. Issue #348 later admitted Gate 2 conflict resolution and its cumulative PR; Gate 3/WO-010 remains not admitted.
 - No force-push, history rewrite, test weakening, coverage exclusion, threshold change, CI bypass, secret exposure, tag mutation, merge or publication is authorized by this Work Order.
 - Review/merge authority follows release D-0062 / ADR-0006: exact-head owner audit is `NOT_INDEPENDENT`; no PR is merged here.
 
 ## Progress and stop conditions
 
-At this revision, Gate 0 is `MERGED`; Gate 1 is `ADMITTED_IN_PROGRESS`; Gate 2 is `READ_ONLY_PREPARATION_RECORDED / NOT_ADMITTED`; Gate 3 is `PREPARATION_ONLY / NOT_ADMITTED`. Per-gate source refs, exact evidence state, changed files, tests, platform results, blockers and current candidate head must be maintained in the machine-readable gate matrix and phase Evidence Bundles.
+At initial master-plan capture, Gates 0–3 had the states recorded in that plan. Current states are maintained by the later gate-specific execution addenda and machine-readable gate matrix; Gate 0 and Gate 1 are merged, Gate 2 has owner Option B semantics applied and awaits exact-head reauditoria, and Gate 3 remains not admitted.
 
 Stop Phase 1 at `GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT` for the required owner audit, or at `BLOCKED_NEEDS_BOUNDED_OWNER_DELTA` if the exact source binding changes or production-source authorization is required. Continue later phases only after their separate gates become effective. Final master completion is allowed only after verified actual receipts for every admitted gate; no such completion is claimed here.
+
+## Gate 2 local execution update — 2026-09-30
+
+The Issue #348 source admission is active for `GBS-V11-RELEASE-INTEGRATION-014`. Immediately before candidate publication, remote `main` and `release/1.1` still matched the admitted SHAs `f6738292c038eb6f0d08d1d32b3752c5c7dc417a` and `4b2f66724ea5df94ddd8fda2d8088b12b9708c10`; merge base remained `e23311e77d79b84f3c70671072a22a6f8896d13d`.
+
+The candidate now contains normal merge commit `554b2627de324058e2264b78c10114eb4c652a9d`, with first parent `aa4af40bfd297742bf100f94fbfeda3ef411a35b` and second parent the admitted release SHA. All 14 admitted textual conflicts are resolved; the two recorded semantic overlaps were reconciled. D-0062 remains branch-qualified, D-0063 keeps both actual adoption receipts, D-0064 remains unallocated, and the main ADR-0007 receipt documents were preserved byte-for-byte.
+
+Three bounded same-Issue correction deltas were recorded before their edits: Issue #348 comments [#5909649467](https://github.com/KayzenRoot/gef-bootstrap/issues/348#issuecomment-5909649467), [#5909922552](https://github.com/KayzenRoot/gef-bootstrap/issues/348#issuecomment-5909922552), and [#5909940063](https://github.com/KayzenRoot/gef-bootstrap/issues/348#issuecomment-5909940063). They authorized only stale checkpoint test assertions, the exact-path historical governance scanner allowlist, and byte-for-byte restoration of the main D-0062 ADR/context-lock/evidence/work-order records. No production code, CI, threshold, manifest, or acceptance state was changed.
+
+Local evidence: `npm ci --ignore-scripts` completed (33 packages added; 0 reported vulnerabilities); `npm run build` passed; `npm run validate` passed with typecheck and 1603/1603 tests (0 failed, 0 skipped) at code/test HEAD `96ca391e61002c494fcb3d408a344251ef1d2748`. Focused admission tests passed 12/12 and the historical-detachment scanner passed 1/1. This does not transfer to a later final PR head. The imported, unedited `.engineering/evidence/GBS-V11-WO-004-EVIDENCE.md:138` has one extra EOF blank line reported by `git diff f6738292c038eb6f0d08d1d32b3752c5c7dc417a..HEAD --check`; it is outside the admitted edit set and is preserved pending a bounded correction delta if a required check rejects it.
+
+The cumulative PR and exact-head provider checks are still pending. Fresh Gitleaks over the complete PR interval, Trivy, CodeQL, Dependency Review, Pipeline Integrity, cross-platform assurance, Sonar quality/duplication evidence, and a provider-bound Codecov patch report of at least 97.85% must all be verified against the final PR head. No owner audit readiness, merge to main, WO-010 admission, tag, or publication is claimed here.
+
+## Gate 2 owner source admission and execution record — 2026-09-30
+
+This addendum supersedes the earlier Phase 2 NOT_ADMITTED / read-only preparation status above. The owner source admission in Issue #348 now approves Gate 2 under stable phase ID GBS-V11-RELEASE-INTEGRATION-014; it does not admit WO-010 or authorize a main merge, tag or publication.
+
+Verified source refs at admission: main f6738292c038eb6f0d08d1d32b3752c5c7dc417a (tree 0413bf3e8d706738f73c93578c81630ce027f4ec); release/1.1 4b2f66724ea5df94ddd8fda2d8088b12b9708c10 (tree 15bdf8462e67daab84152f096a0ab629be25ffc9); merge-base e23311e77d79b84f3c70671072a22a6f8896d13d (tree 39d8b61cb70020e87c65f2443ce3790af1c2b5c4); divergence 2 main-only / 84 release-only. PR #349 merged normally to release at 4b2f66724ea5df94ddd8fda2d8088b12b9708c10; PR #347 release adoption merged at 9f6f069c977868ade34a19cddb346f7bea9a95fe. Issue #337 is CLOSED/MERGED. PR #278 remains CLOSED_NOT_MERGED and its historical checks/95.69% Codecov result do not transfer.
+
+The fresh git merge-tree --write-tree --name-only --messages result tree is 797545a324c17e5e14da9ddbc6819f5134bfb21d: 14 textual conflicts (12 content, 2 add/add), confined to the same admitted governance/source-document families in the Gate 2 Context Lock, plus semantic overlaps at .engineering/CHECKPOINT.md and .engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md. No runtime, product, test, CI or security-policy conflict was returned. Per-path resolution intent and source fingerprints were committed before the merge in .engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json at aa4af40bfd297742bf100f94fbfeda3ef411a35b.
+
+Decision reconciliation is branch-qualified: preserve D-0062@main / ADR-0007 (Hive integration retirement) and D-0062@release/1.1 / ADR-0006 (owner audit/merge authority), preserve D-0063 / ADR-0008 provenance on main and actual release merge #347, and leave D-0064 unallocated. Keep V1.0 accepted 1088/1088 and the V1.1 production state pending; update the candidate checkpoint only with real Gate 0/Gate 1 receipts and never invent this candidate's future merge/check results.
+
+The clean candidate branch is codex/gbs-v11-release-integration-014, based on the exact current main. Integrate exact release/1.1 with a normal two-parent merge, no squash/cherry-pick/force-push. Resolve only paths authorized in Issue #348 and the committed Context Lock. Release product, test, workflow and runtime files enter through merge ancestry; do not manually recopy or edit them. Any cleanly merged product/test/CI regression must receive the exact bounded same-Issue Correction Delta required by the source admission before an out-of-allowlist edit.
+
+Gate 2 requires full build/validation and package/install/upgrade/recovery/release tests; current Ubuntu/macOS/Windows assurance; Gitleaks across the complete PR commit interval; Trivy, CodeQL, Dependency Review, Pipeline Integrity, current Sonar Quality Gate and duplication diagnostics, and applicable M41-M63/m01 assurance. Codecov must provide a report/check for this cumulative PR with patch >=97.85% on its exact final HEAD; native LCOV is supporting evidence only. Any failed, pending, stale or head-mismatched gate blocks owner audit readiness.
+
+Execution update: normal two-parent candidate merge `554b2627de324058e2264b78c10114eb4c652a9d` (tree `01acb6c2379304235b6213e3e9c7a2f87078069b`) is committed on `codex/gbs-v11-release-integration-014`, with first parent `aa4af40bfd297742bf100f94fbfeda3ef411a35b` and second parent admitted release `4b2f66724ea5df94ddd8fda2d8088b12b9708c10`. All 14 admitted textual conflicts are resolved; unresolved count is zero. The bounded corrections in Issue #348 comments #5909649467, #5909922552 and #5909940063 are complete. Local build passed, and full validation passed 1603/1603 with 0 failures/skips at code/test HEAD `96ca391e61002c494fcb3d408a344251ef1d2748`. A cumulative PR and its exact-head provider checks are still pending at this evidence cut. Stop only at `GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_READY_FOR_OWNER_AUDIT`, after all required exact-head gates pass. No main merge, tag, publication or WO-010 acceptance is authorized.
+
+## Gate 2 exact-head execution disposition — 2026-09-30
+
+This addendum supersedes the pending-at-capture statement above. PR [#350](https://github.com/KayzenRoot/gef-bootstrap/pull/350) was created from `main@f6738292c038eb6f0d08d1d32b3752c5c7dc417a` and integrates `release/1.1@4b2f66724ea5df94ddd8fda2d8088b12b9708c10` by normal two-parent merge `554b2627de324058e2264b78c10114eb4c652a9d`. At exact-head evidence capture, PR HEAD was `5dfc1663ed5550d650b45e88acbce30b34c24381`; all 14 authorized textual conflicts and both semantic overlaps are resolved, with no unresolved conflicts.
+
+Build and local `npm run validate` passed (typecheck and 1603/1603 tests; 0 failures, 0 skips) at code/test HEAD `96ca391e61002c494fcb3d408a344251ef1d2748`. The exact PR HEAD had 139/139 GitHub status contexts report SUCCESS, including cross-platform assurance, Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, release assurance, and SonarCloud Quality Gate. The CodeRabbit context says “Review skipped: draft pull request”; this is not an owner audit. Sonar reported 117 new issues, 0 accepted issues, 0 security hotspots, and 2.6% new-code duplication. The evidence links and provider detail are in `.engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE2-EVIDENCE.md` and PR #350.
+
+**Gate 2 is BLOCKED by the mandatory Codecov patch proof.** On exact base `f6738292c038eb6f0d08d1d32b3752c5c7dc417a` and exact candidate `5dfc1663ed5550d650b45e88acbce30b34c24381`, Codecov reports total coverage 97.85% for base and 95.50% for candidate, but Patch is `—`; its comparison API returns 31 files and 0 patch lines/hits/misses. The green `codecov/patch` check says “Coverage not affected” and does not prove the required numeric patch >=97.85%. No Codecov threshold pass is claimed.
+
+Issue #348 source admission forbids direct runtime, test, workflow, coverage-mapping, and threshold edits by default. The provider result does not isolate an authorized integration code/test hunk that could be corrected within the current write scope. Do not alter or waive the metric. Gate 2 has not reached `GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_READY_FOR_OWNER_AUDIT`; further remediation requires the bounded owner-approved Correction Delta specified by Issue #348. PR #350 remains open/draft. Main merge, tag, WO-010 acceptance, and publication remain unauthorized.
+
+## Correction Delta 4 execution record — 2026-09-30
+
+Review [#5366327642](https://github.com/KayzenRoot/gef-bootstrap/pull/350#pullrequestreview-5366327642) authorized only adding `main` to the `pull_request.branches` filter in `.github/workflows/v11-release-assurance.yml`, preserving `release/1.1`; no jobs or `push` filter changed. Commit `07a723cfe30b324b500b46618cef4e451705f39a` is the exact workflow-only change.
+
+Provider diagnosis on the same exact head: Codecov upload run 36719357762 completed; compare base is `f6738292c038eb6f0d08d1d32b3752c5c7dc417a`, head is `07a723cfe30b324b500b46618cef4e451705f39a`, comparison state `processed`, and patch has 31 files but 0 lines/hits/misses/partials. The green status says “Coverage not affected” and the UI has Patch `—`; there is no numeric percentage for the required `>=97.85%`. GitHub reports actual added-file hunks of 238 lines for `prepare-package.mjs`, 348 for `packages/cli/src/main.ts`, and 556 for `v11-performance-telemetry.mjs`. Codecov's processed report maps the exact repository-relative paths for `prepare-package.mjs` (238 lines) and telemetry (556 lines) but returns null patch coverage; it has no processed path report for `main.ts`. The raw uploaded LCOV `SF:` text is not available from Codecov's report API or workflow artifacts (zero downloadable artifacts). The internal provider diff/mapping reason is therefore unresolved; no exact technical path-fix hunk is supported, so none was proposed in Issue #348 and no coverage workflow/config, runtime, test, threshold, exclusion, or metric was changed.
+
+After the trigger correction, all 145/145 GitHub status contexts completed SUCCESS on measured HEAD `07a723cfe30b324b500b46618cef4e451705f39a`. The V1.1 assurance jobs passed on Ubuntu, macOS, and Windows (run 36719357798); Repository Validation, Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Codecov upload, and Sonar also passed. Sonar Quality Gate: 117 new issues, 0 accepted, 0 security hotspots, 0.0% new-code coverage, 2.6% duplication. CodeRabbit review was skipped because the PR is draft and does not constitute owner audit.
+
+**STOP: `OWNER_DECISION_REQUIRED`.** No numeric Codecov patch result exists and no truthful mapping fix was proven. The owner must either retain `>=97.85%` and keep Gate 2 blocked, or separately amend the acceptance semantics. PR #350 stays open/draft and unmerged; WO-010 remains NOT_ADMITTED; no tag or publication. Main, release, merge-base and branch-qualified D-0062 decisions remain unchanged. The evidence-only commit invalidates these exact-head check receipts; the complete check suite must be rebound to its resulting HEAD, which will be recorded in the live PR description.
+
+
+## Gate 2 owner semantic amendment — Option B (2026-09-30)
+
+Owner explicitly selected **Option B** after review #5366930854. This amends only the Gate 2 Codecov acceptance semantics; it does not lower the numeric threshold, alter coverage instrumentation, or approve the PR by itself.
+
+- When Codecov supplies a numeric patch percentage, the existing requirement remains **>=97.85%** on the exact PR HEAD.
+- When Codecov supplies **zero eligible patch lines** and explicitly reports Patch N/A / “Coverage not affected”, the patch metric is recorded as **N/A_ZERO_DENOMINATOR**, never 100%, and may satisfy the patch-gate dimension only if the exact base/head are bound, exact-head LCOV upload succeeds, the provider patch status is SUCCESS, project/head coverage remains visible, no threshold/exclusion/coverage definition is weakened, no runtime/test change is made to manufacture a denominator, and all other required exact-head quality/security/platform gates are green.
+- Any non-zero patch denominator without numeric patch >=97.85%, or any failed/stale/mismatched coverage evidence, remains BLOCKED.
+- PR #350 must rerun required checks after this documentation-only amendment and receive a fresh owner exact-head audit before any main merge. Gate 3 / WO-010 remains NOT_ADMITTED until Gate 2 is actually closed.
+
+Current stop: `GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT`.

@@ -41,11 +41,34 @@ test("WO-007 objective approval is promoted before WO-008 admission", () => {
 
 test("machine and human checkpoint record completed WO-008 and admitted WO-009", () => {
   const completed = checkpoint.v11.completedWorkOrders["GBS-V11-WO-008"];
-  if (checkpoint.v11.status === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT") {
+  const optionBApproved = checkpoint.v11.gate2CumulativeIntegration?.codecovAcceptanceSemantics?.ownerDecision === "OPTION_B_APPROVED";
+  if (optionBApproved) {
+    assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT");
+    assert.equal(checkpoint.v11.completedWorkOrders["GBS-V11-WO-009"].implementationPr, 316);
+    assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-MAINT-POST-WO009-001");
+    assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
+    assert.equal(checkpoint.v11.nextWorkOrder, "NONE");
+    assert.equal(checkpoint.v11.gate2CumulativeIntegration.state, "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT");
+    assert.equal(
+      checkpoint.v11.stopState,
+      "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT",
+    );
+    assert.equal(
+      checkpoint.v11.nextLegalAction,
+      "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT",
+    );
+    assert.equal(checkpoint.v11.gate2CumulativeIntegration.mainMergeAuthorized, false);
+    assert.equal(checkpoint.v11.gate2CumulativeIntegration.tagOrPublicationAuthorized, false);
+    assert.equal(checkpoint.v11.nextCandidateWorkOrder, "GBS-V11-WO-010");
+    assert.equal(
+      checkpoint.v11.wo010Gate,
+      "NOT_ADMITTED until Gate2 owner audit closes: numeric Codecov patch >=97.85% when a numeric denominator exists, or N/A_ZERO_DENOMINATOR only under owner Option B exact-base/head + exact-head LCOV upload SUCCESS + provider patch SUCCESS with zero eligible patch lines/not affected + visible head/project coverage + no weakened coverage semantics + all other required gates green",
+    );
+  } else if (checkpoint.v11.status === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT") {
     assert.equal(checkpoint.v11.completedWorkOrders["GBS-V11-WO-009"].implementationPr, 316);
     assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-MAINT-POST-WO009-001");
     assert.equal(checkpoint.v11.nextWorkOrder, "NONE");
-    assert.equal(checkpoint.v11.stopState, "GBS_V11_WO009_MERGED_PR278_RELEASE_GATES_BLOCK_WO010");
+    assert.equal(checkpoint.v11.stopState, "GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_READY_FOR_OWNER_AUDIT");
   } else {
   assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_ADMITTED");
   assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
