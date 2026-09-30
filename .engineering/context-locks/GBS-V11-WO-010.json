@@ -76,9 +76,14 @@
     ".github/workflows/v11-publish.yml",
     ".github/workflows/v11-release-assurance.yml",
     "packages/config/src/index.ts",
+    "packages/cli/scripts/prepare-package.mjs",
     "tests/v11-wo-010-artifact-smoke.mjs",
     "tests/v11-wo-010-publish-workflow.test.mjs",
-    "tests/v11-wo-010-security-config.test.mjs"
+    "tests/v11-wo-010-security-config.test.mjs",
+    "tests/v11-codecov-patch-coverage.test.mjs",
+    "tests/v11-pack-branch-negative.test.mjs",
+    "tests/v11-wo-002-dist-smoke.test.mjs",
+    "tests/v11-wo-003-dist-smoke.test.mjs"
   ],
   "readOnly": [
     "package.json",
@@ -133,6 +138,64 @@
       "comment": 5916761162,
       "paths": [".github/workflows/v11-release-assurance.yml", "tests/v11-wo-010-publish-workflow.test.mjs", "tests/v11-wo-010-artifact-smoke.mjs"],
       "result": "make the same exact-head tarball matrix executable before merge through the existing pull_request assurance workflow"
+    },
+    {
+      "issue": 351,
+      "comment": 5917327074,
+      "paths": [
+        "packages/cli/scripts/prepare-package.mjs",
+        ".github/workflows/v11-publish.yml",
+        "tests/v11-wo-010-artifact-smoke.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "bundle SHA-512-verified Koffi prebuilds for exact cross-platform tarball installs, block lifecycle scripts, lock isolated consumers, and remove the Gitleaks wording false positive"
+    },
+    {
+      "issue": 351,
+      "comment": 5917518687,
+      "paths": [
+        "packages/cli/scripts/prepare-package.mjs",
+        ".github/workflows/v11-publish.yml",
+        "tests/v11-wo-010-artifact-smoke.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "bundle the complete reachable internal workspace runtime closure so offline tarball consumers never request private @gef-bootstrap packages from the public registry"
+    },
+    {
+      "issue": 351,
+      "comment": 5917645177,
+      "paths": [
+        "tests/v11-codecov-patch-coverage.test.mjs",
+        "tests/v11-pack-branch-negative.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "refresh only the two admitted package-builder blob identity constants after authorized same-WO package-preparation corrections"
+    },
+    {
+      "issue": 351,
+      "comment": 5917689147,
+      "paths": [
+        "tests/v11-wo-002-dist-smoke.test.mjs",
+        "tests/v11-wo-003-dist-smoke.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "align legacy distribution assertions with the authorized portable native and complete internal runtime package closure"
+    },
+    {
+      "issue": 351,
+      "comment": 5917783307,
+      "paths": [
+        "tests/v11-codecov-patch-coverage.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "update the isolated package-builder fixture for lockfile-verified portable native staging while retaining fail-closed lock and package assertions"
     }
   ],
   "npmPreflight": {

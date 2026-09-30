@@ -73,11 +73,22 @@ function seedV10Project(target) {
 const consumer = mkdtempSync(join(tmpdir(), "gef-wo010-cross-platform-"));
 try {
   requireSuccess(npmRun(["init", "-y"], consumer), "isolated consumer npm init");
-  requireSuccess(npmRun(["install", "--no-audit", "--no-fund", tarball], consumer), "install of exact release tarball");
+  requireSuccess(
+    npmRun(["install", "--package-lock-only", "--ignore-scripts", "--offline", "--no-audit", "--no-fund", tarball], consumer),
+    "lock exact release tarball",
+  );
+  assert.ok(existsSync(join(consumer, "package-lock.json")), "isolated tarball consumer must have a generated lockfile");
+  requireSuccess(npmRun(["install", "--ignore-scripts", "--offline", "--no-audit", "--no-fund"], consumer), "install locked exact release tarball");
 
   const cliDirectory = join(consumer, "node_modules", "@gef-bootstrap", "cli");
   const bin = join(cliDirectory, "bin", "gef.mjs");
   assert.ok(existsSync(bin), "installed tarball must provide the gef executable");
+  const nativePackage = join(cliDirectory, "node_modules", "@koromix", "koffi-" + process.platform + "-" + process.arch);
+  assert.ok(existsSync(join(nativePackage, "package.json")), "installed tarball must include the host Koffi prebuild");
+  requireSuccess(
+    run(process.execPath, ["-e", "require(process.argv[1])", join(cliDirectory, "node_modules", "koffi")], { cwd: consumer }),
+    "load installed Koffi native prebuild without lifecycle scripts",
+  );
   const invoke = (args, cwd = consumer) => {
     const result = run(process.execPath, [bin, ...args], { cwd });
     requireSuccess(result, `installed gef ${args.join(" ")}`);

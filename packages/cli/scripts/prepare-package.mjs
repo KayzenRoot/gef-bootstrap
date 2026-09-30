@@ -10,9 +10,9 @@
  * Staged contents:
  *   dist/, bin/, schemas/, README.md, package.json   -- the package payload itself
  *   vendor/engines/<name>/...                        -- the verified V1 engine modules
- *   node_modules/@gef-bootstrap/{contracts,kernel}   -- the runtime the CLI depends on, so npm
- *                                                       bundles it (`bundleDependencies`)
- *                                                       instead of demanding it from a registry
+ *   node_modules/@gef-bootstrap/<runtime package>    -- the full internal runtime dependency
+ *                                                       closure, bundled instead of fetched from
+ *                                                       a private package registry
  *   LICENSE                                          -- the repository legal payload
  *   vendor/MANIFEST.json                             -- sha256 of every vendored artefact
  *
@@ -47,7 +47,7 @@ const ENGINES = [
 ];
 
 /** Workspace runtime packages bundled into the tarball. */
-const RUNTIME_PACKAGES = ["contracts", "kernel", "preflight"];
+const RUNTIME_PACKAGES = ["contracts", "kernel", "preflight", "config", "project-identity"];
 
 /** Package payload copied verbatim from the package directory. */
 const PAYLOAD = ["dist", "bin", "schemas", "README.md", "package.json"];
@@ -58,6 +58,15 @@ const CLI_SCHEMA_ASSETS = [
   "gef-cli-upgrade-compatibility-matrix.schema.json",
   "gef-cli-upgrade-compatibility-matrix.json",
 ];
+
+/** Lockfile-pinned native prebuilds required by the supported release platforms. */
+const KOFFI_NATIVE_PREBUILDS = [
+  { name: "@koromix/koffi-linux-x64", os: "linux", cpu: "x64" },
+  { name: "@koromix/koffi-darwin-x64", os: "darwin", cpu: "x64" },
+  { name: "@koromix/koffi-darwin-arm64", os: "darwin", cpu: "arm64" },
+  { name: "@koromix/koffi-win32-x64", os: "win32", cpu: "x64" },
+];
+const KOFFI_VERSION = "3.3.0";
 
 const sha256 = (path) => createHash("sha256").update(readFileSync(path)).digest("hex");
 
@@ -126,29 +135,131 @@ function stageSchemaAssets(staging, manifest) {
 
 }
 
-/** Bundle only the installed native packages, including the host's required binary. */
-function stageNativeRuntime(staging, manifest) {
-  // Koffi and its platform prebuilt binary are runtime dependencies of the Windows rights oracle.
-  // Koffi resolves its native binary as a sibling of its own package directory, so both entries
-  // must be installed together for the installed CLI to load the adapter.
-  // Only the build host's prebuilt binary is resolvable: npm skips platform packages whose os/cpu
-  // fields do not match, so a Linux build stages no Windows binary and the Windows build stages no
-  // Linux one. The host must always have its own, and that requirement is enforced here.
-  const koromixRoot = join(repositoryRoot, "node_modules", "@koromix");
-  const hostPlatformPackage = `@koromix/koffi-${process.platform}-${process.arch}`;
-  const availableNative = existsSync(koromixRoot) ? readdirSync(koromixRoot).map((name) => `@koromix/${name}`) : [];
-  if (!availableNative.includes(hostPlatformPackage)) throw new Error(`Native runtime for this host is missing: ${hostPlatformPackage} (run npm install)`);
-  const nativePackages = ["koffi", ...availableNative];
-  for (const name of nativePackages) {
-    const source = join(repositoryRoot, "node_modules", ...name.split("/"));
-    if (!existsSync(source)) throw new Error(`Runtime native package is missing: ${name} (run npm install)`);
-    const target = join(staging, "node_modules", ...name.split("/"));
-    mkdirSync(target, { recursive: true });
-    cpSync(source, target, { recursive: true });
-    const declared = JSON.parse(readFileSync(join(source, "package.json"), "utf8"));
-    manifest.artifacts.push({ kind: "native-runtime", name, version: declared.version, target: `node_modules/${name}` });
+function readLockedNativePackage(name, packageLock) {
+  const entry = packageLock.packages?.["node_modules/" + name];
+  const packageName = name.split("/").at(-1);
+  if (entry?.version !== KOFFI_VERSION) throw new Error("Native package version is not pinned as expected: " + name);
+  const expectedResolved = "https://registry.npmjs.org/" + name + "/-/" + packageName + "-" + KOFFI_VERSION + ".tgz";
+  if (entry.resolved !== expectedResolved) throw new Error("Native package registry URL differs from the lockfile policy: " + name);
+  const integrity = entry.integrity?.split(/\s+/).find((value) => value.startsWith("sha512-"));
+  if (integrity === undefined) throw new Error("Native package has no SHA-512 lockfile integrity: " + name);
+  return { version: entry.version, integrity };
+}
+
+function verifyNativePackageIntegrity(archive, expectedIntegrity, name) {
+  const actualIntegrity = "sha512-" + createHash("sha512").update(readFileSync(archive)).digest("base64");
+  if (actualIntegrity !== expectedIntegrity) throw new Error("Native package archive does not match package-lock.json: " + name);
+}
+
+function stageLockedNativePackage(staging, manifest, packageLock, nativePackage) {
+  const { name, os, cpu } = nativePackage;
+  const locked = readLockedNativePackage(name, packageLock);
+  const archiveDirectory = join(staging, ".native-package-archives");
+  mkdirSync(archiveDirectory, { recursive: true });
+  const packageSpec = name + "@" + locked.version;
+  const packed = spawnSync(
+    process.execPath,
+    [resolveNpmCli(), "pack", "--ignore-scripts", "--json", "--pack-destination", archiveDirectory, packageSpec],
+    { cwd: repositoryRoot, encoding: "utf8", timeout: 300_000 },
+  );
+  if (packed.status !== 0) throw new Error("Unable to retrieve lockfile-pinned native package " + name + ": " + packed.stderr);
+  const packedMetadata = JSON.parse(packed.stdout);
+  if (!Array.isArray(packedMetadata) || packedMetadata.length !== 1 || typeof packedMetadata[0].filename !== "string") {
+    throw new Error("npm pack returned unexpected metadata for native package " + name);
+  }
+  const archive = join(archiveDirectory, packedMetadata[0].filename);
+  if (!existsSync(archive)) throw new Error("npm pack did not produce the native package archive: " + name);
+  verifyNativePackageIntegrity(archive, locked.integrity, name);
+  if (packedMetadata[0].integrity !== locked.integrity) throw new Error("npm pack integrity differs from package-lock.json: " + name);
+
+  const listing = spawnSync("tar", ["-tzf", archive], { encoding: "utf8", timeout: 120_000 });
+  if (listing.status !== 0) throw new Error("Unable to inspect native package archive " + name + ": " + listing.stderr);
+  const archiveEntries = listing.stdout.split(/\r?\n/).filter(Boolean);
+  if (archiveEntries.length === 0 || archiveEntries.some((entry) =>
+    entry.startsWith("/") || /^[A-Za-z]:/.test(entry) || entry.split(/[\\/]/).includes("..") ||
+    !(entry === "package" || entry.startsWith("package/")))) {
+    throw new Error("Native package archive has an unexpected path: " + name);
   }
 
+  const target = join(staging, "node_modules", ...name.split("/"));
+  mkdirSync(target, { recursive: true });
+  const extracted = spawnSync("tar", ["-xzf", archive, "-C", target, "--strip-components=1"], {
+    encoding: "utf8",
+    timeout: 120_000,
+  });
+  if (extracted.status !== 0) throw new Error("Unable to stage native package " + name + ": " + extracted.stderr);
+  const declared = JSON.parse(readFileSync(join(target, "package.json"), "utf8"));
+  if (declared.name !== name || declared.version !== locked.version ||
+    !declared.os?.includes(os) || !declared.cpu?.includes(cpu)) {
+    throw new Error("Staged native package identity or platform does not match the lock: " + name);
+  }
+  const stagedFiles = readdirSync(target, { recursive: true });
+  if (!stagedFiles.some((entry) => String(entry).endsWith(".node"))) {
+    throw new Error("Staged native package has no Koffi binary: " + name);
+  }
+
+  manifest.artifacts.push({
+    kind: "native-runtime",
+    name,
+    version: declared.version,
+    target: "node_modules/" + name,
+    integrity: locked.integrity,
+  });
+}
+
+function updateStagedNativeDependencies(staging, packageLock) {
+  const manifestPath = join(staging, "package.json");
+  const packageMetadata = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const bundleDependencies = new Set(packageMetadata.bundleDependencies ?? packageMetadata.bundledDependencies ?? []);
+  const dependencies = { ...(packageMetadata.dependencies ?? {}) };
+  const optionalDependencies = { ...(packageMetadata.optionalDependencies ?? {}) };
+  for (const name of RUNTIME_PACKAGES) {
+    const runtimeMetadata = JSON.parse(readFileSync(join(repositoryRoot, "packages", name, "package.json"), "utf8"));
+    if (typeof runtimeMetadata.name !== "string" || !runtimeMetadata.name.startsWith("@gef-bootstrap/") ||
+      typeof runtimeMetadata.version !== "string") {
+      throw new Error("Internal runtime package identity is invalid: " + name);
+    }
+    if (dependencies[runtimeMetadata.name] !== undefined && dependencies[runtimeMetadata.name] !== runtimeMetadata.version) {
+      throw new Error("Staged package dependency version differs from the workspace: " + runtimeMetadata.name);
+    }
+    dependencies[runtimeMetadata.name] = runtimeMetadata.version;
+    bundleDependencies.add(runtimeMetadata.name);
+  }
+  for (const nativePackage of KOFFI_NATIVE_PREBUILDS) {
+    bundleDependencies.add(nativePackage.name);
+    optionalDependencies[nativePackage.name] = readLockedNativePackage(nativePackage.name, packageLock).version;
+  }
+  packageMetadata.bundleDependencies = [...bundleDependencies].sort();
+  packageMetadata.dependencies = Object.fromEntries(Object.entries(dependencies).sort(([left], [right]) => left.localeCompare(right)));
+  packageMetadata.optionalDependencies = Object.fromEntries(
+    Object.entries(optionalDependencies).sort(([left], [right]) => left.localeCompare(right)),
+  );
+  writeFileSync(manifestPath, JSON.stringify(packageMetadata, null, 2) + "\n");
+}
+
+/** Bundle lockfile-verified prebuilds so the same tarball works on every release OS. */
+function stageNativeRuntime(staging, manifest) {
+  const packageLock = JSON.parse(readFileSync(join(repositoryRoot, "package-lock.json"), "utf8"));
+  const koffiSource = join(repositoryRoot, "node_modules", "koffi");
+  const koffiLock = readLockedNativePackage("koffi", packageLock);
+  if (!existsSync(koffiSource)) throw new Error("Koffi runtime package is missing (run npm ci)");
+  const koffiManifest = JSON.parse(readFileSync(join(koffiSource, "package.json"), "utf8"));
+  if (koffiManifest.version !== koffiLock.version) throw new Error("Installed Koffi version does not match package-lock.json");
+  const koffiTarget = join(staging, "node_modules", "koffi");
+  mkdirSync(koffiTarget, { recursive: true });
+  cpSync(koffiSource, koffiTarget, { recursive: true });
+  manifest.artifacts.push({
+    kind: "native-runtime",
+    name: "koffi",
+    version: koffiManifest.version,
+    target: "node_modules/koffi",
+    integrity: koffiLock.integrity,
+  });
+
+  for (const nativePackage of KOFFI_NATIVE_PREBUILDS) {
+    stageLockedNativePackage(staging, manifest, packageLock, nativePackage);
+  }
+  updateStagedNativeDependencies(staging, packageLock);
 }
 
 /** Copy built workspace modules with their packaged manifests. */

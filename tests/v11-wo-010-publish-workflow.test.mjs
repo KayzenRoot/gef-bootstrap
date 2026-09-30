@@ -8,6 +8,7 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const WORKFLOW = readFileSync(resolve(ROOT, ".github/workflows/v11-publish.yml"), "utf8");
 const RELEASE_ASSURANCE = readFileSync(resolve(ROOT, ".github/workflows/v11-release-assurance.yml"), "utf8");
 const ARTIFACT_SMOKE = readFileSync(resolve(ROOT, "tests/v11-wo-010-artifact-smoke.mjs"), "utf8");
+const PACKAGE_PREPARER = readFileSync(resolve(ROOT, "packages/cli/scripts/prepare-package.mjs"), "utf8");
 
 test("WO-010 manual branch dispatch verifies a candidate but only an exact pushed tag can publish", () => {
   assert.match(WORKFLOW, /push:\s*\n\s+tags:\s*\["v1\.1\.0"\]/);
@@ -37,7 +38,7 @@ test("WO-010 publisher uses short-lived OIDC with least privilege and no publish
   assert.doesNotMatch(WORKFLOW.split("  verify:")[1].split("\n  publish:")[0], /id-token:\s*write/);
   assert.doesNotMatch(WORKFLOW.split("  post-publish:")[1], /id-token:\s*write/);
   assert.doesNotMatch(WORKFLOW, /NPM_TOKEN|NODE_AUTH_TOKEN|npm_[A-Za-z0-9]{20,}/);
-  assert.match(WORKFLOW, /npm install --global npm@11\.5\.1/);
+  assert.match(WORKFLOW, /npm install --global --ignore-scripts --no-audit --no-fund npm@11\.5\.1/);
   assert.match(WORKFLOW, /test "\$\(npm --version\)" = "11\.5\.1"/);
   const publishJobSection = WORKFLOW.split("\n  publish:")[1].split("\n  post-publish:")[0];
   assert.equal((WORKFLOW.match(/id-token:\s*write/g) ?? []).length, 1, "only the publish job may request OIDC identity");
@@ -51,14 +52,18 @@ test("WO-010 publisher validates, inspects and smokes the exact tarball before p
   assert.match(WORKFLOW, /prepare-package\.mjs --pack/);
   assert.match(WORKFLOW, /tar -tzf/);
   assert.match(WORKFLOW, /const expectedFiles = \['LICENSE', 'README\.md', 'bin', 'dist', 'schemas', 'vendor'\]/);
-  assert.match(WORKFLOW, /const expectedBundles = \['@gef-bootstrap\/contracts', '@gef-bootstrap\/kernel', '@gef-bootstrap\/preflight', '@koromix\/koffi-win32-x64', 'koffi'\]/);
+  assert.match(WORKFLOW, /const expectedBundles = \['@gef-bootstrap\/config', '@gef-bootstrap\/contracts', '@gef-bootstrap\/kernel', '@gef-bootstrap\/preflight', '@gef-bootstrap\/project-identity', '@koromix\/koffi-darwin-arm64', '@koromix\/koffi-darwin-x64', '@koromix\/koffi-linux-x64', '@koromix\/koffi-win32-x64', 'koffi'\]/);
+  assert.match(WORKFLOW, /const expectedNativeBundles = \['@koromix\/koffi-linux-x64', '@koromix\/koffi-darwin-x64', '@koromix\/koffi-darwin-arm64', '@koromix\/koffi-win32-x64'\]/);
+  assert.match(WORKFLOW, /entry\.endsWith\('\/koffi\.node'\)/);
   assert.match(WORKFLOW, /for \(const entry of entries\)/);
   assert.match(WORKFLOW, /archive path is outside the reviewed allowlist/);
   assert.match(WORKFLOW, /sensitiveFilename\.test\(normalized\)/);
-  assert.match(WORKFLOW, /npm install --offline/);
+  assert.match(WORKFLOW, /npm install --package-lock-only --ignore-scripts --offline/);
+  assert.match(WORKFLOW, /test -s package-lock\.json\r?\n\s+npm install --ignore-scripts --offline --no-audit --no-fund/);
   assert.doesNotMatch(WORKFLOW, /npm init -y --prefix/);
-  assert.match(WORKFLOW, /cd "\$consumer"\r?\n\s+npm init -y\r?\n\s+npm install --offline/);
-  assert.match(WORKFLOW, /cd "\$consumer"\r?\n\s+npm init -y\r?\n\s+npm install --no-audit --no-fund @gef-bootstrap\/cli@1\.1\.0/);
+  assert.match(WORKFLOW, /cd "\$consumer"\r?\n\s+npm init -y\r?\n\s+npm install --package-lock-only --ignore-scripts --offline/);
+  assert.match(WORKFLOW, /cd "\$consumer"\r?\n\s+npm init -y\r?\n\s+npm install --package-lock-only --ignore-scripts --no-audit --no-fund @gef-bootstrap\/cli@1\.1\.0/);
+  assert.match(WORKFLOW, /test -s package-lock\.json\r?\n\s+npm install --ignore-scripts --no-audit --no-fund/);
   assert.match(WORKFLOW, /actions\/upload-artifact@/);
   assert.match(WORKFLOW, /GBS-V11-WO-010-RELEASE-MANIFEST\.json/);
   assert.match(WORKFLOW, /provenance/);
@@ -79,7 +84,10 @@ test("WO-010 installs and exercises the same checksum-bound run artifact on Ubun
   assert.match(matrixJob, /receipt\.tarball\.sha256 !== actual/);
   assert.match(matrixJob, /ref: \$\{\{ github\.sha \}\}/);
   assert.match(matrixJob, /node tests\/v11-wo-010-artifact-smoke\.mjs/);
-  assert.match(ARTIFACT_SMOKE, /\["install", "--no-audit", "--no-fund", tarball\]/);
+  assert.match(ARTIFACT_SMOKE, /\["install", "--package-lock-only", "--ignore-scripts", "--offline"/);
+  assert.match(ARTIFACT_SMOKE, /\["install", "--ignore-scripts", "--offline"/);
+  assert.match(ARTIFACT_SMOKE, /@koromix.*koffi-/);
+  assert.match(ARTIFACT_SMOKE, /load installed Koffi native prebuild without lifecycle scripts/);
   assert.match(ARTIFACT_SMOKE, /\["uninstall", "--no-audit", "--no-fund", "@gef-bootstrap\/cli"\]/);
   assert.match(ARTIFACT_SMOKE, /doctor/);
   assert.match(ARTIFACT_SMOKE, /status/);
@@ -98,6 +106,12 @@ test("WO-010 pre-merge assurance runs its one exact-head tarball on all three pl
   assert.match(producer, /sourceCommit/);
   assert.match(producer, /createHash\('sha256'\)/);
   assert.match(producer, /actions\/upload-artifact@/);
+  assert.match(PACKAGE_PREPARER, /KOFFI_NATIVE_PREBUILDS = \[/);
+  assert.match(PACKAGE_PREPARER, /RUNTIME_PACKAGES = \["contracts", "kernel", "preflight", "config", "project-identity"\]/);
+  assert.match(PACKAGE_PREPARER, /verifyNativePackageIntegrity/);
+  assert.match(PACKAGE_PREPARER, /optionalDependencies\[nativePackage\.name\]/);
+  assert.match(WORKFLOW, /const expectedNativeBundles = \[/);
+  assert.match(WORKFLOW, /lockfile-pinned Koffi prebuild is missing/);
   assert.match(matrixJob, /needs: exact-head-package-candidate/);
   assert.match(matrixJob, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
   assert.match(matrixJob, /actions\/download-artifact@/);

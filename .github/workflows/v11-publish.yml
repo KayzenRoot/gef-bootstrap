@@ -61,7 +61,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm install --global npm@11.5.1
+          npm install --global --ignore-scripts --no-audit --no-fund npm@11.5.1
           test "$(npm --version)" = "11.5.1"
 
       - name: Validate release identity and public package metadata
@@ -106,7 +106,8 @@ jobs:
           const [archive, contentsPath] = process.argv.slice(2);
           const pkg = JSON.parse(execFileSync('tar', ['-xOzf', archive, 'package/package.json'], { encoding: 'utf8' }));
           const expectedFiles = ['LICENSE', 'README.md', 'bin', 'dist', 'schemas', 'vendor'];
-          const expectedBundles = ['@gef-bootstrap/contracts', '@gef-bootstrap/kernel', '@gef-bootstrap/preflight', '@koromix/koffi-win32-x64', 'koffi'];
+          const expectedBundles = ['@gef-bootstrap/config', '@gef-bootstrap/contracts', '@gef-bootstrap/kernel', '@gef-bootstrap/preflight', '@gef-bootstrap/project-identity', '@koromix/koffi-darwin-arm64', '@koromix/koffi-darwin-x64', '@koromix/koffi-linux-x64', '@koromix/koffi-win32-x64', 'koffi'];
+          const expectedNativeBundles = ['@koromix/koffi-linux-x64', '@koromix/koffi-darwin-x64', '@koromix/koffi-darwin-arm64', '@koromix/koffi-win32-x64'];
           const sorted = (items) => [...items].sort();
           if (JSON.stringify(sorted(pkg.files ?? [])) !== JSON.stringify(sorted(expectedFiles))) {
             throw new Error('Refusing package: files allowlist differs from the reviewed WO-010 set');
@@ -118,6 +119,13 @@ jobs:
           const contentRoots = expectedFiles.filter((name) => ['bin', 'dist', 'schemas', 'vendor'].includes(name)).map((name) => `package/${name}`);
           const bundleRoots = expectedBundles.map((name) => `package/node_modules/${name}`);
           const entries = readFileSync(contentsPath, 'utf8').split(/\r?\n/).filter(Boolean);
+          for (const name of expectedNativeBundles) {
+            const packageRoot = 'package/node_modules/' + name + '/';
+            if (pkg.optionalDependencies?.[name] !== '3.3.0' ||
+              !entries.some((entry) => entry.startsWith(packageRoot) && entry.endsWith('/koffi.node'))) {
+              throw new Error('Refusing package: lockfile-pinned Koffi prebuild is missing: ' + name);
+            }
+          }
           const sensitiveFilename = /(^|\/)(?:\.npmrc|\.env(?:\.[^/]*)?|credentials?(?:\.[^/]*)?|secrets?(?:\.[^/]*)?|tokens?(?:\.[^/]*)?|id_rsa(?:\.[^/]*)?|[^/]*\.(?:pem|key|p12|pfx))$/i;
           for (const entry of entries) {
             const normalized = entry.replace(/\/+$/, '');
@@ -190,7 +198,9 @@ jobs:
           (
             cd "$consumer"
             npm init -y
-            npm install --offline --no-audit --no-fund "$GEF_RELEASE_TARBALL"
+            npm install --package-lock-only --ignore-scripts --offline --no-audit --no-fund "$GEF_RELEASE_TARBALL"
+            test -s package-lock.json
+            npm install --ignore-scripts --offline --no-audit --no-fund
           )
           bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
           node "$bin" --help > "$RUNNER_TEMP/gef-help.json"
@@ -306,7 +316,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          npm install --global npm@11.5.1
+          npm install --global --ignore-scripts --no-audit --no-fund npm@11.5.1
           test "$(npm --version)" = "11.5.1"
 
       - name: Verify receipt and publish the exact tarball with provenance
@@ -348,7 +358,7 @@ jobs:
           package-manager-cache: false
 
       - name: Pin npm signature verification support
-        run: npm install --global npm@11.5.1
+        run: npm install --global --ignore-scripts --no-audit --no-fund npm@11.5.1
 
       - name: Retrieve, verify signatures and smoke-test the published package
         shell: bash
@@ -361,7 +371,9 @@ jobs:
           (
             cd "$consumer"
             npm init -y
-            npm install --no-audit --no-fund @gef-bootstrap/cli@1.1.0
+            npm install --package-lock-only --ignore-scripts --no-audit --no-fund @gef-bootstrap/cli@1.1.0
+            test -s package-lock.json
+            npm install --ignore-scripts --no-audit --no-fund
           )
           bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
           node "$bin" --help > /dev/null

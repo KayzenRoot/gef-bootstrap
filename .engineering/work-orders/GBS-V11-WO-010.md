@@ -37,7 +37,7 @@ All rows apply to the exact final PR head; unrun or stale evidence is `NOT_RUN`,
 | Package | clean lockfile install/build/validate, real `npm pack` tarball, contents allowlist, LICENSE/README/schemas/dist/bin/vendor/native payload, tarball SHA-256, source/version manifest, installed `gef --help`, `--version`, doctor/status and supported library import |
 | Platforms | genuine Ubuntu, Windows and macOS package install/use/remove, NEW_PROJECT init, EXISTING_PROJECT/BROWNFIELD adopt, unsupported runtime, paths/permissions/symlinks/native Koffi behavior as applicable |
 | Upgrade/recovery | preview/dry-run, compatibility, V1.0-to-V1.1 state migration, user-state preservation, interrupted/failed recovery, rollback/roll-forward only as supported, denied permissions/missing capability/offline dependency, unsupported downgrade, and no silent CLI self-update |
-| Security/supply chain | exact-head Gitleaks full PR history, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Sonar quality/duplication, Codecov Option B, dependency audit, zero unresolved release-blocking CRITICAL/HIGH, secret-free package, OIDC/provenance plan |
+| Security/supply chain | exact-head Gitleaks full PR history, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Sonar quality/duplication, Codecov Option B, dependency audit, zero unresolved release-blocking CRITICAL/HIGH, archive-content scan, OIDC/provenance plan |
 | Documentation | Changelog, installation, quickstart, operations runbook and package README match tested behavior; proprietary All Rights Reserved terms and known limitations remain explicit; no speedup claim beyond WO-008 `NO_CHANGE` |
 | Registry preflight | check npm identity, `@gef-bootstrap` scope/ownership, `@gef-bootstrap/cli@1.1.0`, public access mode and the exact GitHub trusted publisher/workflow binding without publishing or exposing credentials |
 
@@ -50,6 +50,16 @@ Follow the WRITE_ALLOWED and WRITE_FORBIDDEN lists in Issue #351 and the exact e
 Root `package.json` and lockfile remain read-only unless an exact package requirement proves a deterministic metadata change. Do not rename `@gef-bootstrap/cli`, convert its proprietary rights, weaken CI/Codecov/security, or edit runtime without an objective defect and a precise same-Issue Correction Delta. Ordinary defects stay in this WO/PR; do not create another Work Order. Before an authorized bug fix, append to Issue #351 the failing check, root cause, exact path/symbol, minimal fix and regression proof.
 
 ## Registry and publication boundary
+
+Correction Delta #7 (Issue #351 comment 5917327074) permits packages/cli/scripts/prepare-package.mjs to stage lockfile-integrity-verified Koffi prebuilds for the supported OS/CPU targets. The generated tarball manifest receives the corresponding native optional and bundled dependency entries; source package metadata and package-lock.json stay unchanged. The delta also permits the existing publisher and harness regression paths listed in the Context Lock to assert those binaries and use script-disabled, lockfile-backed installation.
+
+Correction Delta #8 (Issue #351 comment 5917518687) permits the same package-preparation, publisher and harness paths to include the complete reachable internal @gef-bootstrap workspace runtime closure. Its staged dependencies and bundle list make the tarball installable offline without resolving private workspace packages from the public registry; source package metadata and package-lock.json remain unchanged.
+
+Correction Delta #9 (Issue #351 comment 5917645177) permits only the two package-builder Git-blob identity constants in `tests/v11-codecov-patch-coverage.test.mjs` and `tests/v11-pack-branch-negative.test.mjs` to advance to the exact current builder blob. It preserves every assertion and all Codecov, coverage-threshold, exclusion, workflow, and branch-negative semantics.
+
+Correction Delta #10 (Issue #351 comment 5917689147) permits only the distribution expectations in `tests/v11-wo-002-dist-smoke.test.mjs` and `tests/v11-wo-003-dist-smoke.test.mjs` to describe the complete internal runtime closure and portable Koffi native payload already authorized by Deltas #7 and #8. It preserves source package metadata, runtime behavior, security assertions, and platform-native loading requirements.
+
+Correction Delta #11 (Issue #351 comment 5917783307) permits only the package-builder fixture in `tests/v11-codecov-patch-coverage.test.mjs` to supply the root lock and complete internal runtime set required by lockfile-verified native staging, and to replace obsolete host-local prebuild absence cases with fail-closed missing/invalid-lock cases. Existing Codecov and branch-negative assertions remain unchanged.
 
 Trusted publishing is the required path where npm supports OIDC; do not substitute a long-lived token. Do not remove `private: true` from `packages/cli/package.json` unless the exact public scope/package ownership and trusted publisher are verified. Preserve `UNLICENSED` and the existing All Rights Reserved LICENSE unless package tooling proves a minimal truthful metadata adjustment is necessary.
 
