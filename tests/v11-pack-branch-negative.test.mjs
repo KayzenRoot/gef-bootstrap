@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -16,10 +16,10 @@ const canonicalBytes = Buffer.from(SOURCE_BYTES.toString("utf8").replace(/\r\n/g
 const actualGitBlob = createHash("sha1").update(`blob ${canonicalBytes.length}\0`).update(canonicalBytes).digest("hex");
 assert.equal(actualGitBlob, EXPECTED_GIT_BLOB, "package builder changed from its admitted source blob");
 
-const FIXTURE_ROOT = mkdtempSync(join(tmpdir(), "gef-pack-cli-negative-"));
+const FIXTURE_ROOT = mkdtempSync(join(realpathSync(tmpdir()), "gef-pack-cli-negative-"));
 test.after(() => {
   const absolute = resolve(FIXTURE_ROOT);
-  const tempRoot = resolve(tmpdir());
+  const tempRoot = resolve(realpathSync(tmpdir()));
   const prefix = `${tempRoot}${sep}`;
   assert.ok(absolute.startsWith(prefix), `refusing fixture cleanup outside OS temp: ${absolute}`);
   assert.ok(absolute.split(/[\\/]/).pop().startsWith("gef-pack-cli-negative-"));
