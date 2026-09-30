@@ -1,6 +1,6 @@
 # GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012 — Exact package branch tests
 
-Status: `LOCAL_VALIDATION_PASS_AWAITING_EXACT_HEAD_CHECKS_AND_OWNER_AUDIT`
+Status: `EXACT_HEAD_PROVIDER_GREEN_AWAITING_OWNER_AUDIT`
 Issue/admission: [#337](https://github.com/KayzenRoot/gef-bootstrap/issues/337), owner source admission after PR #347 merge
 Master: [GBS-V11-RELEASE-ONEPASS-013](GBS-V11-RELEASE-ONEPASS-013.md), Issue [#348](https://github.com/KayzenRoot/gef-bootstrap/issues/348)
 Target: `release/1.1`
@@ -83,4 +83,10 @@ No check, test, threshold or security gate may be weakened. A green Phase 1 unit
 
 One cohesive actual-diff Phase 1 PR containing only the admitted tests and governance/evidence artifacts. Owner audit follows ADR-0006 / D-0062 on the exact candidate head and is `NOT_INDEPENDENT`. This Work Order authorizes no merge.
 
-**STOP:** `GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT`. If the exact source/ref binding moves or any production-source permission is needed, stop as `BLOCKED_NEEDS_BOUNDED_OWNER_DELTA`.
+## Owner correction delta — review #5363391120
+
+The owner re-audit on PR #349, reviewed head `a2348d39bcd77951900d7d24e2a45a33e67fe9a8` over base `9f6f069c977868ade34a19cddb346f7bea9a95fe`, found only stale evidence and an incorrect Context Lock allowlist path. Its provider record is 14 workflow runs expanded to 33 jobs, 33/33 successful; Repository Validation reports 1,603 total, 1,599 pass, 0 fail and 4 skipped. The Evidence Bundle and master gate matrix record per-platform, Gitleaks, Trivy, CodeQL and Sonar outcomes and explicitly retain the 7 MAJOR test code smells as quality debt. Phase 2 cumulative Codecov remains NOT_RUN / NOT_CREDITED.
+
+This bounded correction updates only the already authorized Evidence Bundle, master gate matrix, child Context Lock, this Work Order and PR description. The allowlist names the actual master Context Lock `.engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013.json`; the misspelled path is not created. No test, production source, CI, threshold, manifest, checkpoint or decision is changed. The correction commit is documentation-only. All workflows triggered by that new commit must pass on the new exact PR HEAD; reviewed-candidate checks are not presented as checks on the new SHA. The final HEAD and its check links are bound in the PR description and the live [PR checks page](https://github.com/KayzenRoot/gef-bootstrap/pull/349/checks).
+
+**STOP:** `GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_EVIDENCE_LOCK_SYNC_READY_FOR_REAUDIT`. Keep PR #349 open and draft. No merge, Gate 2/WO-010 admission or publication. If the exact source/ref binding moves or production-source permission is needed, stop as `BLOCKED_NEEDS_BOUNDED_OWNER_DELTA`.

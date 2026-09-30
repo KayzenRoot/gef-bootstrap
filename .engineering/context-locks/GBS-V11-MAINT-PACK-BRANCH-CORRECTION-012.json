@@ -4,8 +4,8 @@
   "parentWorkOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "issue": 337,
   "masterIssue": 348,
-  "status": "ADMITTED_TESTS_ONLY_EXECUTION_IN_PROGRESS",
-  "capturedAtUtc": "2026-09-30T01:37:44Z",
+  "status": "EXACT_HEAD_PROVIDER_GREEN_AWAITING_OWNER_AUDIT",
+  "capturedAtUtc": "2026-09-30T09:10:55Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "targetRef": "release/1.1",
   "candidateBranch": "codex/gbs-v11-maint-pack-branch-correction-012",
@@ -38,7 +38,7 @@
     ".engineering/work-orders/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.md",
     ".engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md",
     ".engineering/context-locks/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.json",
-    ".engineering/context-locks/GBS-V11-GOV-CODEX-RELEASE-ONEPASS-013.json",
+    ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013.json",
     ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md",
     ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json"
   ],
@@ -61,7 +61,27 @@
     "sourceMustMapTo": "packages/cli/scripts/prepare-package.mjs at exact blob above",
     "historicDiagnosticBranchLines": [73, 83, 97, 117, 139, 140, 144, 159, 173, 199, 203, 219, 222, 232],
     "allLinesMustBeReboundAgainstCurrentCandidate": true,
-    "coverageRunState": "NOT_RUN_AT_INITIAL_LOCK"
+    "coverageRunState": "PASS_REVIEWED_CANDIDATE_a2348d39bcd77951900d7d24e2a45a33e67fe9a8_DA_236_OF_238_BRDA_70_OF_87_FUNCTIONS_100_PERCENT; CUMULATIVE_CODECOV_NOT_RUN_NOT_CREDITED"
+  },
+  "ownerCorrectionReview": {
+    "reviewId": 5363391120,
+    "reviewedHead": "a2348d39bcd77951900d7d24e2a45a33e67fe9a8",
+    "reviewedBase": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
+    "workflowRuns": 14,
+    "jobs": 33,
+    "successfulJobs": 33,
+    "repositoryValidation": "1603 total; 1599 passed; 0 failed; 4 skipped",
+    "crossPlatform": {
+      "ubuntu": "1599 passed; 0 failed; 4 skipped; npm audit 0 vulnerabilities",
+      "macos": "1599 passed; 0 failed; 4 skipped; npm audit 0 vulnerabilities",
+      "windows": "1603 passed; 0 failed; 0 skipped; npm audit 0 vulnerabilities"
+    },
+    "gitleaks": "PASS complete PR commit interval; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346405/job/109725705448",
+    "trivy": "PASS; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346405/job/109725705282",
+    "codeql": "PASS; https://github.com/KayzenRoot/gef-bootstrap/runs/109723352322",
+    "sonar": "Quality Gate PASS; 0 security hotspots; 7 new open MAJOR javascript:S8784 code smells in tests; https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=349",
+    "candidateHighCriticalCodeScanning": "0 open HIGH/CRITICAL on reviewed candidate and release/1.1; three open HIGH Scorecard alerts are confined to main (#14, #13, #3)",
+    "newDocumentationHeadChecks": "Required after this correction commit; must pass on PR #349 current exact HEAD before re-audit"
   },
   "decisionBindings": {
     "releaseD0062": "ADR-0006 owner-operated exact-head audit/merge authority; remains effective",
@@ -70,6 +90,6 @@
     "mergeRequiredForThisWorkOrder": false,
     "publicationAllowed": false
   },
-  "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT",
+  "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_EVIDENCE_LOCK_SYNC_READY_FOR_REAUDIT",
   "fallbackStopCondition": "BLOCKED_NEEDS_BOUNDED_OWNER_DELTA"
 }

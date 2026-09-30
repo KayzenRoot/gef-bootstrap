@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-09-30T01:37:44Z",
+  "capturedAtUtc": "2026-09-30T09:10:55Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
@@ -26,9 +26,12 @@
     {
       "gate": 1,
       "name": "Issue #337 tests-only package branch coverage correction",
-      "state": "ADMITTED_IN_PROGRESS",
+      "state": "EXACT_HEAD_PROVIDER_GREEN_AWAITING_OWNER_AUDIT",
       "childWorkOrder": "GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012",
       "executionBase": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
+      "reviewedCandidateHead": "a2348d39bcd77951900d7d24e2a45a33e67fe9a8",
+      "ownerCorrectionReview": 5363391120,
+      "providerRunSummary": "At the reviewed candidate SHA, 14 workflow runs expanded to 33 jobs; 33/33 jobs succeeded. New documentation-only HEAD checks must independently complete before re-audit.",
       "criticalScriptBlob": "10e659ccce15045ed37ffa3e82d06a8408b8f734",
       "criticalTestBlob": "2441961628d20dcc9404d2e51cc1d97b03543137",
       "allowedSourceChanges": [
@@ -37,15 +40,22 @@
       ],
       "productionSourceState": "READ_ONLY",
       "checks": {
-        "nativeNode2217Lcov": "LOCAL_PASS: 1603/1603; exact production SF DA 236/238, BRDA 70/87; provider interpretation not credited",
-        "build": "LOCAL_PASS_NODE_22_17_0_NPM_10_8_2",
-        "validate": "LOCAL_PASS_NODE_22_17_0_NPM_10_8_2_1603_OF_1603",
-        "packageIntegrationSecurity": "LOCAL_TEST_SUITE_PASS; exact-head dependency/security scans pending",
-        "ubuntuWindowsMacos": "WINDOWS_LOCAL_PASS; UBUNTU_MACOS_PENDING_PROVIDER_EXACT_HEAD",
-        "gitleaksFullNewCommitInterval": "PENDING_AFTER_FINAL_COMMITS",
-        "trivyCodeqlSonar": "PENDING_PROVIDER_EXACT_HEAD"
+        "nativeNode2217Lcov": "PASS at reviewed candidate a2348d39bcd77951900d7d24e2a45a33e67fe9a8: 1603 tests; exact production SF DA 236/238 (99.16%), BRDA 70/87 (80.46%), functions 100%; all 14 historic target lines have positive DA. This does not credit the future cumulative Codecov gate.",
+        "build": "PASS_NODE_22_17_0_NPM_10_8_2 at reviewed candidate a2348d39bcd77951900d7d24e2a45a33e67fe9a8",
+        "validate": "PASS_NODE_22_17_0_NPM_10_8_2_1603_OF_1603 at reviewed candidate a2348d39bcd77951900d7d24e2a45a33e67fe9a8",
+        "packageIntegrationSecurity": "PASS at reviewed candidate; Repository Validation 1603 total / 1599 PASS / 0 FAIL / 4 SKIPPED (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467583/job/109723038271)",
+        "ubuntuWindowsMacos": "PASS at reviewed candidate: Ubuntu 1599 PASS / 0 FAIL / 4 SKIPPED (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038646); macOS 1599 PASS / 0 FAIL / 4 SKIPPED (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038619); Windows 1603 PASS / 0 FAIL / 0 SKIPPED (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038677). Each npm audit found 0 vulnerabilities.",
+        "gitleaksFullNewCommitInterval": "PASS over the complete PR commit interval at reviewed candidate (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346405/job/109725705448); earlier same-SHA run also passed (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467644/job/109723038759)",
+        "trivyCodeqlSonar": "PASS at reviewed candidate: Trivy (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346405/job/109725705282), CodeQL (https://github.com/KayzenRoot/gef-bootstrap/runs/109723352322), Sonar Quality Gate (https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=349). Sonar: 0 security hotspots; 7 open MAJOR javascript:S8784 code smells in tests, retained as quality debt.",
+        "dependencyReview": "PASS (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346401/job/109725705405)",
+        "pipelineIntegrity": "PASS (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346526/job/109725705707)",
+        "codeqlTrackedAlertEvidence": "PASS (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038478)",
+        "sonarDiagnosticsAndDuplication": "PASS; quality gate pass, 7 MAJOR code smells in tests remain disclosed (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038618; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038605)",
+        "securityFindingScope": "No open HIGH/CRITICAL code-scanning alerts on candidate or release/1.1. Repository-wide inventory separately has three open HIGH Scorecard alerts on main only (#14 MaintainedID, #13 CodeReviewID, #3 BranchProtectionID); release HIGH #2 is fixed and release MEDIUM #1 remains open.",
+        "newDocumentationHeadChecks": "Must be checked on the final PR #349 HEAD before re-audit; prior candidate evidence above is not transferred as a new-SHA check. Live exact-head check page: https://github.com/KayzenRoot/gef-bootstrap/pull/349/checks"
       },
-      "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT"
+      "cumulativeCodecov": "NOT_RUN_NOT_CREDITED; Gate 2 requires a fresh release-to-main PR exact SHA >=97.85%",
+      "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_EVIDENCE_LOCK_SYNC_READY_FOR_REAUDIT"
     },
     {
       "gate": 2,
