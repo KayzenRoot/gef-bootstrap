@@ -131,7 +131,24 @@ try {
   if ($ReleaseArtifactSmoke) {
     $smokeScript = Join-Path $workspace "tests\v11-wo-010-artifact-smoke.mjs"
     if (-not (Test-Path -LiteralPath $smokeScript -PathType Leaf)) { throw "The exact-artifact acceptance harness is missing." }
-    $smoke = Invoke-UserProcess "same-artifact-smoke" $nodePath ('"' + $smokeScript + '"')
+    $environmentPath = Join-Path $tempRoot "gef-v11-artifact-smoke-environment.json"
+    $bootstrapPath = Join-Path $tempRoot "gef-v11-artifact-smoke-bootstrap.mjs"
+    $environmentJson = ConvertTo-Json -InputObject $childEnvironment -Compress
+    [System.IO.File]::WriteAllText($environmentPath, $environmentJson, [System.Text.UTF8Encoding]::new($false))
+    $bootstrap = @'
+import { readFileSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+
+const [environmentPath, smokeScript] = process.argv.slice(2);
+if (!environmentPath || !smokeScript) throw new Error("The exact-artifact smoke bootstrap requires its environment and harness paths.");
+const environment = JSON.parse(readFileSync(environmentPath, "utf8"));
+for (const key of Object.keys(process.env)) delete process.env[key];
+Object.assign(process.env, environment);
+await import(pathToFileURL(smokeScript).href);
+'@
+    [System.IO.File]::WriteAllText($bootstrapPath, $bootstrap, [System.Text.UTF8Encoding]::new($false))
+    $bootstrapArguments = '"' + $bootstrapPath + '" "' + $environmentPath + '" "' + $smokeScript + '"'
+    $smoke = Invoke-UserProcess "same-artifact-smoke" $nodePath $bootstrapArguments
     if ($smoke.ExitCode -ne 0) { throw "The exact-artifact smoke failed under the unprivileged Windows identity." }
   }
   else {

@@ -219,6 +219,17 @@
         ".engineering/context-locks/GBS-V11-WO-010.json"
       ],
       "result": "run the Windows same-artifact migration smoke under a standard non-Administrator identity so machine-Git trust remains fail-closed without blocking supported upgrade evidence"
+    },
+    {
+      "issue": 351,
+      "comment": 5918809234,
+      "paths": [
+        ".github/scripts/run-v11-unprivileged-validation.ps1",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "bootstrap the exact-artifact smoke with only its receipt-bound child environment while retaining the standard Windows identity and unchanged default validation mode"
     }
   ],
   "npmPreflight": {

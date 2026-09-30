@@ -123,6 +123,13 @@ test("WO-010 pre-merge assurance runs its one exact-head tarball on all three pl
   assert.match(UNPRIVILEGED_VALIDATION, /Add-LocalGroupMember -Group "Users"/);
   assert.match(UNPRIVILEGED_VALIDATION, /The temporary validation identity unexpectedly belongs to Administrators/);
   assert.match(UNPRIVILEGED_VALIDATION, /Copy-Item -LiteralPath[\s\S]*?GEF_EXPECTED_SOURCE_COMMIT/);
+  assert.match(UNPRIVILEGED_VALIDATION, /GEF_RELEASE_RECEIPT_DIR/);
+  assert.match(UNPRIVILEGED_VALIDATION, /GEF_EXPECTED_EVENT/);
+  assert.match(UNPRIVILEGED_VALIDATION, /GEF_EXPECTED_REF/);
+  assert.match(UNPRIVILEGED_VALIDATION, /artifact-smoke-environment\.json/);
+  assert.match(UNPRIVILEGED_VALIDATION, /for \(const key of Object\.keys\(process\.env\)\) delete process\.env\[key\]/);
+  assert.match(UNPRIVILEGED_VALIDATION, /Object\.assign\(process\.env, environment\)/);
+  assert.match(UNPRIVILEGED_VALIDATION, /await import\(pathToFileURL\(smokeScript\)\.href\)/);
   assert.match(UNPRIVILEGED_VALIDATION, /Invoke-UserProcess "same-artifact-smoke"/);
   assert.match(UNPRIVILEGED_VALIDATION, /npmArgs = .* run validate/);
   assert.doesNotMatch(matrixJob, /id-token:\s*write/);
