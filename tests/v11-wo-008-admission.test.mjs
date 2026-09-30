@@ -45,7 +45,7 @@ test("machine and human checkpoint record completed WO-008 and admitted WO-009",
     assert.equal(checkpoint.v11.completedWorkOrders["GBS-V11-WO-009"].implementationPr, 316);
     assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-MAINT-POST-WO009-001");
     assert.equal(checkpoint.v11.nextWorkOrder, "NONE");
-    assert.equal(checkpoint.v11.stopState, "GBS_V11_WO009_MERGED_PR278_RELEASE_GATES_BLOCK_WO010");
+    assert.equal(checkpoint.v11.stopState, "GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_READY_FOR_OWNER_AUDIT");
   } else {
   assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_ADMITTED");
   assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
