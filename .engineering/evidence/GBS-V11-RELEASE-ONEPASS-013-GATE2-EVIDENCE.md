@@ -1,6 +1,6 @@
 # GBS-V11-RELEASE-ONEPASS-013 — Gate 2 Evidence Bundle
 
-Current disposition: `OWNER_DECISION_REQUIRED_CODECOV_PATCH_NUMERIC_PERCENTAGE_UNAVAILABLE`; see the Correction Delta 4 evidence below.
+Current disposition: `OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT`; the owner selected the governed zero-denominator N/A semantics after review #5366930854.
 
 Initial preflight status: admitted; integration not yet executed at that capture. Superseded by the Gate 2 execution addendum at the end of this bundle.
 
@@ -103,3 +103,17 @@ Codecov defines patch coverage over changed lines in the Git diff and describes 
 **Exact-head checks.** All 145/145 GitHub status contexts completed SUCCESS on measured HEAD `07a723cfe30b324b500b46618cef4e451705f39a`, including [Repository Validation](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36719357855), [Gitleaks and Trivy](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36719357413), [release assurance matrix](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36719357798), [Dependency Review](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36719357339), [Pipeline Integrity](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36719357679), [CodeQL](https://github.com/KayzenRoot/gef-bootstrap/runs/109901107383), [Codecov upload](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36719357762), and [SonarCloud](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=350). Sonar Quality Gate passed with 117 new issues, 0 accepted issues, 0 security hotspots, 0.0% new-code coverage, and 2.6% duplication. CodeRabbit again reports review skipped because the PR is draft; no owner audit is claimed. The complete check list is at [PR #350 checks](https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks).
 
 **Disposition.** Since Codecov still supplies no numeric patch percentage and the available provider evidence proves no truthful path-fix hunk, stop at `OWNER_DECISION_REQUIRED`. The owner must choose whether to preserve the numeric `>=97.85%` criterion and leave Gate 2 blocked, or separately amend Gate 2 acceptance semantics. PR #350 remains draft and unmerged. WO-010 remains NOT_ADMITTED; no tag or publication is authorized. These check receipts bind to `07a723c`; the evidence-only commit that records them requires the complete checks to be rerun on its resulting HEAD. The live PR description will carry that final exact-head receipt.
+
+
+## Owner decision B — governed zero-denominator semantics (2026-09-30)
+
+The owner explicitly selected **Option B** after exact-head review #5366930854. The decision resolves the policy ambiguity without fabricating a numeric patch result:
+
+- A numeric Codecov patch result still must be **>=97.85%** whenever Codecov provides a non-zero eligible patch denominator.
+- If Codecov binds the exact base/head, exact-head LCOV upload succeeds, the patch status is SUCCESS, and the provider explicitly reports **zero eligible patch lines / Patch N/A / “Coverage not affected”**, the patch dimension is recorded as **N/A_ZERO_DENOMINATOR**, never as 100% and never as a numeric threshold pass.
+- N/A is eligible only when head/project coverage remains visible, no threshold/exclusion/coverage definition is weakened, no runtime/test edit exists merely to manufacture a denominator, and all other required exact-head Sonar/security/integrity/dependency/platform/release-assurance gates are green.
+- Any non-zero denominator without numeric patch >=97.85% remains BLOCKED.
+
+PR #350 at pre-amendment HEAD `4884b2aded8130e2af0bd0083caa54e11ce8eca6` already demonstrated the factual zero-denominator pattern and green exact-head technical gates. This documentation-only amendment creates a new HEAD, so those receipts are historical input only until the required checks rerun and the owner audits the new exact HEAD. No main merge, WO-010 admission, tag, GitHub Release or package publication is authorized by this decision alone.
+
+STOP: `GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT`.
