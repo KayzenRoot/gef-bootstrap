@@ -6,8 +6,16 @@
   "masterIssue": 348,
   "pullRequest": 350,
   "branch": "codex/gbs-v11-release-integration-014",
-  "sourceCommitAtPackageInput": "7cf5524468998a721ef3f1aeb1cc279c6811582d",
-  "captureMode": "real npm pack from the admitted package sources after npm run build",
+  "sourceCommitAtPackageInput": "59df2d1feadb18f5f5997f748f79339adb701f43",
+  "captureMode": "real npm pack in exact-head GitHub Actions run 36779630179 after locked install and build",
+  "packageProducer": {
+    "workflowRun": 36779630179,
+    "artifactId": 11126264348,
+    "artifactArchiveSha256": "2c92f9057a108a9491cfd1c762113e2b61ff38d78244b36d24715f2515ad7a2b",
+    "event": "pull_request",
+    "ref": "refs/pull/350/merge",
+    "platform": "linux-x64"
+  },
   "package": {
     "name": "@gef-bootstrap/cli",
     "version": "1.1.0",
@@ -16,23 +24,26 @@
     "registryPublicationAttempted": false
   },
   "toolchain": {
-    "platform": "win32-x64",
+    "platform": "win32-x64 local validation; Linux x64 exact-head package producer",
     "node": "v24.19.0",
     "npm": "11.17.0"
   },
   "tarball": {
     "file": "gef-bootstrap-cli-1.1.0.tgz",
-    "sha256": "4a8aaf9507549291402f80eff8201704d2573d3c1c9b67be4f4c6f723f8ee624",
-    "entryCount": 316,
-    "requiredPayloadAllowlist": "PASS",
-    "forbiddenSourceCredentialAndDevelopmentPathScan": "PASS",
-    "offlineInstallAndUse": "PASS",
-    "consumerInstallUseUninstall": "PASS in a dedicated isolated consumer; root package.json byte-identical"
+    "sha256": "17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
+    "sizeBytes": 2737245,
+    "entryCount": 379,
+    "requiredPayloadAllowlist": "PASS; all 379 entries stayed within the reviewed package/file/bundle roots",
+    "forbiddenSourceCredentialAndDevelopmentPathScan": "PASS; no sensitive filenames or paths outside the reviewed allowlist",
+    "offlineInstallAndUse": "PASS with npm ci --offline --ignore-scripts; staged Koffi declares only the four lock-verified bundled native prebuilds",
+    "consumerInstallUseUninstall": "PASS on Ubuntu, Windows and macOS from the same receipt-bound workflow artifact; V1.0-to-V1.1 migration preserved project state"
   },
   "vendorManifest": {
     "path": "package/vendor/MANIFEST.json",
-    "artifactEntries": 18,
+    "artifactEntries": 23,
     "sha256EntriesVerifiedAgainstTarball": 13,
+    "sha256Verification": "PASS; all 13 sha256-bearing entries recomputed against the exact-head tarball",
+    "nativeSha512LockVerification": "PASS; all five native-runtime integrity entries match package-lock.json",
     "remainingEntries": "Bundled runtime package version bindings without a sha256 field",
     "result": "PASS"
   },
@@ -41,7 +52,8 @@
     "workflow": "v11-publish.yml",
     "environment": "npm-publish",
     "registryAttestationIssued": false,
-    "reason": "Candidate is unpublished and no npm scope/package access was available."
+    "prepublicationReceipt": "sourceCommit/event/ref and tarball SHA-256 bound in GBS-V11-WO-010-RELEASE-MANIFEST.json from workflow run 36779630179",
+    "reason": "Candidate is unpublished and no npm scope/package access was available; no registry attestation is claimed."
   },
   "npmPreflight": {
     "identity": "UNVERIFIED_ENEEDAUTH",
@@ -53,7 +65,27 @@
     "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
   },
   "exactHeadCi": {
-    "state": "PENDING",
+    "state": "COMPLETED_WITH_BLOCKERS",
+    "candidateHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+    "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "statusContexts": "147 total; 146 SUCCESS; 1 FAILURE; 0 pending",
+    "platforms": {
+      "releaseAssurance": "PASS Ubuntu/macOS/Windows; workflow run 36779630179",
+      "sameExactTarball": "PASS Ubuntu/macOS/Windows; workflow run 36779630179; tarball SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
+      "upgradeRecovery": "PASS Ubuntu/Windows/macOS; exact-head WO-004 assurance run 36779629909"
+    },
+    "codecovOptionB": "N/A_ZERO_DENOMINATOR under the owner Option B; exact base/head; LCOV upload SUCCESS run 36779630067/job 110106182182; codecov/patch SUCCESS check 110107481751 reports Coverage not affected comparing f673829...59df2d1; exact commit report URL is linked in the Evidence Bundle; never 100%",
+    "passedSecurityAndIntegrity": [
+      "Trivy",
+      "CodeQL and tracked alert evidence (one MEDIUM alert surfaced)",
+      "Dependency Review",
+      "Pipeline Integrity",
+      "SonarCloud Quality Gate",
+      "Cumulative Sonar diagnostics and duplicate-block inventory"
+    ],
+    "failed": {
+      "Gitleaks": "FAILURE; one redacted generic-api-key finding at historical .engineering/work-orders/GBS-V11-WO-010.md:40, introduced by commit e6bb4403537a39d4db8fb3799deb85e49400140a; current wording was corrected earlier but the historical interval finding remains; no history rewrite or scanner-policy change is authorized"
+    },
     "required": [
       "Codecov Option B",
       "release assurance Ubuntu/macOS/Windows",
@@ -65,13 +97,17 @@
       "Pipeline Integrity",
       "Sonar",
       "all required PR checks"
-    ]
+    ],
+    "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
+    "auditReady": false
   },
   "validation": {
     "build": "PASS",
-    "focusedTests": "32/32 PASS; 0 skipped",
-    "localSameTarballSmoke": "PASS on Windows x64: install/use/library import/V1.0-to-V1.1 migration with state preservation/uninstall",
+    "focusedPackageAndPublisherTests": "PASS 11/11",
+    "sameExactTarballSmoke": "PASS on Ubuntu, Windows and macOS: install/use/library import/V1.0-to-V1.1 migration with state preservation/uninstall; the same downloaded artifact also passed local Windows x64",
+    "tarballContentAndVendorManifest": "PASS: 379 entries, reviewed allowlist, no sensitive filenames, 23 manifest artifacts, 13/13 SHA-256 and 5/5 native SHA-512 lock checks verified",
     "npmAudit": "PASS 0 vulnerabilities",
-    "npmRunValidate": "PASS 1610/1610; 0 failed; 0 skipped"
+    "npmRunValidate": "PASS 1610/1610; 0 failed; 0 skipped locally and in exact-head Windows assurance",
+    "npmPreflight": "OWNER_ACTION_REQUIRED: ENEEDAUTH; 404 Scope not found; 404 package not found; publisher binding unverified; publication not attempted"
   }
 }

@@ -595,7 +595,7 @@
       }
     },
     "gate3Wo010Acceptance": {
-      "state": "ADMITTED_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+      "state": "PREPUBLICATION_ACCEPTANCE_COMPLETED_WITH_BLOCKERS",
       "workOrder": "GBS-V11-WO-010",
       "issue": 351,
       "masterIssue": 348,
@@ -617,23 +617,35 @@
         "private": true,
         "license": "UNLICENSED"
       },
-      "exactHeadChecks": "PENDING_PUSH_AND_PROVIDER_COMPLETION",
+      "candidateHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+      "exactHeadChecks": "147 total; 146 SUCCESS; 1 FAILURE (Gitleaks); 0 pending; not audit-ready",
+      "exactHeadProviderEvidence": {
+        "releaseAssurance": "PASS Ubuntu/macOS/Windows; run 36779630179",
+        "sameArtifactMatrix": "PASS Ubuntu/Windows/macOS from one receipt-bound tarball; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898; run 36779630179",
+        "packageManifest": "PASS: 379 tarball entries; 23 vendor manifest entries; 13/13 SHA-256 and 5/5 native SHA-512 lock values verified; allowlist and sensitive filename scans pass",
+        "repositoryValidation": "PASS 1610/1610; 0 failed; 0 skipped; run 36779630315",
+        "codecovOptionB": "N/A_ZERO_DENOMINATOR under owner Option B; exact base/head; LCOV upload SUCCESS run 36779630067/job 110106182182; codecov/patch SUCCESS check 110107481751 reports Coverage not affected comparing f673829...59df2d1; never 100%",
+        "trivyCodeqlDependencyReviewPipelineIntegritySonar": "PASS; CodeQL reports one MEDIUM alert and tracked-alert evidence passes; no other release-blocking CRITICAL/HIGH finding surfaced",
+        "gitleaks": "FAILURE; redacted generic-api-key finding at historical .engineering/work-orders/GBS-V11-WO-010.md:40, commit e6bb4403537a39d4db8fb3799deb85e49400140a; wording was previously corrected but the history scan remains red",
+        "sonar": "PASS; SonarCloud Quality Gate, cumulative diagnostics and duplicate-block inventory",
+        "npmOwnerSetup": "REQUIRED; ENEEDAUTH and 404 scope/package; Trusted Publisher binding unavailable"
+      },
       "mainMergeAuthorized": false,
       "tagAuthorized": false,
       "publicationAuthorized": false,
-      "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC_AFTER_ALL_SAFE_EXACT_HEAD_CHECKS_PASS",
+      "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
       "localValidation": {
         "node": "v24.19.0",
         "npm": "11.17.0",
         "dependencyInstall": "PASS 33 packages; 0 vulnerabilities",
         "build": "PASS",
-    "focusedTests": "32/32 PASS; 0 skipped across distribution/package/upgrade/recovery/compatibility/publisher/security suites; same-artifact Windows install/use/migration/uninstall PASS",
+        "focusedTests": "11/11 PASS for package builder, branch-negative and WO-010 publisher contracts; same exact tarball smoke also passed Windows x64",
         "npmAudit": "PASS; 0 vulnerabilities",
-    "npmRunValidate": "PASS; 1610/1610; 0 failed; 0 skipped",
+        "npmRunValidate": "PASS; 1610/1610; 0 failed; 0 skipped locally; exact-head Repository Validation and release assurance also PASS",
         "platform": "Windows x64"
       }
     },
-    "gate3NextLegalAction": "Finish safe prepublication acceptance on exact PR #350 head; then stop OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC if registry identity/scope/OIDC remain unavailable.",
+    "gate3NextLegalAction": "Owner must establish/verify npm scope/package and configure Trusted Publishing OIDC; Gitleaks remains a historical check blocker. Sonar and all other completed checks are green. No merge, tag or publication is authorized; reauditoria uses the live PR head and current provider checks.",
     "gate3EvidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
     "gate3Manifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json"
   }

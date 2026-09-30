@@ -341,7 +341,7 @@
     {
       "gate": 3,
       "name": "WO-010 production acceptance and V1.1 release",
-      "state": "ADMITTED_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+      "state": "PREPUBLICATION_ACCEPTANCE_COMPLETED_WITH_BLOCKERS",
       "workOrder": "GBS-V11-WO-010",
       "workOrderPresent": true,
       "packageMetadata": {
@@ -373,7 +373,8 @@
       "admissionHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
       "candidateBranch": "codex/gbs-v11-release-integration-014",
       "correctionDelta6IssueComment": 5916761162,
-      "sameArtifactMatrix": "Configured in existing PR release-assurance workflow: exact-head Ubuntu producer uploads one SHA-256-bound tarball; Ubuntu/Windows/macOS consumers install/use/migrate/uninstall that same run artifact; provider result pending final candidate push.",
+      "correctionDelta16IssueComment": 5919878202,
+      "sameArtifactMatrix": "PASS on exact implementation head 59df2d1feadb18f5f5997f748f79339adb701f43: Ubuntu/Windows/macOS consumed the same receipt-bound tarball SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898; workflow run 36779630179.",
       "npmPreflight": {
         "identity": "npm whoami returned ENEEDAUTH without exposing credentials",
         "scope": "npm access list packages @gef-bootstrap returned 404 Scope not found",
@@ -382,22 +383,29 @@
         "publication": "NOT_ATTEMPTED"
       },
       "prepublicationChecks": {
-        "windowsLocalTarballInstallAndUse": "PASS: exact tarball install/use/library import/V1.0-to-V1.1 migration with user-state preservation/uninstall; SHA-256 4a8aaf9507549291402f80eff8201704d2573d3c1c9b67be4f4c6f723f8ee624",
-        "focusedPackageUpgradeRecoveryTests": "PASS 32/32; 0 skipped",
-        "sameArtifactWindowsSmoke": "PASS on Windows x64; exact real tarball checksum verified",
+        "exactHeadPackageCandidate": "PASS: source commit 59df2d1feadb18f5f5997f748f79339adb701f43; event pull_request; ref refs/pull/350/merge; Linux x64 producer; tarball SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898; artifact 11126264348",
+        "tarballManifestAndAllowlist": "PASS: 379 entries; reviewed archive path/file/bundle allowlist; no sensitive filenames; package @gef-bootstrap/cli@1.1.0 private=true UNLICENSED; exactly 4 staged Koffi optionals; vendor manifest 23 entries, 13/13 SHA-256 and 5/5 native SHA-512 lock checks verified",
+        "focusedPackageAndPublisherTests": "PASS 11/11; Context Lock JSON and git diff checks pass; staged secret-pattern scan has no matches",
+        "sameArtifactUbuntuWindowsMacos": "PASS: exact same SHA-256-bound artifact installs, exercises, migrates with preserved project state, and uninstalls on all three OSes in workflow run 36779630179; Windows uses a standard non-Administrator identity",
+        "focusedPackageUpgradeRecoveryTests": "Covered by npm run validate and exact-head WO-004 Ubuntu/Windows/macOS upgrade and recovery jobs: PASS",
+        "sameArtifactWindowsSmoke": "PASS on Windows x64 locally against the downloaded exact workflow receipt/source/event/ref and tarball checksum; install/use/library import/V1.0 migration/uninstall succeeded",
         "npmRunBuild": "PASS",
         "npmAudit": "PASS: npm audit --audit-level=high; 0 vulnerabilities",
-        "npmRunValidate": "PASS: typecheck plus 1610/1610 tests; 0 failed; 0 skipped on Windows Node v24.19.0 (working tree based on admitted source head 8529883a048eb58aa131c68800b22fba87ce8da2)",
-        "ubuntuMacosWindowsExactHeadAssurance": "PENDING",
-        "sameArtifactUbuntuWindowsMacos": "PENDING_FINAL_PR_HEAD_WORKFLOW_RUN",
-        "codecovExactHeadOptionB": "PENDING",
-        "securityAndSupplyChainExactHead": "PENDING",
-        "localTarballManifest": "PASS: 316 entries; vendor manifest 18 artifacts; all 13 SHA-256-bearing entries verified",
-        "windowsPackageInstallUseRecovery": "PASS: actual offline tarball install/use/doctor/status/library/uninstall; focused distribution/package/UPG-MIG/COMPAT/publisher/security tests 32/32"
+        "npmRunValidate": "PASS: typecheck plus 1610/1610 tests; 0 failed; 0 skipped locally and in exact-head Windows assurance; Repository Validation PASS",
+        "ubuntuMacosWindowsExactHeadAssurance": "PASS on exact implementation head 59df2d1feadb18f5f5997f748f79339adb701f43; release assurance workflow run 36779630179",
+        "codecovExactHeadOptionB": "N/A_ZERO_DENOMINATOR under owner Option B; exact base/head; LCOV upload SUCCESS run 36779630067/job 110106182182; provider codecov/patch SUCCESS check 110107481751 reports Coverage not affected comparing f673829...59df2d1; exact commit report link is in the Evidence Bundle; never interpreted as 100%",
+        "securityAndSupplyChainExactHead": "Trivy, CodeQL/tracked-alert evidence (one MEDIUM alert), Dependency Review, Pipeline Integrity and Sonar Quality Gate/diagnostics/duplicate-block inventory PASS; Gitleaks FAIL as detailed in the WO-010 Evidence Bundle",
+        "npmPreflight": "OWNER_ACTION_REQUIRED: npm whoami ENEEDAUTH; scope query 404 Scope not found; package query 404; trusted publisher binding unavailable; publication NOT_ATTEMPTED"
       },
-      "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC_AFTER_ALL_SAFE_EXACT_HEAD_CHECKS_PASS",
-      "finalPullRequestHead": "PENDING_CANDIDATE_COMMIT",
-      "requiredExactHeadChecks": "PENDING_PUSH_AND_PROVIDER_COMPLETION"
+      "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
+      "finalPullRequestHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+      "requiredExactHeadChecks": "147 total; 146 SUCCESS; 1 FAILURE (Gitleaks); 0 pending; not audit-ready",
+      "auditReady": false,
+      "blockingChecks": {
+        "gitleaks": "FAILURE; redacted generic-api-key finding at historical .engineering/work-orders/GBS-V11-WO-010.md:40, introduced by e6bb4403537a39d4db8fb3799deb85e49400140a; historical scan remains red after the wording correction; no history rewrite or scanner-policy change authorized"
+      },
+      "evidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
+      "releaseManifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json"
     }
   ],
   "historicalFacts": {
@@ -413,7 +421,7 @@
   "mergeAuthorized": false,
   "publicationAuthorized": false,
   "currentGate": 3,
-  "currentGateState": "ADMITTED_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+  "currentGateState": "PREPUBLICATION_ACCEPTANCE_COMPLETED_WITH_BLOCKERS",
   "currentCandidateBranch": "codex/gbs-v11-release-integration-014",
   "mainMergeAuthorized": false
 }
