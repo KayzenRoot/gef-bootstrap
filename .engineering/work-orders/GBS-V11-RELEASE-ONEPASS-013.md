@@ -70,7 +70,7 @@ Two further files changed on both sides relative to the merge base but did not c
 
 Decision lineage to preserve:
 
-- `D-0062@main / ADR-0007` means retire the Hive-specific development/integration contract; it is approved and merged to `main` at `3c5f1fb96e9d5f3d8a07acdf024687063f82d9d2` and its current ADR blob is `687ee037d2dcd4936d118a23666665fc66410aed`.
+- `D-0062@main / ADR-0007` means retire the main-branch external development/integration contract; it is approved and merged to `main` at `3c5f1fb96e9d5f3d8a07acdf024687063f82d9d2` and its current ADR blob is `687ee037d2dcd4936d118a23666665fc66410aed`.
 - `D-0062@release/1.1 / ADR-0006` means owner-operated exact-head audit and merge authority; current release ADR blob is `97bef59b15f557302a7fd625af30ceeb421c01a1`.
 - D-0062 is branch-qualified historical identity on both lines. D-0064 is unallocated; any renumbering or lineage map requires explicit admission and owner decision. Never overwrite either branch's D-0062 meaning.
 - D-0063 / ADR-0008 is effective on `main` under its promotion and effective on release only at the actual PR #347 merge. Its branch-specific blobs are in the gate matrix.

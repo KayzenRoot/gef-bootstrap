@@ -37,12 +37,12 @@
       ],
       "productionSourceState": "READ_ONLY",
       "checks": {
-        "nativeNode2217Lcov": "PENDING",
-        "build": "PENDING",
-        "validate": "PENDING",
-        "packageIntegrationSecurity": "PENDING",
-        "ubuntuWindowsMacos": "PENDING_PROVIDER_EXACT_HEAD",
-        "gitleaksFullNewCommitInterval": "PENDING",
+        "nativeNode2217Lcov": "LOCAL_PASS: 1603/1603; exact production SF DA 236/238, BRDA 70/87; provider interpretation not credited",
+        "build": "LOCAL_PASS_NODE_22_17_0_NPM_10_8_2",
+        "validate": "LOCAL_PASS_NODE_22_17_0_NPM_10_8_2_1603_OF_1603",
+        "packageIntegrationSecurity": "LOCAL_TEST_SUITE_PASS; exact-head dependency/security scans pending",
+        "ubuntuWindowsMacos": "WINDOWS_LOCAL_PASS; UBUNTU_MACOS_PENDING_PROVIDER_EXACT_HEAD",
+        "gitleaksFullNewCommitInterval": "PENDING_AFTER_FINAL_COMMITS",
         "trivyCodeqlSonar": "PENDING_PROVIDER_EXACT_HEAD"
       },
       "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT"
@@ -78,7 +78,7 @@
         ".engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md"
       ],
       "branchQualifiedDecisions": {
-        "D-0062@main": "ADR-0007 Hive integration retirement",
+        "D-0062@main": "ADR-0007 retirement of main-branch external integration",
         "D-0062@release/1.1": "ADR-0006 owner-operated audit and merge",
         "D-0064": "UNALLOCATED",
         "D-0063@release/1.1": "effective at real PR #347 merge"

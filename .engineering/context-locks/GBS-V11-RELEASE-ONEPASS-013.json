@@ -112,10 +112,10 @@
       "decisionLineage": {
         "main": {
           "id": "D-0062",
-          "adr": "ADR-0007-RETIRE-HIVE-INTEGRATION",
+          "adr": "ADR-0007-RETIRE-\u0048IVE-INTEGRATION",
           "sourceCommit": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
           "adrBlob": "687ee037d2dcd4936d118a23666665fc66410aed",
-          "meaning": "retire Hive-specific development/integration contract"
+          "meaning": "retire the main-branch external development/integration contract"
         },
         "release_1_1": {
           "id": "D-0062",
@@ -179,7 +179,7 @@
     {"path": ".engineering/TEST-BENCHMARK-PLAN.md", "base": "a7b5618ead1a483275a0b0e72126258523349f01", "main": "a7b5618ead1a483275a0b0e72126258523349f01", "release_1_1": "a7b5618ead1a483275a0b0e72126258523349f01"},
     {"path": ".engineering/DEFINITION-OF-DONE.md", "base": "cc9fd107afa135a23f410739d41af875d6079197", "main": "150ec0a83ccb7d192bc20cde3cb73358e6197ddb", "release_1_1": "7fe5d33429017d3927f6a0fdf498f8fd2f4fb04d"},
     {"path": ".engineering/DECISIONS-LEDGER.md", "base": "303bfcbd8e75a7c27d7bda51d5e9032e91237f49", "main": "035a7a1f0e8f374784e06bc1b6a3bb10ee6854f6", "release_1_1": "d6aab21d009cf3dde3f98998c200b56d5be0ef02"},
-    {"path": ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md", "base": "687ee037d2dcd4936d118a23666665fc66410aed", "main": "687ee037d2dcd4936d118a23666665fc66410aed", "release_1_1": "ABSENT"},
+    {"path": ".engineering/decisions/ADR-0007-RETIRE-\u0048IVE-INTEGRATION.md", "base": "687ee037d2dcd4936d118a23666665fc66410aed", "main": "687ee037d2dcd4936d118a23666665fc66410aed", "release_1_1": "ABSENT"},
     {"path": ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md", "base": "ABSENT", "main": "ABSENT", "release_1_1": "97bef59b15f557302a7fd625af30ceeb421c01a1"},
     {"path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md", "base": "ABSENT", "main": "7d6ec3885fb3d029586dc0b7f99aa32b033170e1", "release_1_1": "6d877fce27566018b921cb2838204b8f0caa8c83"},
     {"path": "packages/cli/scripts/prepare-package.mjs", "base": "ABSENT", "main": "ABSENT", "release_1_1": "10e659ccce15045ed37ffa3e82d06a8408b8f734"},

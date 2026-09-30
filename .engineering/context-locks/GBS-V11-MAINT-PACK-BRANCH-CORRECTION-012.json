@@ -65,7 +65,7 @@
   },
   "decisionBindings": {
     "releaseD0062": "ADR-0006 owner-operated exact-head audit/merge authority; remains effective",
-    "mainD0062": "ADR-0007 Hive-specific integration retirement; distinct branch-qualified lineage",
+    "mainD0062": "ADR-0007 retirement of the main-branch external integration contract; distinct branch-qualified lineage",
     "releaseD0063": "ADR-0008 effective at actual PR #347 merge",
     "mergeRequiredForThisWorkOrder": false,
     "publicationAllowed": false

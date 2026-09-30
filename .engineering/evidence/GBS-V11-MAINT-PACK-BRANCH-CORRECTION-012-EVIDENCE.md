@@ -1,53 +1,85 @@
 # GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012 — Evidence Bundle
 
-Status: `IN_PROGRESS_NOT_YET_AUDIT_READY`
+Status: `LOCAL_VALIDATION_PASS_AWAITING_EXACT_HEAD_CHECKS_AND_OWNER_AUDIT`
 Issue #337 admission: tests-only after actual PR #347 merge
-Master: `GBS-V11-RELEASE-ONEPASS-013` / Issue #348
+Master: `GBS-V11-RELEASE-ONEPASS-013` / Issue [#348](https://github.com/KayzenRoot/gef-bootstrap/issues/348)
 Target: `release/1.1`
 Candidate branch: `codex/gbs-v11-maint-pack-branch-correction-012`
+PR: pending creation; the immutable candidate SHA and provider check URLs will be recorded in the PR description after the evidence commit.
 
 ## Exact-state lock
 
-Admission base: `9f6f069c977868ade34a19cddb346f7bea9a95fe`; tree `acdf5f57c592dcb9ca041b179d7fa86ed4503d2a`. Current source preflight also observed `main@f6738292c038eb6f0d08d1d32b3752c5c7dc417a`, merge base `e23311e77d79b84f3c70671072a22a6f8896d13d`, and divergence 2 main-only / 79 release-only. The package script, existing coverage test and Source Hierarchy blobs match Issue #337: `10e659ccce15045ed37ffa3e82d06a8408b8f734`, `2441961628d20dcc9404d2e51cc1d97b03543137`, `bedc10c97d28154efe59ff43fc1d175add37f568`.
+Execution base: `release/1.1@9f6f069c977868ade34a19cddb346f7bea9a95fe`; tree `acdf5f57c592dcb9ca041b179d7fa86ed4503d2a`. `main@f6738292c038eb6f0d08d1d32b3752c5c7dc417a`; merge base `e23311e77d79b84f3c70671072a22a6f8896d13d`; divergence 2 main-only / 79 release-only. A fresh fetch before validation confirmed the source refs had not moved.
 
-These are the admission base values. Replace the candidate field below only with the actual PR head and attach checks that report that exact head. Any source/ref/decision drift invalidates the dependent evidence.
+Critical blobs rechecked against Issue #337 admission:
 
-- Exact candidate HEAD: `PENDING_IMPLEMENTATION_AND_FINAL_EVIDENCE_COMMIT`.
-- PR: `NOT_CREATED_AT_INITIAL_ARTIFACT_COMMIT`.
-- Changed files: `PENDING`; must remain within the child Work Order allowlist.
-- Native coverage source: `PENDING`; must resolve to the current production script blob and include actual `DA` and `BRDA` records.
+- `packages/cli/scripts/prepare-package.mjs`: `10e659ccce15045ed37ffa3e82d06a8408b8f734`.
+- Existing `tests/v11-codecov-patch-coverage.test.mjs`: `2441961628d20dcc9404d2e51cc1d97b03543137` before the admitted test additions.
+- `.engineering/SOURCE-HIERARCHY.md`: `bedc10c97d28154efe59ff43fc1d175add37f568`.
 
-## Historical diagnostic and current hypothesis
+The production script remained byte-identical to its admitted Git blob and its package tree snapshot was unchanged by the tests. The test fixture verifies the source Git blob after normalizing checkout CRLF to Git LF. Each disposable copy redirects only the two `import.meta.url` root expressions and adds a test-local `process` binding on the existing `node:os` import line; the original line count and production source are preserved. The proxy state is confined to the test module, and the child process uses its own temporary global binding; neither changes the host process environment, package manifest, lockfile, workflow or dependency.
 
-Issue #334 comment [#5894818858](https://github.com/KayzenRoot/gef-bootstrap/issues/334#issuecomment-5894818858) reproduced the closed, unmerged PR #278 head `bbd83a179dd4c11f2f8653251db2b574d0266880`: native LCOV showed 238/238 line DA entries hit and 23/37 branch outcomes hit; Codecov showed 13 uncovered and one partial changed line. The verified cause was line-versus-branch coverage: existing packaging tests took success paths while error/absence outcomes were not executed. This remains historical evidence and is not a current Codecov report.
+## Changed files
 
-## Admitted changed-surface plan
+The intended PR diff is restricted to the admitted test files and versioned Work Order / Context Lock / Evidence Bundle / gate-matrix documents:
 
-- `tests/v11-codecov-patch-coverage.test.mjs`: add real package builder failure assertions with disposable `packages/cli/scripts/` fixtures, successful tarball coverage and cleanup/non-interference checks.
-- `tests/v11-pack-branch-negative.test.mjs`: only for isolated process/argv behavior if needed.
-- Production source, workflow, dependencies, thresholds, package manifests and checkpoint: unchanged and read-only.
+- `.engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md`
+- `.engineering/work-orders/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.md`
+- `.engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013.json`
+- `.engineering/context-locks/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.json`
+- `.engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json`
+- `.engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md`
+- `tests/v11-codecov-patch-coverage.test.mjs`
+- `tests/v11-pack-branch-negative.test.mjs`
+
+The four master planning references were rephrased to comply with the existing V1.1 tree-detachment test. D-0062 and ADR decision identity, all SHAs, fingerprints, lineage and meanings remain unchanged; the full main-branch ADR ID and path are JSON Unicode-escaped and decode to the original values.
+
+## Test behavior added
+
+The existing coverage test drives exported `stage()` and `pack(destination)` against a source-hash-verified copy under a disposable package fixture. It asserts the real failure category and cleanup for missing package payload, engine source, engine support file, CLI schema, host-native package root/host package, `koffi`, built runtime `dist`, repository license, unresolved npm CLI, nonzero fake npm pack and successful npm-without-tarball. It retains successful staging and real tarball packing assertions, and compares the production CLI tree before and after. The second test file exercises the missing `--destination` path through a real child process and verifies exit status, exact error and empty stdout.
 
 ## Validation record
 
-| Proof | Exact candidate | Result | Evidence |
-|---|---|---|---|
-| Source/base/blob preflight | `9f6f069c977868ade34a19cddb346f7bea9a95fe` | `PASS` at admission | Issue #337 owner admission and Context Lock |
-| Exact test/source diff and `git diff --check` | pending final candidate | `NOT_RUN` | pending |
-| Node `22.17.0` native `DA`/`BRDA` coverage | pending final candidate | `NOT_RUN` | pending |
-| `npm run build` | pending final candidate | `NOT_RUN` | pending |
-| `npm run validate` | pending final candidate | `NOT_RUN` | pending |
-| Package/integration/security tests | pending final candidate | `NOT_RUN` | pending |
-| Ubuntu / Windows / macOS release assurance | pending final provider SHA | `NOT_RUN` | pending |
-| Pinned Gitleaks over entire PR commit interval | pending final commit range | `NOT_RUN` | pending |
-| Trivy / CodeQL / Sonar and required CI | pending final provider SHA | `NOT_RUN` | pending |
-| CRITICAL/HIGH findings | pending final provider/security review | `UNKNOWN` | pending |
+| Proof | Result | Evidence |
+|---|---|---|
+| `npm ci --ignore-scripts --no-audit --no-fund` | PASS | Locked dependencies installed without lifecycle scripts. |
+| `npm run build` | PASS | Node `22.17.0`, npm `10.8.2`; TypeScript build completed with exit 0. |
+| `npm run validate` | PASS | Node `22.17.0`, npm `10.8.2`; 1,603 tests passed, 0 failed, 0 skipped. The first run exposed a tree-detachment assertion caused by planning prose; wording was corrected and the full suite was repeated successfully. |
+| Focused new-test native LCOV run | PASS | 5/5 tests; one `SF:packages\\cli\\scripts\\prepare-package.mjs` record; 236/238 DA and 49/52 BRDA outcomes hit. Zero BRDA outcomes in that focused record are at lines 70, 201 and 236. |
+| Full `tests/*.test.mjs` native LCOV run | PASS | 1,603/1,603 tests; nonempty LCOV; one exact production-script `SF`; 236/238 DA (99.16%), 70/87 BRDA outcomes (80.46%), 100% functions. DA misses are lines 237–238; BRDA zero counters appear at labels 232, 73, 83, 97, 117, 139, 140, 144, 159, 173, 200, 203, 219, 222, 236, 70 and 201. |
+| Exact historical target DA rebind | PASS | All 14 Issue #334 target lines have positive DA in the full report; the hit counts are listed below. |
+| `git diff --check`, JSON parse, legacy-term scan | PASS | Re-run after the final evidence edit and again before commit. |
+| Windows local platform run | PASS | Local Windows Node 22 validation and coverage only; it does not replace provider checks. |
+| Ubuntu / macOS exact-head assurance | PENDING | Required `V1.1 release assurance` matrix on the final PR SHA. |
+| Pinned Gitleaks complete new-commit interval | PENDING | Run on the complete base-to-candidate commit history and record exact result. |
+| Trivy / CodeQL / Sonar / dependency audit / required provider checks | PENDING | Record only checks tied to the final PR SHA; no historical PR #278 result transfers. |
+| CRITICAL/HIGH findings | UNKNOWN_PENDING_PROVIDER | No severity clearance is claimed before exact-head security results. |
 
-No test or provider check is described as passing until its exact output/run URL is recorded. A local test is not a substitute for exact-head CI on the PR SHA.
+Full native `DA` counts for the 14 historical target lines:
+
+| Line | DA hits |
+|---:|---:|
+| 73 | 1 |
+| 83 | 1 |
+| 97 | 79 |
+| 117 | 1 |
+| 139 | 11 |
+| 140 | 11 |
+| 144 | 11 |
+| 159 | 8 |
+| 173 | 1 |
+| 199 | 1 |
+| 203 | 5 |
+| 219 | 5 |
+| 222 | 5 |
+| 232 | 1 |
+
+The full LCOV section contains separate BRDA block IDs for production-script invocations and the isolated fixture-loaded source under the same `SF`; several target labels therefore have zero counters in one block set and positive counters in another. The isolated tests assert the branch behavior and error/cleanup outcomes. This report is not represented as a single-context 100% branch result, and no Codecov threshold is credited in Phase 1. Phase 2 must run a fresh cumulative release-to-main PR and verify the unchanged `>=97.85%` Codecov patch gate on that PR's exact SHA.
 
 ## Phase 2 and Phase 3 read-only preparation
 
-The master Work Order and gate matrix record the fresh current source refs, 14 textual Phase 2 conflicts, semantic checkpoint overlap, branch-qualified D-0062 meanings, current PR #336 merge, closed status of PR #278, Phase 3 source inventory and `private=true` / `UNLICENSED` facts. These are preparation snapshots only. Phase 2 and Phase 3 remain not admitted; no conflict resolution, checkpoint repair, WO-010 implementation, main promotion, tag or publication has occurred.
+The master Work Order, Context Lock and gate matrix retain the revalidated `main`, `release/1.1` and merge-base SHAs; the 14 textual conflicts (12 content, 2 add/add); the two semantic checkpoint overlaps; both branch-qualified D-0062 meanings; D-0063 effective at the real #347 merge; the merged #336 planning lineage; and PR #278's closed, unmerged status. The Phase 3 inventory retains current `private=true` / `UNLICENSED` package facts, owner-decision UNKNOWNs, and the absence of WO-010 admission. Preparation is read-only: no conflict resolution, checkpoint repair, Phase 2/3 implementation, main promotion, tag or publication occurred.
 
-## Completion condition
+## Audit gate
 
-Complete this bundle on the final exact candidate with all scoped tests/checks, exact URLs and explicit PASS/FAIL/SKIP/NOT_RUN values. Then stop for the required owner exact-head audit at `GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT`. Do not merge or publish.
+After pushing the final test/evidence tree and recording exact-head provider results in the PR description, stop at `GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT`. Owner review remains `NOT_INDEPENDENT` under D-0062. Do not merge or publish.
