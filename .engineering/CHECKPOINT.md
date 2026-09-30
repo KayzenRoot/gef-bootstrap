@@ -207,3 +207,13 @@ V1.1 STOP CONDITION: `GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_RE
 
 ### Gate 2 Codecov owner amendment — Option B
 Owner decision after review #5366930854: Codecov numeric patch remains required at **>=97.85% whenever numeric patch coverage exists**. If the provider reports an exact-base/head patch with **zero eligible lines / Patch N/A / Coverage not affected**, and exact-head LCOV upload + Codecov patch status are SUCCESS, that dimension is recorded as **N/A_ZERO_DENOMINATOR**, never 100%. Acceptance additionally requires visible head/project coverage, no weakened threshold/exclusions/coverage definition, no synthetic denominator edits, all other Gate 2 checks green, and a fresh owner exact-head audit. Gate 3 / WO-010 remains separately gated.
+
+## Gate 3 / WO-010 prepublication overlay — 2026-09-30
+
+Gate 2 is OWNER_APPROVED by review #5368812257 on exact reviewed head 8529883a048eb58aa131c68800b22fba87ce8da2. The decision is OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT; it admits the separately bounded GBS-V11-WO-010 acceptance on PR #350.
+
+The release-line receipt fields above remain as the historical Gate 2 handoff. Current Gate 3 admission, package preflight and acceptance progress are separately recorded in v11.gate3Wo010Acceptance in CHECKPOINT.json and in .engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json. V1.0 production remains 1088/1088; no V1.1 production promotion is claimed.
+
+The real local Windows tarball package proof, same-artifact Windows install/use/migration/uninstall smoke, focused 32/32 distribution/package/upgrade/recovery/compatibility/publisher/security suite, `npm run build`, `npm audit` and `npm run validate` (1610/1610; 0 failed, 0 skipped) are recorded in .engineering/evidence/GBS-V11-WO-010-EVIDENCE.md. Correction Delta #6 adds a pre-merge exact-head tarball producer and Ubuntu/Windows/macOS consumers to the existing release-assurance trigger; provider results remain required on the final PR head. Codecov Option B, Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Sonar and all required checks must also be fresh on that head. After those exact-head checks, npm identity, scope and Trusted Publisher configuration remain an owner action because npm returned ENEEDAUTH and 404 Scope not found / package not found.
+
+WO-010 stop after safe prepublication work: OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC. No main merge, tag, GitHub Release or publication is authorized.

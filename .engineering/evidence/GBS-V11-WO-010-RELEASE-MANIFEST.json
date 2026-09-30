@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "kind": "gef.v11.release-package-candidate",
+  "workOrderId": "GBS-V11-WO-010",
+  "issue": 351,
+  "masterIssue": 348,
+  "pullRequest": 350,
+  "branch": "codex/gbs-v11-release-integration-014",
+  "sourceCommitAtPackageInput": "7cf5524468998a721ef3f1aeb1cc279c6811582d",
+  "captureMode": "real npm pack from the admitted package sources after npm run build",
+  "package": {
+    "name": "@gef-bootstrap/cli",
+    "version": "1.1.0",
+    "private": true,
+    "license": "UNLICENSED",
+    "registryPublicationAttempted": false
+  },
+  "toolchain": {
+    "platform": "win32-x64",
+    "node": "v24.19.0",
+    "npm": "11.17.0"
+  },
+  "tarball": {
+    "file": "gef-bootstrap-cli-1.1.0.tgz",
+    "sha256": "4a8aaf9507549291402f80eff8201704d2573d3c1c9b67be4f4c6f723f8ee624",
+    "entryCount": 316,
+    "requiredPayloadAllowlist": "PASS",
+    "forbiddenSourceCredentialAndDevelopmentPathScan": "PASS",
+    "offlineInstallAndUse": "PASS",
+    "consumerInstallUseUninstall": "PASS in a dedicated isolated consumer; root package.json byte-identical"
+  },
+  "vendorManifest": {
+    "path": "package/vendor/MANIFEST.json",
+    "artifactEntries": 18,
+    "sha256EntriesVerifiedAgainstTarball": 13,
+    "remainingEntries": "Bundled runtime package version bindings without a sha256 field",
+    "result": "PASS"
+  },
+  "provenance": {
+    "method": "npm Trusted Publishing via GitHub Actions OIDC",
+    "workflow": "v11-publish.yml",
+    "environment": "npm-publish",
+    "registryAttestationIssued": false,
+    "reason": "Candidate is unpublished and no npm scope/package access was available."
+  },
+  "npmPreflight": {
+    "identity": "UNVERIFIED_ENEEDAUTH",
+    "scope": "HTTP_404_SCOPE_NOT_FOUND",
+    "package": "HTTP_404_PACKAGE_NOT_FOUND",
+    "trustedPublisherBinding": "UNVERIFIED_NO_PACKAGE_SETTINGS_ACCESS",
+    "longLivedToken": "NOT_USED",
+    "publication": "NOT_ATTEMPTED",
+    "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+  },
+  "exactHeadCi": {
+    "state": "PENDING",
+    "required": [
+      "Codecov Option B",
+      "release assurance Ubuntu/macOS/Windows",
+      "same exact-head release tarball on Ubuntu/Windows/macOS",
+      "Gitleaks",
+      "Trivy",
+      "CodeQL",
+      "Dependency Review",
+      "Pipeline Integrity",
+      "Sonar",
+      "all required PR checks"
+    ]
+  },
+  "validation": {
+    "build": "PASS",
+    "focusedTests": "32/32 PASS; 0 skipped",
+    "localSameTarballSmoke": "PASS on Windows x64: install/use/library import/V1.0-to-V1.1 migration with state preservation/uninstall",
+    "npmAudit": "PASS 0 vulnerabilities",
+    "npmRunValidate": "PASS 1610/1610; 0 failed; 0 skipped"
+  }
+}

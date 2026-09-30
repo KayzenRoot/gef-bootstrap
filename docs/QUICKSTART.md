@@ -6,6 +6,8 @@ npm ci
 npm run validate
 ```
 
+The V1.1.0 production-acceptance candidate remains unpublished. To exercise its real CLI tarball without registry publication, follow the candidate package steps in [Installation](INSTALLATION.md).
+
 ## 2. Read canonical operating state
 Read `AGENTS.md`, `planning/MASTER-MODULE-INDEX.md` and `.engineering/CHECKPOINT.md` before changing governed state.
 

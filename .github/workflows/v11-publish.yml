@@ -1,0 +1,368 @@
+name: V1.1 trusted npm publication
+
+on:
+  push:
+    tags: ["v1.1.0"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v11-npm-publish-v1.1.0
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    if: github.ref == 'refs/tags/v1.1.0' || (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch')
+    name: Verify and pack the accepted v1.1.0 source
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the exact release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Require the pushed v1.1.0 tag to point into main
+        if: github.event_name == 'push' && github.ref == 'refs/tags/v1.1.0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_TYPE" = "tag"
+          test "$GITHUB_REF_NAME" = "v1.1.0"
+          release_commit="$(git rev-parse 'v1.1.0^{commit}')"
+          test "$(git rev-parse HEAD)" = "$release_commit"
+          git fetch --no-tags origin refs/heads/main:refs/remotes/origin/main
+          git merge-base --is-ancestor "$release_commit" refs/remotes/origin/main
+          echo "Verified release source commit: $release_commit"
+
+      - name: Require manual branch dispatch to test this exact candidate
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_TYPE" = "branch"
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          echo "Verified manual candidate branch $GITHUB_REF_NAME at $GITHUB_SHA"
+
+      - name: Set up Node.js and npm registry
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.14.0"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Pin the minimum npm CLI with trusted publishing support
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.5.1
+          test "$(npm --version)" = "11.5.1"
+
+      - name: Validate release identity and public package metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          const manifest = JSON.parse(readFileSync('packages/cli/package.json', 'utf8'));
+          const releasePush = process.env.GITHUB_EVENT_NAME === 'push' && process.env.GITHUB_REF === 'refs/tags/v1.1.0';
+          if (manifest.name !== '@gef-bootstrap/cli' || manifest.version !== '1.1.0' || (releasePush && manifest.private !== false)) {
+            throw new Error('Refusing candidate: package identity mismatch, or release package is not public');
+          }
+          NODE
+
+      - name: Install locked workspace dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build, validate and audit the exact tagged source
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          npm run validate
+          npm audit --audit-level=high
+
+      - name: Build and inspect the actual release tarball
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+          destination="$RUNNER_TEMP/gef-v1.1.0-package"
+          mkdir -p "$destination"
+          tarball="$(node packages/cli/scripts/prepare-package.mjs --pack --destination "$destination")"
+          test -s "$tarball"
+          echo "tarball=$tarball" >> "$GITHUB_OUTPUT"
+          contents="$RUNNER_TEMP/gef-v1.1.0-package-contents.txt"
+          tar -tzf "$tarball" > "$contents"
+          node --input-type=module - "$tarball" "$contents" <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const [archive, contentsPath] = process.argv.slice(2);
+          const pkg = JSON.parse(execFileSync('tar', ['-xOzf', archive, 'package/package.json'], { encoding: 'utf8' }));
+          const expectedFiles = ['LICENSE', 'README.md', 'bin', 'dist', 'schemas', 'vendor'];
+          const expectedBundles = ['@gef-bootstrap/contracts', '@gef-bootstrap/kernel', '@gef-bootstrap/preflight', '@koromix/koffi-win32-x64', 'koffi'];
+          const sorted = (items) => [...items].sort();
+          if (JSON.stringify(sorted(pkg.files ?? [])) !== JSON.stringify(sorted(expectedFiles))) {
+            throw new Error('Refusing package: files allowlist differs from the reviewed WO-010 set');
+          }
+          if (JSON.stringify(sorted(pkg.bundleDependencies ?? pkg.bundledDependencies ?? [])) !== JSON.stringify(sorted(expectedBundles))) {
+            throw new Error('Refusing package: bundled dependencies differ from the reviewed WO-010 set');
+          }
+          const files = new Set(['package/package.json', 'package/LICENSE', 'package/README.md']);
+          const contentRoots = expectedFiles.filter((name) => ['bin', 'dist', 'schemas', 'vendor'].includes(name)).map((name) => `package/${name}`);
+          const bundleRoots = expectedBundles.map((name) => `package/node_modules/${name}`);
+          const entries = readFileSync(contentsPath, 'utf8').split(/\r?\n/).filter(Boolean);
+          const sensitiveFilename = /(^|\/)(?:\.npmrc|\.env(?:\.[^/]*)?|credentials?(?:\.[^/]*)?|secrets?(?:\.[^/]*)?|tokens?(?:\.[^/]*)?|id_rsa(?:\.[^/]*)?|[^/]*\.(?:pem|key|p12|pfx))$/i;
+          for (const entry of entries) {
+            const normalized = entry.replace(/\/+$/, '');
+            const directory = entry.endsWith('/');
+            const contentAllowed = contentRoots.some((root) => normalized === root || normalized.startsWith(`${root}/`));
+            const bundleAllowed = bundleRoots.some((root) => normalized === root || normalized.startsWith(`${root}/`));
+            const parentDirectoryAllowed = directory && (normalized === 'package' || normalized === 'package/node_modules' || [...contentRoots, ...bundleRoots].some((root) => root.startsWith(`${normalized}/`)));
+            if (!entry.startsWith('package/') || !(files.has(normalized) || contentAllowed || bundleAllowed || parentDirectoryAllowed)) {
+              throw new Error(`Refusing package: archive path is outside the reviewed allowlist: ${entry}`);
+            }
+            if (sensitiveFilename.test(normalized)) throw new Error(`Refusing package: sensitive filename is present: ${entry}`);
+          }
+          for (const required of ['package/package.json', 'package/LICENSE', 'package/README.md', 'package/bin/gef.mjs', 'package/dist/main.js', 'package/vendor/MANIFEST.json', 'package/schemas/gef-cli-state.schema.json']) {
+            if (!entries.includes(required)) throw new Error(`Refusing package: required path is missing: ${required}`);
+          }
+          NODE
+
+          mkdir -p "$RUNNER_TEMP/gef-v1.1.0-package-receipt"
+          cp "$tarball" "$RUNNER_TEMP/gef-v1.1.0-package-receipt/"
+          archive="$RUNNER_TEMP/gef-v1.1.0-package-receipt/$(basename "$tarball")"
+          package_json="$RUNNER_TEMP/gef-v1.1.0-package.json"
+          tar -xOzf "$archive" package/package.json > "$package_json"
+          node --input-type=module - "$archive" "$package_json" "$RUNNER_TEMP/gef-v1.1.0-package-receipt/GBS-V11-WO-010-RELEASE-MANIFEST.json" <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const [archive, packageJsonPath, receiptPath] = process.argv.slice(2);
+          const pkg = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+          const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          const receipt = {
+            schemaVersion: 1,
+            kind: 'gef.v11.release-package-candidate',
+            version: pkg.version,
+            packageName: pkg.name,
+            sourceCommit,
+            event: process.env.GITHUB_EVENT_NAME,
+            ref: process.env.GITHUB_REF,
+            tag: process.env.GITHUB_REF_TYPE === 'tag' ? process.env.GITHUB_REF_NAME : null,
+            runnerPlatform: process.platform,
+            runnerArchitecture: process.arch,
+            node: process.version,
+            npm: execFileSync('npm', ['--version'], { encoding: 'utf8' }).trim(),
+            license: pkg.license,
+            private: pkg.private,
+            tarball: {
+              file: archive.split(/[\\/]/).at(-1),
+              sha256: createHash('sha256').update(readFileSync(archive)).digest('hex'),
+              inspection: 'COMPLETE_PACKAGE_PATH_ALLOWLIST_AND_SENSITIVE_FILENAME_CHECKS_PASSED'
+            },
+            provenance: {
+              method: 'npm trusted publishing via GitHub OIDC',
+              expectedWorkflow: 'v11-publish.yml',
+              issued: false,
+              note: 'A registry attestation exists only after the publish job succeeds.'
+            }
+          };
+          writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n');
+          console.log('Tarball SHA-256: ' + receipt.tarball.sha256);
+          console.log('Source commit: ' + sourceCommit);
+          NODE
+
+      - name: Install and smoke-test the exact packed artifact
+        shell: bash
+        env:
+          GEF_RELEASE_TARBALL: ${{ steps.package.outputs.tarball }}
+        run: |
+          set -euo pipefail
+          consumer="$RUNNER_TEMP/gef-v1.1.0-consumer"
+          mkdir -p "$consumer"
+          (
+            cd "$consumer"
+            npm init -y
+            npm install --offline --no-audit --no-fund "$GEF_RELEASE_TARBALL"
+          )
+          bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
+          node "$bin" --help > "$RUNNER_TEMP/gef-help.json"
+          node "$bin" --version > "$RUNNER_TEMP/gef-version.json"
+          node "$bin" doctor --target "$consumer" --json > "$RUNNER_TEMP/gef-doctor.json"
+          node "$bin" status --target "$consumer" --json > "$RUNNER_TEMP/gef-status.json"
+          cd "$consumer"
+          node --input-type=module -e "import { processExitCodeFor } from '@gef-bootstrap/cli'; if (typeof processExitCodeFor !== 'function') process.exit(1)"
+
+      - name: Retain the package and exact-input checksum manifest
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gef-v1.1.0-package-${{ github.run_id }}
+          path: ${{ runner.temp }}/gef-v1.1.0-package-receipt/
+          if-no-files-found: error
+          retention-days: 30
+
+  cross-platform-artifact-smoke:
+    needs: verify
+    name: Install and use the exact candidate tarball (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out the exact source for the acceptance harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download the exact package and checksum receipt from this run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: gef-v1.1.0-package-${{ github.run_id }}
+          path: ${{ runner.temp }}/gef-v1.1.0-package-receipt
+
+      - name: Set up the runtime used for package acceptance
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.14.0"
+          package-manager-cache: false
+
+      - name: Bind the tarball checksum and receipt to this exact workflow source
+        shell: bash
+        env:
+          EXPECTED_SOURCE_COMMIT: ${{ github.sha }}
+          EXPECTED_EVENT: ${{ github.event_name }}
+          EXPECTED_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync } from 'node:fs';
+          import { join } from 'node:path';
+          const directory = join(process.env.RUNNER_TEMP, 'gef-v1.1.0-package-receipt');
+          const receipt = JSON.parse(readFileSync(join(directory, 'GBS-V11-WO-010-RELEASE-MANIFEST.json'), 'utf8'));
+          const archive = readFileSync(join(directory, receipt.tarball.file));
+          const actual = createHash('sha256').update(archive).digest('hex');
+          if (receipt.sourceCommit !== process.env.EXPECTED_SOURCE_COMMIT || receipt.event !== process.env.EXPECTED_EVENT || receipt.ref !== process.env.EXPECTED_REF || receipt.tarball.sha256 !== actual || receipt.version !== '1.1.0' || receipt.packageName !== '@gef-bootstrap/cli') {
+            throw new Error('Refusing cross-platform smoke: receipt, source, version or tarball checksum mismatch');
+          }
+          console.log(`Verified ${receipt.tarball.file} from ${receipt.sourceCommit}; sha256=${actual}`);
+          NODE
+
+      - name: Install, use, migrate with and remove the same tarball on this platform
+        shell: bash
+        env:
+          GEF_RELEASE_RECEIPT_DIR: ${{ runner.temp }}/gef-v1.1.0-package-receipt
+          GEF_EXPECTED_SOURCE_COMMIT: ${{ github.sha }}
+          GEF_EXPECTED_EVENT: ${{ github.event_name }}
+          GEF_EXPECTED_REF: ${{ github.ref }}
+        run: node tests/v11-wo-010-artifact-smoke.mjs
+
+  publish:
+    needs: [verify, cross-platform-artifact-smoke]
+    if: github.event_name == 'push' && github.ref == 'refs/tags/v1.1.0'
+    name: Publish through npm OIDC
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: npm-publish
+    permissions:
+      actions: read
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out the exact release tag for receipt verification
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download the verified package from this workflow run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --name "gef-v1.1.0-package-$GITHUB_RUN_ID" --dir "$RUNNER_TEMP/gef-v1.1.0-package-receipt"
+
+      - name: Set up npm trusted publisher client
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.14.0"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Pin the minimum npm CLI with trusted publishing support
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global npm@11.5.1
+          test "$(npm --version)" = "11.5.1"
+
+      - name: Verify receipt and publish the exact tarball with provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/gef-v1.1.0-package-receipt/GBS-V11-WO-010-RELEASE-MANIFEST.json"
+          tarball="$RUNNER_TEMP/gef-v1.1.0-package-receipt/gef-bootstrap-cli-1.1.0.tgz"
+          test -s "$receipt"
+          test -s "$tarball"
+          node --input-type=module - "$receipt" "$tarball" <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const [receiptPath, tarballPath] = process.argv.slice(2);
+          const receipt = JSON.parse(readFileSync(receiptPath, 'utf8'));
+          const actual = createHash('sha256').update(readFileSync(tarballPath)).digest('hex');
+          const releaseCommit = execFileSync('git', ['rev-parse', 'v1.1.0^{commit}'], { encoding: 'utf8' }).trim();
+          if (receipt.kind !== 'gef.v11.release-package-candidate' || receipt.event !== 'push' || receipt.ref !== 'refs/tags/v1.1.0' || receipt.sourceCommit !== releaseCommit || receipt.sourceCommit !== process.env.GITHUB_SHA || receipt.tag !== 'v1.1.0' || receipt.tarball.sha256 !== actual || receipt.version !== '1.1.0' || receipt.packageName !== '@gef-bootstrap/cli' || receipt.private !== false) {
+            throw new Error('Refusing publication: package receipt does not match the exact tag, version, visibility or tarball');
+          }
+          NODE
+          npm publish "$tarball" --access public --provenance --ignore-scripts
+
+  post-publish:
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/tags/v1.1.0'
+    name: Verify public retrieval and provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Set up Node.js and npm registry
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.14.0"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Pin npm signature verification support
+        run: npm install --global npm@11.5.1
+
+      - name: Retrieve, verify signatures and smoke-test the published package
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(npm view @gef-bootstrap/cli@1.1.0 version)" = "1.1.0"
+          npm audit signatures @gef-bootstrap/cli@1.1.0
+          consumer="$RUNNER_TEMP/gef-v1.1.0-published-consumer"
+          mkdir -p "$consumer"
+          (
+            cd "$consumer"
+            npm init -y
+            npm install --no-audit --no-fund @gef-bootstrap/cli@1.1.0
+          )
+          bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
+          node "$bin" --help > /dev/null
+          node "$bin" --version | grep -F '"version": "1.1.0"'

@@ -593,6 +593,48 @@
         "zeroDenominatorRule": "N/A_ZERO_DENOMINATOR accepted only with exact bound base/head, exact-head LCOV upload SUCCESS, provider patch status SUCCESS, zero eligible patch lines / Patch N/A / Coverage not affected, visible head/project coverage, unchanged threshold/exclusions/coverage definition, no synthetic denominator edits, all other required Gate2 checks green, and owner exact-head audit",
         "nAIsNot": "100% or numeric threshold satisfaction"
       }
-    }
+    },
+    "gate3Wo010Acceptance": {
+      "state": "ADMITTED_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+      "workOrder": "GBS-V11-WO-010",
+      "issue": 351,
+      "masterIssue": 348,
+      "implementationPr": 350,
+      "branch": "codex/gbs-v11-release-integration-014",
+      "admissionReview": 5368812257,
+      "admissionReviewedHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+      "gate2OwnerVerdict": "OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT",
+      "npmPreflight": {
+        "identity": "UNVERIFIED_ENEEDAUTH",
+        "scope": "404_SCOPE_NOT_FOUND",
+        "package": "404_NOT_FOUND",
+        "trustedPublisher": "UNVERIFIED_PACKAGE_SETTINGS_UNAVAILABLE",
+        "publication": "NOT_ATTEMPTED"
+      },
+      "packageMetadata": {
+        "name": "@gef-bootstrap/cli",
+        "version": "1.1.0",
+        "private": true,
+        "license": "UNLICENSED"
+      },
+      "exactHeadChecks": "PENDING_PUSH_AND_PROVIDER_COMPLETION",
+      "mainMergeAuthorized": false,
+      "tagAuthorized": false,
+      "publicationAuthorized": false,
+      "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC_AFTER_ALL_SAFE_EXACT_HEAD_CHECKS_PASS",
+      "localValidation": {
+        "node": "v24.19.0",
+        "npm": "11.17.0",
+        "dependencyInstall": "PASS 33 packages; 0 vulnerabilities",
+        "build": "PASS",
+    "focusedTests": "32/32 PASS; 0 skipped across distribution/package/upgrade/recovery/compatibility/publisher/security suites; same-artifact Windows install/use/migration/uninstall PASS",
+        "npmAudit": "PASS; 0 vulnerabilities",
+    "npmRunValidate": "PASS; 1610/1610; 0 failed; 0 skipped",
+        "platform": "Windows x64"
+      }
+    },
+    "gate3NextLegalAction": "Finish safe prepublication acceptance on exact PR #350 head; then stop OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC if registry identity/scope/OIDC remain unavailable.",
+    "gate3EvidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
+    "gate3Manifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json"
   }
 }
