@@ -11,7 +11,7 @@ const TEST_FILE = fileURLToPath(import.meta.url);
 const REPO_ROOT = resolve(dirname(TEST_FILE), "..");
 const REAL_SCRIPT = join(REPO_ROOT, "packages", "cli", "scripts", "prepare-package.mjs");
 const SOURCE_BYTES = readFileSync(REAL_SCRIPT);
-const EXPECTED_GIT_BLOB = "0ef8c90257efccee67888a9db0791b92c26d08c8";
+const EXPECTED_GIT_BLOB = "fe707051614fe54dda689ac223ac073a0a79c553";
 const canonicalBytes = Buffer.from(SOURCE_BYTES.toString("utf8").replace(/\r\n/g, "\n"), "utf8");
 const actualGitBlob = createHash("sha1").update(`blob ${canonicalBytes.length}\0`).update(canonicalBytes).digest("hex");
 assert.equal(actualGitBlob, EXPECTED_GIT_BLOB, "package builder changed from its admitted source blob");

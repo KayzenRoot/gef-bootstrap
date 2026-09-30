@@ -77,6 +77,16 @@ Scope is limited to the publisher workflow, package-preparation script, existing
 
 Regression proof: focused package-builder/publisher guards, full npm run validate, and fresh exact-head package, cross-platform, security, quality and required PR checks. Delta #15 does not waive Gitleaks, Sonar, npm owner configuration, or the exact-head audit stop conditions.
 
+## Correction Delta #16 — bundled Koffi optional-dependency lock mismatch
+
+Issue #351 correction: comment 5919878202.
+
+The checksum-bound real tarball from PR #350 HEAD `e8fb71cdcfde953365829fba868d7ecab21e9535` failed the consumer's `npm ci`: its generated package lock omitted optional Koffi platform packages beyond the four native prebuilds bundled for Linux x64, Windows x64 and macOS x64/arm64, while the copied nested Koffi manifest still declared those additional platforms. npm correctly rejected the inconsistent lock.
+
+The correction is limited to `packages/cli/scripts/prepare-package.mjs`, `tests/v11-codecov-patch-coverage.test.mjs`, `tests/v11-pack-branch-negative.test.mjs`, `tests/v11-wo-010-publish-workflow.test.mjs`, this Work Order and `.engineering/context-locks/GBS-V11-WO-010.json`. The package builder narrows only the staged Koffi manifest's `optionalDependencies` to the four entries already verified against the root lockfile and bundled into the portable tarball. The source Koffi metadata, package identity, root package manifest/lockfile, runtime code, lifecycle policy and supported-platform behavior remain unchanged. Existing package-builder blob identity assertions are refreshed only as admitted.
+
+Regression proof requires a fixture containing supported and unsupported Koffi optional entries, exact staged metadata assertions, a receipt-bound real-tarball `npm ci --offline --ignore-scripts` and native Koffi load on Windows/Linux/macOS, focused package tests, `npm run build`, `npm audit --audit-level=high`, `npm run validate`, and fresh exact-head checks. Delta #16 does not waive any security, npm-owner-configuration or audit stop condition.
+
 Trusted publishing is the required path where npm supports OIDC; do not substitute a long-lived token. Do not remove `private: true` from `packages/cli/package.json` unless the exact public scope/package ownership and trusted publisher are verified. Preserve `UNLICENSED` and the existing All Rights Reserved LICENSE unless package tooling proves a minimal truthful metadata adjustment is necessary.
 
 If identity, namespace ownership or the package's trusted publisher cannot be verified/configured, finish all safe pre-publication work and record one concise `OWNER_ACTION_REQUIRED` block naming the exact npm scope/package settings. Do not publish a placeholder/staged package, use a token, or infer ownership from a public 404.

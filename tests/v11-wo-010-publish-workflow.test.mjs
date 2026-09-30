@@ -116,6 +116,8 @@ test("WO-010 pre-merge assurance runs its one exact-head tarball on all three pl
   assert.match(PACKAGE_PREPARER, /KOFFI_NATIVE_PREBUILDS = \[/);
   assert.match(PACKAGE_PREPARER, /RUNTIME_PACKAGES = \["contracts", "kernel", "preflight", "config", "project-identity"\]/);
   assert.match(PACKAGE_PREPARER, /verifyNativePackageIntegrity/);
+  assert.match(PACKAGE_PREPARER, /function updateStagedKoffiOptionalDependencies[\s\S]*?koffiManifest\.optionalDependencies = optionalDependencies/);
+  assert.match(PACKAGE_PREPARER, /cpSync\(koffiSource, koffiTarget, \{ recursive: true \}\);\r?\n\s+updateStagedKoffiOptionalDependencies\(koffiTarget, packageLock\)/);
   assert.match(PACKAGE_PREPARER, /optionalDependencies\[nativePackage\.name\]/);
   assert.match(WORKFLOW, /const expectedNativeBundles = \[/);
   assert.match(WORKFLOW, /lockfile-pinned Koffi prebuild is missing/);

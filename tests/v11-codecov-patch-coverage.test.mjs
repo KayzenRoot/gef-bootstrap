@@ -19,7 +19,7 @@ const FIXTURE_SCRIPT = join(FIXTURE_REPO, "packages", "cli", "scripts", "prepare
 const REAL_SCRIPT_URL = pathToFileURL(REAL_SCRIPT).href;
 const SOURCE_BYTES = readFileSync(REAL_SCRIPT);
 const SOURCE_SHA256 = createHash("sha256").update(SOURCE_BYTES).digest("hex");
-const ADMITTED_GIT_BLOB = "0ef8c90257efccee67888a9db0791b92c26d08c8";
+const ADMITTED_GIT_BLOB = "fe707051614fe54dda689ac223ac073a0a79c553";
 const gitBlobSha1 = bytes => {
   const canonicalBytes = Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8");
   return createHash("sha1").update(`blob ${canonicalBytes.length}\0`).update(canonicalBytes).digest("hex");
@@ -105,7 +105,18 @@ function seedFixture({ payload = true, engines = true, support = true, schemas =
   if (engines) for (const source of ENGINE_SOURCES) writeFixtureFile(source);
   if (support) writeFixtureFile(SUPPORT_SOURCE);
   if (schemas) for (const asset of SCHEMA_ASSETS) writeFixtureFile(`packages/cli/schemas/${asset}`, "{}\n");
-  if (koffi) writeFixtureFile("node_modules/koffi/package.json", JSON.stringify({ name: "koffi", version: "3.3.0" }));
+  if (koffi) writeFixtureFile("node_modules/koffi/package.json", JSON.stringify({
+    name: "koffi",
+    version: "3.3.0",
+    optionalDependencies: {
+      "@koromix/koffi-linux-x64": "3.3.0",
+      "@koromix/koffi-darwin-x64": "3.3.0",
+      "@koromix/koffi-darwin-arm64": "3.3.0",
+      "@koromix/koffi-win32-x64": "3.3.0",
+      "@koromix/koffi-android-arm64": "3.3.0",
+      "@koromix/koffi-linux-arm64": "3.3.0",
+    },
+  }));
   for (const name of RUNTIME_PACKAGES) {
     writeFixtureFile(`packages/${name}/package.json`, JSON.stringify({ name: `@gef-bootstrap/${name}`, version: "0.0.0" }));
     if (runtimeDists) writeFixtureFile(`packages/${name}/dist/index.mjs`);
@@ -344,6 +355,13 @@ test("package preparation: real fail-closed branches clean isolated staging and 
   try {
     assert.ok(existsSync(join(staged, "vendor", "MANIFEST.json")));
     assert.ok(existsSync(join(staged, "LICENSE")));
+    const stagedKoffi = JSON.parse(readFileSync(join(staged, "node_modules", "koffi", "package.json"), "utf8"));
+    assert.deepEqual(stagedKoffi.optionalDependencies, {
+      "@koromix/koffi-linux-x64": "3.3.0",
+      "@koromix/koffi-darwin-x64": "3.3.0",
+      "@koromix/koffi-darwin-arm64": "3.3.0",
+      "@koromix/koffi-win32-x64": "3.3.0",
+    });
   } finally {
     rmSync(staged, { recursive: true, force: true });
     cleanupNewStages(beforeStage);

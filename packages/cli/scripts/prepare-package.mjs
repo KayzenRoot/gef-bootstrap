@@ -151,6 +151,20 @@ function verifyNativePackageIntegrity(archive, expectedIntegrity, name) {
   if (actualIntegrity !== expectedIntegrity) throw new Error("Native package archive does not match package-lock.json: " + name);
 }
 
+function updateStagedKoffiOptionalDependencies(koffiTarget, packageLock) {
+  const manifestPath = join(koffiTarget, "package.json");
+  const koffiManifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const optionalDependencies = Object.fromEntries(KOFFI_NATIVE_PREBUILDS.map(({ name }) => {
+    const locked = readLockedNativePackage(name, packageLock);
+    if (koffiManifest.optionalDependencies?.[name] !== locked.version) {
+      throw new Error("Koffi optional native dependency differs from package-lock.json: " + name);
+    }
+    return [name, locked.version];
+  }));
+  koffiManifest.optionalDependencies = optionalDependencies;
+  writeFileSync(manifestPath, JSON.stringify(koffiManifest, null, 2) + "\n");
+}
+
 function stageLockedNativePackage(staging, manifest, packageLock, nativePackage) {
   const { name, os, cpu } = nativePackage;
   const locked = readLockedNativePackage(name, packageLock);
@@ -253,6 +267,7 @@ function stageNativeRuntime(staging, manifest) {
   const koffiTarget = join(staging, "node_modules", "koffi");
   mkdirSync(koffiTarget, { recursive: true });
   cpSync(koffiSource, koffiTarget, { recursive: true });
+  updateStagedKoffiOptionalDependencies(koffiTarget, packageLock);
   manifest.artifacts.push({
     kind: "native-runtime",
     name: "koffi",
