@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-MAIN-RECONCILE-006",
+  "parent": "GBS-V11-MAINT-POST-WO009-001",
+  "baseRef": "release/1.1",
+  "baseSha": "6275860c7cde1fbecccf646b87a04b9e92c8ecd0",
+  "mainParentSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+  "mergeBaseSha": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "branch": "gbs/v11/maint-pr278-main-ancestry-006",
+  "owner": "KayzenRoot",
+  "assurance": "ELEVATED",
+  "counts": {
+    "equal": 902,
+    "releaseOnly": 203,
+    "mainOnly": 29,
+    "divergent": 51
+  },
+  "expectedParents": [
+    "6275860c7cde1fbecccf646b87a04b9e92c8ecd0",
+    "e23311e77d79b84f3c70671072a22a6f8896d13d"
+  ],
+  "requiredMergeMethod": "merge",
+  "authorizedPaths": [
+    ".github/workflows/m08-platform.yml",
+    ".github/workflows/m09-platform.yml",
+    ".github/workflows/m41-m47-integrated.yml",
+    ".github/workflows/m48-m54-integrated.yml",
+    ".github/workflows/m62-m63-final.yml",
+    ".gitignore",
+    ".github/CODEOWNERS",
+    ".github/workflows/coverage-codecov.yml",
+    "docs/COVERAGE-PIPELINE.md",
+    "docs/PIPELINE-INTEGRITY.md",
+    "docs/SECURITY-TOOLING-PILOT.md",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-MAIN-RECONCILE-006.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-MAIN-RECONCILE-006.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-MAIN-RECONCILE-006-EVIDENCE.md",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-MAIN-RECONCILE-006-MATRIX.md"
+  ],
+  "forbidden": [
+    "force push",
+    "direct main mutation",
+    "v1.0.0 tag mutation",
+    "squash this merge",
+    "retired live adapter",
+    "scanner thresholds",
+    "early production publication"
+  ],
+  "stopCondition": "GBS_V11_PR278_MAIN_ANCESTRY_006_EXACT_HEAD_VERIFIED_OR_BLOCKED"
+}

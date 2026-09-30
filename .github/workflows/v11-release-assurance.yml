@@ -1,0 +1,305 @@
+name: V1.1 release assurance
+
+on:
+  pull_request:
+    branches: ["release/1.1"]
+  push:
+    branches: ["release/1.1"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: v11-release-assurance-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-assurance:
+    name: V1.1 release assurance / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out exact candidate head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Set up Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked workspace dependencies (Linux/macOS)
+        id: install_unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -o pipefail
+          npm ci --ignore-scripts 2>&1 | tee install.log
+      - name: Install locked workspace dependencies (Windows)
+        id: install_windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          npm.cmd ci --ignore-scripts *>&1 | Tee-Object -FilePath install.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Run full validation as an unprivileged Windows user
+        id: validate_windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./.github/scripts/run-v11-unprivileged-validation.ps1
+      - name: Run full typecheck and regression suite (Linux/macOS)
+        id: validate_unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run validate 2>&1 | tee validation.log
+      - name: Audit dependency vulnerabilities (Windows)
+        id: audit_windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          npm.cmd audit --audit-level=high *>&1 | Tee-Object -FilePath dependency-audit.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Audit dependency vulnerabilities (Linux/macOS)
+        id: audit_unix
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -o pipefail
+          npm audit --audit-level=high 2>&1 | tee dependency-audit.log
+      - name: Write exact-head assurance receipt
+        if: always()
+        env:
+          GEF_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          GEF_HEAD_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          GEF_INSTALL_OUTCOME: ${{ runner.os == 'Windows' && steps.install_windows.outcome || steps.install_unix.outcome }}
+          GEF_VALIDATE_OUTCOME: ${{ runner.os == 'Windows' && steps.validate_windows.outcome || steps.validate_unix.outcome }}
+          GEF_AUDIT_OUTCOME: ${{ runner.os == 'Windows' && steps.audit_windows.outcome || steps.audit_unix.outcome }}
+        run: node .github/scripts/write-v11-assurance-receipt.mjs
+      - name: Upload exact-head logs and receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: v11-assurance-${{ matrix.os }}-${{ github.run_id }}
+          path: |
+            install.log
+            validation.log
+            dependency-audit.log
+            assurance-receipt.json
+          if-no-files-found: warn
+          retention-days: 30
+
+
+  cumulative-sonar-evidence:
+    # Release-bound read-only diagnostics for PR #278; no checkout, no secret
+    # access, no candidate code execution and no Sonar quality-gate override.
+    name: Cumulative Sonar diagnostics
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Inspect cumulative release-to-main Sonar annotations
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GH_REPO" = "KayzenRoot/gef-bootstrap" || { echo "::error::Wrong repository"; exit 1; }
+          release_sha="$(gh api "repos/$GH_REPO/git/ref/heads/release/1.1" --jq '.object.sha')"
+          pr_sha="$(gh api "repos/$GH_REPO/pulls/278" --jq '.head.sha')"
+          printf 'Current release SHA: %s\nPR #278 head SHA: %s\n' "$release_sha" "$pr_sha"
+          if [ "$release_sha" != "$pr_sha" ]; then
+            echo "::warning::PR #278 is not bound to the current release tip: STALE; do not infer quality-gate closure"
+            exit 0
+          fi
+          checks="$RUNNER_TEMP/release-checks.json"
+          gh api --paginate "repos/$GH_REPO/commits/$pr_sha/check-runs?per_page=100" | jq -s '[.[] | .check_runs[]]' > "$checks" || {
+            echo "::warning::GitHub check inventory unavailable: NOT_VERIFIED"
+            exit 0
+          }
+          sonar_id="$(jq -r '[.[] | select(.name == "SonarCloud Code Analysis") | select(.app.slug == "sonarqubecloud")] | sort_by(.completed_at) | last | .id // empty' "$checks")"
+          if [ -z "$sonar_id" ]; then
+            echo "::warning::Cumulative PR #278 Sonar check has not arrived for the current release head: NOT_VERIFIED"
+            exit 0
+          fi
+          jq -c --argjson id "$sonar_id" '[.[] | select(.id == $id) | {id, status, conclusion, head_sha, annotation_count: .output.annotations_count}]' "$checks"
+          annotations="$RUNNER_TEMP/sonar-annotations.json"
+          gh api --paginate "repos/$GH_REPO/check-runs/$sonar_id/annotations?per_page=100" | jq -s 'add // []' > "$annotations" || {
+            echo "::warning::Cumulative PR #278 annotation inventory unavailable: NOT_VERIFIED"
+            exit 0
+          }
+          echo "PR #278 Sonar annotations by path/rule/line (metadata only; no code snippets or messages):"
+          jq -c '[.[] | {path, start_line, end_line, annotation_level, title}] | sort_by(.path, .start_line, .title)' "$annotations"
+          echo "Annotation count:"
+          jq 'length' "$annotations"
+          echo "This inventory is diagnostic, never approval. Original Sonar Quality Gate remains authoritative."
+
+  codeql-alert-evidence:
+    # Read-only provider query; this job never checks out PR code or executes
+    # a candidate-provided script, and logs only controlled alert metadata.
+    name: CodeQL tracked alert evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      security-events: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      GEF_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Inspect historical alert and branch-scoped security evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GH_REPO" = "KayzenRoot/gef-bootstrap" || { echo "::error::Wrong repository"; exit 1; }
+          printf 'Exact candidate head: %s\n' "$GEF_CANDIDATE_SHA"
+          all="$RUNNER_TEMP/codeql-all-alerts.json"
+          release_alerts="$RUNNER_TEMP/codeql-release-alerts.json"
+          tracked="$RUNNER_TEMP/codeql-tracked-alert.json"
+          gh api --paginate "repos/$GH_REPO/code-scanning/alerts?state=all&per_page=100" | jq -s 'add // []' > "$all" || {
+            echo "::error::Complete provider alert inventory unavailable; disposition remains BLOCKED"
+            exit 1
+          }
+          gh api --paginate "repos/$GH_REPO/code-scanning/alerts?ref=refs%2Fheads%2Frelease%2F1.1&state=all&per_page=100" | jq -s 'add // []' > "$release_alerts" || {
+            echo "::error::Release-scoped provider alert inventory unavailable; disposition remains BLOCKED"
+            exit 1
+          }
+          echo "Historical #2 direct provider lookup (metadata only):"
+          if gh api "repos/$GH_REPO/code-scanning/alerts/2" > "$tracked" 2>/dev/null; then
+            jq -c '{number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, updatedAt: .updated_at}' "$tracked"
+          else
+            echo "::warning::Historical alert #2 unavailable by direct provider lookup; owner disposition remains required"
+          fi
+          echo "All current open HIGH/CRITICAL alert metadata:"
+          jq -c '[.[] | select(.state == "open" and (.rule.security_severity_level == "high" or .rule.security_severity_level == "critical")) | {number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, ref: .most_recent_instance.ref, file: .most_recent_instance.location.path}]' "$all"
+          echo "Release/1.1 alert metadata (all states):"
+          jq -c '[.[] | {number, state, tool: .tool.name, ruleId: .rule.id, severity: .rule.security_severity_level, ref: .most_recent_instance.ref, file: .most_recent_instance.location.path}]' "$release_alerts"
+          # Successful inventory retrieval establishes provider access only;
+          # owner audit must still decide exact-candidate applicability and close
+          # or disposition any unresolved finding before WO-009 promotion.
+
+  cumulative-duplication-inventory:
+    # Read-only, no checkout, no private Sonar token: diagnostic for the
+    # cumulative release-to-main gate. Missing provider data is NOT_VERIFIED.
+    name: Cumulative Sonar duplicate blocks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      checks: read
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Inventory exact-current Sonar duplicate file/block metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GH_REPO" = "KayzenRoot/gef-bootstrap" || { echo "::error::Unexpected repository"; exit 1; }
+          release_sha="$(gh api "repos/$GH_REPO/git/ref/heads/release/1.1" --jq '.object.sha')"
+          pr_sha="$(gh api "repos/$GH_REPO/pulls/278" --jq '.head.sha')"
+          printf 'Release head: %s; PR #278 head: %s\n' "$release_sha" "$pr_sha"
+          if [ "$release_sha" != "$pr_sha" ]; then
+            echo "::warning::STALE: release and cumulative PR heads differ; no provider claim"
+            exit 0
+          fi
+          checks="$RUNNER_TEMP/sonar-checks.json"
+          gh api --paginate "repos/$GH_REPO/commits/$pr_sha/check-runs?per_page=100" \
+            | jq -s '[.[] | .check_runs[]]' > "$checks" || {
+            echo "::warning::NOT_VERIFIED: GitHub check inventory unavailable"
+            exit 0
+          }
+          sonar_id="$(jq -r --arg sha "$pr_sha" '
+            [.[] | select(.name == "SonarCloud Code Analysis" and .app.slug == "sonarqubecloud" and .head_sha == $sha and .status == "completed")]
+            | sort_by(.completed_at) | last | .id // empty' "$checks")"
+          if [ -z "$sonar_id" ]; then
+            echo "::warning::NOT_VERIFIED: no completed cumulative Sonar check on this exact head"
+            exit 0
+          fi
+          jq -c --argjson id "$sonar_id" \
+            '[.[] | select(.id == $id) | {id, status, conclusion, head_sha, summary: .output.title}]' "$checks"
+          tree="$RUNNER_TEMP/sonar-duplication-tree.json"
+          if ! curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' --max-time 30 --get \
+            --data-urlencode 'component=KayzenRoot_gef-bootstrap' \
+            --data-urlencode 'metricKeys=new_duplicated_lines,new_duplicated_lines_density' \
+            --data-urlencode 'qualifiers=FIL' --data-urlencode 'ps=500' \
+            --data-urlencode 'pullRequest=278' \
+            'https://sonarcloud.io/api/measures/component_tree' > "$tree"; then
+            echo "::warning::NOT_VERIFIED: public Sonar Browse/component-tree is unavailable"
+            exit 0
+          fi
+          if ! jq -e '(.components | type) == "array"' "$tree" >/dev/null; then
+            echo "::warning::NOT_VERIFIED: provider returned no validated component array"
+            exit 0
+          fi
+          top="$RUNNER_TEMP/sonar-top-duplicated-files.json"
+          jq -c '
+            def measure($ms; $key): ([$ms[]? | select(.metric == $key) | (.value // .period.value // .periods[0].value // "0")][0] // "0");
+            [.components[]? |
+              { key, path,
+                newDuplicatedLines: (measure(.measures; "new_duplicated_lines") | tonumber? // 0),
+                density: (measure(.measures; "new_duplicated_lines_density") | tonumber? // 0) }
+              | select(.newDuplicatedLines > 0)
+            ] | sort_by(-.newDuplicatedLines) | .[:12]
+          ' "$tree" > "$top"
+          printf 'File-level duplicate metrics (public provider metadata; max 12):\n'
+          cat "$top"
+          if [ "$(jq 'length' "$top")" -eq 0 ]; then
+            echo "::warning::NOT_VERIFIED: no file-level new duplication data available"
+            exit 0
+          fi
+          while IFS= read -r component_key; do
+            [ -n "$component_key" ] || continue
+            encoded_key="$(jq -nr --arg key "$component_key" '$key | @uri')"
+            blocks="$RUNNER_TEMP/sonar-duplication-blocks.json"
+            if ! curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' --max-time 20 \
+              "https://sonarcloud.io/api/duplications/show?key=$encoded_key&pullRequest=278" > "$blocks"; then
+              echo "::warning::NOT_VERIFIED: duplication blocks unavailable for one listed file"
+              continue
+            fi
+            jq -c --arg key "$component_key" '{
+              file: $key,
+              references: ((.files // {}) | with_entries(.value |= {key, name})),
+              groups: [(.duplications // [])[:20][] | {blocks: [.blocks[] | {from, size, _ref}]}]
+            }' "$blocks"
+          done < <(jq -r '.[].key' "$top")
+          final_release="$(gh api "repos/$GH_REPO/git/ref/heads/release/1.1" --jq '.object.sha')"
+          final_pr="$(gh api "repos/$GH_REPO/pulls/278" --jq '.head.sha')"
+          if [ "$final_release" != "$release_sha" ] || [ "$final_pr" != "$pr_sha" ]; then
+            echo "::warning::STALE: provider refs changed during diagnostics; discard this run"
+          fi
+          # Candidate-specific issue metadata helps resolve a new security rating
+          # on this diagnostic PR, without printing messages or source snippets.
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            candidate_pr="$(jq -r '.pull_request.number // empty' "$GITHUB_EVENT_PATH")"
+            if [ -n "$candidate_pr" ]; then
+              candidate_issues="$RUNNER_TEMP/candidate-issues.json"
+              if curl --silent --show-error --fail --location --proto '=https' --proto-redir '=https' --max-time 30 --get \
+                --data-urlencode 'componentKeys=KayzenRoot_gef-bootstrap' \
+                --data-urlencode "pullRequest=$candidate_pr" \
+                --data-urlencode 'resolved=false' --data-urlencode 'ps=100' \
+                'https://sonarcloud.io/api/issues/search' > "$candidate_issues"; then
+                echo "Current diagnostic PR issue metadata (up to 60; no messages/snippets):"
+                jq -c '[.issues[]? | {
+                  rule, type, severity, component, line, status,
+                  impacts: [.impacts[]? | {softwareQuality, severity}]
+                }] | .[:60]' "$candidate_issues"
+              else
+                echo "::warning::NOT_VERIFIED: candidate Sonar issue metadata is inaccessible"
+              fi
+            fi
+          fi
+          echo "Diagnostic only: never overrides the original Sonar Quality Gate."

@@ -13,7 +13,7 @@ The active product model is:
 - Codex may be used only in target repositories under GEF governance, not to build this repository;
 - deterministic tooling is a required product component but never semantic authority;
 - GitHub is the reference hosted profile, not a universal semantic dependency;
-- 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED block independent-product release; M39 and M41 remain ecosystem-specific optional tracks; M40 is the third, provider-neutral reserved context slot under ADR-0007, aligned with V1.1 ADR-0005/D-0061.
+- 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED block independent-product release; M39/M40/M41 are optional adapter tracks.
 
 Controlling sources, in their applicable authority domains:
 1. `GBS-CONSTITUTION-v1.1` + hybrid amendment;
@@ -41,7 +41,7 @@ Superseded for construction of this repository by the current construction invar
 Superseded in mechanics by the hybrid product model. The target-repository materialization goal remains valid, but materialization is now supported by the required deterministic work plane rather than instruction-only behavior.
 
 ### D-0027 / D-0029 reduced-V1 admission model
-Superseded for the current release denominator by frozen complete-production Scope. The historical and prospective inventory retain 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED + 3 OPTIONAL_ADAPTER; M40 becomes a neutral reserved context slot under ADR-0007. No Hive-specific adapter is active. PRODUCT_INCLUDED is release-blocking for the one complete production version.
+Superseded for the current release denominator by frozen complete-production Scope. The current inventory is 47 CORE_REQUIRED + 14 PRODUCT_INCLUDED + 3 OPTIONAL_ADAPTER. PRODUCT_INCLUDED is release-blocking for the one complete production version.
 
 ### D-0031 / D-0032 “V1” wording
 Retained only as historical terminology. Current scope carrying cost/classification is interpreted through complete-production Scope, Architecture, DoD and weighted backlog.
@@ -64,8 +64,19 @@ Retained substantively, relabeled operationally as complete-product telemetry/be
 ### D-0051 Project Overview derived from Constitution v1.0
 Project Overview remains frozen and valid where not superseded. Constitution v1.1 plus later frozen Source Pack artifacts control any conflicting downstream interpretation.
 
-### D-0002 / D-0040 / ADR-0001-D3 — retired Hive adapter
-Owner decision D-0062 and ADR-0007 supersede only the prospective Hive-specific integration permission, aligning with V1.1's pre-existing D-0061/ADR-0005. M40 remains a neutral RESERVED context slot, with no Hive identity, protocol, schema, code or activation; active code, deployment and operator instructions can no longer include Hive. Original decisions and accepted receipts/tags remain intact. M39 UADS and M41 UGAS are unrelated optional adapters. The 64-ID/282-session inventory and 61-module/1088-weight production denominator are unchanged. PR #297 was closed because it proposed Hive-first executor context.
+### D-0062@release/1.1 / ADR-0006 — owner-operated review and merge
+
+After PR #298's exact-head owner audit and promotion merge `d52dcca0840465324582b022c53b5a12fd0a3840` into `release/1.1`, the repository owner account `KayzenRoot` is the sole required GitHub write/review/merge identity on that branch. Collaborator approval and external human review are optional, never required. The owner records an exact-head substantive audit on the PR and may merge after all required checks succeed and no CRITICAL/HIGH blocker remains. The distinct main decision D-0062@main / ADR-0007 records Hive integration retirement; neither branch entry remaps the other.
+
+This bounded supersession replaces ADR-0003-D3's external-audit and no-merge clauses for active/future V1.1 work and replaces incompatible active/future Work Order or template requirements for collaborator review. It does not rewrite historical records, weaken checks, authorize check bypass, permit force-push/history rewrite, change `main`/V1.0.0 release boundaries, or waive S4/security/recovery requirements. GEF-generated target-project workflows use the configured project-owner account and do not require collaborator approval.
+
+## Branch-qualified promotion status
+
+### D-0063 / ADR-0008 — main and release/1.1 adoption receipts
+
+Main source: Git blob `7d6ec3885fb3d029586dc0b7f99aa32b033170e1` at main commit `f6738292c038eb6f0d08d1d32b3752c5c7dc417a`; PR #332 merged as `419b9cd713d4817c05582287ec10793fc7fdc130` after owner audit #5894096435 (NOT_INDEPENDENT).
+
+Release adoption: PR #347 audited head `ab02b706b4ab7de941cdcc1f849fc07003d92949`, owner review #5360335310 (NOT_INDEPENDENT), merged to `release/1.1` as `9f6f069c977868ade34a19cddb346f7bea9a95fe`. D-0062@release / ADR-0006 governed until that merge. This map preserves branch provenance, does not remap D-0062@main / ADR-0007 or D-0062@release / ADR-0006, and does not allocate D-0064 or ADR-0009.
 
 ## Agent rule
 When a historical D-* entry conflicts with this map or a later frozen controlling source in the same authority domain, the later governed source controls. Never delete the historical entry merely to simplify context. Never use newest-wins across different authority domains.

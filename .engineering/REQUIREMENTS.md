@@ -6,7 +6,7 @@ Status: `FROZEN`
 Derived from `GBS-CONSTITUTION-v1.1`, `CONSTITUTION-AMENDMENT-0001-HYBRID` and frozen `.engineering/PROJECT-OVERVIEW.md`. These define V1 capability, not implementation architecture, language, final schemas or detailed Scope ownership.
 
 ## Construction constraint
-After promotion of owner-directed ADR-0008 / D-0063, Codex is the sole code/test/CI/migration executor for this repository and new GEF-governed projects. ChatGPT plans and coordinates GitHub issues, Work Orders, meaningful planning-only draft PRs, objective review and evidence-based response statistics; only admitted exact-base Work Orders authorize Codex implementation.
+ADR-0008 / D-0063 makes Codex the sole code/test/CI/migration executor for this repository and new GEF-governed projects, effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. Only admitted exact-base Work Orders authorize implementation. ChatGPT owns planning, approved governance documents, GitHub coordination, objective review and evidence-based reporting. D-0062 remains branch-qualified as main ADR-0007 and release ADR-0006.
 
 ## Requirement classes
 `GOV`, `CONT`, `FUNC`, `DET`, `ASSURE`, `BROWN`, `PERF`, `OBS`, `PLAT`, `SEC`, `COMPAT`.
@@ -61,7 +61,7 @@ After promotion of owner-directed ADR-0008 / D-0063, Codex is the sole code/test
 ## Platform/profile
 - `REQ-PLAT-001` GitHub first-class profile using applicable PR/check/Actions/issues/ruleset/governance surfaces and truthful permission gaps.
 - `REQ-PLAT-002` Core semantic portability to equivalent version-controlled platforms satisfying identity/change/evidence/continuity contracts.
-- `REQ-PLAT-003` UADS/UGAS/other ecosystem integrations remain optional unless future governed scope admits them.
+- `REQ-PLAT-003` External ecosystem integrations remain optional unless future governed scope admits them.
 
 ## Security, recovery and compatibility
 - `REQ-SEC-001` Destructive/irreversible operations require explicit safety policy, scope validation and risk-appropriate recovery behavior.
@@ -84,7 +84,7 @@ Every NECESSARY requirement must ultimately map: `REQ-ID -> Scope owner/classifi
 This is the initial frozen V1 requirement baseline. A later REQ requires unique ID, canonical basis, applicability, dependency/impact analysis, Scope/Architecture/DoD impact, review and checkpoint promotion. It does not silently enter the V1 completion denominator until Scope admits it.
 
 ## Explicit non-requirements
-No specific CLI framework, always-on daemon/service, fixed language before Architecture, mandatory UADS/UGAS integration, GitHub semantics for all platforms, cross-project memory authority, universal percentage gain guarantee, full brownfield normalization before use, or premature final Source Capsule/Execution Pack schema.
+No specific CLI framework, always-on daemon/service, fixed language before Architecture, mandatory external ecosystem integration, GitHub semantics for all platforms, cross-project memory authority, universal percentage gain guarantee, full brownfield normalization before use, or premature final Source Capsule/Execution Pack schema.
 
 ## Closed design questions
 1. Applicability is assigned by Scope; no duplicate requirement priority system.
@@ -99,7 +99,7 @@ No specific CLI framework, always-on daemon/service, fixed language before Archi
 - Constitution v1.1 compatibility: PASS
 - hybrid semantic/deterministic boundary: PASS
 - physical deterministic V1 capability: PASS
-- Owner-directed Codex-only implementation and GitHub-first planning rule recorded in prospective ADR-0008; effectiveness requires exact-head audit and checkpoint promotion, not an automatic historical reclassification.
+- Owner-directed Codex-only implementation and GitHub-first planning under ADR-0008 / D-0063 are effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`; no historical reclassification.
 - brownfield first-class capability: PASS
 - token/latency optimization: PASS
 - security/recovery floor: PASS

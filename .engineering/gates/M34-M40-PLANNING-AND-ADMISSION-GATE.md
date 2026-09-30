@@ -8,6 +8,6 @@ Security invariants: deny-by-default, monotonic widening, no secret plaintext ev
 
 Reliability invariants: verified backups, write-ahead recovery intent, idempotent resume/rollback, quarantine on corruption, bounded recovery loops, deterministic canonical integrity and explicit authority hierarchy.
 
-Integration invariants: capability detection is descriptive not authoritative; observations are injected; unknown capability is not optimistic; optional adapter absence is normal; fallback preserves obligations; Hive context cannot outrank canonical sources.
+Integration invariants: capability detection is descriptive not authoritative; observations are injected; unknown capability is not optimistic; optional adapter absence is normal; fallback preserves obligations; optional context adapters cannot outrank canonical sources.
 
 Implementation authority: GRANTED only for GBS-WO-M34-M40-001. Promotion authority: NOT GRANTED until exact-head CI and audit.

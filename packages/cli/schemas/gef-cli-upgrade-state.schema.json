@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gef:schema:cli-upgrade-state:1",
+  "title": "GEF CLI governed upgrade state",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "commandId", "contractVersion", "productVersion", "sourceVersion", "targetVersion", "migrationId", "runId", "sourceRef", "sourceFingerprint", "sourceReceiptFingerprint", "planDigest", "observationFingerprint", "transaction"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "kind": { "const": "gef.upgrade.state" },
+    "commandId": { "const": "gef.upgrade.apply" },
+    "contractVersion": { "type": "string", "minLength": 1 },
+    "productVersion": { "const": "1.1.0" },
+    "sourceVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "targetVersion": { "const": "1.1.0" },
+    "migrationId": { "type": "string", "minLength": 1 },
+    "runId": { "type": "string", "minLength": 1 },
+    "sourceRef": { "type": "string", "enum": [".gef/init-state.json", ".gef/adopt-state.json"] },
+    "sourceFingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "sourceReceiptFingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "planDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "observationFingerprint": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "transaction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["planDigest", "outcome"],
+      "properties": {
+        "planDigest": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "outcome": { "const": "APPLIED" }
+      }
+    }
+  }
+}

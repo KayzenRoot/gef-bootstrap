@@ -1,10 +1,5 @@
 # Changelog
 
-## [Unreleased]
-
-### Changed
-- Retired Hive from GEF Bootstrap's active optional integration track, development instructions, runtime API and planning. Historical V1 receipts and decisions remain traceable; the core production denominator is unchanged. See ADR-0007 and GBS-MAINT-HIVE-REMOVAL-001. M40 remains a neutral reserved context slot, aligned with V1.1 ADR-0005/D-0061.
-
 All notable release changes are documented here. GEF Bootstrap uses Semantic Versioning.
 
 ## [1.0.0] - 2026-09-16
@@ -18,7 +13,7 @@ All notable release changes are documented here. GEF Bootstrap uses Semantic Ver
 - Evidence engine, proof graph, HEDS semantic delta review, assurance and test-impact engines.
 - Git/GitHub bootstrap, governance, CI and release governance foundations.
 - Security, policy safety, recovery, integrity and capability detection.
-- Optional UADS/Hive/UGAS adapters and generic adapter API.
+- Optional ecosystem adapters and generic adapter API.
 - Telemetry, audit ledger, baseline/benchmark, artifact and operator UX foundations.
 - Help, installation, upgrade, compatibility and self-doctor contracts.
 - Unit/integration harnesses, GitHub simulation, E2E, performance and adversarial security testing.

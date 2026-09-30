@@ -1,0 +1,23 @@
+# GBS-V11-MAINT-PR278-DUPLICATION-DIAG-007 — Admission and objective evidence
+
+- Exact admission base: `a02acbeafb46e1587caff715a3112f9e99692309`; production `main` unchanged at `e23311e77d79b84f3c70671072a22a6f8896d13d`.
+- Parent: `GBS-V11-MAINT-POST-WO009-001`; owner-operated review only, NOT_INDEPENDENT.
+- Cumulative PR #278 current Sonar check `109466787630`: FAILED with 3.1% new duplication (<=3.0% required); security and reliability ratings are no longer listed as failed conditions. File/block attribution **not yet provider-verified**.
+- Codecov patch check `109468307667`: FAILED, 85.81% of diff hit versus 97.85% target; last report identifies `packages/cli/scripts/rights-diagnostics.mjs`, `packages/cli/scripts/prepare-package.mjs` and `packages/cli/bin/gef.mjs`.
+- This candidate adds only a public, read-only duplicate metadata inventory. The original Sonar and Codecov checks retain full authority.
+- Tests, candidate HEAD and diagnostic provider output: PENDING until GitHub Actions completes on the PR exact SHA. No successful gate is predeclared.
+- Remaining: provider-bound duplicate blocks; source correction if supported; patch-coverage tests; cumulative exact-head gate closure. WO-010 NOT admitted.
+
+## Provider diagnostics and Correction Delta (2026-09-29)
+- First candidate `9f421f64f2fdb054d987eff32ca8a5d8de5e92b0` had the new workflow job outside the YAML `jobs` mapping. Its invalid-workflow provider run `36587585924` FAILED. Fixed within the same PR by commit `0c345198917e3ee61c7ea7c6adcf319203522de1`, restoring valid job indentation. This is an introduced error, not a passed check.
+- Exact-head read-only diagnostic: `Cumulative Sonar duplicate blocks`, job `109472537023`, SUCCESS on `0c345198917e3ee61c7ea7c6adcf319203522de1`. Logs bound release and PR #278 to the same commit `a02acbeafb46e1587caff715a3112f9e99692309` and actual FAILED Sonar check `109466787630`.
+- Public Sonar API metadata VERIFIED (no token), including file-level new duplicate lines: `packages/cli/src/registry.ts` 79; `tests/v11-wo-002-private-authority.test.mjs` 67; `packages/cli/src/transaction.ts` 62; `tests/v11-wo-003-doctor-status.test.mjs` 58; WO admission tests #007 44, #006 41, #005 34, #008 29, #002 26. These counts are per-file metrics, not additive proof of gate reduction.
+- Exact duplicate-block examples: registry.ts lines 1626/2156 size 17 and 2239/2258 size 26 (self duplicates); transaction.ts lines 708/718 size 52; private-authority.test.mjs lines 60 vs ownership.test.mjs line 57 size 19, and self-repeated fixtures lines 136/158/181; doctor-status.test.mjs line 208 vs doctor-status-e2e.test.mjs line 113 size 15; WO admission tests share repeated setup/assertion blocks across WO-002 through WO-008. Provider log `109472537023` retains full file/reference metadata.
+- Separate current Codecov patch failure `109468307667`: 85.81% versus 97.85% target, with 42 missing diff lines. Most missing source lines are in `rights-diagnostics.mjs` (23), `prepare-package.mjs` (13 plus one partially hit) and `gef.mjs` (5).
+- **New candidate blocker:** PR #327 incremental Sonar check `109472701919` FAILED with Security Rating C on diagnostic code. This is a `CORRECTION_REQUIRED` condition; no merge, no accepted candidate, no claim that read-only intent rules out an actual scanner finding. The same job now queries candidate Sonar issue metadata for rule/file/line to support a bounded correction, without exposing messages, tokens or source.
+- Any subsequent candidate SHA invalidates prior exact-head check results. Original PR #278 cumulative Sonar and Codecov checks remain release blockers; WO-010 remains NOT admitted.
+
+## Candidate security correction
+- PR #327 SonarCloud exact candidate `7e1fb8d2f1c6c3aa7aad6bd6bc6b982b12b1e5d4` reported `githubactions:S6506`, three MAJOR/MEDIUM security findings at `.github/workflows/v11-release-assurance.yml` lines 235, 268 and 290. These correspond to the three diagnostic `curl --location` invocations, which could otherwise follow an HTTPS redirect into clear-text HTTP. This rule/file/line attribution was obtained from public Sonar issues metadata by GitHub Actions job `109473739518`; no suppression or downgrade.
+- Same Work Order/PR Correction Delta commit `534b47c6b4410836aae46a08ac4c0f78595d9015` adds `--proto '=https' --proto-redir '=https'` to all three calls, preserving HTTPS-only transport, read-only metadata, exact-head binding and public Browse semantics.
+- **Verification not predeclared:** run exact-head new-code Sonar/CodeQL and all mandatory security/three-OS suites on the final candidate. If the vulnerability is still present or any check is stale/pending/failed, status remains CORRECTION_REQUIRED and merging is forbidden.

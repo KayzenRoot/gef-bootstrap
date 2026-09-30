@@ -354,7 +354,7 @@ Acceleration MUST NOT:
 - let a long prompt hide multiple unauditable changes;
 - convert missing dependency knowledge into a smaller test radius;
 - treat prompt length or elapsed executor time as progress;
-- let ChatGPT or another assistant author implementation/test/CI/migration code; Codex is the sole code executor after ADR-0008 promotion.
+- let an assistant other than Codex author implementation/test/CI/migration code after ADR-0008 / D-0063 became effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`.
 
 ## 17. Default target-project behavior
 Unless a target project explicitly selects a stricter compatible profile, GEF SHOULD default to:
@@ -367,6 +367,6 @@ Unless a target project explicitly selects a stricter compatible profile, GEF SH
 - exact-head assurance before acceptance.
 
 ## 18. Codex-only, GitHub-first handoff (owner-directed ADR-0008)
-Upon audited promotion, ChatGPT opens issue-backed Work Orders immediately after each module plan is approved; it may open isolated planning-only draft PRs when they have an actual plan diff. Codex alone authors implementation/tests/CI/migrations after legal admission and Context Lock binding. The default user handoff is a short GitHub issue + Work Order + PR pointer, not a PDF. Each ChatGPT construction response carries objective, current progress and blocker statistics under `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`. No planning PR grants implementation authority; no throughput claim without baseline/proof. All existing selective-test/full-release safety contracts remain in force.
+ADR-0008 / D-0063 is effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. ChatGPT opens issue-backed Work Orders after module-plan approval and may open planning-only draft PRs only when they contain a meaningful plan diff. Codex alone authors implementation, tests, CI and migrations after legal admission and Context Lock binding. The default handoff is a short GitHub issue, Work Order and PR pointer, not a PDF. Construction responses carry objective progress and blocker statistics under `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`. No planning PR grants implementation authority; existing selective-test and full-release safety contracts remain in force.
 
 STOP CONDITION: `EXECUTOR_ACCELERATION_OWNER_DIRECTIVE_MATERIALIZED`.

@@ -16,7 +16,7 @@ This project-level Definition of Done derives from `GBS-CONSTITUTION-v1.1`, froz
 - `PRODUCTION_CANDIDATE`
 - `PRODUCTION_RELEASE_DONE`
 
-Optional UADS/UGAS adapters are tracked independently and do not block the independent product release unless a release claim explicitly includes them.
+Optional ecosystem adapters are tracked independently and do not block the independent product release unless a release claim explicitly includes them.
 
 ## Universal completion dimensions
 An admitted item/module is DONE only when all applicable dimensions are satisfied: scope/admission and stable IDs; requirements/acceptance; architecture/contracts; implementation/materialization where required; applicable T0–T7 proof; security/integrity; current exact-state evidence; documentation/runbook/operator updates; migration/recovery/compatibility where applicable; governed evidence/checkpoint promotion; and no unresolved blocker for the claimed surface.
@@ -117,7 +117,8 @@ Progress percentage is not DONE. Partial credit may use only the frozen weighted
 - construction readiness gate explicit: PASS
 - open DoD questions: 0
 
-## Owner-directed process overlay (ADR-0008; proposed until promoted)
-After the governed amendment becomes effective, any implementation admission must identify the Codex-only code executor, stable GitHub issue/Work Order, legal branch/base, precise file/read/write map and Context Lock. Planning-only PRs do not earn implementation credit. Every construction-response status must separate frozen-denominator release credit from Work Order counts, disclose blockers/unknowns and cite exact-state evidence. Existing exact-head assurance/security/test/rollback criteria are unchanged; this overlay does not retroactively alter V1 acceptance.
+## Owner-directed process overlay (ADR-0008; effective on main and release/1.1)
+
+ADR-0008 / D-0063 is effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. Implementation admission identifies the Codex-only code executor, stable GitHub issue/Work Order, legal branch/base, precise file/read/write map and Context Lock. Planning-only PRs do not earn implementation credit. Construction status separates frozen-denominator release credit from Work Order counts, discloses blockers/unknowns and cites exact-state evidence. Existing exact-head assurance, security, test and rollback criteria remain unchanged; this overlay does not retroactively alter V1 acceptance or authorize V1.1 production promotion.
 
 STOP CONDITION: `READY_FOR_DOD_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.

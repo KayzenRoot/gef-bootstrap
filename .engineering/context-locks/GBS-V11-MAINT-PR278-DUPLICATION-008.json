@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-DUPLICATION-008",
+  "parent": "GBS-V11-MAINT-POST-WO009-001",
+  "owner": "KayzenRoot",
+  "baseRef": "release/1.1",
+  "baseSha": "e006fc53efa5bbd7d01cb485b3407353b27b9173",
+  "branch": "gbs/v11/maint-pr278-duplication-refactor-008",
+  "assurance": "ELEVATED",
+  "sourceFingerprints": {
+    ".engineering/CHECKPOINT.md": "a8550e4ebc45ce7d1a1aa528366458d9657e92f5",
+    ".engineering/CHECKPOINT.json": "bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6",
+    ".engineering/DECISIONS-LEDGER.md": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537",
+    ".engineering/SCOPE.md": "5aad68fdbd57b850ec05e5c44e74e5e5a3b94a29",
+    ".engineering/ARCHITECTURE.md": "c5eda022280e47ff4b45070193d196929a3a1ec0",
+    ".engineering/DEFINITION-OF-DONE.md": "d9209765a268f0e21390a2c6c531c7dd771515b4",
+    ".engineering/SECURITY.md": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
+    ".engineering/work-orders/GBS-V11-MAINT-POST-WO009-001.md": "5c5d49f2cfb3fefff509379e5ac9ccdbb1aecae5",
+    ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md": "786eba0313202f2f2648461a2fc4e6f81190969a",
+    ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md": "97bef59b15f557302a7fd625af30ceeb421c01a1",
+    "packages/cli/src/registry.ts": "1d674c17db52b4966cb2a7ab7cb1d8adb7f14a2f",
+    "tests/v11-wo-002-private-authority.test.mjs": "1c56989179fd9adfd27d0cea12cd32313dee3ac8",
+    "tests/v11-wo-002-ownership.test.mjs": "a18635c466dcef4c39d323b44104dbb62ec01317"
+  },
+  "authorizedPaths": [
+    "packages/cli/src/registry.ts",
+    "tests/v11-wo-002-private-authority.test.mjs",
+    "tests/v11-wo-002-ownership.test.mjs",
+    "tests/helpers/directory-alias.mjs",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-DUPLICATION-008.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-DUPLICATION-008.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-DUPLICATION-008-EVIDENCE.md"
+  ],
+  "forbidden": [
+    "main",
+    "v1.0.0",
+    "Sonar/Codecov thresholds or exclusions",
+    "dependencies",
+    "retired integration",
+    "publication"
+  ],
+  "stopCondition": "GBS_V11_PR278_DUPLICATION_008_EXACT_HEAD_VALIDATED_OR_CORRECTION_REQUIRED"
+}

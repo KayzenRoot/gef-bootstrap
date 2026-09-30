@@ -32,7 +32,7 @@ The plane may perform deterministic tasks such as:
 - other bounded transformations from known governed inputs.
 
 ## Self-construction policy
-GEF Bootstrap and new GEF-governed software projects use **Codex as the sole code/test/CI/migration executor** under owner-directed ADR-0008 / D-0063 after its governed promotion. ChatGPT owns architecture, canonical planning, approved governance documentation, GitHub task/PR coordination, objective code/security review and progress reporting; GitHub CI runs checks but is not a separate code author. Existing projects adopt through their own source authority without silently changing active Work Orders.
+GEF Bootstrap and new GEF-governed software projects use **Codex as the sole code/test/CI/migration executor** under ADR-0008 / D-0063, effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. ChatGPT owns architecture, canonical planning, approved governance documentation, GitHub task/PR coordination, objective code/security review and progress reporting; GitHub CI runs checks but is not a separate code author. Existing projects adopt through their own source authority without silently changing active Work Orders. D-0062 remains branch-qualified: main ADR-0007 records Hive retirement, and release ADR-0006 governs owner audit and merge authority.
 
 ## Problem being solved
 AI-assisted software construction repeatedly pays costs that should not need to be paid again: broad rereads, rediscovery of settled architecture, repetitive searches, unnecessary test breadth, verbose evidence, reopened decisions, lost chat continuity and brownfield restarts.
@@ -111,7 +111,7 @@ V1 must be able to measure or explicitly classify unavailable/estimated token, t
 12. Optional ecosystem integrations do not silently become core.
 13. Accepted work should reduce comparable future rediscovery.
 14. The deterministic work plane is a product component but is authoritative only for bounded mechanical operations.
-15. Codex is the sole code implementation/correction executor for this repository under promoted ADR-0008; ChatGPT handles bounded planning, governance and review.
+15. Owner-directed ADR-0008 / D-0063 assigns sole code authorship to Codex on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`; D-0062 remains branch-qualified as main ADR-0007 and release ADR-0006.
 
 ## Product boundary
 ### Core product
@@ -129,7 +129,7 @@ V1 must be able to measure or explicitly classify unavailable/estimated token, t
 - replacing ChatGPT/planning semantics with hard-coded planner logic;
 - making a CLI interface itself the semantic source of truth;
 - requiring an always-on daemon/service unless later architecture proves necessity;
-- requiring UADS/UGAS to function;
+- requiring optional external ecosystems to function;
 - rewriting target architecture solely for GEF naming;
 - full brownfield normalization before use;
 - cross-project memory authority without dedicated provenance/security design;
@@ -137,7 +137,7 @@ V1 must be able to measure or explicitly classify unavailable/estimated token, t
 - universal improvement claims without evidence.
 
 ## Integration boundary
-UADS and UGAS and future ecosystems remain optional adapters/capabilities unless a future governed scope decision changes that boundary.
+External ecosystems remain optional adapters/capabilities unless a future governed scope decision changes that boundary.
 
 ## Success model
 GEF Bootstrap succeeds when it can initialize or progressively govern target repositories, compile bounded work from canonical sources, safely reduce rediscovery/context/test cost, produce evidence-bound review/completion, preserve cross-chat continuity and demonstrate measurable engineering-cost behavior when data exists.
