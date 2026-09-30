@@ -255,8 +255,8 @@ Status: `ACTIVE`
 - Owner audit: comment #5847950958; evidence `.engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md`.
 - Status: `EFFECTIVE`
 
-## D-0063@main / ADR-0008 — main source provenance only on release
+## D-0063@main / ADR-0008 — main source provenance and release applicability
 
 - Main source: commit f6738292c038eb6f0d08d1d32b3752c5c7dc417a; ADR-0008 Git blob 7d6ec3885fb3d029586dc0b7f99aa32b033170e1.
-- Release disposition: NOT_EFFECTIVE_ON_RELEASE; any release adoption requires a separate exact-head owner audit and checkpoint promotion.
+- Release disposition: effect begins exactly at the governed merge of this exact-head owner-audited promotion PR; before that event it is not effective on release.
 - This branch-qualified reference does not create a new release decision, change D-0062@release / ADR-0006, or allocate D-0064.

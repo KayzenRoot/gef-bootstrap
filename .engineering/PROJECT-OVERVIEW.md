@@ -32,7 +32,7 @@ The plane may perform deterministic tasks such as:
 - other bounded transformations from known governed inputs.
 
 ## Self-construction policy
-Owner-directed ADR-0008 / D-0063 prospectively establishes Codex as the sole code, test, CI and migration author for this repository and new GEF-governed projects after separate exact-head owner audit and checkpoint promotion. On release/1.1 this adoption is PENDING and NOT_EFFECTIVE; the promoted release checkpoint and ADR-0006 continue to govern current authority. ChatGPT owns architecture, approved governance documentation, GitHub planning and coordination, objective code/security review and evidence-based reporting. Target repositories continue under their own canonical authority. The earlier construction-actor restriction remains preserved in the historical D-0054 text of Constitution Amendment 0001.
+Owner-directed ADR-0008 / D-0063 establishes Codex as the sole code, test, CI and migration author for this repository and new GEF-governed projects on release/1.1 exactly at the governed merge of this exact-head owner-audited promotion PR. Until that merge, D-0062 / ADR-0006 and the promoted release checkpoint continue to govern. ChatGPT owns architecture, approved governance documentation, GitHub planning and coordination, objective code/security review and evidence-based reporting. Target repositories continue under their own canonical authority. The earlier construction-actor restriction remains preserved in the historical D-0054 text of Constitution Amendment 0001.
 
 ## Problem being solved
 AI-assisted software construction repeatedly pays costs that should not need to be paid again: broad rereads, rediscovery of settled architecture, repetitive searches, unnecessary test breadth, verbose evidence, reopened decisions, lost chat continuity and brownfield restarts.
@@ -111,7 +111,7 @@ V1 must be able to measure or explicitly classify unavailable/estimated token, t
 12. Optional ecosystem integrations do not silently become core.
 13. Accepted work should reduce comparable future rediscovery.
 14. The deterministic work plane is a product component but is authoritative only for bounded mechanical operations.
-15. Owner-directed ADR-0008 / D-0063 prospectively assigns sole code authorship to Codex after a separate exact-head owner audit and checkpoint promotion; release/1.1 adoption remains PENDING and NOT_EFFECTIVE until that gate.
+15. Owner-directed ADR-0008 / D-0063 assigns sole code authorship to Codex on release/1.1 exactly at the governed merge of this exact-head owner-audited promotion PR; D-0062 / ADR-0006 remains effective before that event.
 
 ## Product boundary
 ### Core product

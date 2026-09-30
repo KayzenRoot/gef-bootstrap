@@ -26,7 +26,7 @@ GEF Bootstrap is a hybrid product with two governed planes:
 The deterministic work plane is part of the product but never silently becomes semantic authority. CLI is a possible interface, not the constitutional requirement itself.
 
 ## Self-construction constraint
-Owner-directed ADR-0008 / D-0063 prospectively defines Codex as the sole code, test, CI and migration author for GEF Bootstrap and new GEF-governed projects after a distinct exact-head owner audit and checkpoint promotion. Release/1.1 adoption is PENDING and NOT_EFFECTIVE; current release authority remains unchanged until that gate. ChatGPT retains semantic planning, approved governance-document authorship, GitHub coordination, objective review and evidence reporting. The hybrid product boundary and accepted V1 history remain unchanged.
+Owner-directed ADR-0008 / D-0063 makes Codex the sole code, test, CI and migration author for GEF Bootstrap and new GEF-governed projects on release/1.1 exactly at the governed merge of this exact-head owner-audited promotion PR. Until that event, D-0062 / ADR-0006 and current release authority remain in force. ChatGPT retains semantic planning, approved governance-document authorship, GitHub coordination, objective review and evidence reporting. The hybrid product boundary and accepted V1 history remain unchanged.
 
 ## Canonical sources
 
@@ -42,7 +42,7 @@ Owner-directed ADR-0008 / D-0063 prospectively defines Codex as the sole code, t
 
 ## History
 - `GBS-CONSTITUTION-v1.0` — original instruction-first constitutional freeze.
-- ADR-0008 / D-0063 — approved and effective on main after its separate checkpoint promotion; release/1.1 adoption is pending a distinct exact-head owner audit and checkpoint promotion.
+- ADR-0008 / D-0063 — approved and effective on main after its separate checkpoint promotion; on release/1.1, effect begins exactly at the governed merge of this exact-head owner-audited promotion PR.
 - `GBS-CONSTITUTION-v1.1` — hybrid product amendment triggered by explicit Product Owner decision.
 
 ## Validity

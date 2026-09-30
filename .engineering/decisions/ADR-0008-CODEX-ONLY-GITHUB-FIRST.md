@@ -1,7 +1,7 @@
 # ADR-0008 — Codex-Only Implementation and GitHub-First Planning
 
 Status: APPROVED by governance PR #332; effective on main only after the separately reviewed checkpoint-promotion PR merges
-Release applicability: PENDING_RELEASE_ADOPTION / NOT_EFFECTIVE on release/1.1 until a separate exact-head owner audit and checkpoint promotion.
+Release applicability: on release/1.1, effective exactly at the governed merge of this exact-head owner-audited promotion PR; before that event D-0062 / ADR-0006 remains authoritative.
 Source lineage: main commit f6738292c038eb6f0d08d1d32b3752c5c7dc417a; Git blob 7d6ec3885fb3d029586dc0b7f99aa32b033170e1.
 Trigger: EXPLICIT_USER_PRODUCT_DECISION, 2026-09-29
 Work Order: GBS-GOV-CODEX-ISSUES-001
@@ -34,7 +34,7 @@ Every ChatGPT development response includes an evidence-based compact progress p
 ChatGPT may propose docs, PR metadata, scoped corrective deltas and reviews but does not produce implementation/test/CI patches. Codex implements corrections in the same Work Order/PR where safe. Require exact-head checks, risk-appropriate regression, evidence bundle, reviewer verdict and canonical checkpoint promotion. Never merge a HIGH/CRITICAL blocker, bypass checks, force push or rewrite historical releases without explicit separately governed authorization. Owner audit is NOT_INDEPENDENT; do not call it independent.
 
 ### ADR-0008-D7 — Adoption and release compatibility
-This is a prospective process change, not a V1.0 product revision or automatic V1.1 promotion. Preserve V1 accepted 1088/1088, all 64 stable IDs and 282 planning sessions, release/1.1's currently admitted maintenance and WO-010 gate. New projects adopt this as default; ongoing projects adopt through their own canonical owner decision without silently reopening unrelated active Work Orders. The release/1.1 adoption in this copy is prospective and remains non-effective until its separate exact-head owner audit and checkpoint promotion.
+This process change is not a V1.0 product revision or automatic V1.1 production promotion. Preserve V1 accepted 1088/1088, all 64 stable IDs and 282 planning sessions, release/1.1's admitted maintenance and WO-010 gate. New projects adopt this as default; ongoing projects adopt through their own canonical owner decision without silently reopening unrelated active Work Orders. On release/1.1, this copy becomes effective exactly at the governed merge of this exact-head owner-audited promotion PR; before that event D-0062 / ADR-0006 remains in force.
 
 ## Implementation contract
 Companion: `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`.
@@ -47,6 +47,6 @@ No source-code, test, CI or runtime changes are admitted by this ADR.
 - Canonical promotion evidence is separately recorded in `.engineering/CHECKPOINT.md`/`.json` and the GBS-GOV-CODEX-ISSUES-001 Evidence Bundle; adoption by release/1.1 requires an independently gated forward-port/reconciliation.
 
 ## Acceptance
-Governance docs consistent; exact source supersession traceable; all required doc/repository/branch checks successful on reviewed head; objective owner audit without unresolved HIGH/CRITICAL; separately promoted checkpoint. Governance PR #332 has met its gates. Effectiveness is conditional on the separate exact-head checkpoint-promotion merge; other branches require their own adoption.
+Governance docs consistent; exact source supersession traceable; all required doc/repository/branch checks successful on reviewed head; objective owner audit without unresolved HIGH/CRITICAL; separately promoted checkpoint. Governance PR #332 has met its main-branch gates. On release/1.1, effectiveness begins exactly at the governed merge of this exact-head owner-audited promotion PR; other branches require their own adoption.
 
 STOP CONDITION: GBS-GOV-CODEX-ISSUES-001_GOVERNANCE_PR_READY_FOR_EXACT_HEAD_AUDIT
