@@ -1,6 +1,8 @@
 # GBS-V11-RELEASE-ONEPASS-013 — Gate 2 Evidence Bundle
 
-Status at capture: admitted, preflight complete; integration is not yet executed.
+Current disposition: `BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE`; see the final execution evidence below.
+
+Initial preflight status: admitted; integration not yet executed at that capture. Superseded by the Gate 2 execution addendum at the end of this bundle.
 
 ## Authority and scope
 
@@ -72,11 +74,18 @@ All required local and provider checks will be recorded only when observed on th
 
 **Known imported whitespace finding.** `git diff f6738292c038eb6f0d08d1d32b3752c5c7dc417a..HEAD --check` reports an extra blank line at EOF in the unedited imported path `.engineering/evidence/GBS-V11-WO-004-EVIDENCE.md:138`. That file is outside the admitted conflict-resolution write set and is preserved unchanged from the release side; no content or test failure was observed. If a required check rejects it, stop for a bounded Issue #348 Correction Delta before editing it.
 
-### Current gate disposition
+### Gate disposition at the pre-PR evidence cut
 
-- Integration merge and conflict resolution: PASS locally; exact normal merge and conflict inventory recorded above.
-- Build and local full validation: PASS at the recorded candidate code/test HEAD; final candidate HEAD must receive fresh provider checks.
-- Exact-head GitHub security, platform assurance, Sonar Quality Gate/duplication, Dependency Review, Pipeline Integrity, CodeQL, Trivy and Gitleaks: PENDING PR creation and workflow completion.
-- Codecov: NOT_RUN for the cumulative candidate. Required provider-bound patch result is `>=97.85%` on the exact final PR HEAD; native LCOV and the historical PR #278 result are not credit.
-- Owner exact-head audit: PENDING; no merge to main, tag, WO-010 admission or publication is authorized.
-- Stop condition: `GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_READY_FOR_OWNER_AUDIT` only after every required exact-head gate passes.
+The pending statements in this subsection describe the pre-PR evidence cut only. They are superseded by the final execution addendum below.
+
+## Final Gate 2 execution evidence — 2026-09-30
+
+**Candidate and ancestry.** PR [#350](https://github.com/KayzenRoot/gef-bootstrap/pull/350) is open as a draft from `codex/gbs-v11-release-integration-014` to `main`. At the provider evidence capture, its exact HEAD was `5dfc1663ed5550d650b45e88acbce30b34c24381`; base remained `f6738292c038eb6f0d08d1d32b3752c5c7dc417a`; release remained `4b2f66724ea5df94ddd8fda2d8088b12b9708c10`. The normal two-parent merge, all 14 authorized conflict resolutions, both semantic overlaps, and branch-qualified D-0062/D-0063 receipts are recorded above. No unapproved product, test, or CI fix was introduced.
+
+**Exact-head checks at `5dfc166`.** GitHub reported 139/139 status contexts as SUCCESS on that exact PR HEAD, including Repository Validation, build/typecheck/full test validation, Ubuntu/macOS/Windows assurance, Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Socket security, upgrade/recovery, and applicable M01/M06-M63 workflows. The CodeRabbit context states “Review skipped: draft pull request”; this is not an owner audit. The check set is linked from [PR #350 checks](https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks). SonarCloud's Quality Gate passed: 117 new issues, 0 accepted issues, 0 security hotspots, and 2.6% new-code duplication; see [SonarCloud PR #350](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=350). Exact-head Gitleaks and Trivy ran in [workflow 36709709496](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36709709496); the native LCOV workflow passed in [PR run 36709709431](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36709709431) and exact-candidate refresh [run 36710842657](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36710842657).
+
+**Codecov is the blocking gate.** The provider report is [PR #350 on Codecov](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/350), comparing exact base `f6738292c038eb6f0d08d1d32b3752c5c7dc417a` to candidate `5dfc1663ed5550d650b45e88acbce30b34c24381`. The report shows total coverage of 97.85% for base and 95.50% for candidate, while the Patch value is `—`. The [Codecov comparison API](https://api.codecov.io/api/v2/github/KayzenRoot/repos/gef-bootstrap/compare/impacted_files?pullid=350) reports patch `files=31`, `lines=0`, `hits=0`, `misses=0`, `partials=0`; therefore it supplies no patch denominator and no numeric patch percentage to compare with the required 97.85%. GitHub's exact-HEAD `codecov/patch` status is green, but its annotation says **“Coverage not affected when comparing f673829...5dfc166”**; that status is not a threshold result. The base refresh [run 36711283623](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36711283623) and candidate refresh completed successfully and did not produce an eligible patch metric.
+
+**Disposition and scope boundary.** Gate 2 is **BLOCKED** and the exact-head owner-audit stop token has not been reached. Issue #348's approved source admission prohibits direct edits to runtime, tests, workflows, coverage mapping, and thresholds by default; it permits only a narrowly evidenced same-PR integration Correction Delta for a proven integration regression. The current provider result establishes an unavailable patch denominator, but does not identify an authorized code or test hunk whose change would remedy it. No metric, threshold, or coverage result is inferred or waived. Further work to change report mapping or workflow behavior requires the bounded owner-approved scope required by Issue #348. PR #350 remains open/draft; no merge, tag, WO-010 acceptance, or publication occurred.
+
+The exact-head checks above apply to `5dfc166`. If this evidence update advances the PR head, checks and the Codecov report must be revalidated on that resulting exact HEAD; the Codecov gate remains blocked unless a provider-bound numeric patch result of at least 97.85% is available.

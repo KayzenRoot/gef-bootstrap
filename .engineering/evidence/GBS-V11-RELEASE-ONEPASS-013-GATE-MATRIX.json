@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-09-30T10:30:46Z",
+  "capturedAtUtc": "2026-09-30T12:06:02Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
@@ -66,7 +66,7 @@
     {
       "gate": 2,
       "name": "Fresh cumulative release-to-main integration",
-      "state": "LOCAL_VALIDATION_PASS_PROVIDER_GATES_PENDING",
+      "state": "BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
       "sourceRefs": {
         "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
         "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
@@ -114,7 +114,7 @@
         "Verify a provider-bound Codecov patch report >=97.85 percent on the exact cumulative PR HEAD.",
         "Owner exact-head audit; no merge to main under Gate 2."
       ],
-      "currentCumulativeCodecovSonar": "PENDING cumulative PR and exact-head provider evidence; Codecov must be >=97.85 percent on the final PR head.",
+      "currentCumulativeCodecovSonar": "Sonar Quality Gate PASS on PR #350; Codecov BLOCKED at exact tested head 5dfc1663ed5550d650b45e88acbce30b34c24381: report Patch is dash and API denominator is 0 lines, so >=97.85 percent is not proven.",
       "sourceAdmissionIssue": 348,
       "candidateBranch": "codex/gbs-v11-release-integration-014",
       "preResolutionPlanCommit": "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
@@ -191,16 +191,18 @@
         }
       },
       "providerChecks": {
-        "pullRequest": "NOT_CREATED_AT_EVIDENCE_CUT",
-        "exactHead": "PENDING",
-        "gitleaks": "PENDING_FULL_PR_INTERVAL",
-        "trivy": "PENDING",
-        "codeql": "PENDING",
-        "dependencyReview": "PENDING",
-        "pipelineIntegrity": "PENDING",
-        "crossPlatformAssurance": "PENDING",
-        "sonarQualityGateAndDuplication": "PENDING",
-        "codecovPatch": "NOT_RUN; required provider-bound patch >=97.85 percent on final exact PR head"
+        "pullRequest": "OPEN_DRAFT https://github.com/KayzenRoot/gef-bootstrap/pull/350",
+        "providerEvidenceHeadSha": "5dfc1663ed5550d650b45e88acbce30b34c24381",
+        "exactHead": "139/139 status contexts SUCCESS; CodeRabbit reports review skipped for draft, not an owner audit; https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks",
+        "gitleaks": "PASS full PR interval; workflow 36709709496",
+        "trivy": "PASS exact-head workflow 36709709496",
+        "codeql": "PASS exact head; https://github.com/KayzenRoot/gef-bootstrap/runs/109868790557",
+        "dependencyReview": "PASS exact-head workflow 36709709581",
+        "pipelineIntegrity": "PASS exact-head workflow 36709709359",
+        "crossPlatformAssurance": "PASS exact-head Ubuntu/macOS/Windows and release assurance jobs; PR checks URL above",
+        "sonarQualityGateAndDuplication": "PASS; 117 new issues, 0 accepted issues, 0 security hotspots, 2.6% new-code duplication; https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=350",
+        "codecovPatch": "BLOCKED: report https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/350 shows Patch —; API base f6738292c038eb6f0d08d1d32b3752c5c7dc417a to head 5dfc1663ed5550d650b45e88acbce30b34c24381 reports patch files=31, lines=0, hits=0, misses=0. Check green summary says Coverage not affected; numeric >=97.85% is not proven.",
+        "codecovUploadRuns": [36709709431, 36710842657, 36711283623]
       }
     },
     {
@@ -243,7 +245,7 @@
   "mergeAuthorized": false,
   "publicationAuthorized": false,
   "currentGate": 2,
-  "currentGateState": "ADMITTED_IN_PROGRESS",
+  "currentGateState": "BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
   "currentCandidateBranch": "codex/gbs-v11-release-integration-014",
   "mainMergeAuthorized": false
 }
