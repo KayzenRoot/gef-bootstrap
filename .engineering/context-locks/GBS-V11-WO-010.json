@@ -230,6 +230,29 @@
         ".engineering/context-locks/GBS-V11-WO-010.json"
       ],
       "result": "bootstrap the exact-artifact smoke with only its receipt-bound child environment while retaining the standard Windows identity and unchanged default validation mode"
+    },
+    {
+      "issue": 351,
+      "comment": 5919409800,
+      "paths": [
+        ".github/workflows/v11-publish.yml",
+        "packages/cli/scripts/prepare-package.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        "tests/v11-pack-branch-negative.test.mjs",
+        "tests/v11-codecov-patch-coverage.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "enforce generated consumer locks with npm ci, resolve tar through an absolute supported system path, and specify stable existing bundle-name ordering for Sonar reliability/security findings"
+    },
+    {
+      "issue": 351,
+      "comment": 5919562332,
+      "paths": [
+        "tests/v11-wo-010-artifact-smoke.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs"
+      ],
+      "result": "use npm ci in the checksum-bound same-artifact consumer after generating its lockfile"
     }
   ],
   "npmPreflight": {

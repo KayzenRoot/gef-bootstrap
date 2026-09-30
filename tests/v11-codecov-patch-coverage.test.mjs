@@ -19,7 +19,7 @@ const FIXTURE_SCRIPT = join(FIXTURE_REPO, "packages", "cli", "scripts", "prepare
 const REAL_SCRIPT_URL = pathToFileURL(REAL_SCRIPT).href;
 const SOURCE_BYTES = readFileSync(REAL_SCRIPT);
 const SOURCE_SHA256 = createHash("sha256").update(SOURCE_BYTES).digest("hex");
-const ADMITTED_GIT_BLOB = "43e96bb2dc5985858e302f86e4b647ce219bcf0c";
+const ADMITTED_GIT_BLOB = "0ef8c90257efccee67888a9db0791b92c26d08c8";
 const gitBlobSha1 = bytes => {
   const canonicalBytes = Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8");
   return createHash("sha1").update(`blob ${canonicalBytes.length}\0`).update(canonicalBytes).digest("hex");

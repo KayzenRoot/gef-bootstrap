@@ -78,7 +78,7 @@ try {
     "lock exact release tarball",
   );
   assert.ok(existsSync(join(consumer, "package-lock.json")), "isolated tarball consumer must have a generated lockfile");
-  requireSuccess(npmRun(["install", "--ignore-scripts", "--offline", "--no-audit", "--no-fund"], consumer), "install locked exact release tarball");
+  requireSuccess(npmRun(["ci", "--ignore-scripts", "--offline", "--no-audit", "--no-fund"], consumer), "install locked exact release tarball");
 
   const cliDirectory = join(consumer, "node_modules", "@gef-bootstrap", "cli");
   const bin = join(cliDirectory, "bin", "gef.mjs");

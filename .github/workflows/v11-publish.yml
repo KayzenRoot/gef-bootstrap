@@ -200,7 +200,7 @@ jobs:
             npm init -y
             npm install --package-lock-only --ignore-scripts --offline --no-audit --no-fund "$GEF_RELEASE_TARBALL"
             test -s package-lock.json
-            npm install --ignore-scripts --offline --no-audit --no-fund
+            npm ci --ignore-scripts --offline --no-audit --no-fund
           )
           bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
           node "$bin" --help > "$RUNNER_TEMP/gef-help.json"
@@ -373,7 +373,7 @@ jobs:
             npm init -y
             npm install --package-lock-only --ignore-scripts --no-audit --no-fund @gef-bootstrap/cli@1.1.0
             test -s package-lock.json
-            npm install --ignore-scripts --no-audit --no-fund
+            npm ci --ignore-scripts --no-audit --no-fund
           )
           bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
           node "$bin" --help > /dev/null

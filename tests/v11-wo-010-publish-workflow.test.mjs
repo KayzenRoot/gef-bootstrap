@@ -60,11 +60,17 @@ test("WO-010 publisher validates, inspects and smokes the exact tarball before p
   assert.match(WORKFLOW, /archive path is outside the reviewed allowlist/);
   assert.match(WORKFLOW, /sensitiveFilename\.test\(normalized\)/);
   assert.match(WORKFLOW, /npm install --package-lock-only --ignore-scripts --offline/);
-  assert.match(WORKFLOW, /test -s package-lock\.json\r?\n\s+npm install --ignore-scripts --offline --no-audit --no-fund/);
+  assert.match(WORKFLOW, /test -s package-lock\.json\r?\n\s+npm ci --ignore-scripts --offline --no-audit --no-fund/);
   assert.doesNotMatch(WORKFLOW, /npm init -y --prefix/);
   assert.match(WORKFLOW, /cd "\$consumer"\r?\n\s+npm init -y\r?\n\s+npm install --package-lock-only --ignore-scripts --offline/);
   assert.match(WORKFLOW, /cd "\$consumer"\r?\n\s+npm init -y\r?\n\s+npm install --package-lock-only --ignore-scripts --no-audit --no-fund @gef-bootstrap\/cli@1\.1\.0/);
-  assert.match(WORKFLOW, /test -s package-lock\.json\r?\n\s+npm install --ignore-scripts --no-audit --no-fund/);
+  assert.match(WORKFLOW, /test -s package-lock\.json\r?\n\s+npm ci --ignore-scripts --no-audit --no-fund/);
+  assert.match(PACKAGE_PREPARER, /function systemTarExecutable\(\)[\s\S]*?process\.platform === "win32"[\s\S]*?SystemRoot[\s\S]*?"System32", "tar\.exe"[\s\S]*?: "\/usr\/bin\/tar"/);
+  assert.match(PACKAGE_PREPARER, /!isAbsolute\(executable\) \|\| !existsSync\(executable\)/);
+  assert.doesNotMatch(PACKAGE_PREPARER, /spawnSync\(\s*["']tar["']/);
+  assert.equal((PACKAGE_PREPARER.match(/spawnSync\(systemTarExecutable\(\),/g) ?? []).length, 2);
+  assert.match(PACKAGE_PREPARER, /function comparePackageNames\(left, right\)[\s\S]*?left < right[\s\S]*?left > right/);
+  assert.match(PACKAGE_PREPARER, /bundleDependencies = \[\.\.\.bundleDependencies\]\.sort\(comparePackageNames\)/);
   assert.match(WORKFLOW, /actions\/upload-artifact@/);
   assert.match(WORKFLOW, /GBS-V11-WO-010-RELEASE-MANIFEST\.json/);
   assert.match(WORKFLOW, /provenance/);
@@ -86,7 +92,7 @@ test("WO-010 installs and exercises the same checksum-bound run artifact on Ubun
   assert.match(matrixJob, /ref: \$\{\{ github\.sha \}\}/);
   assert.match(matrixJob, /node tests\/v11-wo-010-artifact-smoke\.mjs/);
   assert.match(ARTIFACT_SMOKE, /\["install", "--package-lock-only", "--ignore-scripts", "--offline"/);
-  assert.match(ARTIFACT_SMOKE, /\["install", "--ignore-scripts", "--offline"/);
+  assert.match(ARTIFACT_SMOKE, /\["ci", "--ignore-scripts", "--offline"/);
   assert.match(ARTIFACT_SMOKE, /@koromix.*koffi-/);
   assert.match(ARTIFACT_SMOKE, /load installed Koffi native prebuild without lifecycle scripts/);
   assert.match(ARTIFACT_SMOKE, /\["uninstall", "--no-audit", "--no-fund", "@gef-bootstrap\/cli"\]/);

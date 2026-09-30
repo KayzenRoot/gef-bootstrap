@@ -172,7 +172,7 @@ function stageLockedNativePackage(staging, manifest, packageLock, nativePackage)
   verifyNativePackageIntegrity(archive, locked.integrity, name);
   if (packedMetadata[0].integrity !== locked.integrity) throw new Error("npm pack integrity differs from package-lock.json: " + name);
 
-  const listing = spawnSync("tar", ["-tzf", archive], { encoding: "utf8", timeout: 120_000 });
+  const listing = spawnSync(systemTarExecutable(), ["-tzf", archive], { encoding: "utf8", timeout: 120_000 });
   if (listing.status !== 0) throw new Error("Unable to inspect native package archive " + name + ": " + listing.stderr);
   const archiveEntries = listing.stdout.split(/\r?\n/).filter(Boolean);
   if (archiveEntries.length === 0 || archiveEntries.some((entry) =>
@@ -183,7 +183,7 @@ function stageLockedNativePackage(staging, manifest, packageLock, nativePackage)
 
   const target = join(staging, "node_modules", ...name.split("/"));
   mkdirSync(target, { recursive: true });
-  const extracted = spawnSync("tar", ["-xzf", archive, "-C", target, "--strip-components=1"], {
+  const extracted = spawnSync(systemTarExecutable(), ["-xzf", archive, "-C", target, "--strip-components=1"], {
     encoding: "utf8",
     timeout: 120_000,
   });
@@ -207,6 +207,11 @@ function stageLockedNativePackage(staging, manifest, packageLock, nativePackage)
   });
 }
 
+function comparePackageNames(left, right) {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+}
 function updateStagedNativeDependencies(staging, packageLock) {
   const manifestPath = join(staging, "package.json");
   const packageMetadata = JSON.parse(readFileSync(manifestPath, "utf8"));
@@ -229,7 +234,7 @@ function updateStagedNativeDependencies(staging, packageLock) {
     bundleDependencies.add(nativePackage.name);
     optionalDependencies[nativePackage.name] = readLockedNativePackage(nativePackage.name, packageLock).version;
   }
-  packageMetadata.bundleDependencies = [...bundleDependencies].sort();
+  packageMetadata.bundleDependencies = [...bundleDependencies].sort(comparePackageNames);
   packageMetadata.dependencies = Object.fromEntries(Object.entries(dependencies).sort(([left], [right]) => left.localeCompare(right)));
   packageMetadata.optionalDependencies = Object.fromEntries(
     Object.entries(optionalDependencies).sort(([left], [right]) => left.localeCompare(right)),
@@ -313,6 +318,16 @@ function resolveNpmCli() {
   const npmCli = candidates.find((candidate) => typeof candidate === "string" && isAbsolute(candidate) && existsSync(candidate));
   if (npmCli === undefined) throw new Error("Unable to resolve npm CLI from the active Node.js installation");
   return npmCli;
+}
+
+function systemTarExecutable() {
+  const executable = process.platform === "win32"
+    ? join(process.env.SystemRoot ?? "C:\\Windows", "System32", "tar.exe")
+    : "/usr/bin/tar";
+  if (!isAbsolute(executable) || !existsSync(executable)) {
+    throw new Error("Supported system tar executable is unavailable");
+  }
+  return executable;
 }
 
 /** Pack the staged package, leaving the package directory untouched. */

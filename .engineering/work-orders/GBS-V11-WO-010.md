@@ -67,6 +67,16 @@ Correction Delta #13 (Issue #351 comment 5918415058) permits the existing `.gith
 
 Correction Delta #14 (Issue #351 comment 5918809234) permits the exact-artifact-smoke mode of `.github/scripts/run-v11-unprivileged-validation.ps1` to apply its already validated receipt/source/event/ref and isolated tool/profile/temp environment inside a clean bootstrap process before loading the existing smoke harness. This preserves the default full-validation path, standard Windows user, exact tarball, matrix, Git trust policy, runtime and publication controls.
 
+## Correction Delta #15 — exact-head Sonar lockfile and package-builder findings
+
+Issue #351 corrections: primary comment 5919409800 and smoke-scope addendum 5919562332.
+
+The exact-head Sonar Quality Gate identified two lockfile-install vulnerabilities in .github/workflows/v11-publish.yml, two PATH-resolved tar vulnerabilities in packages/cli/scripts/prepare-package.mjs, and a critical sort finding in the bundle-dependency manifest. The bounded fix changes consumer installation to npm ci after lockfile generation, invokes the supported platform tar through an absolute system path with fail-closed availability checks, and makes existing UTF-16 code-unit package-name ordering explicit without changing order.
+
+Scope is limited to the publisher workflow, package-preparation script, existing WO-010 publisher/artifact-smoke tests, the two admitted package-builder Git-blob identity constants in tests/v11-codecov-patch-coverage.test.mjs and tests/v11-pack-branch-negative.test.mjs, this Work Order, and its Context Lock. No package metadata, dependency, runtime behavior, workflow trigger/permission, coverage, or security policy changes.
+
+Regression proof: focused package-builder/publisher guards, full npm run validate, and fresh exact-head package, cross-platform, security, quality and required PR checks. Delta #15 does not waive Gitleaks, Sonar, npm owner configuration, or the exact-head audit stop conditions.
+
 Trusted publishing is the required path where npm supports OIDC; do not substitute a long-lived token. Do not remove `private: true` from `packages/cli/package.json` unless the exact public scope/package ownership and trusted publisher are verified. Preserve `UNLICENSED` and the existing All Rights Reserved LICENSE unless package tooling proves a minimal truthful metadata adjustment is necessary.
 
 If identity, namespace ownership or the package's trusted publisher cannot be verified/configured, finish all safe pre-publication work and record one concise `OWNER_ACTION_REQUIRED` block naming the exact npm scope/package settings. Do not publish a placeholder/staged package, use a token, or infer ownership from a public 404.
