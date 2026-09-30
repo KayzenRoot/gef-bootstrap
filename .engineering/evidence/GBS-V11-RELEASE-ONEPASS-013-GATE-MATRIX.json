@@ -244,35 +244,45 @@
       },
       "providerChecks": {
         "pullRequest": "OPEN_DRAFT https://github.com/KayzenRoot/gef-bootstrap/pull/350",
-        "providerEvidenceHeadSha": "5dfc1663ed5550d650b45e88acbce30b34c24381",
-        "exactHead": "139/139 status contexts SUCCESS; CodeRabbit reports review skipped for draft, not an owner audit; https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks",
-        "gitleaks": "PASS full PR interval; workflow 36709709496",
-        "trivy": "PASS exact-head workflow 36709709496",
-        "codeql": "PASS exact head; https://github.com/KayzenRoot/gef-bootstrap/runs/109868790557",
-        "dependencyReview": "PASS exact-head workflow 36709709581",
-        "pipelineIntegrity": "PASS exact-head workflow 36709709359",
-        "crossPlatformAssurance": "PASS exact-head Ubuntu/macOS/Windows and release assurance jobs; PR checks URL above",
-        "sonarQualityGateAndDuplication": "PASS; 117 new issues, 0 accepted issues, 0 security hotspots, 2.6% new-code duplication; https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=350",
-        "codecovPatch": "BLOCKED: report https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/350 shows Patch —; API base f6738292c038eb6f0d08d1d32b3752c5c7dc417a to head 5dfc1663ed5550d650b45e88acbce30b34c24381 reports patch files=31, lines=0, hits=0, misses=0. Check green summary says Coverage not affected; numeric >=97.85% is not proven.",
+        "providerEvidenceHeadSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
+        "exactHead": "145/145 status contexts SUCCESS; CodeRabbit remains non-audit; https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks",
+        "gitleaks": "PASS exact head; workflow 36737779435",
+        "trivy": "PASS exact head; workflow 36737779435",
+        "codeql": "PASS exact head; run 109964564820",
+        "dependencyReview": "PASS exact head; workflow 36737779307",
+        "pipelineIntegrity": "PASS exact head; workflow 36737779650",
+        "crossPlatformAssurance": "PASS exact head; V1.1 release assurance Ubuntu/macOS/Windows, workflow 36737779630",
+        "sonarQualityGateAndDuplication": "PASS exact head; SonarCloud Code Analysis and cumulative diagnostics/duplicate-block checks succeeded",
+        "codecovPatch": "N/A_ZERO_DENOMINATOR under owner Option B: exact base/head bound; LCOV upload succeeded; provider codecov/patch SUCCESS run 109964904340 says Coverage not affected; patch files=31, lines=0, hits=0, misses=0, partials=0; base coverage=97.85%, head coverage=95.26%; no numeric patch percent",
         "codecovUploadRuns": [
           36709709431,
           36710842657,
-          36711283623
+          36711283623,
+          36719357762,
+          36737779260
         ]
       },
       "latestExactHeadEvidence": {
-        "headSha": "07a723cfe30b324b500b46618cef4e451705f39a",
+        "headSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
         "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
         "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
         "mergeBaseSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
         "checks": "145/145 SUCCESS",
         "releaseAssurance": "Ubuntu/macOS/Windows PASS",
-        "releaseAssuranceRun": 36719357798,
-        "codecovRun": 36719357762,
+        "releaseAssuranceRun": 36737779630,
+        "codecovRun": 36737779260,
+        "codecovPatchCheckRun": 109964904340,
         "codecovPatchFiles": 31,
         "codecovPatchLines": 0,
+        "codecovPatchHits": 0,
+        "codecovPatchMisses": 0,
+        "codecovPatchPartials": 0,
         "numericPatchPercent": null,
-        "stopCondition": "SUPERSEDED_BY_OWNER_OPTION_B_DOCUMENTATION_DELTA_AWAITING_NEW_HEAD_CHECKS"
+        "patchDisposition": "N/A_ZERO_DENOMINATOR",
+        "baseCoveragePercent": 97.85,
+        "headCoveragePercent": 95.26,
+        "codecovPatchSummary": "Coverage not affected when comparing f673829...5c0aa73",
+        "stopCondition": "SUPERSEDED_BY_EVIDENCE_SYNC_DOCS_ONLY_HEAD_REQUIRING_EXACT_HEAD_REVALIDATION"
       },
       "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT",
       "ownerSemanticAmendment": {
@@ -304,7 +314,11 @@
         "disposition": "Superseded by correctionDelta5 source head; do not carry these failures or earlier-head passes to the next exact-head audit."
       },
       "postDelta5ExactHeadChecks": {
-        "state": "PENDING_ON_PR_HEAD_AFTER_EVIDENCE_AND_GATE_MATRIX_SYNC",
+        "state": "SUCCESS_ON_5c0aa73; DOCUMENTATION_FOLLOWUP_REQUIRES_EXACT_HEAD_REVALIDATION",
+        "headSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
+        "checks": "145/145 SUCCESS",
+        "codecovDisposition": "N/A_ZERO_DENOMINATOR",
+        "releaseAssurance": "Ubuntu/macOS/Windows PASS",
         "required": [
           "Codecov exact-head LCOV upload and provider patch status",
           "V1.1 release assurance Ubuntu/macOS/Windows",
@@ -315,6 +329,7 @@
           "Pipeline Integrity",
           "all other required exact-head workflows"
         ],
+        "next": "Revalidate the documentation-only Gate Matrix/Evidence follow-up HEAD, then stop for owner reauditoria",
         "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_TEST_ASSERTIONS_READY_FOR_REAUDIT"
       }
     },
