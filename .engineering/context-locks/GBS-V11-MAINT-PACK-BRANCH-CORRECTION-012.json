@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012",
+  "parentWorkOrderId": "GBS-V11-RELEASE-ONEPASS-013",
+  "issue": 337,
+  "masterIssue": 348,
+  "status": "ADMITTED_TESTS_ONLY_EXECUTION_IN_PROGRESS",
+  "capturedAtUtc": "2026-09-30T01:37:44Z",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "targetRef": "release/1.1",
+  "candidateBranch": "codex/gbs-v11-maint-pack-branch-correction-012",
+  "executionBase": {
+    "ref": "release/1.1",
+    "commit": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
+    "tree": "acdf5f57c592dcb9ca041b179d7fa86ed4503d2a"
+  },
+  "relatedLiveRefs": {
+    "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+    "divergenceMainOnlyReleaseOnly": [2, 79]
+  },
+  "admissionEvidence": {
+    "source": "Issue #337 OWNER PHASE1 SOURCE ADMISSION — POST GOVERNANCE MERGE (TESTS-ONLY, NOT_INDEPENDENT)",
+    "releaseMerge": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
+    "ownerAuditReview": 5360335310,
+    "reviewIndependence": "NOT_INDEPENDENT",
+    "criticalSourceBlobs": {
+      "packages/cli/scripts/prepare-package.mjs": "10e659ccce15045ed37ffa3e82d06a8408b8f734",
+      "tests/v11-codecov-patch-coverage.test.mjs": "2441961628d20dcc9404d2e51cc1d97b03543137",
+      ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568"
+    },
+    "issue334HistoricSubject": "bbd83a179dd4c11f2f8653251db2b574d0266880",
+    "issue334Evidence": "https://github.com/KayzenRoot/gef-bootstrap/issues/334#issuecomment-5894818858"
+  },
+  "authorizedPaths": [
+    "tests/v11-codecov-patch-coverage.test.mjs",
+    "tests/v11-pack-branch-negative.test.mjs",
+    ".engineering/work-orders/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.md",
+    ".engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.json",
+    ".engineering/context-locks/GBS-V11-GOV-CODEX-RELEASE-ONEPASS-013.json",
+    ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md",
+    ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json"
+  ],
+  "writeForbidden": [
+    "packages/cli/scripts/prepare-package.mjs",
+    "all other production/test files",
+    "package manifests and lockfile",
+    "dependencies",
+    ".github/workflows/**",
+    "coverage policy/threshold",
+    ".engineering/CHECKPOINT.md",
+    ".engineering/CHECKPOINT.json",
+    "main",
+    "release tag",
+    "registry/publication"
+  ],
+  "nativeCoverageContract": {
+    "nodeVersion": "22.17.0",
+    "report": "Node native LCOV DA and BRDA",
+    "sourceMustMapTo": "packages/cli/scripts/prepare-package.mjs at exact blob above",
+    "historicDiagnosticBranchLines": [73, 83, 97, 117, 139, 140, 144, 159, 173, 199, 203, 219, 222, 232],
+    "allLinesMustBeReboundAgainstCurrentCandidate": true,
+    "coverageRunState": "NOT_RUN_AT_INITIAL_LOCK"
+  },
+  "decisionBindings": {
+    "releaseD0062": "ADR-0006 owner-operated exact-head audit/merge authority; remains effective",
+    "mainD0062": "ADR-0007 Hive-specific integration retirement; distinct branch-qualified lineage",
+    "releaseD0063": "ADR-0008 effective at actual PR #347 merge",
+    "mergeRequiredForThisWorkOrder": false,
+    "publicationAllowed": false
+  },
+  "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT",
+  "fallbackStopCondition": "BLOCKED_NEEDS_BOUNDED_OWNER_DELTA"
+}
