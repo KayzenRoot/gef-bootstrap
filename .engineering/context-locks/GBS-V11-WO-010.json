@@ -196,6 +196,16 @@
         ".engineering/context-locks/GBS-V11-WO-010.json"
       ],
       "result": "update the isolated package-builder fixture for lockfile-verified portable native staging while retaining fail-closed lock and package assertions"
+    },
+    {
+      "issue": 351,
+      "comment": 5918081266,
+      "paths": [
+        "tests/v11-wo-003-dist-smoke.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "assert the portable tarball retains its Windows prebuild after a POSIX install while preserving the POSIX effective-write behavior"
     }
   ],
   "npmPreflight": {

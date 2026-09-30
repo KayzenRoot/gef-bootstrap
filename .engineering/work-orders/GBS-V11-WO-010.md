@@ -61,6 +61,8 @@ Correction Delta #10 (Issue #351 comment 5917689147) permits only the distributi
 
 Correction Delta #11 (Issue #351 comment 5917783307) permits only the package-builder fixture in `tests/v11-codecov-patch-coverage.test.mjs` to supply the root lock and complete internal runtime set required by lockfile-verified native staging, and to replace obsolete host-local prebuild absence cases with fail-closed missing/invalid-lock cases. Existing Codecov and branch-negative assertions remain unchanged.
 
+Correction Delta #12 (Issue #351 comment 5918081266) permits the POSIX assertion in `tests/v11-wo-003-dist-smoke.test.mjs` to require the portable Windows prebuild to remain present in the installed universal tarball. POSIX doctor/status behavior remains on the effective-write proof and does not load the Windows adapter.
+
 Trusted publishing is the required path where npm supports OIDC; do not substitute a long-lived token. Do not remove `private: true` from `packages/cli/package.json` unless the exact public scope/package ownership and trusted publisher are verified. Preserve `UNLICENSED` and the existing All Rights Reserved LICENSE unless package tooling proves a minimal truthful metadata adjustment is necessary.
 
 If identity, namespace ownership or the package's trusted publisher cannot be verified/configured, finish all safe pre-publication work and record one concise `OWNER_ACTION_REQUIRED` block naming the exact npm scope/package settings. Do not publish a placeholder/staged package, use a token, or infer ownership from a public 404.

@@ -408,6 +408,6 @@ test("the installed package carries the Windows rights oracle and its prebuilt b
     }
   } else {
     // POSIX never loads the adapter; the effective-write chain is the proof there.
-    assert.equal(existsSync(join(cliDir, "node_modules", "@koromix", "koffi-win32-x64")), false, "a POSIX build stages no Windows binary");
+    assert.equal(existsSync(join(cliDir, "node_modules", "@koromix", "koffi-win32-x64")), true, "the portable package retains the Windows prebuild on POSIX");
   }
 });
