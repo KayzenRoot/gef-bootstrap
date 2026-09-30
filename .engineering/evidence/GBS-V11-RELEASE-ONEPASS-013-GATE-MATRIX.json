@@ -66,7 +66,7 @@
     {
       "gate": 2,
       "name": "Fresh cumulative release-to-main integration",
-      "state": "OWNER_DECISION_REQUIRED_CODECOV_PATCH_NUMERIC_PERCENTAGE_UNAVAILABLE",
+      "state": "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT",
       "sourceRefs": {
         "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
         "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
@@ -111,10 +111,10 @@
         "Resolve only the admitted governance/source-document conflicts according to the committed per-path Context Lock.",
         "Complete full build, validation, package/install/upgrade/recovery and release tests.",
         "Obtain current Ubuntu/macOS/Windows, Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Sonar and applicable assurance checks on the exact cumulative PR HEAD.",
-        "Verify a provider-bound Codecov patch report >=97.85 percent on the exact cumulative PR HEAD.",
+        "Codecov acceptance: numeric patch >=97.85% when defined; otherwise N/A_ZERO_DENOMINATOR is permitted only under owner Option B exact-base/head, successful exact-head LCOV upload, provider SUCCESS+zero eligible patch lines/not-affected, no weakened coverage semantics, all other required gates green, and fresh owner exact-head audit.",
         "Owner exact-head audit; no merge to main under Gate 2."
       ],
-      "currentCumulativeCodecovSonar": "Sonar Quality Gate PASS; Codecov upload accepted on exact measured HEAD 07a723cfe30b324b500b46618cef4e451705f39a. Provider compare uses base f6738292c038eb6f0d08d1d32b3752c5c7dc417a and returns 31 patch files, 0 lines/hits/misses; check says “Coverage not affected”; numeric >=97.85% unavailable. No legitimate mapping hunk proven; stop OWNER_DECISION_REQUIRED.",
+      "currentCumulativeCodecovSonar": "Sonar Quality Gate PASS. Owner Option B applies: numeric Codecov patch must remain >=97.85% when a numeric denominator exists; when the provider reports zero eligible patch lines / Patch N/A / Coverage not affected on exact bound base/head with successful exact-head LCOV upload and SUCCESS patch status, record N/A_ZERO_DENOMINATOR (never 100%) and require all other exact-head gates green plus owner audit.",
       "sourceAdmissionIssue": 348,
       "candidateBranch": "codex/gbs-v11-release-integration-014",
       "preResolutionPlanCommit": "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
@@ -234,9 +234,19 @@
         "codecovPatchFiles": 31,
         "codecovPatchLines": 0,
         "numericPatchPercent": null,
-        "stopCondition": "OWNER_DECISION_REQUIRED"
+        "stopCondition": "SUPERSEDED_BY_OWNER_OPTION_B_DOCUMENTATION_DELTA_AWAITING_NEW_HEAD_CHECKS"
       },
-      "stopCondition": "OWNER_DECISION_REQUIRED"
+      "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT",
+      "ownerSemanticAmendment": {
+        "decision": "OPTION_B_APPROVED",
+        "date": "2026-09-30",
+        "source": "Issue #348 owner decision after review #5366930854",
+        "numericRule": "patch >=97.85% when numeric patch denominator exists",
+        "zeroDenominatorRule": "N/A_ZERO_DENOMINATOR accepted only for exact base/head + exact-head LCOV upload SUCCESS + provider patch status SUCCESS + zero eligible patch lines / not affected + visible head/project coverage + no weakened threshold/exclusion/coverage definition + all other required gates green + owner exact-head audit",
+        "prohibitedInterpretation": "N/A is never 100% and never numeric threshold satisfaction",
+        "currentCandidateBeforeDocsHead": "4884b2aded8130e2af0bd0083caa54e11ce8eca6",
+        "state": "APPLIED_AWAITING_NEW_HEAD_CHECKS_AND_OWNER_REAUDIT"
+      }
     },
     {
       "gate": 3,
@@ -278,7 +288,7 @@
   "mergeAuthorized": false,
   "publicationAuthorized": false,
   "currentGate": 2,
-  "currentGateState": "BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
+  "currentGateState": "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT",
   "currentCandidateBranch": "codex/gbs-v11-release-integration-014",
   "mainMergeAuthorized": false
 }
