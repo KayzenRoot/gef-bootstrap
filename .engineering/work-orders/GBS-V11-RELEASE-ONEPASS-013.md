@@ -96,7 +96,7 @@ WO-010 acceptance remains a distinct gate for the complete frozen DoD: current f
 |---|---|---|
 | 0 | Exact-head owner audit, required checks and real merge receipt for governance promotion | `MERGED` at `9f6f069c977868ade34a19cddb346f7bea9a95fe` |
 | 1 | Actual fail-closed branch cases; native Node 22.17.0 DA/BRDA on exact candidate; build/validate; package/integration/security; exact-head cross-platform and security checks | `MERGED` at `4b2f66724ea5df94ddd8fda2d8088b12b9708c10` |
-| 2 | Fresh ancestry/conflict reconciliation; cumulative Codecov >=97.85%; current Sonar/security/quality and all required checks on one exact integration head | `BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE`; details in the Gate 2 Evidence Bundle |
+| 2 | Fresh ancestry/conflict reconciliation; Codecov numeric patch >=97.85% when defined, or governed `N/A_ZERO_DENOMINATOR` only under the exact owner Option B conditions; current Sonar/security/quality and all required checks on one exact integration head | `OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT`; details in the Gate 2 Evidence Bundle |
 | 3 | Full WO-010 production DoD, supported consumer/install/upgrade/recovery matrix, secure reproducible release artifacts, owner decisions and verified post-publication receipts if publication is authorized | `NOT_ADMITTED`; legal/registry/OIDC decisions unknown |
 
 Unrun evidence is `NOT_RUN`; missing or inaccessible evidence is `UNKNOWN/BLOCKED`; failed or stale exact-head evidence is not a pass. Preserve the historical V1 `1088/1088` denominator and state. “9/10 WOs” is a milestone count, never a production completion percentage.
@@ -111,7 +111,7 @@ Unrun evidence is `NOT_RUN`; missing or inaccessible evidence is `UNKNOWN/BLOCKE
 
 ## Progress and stop conditions
 
-At initial master-plan capture, Gates 0–3 had the states recorded in that plan. Current states are maintained by the later gate-specific execution addenda and machine-readable gate matrix; Gate 0 and Gate 1 are merged, Gate 2 is blocked on Codecov patch evidence, and Gate 3 remains not admitted.
+At initial master-plan capture, Gates 0–3 had the states recorded in that plan. Current states are maintained by the later gate-specific execution addenda and machine-readable gate matrix; Gate 0 and Gate 1 are merged, Gate 2 has owner Option B semantics applied and awaits exact-head reauditoria, and Gate 3 remains not admitted.
 
 Stop Phase 1 at `GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_SOURCE_BOUND_TESTS_ONLY_ADMITTED_EXACT_HEAD_READY_FOR_OWNER_AUDIT` for the required owner audit, or at `BLOCKED_NEEDS_BOUNDED_OWNER_DELTA` if the exact source binding changes or production-source authorization is required. Continue later phases only after their separate gates become effective. Final master completion is allowed only after verified actual receipts for every admitted gate; no such completion is claimed here.
 
@@ -162,3 +162,15 @@ Provider diagnosis on the same exact head: Codecov upload run 36719357762 comple
 After the trigger correction, all 145/145 GitHub status contexts completed SUCCESS on measured HEAD `07a723cfe30b324b500b46618cef4e451705f39a`. The V1.1 assurance jobs passed on Ubuntu, macOS, and Windows (run 36719357798); Repository Validation, Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Codecov upload, and Sonar also passed. Sonar Quality Gate: 117 new issues, 0 accepted, 0 security hotspots, 0.0% new-code coverage, 2.6% duplication. CodeRabbit review was skipped because the PR is draft and does not constitute owner audit.
 
 **STOP: `OWNER_DECISION_REQUIRED`.** No numeric Codecov patch result exists and no truthful mapping fix was proven. The owner must either retain `>=97.85%` and keep Gate 2 blocked, or separately amend the acceptance semantics. PR #350 stays open/draft and unmerged; WO-010 remains NOT_ADMITTED; no tag or publication. Main, release, merge-base and branch-qualified D-0062 decisions remain unchanged. The evidence-only commit invalidates these exact-head check receipts; the complete check suite must be rebound to its resulting HEAD, which will be recorded in the live PR description.
+
+
+## Gate 2 owner semantic amendment — Option B (2026-09-30)
+
+Owner explicitly selected **Option B** after review #5366930854. This amends only the Gate 2 Codecov acceptance semantics; it does not lower the numeric threshold, alter coverage instrumentation, or approve the PR by itself.
+
+- When Codecov supplies a numeric patch percentage, the existing requirement remains **>=97.85%** on the exact PR HEAD.
+- When Codecov supplies **zero eligible patch lines** and explicitly reports Patch N/A / “Coverage not affected”, the patch metric is recorded as **N/A_ZERO_DENOMINATOR**, never 100%, and may satisfy the patch-gate dimension only if the exact base/head are bound, exact-head LCOV upload succeeds, the provider patch status is SUCCESS, project/head coverage remains visible, no threshold/exclusion/coverage definition is weakened, no runtime/test change is made to manufacture a denominator, and all other required exact-head quality/security/platform gates are green.
+- Any non-zero patch denominator without numeric patch >=97.85%, or any failed/stale/mismatched coverage evidence, remains BLOCKED.
+- PR #350 must rerun required checks after this documentation-only amendment and receive a fresh owner exact-head audit before any main merge. Gate 3 / WO-010 remains NOT_ADMITTED until Gate 2 is actually closed.
+
+Current stop: `GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT`.
