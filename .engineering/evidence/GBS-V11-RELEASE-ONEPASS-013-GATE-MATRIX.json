@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-09-30T12:06:02Z",
+  "capturedAtUtc": "2026-09-30T13:16:08Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
@@ -66,7 +66,7 @@
     {
       "gate": 2,
       "name": "Fresh cumulative release-to-main integration",
-      "state": "BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
+      "state": "OWNER_DECISION_REQUIRED_CODECOV_PATCH_NUMERIC_PERCENTAGE_UNAVAILABLE",
       "sourceRefs": {
         "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
         "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
@@ -114,7 +114,7 @@
         "Verify a provider-bound Codecov patch report >=97.85 percent on the exact cumulative PR HEAD.",
         "Owner exact-head audit; no merge to main under Gate 2."
       ],
-      "currentCumulativeCodecovSonar": "Sonar Quality Gate PASS on PR #350; Codecov BLOCKED at exact tested head 5dfc1663ed5550d650b45e88acbce30b34c24381: report Patch is dash and API denominator is 0 lines, so >=97.85 percent is not proven.",
+      "currentCumulativeCodecovSonar": "Sonar Quality Gate PASS; Codecov upload accepted on exact measured HEAD 07a723cfe30b324b500b46618cef4e451705f39a. Provider compare uses base f6738292c038eb6f0d08d1d32b3752c5c7dc417a and returns 31 patch files, 0 lines/hits/misses; check says “Coverage not affected”; numeric >=97.85% unavailable. No legitimate mapping hunk proven; stop OWNER_DECISION_REQUIRED.",
       "sourceAdmissionIssue": 348,
       "candidateBranch": "codex/gbs-v11-release-integration-014",
       "preResolutionPlanCommit": "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
@@ -153,6 +153,20 @@
             ".engineering/work-orders/GBS-MAINT-HIVE-REMOVAL-001.md"
           ],
           "result": "restored byte-for-byte from admitted main source f6738292c038eb6f0d08d1d32b3752c5c7dc417a"
+        },
+        {
+          "issue": 348,
+          "review": 5366327642,
+          "paths": [
+            ".github/workflows/v11-release-assurance.yml",
+            ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json",
+            ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013.json",
+            ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json",
+            ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE2-EVIDENCE.md",
+            ".engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md",
+            "pull request #350 description"
+          ],
+          "result": "Only pull_request trigger now includes main and release/1.1; jobs and push trigger unchanged. Provider-bound Codecov diagnosis found no numeric patch percent and no justified mapping-fix hunk; exact cause remains provider/diff mapping limitation. 145/145 checks passed on measured head 07a723cfe30b324b500b46618cef4e451705f39a. Stop OWNER_DECISION_REQUIRED."
         }
       ],
       "localValidation": {
@@ -202,8 +216,27 @@
         "crossPlatformAssurance": "PASS exact-head Ubuntu/macOS/Windows and release assurance jobs; PR checks URL above",
         "sonarQualityGateAndDuplication": "PASS; 117 new issues, 0 accepted issues, 0 security hotspots, 2.6% new-code duplication; https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=350",
         "codecovPatch": "BLOCKED: report https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/350 shows Patch —; API base f6738292c038eb6f0d08d1d32b3752c5c7dc417a to head 5dfc1663ed5550d650b45e88acbce30b34c24381 reports patch files=31, lines=0, hits=0, misses=0. Check green summary says Coverage not affected; numeric >=97.85% is not proven.",
-        "codecovUploadRuns": [36709709431, 36710842657, 36711283623]
-      }
+        "codecovUploadRuns": [
+          36709709431,
+          36710842657,
+          36711283623
+        ]
+      },
+      "latestExactHeadEvidence": {
+        "headSha": "07a723cfe30b324b500b46618cef4e451705f39a",
+        "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+        "mergeBaseSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+        "checks": "145/145 SUCCESS",
+        "releaseAssurance": "Ubuntu/macOS/Windows PASS",
+        "releaseAssuranceRun": 36719357798,
+        "codecovRun": 36719357762,
+        "codecovPatchFiles": 31,
+        "codecovPatchLines": 0,
+        "numericPatchPercent": null,
+        "stopCondition": "OWNER_DECISION_REQUIRED"
+      },
+      "stopCondition": "OWNER_DECISION_REQUIRED"
     },
     {
       "gate": 3,

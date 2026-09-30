@@ -3,7 +3,7 @@
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "issue": 348,
   "status": "GATE2_BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
-  "capturedAtUtc": "2026-09-30T12:06:02Z",
+  "capturedAtUtc": "2026-09-30T13:16:08Z",
   "capturedLocalDate": "2026-09-30",
   "timezone": "America/Sao_Paulo",
   "repository": "KayzenRoot/gef-bootstrap",
@@ -529,7 +529,7 @@
   ],
   "mergeAuthorized": false,
   "publicationAuthorized": false,
-  "currentGate": "Gate 2: cumulative PR #350 is blocked because Codecov has no numeric patch denominator/result",
-  "currentGateState": "BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
+  "currentGate": "Gate 2: OWNER_DECISION_REQUIRED; Codecov upload is accepted but the exact-head provider comparison has denominator 0 and no numeric patch percentage.",
+  "currentGateState": "OWNER_DECISION_REQUIRED_CODECOV_PATCH_NUMERIC_PERCENTAGE_UNAVAILABLE",
   "gate2ContextLock": ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json"
 }

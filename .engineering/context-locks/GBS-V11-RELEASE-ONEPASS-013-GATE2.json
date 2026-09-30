@@ -4,8 +4,8 @@
   "phaseId": "GBS-V11-RELEASE-INTEGRATION-014",
   "issue": 348,
   "repository": "KayzenRoot/gef-bootstrap",
-  "capturedAtUtc": "2026-09-30T12:06:02Z",
-  "status": "GATE2_EXECUTED_BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
+  "capturedAtUtc": "2026-09-30T13:16:08Z",
+  "status": "OWNER_DECISION_REQUIRED_CODECOV_PATCH_NUMERIC_PERCENTAGE_UNAVAILABLE",
   "sourceAdmission": {
     "url": "https://github.com/KayzenRoot/gef-bootstrap/issues/348",
     "state": "APPROVED_NOT_INDEPENDENT",
@@ -17,9 +17,9 @@
     "baseBranch": "main",
     "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
     "pullRequestBase": "main",
-    "pullRequestHeadSha": "5dfc1663ed5550d650b45e88acbce30b34c24381",
+    "pullRequestHeadSha": "07a723cfe30b324b500b46618cef4e451705f39a",
     "pullRequestNumber": 350,
-    "state": "OPEN_DRAFT_BLOCKED_CODECOV_PATCH_METRIC_UNAVAILABLE",
+    "state": "OPEN_DRAFT_OWNER_DECISION_REQUIRED_CODECOV_PATCH_NUMERIC_PERCENTAGE_UNAVAILABLE",
     "preMergePlanCommit": "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
     "currentPreMergeHead": "aa4af40bfd297742bf100f94fbfeda3ef411a35b"
   },
@@ -423,13 +423,104 @@
   },
   "results": {
     "localValidation": "PASS: npm ci --ignore-scripts; npm run build; npm run validate typecheck and 1603/1603 tests at code/test HEAD 96ca391e61002c494fcb3d408a344251ef1d2748",
-    "providerChecks": "139/139 GitHub status contexts report SUCCESS on exact PR HEAD 5dfc1663ed5550d650b45e88acbce30b34c24381; CodeRabbit says review skipped for draft, so this is not owner audit; PR checks URL https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks",
-    "codecovPatchPercent": "UNAVAILABLE: Codecov Patch is dash; API comparison base f6738292c038eb6f0d08d1d32b3752c5c7dc417a to head 5dfc1663ed5550d650b45e88acbce30b34c24381 reports 31 files and 0 lines/hits/misses; no numeric patch percentage proves the >=97.85% gate",
+    "providerChecks": "145/145 GitHub status contexts SUCCESS on exact measured HEAD 07a723cfe30b324b500b46618cef4e451705f39a; release assurance Ubuntu/macOS/Windows all pass; CodeRabbit review skipped because draft and is not an owner audit. PR checks: https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks",
+    "codecovPatchPercent": "OWNER_DECISION_REQUIRED: Codecov accepted upload on exact HEAD 07a723cfe30b324b500b46618cef4e451705f39a but reports 31 patch files and 0 lines/hits/misses; Patch is — and no numeric >=97.85% exists. See provider upload run 36719357762 and API diagnosis in this Context Lock.",
     "sonar": "PASS Quality Gate; 117 new issues, 0 accepted issues, 0 security hotspots, 2.6% new-code duplication; https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=350",
     "securityFindings": "Exact-head Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Socket and platform/release assurance checks passed; no open HIGH/CRITICAL code-scanning finding reported on candidate",
-    "exactCandidateHead": "5dfc1663ed5550d650b45e88acbce30b34c24381"
+    "exactCandidateHead": "07a723cfe30b324b500b46618cef4e451705f39a",
+    "releaseAssuranceMatrix": "PASS on exact measured HEAD 07a723cfe30b324b500b46618cef4e451705f39a: Ubuntu job 109900179864, macOS 109900179549, Windows 109900179900; run 36719357798.",
+    "sourceBoundCodecovDiagnosis": {
+      "classification": "CODECOV_PROVIDER_DIFF_MAPPING_SEMANTICS_UNRESOLVED",
+      "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+      "headSha": "07a723cfe30b324b500b46618cef4e451705f39a",
+      "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+      "mergeBaseSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+      "providerUpload": {
+        "runId": 36719357762,
+        "jobId": 109900178833,
+        "state": "SUCCESS",
+        "reportState": "complete",
+        "ciPassed": true,
+        "artifactsCount": 0,
+        "uploadedTotals": {
+          "files": 162,
+          "lines": 20212,
+          "hits": 19268,
+          "misses": 835,
+          "partials": 109,
+          "coveragePercent": 95.32,
+          "branches": 973,
+          "methods": 2819,
+          "sessions": 1
+        }
+      },
+      "comparison": {
+        "state": "processed",
+        "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "headSha": "07a723cfe30b324b500b46618cef4e451705f39a",
+        "patchFiles": 31,
+        "patchLines": 0,
+        "patchHits": 0,
+        "patchMisses": 0,
+        "patchPartials": 0,
+        "apiCoverageField": 0,
+        "numericPatchPercent": null,
+        "checkConclusion": "success",
+        "checkSummary": "Coverage not affected when comparing f673829...07a723c"
+      },
+      "githubDiffFiles": [
+        {
+          "path": "packages/cli/scripts/prepare-package.mjs",
+          "status": "added",
+          "addedLines": 238,
+          "hunk": "@@ -0,0 +1,238 @@"
+        },
+        {
+          "path": "packages/cli/src/main.ts",
+          "status": "added",
+          "addedLines": 348,
+          "hunk": "@@ -0,0 +1,348 @@"
+        },
+        {
+          "path": "packages/m62-m63-final/src/v11-performance-telemetry.mjs",
+          "status": "added",
+          "addedLines": 556,
+          "hunk": "@@ -0,0 +1,556 @@"
+        }
+      ],
+      "codecovProcessedPathReports": [
+        {
+          "path": "packages/cli/scripts/prepare-package.mjs",
+          "lines": 238,
+          "hits": 221,
+          "misses": 5,
+          "partials": 12,
+          "coveragePercent": 92.85,
+          "patchPercent": null
+        },
+        {
+          "path": "packages/m62-m63-final/src/v11-performance-telemetry.mjs",
+          "lines": 556,
+          "hits": 427,
+          "misses": 92,
+          "partials": 37,
+          "coveragePercent": 76.79,
+          "patchPercent": null
+        },
+        {
+          "path": "packages/cli/src/main.ts",
+          "processedPathReport": "absent at exact head",
+          "patchPercent": null
+        }
+      ],
+      "pathAssessment": "Codecov processed-report paths for prepare-package.mjs and v11-performance-telemetry.mjs match the repository-relative GitHub paths and expose line totals, while impacted_files returns null patch coverage. The added main.ts has no processed path report. GitHub reports all three files as added with zero-base hunks. This does not prove one exact SF-prefix correction; no legitimate fixes hunk is supported by available evidence.",
+      "rawLcovAvailability": "The exact raw SF records are not exposed by the Codecov processed-report API; the coverage workflow run has zero downloadable artifacts and its logs only assert that LCOV exists. The provider-normalized paths above are verified; the original LCOV text is unavailable.",
+      "officialSemantics": "Codecov documents patch coverage as coverage of lines changed in the Git diff and defines ø/not affected as a diff not concerning tracked coverage. The current provider response contradicts the mapped report plus GitHub added-line hunks; its internal diff/mapping cause is unresolved. See https://docs.codecov.com/docs/coverage-percentages, https://docs.codecov.com/docs/fixing-paths, and https://docs.codecov.com/reference/repos_report_retrieve.",
+      "remediation": "No exact technical mapping hunk identified. Do not change coverage workflow, threshold, exclusions, metric, tests, or runtime. Owner must decide whether to preserve numeric >=97.85% and remain blocked or separately amend acceptance semantics.",
+      "conclusion": "OWNER_DECISION_REQUIRED"
+    }
   },
-  "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_READY_FOR_OWNER_AUDIT",
+  "stopCondition": "OWNER_DECISION_REQUIRED",
   "mainMergeAuthorized": false,
   "tagAuthorized": false,
   "publicationAuthorized": false,
@@ -521,14 +612,104 @@
   },
   "providerChecks": {
     "pullRequest": "OPEN_DRAFT https://github.com/KayzenRoot/gef-bootstrap/pull/350",
-    "exactHead": "139/139 status contexts SUCCESS at 5dfc1663ed5550d650b45e88acbce30b34c24381; CodeRabbit review skipped because draft; owner audit not done",
+    "exactHead": "145/145 status contexts SUCCESS on exact measured HEAD 07a723cfe30b324b500b46618cef4e451705f39a; CodeRabbit skipped for draft; owner audit not done.",
     "gitleaks": "PASS full PR interval; workflow 36709709496",
     "trivy": "PASS exact-head workflow 36709709496",
     "codeql": "PASS exact head; check https://github.com/KayzenRoot/gef-bootstrap/runs/109868790557",
     "dependencyReview": "PASS exact-head workflow 36709709581",
     "pipelineIntegrity": "PASS exact-head workflow 36709709359",
-    "crossPlatformAssurance": "PASS exact-head GitHub check set; PR checks https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks",
-    "sonarQualityGateAndDuplication": "PASS Quality Gate; 117 new issues, 0 accepted issues, 0 security hotspots, 2.6% duplication; https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=350",
-    "codecovPatch": "BLOCKED: check success summary is Coverage not affected; report https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/350 shows Patch —; API reports 31 files, 0 patch lines, 0 hits, 0 misses. Required >=97.85% is unproven. Candidate upload run 36710842657; base refresh run 36711283623."
+    "crossPlatformAssurance": "PASS on exact measured HEAD 07a723cfe30b324b500b46618cef4e451705f39a: Ubuntu 109900179864; macOS 109900179549; Windows 109900179900; workflow run https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36719357798.",
+    "sonarQualityGateAndDuplication": "PASS Quality Gate on exact measured HEAD; 117 new issues, 0 accepted, 0 security hotspots, 0.0% new-code coverage and 2.6% duplication; https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=350.",
+    "codecovPatch": "OWNER_DECISION_REQUIRED: exact base f6738292c038eb6f0d08d1d32b3752c5c7dc417a to head 07a723cfe30b324b500b46618cef4e451705f39a; provider state processed, patch files=31, lines/hits/misses/partials=0, numeric percent unavailable. Check is success only with “Coverage not affected”. Upload run 36719357762; https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/350.",
+    "sourceBoundCodecovDiagnosis": {
+      "classification": "CODECOV_PROVIDER_DIFF_MAPPING_SEMANTICS_UNRESOLVED",
+      "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+      "headSha": "07a723cfe30b324b500b46618cef4e451705f39a",
+      "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+      "mergeBaseSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+      "providerUpload": {
+        "runId": 36719357762,
+        "jobId": 109900178833,
+        "state": "SUCCESS",
+        "reportState": "complete",
+        "ciPassed": true,
+        "artifactsCount": 0,
+        "uploadedTotals": {
+          "files": 162,
+          "lines": 20212,
+          "hits": 19268,
+          "misses": 835,
+          "partials": 109,
+          "coveragePercent": 95.32,
+          "branches": 973,
+          "methods": 2819,
+          "sessions": 1
+        }
+      },
+      "comparison": {
+        "state": "processed",
+        "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "headSha": "07a723cfe30b324b500b46618cef4e451705f39a",
+        "patchFiles": 31,
+        "patchLines": 0,
+        "patchHits": 0,
+        "patchMisses": 0,
+        "patchPartials": 0,
+        "apiCoverageField": 0,
+        "numericPatchPercent": null,
+        "checkConclusion": "success",
+        "checkSummary": "Coverage not affected when comparing f673829...07a723c"
+      },
+      "githubDiffFiles": [
+        {
+          "path": "packages/cli/scripts/prepare-package.mjs",
+          "status": "added",
+          "addedLines": 238,
+          "hunk": "@@ -0,0 +1,238 @@"
+        },
+        {
+          "path": "packages/cli/src/main.ts",
+          "status": "added",
+          "addedLines": 348,
+          "hunk": "@@ -0,0 +1,348 @@"
+        },
+        {
+          "path": "packages/m62-m63-final/src/v11-performance-telemetry.mjs",
+          "status": "added",
+          "addedLines": 556,
+          "hunk": "@@ -0,0 +1,556 @@"
+        }
+      ],
+      "codecovProcessedPathReports": [
+        {
+          "path": "packages/cli/scripts/prepare-package.mjs",
+          "lines": 238,
+          "hits": 221,
+          "misses": 5,
+          "partials": 12,
+          "coveragePercent": 92.85,
+          "patchPercent": null
+        },
+        {
+          "path": "packages/m62-m63-final/src/v11-performance-telemetry.mjs",
+          "lines": 556,
+          "hits": 427,
+          "misses": 92,
+          "partials": 37,
+          "coveragePercent": 76.79,
+          "patchPercent": null
+        },
+        {
+          "path": "packages/cli/src/main.ts",
+          "processedPathReport": "absent at exact head",
+          "patchPercent": null
+        }
+      ],
+      "pathAssessment": "Codecov processed-report paths for prepare-package.mjs and v11-performance-telemetry.mjs match the repository-relative GitHub paths and expose line totals, while impacted_files returns null patch coverage. The added main.ts has no processed path report. GitHub reports all three files as added with zero-base hunks. This does not prove one exact SF-prefix correction; no legitimate fixes hunk is supported by available evidence.",
+      "rawLcovAvailability": "The exact raw SF records are not exposed by the Codecov processed-report API; the coverage workflow run has zero downloadable artifacts and its logs only assert that LCOV exists. The provider-normalized paths above are verified; the original LCOV text is unavailable.",
+      "officialSemantics": "Codecov documents patch coverage as coverage of lines changed in the Git diff and defines ø/not affected as a diff not concerning tracked coverage. The current provider response contradicts the mapped report plus GitHub added-line hunks; its internal diff/mapping cause is unresolved. See https://docs.codecov.com/docs/coverage-percentages, https://docs.codecov.com/docs/fixing-paths, and https://docs.codecov.com/reference/repos_report_retrieve.",
+      "remediation": "No exact technical mapping hunk identified. Do not change coverage workflow, threshold, exclusions, metric, tests, or runtime. Owner must decide whether to preserve numeric >=97.85% and remain blocked or separately amend acceptance semantics.",
+      "conclusion": "OWNER_DECISION_REQUIRED"
+    }
   }
 }
