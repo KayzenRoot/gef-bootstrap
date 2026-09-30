@@ -120,7 +120,8 @@ jobs:
           node-version: 22
           package-manager-cache: false
 
-      - name: Install, use, migrate with and remove the exact same package tarball
+      - name: Install, use, migrate with and remove the exact same package tarball (non-Windows)
+        if: runner.os != 'Windows'
         shell: bash
         env:
           GEF_RELEASE_RECEIPT_DIR: ${{ runner.temp }}/gef-v1.1.0-exact-head-package
@@ -128,6 +129,16 @@ jobs:
           GEF_EXPECTED_EVENT: ${{ github.event_name }}
           GEF_EXPECTED_REF: ${{ github.ref }}
         run: node tests/v11-wo-010-artifact-smoke.mjs
+
+      - name: Install, use, migrate with and remove the exact same package tarball (unprivileged Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          GEF_RELEASE_RECEIPT_DIR: ${{ runner.temp }}/gef-v1.1.0-exact-head-package
+          GEF_EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          GEF_EXPECTED_EVENT: ${{ github.event_name }}
+          GEF_EXPECTED_REF: ${{ github.ref }}
+        run: ./.github/scripts/run-v11-unprivileged-validation.ps1 -ReleaseArtifactSmoke
 
   release-assurance:
     name: V1.1 release assurance / ${{ matrix.os }}

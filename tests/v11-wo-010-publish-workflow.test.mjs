@@ -9,6 +9,7 @@ const WORKFLOW = readFileSync(resolve(ROOT, ".github/workflows/v11-publish.yml")
 const RELEASE_ASSURANCE = readFileSync(resolve(ROOT, ".github/workflows/v11-release-assurance.yml"), "utf8");
 const ARTIFACT_SMOKE = readFileSync(resolve(ROOT, "tests/v11-wo-010-artifact-smoke.mjs"), "utf8");
 const PACKAGE_PREPARER = readFileSync(resolve(ROOT, "packages/cli/scripts/prepare-package.mjs"), "utf8");
+const UNPRIVILEGED_VALIDATION = readFileSync(resolve(ROOT, ".github/scripts/run-v11-unprivileged-validation.ps1"), "utf8");
 
 test("WO-010 manual branch dispatch verifies a candidate but only an exact pushed tag can publish", () => {
   assert.match(WORKFLOW, /push:\s*\n\s+tags:\s*\["v1\.1\.0"\]/);
@@ -116,7 +117,14 @@ test("WO-010 pre-merge assurance runs its one exact-head tarball on all three pl
   assert.match(matrixJob, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
   assert.match(matrixJob, /actions\/download-artifact@/);
   assert.match(matrixJob, /name: gef-v1\.1\.0-exact-head-package-\$\{\{ github\.run_id \}\}/);
-  assert.match(matrixJob, /node tests\/v11-wo-010-artifact-smoke\.mjs/);
+  assert.match(matrixJob, /if: runner\.os != 'Windows'[\s\S]*?node tests\/v11-wo-010-artifact-smoke\.mjs/);
+  assert.match(matrixJob, /if: runner\.os == 'Windows'[\s\S]*?run: \.\/\.github\/scripts\/run-v11-unprivileged-validation\.ps1 -ReleaseArtifactSmoke/);
+  assert.match(UNPRIVILEGED_VALIDATION, /\[switch\] \$ReleaseArtifactSmoke/);
+  assert.match(UNPRIVILEGED_VALIDATION, /Add-LocalGroupMember -Group "Users"/);
+  assert.match(UNPRIVILEGED_VALIDATION, /The temporary validation identity unexpectedly belongs to Administrators/);
+  assert.match(UNPRIVILEGED_VALIDATION, /Copy-Item -LiteralPath[\s\S]*?GEF_EXPECTED_SOURCE_COMMIT/);
+  assert.match(UNPRIVILEGED_VALIDATION, /Invoke-UserProcess "same-artifact-smoke"/);
+  assert.match(UNPRIVILEGED_VALIDATION, /npmArgs = .* run validate/);
   assert.doesNotMatch(matrixJob, /id-token:\s*write/);
 });
 

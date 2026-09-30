@@ -1,3 +1,7 @@
+param(
+  [switch] $ReleaseArtifactSmoke
+)
+
 $ErrorActionPreference = "Stop"
 
 $workspace = [System.IO.Path]::GetFullPath($env:GITHUB_WORKSPACE)
@@ -31,6 +35,20 @@ function Invoke-UserProcess([string]$Name, [string]$FilePath, [string]$Arguments
 try {
   if (-not (Test-Path $workspace)) { throw "GITHUB_WORKSPACE is missing." }
   if (-not (Get-Command New-LocalUser -ErrorAction SilentlyContinue)) { throw "New-LocalUser is unavailable on this runner." }
+
+  if ($ReleaseArtifactSmoke) {
+    if (-not $env:GEF_RELEASE_RECEIPT_DIR) { throw "GEF_RELEASE_RECEIPT_DIR is required for the exact-artifact smoke." }
+    if ($env:GEF_EXPECTED_SOURCE_COMMIT -notmatch '^[0-9a-f]{40}$') { throw "GEF_EXPECTED_SOURCE_COMMIT must be an exact commit SHA." }
+    if ($env:GEF_EXPECTED_EVENT -notin @("pull_request", "push")) { throw "GEF_EXPECTED_EVENT is unsupported for the exact-artifact smoke." }
+    if ($env:GEF_EXPECTED_REF -notmatch '^refs/(pull/[0-9]+/merge|heads/release/1\.1)$') { throw "GEF_EXPECTED_REF is not an admitted candidate ref." }
+
+    $sourceArtifactDirectory = [System.IO.Path]::GetFullPath($env:GEF_RELEASE_RECEIPT_DIR)
+    foreach ($artifactName in @("GBS-V11-WO-010-RELEASE-MANIFEST.json", "gef-bootstrap-cli-1.1.0.tgz")) {
+      if (-not (Test-Path -LiteralPath (Join-Path $sourceArtifactDirectory $artifactName) -PathType Leaf)) {
+        throw "The exact-artifact receipt directory is missing $artifactName."
+      }
+    }
+  }
 
   $nodePath = (Get-Command node.exe -ErrorAction Stop).Source
   $npmCommand = (Get-Command npm.cmd -ErrorAction Stop).Source
@@ -85,6 +103,20 @@ try {
     CI = "true"
   }
 
+  if ($ReleaseArtifactSmoke) {
+    $stagedArtifactDirectory = Join-Path $tempRoot "gef-v1.1.0-exact-head-package"
+    New-Item -ItemType Directory -Path $stagedArtifactDirectory -Force | Out-Null
+    foreach ($artifactName in @("GBS-V11-WO-010-RELEASE-MANIFEST.json", "gef-bootstrap-cli-1.1.0.tgz")) {
+      Copy-Item -LiteralPath (Join-Path $sourceArtifactDirectory $artifactName) -Destination (Join-Path $stagedArtifactDirectory $artifactName)
+    }
+    & icacls.exe $stagedArtifactDirectory /grant $grant /T /C /Q | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "Could not grant the temporary user access to the exact-artifact receipt." }
+    $childEnvironment["GEF_RELEASE_RECEIPT_DIR"] = $stagedArtifactDirectory
+    $childEnvironment["GEF_EXPECTED_SOURCE_COMMIT"] = $env:GEF_EXPECTED_SOURCE_COMMIT
+    $childEnvironment["GEF_EXPECTED_EVENT"] = $env:GEF_EXPECTED_EVENT
+    $childEnvironment["GEF_EXPECTED_REF"] = $env:GEF_EXPECTED_REF
+  }
+
   Add-Record ("Workspace: " + $workspace)
   Add-Record ("Validation account: " + $identity)
   Add-Record "The account is a standard Users member and is not an Administrators member."
@@ -96,9 +128,17 @@ try {
   $gitConfig = Invoke-UserProcess "git-safe-directory" $gitPath $gitArgs
   if ($gitConfig.ExitCode -ne 0) { throw "Could not configure Git safe.directory for the standard user." }
 
-  $npmArgs = '"' + $npmCli + '" run validate'
-  $validation = Invoke-UserProcess "npm-validate" $nodePath $npmArgs
-  if ($validation.ExitCode -ne 0) { throw "npm run validate failed under the unprivileged Windows identity." }
+  if ($ReleaseArtifactSmoke) {
+    $smokeScript = Join-Path $workspace "tests\v11-wo-010-artifact-smoke.mjs"
+    if (-not (Test-Path -LiteralPath $smokeScript -PathType Leaf)) { throw "The exact-artifact acceptance harness is missing." }
+    $smoke = Invoke-UserProcess "same-artifact-smoke" $nodePath ('"' + $smokeScript + '"')
+    if ($smoke.ExitCode -ne 0) { throw "The exact-artifact smoke failed under the unprivileged Windows identity." }
+  }
+  else {
+    $npmArgs = '"' + $npmCli + '" run validate'
+    $validation = Invoke-UserProcess "npm-validate" $nodePath $npmArgs
+    if ($validation.ExitCode -ne 0) { throw "npm run validate failed under the unprivileged Windows identity." }
+  }
 }
 catch {
   $failure = $_.Exception.Message
