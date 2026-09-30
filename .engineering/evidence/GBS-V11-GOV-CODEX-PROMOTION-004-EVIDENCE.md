@@ -1,6 +1,6 @@
 # Evidence Bundle — GBS-V11-GOV-CODEX-PROMOTION-004
 
-Status: `BLOCKED_REQUIRED_VALIDATION_FAILURE`. This candidate is not represented as ready or independently audited. No merge has occurred.
+Status: `CORRECTION_DELTA_IN_PROGRESS`; this bundle records the admitted exact one-helper delta and read-only master-phase preparation. Final gate disposition and live exact-HEAD check links are maintained in PR #347. No merge has occurred.
 
 ## Authority and exact baseline
 
@@ -28,7 +28,7 @@ Status: `BLOCKED_REQUIRED_VALIDATION_FAILURE`. This candidate is not represented
 
 ## Changed files and meaning
 
-The actual candidate write set is limited to the 19 admitted paths:
+The original promotion write set remains 19 documentation paths. The owner-approved Correction Delta adds only tests/helpers/v11-context-lock-refresh-assertions.mjs, for 20 total paths across the candidate; the six consumer tests remain read-only:
 
 1. `AGENTS.md`
 2. `.engineering/ARCHITECTURE.md`
@@ -60,12 +60,56 @@ Final candidate HEAD/tree and provider check URLs are bound in the associated PR
 - Checkpoint JSON parsing and shared Markdown/JSON action/adoption/Issue #334/#337/WO-010 coherence: PASS.
 - `git diff --check`: PASS.
 - Focused legacy detachment + WO-008/009 continuity tests: 13/13 PASS.
-- `npm run validate`: FAIL, exit 1. Typecheck completed and the test runner executed 1,602 tests: 1,595 passed, 7 failed, 0 skipped. All seven failures are legacy checkpoint assertions that still require the obsolete `RESOLVE_PR278_SONAR_AND_MERGE_CONFLICT_UNDER_GBS_V11_MAINT_POST_WO009_001` value after the required factual next-action correction. They occur in checkpoint/WO-002/003/005/006/007/009 assertions, including `tests/helpers/v11-context-lock-refresh-assertions.mjs:49`. Those tests are outside the admitted write set and remain unchanged; the required full validation therefore blocks the STOP condition.
-- Gitleaks 8.30.1 directory scan of all 19 exact candidate paths: PASS, zero findings; config SHA-256 `e163e53b9e7e8a8511e77271e2b323ed057759542a6d988258afe3a1fa329caf`; `.gitleaksignore` is empty and no finding was waived or suppressed. The full Git commit-range scan is run after the final candidate commit and recorded with its exact range in the associated PR description.
-- Exact-final-HEAD GitHub workflows: record each current conclusion and URL in the associated PR description after the push. PR #342 and closed PR #278 results are not transferable.
+- Prior exact-head provider baseline, before this Correction Delta, from Repository Validation job 109672960014: 1,602 outcomes = 1,591 PASS, 7 FAIL, 4 SKIPPED. All seven failures routed through the shared helper; the six consuming test files are unchanged.
+- Correction Delta local proof on the candidate tree: Node v24.19.0; npm run validate PASS (typecheck PASS; 1,602 tests PASS, 0 FAIL, 0 SKIPPED); six consumer suites PASS (41/41); direct branch check PASS for current CLOSED_NOT_MERGED state, strict historical fallback and fail-closed unknown marker; legacy-detachment suite PASS (1/1). Full validation is rerun after this evidence update.
+- The earlier Gitleaks result covered the original 19-path promotion only and is not reused. The new exact commit-range Gitleaks and Trivy conclusions must come from Free Security Pilot on the pushed final HEAD; see the live PR checks page and exact run links in the PR description.
+- Exact-final-HEAD Repository Validation, Pipeline Integrity, Dependency Review, Free Security Pilot (Gitleaks and Trivy), M41-M63 integrated assurance and V1.1 Ubuntu/macOS/Windows release assurance are bound after push. The PR description records each actual conclusion and URL; no result transfers from the previous HEAD, PR #342 or PR #278.
 
 ## Impact, risk and stop
 
-Runtime/API compatibility: no code or dependency changes. Security policy and controls: unchanged. V1.0 acceptance: unchanged. Main risk/blocker: required validation has seven static assertions bound to the old stale action; changing tests or retaining the stale machine action would violate the admitted checkpoint correction or forbidden-path boundary. Draft status is retained pending owner audit/correction decision; no audit verdict or independent review is claimed.
+Runtime/API compatibility and production source are unchanged; only the admitted test helper and current Work Order, Context Lock and Evidence Bundle changed. The principal remaining gate is completion of exact-final-HEAD provider checks followed by owner re-audit. No audit verdict or independent review is claimed.
 
-Execution STOP CONDITION requested by Issue #345: `GBS_V11_GOV_CODEX_PROMOTION_004_EXACT_HEAD_READY_FOR_OWNER_AUDIT` is **NOT REACHED** because `npm run validate` fails as recorded above. Candidate stop: `BLOCKED_REQUIRED_VALIDATION_FAILURE`; no merge, publication or promotion is claimed.
+The prior STOP CONDITION GBS_V11_GOV_CODEX_PROMOTION_004_EXACT_HEAD_READY_FOR_OWNER_AUDIT was blocked by the seven shared-helper assertions. The current Correction Delta stop is GBS_V11_GOV_CODEX_PROMOTION_004_CHECKPOINT_TEST_DELTA_READY_FOR_REAUDIT. Its reachability depends on all local validations and current exact-HEAD GitHub checks; consult the live PR description/checks before any audit or merge. No merge, publication, issue #337 admission or WO-010 admission is claimed.
+
+
+## Master Issue #348 — read-only preparation for later phases
+
+This is a source-path plan only. The complete governing plan is Issue [#348](https://github.com/KayzenRoot/gef-bootstrap/issues/348), GBS-V11-RELEASE-ONEPASS-013. The candidate source blobs below are pinned in the updated Context Lock against the observed release source SHA 637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a. They are planning snapshots, not future execution locks or write authorization. Canonical master Work Order/Context Lock versioning is deferred until Gate 0 is audited, merged, and the merged release tip is reverified, as Issue #348 requires.
+
+Observed preparation snapshot: main f6738292c038eb6f0d08d1d32b3752c5c7dc417a; release/1.1 637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a; current PR #347 before correction 9b8d8b7f976991706793c4159ceba1fdd24ad88a. Current main/release merge-base e23311e77d79b84f3c70671072a22a6f8896d13d; divergence 2 main-only / 75 release-only. The exact conflict paths are the 14 source-bound entries in the Context Lock; .engineering/CHECKPOINT.md is an additional semantic overlap although it textually merges. Recompute after Gates 0 and 1.
+
+### Phase 1 — Issue #337 package-branch coverage correction
+
+Stable child identity GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012 remains PROPOSED / NOT_ADMITTED. Its future artifact paths are .engineering/work-orders/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.md, .engineering/context-locks/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.json and .engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md. They are not created in this correction.
+
+Read-only source map at the captured release SHA:
+- packages/cli/scripts/prepare-package.mjs: parseArguments; stagePayload; stageEngines; stageSchemaAssets; stageNativeRuntime; stageWorkspaceRuntime; stageLegalPayload; stage; resolveNpmCli; pack. This production script is READ_ONLY by default; any source refactor/injection needs separate exact approval.
+- tests/v11-codecov-patch-coverage.test.mjs: first candidate test target after source-bound Issue #337 admission. It currently verifies successful real package packing plus unrelated rights diagnostic cases.
+- tests/v11-wo-004-package-smoke.test.mjs and tests/v11-wo-002-cli-e2e.test.mjs: existing package/CLI regression proofs, READ_ONLY unless narrowly admitted.
+- packages/cli/package.json, .github/workflows/coverage-codecov.yml and docs/COVERAGE-PIPELINE.md: read-only metadata, CI/OIDC policy and provider-method sources.
+- Historical branch targets remain diagnostic only: lines 73, 83, 97, 117, 139, 140, 144, 159, 173, 199, 203, 219, 222 and 232. Recompute actual changed-line/branch intersections on the newly admitted candidate. Do not promise synthetic hits or modify CI/thresholds.
+
+Dependency: Gate 0 actual owner-audited merge and exact release receipt, then fresh source-bound admission of existing Issue #337. Required proof stays as Issue #348 specifies: native Node 22.17.0 LCOV DA/BRDA, negative-path behavior, build/validate, package smoke, Ubuntu/Windows/macOS, security and exact-head review; later cumulative Codecov >=97.85% and Sonar remain separate Gate 2 requirements.
+
+### Phase 2 — fresh cumulative release-to-main integration
+
+No implementation branch or write allowlist is prepared before Gates 0 and 1. The current conflict map names .engineering/ARCHITECTURE.md, .engineering/CHECKPOINT.json, .engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md, .engineering/CONSTITUTION-LOCK.md, .engineering/DECISIONS-LEDGER.md, .engineering/DEFINITION-OF-DONE.md, .engineering/EXECUTOR-ACCELERATION-CONTRACT.md, .engineering/GITHUB-FIRST-CODEX-WORKFLOW.md, .engineering/PROJECT-OVERVIEW.md, .engineering/REQUIREMENTS.md, .engineering/SCOPE.md, .engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md, AGENTS.md and README.md. Preserve branch-qualified D-0062/ADR-0006 on release and D-0062/ADR-0007 on main, and D-0063 only after Gate 0. Recompute merge-tree and stage blobs after Gate 1; document conflict intent before any authorized integration mutation. Review semantic overlaps in .engineering/CHECKPOINT.md, SOURCE-HIERARCHY, SECURITY, Architecture, DoD, Scope, Requirements, README and runbooks even when Git auto-merges them. Target one real-diff PR to main only after separate write-scope admission.
+
+Planned artifacts after Gate 0: .engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md, a fresh .engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013.json, phase Evidence Bundles under .engineering/evidence/, and a machine-readable .engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json. Do not create the canonical master files before their required timing gate.
+
+### Phase 3 — WO-010 production acceptance and release
+
+WO-010 remains NOT_ADMITTED. The captured tree contains no versioned .engineering/work-orders/GBS-V11-WO-010.md. Candidate source inventory and release proof surfaces are recorded with blobs in the Context Lock: root and CLI package.json, package-lock.json, LICENSE, CHANGELOG.md, root/CLI READMEs, docs/INSTALLATION.md, docs/QUICKSTART.md, docs/V1.1-OPERATIONS-RUNBOOK.md, release plan/distribution architecture/compatibility and test matrices, package preparation script, and V1.1/security/dependency workflows. These are inventory references only; the package manifests currently state private=true and license=UNLICENSED. Registry ownership, legal distribution/license consent and trusted-publishing identity remain unverified and require owner decisions. No package, tag, main promotion, or external publication is authorized.
+
+Dependency: Gate 2 current exact-head cumulative Codecov/Sonar/security/ancestry/conflict proof and separate owner acceptance. Prepare the complete WO-010 acceptance/evidence contract then; do not alter manifests, lockfiles, release source, workflows or tests now.
+
+### Gate dashboard at this preparation boundary
+
+| Gate | State | Next legal boundary |
+|---|---|---|
+| 0 — promotion correction | Correction Delta in progress on PR #347; no merge | Exact-head checks, then owner re-audit |
+| 1 — Issue #337 | NOT_EXECUTABLE; child not admitted | Gate 0 merged, then fresh source admission |
+| 2 — cumulative integration | NOT_EXECUTABLE | Gates 0 and 1 merged, then fresh conflict map and exact-head audit |
+| 3 — WO-010/release | NOT_ADMITTED | Gate 2 plus separate owner acceptance and external legal/registry decisions |
+
+V1.0 accepted history remains 1088/1088. V1.1 main Work Orders 9/10 is not an overall release-completion percentage. No Codecov or Sonar result from closed PR #278 is reused.

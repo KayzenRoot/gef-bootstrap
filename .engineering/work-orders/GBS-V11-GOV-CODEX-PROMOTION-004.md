@@ -82,3 +82,18 @@ No merge, publication, checkpoint promotion outside the conditional text in this
 
 Execution stop: GBS_V11_GOV_CODEX_PROMOTION_004_EXACT_HEAD_READY_FOR_OWNER_AUDIT.
 After a real authorized merge, separately verify the actual release SHA and add only the factual post-merge receipt if canonical checkpoint state requires it; then stop at GBS_V11_GOV_CODEX_PROMOTION_004_RELEASE_ADOPTION_VERIFIED.
+
+
+## CORRECTION DELTA — owner review 5359939027, Issue #345
+
+Review 5359939027 is CORRECTION REQUIRED / NOT_INDEPENDENT on candidate HEAD 9b8d8b7f976991706793c4159ceba1fdd24ad88a. The exact Repository Validation log reports 1,602 test outcomes: 1,591 passed, 7 failed and 4 skipped. The seven failures are stale expectations routed through the single helper below; prior candidate prose saying 1,595 passed and zero skipped is superseded by the exact provider counts.
+
+This owner-authorized correction adds exactly one test-support path to the original 19-path candidate write set: tests/helpers/v11-context-lock-refresh-assertions.mjs. This narrow exception supersedes the earlier blanket test prohibition only for this helper. The six consuming tests remain READ_ONLY: tests/v11-wo-001-promotion.test.mjs, tests/v11-wo-003-admission.test.mjs, tests/v11-wo-005-admission.test.mjs, tests/v11-wo-006-admission.test.mjs, tests/v11-wo-007-admission.test.mjs and tests/v11-wo-009-admission.test.mjs. No production source, CI, fixtures, thresholds, unrelated tests, decisions or accepted V1 history may change.
+
+The helper branches only when checkpoint.v11.closedCumulativePr278.state is exactly CLOSED_NOT_MERGED. In that case it asserts the exact new checkpoint action, historical #278/#334 evidence, #337 OPEN_PROPOSED_NOT_ADMITTED, absence of a replacement cumulative PR as captured, and WO-010 NOT_ADMITTED. When that exact marker is absent, it preserves the prior strict legacy action and completed-WO-009 assertions. It never accepts an arbitrary set of actions or relaxes history.
+
+Required proof on the new exact candidate: run all six consumer suites, npm run validate, Markdown/JSON checkpoint coherence, legacy detachment, whitespace checks, full commit-range pinned Gitleaks, Trivy/security, and Repository Validation, Pipeline Integrity, Dependency Review, Free Security Pilot, M41-M63 and V1.1 Ubuntu/macOS/Windows release assurance. Correct only in-scope defects and bind every provider result to the final SHA. STOP for owner re-audit at GBS_V11_GOV_CODEX_PROMOTION_004_CHECKPOINT_TEST_DELTA_READY_FOR_REAUDIT. No merge, issue #337 admission, WO-010 admission or publication follows from this delta.
+
+## Master Issue #348 preparation boundary
+
+Issue #348 is the complete master plan. This child Work Order records a read-only file map and gate plan in its Evidence Bundle; it does not version the canonical master Work Order or future Context Locks before Gate 0. Rebind all live refs and candidate paths after each gate. Phase 1 stays non-executable until Gate 0 is audited and integrated; Phase 2 waits for Gates 0 and 1; Phase 3 waits for Gate 2 and separate owner acceptance. The preparation map is not an admission or future source lock.

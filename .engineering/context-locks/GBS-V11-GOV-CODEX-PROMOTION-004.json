@@ -917,11 +917,12 @@
       ".engineering/CHECKPOINT.json",
       ".engineering/work-orders/GBS-V11-GOV-CODEX-PROMOTION-004.md",
       ".engineering/context-locks/GBS-V11-GOV-CODEX-PROMOTION-004.json",
-      ".engineering/evidence/GBS-V11-GOV-CODEX-PROMOTION-004-EVIDENCE.md"
+      ".engineering/evidence/GBS-V11-GOV-CODEX-PROMOTION-004-EVIDENCE.md",
+      "tests/helpers/v11-context-lock-refresh-assertions.mjs"
     ],
     "forbidden": [
       "product code",
-      "tests and fixtures",
+      "all other tests and fixtures except the exact correctionDelta helper path",
       "CI/workflows",
       "dependencies",
       "security or coverage policy",
@@ -935,7 +936,31 @@
     "noDecisionAllocation": [
       "D-0064",
       "ADR-0009"
-    ]
+    ],
+    "correctionDelta": {
+      "issue": 345,
+      "review": 5359939027,
+      "reviewVerdict": "CORRECTION_REQUIRED",
+      "reviewIndependence": "NOT_INDEPENDENT",
+      "reviewedHead": "9b8d8b7f976991706793c4159ceba1fdd24ad88a",
+      "writeAllowedOnly": [
+        "tests/helpers/v11-context-lock-refresh-assertions.mjs"
+      ],
+      "readOnlyConsumers": [
+        "tests/v11-wo-001-promotion.test.mjs",
+        "tests/v11-wo-003-admission.test.mjs",
+        "tests/v11-wo-005-admission.test.mjs",
+        "tests/v11-wo-006-admission.test.mjs",
+        "tests/v11-wo-007-admission.test.mjs",
+        "tests/v11-wo-009-admission.test.mjs"
+      ],
+      "guard": "checkpoint.v11.closedCumulativePr278.state === CLOSED_NOT_MERGED",
+      "elseBehavior": "Retain exact legacy action and completed-WO-009 assertions.",
+      "baseHead": "9b8d8b7f976991706793c4159ceba1fdd24ad88a",
+      "helperBaseBlob": "1743b11a61af3cfb4d894d047cd0048806079c7b",
+      "original49Source147FingerprintMatrix": "PRESERVED_IMMUTABLE",
+      "helperBaseBlobSha256": "ef0831ab0ab1da63b7d2b0eaf37297e4819ebf5fdf3b2f2cf7a33f3ce5d10609"
+    }
   },
   "validation": {
     "local": [
@@ -945,7 +970,11 @@
       "scoped governance/document/legacy checks",
       "JSON parse and checkpoint coherence",
       "git diff --check",
-      "npm run validate"
+      "npm run validate",
+      "Six consumer suites using tests/helpers/v11-context-lock-refresh-assertions.mjs",
+      "npm run validate; report provider/local pass-fail-skip counts separately",
+      "Checkpoint Markdown/JSON coherence including CLOSED_NOT_MERGED conditional helper proof",
+      "Full new commit-range pinned Gitleaks and Trivy/security results"
     ],
     "githubExactHead": [
       "Repository Validation",
@@ -957,5 +986,344 @@
     ],
     "resultsDoNotTransfer": true
   },
-  "stopCondition": "GBS_V11_GOV_CODEX_PROMOTION_004_EXACT_HEAD_READY_FOR_OWNER_AUDIT"
+  "stopCondition": "GBS_V11_GOV_CODEX_PROMOTION_004_CHECKPOINT_TEST_DELTA_READY_FOR_REAUDIT",
+  "correctionDelta": {
+    "candidateBase": "release/1.1@637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+    "candidateBaseTree": "660f28a10215bbbfcd42d31797c77d2e97d3b6a9",
+    "reviewHead": "9b8d8b7f976991706793c4159ceba1fdd24ad88a",
+    "authorizationSource": "Issue #345 CORRECTION DELTA and review #5359939027",
+    "newStopCondition": "GBS_V11_GOV_CODEX_PROMOTION_004_CHECKPOINT_TEST_DELTA_READY_FOR_REAUDIT",
+    "mergeAuthorized": false,
+    "mainMutationAuthorized": false
+  },
+  "previousStopCondition": "GBS_V11_GOV_CODEX_PROMOTION_004_EXACT_HEAD_READY_FOR_OWNER_AUDIT",
+  "masterIssue348Preparation": {
+    "masterIssue": 348,
+    "masterWorkOrder": "GBS-V11-RELEASE-ONEPASS-013",
+    "status": "PREPARATION_ONLY",
+    "capturedAt": "2026-09-29",
+    "observedRefs": {
+      "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+      "release_1_1": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+      "candidateHead": "9b8d8b7f976991706793c4159ceba1fdd24ad88a"
+    },
+    "gateMatrix": [
+      {
+        "gate": 0,
+        "name": "Phase 0 governance correction",
+        "state": "IN_PROGRESS_CORRECTION_DELTA; no merge"
+      },
+      {
+        "gate": 1,
+        "name": "Phase 1 #337 package coverage",
+        "state": "NOT_EXECUTABLE_UNTIL_GATE0_MERGED_AND_ISSUE337_ADMITTED"
+      },
+      {
+        "gate": 2,
+        "name": "Phase 2 cumulative integration",
+        "state": "NOT_EXECUTABLE_UNTIL_GATES0_AND1"
+      },
+      {
+        "gate": 3,
+        "name": "Phase 3 WO-010 release acceptance",
+        "state": "NOT_ADMITTED_UNTIL_GATE2_AND_SEPARATE_OWNER_ACCEPTANCE"
+      }
+    ],
+    "phaseArtifactsNotCreated": {
+      "phase1": [
+        ".engineering/work-orders/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.md",
+        ".engineering/context-locks/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012.json",
+        ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md"
+      ],
+      "masterAfterGate0": [
+        ".engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md",
+        ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013.json",
+        ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json"
+      ],
+      "phase3": [
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json",
+        ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md"
+      ]
+    },
+    "phaseSourceSnapshot": [
+      {
+        "phase": "phase1_package_coverage",
+        "path": "packages/cli/scripts/prepare-package.mjs",
+        "role": "Production packaging behavior under test; READ_ONLY by default.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "10e659ccce15045ed37ffa3e82d06a8408b8f734",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase1_package_coverage",
+        "path": "tests/v11-codecov-patch-coverage.test.mjs",
+        "role": "First candidate negative-path test file only after #337 source-bound admission.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "2441961628d20dcc9404d2e51cc1d97b03543137",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase1_package_coverage",
+        "path": "tests/v11-wo-004-package-smoke.test.mjs",
+        "role": "Existing package regression proof; READ_ONLY unless separately admitted.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "2c08cd64a32c3d0eb287b7d7ec54dab338e2f6af",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase1_package_coverage",
+        "path": "tests/v11-wo-002-cli-e2e.test.mjs",
+        "role": "Existing CLI regression proof; READ_ONLY unless separately admitted.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "0d358fe541cff596dcaad9b1f21b70a2d8396873",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase1_package_coverage",
+        "path": "packages/cli/package.json",
+        "role": "Package metadata; READ_ONLY in Phase 1.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "2ae791155eae41a7d835b0758365356d6136af0c",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase1_package_coverage",
+        "path": ".github/workflows/coverage-codecov.yml",
+        "role": "Coverage workflow and OIDC policy; READ_ONLY.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "005e04fe7d3306ef64613317f89115adf67c7791",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase1_package_coverage",
+        "path": "docs/COVERAGE-PIPELINE.md",
+        "role": "Coverage method/provider limitations; READ_ONLY.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "5b53c6fb6790f06e589e3128fd92b14421fc022a",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "package.json",
+        "role": "Workspace package metadata, scripts and lock binding; candidate source only.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "c8e17d4121566250595a1966a9314c56272546ac",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "package-lock.json",
+        "role": "Exact dependency lock; candidate source only.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "f7fccd5a338feae645d7c31de6905d6e0e97d998",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "packages/cli/package.json",
+        "role": "CLI distribution metadata, private/license/bundling fields; candidate source only.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "2ae791155eae41a7d835b0758365356d6136af0c",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "LICENSE",
+        "role": "Legal payload and license decision input; no legal decision inferred.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "648cad75d20c617b197af5d3a685f7736e5da037",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "CHANGELOG.md",
+        "role": "Release notes candidate.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "9cb95d6c5a6ea845f3040d22237e14a57ed419d0",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "README.md",
+        "role": "Top-level product/release claims candidate.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "591f2f07ac30c90b13667dd7f12a8ee848c2c8f5",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "packages/cli/README.md",
+        "role": "CLI use/package claims candidate.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "8ec72261f66694ff3fb66ca7749c6d9408bfd230",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "docs/INSTALLATION.md",
+        "role": "Installation instructions candidate.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "378b2e22b4acdc245b8fd6203ed5c86eba309779",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "docs/QUICKSTART.md",
+        "role": "Consumer quickstart candidate.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "fb88468a7f10ed6e8b386595fca560060fc0b39c",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": "docs/V1.1-OPERATIONS-RUNBOOK.md",
+        "role": "Operator/recovery claims candidate.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "c48bed8ade87a27ecea164cd331e314ac5b5cbf1",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".engineering/releases/V1.1-RELEASE-PLAN.md",
+        "role": "Release acceptance and gates.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "074c99c57f09a13cb2e71cce883e46ee500909ed",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".engineering/releases/V1.1-CLI-DISTRIBUTION-ARCHITECTURE.md",
+        "role": "Distribution contract.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "dde3f82749161ad5c7b82415a160cca5d852e197",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".engineering/releases/V1.1-COMPATIBILITY-MATRIX.skeleton.json",
+        "role": "Compatibility evidence template.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "faef9888fa24500ae8bdcb24c1c4aad6aea69fa8",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".engineering/releases/V1.1-TEST-MATRIX.md",
+        "role": "Release proof obligations.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".github/workflows/v11-release-assurance.yml",
+        "role": "Cross-platform release checks; candidate source only.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "1fd986a32dfe1aa0ba9bbe6fe14d7ef366cc6f98",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".github/workflows/free-security-pilot.yml",
+        "role": "Security proof workflow; candidate source only.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "38137ef513fcc52d6e14a42c6a5ebcc2f1b05f69",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".github/workflows/dependency-review.yml",
+        "role": "Dependency review workflow; candidate source only.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "3d34f93903798345abcbd345640f1e04f5e0d424",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".github/workflows/security-codeql.yml",
+        "role": "CodeQL workflow; candidate source only.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "554e26bf9d16aceee708d48f86251495bd74e993",
+        "planningOnly": true
+      },
+      {
+        "phase": "phase3_release_acceptance",
+        "path": ".github/workflows/scorecard.yml",
+        "role": "Scorecard workflow; candidate source only.",
+        "releaseCommit": "637c24c9d3ef1d9c3197912dd8f7e7b0e6b8f90a",
+        "releaseBlob": "497c3da1ab34964e77363061a51f82f090cae0e0",
+        "planningOnly": true
+      }
+    ],
+    "phase2CurrentConflictPaths": [
+      {
+        "path": ".engineering/ARCHITECTURE.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/CHECKPOINT.json",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/CONSTITUTION-LOCK.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/DECISIONS-LEDGER.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+        "kind": "ADD_ADD"
+      },
+      {
+        "path": ".engineering/DEFINITION-OF-DONE.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md",
+        "kind": "ADD_ADD"
+      },
+      {
+        "path": ".engineering/PROJECT-OVERVIEW.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/REQUIREMENTS.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": ".engineering/SCOPE.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": "AGENTS.md",
+        "kind": "CONTENT"
+      },
+      {
+        "path": "README.md",
+        "kind": "CONTENT"
+      }
+    ],
+    "semanticOverlapEvenWhenTextuallyMerged": [
+      ".engineering/CHECKPOINT.md"
+    ],
+    "freshLockRequiredBeforeEachExecutablePhase": true,
+    "snapshotIsNotAdmissionOrFutureContextLock": true,
+    "masterArtifactTiming": "Issue #348 requires the canonical master Work Order/Context Lock after Gate 0 has merged and the merged release tip has been verified.",
+    "externalOwnerActionsStillUnverified": [
+      "npm registry ownership/permissions",
+      "legal distribution/license consent",
+      "trusted publishing/OIDC identity"
+    ]
+  }
 }
