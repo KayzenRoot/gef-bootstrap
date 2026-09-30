@@ -60,7 +60,7 @@ The files above are the only admitted normative conflict-resolution targets. The
 
 ## Gate 2 checks
 
-All required local and provider checks will be recorded only when observed on the exact cumulative PR HEAD. Native LCOV supports the result but cannot substitute for a provider-bound Codecov patch report. Required Codecov patch threshold: at least 97.85%. A failed, pending, stale or mismatched required check is not a pass.
+All required local and provider checks will be recorded only when observed on the exact cumulative PR HEAD. Native LCOV supports the result but cannot substitute for a provider-bound Codecov patch report. Required Codecov acceptance: numeric patch coverage at least 97.85% when a numeric denominator exists; otherwise `N/A_ZERO_DENOMINATOR` only under the owner-approved Option B conditions recorded below. A failed, pending, stale or mismatched required check is not a pass.
 
 ### Execution evidence — 2026-09-30
 
@@ -117,3 +117,19 @@ The owner explicitly selected **Option B** after exact-head review #5366930854. 
 PR #350 at pre-amendment HEAD `4884b2aded8130e2af0bd0083caa54e11ce8eca6` already demonstrated the factual zero-denominator pattern and green exact-head technical gates. This documentation-only amendment creates a new HEAD, so those receipts are historical input only until the required checks rerun and the owner audits the new exact HEAD. No main merge, WO-010 admission, tag, GitHub Release or package publication is authorized by this decision alone.
 
 STOP: `GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT`.
+
+
+## Owner Correction Delta 5 — strict Option B checkpoint assertions (2026-09-30)
+
+Review [#5367412324](https://github.com/KayzenRoot/gef-bootstrap/pull/350#pullrequestreview-5367412324) on PR #350 HEAD `1d340b6f52d1f61bd887f93e7c228b77018dab5a` identified seven shared-helper failures and one WO-008 admission failure. Those assertions still expected the pre-Option-B Gate 2 transition. The review-bound correction changes only:
+
+- `tests/helpers/v11-context-lock-refresh-assertions.mjs`
+- `tests/v11-wo-008-admission.test.mjs`
+
+The Option B assertions activate only when `checkpoint.v11.gate2CumulativeIntegration.codecovAcceptanceSemantics.ownerDecision` is exactly `OPTION_B_APPROVED`. They require the exact Option B action/state and zero-denominator rule, preserve `mainMergeAuthorized=false` and `tagOrPublicationAuthorized=false`, and keep WO-010 `NOT_ADMITTED`. Checkpoints without that exact decision retain the previous strict Gate 2 transition assertions. No runtime, workflow, coverage threshold, exclusion, CI or other test file was changed.
+
+**Local verification on the correction source tree.** Code/test commit `db33e42ca38386be6a601a11bcddaf963cb90a94` contains the two authorized test paths. On Windows with Node `v24.19.0`, `npm ci --ignore-scripts` added 33 packages and reported 0 vulnerabilities. The focused WO-001/003/005/006/007/008/009 checkpoint suite passed **48/48**. `npm run validate` passed typecheck and **1603/1603** tests, with 0 failures and 0 skips. The focused result was reproduced in a normal clone after the initial Git worktree run exposed `.git`-layout/ownership assumptions in unrelated tests; no extra test paths were changed.
+
+The local results do not replace provider checks. Review #5367412324's checks on `1d340b6` reported 8 stale-assertion failures in Repository Validation, m01-validation and Codecov Coverage Pilot. Those receipts are superseded by this correction. Exact-head Codecov upload/status, Ubuntu/macOS/Windows release assurance, Gitleaks, Trivy, CodeQL, Sonar, Dependency Review, Pipeline Integrity and all required workflows remain pending on the PR head after the Evidence Bundle and Gate Matrix update. Option B remains subject to fresh exact-head verification and owner reauditoria.
+
+STOP: `GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_TEST_ASSERTIONS_READY_FOR_REAUDIT`.

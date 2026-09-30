@@ -167,6 +167,17 @@
             "pull request #350 description"
           ],
           "result": "Only pull_request trigger now includes main and release/1.1; jobs and push trigger unchanged. Provider-bound Codecov diagnosis found no numeric patch percent and no justified mapping-fix hunk; exact cause remains provider/diff mapping limitation. 145/145 checks passed on measured head 07a723cfe30b324b500b46618cef4e451705f39a. Stop OWNER_DECISION_REQUIRED."
+        },
+        {
+          "issue": 348,
+          "review": 5367412324,
+          "sourceHead": "db33e42ca38386be6a601a11bcddaf963cb90a94",
+          "priorReviewedHead": "1d340b6f52d1f61bd887f93e7c228b77018dab5a",
+          "paths": [
+            "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+            "tests/v11-wo-008-admission.test.mjs"
+          ],
+          "result": "Recognize Option B only on the exact ownerDecision value; preserve strict historical assertions when absent. No runtime, workflow, threshold, exclusion, CI or other test path changed."
         }
       ],
       "localValidation": {
@@ -202,6 +213,33 @@
           "result": "PASS",
           "passed": 1,
           "failed": 0
+        },
+        "correctionDelta5": {
+          "sourceHead": "db33e42ca38386be6a601a11bcddaf963cb90a94",
+          "platform": "Windows",
+          "node": "v24.19.0",
+          "dependencyInstall": {
+            "command": "npm ci --ignore-scripts",
+            "result": "PASS",
+            "packagesAdded": 33,
+            "reportedVulnerabilities": 0
+          },
+          "focusedCheckpointTests": {
+            "command": "node --test tests/v11-wo-001-promotion.test.mjs tests/v11-wo-003-admission.test.mjs tests/v11-wo-005-admission.test.mjs tests/v11-wo-006-admission.test.mjs tests/v11-wo-007-admission.test.mjs tests/v11-wo-008-admission.test.mjs tests/v11-wo-009-admission.test.mjs",
+            "result": "PASS",
+            "passed": 48,
+            "failed": 0,
+            "skipped": 0
+          },
+          "fullValidation": {
+            "command": "npm run validate",
+            "typecheck": "PASS",
+            "tests": 1603,
+            "passed": 1603,
+            "failed": 0,
+            "skipped": 0,
+            "result": "PASS"
+          }
         }
       },
       "providerChecks": {
@@ -246,6 +284,38 @@
         "prohibitedInterpretation": "N/A is never 100% and never numeric threshold satisfaction",
         "currentCandidateBeforeDocsHead": "4884b2aded8130e2af0bd0083caa54e11ce8eca6",
         "state": "APPLIED_AWAITING_NEW_HEAD_CHECKS_AND_OWNER_REAUDIT"
+      },
+      "latestReview": {
+        "review": 5367412324,
+        "reviewedHead": "1d340b6f52d1f61bd887f93e7c228b77018dab5a",
+        "verdict": "CORRECTION_REQUIRED / NOT_INDEPENDENT",
+        "staleAssertionFailures": 8,
+        "previousSuite": {
+          "total": 1603,
+          "passed": 1591,
+          "failed": 8,
+          "skipped": 4
+        },
+        "failedRuns": {
+          "repositoryValidation": 36726398183,
+          "m01Validation": 36726398316,
+          "codecovCoveragePilot": 36726398023
+        },
+        "disposition": "Superseded by correctionDelta5 source head; do not carry these failures or earlier-head passes to the next exact-head audit."
+      },
+      "postDelta5ExactHeadChecks": {
+        "state": "PENDING_ON_PR_HEAD_AFTER_EVIDENCE_AND_GATE_MATRIX_SYNC",
+        "required": [
+          "Codecov exact-head LCOV upload and provider patch status",
+          "V1.1 release assurance Ubuntu/macOS/Windows",
+          "Gitleaks and Trivy",
+          "CodeQL",
+          "Sonar",
+          "Dependency Review",
+          "Pipeline Integrity",
+          "all other required exact-head workflows"
+        ],
+        "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_TEST_ASSERTIONS_READY_FOR_REAUDIT"
       }
     },
     {
