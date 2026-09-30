@@ -569,7 +569,22 @@
       ],
       "codecovPatch": "NOT_RUN",
       "mainMergeAuthorized": false,
-      "tagOrPublicationAuthorized": false
+      "tagOrPublicationAuthorized": false,
+      "integrationCandidateMerge": {
+        "branch": "codex/gbs-v11-release-integration-014",
+        "sha": "554b2627de324058e2264b78c10114eb4c652a9d",
+        "tree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+        "parents": [
+          "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+          "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+        ],
+        "status": "CANDIDATE_ONLY_NOT_PROMOTED_TO_MAIN"
+      },
+      "resolvedTextualConflicts": 14,
+      "unresolvedTextualConflicts": 0,
+      "localBuild": "PASS at code/test HEAD 96ca391e61002c494fcb3d408a344251ef1d2748",
+      "localValidation": "PASS 1603/1603, 0 failed, 0 skipped at code/test HEAD 96ca391e61002c494fcb3d408a344251ef1d2748",
+      "exactPrHeadProviderChecks": "PENDING"
     }
   }
 }
