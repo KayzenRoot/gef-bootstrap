@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-COMPLEXITY-005",
+  "parent": "GBS-V11-MAINT-POST-WO009-001",
+  "baseRef": "release/1.1",
+  "baseSha": "3abf60731adaabd61bda97a62e48c005baf8b170",
+  "branch": "gbs/v11/maint-pr278-complexity-005",
+  "owner": "KayzenRoot",
+  "assurance": "ELEVATED",
+  "sonarProviderEvidence": {
+    "pullRequest": 278,
+    "readOnlyJob": 109433079205,
+    "complexity": {
+      "packageStage": 23,
+      "caseSemantics": 20,
+      "metricNormalization": 24
+    },
+    "qualityGate": "FAILURE",
+    "securityRating": "B",
+    "reliabilityRating": "D",
+    "duplicationDisplay": "3.0%"
+  },
+  "authorizedPaths": [
+    "packages/cli/scripts/prepare-package.mjs",
+    "packages/cli/src/private-authority.ts",
+    "packages/m62-m63-final/src/v11-performance-telemetry.mjs",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-COMPLEXITY-005.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-COMPLEXITY-005.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-COMPLEXITY-005-EVIDENCE.md"
+  ],
+  "forbidden": [
+    "main mutation",
+    "v1.0.0 tag mutation",
+    "Sonar threshold changes",
+    "new package dependencies",
+    "release promotion",
+    "retired provider integration"
+  ],
+  "stopCondition": "GBS_V11_PR278_COMPLEXITY_005_EXACT_HEAD_VERIFIED_OR_BLOCKED"
+}

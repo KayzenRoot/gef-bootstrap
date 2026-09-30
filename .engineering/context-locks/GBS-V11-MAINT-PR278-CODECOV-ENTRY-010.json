@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-CODECOV-ENTRY-010",
+  "parent": "GBS-V11-MAINT-POST-WO009-001",
+  "owner": "KayzenRoot",
+  "assurance": "ELEVATED",
+  "baseRef": "release/1.1",
+  "baseSha": "dcb95a79a0d8bcb5441077c71b3499f47dd958e9",
+  "branch": "gbs/v11/maint-pr278-cli-entry-coverage-010",
+  "fingerprints": {
+    ".engineering/CHECKPOINT.md": "a8550e4ebc45ce7d1a1aa528366458d9657e92f5",
+    ".engineering/CHECKPOINT.json": "bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6",
+    ".engineering/DECISIONS-LEDGER.md": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537",
+    ".engineering/SCOPE.md": "5aad68fdbd57b850ec05e5c44e74e5e5a3b94a29",
+    ".engineering/ARCHITECTURE.md": "c5eda022280e47ff4b45070193d196929a3a1ec0",
+    ".engineering/SECURITY.md": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
+    ".engineering/DEFINITION-OF-DONE.md": "d9209765a268f0e21390a2c6c531c7dd771515b4",
+    ".engineering/work-orders/GBS-V11-MAINT-POST-WO009-001.md": "5c5d49f2cfb3fefff509379e5ac9ccdbb1aecae5",
+    ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md": "786eba0313202f2f2648461a2fc4e6f81190969a",
+    ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md": "97bef59b15f557302a7fd625af30ceeb421c01a1",
+    "packages/cli/bin/gef.mjs": "9f51bd3d7e0f3a8df98f05efe10389a61feef676",
+    "packages/cli/scripts/prepare-package.mjs": "10e659ccce15045ed37ffa3e82d06a8408b8f734"
+  },
+  "authorizedPaths": [
+    "packages/cli/bin/gef.mjs",
+    "tests/v11-cli-entry-coverage.test.mjs",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-CODECOV-ENTRY-010.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-CODECOV-ENTRY-010.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-CODECOV-ENTRY-010-EVIDENCE.md"
+  ],
+  "observedProvider": {
+    "cumulativePr": 278,
+    "exactHead": "dcb95a79a0d8bcb5441077c71b3499f47dd958e9",
+    "sonar": "SUCCESS",
+    "codecov": "FAILURE",
+    "patchPercent": 93.89,
+    "targetPercent": 97.85,
+    "missingDiffLines": 19
+  },
+  "unproven": [
+    "Provider mismatch: preparation native LCOV 100% line vs Codecov 13 missing lines"
+  ],
+  "exclusions": [
+    "production main",
+    "tags",
+    "threshold changes",
+    "deps/lockfile/CI workflow",
+    "retired external adapters",
+    "publication"
+  ],
+  "stopCondition": "GBS_V11_ENTRY_COVERAGE_EXACT_HEAD_VERIFIED_PROVIDER_RECHECK_REQUIRED"
+}

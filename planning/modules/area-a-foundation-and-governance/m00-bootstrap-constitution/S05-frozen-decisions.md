@@ -26,7 +26,7 @@ F1–F8 are stable constitutional group IDs in V1. Individual `D-*` decisions re
 ### CONST-F1 — Product identity and boundary
 - GEF Bootstrap is instruction-first governance, not a standalone CLI/runtime product.
 - It materializes governed project artifacts into target repositories through compatible agents/executors.
-- UADS, Hive, UGAS and other ecosystems remain optional integrations unless future governed scope explicitly changes that boundary.
+- External ecosystems remain optional integrations unless future governed scope explicitly changes that boundary.
 
 ### CONST-F2 — Default engineering model
 - GEF V1 is the default engineering model for initialized projects.

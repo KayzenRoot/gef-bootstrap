@@ -1,6 +1,6 @@
 # Backlog Baseline
 
-Status: `FROZEN` (owner maintenance amendment: active optional adapters only; baseline denominator unchanged).
+Status: `FROZEN`
 
 ## Purpose
 This backlog is the canonical weighted production denominator for the single complete GEF Bootstrap production target. Production credit is evidence-bound; planning activity alone does not earn weight.
@@ -13,7 +13,7 @@ This backlog is the canonical weighted production denominator for the single com
 5. Denominator changes require governed before/after impact recording.
 
 ## Main production denominator
-61 release-blocking modules. Optional M39, reserved M40 and M41 stay outside this denominator.
+61 release-blocking modules. Optional M39-M41 adapters remain outside this denominator.
 
 | Module | Class | E | R | I | P | Weight | Current evidence state |
 |---|---|---:|---:|---:|---:|---:|---|
@@ -87,7 +87,7 @@ This backlog is the canonical weighted production denominator for the single com
 ## Optional adapter track
 | Module | Class | E | R | I | P | Weight | State |
 |---|---|---:|---:|---:|---:|---:|---|
-| M39 UADS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
+| M39 Reserved External Adapter Slot | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | RESERVED |
 | M40 Reserved Context Adapter Slot | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | RESERVED |
 | M41 UGAS Adapter | OPTIONAL_ADAPTER | 4 | 4 | 4 | 4 | 16 | PLANNED |
 
@@ -133,7 +133,7 @@ Backlog weights remain production burden, not time. M22 owns empirical ETA/forec
 
 ## Frozen decisions
 - 61 release-blocking weights remain accepted and unchanged.
-- M39, reserved M40 and M41 stay outside the independent-product denominator.
+- M39-M41 stay outside the independent-product denominator.
 - production credit is evidence-bound, never activity-based.
 - planning artifacts may be reused but do not independently earn future engine weights.
 - any future recalibration records denominator/completion impact before and after.

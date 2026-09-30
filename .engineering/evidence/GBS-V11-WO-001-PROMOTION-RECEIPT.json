@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-001-PROMOTION",
+  "releaseLine": "1.1.x",
+  "pullRequest": 280,
+  "baseBranch": "release/1.1",
+  "baseSha": "c5890620a98f2b23c794d65234824ad2ea084036",
+  "promotionBranch": "gov/1.1/wo-001-checkpoint-promotion",
+  "promotionPayloadHead": "9af7d1eb848bd8c8a4d96c194289337a7251c08b",
+  "promotionDecision": "D-0059",
+  "adr": "ADR-0003",
+  "inheritedAudit": {
+    "workOrder": "GBS-V11-WO-001",
+    "pullRequest": 279,
+    "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
+    "auditComment": 5706304150,
+    "verdict": "APPROVED",
+    "criticalFindings": 0,
+    "highFindings": 0,
+    "mergeSha": "c5890620a98f2b23c794d65234824ad2ea084036",
+    "assuranceRuns": {
+      "m01Validation": 35164467278,
+      "m41m47": 35164467254,
+      "m48m54": 35164467289,
+      "m55m61": 35164467259,
+      "m62m63Final": 35164467252
+    }
+  },
+  "productionStatePreserved": {
+    "branch": "main",
+    "status": "GBS_V1_PRODUCTION_ACCEPTED",
+    "earnedProductionWeight": 1088,
+    "productionDenominatorWeight": 1088,
+    "remainingProductionWeight": 0,
+    "stopState": "GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088",
+    "v100TagTarget": "866fe3af8cccc65c929aaf6a47a924401fa448b3"
+  },
+  "executorAuthority": {
+    "decision": "ADR-0003-D3",
+    "effectiveWhen": "PR_280_MERGED_TO_RELEASE_1_1_AFTER_OBJECTIVE_AUDIT_APPROVED",
+    "mainAuthorized": false,
+    "requiresAdmittedWorkOrder": true,
+    "allowedBranches": [
+      "release/1.1",
+      "subordinate V1.1 branches"
+    ],
+    "prohibited": [
+      "main",
+      "v1.0.0 tag mutation",
+      "merge",
+      "tag",
+      "publish",
+      "force-push",
+      "history rewrite",
+      "self-approval",
+      "V1.0.0 acceptance history mutation"
+    ]
+  },
+  "cliAdmission": {
+    "decision": "ADR-0003-D4",
+    "semanticAuthority": false,
+    "effectiveWhen": "PR_280_MERGED_TO_RELEASE_1_1_AFTER_OBJECTIVE_AUDIT_APPROVED"
+  },
+  "nextLegalWorkOrder": "GBS-V11-WO-002",
+  "postPayloadMutationPolicy": "RECEIPT_STALE_ON_ANY_NON_RECEIPT_CHANGE",
+  "finalHeadAuditRule": "OBJECTIVE_AUDIT_MUST_BIND_THE_PR_HEAD_CONTAINING_THIS_RECEIPT",
+  "state": "PROMOTION_CANDIDATE",
+  "stopCondition": "GBS_V11_WO_001_PROMOTION_READY_FOR_EXACT_HEAD_VALIDATION_AND_OBJECTIVE_AUDIT"
+}

@@ -2,8 +2,9 @@
 
 This repository is governed by GEF Bootstrap. This file is an executor-facing acceleration layer, not a replacement for canonical project authority.
 
-## Actor lock (ADR-0008, approved; effective with main checkpoint promotion)
-For GEF Bootstrap and newly governed software projects, **Codex is the only code/test/CI/migration implementation and correction author** once the owner-directed amendment is objectively approved and promoted. ChatGPT is the architect, Work Order/issue/planning-PR author, objective code/security auditor, GitHub coordinator and reporter. Never treat a documentation-planning PR or unadmitted issue as code-execution authority. Use `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`; short user prompts point to GitHub issue/Work Order/PR rather than PDFs. In this repository, keep V1.0 accepted evidence immutable and respect release/1.1's separate admission constraints.
+## Owner-approved actor and GitHub-first handoff (ADR-0008 / D-0063)
+
+ADR-0008 / D-0063 makes Codex the sole code, test, CI and migration author for this repository and new GEF-governed projects, effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. D-0062 remains branch-qualified: main ADR-0007 records Hive retirement, and release ADR-0006 governs owner audit and merge authority. ChatGPT prepares approved governance documents and issue-backed Work Orders, coordinates GitHub and performs objective review. A planning document or unadmitted issue never authorizes implementation. See .engineering/GITHUB-FIRST-CODEX-WORKFLOW.md.
 
 ## Authority
 1. Resolve facts through `.engineering/SOURCE-HIERARCHY.md`.
@@ -38,5 +39,23 @@ The executor should execute, not rediscover product intent.
 - Keep GitHub/provider automation as an acceleration and evidence layer. Runtime product correctness must not depend on GitHub unless the product scope explicitly requires it.
 - The completed product must remain operable when the repository is private and GitHub automation is disabled, except for repository hosting/version-control functions explicitly chosen by the operator.
 
+## Owner-operated review and merge
+
+For this repository, all GitHub writes use the owner account `KayzenRoot`. Never request or wait for collaborator review and never switch to another connected account. The owner performs and records the exact-head semantic audit; do not label it independent. The owner may merge only after all Work Order-required checks pass on the exact head, CRITICAL/HIGH blockers are zero and the target branch is authorized. Preserve branch protections and required checks; do not bypass a failing or pending check.
+
 ## Completion
-A green test is evidence, not completion. A merged PR is not MODULE_DONE by itself. Follow the project DoD, exact-head semantic audit, evidence bundle and checkpoint promotion rules.
+A green test is evidence, not completion. A merged PR is not MODULE_DONE by itself. Follow the project DoD, owner exact-head audit, evidence bundle and checkpoint promotion rules.
+
+## Fresh-context construction routing
+
+During every governed application build, use canonical project/provider state to select work and direct the next stage. Chat history and conversational summaries are informational; they do not establish progress, approvals, branch state or authority.
+
+Before continuing after a new chat or a major handoff:
+
+1. Verify the repository, provider account, branch and exact HEAD.
+2. Read `.engineering/CHECKPOINT.json` and `.engineering/CHECKPOINT.md`, the active Work Order and Context Lock, source hierarchy, current evidence and required checks.
+3. Reconcile the checkpoint and observed provider state with the M18 resume rules. Stale bindings, conflicts, orphan work or unresolved blockers stop execution.
+4. Use the M20 response contract to report the verified project/phase, active module/Work Order/stage, exact checkpoint/head, blockers and prerequisites.
+5. State one canonical next necessary action. If none is safe or known, state `NONE` or `UNKNOWN` with the blocking evidence needed. Never select a successor from chat history or skip an admitted Work Order.
+
+For application construction, route the handoff through discovery, requirements/scope, admitted Work Order and Context Lock, preflight, implementation, tests/evidence, exact-head owner audit, checkpoint promotion and the next admitted Work Order. Each handoff ends with the single next legal action or an explicit stop state.

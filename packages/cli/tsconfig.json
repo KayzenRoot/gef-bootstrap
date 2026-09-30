@@ -1,6 +1,25 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": {"rootDir": "src", "outDir": "dist", "tsBuildInfoFile": "./tsconfig.tsbuildinfo"},
-  "include": ["src/**/*.ts"],
-  "references": [{"path": "../contracts"}, {"path": "../kernel"}]
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "dist",
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
+    "types": [
+      "node"
+    ]
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "references": [
+    {
+      "path": "../contracts"
+    },
+    {
+      "path": "../kernel"
+    },
+    {
+      "path": "../preflight"
+    }
+  ]
 }

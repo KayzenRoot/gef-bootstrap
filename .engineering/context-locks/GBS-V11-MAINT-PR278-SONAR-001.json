@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-SONAR-001",
+  "parentWorkOrder": "GBS-V11-MAINT-POST-WO009-001",
+  "baseRef": "release/1.1",
+  "baseSha": "bdd827ff6bba22eef3d66f276a618c80e19fc587",
+  "productionShaAtLock": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+  "implementationBranch": "gbs/v11/maint-pr278-sonar-diagnostics-001",
+  "currentSonarCheckIdAtAdmission": 109414953860,
+  "observedAnnotationCount": 50,
+  "authorizedFiles": [
+    ".github/workflows/v11-release-assurance.yml",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-SONAR-001.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-SONAR-001.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-SONAR-001-EVIDENCE.md"
+  ],
+  "excluded": [
+    "main",
+    "v1.0.0 tag",
+    "Sonar rule or threshold changes",
+    "production acceptance",
+    "provider secret exposure",
+    "retired third-party runtime"
+  ],
+  "staleIf": [
+    "release/1.1 advances beyond baseSha",
+    "PR #278 head differs from current release tip",
+    "Sonar check does not bind exact observed SHA"
+  ],
+  "stopCondition": "GBS_V11_PR278_SONAR_DIAGNOSTICS_INTEGRATED_PROVIDER_RESULTS_RECORDED"
+}

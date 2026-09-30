@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-GOV-001",
+  "releaseLine": "1.1.x",
+  "implementationBranch": "governance/GBS-V11-GOV-001-owner-operated",
+  "base": {
+    "ref": "release/1.1",
+    "sha": "33671ba9a3d4962cea4371f5610bda23e4889e11"
+  },
+  "ownerAuthority": {
+    "githubLogin": "KayzenRoot",
+    "githubUserId": 114633702,
+    "source": "explicit Product Owner instruction",
+    "date": "2026-09-26"
+  },
+  "criticalSources": [
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "gitBlobSha": "65167869fd424b32e82bf912876821cf35d908b1"
+    },
+    {
+      "path": ".engineering/DECISIONS-SUPERSESSION-MAP.md",
+      "gitBlobSha": "b5a195208ba2175b83b8c600551241533abccb7b"
+    },
+    {
+      "path": ".engineering/CONSTITUTION-LOCK.md",
+      "gitBlobSha": "27c915872ad978fa0950ccd24457659c79269822"
+    },
+    {
+      "path": ".engineering/work-orders/GBS-V11-WO-008.md",
+      "gitBlobSha": "e397602a184bc7d577a2560484d7a33d2fdc0304"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.md",
+      "gitBlobSha": "7bf2662718ddf85bc3d28558dd2423bcc68dbf45"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "gitBlobSha": "c157b7847da74e6f35997388a1482381a2f3887d"
+    }
+  ],
+  "activeSubject": {
+    "pullRequest": 296,
+    "headSha": "c4a108059d5b77baed43faa28847828ea1f450a7",
+    "checksObserved": "24/24 success on 2026-09-26"
+  },
+  "staleIf": [
+    "release/1.1 base changes before promotion",
+    "any critical source above changes",
+    "PR #296 head changes before its owner audit",
+    "required checks no longer match the exact audited head"
+  ]
+}

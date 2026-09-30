@@ -1,6 +1,6 @@
 # Scope
 
-Status: `FROZEN`, with owner-directed maintenance amendment (2026-09-28; ADR-0007).
+Status: `FROZEN`
 
 ## Binding
 Scope is derived from `GBS-CONSTITUTION-v1.1`, frozen Project Overview, frozen Requirements and the Project Owner decision that GEF Bootstrap targets **one complete production version**, not a deliberately reduced V1/MVP slice.
@@ -81,8 +81,8 @@ A capability is never deferred merely because it takes longer to build. `EXPERIM
 
 ## Area J — Integrations
 - `GBS-M38 Capability Detection` — `CORE_REQUIRED`.
-- `GBS-M39 UADS Adapter` — `OPTIONAL_ADAPTER`.
-- `GBS-M40 Reserved Context Adapter Slot` — `OPTIONAL_ADAPTER`, RESERVED; no provider or implementation.
+- `GBS-M39 Reserved External Adapter Slot` — `OPTIONAL_ADAPTER`.
+- `GBS-M40 Reserved Context Adapter Slot` — `OPTIONAL_ADAPTER`.
 - `GBS-M41 UGAS Adapter` — `OPTIONAL_ADAPTER`.
 - `GBS-M42 Generic Adapter API` — `PRODUCT_INCLUDED`.
 
@@ -124,11 +124,11 @@ Architecture may share harness infrastructure to reduce duplication; proof oblig
 ## Classification summary
 - `CORE_REQUIRED`: 47 modules.
 - `PRODUCT_INCLUDED`: 14 modules.
-- `OPTIONAL_ADAPTER`: 3 tracked slots (`M39`, neutral reserved `M40`, `M41`).
+- `OPTIONAL_ADAPTER`: 3 modules (`M39`, `M40`, `M41`).
 - `EXPERIMENTAL_GATED`: applied primarily at technology/capability level rather than whole-module exclusion.
 - `OUT_OF_SCOPE`: 0 current inventory modules.
 
-Inventory remains 64 stable module IDs: 47 CORE_REQUIRED, 14 PRODUCT_INCLUDED and 3 OPTIONAL_ADAPTER including neutral reserved M40. The old M40 provider-specific contract is removed without renumbering or changing the accepted 61-module production denominator.
+Total inventory remains 64 modules. All useful module families remain in the complete product program; only ecosystem-specific adapters are non-blocking.
 
 ## Stable module reframes
 | Stable ID | Legacy name | Complete-product name |
@@ -168,15 +168,15 @@ A second hosted provider such as GitLab or Bitbucket is **not mandatory** for `P
 The GitHub profile includes governed repository discovery, branch/PR lifecycle, checks/status evidence, CI integration, issues/templates where relevant, ruleset/permission-gap reporting, release surfaces and exact-head evidence binding. Unavailable administrative permissions produce truthful gap/block states rather than fabricated success.
 
 ## Optional adapter packaging
-`M39 UADS` and `M41 UGAS` remain optional adapter tracks, while `M40` remains a neutral reserved context slot with no provider identity or runtime. M39 and M41 remain separately activatable packages/profiles over the Generic Adapter API; M40 remains strictly reserved and inactive. Their absence cannot block independent `PRODUCTION_RELEASE_DONE`.
+`M39` and `M40` are reserved optional slots; `M41 UGAS` remains an optional adapter track over the Generic Adapter API. Optional adapter absence cannot block independent `PRODUCTION_RELEASE_DONE`.
 
-An adapter may be advertised as shipped/supported only when its own compatibility, tests, documentation and evidence pass. The complete core release must work without any external adapter installed or connected.
+An adapter may be advertised as shipped/supported only when its own compatibility, tests, documentation and evidence pass. The complete core release must work without any of the three installed or connected.
 
 ## Production quality boundary
 The single production release requires semantic/governance conformance, deterministic work-plane correctness, unit/integration/E2E evidence, security/secret-safety, mutation recovery, compatibility/upgrade proof, brownfield preservation, GitHub-profile simulation/integration, token/time/performance benchmark path, user/engineering documentation, operational runbooks and exact-state production acceptance.
 
 ## Construction invariant
-After the owner-directed ADR-0008 / D-0063 is objectively audited and promoted, **Codex exclusively authors implementation, tests, fixtures, CI/build scripts, migrations and corrective code** for GEF Bootstrap and new governed software projects. ChatGPT authors approved planning/governance documentation, freezes detailed issue-backed Work Orders and qualified planning-only PRs as each module is planned, coordinates GitHub and conducts exact-head code/bug/security review. Codex implementation remains subject to legal admission, precise file maps and current Context Locks; release safety and historical V1 acceptance are unchanged. See `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`.
+Under ADR-0008 / D-0063, **Codex exclusively authors implementation, tests, fixtures, CI/build scripts, migrations and corrective code** for GEF Bootstrap and new governed software projects, effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. Admitted Work Orders, precise file maps and current Context Locks remain mandatory. ChatGPT authors approved planning/governance documentation, coordinates GitHub and conducts exact-head review. Release safety and historical V1 acceptance are unchanged. See `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`.
 
 ## Out-of-scope product identities
 - general-purpose IDE/editor;
@@ -220,7 +220,7 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 
 ## Frozen Scope decisions
 1. Single complete production target, not MVP/small-V1.
-2. Original 64 stable IDs and 282 sessions are preserved: 47 CORE_REQUIRED, 14 PRODUCT_INCLUDED and 3 OPTIONAL_ADAPTER, including an inactive, provider-neutral reserved M40 context slot. Original release acceptance history is preserved.
+2. All 64 inventory modules retained: 47 CORE_REQUIRED, 14 PRODUCT_INCLUDED, 3 OPTIONAL_ADAPTER.
 3. Stable reframes: M01/M47/M49/M62 canonical names changed; IDs remain stable.
 4. Ecosystem adapters are official, separately activatable and non-blocking.
 5. Experimental technologies use Utility, Assurance, Validity/Stability and Engineering ROI production gates.
@@ -230,8 +230,8 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 
 ## Freeze audit
 - single complete production target: PASS
-- 64 stable IDs preserved, with neutral reserved M40 slot pending exact-head audit
-- tracked count: 64; release-blocking denominator remains 61 and is unchanged
+- all 64 inventory modules classified: PASS
+- counts reconcile to 64: PASS
 - hybrid semantic + deterministic product preserved: PASS
 - no schedule-based feature deferral: PASS
 - optional integrations non-blocking: PASS
@@ -240,7 +240,7 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 - weighted baseline method defined without fabricating current percentage: PASS
 - stable module names synchronized with Master Module Index: PASS
 - governed supersession ADR present: PASS
-- owner-directed construction-actor supersession registered by ADR-0008; effect is conditional on exact-head audit and checkpoint promotion; historical V1 acceptance unchanged
+- owner-directed construction-actor supersession registered by ADR-0008 and effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`; historical V1 acceptance unchanged.
 - Architecture not prematurely selected: PASS
 - implementation not started: PASS
 - remaining Scope closure questions: 0

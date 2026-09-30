@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-DUPLICATION-DIAG-007",
+  "parent": "GBS-V11-MAINT-POST-WO009-001",
+  "baseRef": "release/1.1",
+  "baseSha": "a02acbeafb46e1587caff715a3112f9e99692309",
+  "branch": "gbs/v11/maint-pr278-duplicate-inventory-007",
+  "owner": "KayzenRoot",
+  "assurance": "ELEVATED",
+  "fingerprints": {
+    ".engineering/CHECKPOINT.md": "a8550e4ebc45ce7d1a1aa528366458d9657e92f5",
+    ".engineering/CHECKPOINT.json": "bc88fcb58acb5cbe6a67f9ce5d89f3162bcc9ca6",
+    ".engineering/DECISIONS-LEDGER.md": "e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537",
+    ".engineering/SCOPE.md": "5aad68fdbd57b850ec05e5c44e74e5e5a3b94a29",
+    ".engineering/ARCHITECTURE.md": "c5eda022280e47ff4b45070193d196929a3a1ec0",
+    ".engineering/DEFINITION-OF-DONE.md": "d9209765a268f0e21390a2c6c531c7dd771515b4",
+    ".engineering/SECURITY.md": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
+    ".engineering/work-orders/GBS-V11-MAINT-POST-WO009-001.md": "5c5d49f2cfb3fefff509379e5ac9ccdbb1aecae5",
+    ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md": "786eba0313202f2f2648461a2fc4e6f81190969a",
+    ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md": "97bef59b15f557302a7fd625af30ceeb421c01a1",
+    ".github/workflows/v11-release-assurance.yml": "79236fe62bbd26814135a91e5f836428d1f2fd0e"
+  },
+  "allowedPaths": [
+    ".github/workflows/v11-release-assurance.yml",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-DUPLICATION-DIAG-007.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-DUPLICATION-DIAG-007.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-DUPLICATION-DIAG-007-EVIDENCE.md"
+  ],
+  "forbidden": [
+    "main",
+    "v1.0.0 tag",
+    "Sonar/Codecov thresholds or rules",
+    "secrets",
+    "dependency or lockfile",
+    "retired integration",
+    "production promotion"
+  ],
+  "stopCondition": "GBS_V11_PR278_DUPLICATION_BLOCKS_PROVIDER_BOUND_OR_NOT_VERIFIED"
+}

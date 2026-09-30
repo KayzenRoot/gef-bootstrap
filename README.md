@@ -8,7 +8,7 @@ A production-accepted, evidence-first engineering bootstrap for starting **new p
 
 ## Project construction: GitHub-first / Codex-only
 
-Owner-directed governance issue [#331](https://github.com/KayzenRoot/gef-bootstrap/issues/331) and objectively audited/merged documentation [PR #332](https://github.com/KayzenRoot/gef-bootstrap/pull/332) establish Codex as the sole code executor for GEF and newly governed projects, effective on main after the separately reviewed checkpoint-promotion merge. ChatGPT plans modules and files, prepares GitHub-backed issues/Work Orders and meaningful planning-only draft PRs, reviews the resulting code/security/tests and reports evidence-based project progress. No routine PDF prompt handoff. See `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md` and ADR-0008. Historical V1.0 release acceptance remains unchanged; release/1.1 requires its own governed forward-port.
+Owner-directed ADR-0008 / D-0063 is effective on `main` from PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` from PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. The adopted workflow assigns implementation authorship to Codex after admission and keeps planning, approved governance documentation, GitHub coordination and objective review with ChatGPT. See [ADR-0008](.engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md) and the [GitHub-first workflow](.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md). Historical V1.0 acceptance and the V1.1 operations runbook remain unchanged; Gate 2 does not promote V1.1 production.
 
 ## Why GEF Bootstrap
 
@@ -61,6 +61,7 @@ GEF V1 is a framework/workspace foundation. Start by reading:
 3. `.engineering/CHECKPOINT.md` for accepted V1 state.
 4. `.engineering/GBS-V1-PRODUCTION-ACCEPTANCE.md` for the release boundary.
 5. `docs/INSTALLATION.md` and `docs/QUICKSTART.md` for setup and adoption.
+6. `docs/V1.1-OPERATIONS-RUNBOOK.md` for recovery, fresh-chat continuity and V1.1 release boundaries.
 
 For a new project, establish canonical sources and a Work Order before mutation. For an existing project, perform discovery, collision/preservation analysis and preview first. Never delete or overwrite user work merely to satisfy bootstrap structure.
 

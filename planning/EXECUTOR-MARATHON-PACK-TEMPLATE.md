@@ -168,6 +168,12 @@ List exactly what the executor must leave behind:
 # 14. FINAL EXACT-HEAD GATE
 Before completion, verify the required final suites on the exact candidate head. A subsequent relevant code/config/test change invalidates affected evidence.
 
+## Owner audit and merge authority
+
+The configured project-owner GitHub account is the final semantic auditor and merge actor. A collaborator review may be requested only as optional advice; it must not be required for progress or merge. Record the owner audit against the exact candidate SHA and do not describe it as independent.
+
+Merge only when every required check is successful on that exact SHA, the owner audit is `OWNER_APPROVED`, the target branch is authorized, and no blocking CRITICAL/HIGH finding remains. Preserve all test, security, recovery and branch-protection gates. Never bypass failed/pending checks or rewrite history.
+
 # 15. STOP CONDITIONS
 Define:
 - success stop;

@@ -2,7 +2,7 @@
 
 Status: `APPROVED`
 
-> HISTORICAL SUPERSESSION NOTICE (2026-09-29): This approved historical ADR retains its original text and evidence. Its **GEF self-construction actor restriction only** is prospectively superseded by owner-directed ADR-0008 / D-0063 after exact-head approval and checkpoint promotion. Other decisions remain unchanged. See issue #331.
+> HISTORICAL SUPERSESSION NOTICE (2026-09-29): This approved historical ADR retains its original text and evidence. Its **GEF self-construction actor restriction only** is superseded by owner-directed ADR-0008 / D-0063, effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. D-0062 remains branch-qualified as main ADR-0007 and release ADR-0006. Other decisions remain unchanged. See issue #331.
 
 ## Trigger
 `EXPLICIT_USER_PRODUCT_DECISION`
@@ -29,7 +29,7 @@ Stable IDs are preserved while canonical names become:
 Physical path renames occur later through governed migration after Architecture determines the safe approach.
 
 ### ADR-0001-D3 — Ecosystem adapters are official but non-blocking
-UADS, Hive and UGAS adapters remain official supported adapter tracks implemented over the Generic Adapter API, but are separately activatable. Independent `PRODUCTION_RELEASE_DONE` does not require those adapters to be installed or connected. An adapter can be claimed as shipped only after its own compatibility, tests, documentation and evidence pass.
+Optional ecosystem adapters remain separately activatable tracks implemented over the Generic Adapter API. Independent `PRODUCTION_RELEASE_DONE` does not require those adapters to be installed or connected. An adapter can be claimed as shipped only after its own compatibility, tests, documentation and evidence pass.
 
 ### ADR-0001-D4 — Experimental capability promotion is evidence-gated
 Advanced heuristic/learned technologies remain in the complete product program and must pass all applicable gates before production promotion:
@@ -61,7 +61,7 @@ Overall percentage remains `NOT_YET_BASELINED` until Scope + DoD + admitted back
 - Schedule pressure alone cannot move coherent useful capability out of the production target.
 - Completeness does not authorize indiscriminate feature accumulation; new capability still requires alignment, ownership, proof and maintenance justification.
 - Architecture and implementation remain unstarted until the ordered Source Pack sequence permits them.
-- GEF Bootstrap continues to be built entirely through ChatGPT and connected project tools; Codex is not its implementation executor.
+- GEF Bootstrap implementation is authored by Codex under admitted Work Orders and exact Context Locks; ChatGPT retains semantic planning, approved governance documentation, GitHub coordination and objective review under ADR-0008 / D-0063.
 
 ## Canonical owner
 `.engineering/SCOPE.md` owns the detailed module classification. This ADR owns the product-release decision and supersession rationale.

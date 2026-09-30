@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-007",
+  "state": "EXECUTABLE_ON_ADMITTED_BRANCH",
+  "implementationBranch": "feat/1.1/wo-007-proof-reuse",
+  "admissionMergeSha": "51d0e0adbaa7d8498a6171b627881dff9b79a999",
+  "implementationBaseSha": "51d0e0adbaa7d8498a6171b627881dff9b79a999",
+  "authority": "ADR-0003-D3",
+  "governanceAudit": {
+    "pr": 293,
+    "auditedHead": "977dba7e2ac454f37e39bddf018ccb58f9bb3660",
+    "review": 5292276555,
+    "verdict": "APPROVED",
+    "criticalFindings": 0,
+    "highFindings": 0
+  },
+  "productionBoundary": {
+    "mainSha": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+    "v100TagObject": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+    "v100TagTarget": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+    "mainMutationAuthorized": false,
+    "tagMutationAuthorized": false,
+    "publicationAuthorized": false
+  },
+  "scope": [
+    "M28-backed TPRR orchestration",
+    "PROOF-INV-01..05",
+    "targeted changed-source invalidation",
+    "current-failure invalidation",
+    "final-sweep preservation",
+    "read-only deterministic reuse plan"
+  ],
+  "preserve": [
+    "M24 evidence acceptance authority",
+    "M25 general proof authority",
+    "M27 assurance authority",
+    "M28 canonical receipt validation",
+    "WO-006 incremental-validation semantics",
+    "D-0061/ADR-0005 legacy ecosystem detachment"
+  ],
+  "forbidden": [
+    "main mutation",
+    "v1.0.0 tag mutation",
+    "publish",
+    "force-push",
+    "history rewrite",
+    "evidence acceptance",
+    "general proof verdict",
+    "assurance verdict",
+    "WO-008+ implementation",
+    "filesystem/network/Git/process/provider authority"
+  ],
+  "stopCondition": "GBS_V11_WO_007_READY_FOR_OBJECTIVE_AUDIT"
+}

@@ -1,6 +1,7 @@
 # GitHub-First ChatGPT ↔ Codex Construction Workflow
 
-Status: APPROVED by ADR-0008 and PR #332; EFFECTIVE on protected main upon the separately audited checkpoint-promotion merge. Other branches follow their own canonical source/adoption state.
+Status: APPROVED by ADR-0008 and PR #332; effective on `main` at merge `419b9cd713d4817c05582287ec10793fc7fdc130`, and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe` (owner audit NOT_INDEPENDENT).
+Source lineage: main commit f6738292c038eb6f0d08d1d32b3752c5c7dc417a; Git blob d061fff8e13bbb13fab6cdafb8bf001921905a61.
 Owner: Project Owner / ChatGPT semantic planning / Codex sole code executor.
 Tracking: issue #331, Work Order GBS-GOV-CODEX-ISSUES-001.
 This document is the compact operational protocol, not a substitute for any project's own Source Pack or current checkpoint.
@@ -53,6 +54,6 @@ Use a short, stable view with:
 For a V1.0-accepted product under V1.1 development, display historical V1.0 100% separately from V1.1 increment/quality/release gates. Do not present WO count as quality-adjusted release completion.
 
 ## Branch/release separation
-Current GEF main V1.0 acceptance remains 1088/1088. Current V1.1 uses release/1.1; WO-009 already accepted on that line, while WO-010 is not admitted pending cumulative PR #278 gates. This document does not supersede that checkpoint or authorize release.
+Current main V1.0 acceptance remains 1088/1088. The V1.1 release lineage remains `release/1.1`; WO-009 is accepted, Issue #337 is closed/merged through PR #349, and WO-010 remains NOT_ADMITTED. PR #278 is closed without merge; its checks are historical and do not transfer to the cumulative Gate 2 candidate. This workflow does not by itself authorize product release.
 
-STOP CONDITION: GITHUB_FIRST_CODEX_WORKFLOW_DOCUMENTED_PENDING_PROMOTION
+STOP CONDITION: GITHUB_FIRST_CODEX_WORKFLOW_ADOPTED_ON_MAIN_AND_RELEASE_WITH_PRODUCT_PROMOTION_STILL_GATED
