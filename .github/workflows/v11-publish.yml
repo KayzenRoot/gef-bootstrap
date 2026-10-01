@@ -340,7 +340,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           echo "Verified $package_name@$package_version from $source_commit; integrity=$tarball_integrity sha256=$tarball_sha256"
 
-      - name: Install and smoke-test the actual registry package
+      - name: Install, inspect and smoke-test the actual registry package
         shell: bash
         run: |
           set -euo pipefail
@@ -349,24 +349,121 @@ jobs:
           cd "$consumer"
           npm init -y
           npm install @gef-bootstrap/cli@1.1.0 --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/
-          npm audit signatures @gef-bootstrap/cli@1.1.0
+
+          cli_root="$consumer/node_modules/@gef-bootstrap/cli"
+          node --input-type=module - "$cli_root" <<'BUNDLES'
+          import { existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
+          import { join, resolve } from "node:path";
+
+          const cliRoot = resolve(process.argv[2]);
+          const bundleRoot = join(cliRoot, "node_modules", "@gef-bootstrap");
+          const requiredPackages = ["contracts", "kernel", "preflight", "config", "project-identity"];
+          const isRealDirectory = (path) => {
+            try {
+              const stat = lstatSync(path);
+              return stat.isDirectory() && !stat.isSymbolicLink();
+            } catch {
+              return false;
+            }
+          };
+          const containsRealFile = (directory) => {
+            try {
+              return readdirSync(directory, { withFileTypes: true }).some((entry) => {
+                const path = join(directory, entry.name);
+                if (entry.isFile()) return !entry.isSymbolicLink();
+                return entry.isDirectory() && !entry.isSymbolicLink() && containsRealFile(path);
+              });
+            } catch {
+              return false;
+            }
+          };
+
+          let observed = [];
+          if (isRealDirectory(bundleRoot)) {
+            observed = readdirSync(bundleRoot, { withFileTypes: true })
+              .filter((entry) => entry.isDirectory() && !entry.isSymbolicLink())
+              .map((entry) => entry.name)
+              .sort();
+          }
+          console.log(`Inspected installed CLI package: ${cliRoot}`);
+          console.log(`Inspected bundled runtime directory: ${bundleRoot}`);
+          console.log(`Observed installed scoped package directories: ${observed.join(", ") || "<none>"}`);
+
+          const missing = [];
+          for (const name of requiredPackages) {
+            const packageRoot = join(bundleRoot, name);
+            const manifestPath = join(packageRoot, "package.json");
+            const distPath = join(packageRoot, "dist");
+            try {
+              if (!isRealDirectory(packageRoot) || !existsSync(manifestPath) || lstatSync(manifestPath).isSymbolicLink()) {
+                missing.push(`@gef-bootstrap/${name}`);
+                continue;
+              }
+              const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+              if (manifest.name !== `@gef-bootstrap/${name}` || !isRealDirectory(distPath) || !containsRealFile(distPath)) {
+                missing.push(`@gef-bootstrap/${name}`);
+              }
+            } catch {
+              missing.push(`@gef-bootstrap/${name}`);
+            }
+          }
+          if (missing.length > 0) {
+            console.error(`GBS_V11_WO_010_RELEASE_INCIDENT_BUNDLED_RUNTIME_MISSING: ${missing.join(", ")}`);
+            process.exit(1);
+          }
+          console.log(`PASS: all required bundled runtimes are physically present with built dist files: ${requiredPackages.map((name) => `@gef-bootstrap/${name}`).join(", ")}`);
+          BUNDLES
+
+          smoke_failed() {
+            local status=$?
+            trap - ERR
+            echo "GBS_V11_WO_010_RELEASE_INCIDENT_RUNTIME_SMOKE_FAILED" | tee -a "$GITHUB_STEP_SUMMARY" >&2
+            exit "$status"
+          }
+          trap smoke_failed ERR
           bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
           test -s "$bin"
-          ./node_modules/.bin/gef --version
-          node "$bin" --help > /dev/null
+          export PATH="$consumer/node_modules/.bin:$PATH"
+          gef --version
+          gef --help
           node --input-type=module -e "import { processExitCodeFor } from '@gef-bootstrap/cli'; if (typeof processExitCodeFor !== 'function') process.exit(1)"
-          node "$bin" status --target "$consumer" --json > "$RUNNER_TEMP/gef-v1.1.0-recovery-status.json"
+          status_json="$RUNNER_TEMP/gef-v1.1.0-recovery-status.json"
+          gef status --target "$consumer" --json > "$status_json"
           node --input-type=module - "$RUNNER_TEMP/gef-v1.1.0-recovery-status.json" <<'NODE'
           import { readFileSync } from 'node:fs';
           JSON.parse(readFileSync(process.argv[2], 'utf8'));
           NODE
+          trap - ERR
+          signatures="$(npm view @gef-bootstrap/cli@1.1.0 dist.signatures --json --registry=https://registry.npmjs.org/)"
           attestations="$(npm view @gef-bootstrap/cli@1.1.0 dist.attestations --json --registry=https://registry.npmjs.org/)"
-          if [ "$attestations" = "null" ] || [ -z "$attestations" ]; then
-            echo "npm registry dist.attestations: absent; no provenance attestation is claimed." >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "npm registry dist.attestations: present; npm audit signatures completed." >> "$GITHUB_STEP_SUMMARY"
-          fi
-          echo "PASS: installed and exercised the actual @gef-bootstrap/cli@1.1.0 registry package without publication."
+          metadata_state() {
+            node --input-type=module - "$1" <<'METADATA'
+          const raw = process.argv[2].trim();
+          if (raw === "" || raw === "null") {
+            process.stdout.write("ABSENT");
+          } else {
+            try {
+              const value = JSON.parse(raw);
+              const present = Array.isArray(value) ? value.length > 0 :
+                value !== null && typeof value === "object" ? Object.keys(value).length > 0 : Boolean(value);
+              process.stdout.write(present ? "PRESENT" : "ABSENT");
+            } catch {
+              process.stdout.write("PRESENT_UNPARSED");
+            }
+          }
+          METADATA
+          }
+          signatures_state="$(metadata_state "$signatures")"
+          attestations_state="$(metadata_state "$attestations")"
+          {
+            echo "### Read-only npm signature and provenance metadata"
+            echo "- dist.signatures: $signatures_state"
+            echo "- dist.attestations: $attestations_state"
+            if [ "$attestations_state" = "ABSENT" ]; then
+              echo "- PROVENANCE_NOT_CLAIMED_FOR_BOOTSTRAP_1_1_0"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "PASS: registry install, bundled runtime inspection, CLI/library/status smoke completed without publication."
 
   cross-platform-artifact-smoke:
     needs: verify
