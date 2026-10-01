@@ -65,3 +65,26 @@ At authorization candidate HEAD `526b82869bde5c40e6cba03de91ad92e25d604d1`, the 
 - `FIRST_PUBLISH_BOOTSTRAP_AUTHORIZED`
 
 The owner-authorized sequence permits the reviewed `private:false` and public `publishConfig.access` package metadata, the tag-only existing-version/SHA-1 guard, and production acceptance only after new-HEAD required checks and the exact-main/tarball gates. This authorization supersedes the earlier first-publish-decision stop above; it does not claim merge, publication, Trusted Publisher setup, tag, or GitHub Release has occurred. The npm CLI identity check returned `kayzenroot`; `npm team ls @gef-bootstrap:developers` listed `kayzenroot`. No credential value was recorded, and no publication had occurred at this authorization checkpoint.
+
+## Correction Delta #19 — immutable-tag release recovery PR
+
+Issue #351 authorizes this bounded recovery after the original tag workflow failed on Node 22.14.0: `tests/v11-codecov-patch-coverage.test.mjs` imports `node:module.registerHooks`, which is unavailable in that runner. The [failed tag workflow](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36842127723) recorded 1,602 passed, 1 failed, and 4 skipped tests. This is a runner-version recovery; no product runtime or package content was changed.
+
+- Current `main` and immutable tag `v1.1.0` both resolve to `fb2a2e6d41086e82ba03f307dc6ada18a52458ea`. The tag was not moved or recreated.
+- Draft recovery PR [#354](https://github.com/KayzenRoot/gef-bootstrap/pull/354) uses branch `codex/gbs-v11-wo010-release-recovery-delta19`, based on that exact `main` SHA. Recovery implementation commit: `b58a541ffcfd325266a841dbea375d0896801b58`; focused guard correction commit: `727c0ab68fb95bb95d2de69cd4f3b79b96e6e6e8` (implementation head when its checks completed).
+- The workflow uses Node 22.17.0 for each V1.1 release runtime. Its manual `RECOVERY` mode runs only from `main`, checks out `v1.1.0`, fails closed unless both the checked-out source and tag resolve to the exact commit above, rebuilds and compares the published package, and smokes the registry package. It carries only `contents: read`; no recovery dispatch or publication step was run.
+- The existing WO-010 workflow guard passes 6/6 locally, and `git diff --check` passes. The guard requires all workflow `node-version` declarations to be `22.17.0`, preserves tag-push-only publication and the single publish-job OIDC permission, and asserts that recovery has no publish, tag-write, token, or OIDC path.
+
+### Read-only npm registry observation
+
+On 2026-10-01, public registry queries confirmed `@gef-bootstrap/cli@1.1.0`, `dist.shasum=2b9b5cf7fd8610d04238ba7b27aa6d791d796237`, and npm-normalized `repository.url=git+https://github.com/KayzenRoot/gef-bootstrap.git`. The response included registry signatures; it did not advertise `dist.attestations`, so no provenance claim is made. These were read-only lookups. No npm credential was used or recorded.
+
+### Exact implementation-head checks
+
+On implementation head `727c0ab68fb95bb95d2de69cd4f3b79b96e6e6e8`, all four GitHub-required checks passed: Gitleaks, Trivy, Pipeline Integrity, and Repository Validation. Codecov patch coverage passed at 100.00% against the 95.10% target. Automatic repository validation and `validate` passed. Exact-head release assurance and the same SHA-bound package smoke passed on Ubuntu, macOS, and Windows; CodeQL, Dependency Review, Socket, TypeScript analysis, and the cumulative Sonar diagnostics/duplicate-block checks passed. Evidence: [release assurance and same-artifact run](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761770), [security and Gitleaks run](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761748), [repository validation](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845762594), [CodeQL](https://github.com/KayzenRoot/gef-bootstrap/runs/110315793148), [Dependency Review](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761695), [Pipeline Integrity](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761809), and [Codecov](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/354).
+
+**Additional SonarCloud Quality Gate: FAIL.** The Security Rating on New Code is D (required A); its annotation points to `.github/workflows/v11-publish.yml:299`, where the workflow computes SHA-1 solely to compare npm's required legacy `dist.shasum`. No Sonar rule, threshold, configuration, or suppression was changed. This failure is disclosed for the owner audit; it is not reported as a pass.
+
+The recovery job has not been dispatched. No merge, tag change, npm republish, or GitHub Release occurred. The draft is at the owner-audit boundary because all required checks passed; the additional Sonar finding remains visible for that audit.
+
+**Correction Delta #19 stop condition:** `GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT`.
