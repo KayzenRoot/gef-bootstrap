@@ -10,6 +10,7 @@ const publisher = read(".github/workflows/v11-publish.yml");
 const assurance = read(".github/workflows/v11-release-assurance.yml");
 const smoke = read("tests/v11-wo-010-artifact-smoke.mjs");
 const windowsHarness = read(".github/scripts/run-v11-unprivileged-validation.ps1");
+const recovery = read(".github/workflows/v11-wo011-post-publish-recovery.yml");
 
 test("WO-011 preserves the v1.1.0 publisher and adds a tag-only v1.1.1 release path", () => {
   assert.match(publisher, /tags:\s*\["v1\.1\.0",\s*"v1\.1\.1"\]/);
@@ -66,4 +67,20 @@ test("WO-011 exact-head assurance binds package version and receipt across all o
   assert.match(windowsHarness, /GEF_EXPECTED_PRODUCT_VERSION -notin @\("1\.1\.0", "1\.1\.1"\)/);
   assert.ok(windowsHarness.includes("tags/v1\\.1\\.1"));
   assert.match(windowsHarness, /\["GEF_EXPECTED_PRODUCT_VERSION"\] = \$env:GEF_EXPECTED_PRODUCT_VERSION/);
+});
+
+test("WO-011 recovery verifies the immutable published CLI without traversing unpublished bundled packages", () => {
+  assert.match(recovery, /RELEASE_RUN_ID: "36904947907"/);
+  assert.match(recovery, /gh run download "\\$RELEASE_RUN_ID" --repo "\\$GITHUB_REPOSITORY"/);
+  assert.match(recovery, /receipt\.tarball/);
+  assert.match(recovery, /dist\.integrity/);
+  assert.match(recovery, /dist\.signatures/);
+  assert.match(recovery, /registry\.npmjs\.org\/-\/npm\/v1\/keys/);
+  assert.match(recovery, /createPublicKey/);
+  assert.match(recovery, /verify\("sha256"/);
+  assert.match(recovery, /dist\.attestations/);
+  assert.doesNotMatch(recovery, /npm audit signatures/);
+  assert.match(recovery, /doctor --target/);
+  assert.match(recovery, /status --target/);
+  assert.match(recovery, /GBS_V11_WO_011_REGISTRY_SMOKE_VERIFIED/);
 });
