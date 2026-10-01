@@ -45,6 +45,7 @@ test("WO-011 tests the same checksum-bound release tarball on Ubuntu, Windows an
   assert.doesNotMatch(publish, /NPM_TOKEN|NODE_AUTH_TOKEN|npm_[A-Za-z0-9]{20,}/);
   assert.equal((publisher.match(/id-token:\s*write/g) ?? []).length, 2, "only the two version-specific publish jobs may request OIDC");
   assert.match(postPublish, /npm audit signatures @gef-bootstrap\/cli@1\.1\.1/);
+  assert.match(postPublish, /gh run download "\\$GITHUB_RUN_ID" --repo "\\$GITHUB_REPOSITORY"/);
   assert.match(postPublish, /published_integrity" = "\$expected_integrity"/);
   assert.match(postPublish, /npm ci --ignore-scripts --no-audit --no-fund/);
   assert.match(postPublish, /"version": "1\.1\.1"/);
