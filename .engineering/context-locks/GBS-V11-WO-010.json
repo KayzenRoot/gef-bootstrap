@@ -353,10 +353,13 @@
       "ownerDecision": "OPTION_B_APPROVED",
       "exactHeadReaudit": "PENDING"
     },
-    "wo010ImplementationHead": "PENDING_FIRST_CLEAN_WO010_COMMIT",
-    "replacementPullRequest": null,
+    "wo010ImplementationHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
+    "replacementPullRequest": 352,
     "mainMergeAuthorized": false,
     "tagOrPublicationAuthorized": false,
-    "stopCondition": "GBS_V11_WO_010_CLEAN_REPLACEMENT_EXACT_HEAD_READY_FOR_OWNER_AUDIT"
+    "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
+    "exactHeadChecks": "149/149 SUCCESS on PR #352 head; exact-source package/platform/security gates pass",
+    "noPr350CommitsInAncestry": true,
+    "npmTrustedPublisherBinding": "Owner reports GitHub connected to npm; package-level OIDC binding and authenticated scope identity remain unverified"
   }
 }

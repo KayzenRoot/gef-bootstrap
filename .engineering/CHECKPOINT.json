@@ -602,12 +602,12 @@
       }
     },
     "gate3Wo010Acceptance": {
-      "state": "CLEAN_REPLACEMENT_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+      "state": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
       "workOrder": "GBS-V11-WO-010",
       "issue": 351,
       "masterIssue": 348,
       "sourcePullRequest": 350,
-      "implementationPr": null,
+      "implementationPr": 352,
       "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
       "admissionReview": 5368812257,
       "admissionReviewedHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
@@ -624,8 +624,8 @@
         ],
         "gate2RecreationCommit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
         "gate2RecreationTree": "6e78975f0c552edfe80e472f6198dd884209b26e",
-        "implementationHead": "PENDING_FIRST_CLEAN_WO010_COMMIT",
-        "replacementPullRequest": null
+        "implementationHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
+        "replacementPullRequest": 352
       },
       "historicalPr350": {
         "state": "OPEN_DRAFT_PRESERVED_UNMODIFIED",
@@ -650,27 +650,52 @@
         "private": true,
         "license": "UNLICENSED"
       },
-      "candidateHead": null,
-      "exactHeadChecks": "NOT_RUN_ON_CLEAN_REPLACEMENT",
-      "exactHeadProviderEvidence": {},
+      "candidateHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
+      "exactHeadChecks": "PASS 149/149 SUCCESS on PR #352 head; all required security, supply-chain, coverage, release and same-artifact checks succeeded",
+      "exactHeadProviderEvidence": {
+        "head": "f3777fe5824ca061803bb2b45c988861156f55c7",
+        "base": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "pullRequest": 352,
+        "exactHeadChecks": "149/149 SUCCESS",
+        "releaseAssurance": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981622 (Ubuntu/macOS/Windows SUCCESS)",
+        "sameArtifact": "PASS all OS; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
+        "codecov": "codecov/patch SUCCESS; all modified and coverable lines covered",
+        "gitleaks": "Pinned 8.30.1 full main..candidate interval PASS before PR; PR check PASS",
+        "trivy": "PASS",
+        "codeql": "PASS",
+        "dependencyReview": "PASS",
+        "pipelineIntegrity": "PASS",
+        "sonar": "PASS; zero security hotspots; 122 new issues disclosed",
+        "socket": "PASS",
+        "npmAudit": "PASS; 0 vulnerabilities",
+        "localValidation": "npm run validate PASS 1610/1610; exact tarball Windows smoke PASS",
+        "npmPreflight": "Owner reports GitHub connected to npm; package-level OIDC binding and npm identity unverified; anonymous E404",
+        "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+      },
       "mainMergeAuthorized": false,
       "tagAuthorized": false,
       "publicationAuthorized": false,
-      "stopCondition": "IN_PROGRESS_BEFORE_REPLACEMENT_PR",
+      "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
       "localValidation": {
         "node": "v24.19.0",
         "npm": "11.17.0",
-        "dependencyInstall": "PASS npm ci added 33 packages",
-        "build": "PASS",
+        "platform": "Windows x64",
+        "dependencyInstall": "PASS npm ci --ignore-scripts --no-audit --no-fund; 33 packages",
+        "build": "PASS npm run build",
         "gate2DirectedTests": "PASS 13/13",
         "packageBuilderTests": "PASS 4/4",
-        "publisherDistributionSecurityTests": "27 passed; receipt-bound smoke pending",
-        "npmAudit": "NOT_RUN",
-        "npmRunValidate": "NOT_RUN",
-        "platform": "Windows x64"
-      }
+        "publisherDistributionSecurityTests": "27 passed; receipt-bound exact CI tarball smoke additionally PASS on Windows",
+        "npmAudit": "PASS 0 vulnerabilities",
+        "npmRunValidate": "PASS 1610/1610; 0 failed/cancelled/skipped/todo",
+        "realTarballSmoke": "PASS Linux-produced exact-head tarball; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
+        "packageArchive": "379 entries; vendor manifest lists 23 artifact entries; package manifest/checksum checks PASS in exact-head CI",
+        "npmPreflight": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC; owner reports GitHub connection; identity/binding are not independently verified; no publication attempted"
+      },
+      "replacementPullRequest": 352,
+      "auditReadyForOwner": false,
+      "technicalChecksReadyForOwnerAudit": true
     },
-    "gate3NextLegalAction": "Complete package receipt, exact-head validation and all required checks on the clean replacement; open one replacement PR only after the pinned full-interval scan passes.",
+    "gate3NextLegalAction": "Owner to provide auditable confirmation of @gef-bootstrap scope/package ownership and package-level GitHub Actions OIDC Trusted Publisher binding; then perform fresh exact-head owner audit. Do not merge, tag, release or publish.",
     "gate3EvidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
     "gate3Manifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json"
   }

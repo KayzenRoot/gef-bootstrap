@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-10-01T00:03:37.878Z",
+  "capturedAtUtc": "2026-10-01T00:34:13.635Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
@@ -358,7 +358,7 @@
     {
       "gate": 3,
       "name": "WO-010 production acceptance and V1.1 release",
-      "state": "CLEAN_REPLACEMENT_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+      "state": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
       "workOrder": "GBS-V11-WO-010",
       "workOrderPresent": true,
       "packageMetadata": {
@@ -370,11 +370,12 @@
       },
       "ownerActions": {
         "licenseDistributionChoice": "ALL_RIGHTS_RESERVED_PRESERVED",
-        "npmIdentity": "UNVERIFIED_ENEEDAUTH",
-        "npmNamespaceRegistryOwnership": "UNVERIFIED_SCOPE_NOT_FOUND_404",
-        "npmPackage": "UNVERIFIED_PACKAGE_NOT_FOUND_404",
-        "npmOidcTrustedPublishing": "UNVERIFIED_NO_SCOPE_OR_PACKAGE_SETTINGS",
-        "finalS4PublicationApproval": "NOT_GRANTED"
+        "npmIdentity": "UNVERIFIED_NO_AUTHENTICATED_IDENTITY_CHECK",
+        "npmNamespaceRegistryOwnership": "UNVERIFIED_PUBLIC_LOOKUP_E404_PRIVATE_VS_ABSENT_INDETERMINATE",
+        "npmPackage": "OWNER_REPORTS_CREATED; anonymous view E404",
+        "npmOidcTrustedPublishing": "OWNER_REPORTS_GITHUB_CONNECTED; package-level OIDC binding unverified",
+        "finalS4PublicationApproval": "NOT_GRANTED",
+        "ownerReportedGithubConnection": true
       },
       "authorizedActivityNow": "Complete exact-head production acceptance on the clean replacement; open one draft replacement PR only after the pinned full-interval scan passes. PR #350 remains historical OPEN/DRAFT and unmodified.",
       "forbiddenNow": [
@@ -391,37 +392,39 @@
       "candidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
       "correctionDelta6IssueComment": 5916761162,
       "correctionDelta16IssueComment": 5919878202,
-      "sameArtifactMatrix": "NOT_RUN_ON_CLEAN_REPLACEMENT",
+      "sameArtifactMatrix": "PASS Ubuntu/macOS/Windows; exact tarball SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
       "npmPreflight": {
-        "identity": "NOT_VERIFIED_FOR_CLEAN_REPLACEMENT",
-        "scope": "Owner reports creation; authentication/ownership not independently verified",
-        "package": "Unauthenticated public registry lookup returned HTTP 404",
-        "trustedPublisherBinding": "NOT_VERIFIED",
-        "longLivedToken": "NOT_USED",
+        "identity": "NOT_VERIFIED_WITHOUT_AUTHENTICATED_IDENTITY",
+        "ownerReport": "Owner reports npm package created and GitHub connected to npm",
+        "publicRegistryLookup": "E404 using isolated empty npm config; private vs absent is indeterminate",
+        "trustedPublisherBinding": "PACKAGE_LEVEL_OIDC_BINDING_NOT_VERIFIED",
+        "credentialUse": "NO_NPM_CREDENTIAL_USED",
         "publication": "NOT_ATTEMPTED",
         "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
       },
       "prepublicationChecks": {
-        "workingTreePinnedGitleaks": "PASS: no new candidate finding; unchanged baseline findings remain in directory scan",
-        "fullMainToCandidateGitleaks": "PENDING_AFTER_WO010_COMMIT",
-        "realPackageTarballAndReceipt": "PENDING",
-        "packageManifestAndChecksums": "PENDING",
-        "sameArtifactUbuntuWindowsMacos": "PENDING",
-        "upgradeRecovery": "PENDING",
+        "workingTreePinnedGitleaks": "PASS: no candidate finding; unchanged baseline findings are outside the candidate diff",
+        "fullMainToCandidateGitleaks": "PASS with pinned Gitleaks 8.30.1 before PR #352 creation; zero findings across the full main..candidate interval; PR Gitleaks check also PASS",
+        "realPackageTarballAndReceipt": "PASS source-bound receipt for exact candidate HEAD; Linux producer run 36794981622",
+        "packageManifestAndChecksums": "PASS 379 archive entries; package metadata, vendor manifest, schema/license payload reviewed; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898; vendor hash/SHA-512 package check PASS",
+        "sameArtifactUbuntuWindowsMacos": "PASS all three operating systems consumed the same SHA-bound artifact",
+        "upgradeRecovery": "PASS release workflow matrix; local Windows exact tarball migration preserved source V1.0 state and receipts",
         "npmRunBuild": "PASS",
-        "focusedTests": "Gate 2 13/13; package builder 4/4; other directed cases 27 passed; receipt smoke pending",
-        "npmAudit": "PENDING",
-        "npmRunValidate": "PENDING",
-        "codecovOptionB": "PENDING",
-        "sonarCodeqlTrivy": "PENDING",
-        "dependencyReviewPipelineIntegritySocket": "PENDING",
-        "exactHeadRequiredChecks": "PENDING"
+        "focusedTests": "PASS Gate 2 13/13; package builder 4/4; other directed tests 27 passed; real receipt-bound smoke PASS on Windows",
+        "npmAudit": "PASS, zero vulnerabilities",
+        "npmRunValidate": "PASS 1610/1610, zero failures/cancelled/skipped/todo",
+        "codecovOptionB": "codecov/patch SUCCESS; provider comment confirms modified and coverable lines covered; existing owner Option B decision preserved; exact-head interpretation remains for owner audit",
+        "sonarCodeqlTrivy": "PASS; Sonar quality/duplicate-block checks PASS with 0 security hotspots and 122 new issues disclosed; CodeQL and Trivy PASS",
+        "dependencyReviewPipelineIntegritySocket": "PASS all three",
+        "exactHeadRequiredChecks": "PASS 149/149 SUCCESS on PR #352 head"
       },
-      "stopCondition": "IN_PROGRESS_BEFORE_REPLACEMENT_PR",
-      "finalPullRequestHead": null,
-      "requiredExactHeadChecks": "NOT_RUN_ON_CLEAN_REPLACEMENT",
+      "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
+      "finalPullRequestHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
+      "requiredExactHeadChecks": "149/149 SUCCESS; all named security, supply-chain, coverage and three-platform package checks succeeded",
       "auditReady": false,
-      "blockingChecks": {},
+      "blockingChecks": {
+        "npmTrustedPublisherPreflight": "Owner reports GitHub connection, but package-level OIDC binding and npm scope identity are unverified; public E404 is indeterminate. Owner evidence/action required."
+      },
       "evidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
       "releaseManifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json",
       "historicalPr350": {
@@ -433,8 +436,8 @@
         "state": "BLOCKED_HISTORICAL_REDACTED_GITLEAKS_FINDING",
         "disposition": "preserved historical evidence; branch remains OPEN/DRAFT and unmodified"
       },
-      "implementationPr": null,
-      "replacementPullRequest": null,
+      "implementationPr": 352,
+      "replacementPullRequest": 352,
       "replacementLineage": {
         "baseMain": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
         "releaseHead": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
@@ -447,10 +450,33 @@
         ],
         "gate2RecreationCommit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
         "gate2RecreationTree": "6e78975f0c552edfe80e472f6198dd884209b26e",
-        "wo010ImplementationHead": "PENDING_FIRST_CLEAN_WO010_COMMIT",
-        "noPr350CommitsInAncestry": true
+        "wo010ImplementationHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
+        "noPr350CommitsInAncestry": true,
+        "replacementPullRequest": 352
       },
-      "correctionDelta17Review": 5372870208
+      "correctionDelta17Review": 5372870208,
+      "finalPullRequestUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/352",
+      "technicalChecksReadyForOwnerAudit": true,
+      "exactHeadProviderEvidence": {
+        "head": "f3777fe5824ca061803bb2b45c988861156f55c7",
+        "base": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "pullRequest": 352,
+        "exactHeadChecks": "149/149 SUCCESS",
+        "releaseAssurance": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981622 (Ubuntu/macOS/Windows SUCCESS)",
+        "sameArtifact": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981622 (Ubuntu/macOS/Windows SUCCESS; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898)",
+        "codecov": "codecov/patch SUCCESS; provider comment states all modified and coverable lines are covered",
+        "gitleaks": "Pinned Gitleaks 8.30.1 full main..candidate interval PASS before PR creation; PR check PASS",
+        "trivy": "PASS",
+        "codeql": "PASS",
+        "dependencyReview": "PASS",
+        "pipelineIntegrity": "PASS",
+        "sonarQualityAndDuplication": "PASS; 0 security hotspots; 122 new issues disclosed",
+        "socket": "PASS",
+        "npmAudit": "PASS, 0 vulnerabilities",
+        "localValidation": "Windows x64; Node 24.19.0; npm 11.17.0; npm run validate 1610/1610 PASS; real receipt-bound Windows artifact smoke PASS",
+        "npmTrustedPublisherBinding": "OWNER_REPORTED_GITHUB_NPM_CONNECTION; package-level OIDC binding and npm identity unverified; unauthenticated npm view returned E404",
+        "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+      }
     }
   ],
   "historicalFacts": {

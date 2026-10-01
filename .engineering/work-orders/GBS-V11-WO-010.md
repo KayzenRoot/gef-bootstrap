@@ -4,7 +4,7 @@
 
 **Master:** Issue #348 / `GBS-V11-RELEASE-ONEPASS-013`
 
-**Admission source PR:** #350 on codex/gbs-v11-release-integration-014 (historical evidence; remains OPEN/DRAFT and unmodified). **Correction Delta #17 candidate branch:** codex/gbs-v11-wo010-clean-replacement-delta17; the replacement PR opens only after the pinned full-interval Gitleaks preflight passes.
+**Admission source PR:** #350 on codex/gbs-v11-release-integration-014 (historical evidence; remains OPEN/DRAFT and unmodified). **Correction Delta #17 replacement:** branch `codex/gbs-v11-wo010-clean-replacement-delta17`, PR #352 OPEN/DRAFT, implementation HEAD `f3777fe5824ca061803bb2b45c988861156f55c7`; the pinned full-interval Gitleaks preflight passed before PR creation. Fresh owner exact-head audit remains required.
 
 **Admission:** OWNER-ADMITTED after Gate 2 review #5368812257 (`OWNER_APPROVED / NOT_INDEPENDENT`)
 

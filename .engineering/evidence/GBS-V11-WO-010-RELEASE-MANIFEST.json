@@ -16,11 +16,20 @@
     "state": "OPEN_DRAFT_PRESERVED_UNMODIFIED",
     "finding": "historical redacted Gitleaks finding; signature omitted; never current evidence"
   },
-  "replacementPullRequest": null,
+  "replacementPullRequest": 352,
   "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
-  "sourceCommitAtPackageInput": null,
-  "captureMode": "PENDING_REAL_PACKAGE_BUILD_FROM_CLEAN_REPLACEMENT_HEAD",
-  "packageProducer": null,
+  "sourceCommitAtPackageInput": "f3777fe5824ca061803bb2b45c988861156f55c7",
+  "captureMode": "GITHUB_ACTIONS_PULL_REQUEST_EXACT_HEAD_PACKAGE",
+  "packageProducer": {
+    "workflow": "V1.1 release assurance",
+    "runId": 36794981622,
+    "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981622",
+    "sourceCommit": "f3777fe5824ca061803bb2b45c988861156f55c7",
+    "event": "pull_request",
+    "ref": "refs/pull/352/merge",
+    "runnerPlatform": "linux",
+    "runnerArchitecture": "x64"
+  },
   "package": {
     "name": "@gef-bootstrap/cli",
     "version": "1.1.0",
@@ -29,53 +38,63 @@
     "registryPublicationAttempted": false
   },
   "toolchain": {
-    "platform": "Windows x64 local executor; Linux/macOS/Windows exact-head producers pending",
-    "node": "v24.19.0",
-    "npm": "11.17.0"
+    "platform": "Exact-head package produced on ubuntu-latest; same artifact consumed on Ubuntu, macOS and Windows; local exact-tarball smoke on Windows x64",
+    "node": "Local validation Node v24.19.0; CI package producer uses workflow-pinned Node",
+    "npm": "Local validation npm 11.17.0; CI package producer uses workflow-pinned npm"
   },
   "tarball": {
     "file": "gef-bootstrap-cli-1.1.0.tgz",
-    "sha256": null,
-    "sizeBytes": null,
-    "entryCount": null,
-    "state": "NOT_BUILT_FOR_CLEAN_REPLACEMENT"
+    "sha256": "17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
+    "sizeBytes": 2737245,
+    "entryCount": 379,
+    "state": "PASS_EXACT_HEAD_CI_ARTIFACT_AND_3_OS_SAME_ARTIFACT_MATRIX"
   },
   "vendorManifest": {
     "path": "package/vendor/MANIFEST.json",
-    "artifactEntries": null,
-    "sha256EntriesVerifiedAgainstTarball": null,
-    "nativeSha512LockVerification": "NOT_RUN_ON_CLEAN_REPLACEMENT",
-    "result": "PENDING_REAL_TARBALL"
+    "artifactEntries": 23,
+    "sha256EntriesVerifiedAgainstTarball": true,
+    "nativeSha512LockVerification": "PASS exact-head release package candidate job",
+    "result": "PASS_EXACT_HEAD_ARCHIVE_REVIEW"
   },
   "provenance": {
     "method": "npm Trusted Publishing via GitHub Actions OIDC",
     "workflow": "v11-publish.yml",
     "environment": "npm-publish",
     "registryAttestationIssued": false,
-    "prepublicationReceipt": null,
-    "reason": "No clean replacement artifact exists yet; no registry publication is authorized."
+    "prepublicationReceipt": "GitHub Actions source/ref-bound package receipt in exact-head release-assurance artifact",
+    "reason": "Pre-publication provenance receipt verified for this source HEAD; npm registry attestation requires a later owner-authorized OIDC publication, which was not attempted."
   },
   "npmPreflight": {
-    "identity": "NOT_VERIFIED_FOR_CLEAN_REPLACEMENT",
-    "scope": "Owner reports creation; authentication/ownership not independently verified",
-    "package": "Unauthenticated public registry lookup returned HTTP 404",
-    "trustedPublisherBinding": "NOT_VERIFIED",
+    "identity": "UNVERIFIED_NO_AUTHENTICATED_NPM_IDENTITY_CHECK",
+    "scope": "Owner reports creating the npm package and connecting GitHub; ownership was not independently authenticated",
+    "package": "Anonymous npm view with isolated empty npm config returned E404; this does not distinguish private from absent",
+    "trustedPublisherBinding": "OWNER_REPORTED_GITHUB_NPM_CONNECTION; package-level OIDC Trusted Publisher binding remains UNVERIFIED",
     "longLivedToken": "NOT_USED",
     "publication": "NOT_ATTEMPTED",
     "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
   },
   "exactHeadCi": {
-    "state": "NOT_RUN_ON_CLEAN_REPLACEMENT",
-    "candidateHead": null,
+    "state": "PASS_ALL_149_PR_CHECKS",
+    "candidateHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
     "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
-    "statusContexts": "NOT_RUN",
+    "statusContexts": "149/149 SUCCESS on PR #352 exact head",
     "platforms": {
-      "releaseAssurance": "NOT_RUN",
-      "sameExactTarball": "NOT_RUN",
-      "upgradeRecovery": "NOT_RUN"
+      "releaseAssurance": "PASS Ubuntu/macOS/Windows",
+      "sameExactTarball": "PASS Ubuntu/macOS/Windows; one SHA-256-bound artifact",
+      "upgradeRecovery": "PASS release workflow matrix; local Windows upgrade fixture preserved V1.0 state and receipt bytes"
     },
-    "codecovOptionB": "NOT_RUN_ON_CLEAN_REPLACEMENT",
-    "passedSecurityAndIntegrity": [],
+    "codecovOptionB": "codecov/patch SUCCESS; provider reports all modified and coverable lines covered; Gate 2 ownerDecision OPTION_B_APPROVED preserved; fresh owner exact-head audit pending",
+    "passedSecurityAndIntegrity": [
+      "pinned Gitleaks full main..candidate interval",
+      "Trivy",
+      "CodeQL",
+      "Dependency Review",
+      "Pipeline Integrity",
+      "Sonar quality and duplicate-block checks",
+      "Socket",
+      "CodeQL tracked-alert evidence",
+      "release package manifest/checksum review"
+    ],
     "failed": {},
     "required": [
       "Codecov Option B",
@@ -90,17 +109,18 @@
       "Socket",
       "all required PR checks"
     ],
-    "stopCondition": "IN_PROGRESS",
-    "auditReady": false
+    "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
+    "auditReady": false,
+    "technicalChecksReadyForOwnerAudit": true
   },
   "validation": {
-    "build": "PASS on local staged replacement content",
+    "build": "PASS npm run build on clean candidate source",
     "focusedGate2Tests": "PASS 13/13",
     "focusedPackageBuilderTests": "PASS 4/4",
-    "focusedPublisherDistributionSecurityTests": "27 passed; artifact receipt smoke pending a real exact-source receipt",
-    "sameArtifactSmoke": "PENDING",
-    "npmAudit": "NOT_RUN",
-    "npmRunValidate": "NOT_RUN",
-    "npmPreflight": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC; no publication attempted"
+    "focusedPublisherDistributionSecurityTests": "27 passed; receipt-bound artifact smoke additionally PASS on Windows using exact CI tarball",
+    "sameArtifactSmoke": "PASS Windows local; Ubuntu/macOS/Windows CI same-artifact matrix PASS",
+    "npmAudit": "PASS found 0 vulnerabilities",
+    "npmRunValidate": "PASS 1610/1610 tests, 0 failures, cancelled, skipped or todo",
+    "npmPreflight": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC; owner reports GitHub connection; scope identity and package OIDC binding remain unverified; no publication attempted"
   }
 }
