@@ -1,0 +1,162 @@
+name: V1.1.1 post-publish recovery
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/v11-publish.yml"
+      - ".github/workflows/v11-wo011-post-publish-recovery.yml"
+      - "tests/v11-wo-011-release-workflow.test.mjs"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: v11-wo011-post-publish-recovery-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  registry-smoke:
+    name: Verify immutable v1.1.1 registry package
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      RELEASE_RUN_ID: "36904947907"
+      RELEASE_ARTIFACT: "gef-v1.1.1-release-package-36904947907"
+      RELEASE_SOURCE_SHA: "1dc030f1358eab0347043a3d54c7fc311c7c2123"
+      PACKAGE_SPEC: "@gef-bootstrap/cli@1.1.1"
+      REGISTRY: "https://registry.npmjs.org/"
+    steps:
+      - name: Download the exact artifact from the original release run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          destination="$RUNNER_TEMP/gef-v1.1.1-package-receipt"
+          mkdir -p "$destination"
+          gh run download "$RELEASE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "$RELEASE_ARTIFACT" --dir "$destination"
+          test -s "$destination/GBS-V11-WO-011-RELEASE-MANIFEST.json"
+          test -s "$destination/gef-bootstrap-cli-1.1.1.tgz"
+
+      - name: Set up Node.js and signature-capable npm
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.17.0"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Pin npm verification support
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global --ignore-scripts --no-audit --no-fund npm@11.5.1
+          test "$(npm --version)" = "11.5.1"
+
+      - name: Verify receipt, registry identity, integrity and provenance metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/gef-v1.1.1-package-receipt/GBS-V11-WO-011-RELEASE-MANIFEST.json"
+          tarball="$RUNNER_TEMP/gef-v1.1.1-package-receipt/gef-bootstrap-cli-1.1.1.tgz"
+
+          node --input-type=module - "$receipt" "$tarball" "$RELEASE_SOURCE_SHA" <<'NODE'
+          import { createHash } from "node:crypto";
+          import { readFileSync } from "node:fs";
+          const [receiptPath, tarballPath, expectedSource] = process.argv.slice(2);
+          const receipt = JSON.parse(readFileSync(receiptPath, "utf8"));
+          const sha256 = createHash("sha256").update(readFileSync(tarballPath)).digest("hex");
+          const expected = {
+            workOrder: "GBS-V11-WO-011",
+            packageName: "@gef-bootstrap/cli",
+            version: "1.1.1",
+            private: false,
+            repository: "https://github.com/KayzenRoot/gef-bootstrap.git",
+            sourceCommit: expectedSource,
+            event: "push",
+            ref: "refs/tags/v1.1.1",
+            tag: "v1.1.1",
+          };
+          for (const [key, value] of Object.entries(expected)) {
+            if (receipt[key] !== value) throw new Error(`Release receipt mismatch for ${key}: expected ${value}, got ${receipt[key]}`);
+          }
+          if (receipt.tarball?.sha256 !== sha256) throw new Error("Release tarball SHA-256 differs from the immutable receipt");
+          console.log(`Receipt and tarball SHA-256 verified: ${sha256}`);
+          NODE
+
+          test "$(npm view "$PACKAGE_SPEC" version --registry="$REGISTRY")" = "1.1.1"
+          test "$(npm view "$PACKAGE_SPEC" repository.url --registry="$REGISTRY")" = "git+https://github.com/KayzenRoot/gef-bootstrap.git"
+
+          expected_integrity="$(
+            node --input-type=module - "$tarball" <<'NODE'
+          import { createHash } from "node:crypto";
+          import { readFileSync } from "node:fs";
+          process.stdout.write(`sha512-${createHash("sha512").update(readFileSync(process.argv[2])).digest("base64")}`);
+          NODE
+          )"
+          published_integrity="$(npm view "$PACKAGE_SPEC" dist.integrity --registry="$REGISTRY")"
+          test "$published_integrity" = "$expected_integrity"
+
+          attestations="$(npm view "$PACKAGE_SPEC" dist.attestations --json --registry="$REGISTRY")"
+          node --input-type=module - "$attestations" <<'NODE'
+          const raw = process.argv[2]?.trim() ?? "";
+          const value = raw === "" ? null : JSON.parse(raw);
+          const present = Array.isArray(value) ? value.length > 0 : value && typeof value === "object" ? Object.keys(value).length > 0 : Boolean(value);
+          if (!present) throw new Error("Expected npm provenance/attestation metadata is absent");
+          NODE
+
+          npm audit signatures "$PACKAGE_SPEC"
+
+      - name: Install from registry and smoke-test CLI, library, doctor and repeated status
+        shell: bash
+        run: |
+          set -euo pipefail
+          consumer="$RUNNER_TEMP/gef-v1.1.1-registry-consumer"
+          mkdir -p "$consumer"
+          (
+            cd "$consumer"
+            npm init -y
+            npm install --package-lock-only --ignore-scripts --no-audit --no-fund "$PACKAGE_SPEC" --registry="$REGISTRY"
+            test -s package-lock.json
+            npm ci --ignore-scripts --no-audit --no-fund
+          )
+
+          bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
+          test -s "$bin"
+          node "$bin" --help >/dev/null
+          node "$bin" --version | grep -F '"version": "1.1.1"'
+          (
+            cd "$consumer"
+            node --input-type=module -e "import { processExitCodeFor } from '@gef-bootstrap/cli'; if (typeof processExitCodeFor !== 'function') process.exit(1)"
+          )
+
+          doctor_json="$RUNNER_TEMP/gef-v1.1.1-doctor.json"
+          status_one="$RUNNER_TEMP/gef-v1.1.1-status-1.json"
+          status_two="$RUNNER_TEMP/gef-v1.1.1-status-2.json"
+          node "$bin" doctor --target "$consumer" --json > "$doctor_json"
+          node "$bin" status --target "$consumer" --json > "$status_one"
+          node "$bin" status --target "$consumer" --json > "$status_two"
+
+          node --input-type=module - "$doctor_json" "$status_one" "$status_two" <<'NODE'
+          import { readFileSync } from "node:fs";
+          const docs = process.argv.slice(2).map((path) => JSON.parse(readFileSync(path, "utf8")));
+          for (const [index, doc] of docs.entries()) {
+            if (doc?.ok !== true) throw new Error(`GEF JSON smoke ${index + 1} did not report ok=true`);
+          }
+          if (JSON.stringify(docs[1]) !== JSON.stringify(docs[2])) throw new Error("Repeated status output is not deterministic");
+          NODE
+
+          {
+            echo "## GBS_V11_WO_011_REGISTRY_SMOKE_VERIFIED"
+            echo "- Package: $PACKAGE_SPEC"
+            echo "- Release run: $RELEASE_RUN_ID"
+            echo "- Source: $RELEASE_SOURCE_SHA"
+            echo "- Original artifact receipt: verified"
+            echo "- Registry SHA-512 SRI: exact match"
+            echo "- npm signature verification: passed"
+            echo "- npm provenance metadata: present"
+            echo "- Registry install with lifecycle scripts disabled: passed"
+            echo "- CLI/help/version/library/doctor/repeated-status smoke: passed"
+          } >> "$GITHUB_STEP_SUMMARY"
