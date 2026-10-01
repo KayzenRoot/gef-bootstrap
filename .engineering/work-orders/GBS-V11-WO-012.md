@@ -167,3 +167,43 @@ Review must state exact base/head, changed paths, required checks, test/security
 Before merge/release: `GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT`.
 
 After successful merge, immutable `v1.1.2` publication and registry verification: `GBS_V11_1_1_2_PRODUCTION_ACCEPTED`.
+
+## CORRECTION DELTA #1 — STRICT TEST-SURFACE AUTHORIZATION
+
+**Reason:** Codex preflight/validation on WO-012 identified six existing V1.1 tests outside the original Context Lock whose assertions are mechanically coupled to the canonical checkpoint/release-flow transition from WO-011 / ordinal 11 to WO-012 / ordinal 12 and to the 1.1.2 distribution wording. These are not new product scope.
+
+**Owner authorization:** APPROVED for this same Work Order and PR only.
+
+Additional WRITE_ALLOWED paths:
+- `tests/v11-wo-002-dist-smoke.test.mjs`
+- `tests/v11-wo-002-admission.test.mjs`
+- `tests/v11-wo-003-admission.test.mjs`
+- `tests/v11-wo-004-admission.test.mjs`
+- `tests/v11-wo-008-admission.test.mjs`
+- `tests/v11-wo-009-admission.test.mjs`
+
+### Allowed semantic changes
+
+1. `tests/v11-wo-002-dist-smoke.test.mjs`
+   - update only stale README/distribution text expectations required by the already-approved 1.1.2 version/docs transition;
+   - preserve package contents, lifecycle-script, security, runtime-closure and installed-CLI smoke assertions.
+
+2. The five admission tests
+   - extend only the exact current-patch/checkpoint state handling necessary to recognize `GBS_V11_WO_012_ADMITTED`, `GBS-V11-WO-012`, ordinal 12 and the approved 1.1.2 workflow/checkpoint fields;
+   - preserve every historical state branch and historical WO assertion;
+   - no skipped tests, blanket regex weakening, broad upper-bound removal, or conversion of exact assertions into permissive truthiness;
+   - do not alter unrelated release/governance semantics.
+
+### Source identities at the original admitted base
+
+- `tests/v11-wo-002-dist-smoke.test.mjs`: `34410ecf132e61d64f42ccddd7056dc6c3aa2a05`
+- `tests/v11-wo-002-admission.test.mjs`: `d425e1dcfcf93781ecc0469792fcbccdd567d9a0`
+- `tests/v11-wo-003-admission.test.mjs`: `01311c6e91481cd92b490b662b21a1c24d563609`
+- `tests/v11-wo-004-admission.test.mjs`: `a7badb41dec78dedfe479cc73896f71c52ac3d7f`
+- `tests/v11-wo-008-admission.test.mjs`: `52d0d89eadf362255b91338071cbeb5467be5b9f`
+- `tests/v11-wo-009-admission.test.mjs`: `8e26a4dff2d535da11fc73deaf2f5803c05f416b`
+
+### Required proof
+
+Codex must show that the six failures are GREEN after the bounded changes, then rerun `npm run build`, `npm run typecheck`, `npm run validate` and `npm audit --audit-level=high`. Any additional failing path outside this delta remains BLOCKED and requires a new exact-path authorization. This delta does not authorize merge, checkpoint promotion, tag or npm publication.
+
