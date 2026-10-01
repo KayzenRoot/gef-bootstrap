@@ -40,10 +40,13 @@ try {
     if (-not $env:GEF_RELEASE_RECEIPT_DIR) { throw "GEF_RELEASE_RECEIPT_DIR is required for the exact-artifact smoke." }
     if ($env:GEF_EXPECTED_SOURCE_COMMIT -notmatch '^[0-9a-f]{40}$') { throw "GEF_EXPECTED_SOURCE_COMMIT must be an exact commit SHA." }
     if ($env:GEF_EXPECTED_EVENT -notin @("pull_request", "push")) { throw "GEF_EXPECTED_EVENT is unsupported for the exact-artifact smoke." }
-    if ($env:GEF_EXPECTED_REF -notmatch '^refs/(pull/[0-9]+/merge|heads/release/1\.1)$') { throw "GEF_EXPECTED_REF is not an admitted candidate ref." }
+    if ($env:GEF_EXPECTED_PRODUCT_VERSION -notin @("1.1.0", "1.1.1")) { throw "GEF_EXPECTED_PRODUCT_VERSION is unsupported for the exact-artifact smoke." }
+    if ($env:GEF_EXPECTED_REF -notmatch '^refs/(pull/[0-9]+/merge|heads/release/1\.1|tags/v1\.1\.1)$') { throw "GEF_EXPECTED_REF is not an admitted candidate ref." }
 
     $sourceArtifactDirectory = [System.IO.Path]::GetFullPath($env:GEF_RELEASE_RECEIPT_DIR)
-    foreach ($artifactName in @("GBS-V11-WO-010-RELEASE-MANIFEST.json", "gef-bootstrap-cli-1.1.0.tgz")) {
+    $workOrder = if ($env:GEF_EXPECTED_PRODUCT_VERSION -eq "1.1.0") { "010" } else { "011" }
+    $artifactNames = @("GBS-V11-WO-$workOrder-RELEASE-MANIFEST.json", "gef-bootstrap-cli-$($env:GEF_EXPECTED_PRODUCT_VERSION).tgz")
+    foreach ($artifactName in $artifactNames) {
       if (-not (Test-Path -LiteralPath (Join-Path $sourceArtifactDirectory $artifactName) -PathType Leaf)) {
         throw "The exact-artifact receipt directory is missing $artifactName."
       }
@@ -104,9 +107,9 @@ try {
   }
 
   if ($ReleaseArtifactSmoke) {
-    $stagedArtifactDirectory = Join-Path $tempRoot "gef-v1.1.0-exact-head-package"
+    $stagedArtifactDirectory = Join-Path $tempRoot "gef-v$($env:GEF_EXPECTED_PRODUCT_VERSION)-exact-head-package"
     New-Item -ItemType Directory -Path $stagedArtifactDirectory -Force | Out-Null
-    foreach ($artifactName in @("GBS-V11-WO-010-RELEASE-MANIFEST.json", "gef-bootstrap-cli-1.1.0.tgz")) {
+    foreach ($artifactName in $artifactNames) {
       Copy-Item -LiteralPath (Join-Path $sourceArtifactDirectory $artifactName) -Destination (Join-Path $stagedArtifactDirectory $artifactName)
     }
     & icacls.exe $stagedArtifactDirectory /grant $grant /T /C /Q | Out-Null
@@ -115,6 +118,7 @@ try {
     $childEnvironment["GEF_EXPECTED_SOURCE_COMMIT"] = $env:GEF_EXPECTED_SOURCE_COMMIT
     $childEnvironment["GEF_EXPECTED_EVENT"] = $env:GEF_EXPECTED_EVENT
     $childEnvironment["GEF_EXPECTED_REF"] = $env:GEF_EXPECTED_REF
+    $childEnvironment["GEF_EXPECTED_PRODUCT_VERSION"] = $env:GEF_EXPECTED_PRODUCT_VERSION
   }
 
   Add-Record ("Workspace: " + $workspace)

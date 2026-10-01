@@ -12,10 +12,10 @@ import { fileURLToPath } from "node:url";
 
 import type { Engines, InstallPlanResult, UpgradePreviewResult } from "./engines.js";
 import { CLI_CONTRACT_VERSION } from "./parser.js";
-import { SUPPORTED_SCHEMA_MAJOR, SUPPORTED_SCHEMA_VERSION } from "./schemas.js";
+import { parseStateDocument, SUPPORTED_SCHEMA_MAJOR, SUPPORTED_SCHEMA_VERSION } from "./schemas.js";
 
 export const UPGRADE_STATE_REF = ".gef/upgrade-state.json";
-export const UPGRADE_MIGRATION_ID = "GEF-UPGRADE-STATE-V1-1";
+export const UPGRADE_MIGRATION_ID = "GEF-UPGRADE-STATE-V1-1-PATCH";
 export const UPGRADE_SOURCE_REFS = Object.freeze([".gef/init-state.json", ".gef/adopt-state.json"] as const);
 export const UPGRADE_MATRIX_ASSET = "gef-cli-upgrade-compatibility-matrix.json";
 export const UPGRADE_MATRIX_SCHEMA_ASSET = "gef-cli-upgrade-compatibility-matrix.schema.json";
@@ -198,24 +198,9 @@ function loadMatrix(): CompatibilityMatrix | null {
 }
 
 function validLegacyState(value: unknown): { readonly runId: string; readonly version: string; readonly commandId: string } | null {
-  const state = record(value);
-  if (state === null || !exactKeys(state, ["schemaVersion", "kind", "verb", "commandId", "contractVersion", "productVersion", "runId", "planDigest", "observationFingerprint", "transaction"])) return null;
-  if (state["schemaVersion"] !== SUPPORTED_SCHEMA_VERSION || typeof state["contractVersion"] !== "string") return null;
-  if (state["kind"] !== "gef.init.state" && state["kind"] !== "gef.adopt.state") return null;
-  const verb = state["kind"] === "gef.init.state" ? "init" : "adopt";
-  const commandId = verb === "init" ? "gef.init.run" : "gef.adopt.apply";
-  if (state["verb"] !== verb || state["commandId"] !== commandId) return null;
-  if (typeof state["productVersion"] !== "string" || !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(state["productVersion"])) return null;
-  if (typeof state["runId"] !== "string" || !/^[A-Za-z0-9-]{1,128}$/.test(state["runId"])) return null;
-  if (typeof state["planDigest"] !== "string" || !/^[0-9a-f]{64}$/.test(state["planDigest"])) return null;
-  if (typeof state["observationFingerprint"] !== "string" || !/^[0-9a-f]{64}$/.test(state["observationFingerprint"])) return null;
-  const transaction = record(state["transaction"]);
-  if (transaction === null || !exactKeys(transaction, ["planDigest", "outcome"]) && !exactKeys(transaction, ["planDigest", "outcome", "receiptDigest", "postFingerprint"])) return null;
-  if (typeof transaction["planDigest"] !== "string" || !/^[0-9a-f]{64}$/.test(transaction["planDigest"])) return null;
-  if (transaction["outcome"] !== "APPLIED" && transaction["outcome"] !== "NOOP_APPLIED") return null;
-  if (transaction["receiptDigest"] !== undefined && (typeof transaction["receiptDigest"] !== "string" || !/^[0-9a-f]{64}$/.test(transaction["receiptDigest"]))) return null;
-  if (transaction["postFingerprint"] !== undefined && (typeof transaction["postFingerprint"] !== "string" || !/^[0-9a-f]{64}$/.test(transaction["postFingerprint"]))) return null;
-  return { runId: state["runId"], version: state["productVersion"], commandId };
+  const state = parseStateDocument(value);
+  if (state === null) return null;
+  return { runId: state.runId, version: state.productVersion, commandId: state.commandId };
 }
 
 function validReceipt(value: unknown, expected: { readonly runId: string; readonly commandId: string; readonly productVersion: string; readonly fileFingerprint: string }): boolean {

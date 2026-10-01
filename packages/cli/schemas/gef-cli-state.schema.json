@@ -31,10 +31,20 @@
     "planDigest": { "$ref": "#/$defs/sha256" },
     "observationFingerprint": {
       "$ref": "#/$defs/sha256",
-      "description": "Fingerprint of the target observation recorded at apply time. A later reader compares it with a fresh observation to detect drift."
+      "description": "Versioned fingerprint of project state recorded at apply time. V1.1.0 documents without observationModel used the full diagnostic observation; PROJECT_DRIFT_V1 excludes only GEF-managed root metadata directories."
+    },
+    "observationModel": {
+      "const": "PROJECT_DRIFT_V1",
+      "description": "Explicit semantics of observationFingerprint. Absent only in compatible V1.1.0 state documents."
     },
     "transaction": { "$ref": "#/$defs/transactionSummary" }
   },
+  "allOf": [
+    {
+      "if": { "properties": { "productVersion": { "const": "1.1.1" } }, "required": ["productVersion"] },
+      "then": { "required": ["observationModel"] }
+    }
+  ],
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
     "transactionSummary": {

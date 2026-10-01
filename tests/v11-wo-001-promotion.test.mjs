@@ -20,9 +20,10 @@ const foundationPromoted = checkpoint.v11.status === 'GBS_V11_FOUNDATION_PROMOTE
 const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
 const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
 const wo009Completed = checkpoint.v11.status === 'GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT';
+const wo011Current = checkpoint.v11.status === 'GBS_V11_WO_011_ADMITTED';
 const admittedMatch = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-const admittedOrdinal = wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
-const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || wo008Completed || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2);
+const admittedOrdinal = wo011Current ? 11 : wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
+const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || wo008Completed || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2 && admittedOrdinal <= 11);
 
 test('V1.0 production acceptance remains byte-semantically preserved at the checkpoint boundary', () => {
   assert.equal(checkpoint.status, 'GBS_V1_PRODUCTION_ACCEPTED');
@@ -64,9 +65,14 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
     assert.ok(checkpointMd.includes("### Completed V1.1 increment — WO-008"));
     return;
   }
+  if (wo011Current) {
+    assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
+    assert.ok(checkpointMd.includes('Current V1.1 release position'));
+    return;
+  }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
   const id = String(admittedOrdinal).padStart(3, '0');
-  if (admittedOrdinal === 9 || wo009Completed) {
+  if (admittedOrdinal === 9 || admittedOrdinal === 11 || wo009Completed) {
     assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
   } else {
     const expectedStop = `GBS_V11_WO_${id}_ADMITTED_READY_FOR_IMPLEMENTATION_BRANCH`;
@@ -102,10 +108,13 @@ test('D-0042 promotion is explicit and does not self-authorize main', () => {
   }
 });
 
-test('promotion does not convert the V1.1 integration branch into production', () => {
+test('V1.1.0 release acceptance and the V1.1.1 patch do not rewrite the V1.0 production ledger', () => {
   assert.ok(checkpointMd.includes('The V1.0 production state above remains canonical for `main`'));
-  assert.match(checkpointMd, /No V1\.1 development state represents production/i);
-  assert.notEqual(checkpoint.v11.status, 'PRODUCTION_APPROVED');
+  assert.equal(checkpoint.v11.stableRelease.status, 'PRODUCTION_ACCEPTED');
+  assert.equal(checkpoint.v11.stableRelease.version, '1.1.0');
+  assert.equal(checkpoint.v11.candidateRelease.status, 'PATCH_IN_PROGRESS');
+  assert.equal(checkpoint.v11.candidateRelease.version, '1.1.1');
+  assert.equal(checkpoint.earnedProductionWeight, 1088);
 });
 
 test('promotion ledger preserves proposal history and records the later effective transition', () => {
@@ -172,7 +181,7 @@ test('WO-002 remains the first governed increment and later admissions preserve 
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-008');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY');
-  } else if (wo009Completed) {
+  } else if (wo009Completed || wo011Current) {
     assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
   } else {
     const activeId = String(admittedOrdinal).padStart(3, '0');
@@ -181,6 +190,7 @@ test('WO-002 remains the first governed increment and later admissions preserve 
   }
 
   for (let ordinal = 2; ordinal < admittedOrdinal; ordinal += 1) {
+    if (ordinal === 10) continue; // WO-010 is a release acceptance record, not an implementation increment entry.
     const id = `GBS-V11-WO-${String(ordinal).padStart(3, '0')}`;
     const completed = checkpoint.v11.completedWorkOrders[id];
     assert.ok(completed, `missing completed work order ${id}`);

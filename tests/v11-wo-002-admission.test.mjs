@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { assertWo011CurrentPatch } from './helpers/v11-context-lock-refresh-assertions.mjs';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,13 +23,14 @@ test('V1 production truth remains unchanged while V1.1 progresses beyond WO-002 
   assert.equal(checkpoint.stopState, 'GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088');
 });
 
-test('V1.1 checkpoint progression never regresses before WO-002 admission', () => {
+test('V1.1 checkpoint progression preserves WO-002 through the current patch admission', () => {
   const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
   const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
   const wo009Completed = checkpoint.v11.status === 'GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT';
+  const wo011Current = checkpoint.v11.status === 'GBS_V11_WO_011_ADMITTED';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-  const ordinal = wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
-  assert.ok(Number.isInteger(ordinal) && ordinal >= 2, `unexpected V1.1 state: ${checkpoint.v11.status}`);
+  const ordinal = wo011Current ? 11 : wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
+  assert.ok(Number.isInteger(ordinal) && ordinal >= 2 && ordinal <= 11, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (ordinal === 2) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-002');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');
@@ -40,6 +42,7 @@ test('V1.1 checkpoint progression never regresses before WO-002 admission', () =
     assert.equal(checkpoint.v11.completedWorkOrders['GBS-V11-WO-002'].criticalFindings, 0);
     assert.equal(checkpoint.v11.completedWorkOrders['GBS-V11-WO-002'].highFindings, 0);
     assert.ok(checkpointMd.includes('Completed V1.1 increment — WO-002'));
+    if (wo011Current) assertWo011CurrentPatch(checkpoint);
   }
 });
 

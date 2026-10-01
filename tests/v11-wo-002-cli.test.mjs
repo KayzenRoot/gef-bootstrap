@@ -382,7 +382,7 @@ test("emitted documents are bound to their schema version", () => {
     verb: "init",
     commandId: "gef.init.run",
     contractVersion: CLI_CONTRACT_VERSION,
-    productVersion: "1.1.0",
+    productVersion: "1.1.1",
     runId: "run-1",
     planDigest: "a".repeat(64),
     observationFingerprint: "b".repeat(64),
@@ -396,7 +396,7 @@ test("emitted documents are bound to their schema version", () => {
     runId: "run-1",
     commandId: "gef.init.run",
     contractVersion: CLI_CONTRACT_VERSION,
-    productVersion: "1.1.0",
+    productVersion: "1.1.1",
     effectStatus: "CONFIRMED",
     lifecyclePhases: ["RECEIVED", "READY", "EXECUTING"],
     resultDigest: "c".repeat(64),
@@ -411,16 +411,26 @@ test("reading a persisted document with an unsupported version is refused", (t) 
   const root = mkdtempSync(join(tmpdir(), "gef-ver-"));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   mkdirSync(join(root, ".gef"), { recursive: true });
-  writeFileSync(join(root, ".gef", "init-state.json"), JSON.stringify({ schemaVersion: "9.0", observationFingerprint: "x" }));
+  const supportedState = buildStateDocument({
+    verb: "init",
+    commandId: "gef.init.run",
+    contractVersion: CLI_CONTRACT_VERSION,
+    productVersion: "1.1.1",
+    runId: "read-supported-state",
+    planDigest: "a".repeat(64),
+    observationFingerprint: "b".repeat(64),
+    transaction: { planDigest: "a".repeat(64), outcome: "APPLIED" },
+  });
+  writeFileSync(join(root, ".gef", "init-state.json"), JSON.stringify({ ...supportedState, schemaVersion: "9.0" }));
   const recorded = readRecordedArtifact(root, "init");
   assert.equal(recorded.present, true);
   assert.equal(recorded.schemaVersionSupported, false, "an unsupported major version must not be interpreted");
   assert.equal(recorded.recordedObservationFingerprint, null);
 
-  writeFileSync(join(root, ".gef", "init-state.json"), JSON.stringify({ schemaVersion: SUPPORTED_SCHEMA_VERSION, observationFingerprint: "x" }));
+  writeFileSync(join(root, ".gef", "init-state.json"), JSON.stringify(supportedState));
   const supported = readRecordedArtifact(root, "init");
   assert.equal(supported.schemaVersionSupported, true);
-  assert.equal(supported.recordedObservationFingerprint, "x");
+  assert.equal(supported.recordedObservationFingerprint, "b".repeat(64));
 });
 
 // ------------------------------------------------- M2 — output selection
@@ -515,6 +525,6 @@ test("fingerprint is stable under key reordering and sensitive to value change",
 
 test("version provenance is mechanically single-sourced", () => {
   assert.equal(rootPackage.version, cliPackage.version);
-  assert.equal(cliPackage.version, "1.1.0");
+  assert.equal(cliPackage.version, "1.1.1");
   assert.equal(cliPackage.bin.gef, "./bin/gef.mjs");
 });

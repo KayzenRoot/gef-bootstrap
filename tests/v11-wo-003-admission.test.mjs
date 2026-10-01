@@ -40,8 +40,10 @@ test('machine and human checkpoint preserve WO-003 admission or prove its object
   const ownerGovernancePromoted = checkpoint.v11.status === 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY';
   const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT';
   const wo009Completed = checkpoint.v11.status === 'GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT';
+  const wo011Current = checkpoint.v11.status === 'GBS_V11_WO_011_ADMITTED';
   const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-  const ordinal = wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
+  const ordinal = wo011Current ? 11 : wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
+  assert.ok(ordinal === null || ordinal <= 11, `unexpected future V1.1 ordinal ${ordinal}`);
   if (ordinal === 3) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-003');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'ADMITTED');

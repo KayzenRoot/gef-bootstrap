@@ -15,12 +15,14 @@ import { tmpdir } from "node:os";
 import {
   ADMITTED_VERBS,
   CLI_COMMAND_IDS,
+  CLI_CONTRACT_VERSION,
   DIAGNOSTIC_FILE_MAX_BYTES,
   DIAGNOSTIC_SOURCE_MAX_FILES,
   GIT_METADATA_MAX_BYTES,
   HELP_INVENTORY,
   SUPPORTED_CHECKPOINT_SCHEMA_VERSIONS,
   buildRegistry,
+  buildStateDocument,
   cliRegistrations,
   containedEntryKind,
   DEFAULT_GIT_TRUST_POLICY,
@@ -272,7 +274,7 @@ function deps(argv, policy) {
     platform: process.platform,
     nodeVersion: process.version,
     architecture: process.arch,
-    productVersion: "1.1.0",
+    productVersion: "1.1.1",
     stdoutIsTty: false,
     out,
     err,
@@ -603,11 +605,19 @@ test("H2: over-budget is never reported as absent", (t) => {
 function recordMatchingBaseline(root, verb = "init") {
   mkdirSync(join(root, ".gef"), { recursive: true });
   const path = join(root, ".gef", `${verb}-state.json`);
-  writeFileSync(path, JSON.stringify({ schemaVersion: "1.0", observationFingerprint: "placeholder" }));
-  // The observation covers the root entry listing only, so rewriting the document content does not
-  // change it.
-  const fingerprint = observeTarget(root).stateFingerprint;
-  writeFileSync(path, JSON.stringify({ schemaVersion: "1.0", observationFingerprint: fingerprint }));
+  const planDigest = createHash("sha256").update(`status-fixture:${verb}`).digest("hex");
+  const fingerprint = observeTarget(root).projectDriftFingerprint;
+  const state = buildStateDocument({
+    verb,
+    commandId: verb === "init" ? "gef.init.run" : "gef.adopt.apply",
+    contractVersion: CLI_CONTRACT_VERSION,
+    productVersion: "1.1.1",
+    runId: `status-fixture-${verb}`,
+    planDigest,
+    observationFingerprint: fingerprint,
+    transaction: { planDigest, outcome: "APPLIED" },
+  });
+  writeFileSync(path, JSON.stringify(state));
   return fingerprint;
 }
 
