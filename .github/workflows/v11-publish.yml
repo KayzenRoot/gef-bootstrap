@@ -936,7 +936,6 @@ jobs:
           )"
           published_integrity="$(npm view @gef-bootstrap/cli@1.1.1 dist.integrity)"
           test "$published_integrity" = "$expected_integrity"
-          npm audit signatures @gef-bootstrap/cli@1.1.1
           consumer="$RUNNER_TEMP/gef-v1.1.1-published-consumer"
           mkdir -p "$consumer"
           (
@@ -945,6 +944,7 @@ jobs:
             npm install --package-lock-only --ignore-scripts --no-audit --no-fund @gef-bootstrap/cli@1.1.1
             test -s package-lock.json
             npm ci --ignore-scripts --no-audit --no-fund
+            npm audit signatures
           )
           bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
           node "$bin" --help > /dev/null
