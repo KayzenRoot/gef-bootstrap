@@ -46,13 +46,27 @@ export function assertLaterActiveWorkOrder(checkpoint, ordinal, ownerGovernanceP
 
 export function assertWo011CurrentPatch(checkpoint) {
   const v11 = checkpoint.v11;
+  const candidateRelease = v11.candidateRelease;
+  const canonicalizedStopState = "GBS_V11_WO_011_GOVERNANCE_CANONICALIZED_EXACT_HEAD_CHECKS_PENDING";
+  const governanceCanonicalized = v11.stopState === canonicalizedStopState;
+
   assert.equal(v11.status, "GBS_V11_WO_011_ADMITTED");
   assert.equal(v11.activeWorkOrder, "GBS-V11-WO-011");
   assert.equal(v11.activeWorkOrderStatus, "ADMITTED");
   assert.equal(v11.implementationBranch, "hotfix/v1.1.1-adopt-baseline-rollout");
   assert.equal(v11.contextLock, ".engineering/context-locks/GBS-V11-WO-011.json");
-  assert.equal(v11.stopState, "GBS_V11_WO_011_IMPLEMENTATION_IN_PROGRESS");
-  assert.equal(v11.nextLegalAction, "CONTINUE_GBS_V11_WO_011_IMPLEMENTATION_ON_LOCKED_BASE");
+  assert.equal(
+    v11.stopState,
+    governanceCanonicalized
+      ? canonicalizedStopState
+      : "GBS_V11_WO_011_IMPLEMENTATION_IN_PROGRESS",
+  );
+  assert.equal(
+    v11.nextLegalAction,
+    governanceCanonicalized
+      ? "RUN_REQUIRED_CHECKS_ON_GBS_V11_WO_011_PR_358_EXACT_HEAD"
+      : "CONTINUE_GBS_V11_WO_011_IMPLEMENTATION_ON_LOCKED_BASE",
+  );
   assert.equal(v11.nextWorkOrder, "GBS-V11-WO-011");
   assert.equal(v11.activeMaintenanceWorkOrder, "NONE");
   assert.match(v11.wo010Gate, /^PRODUCTION_ACCEPTED:/);
@@ -64,15 +78,34 @@ export function assertWo011CurrentPatch(checkpoint) {
   assert.equal(v11.stableRelease.githubReleaseUrl, "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0");
   assert.equal(v11.stableRelease.distIntegrity, "sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==");
   assert.equal(v11.stableRelease.ownerCloseoutComment, "https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5932018102");
-  assert.equal(v11.candidateRelease.version, "1.1.1");
-  assert.equal(v11.candidateRelease.status, "PATCH_IN_PROGRESS");
-  assert.equal(v11.candidateRelease.workOrder, "GBS-V11-WO-011");
-  assert.equal(v11.candidateRelease.issue, 357);
-  assert.equal(v11.candidateRelease.baseMainSha, "a88a61b7fcae632cdf5b282dc4461592b92cad57");
-  assert.equal(v11.candidateRelease.pullRequest, null);
-  assert.equal(v11.candidateRelease.tag, null);
-  assert.equal(v11.candidateRelease.npmPublished, false);
-  assert.equal(v11.candidateRelease.contextLockSha256, "5ABFFB90ECFE32A23B45F361371603FA6F2A4477883030512856F80B65B10C0B");
+  assert.equal(candidateRelease.version, "1.1.1");
+  assert.equal(candidateRelease.status, "PATCH_IN_PROGRESS");
+  assert.equal(candidateRelease.workOrder, "GBS-V11-WO-011");
+  assert.equal(candidateRelease.issue, 357);
+  assert.equal(candidateRelease.baseMainSha, "a88a61b7fcae632cdf5b282dc4461592b92cad57");
+  assert.equal(candidateRelease.branch, "hotfix/v1.1.1-adopt-baseline-rollout");
+  assert.equal(candidateRelease.contextLock, ".engineering/context-locks/GBS-V11-WO-011.json");
+  assert.equal(candidateRelease.pullRequest, governanceCanonicalized ? 358 : null);
+  assert.equal(candidateRelease.tag, null);
+  assert.equal(candidateRelease.npmPublished, false);
+  assert.equal(candidateRelease.contextLockSha256, governanceCanonicalized
+    ? "E100E0B312A37ACEA67F6B1AF761A96D3DE778A6AC8B2C2789354E9771E381B7"
+    : "5ABFFB90ECFE32A23B45F361371603FA6F2A4477883030512856F80B65B10C0B");
+  if (governanceCanonicalized) {
+    assert.deepEqual(candidateRelease.postProductionPatchRouting, {
+      decision: "D-0064",
+      adr: "ADR-0009",
+      ownerResolution: "https://github.com/KayzenRoot/gef-bootstrap/issues/357#issuecomment-5935855771",
+      canonicalizationPr: 358,
+      prBase: "main",
+      previousHeadChecks: "HISTORICAL_AFTER_GOVERNANCE_COMMIT",
+      exactHeadChecks: "PENDING",
+      stopWhen: "GBS_V11_WO_011_GOVERNANCE_CANONICALIZED_EXACT_HEAD_READY_FOR_OWNER_AUDIT",
+      mergeTagNpmOrRolloutAuthorized: false,
+    });
+  } else {
+    assert.equal(candidateRelease.postProductionPatchRouting, undefined);
+  }
   assert.equal(v11.gate3Wo010Acceptance.finalProductionAcceptance.status, "PRODUCTION_ACCEPTED");
   assert.equal(v11.gate3Wo010Acceptance.finalProductionAcceptance.historicalRecoveryEvidencePreserved, true);
 }
