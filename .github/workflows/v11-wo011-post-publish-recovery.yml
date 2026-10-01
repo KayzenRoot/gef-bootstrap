@@ -107,6 +107,33 @@ jobs:
           if (!present) throw new Error("Expected npm provenance/attestation metadata is absent");
           NODE
 
+          signatures="$(npm view "$PACKAGE_SPEC" dist.signatures --json --registry="$REGISTRY")"
+          node --input-type=module - "$published_integrity" "$signatures" <<'NODE'
+          import { createPublicKey, verify } from "node:crypto";
+          const [integrity, signaturesJson] = process.argv.slice(2);
+          const signatures = JSON.parse(signaturesJson || "[]");
+          if (!Array.isArray(signatures) || signatures.length === 0) throw new Error("Published package has no registry signatures");
+          const response = await fetch("https://registry.npmjs.org/-/npm/v1/keys");
+          if (!response.ok) throw new Error(`Unable to retrieve npm registry signing keys: HTTP ${response.status}`);
+          const { keys } = await response.json();
+          if (!Array.isArray(keys) || keys.length === 0) throw new Error("npm registry signing-key set is empty");
+          const message = `@gef-bootstrap/cli@1.1.1:${integrity}`;
+          let verified = false;
+          for (const signature of signatures) {
+            const key = keys.find((candidate) => candidate.keyid === signature.keyid);
+            if (!key) continue;
+            if (key.keytype !== "ecdsa-sha2-nistp256" || key.scheme !== "ecdsa-sha2-nistp256") continue;
+            if (key.expires && Date.parse(key.expires) <= Date.now()) continue;
+            const publicKey = createPublicKey({ key: Buffer.from(key.key, "base64"), format: "der", type: "spki" });
+            if (verify("sha256", Buffer.from(message), publicKey, Buffer.from(signature.sig, "base64"))) {
+              verified = true;
+              console.log(`Verified npm registry ECDSA signature with key ${signature.keyid}`);
+              break;
+            }
+          }
+          if (!verified) throw new Error("No published npm registry signature verified against an active registry signing key");
+          NODE
+
 
       - name: Install from registry and smoke-test CLI, library, doctor and repeated status
         shell: bash
@@ -120,7 +147,6 @@ jobs:
             npm install --package-lock-only --ignore-scripts --no-audit --no-fund "$PACKAGE_SPEC" --registry="$REGISTRY"
             test -s package-lock.json
             npm ci --ignore-scripts --no-audit --no-fund
-            npm audit signatures
           )
 
           bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
