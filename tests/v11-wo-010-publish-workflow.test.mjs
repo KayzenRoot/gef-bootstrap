@@ -37,7 +37,13 @@ test("WO-010 manual branch dispatch verifies a candidate but only an exact pushe
   assert.match(recoveryJob, /published_integrity"\s*!=\s*"\$tarball_integrity"/);
   assert.match(recoveryJob, /if \[ "\$published_repository" != "\$expected_repository" \]; then[\s\S]*?exit 1[\s\S]*?fi/);
   assert.match(recoveryJob, /GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH/);
-  assert.match(recoveryJob, /npm install @gef-bootstrap\/cli@1\.1\.0 --ignore-scripts[\s\S]*?npm audit signatures @gef-bootstrap\/cli@1\.1\.0[\s\S]*?processExitCodeFor[\s\S]*?status --target/);
+  assert.match(recoveryJob, /npm install @gef-bootstrap\/cli@1\.1\.0 --ignore-scripts --no-audit --no-fund --registry=https:\/\/registry\.npmjs\.org\//);
+  assert.match(recoveryJob, /requiredPackages = \["contracts", "kernel", "preflight", "config", "project-identity"\]/);
+  assert.match(recoveryJob, /Inspected bundled runtime directory[\s\S]*?isRealDirectory\(packageRoot\)[\s\S]*?containsRealFile\(distPath\)[\s\S]*?GBS_V11_WO_010_RELEASE_INCIDENT_BUNDLED_RUNTIME_MISSING/);
+  assert.match(recoveryJob, /GBS_V11_WO_010_RELEASE_INCIDENT_RUNTIME_SMOKE_FAILED/);
+  assert.match(recoveryJob, /gef --version[\s\S]*?gef --help[\s\S]*?processExitCodeFor[\s\S]*?gef status --target[\s\S]*?JSON\.parse/);
+  assert.match(recoveryJob, /npm view @gef-bootstrap\/cli@1\.1\.0 dist\.signatures --json[\s\S]*?npm view @gef-bootstrap\/cli@1\.1\.0 dist\.attestations --json[\s\S]*?PROVENANCE_NOT_CLAIMED_FOR_BOOTSTRAP_1_1_0/);
+  assert.doesNotMatch(recoveryJob, /npm audit signatures/);
   assert.doesNotMatch(recoveryJob, /npm publish|id-token:\s*write|NPM_TOKEN|NODE_AUTH_TOKEN|git tag|git push/);
   assert.doesNotMatch(WORKFLOW, /node-version:\s*"(?!22\.17\.0)[^"]+"/);
   const publishJob = WORKFLOW.split("\n  publish:")[1].split("\n  post-publish:")[0];
@@ -98,7 +104,8 @@ test("WO-010 publisher validates, inspects and smokes the exact tarball before p
   assert.match(WORKFLOW, /node "\$bin" doctor/);
   assert.match(WORKFLOW, /node "\$bin" status/);
   assert.match(WORKFLOW, /npm publish "\$tarball" --access public --provenance --ignore-scripts/);
-  assert.match(WORKFLOW, /npm audit signatures @gef-bootstrap\/cli@1\.1\.0/);
+  const postPublishJob = WORKFLOW.split("\n  post-publish:")[1];
+  assert.match(postPublishJob, /npm audit signatures @gef-bootstrap\/cli@1\.1\.0/);
 });
 
 test("WO-010 installs and exercises the same checksum-bound run artifact on Ubuntu, Windows and macOS", () => {

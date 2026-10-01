@@ -244,3 +244,13 @@ On PR #354, owner review #5378094691's SonarCloud finding was corrected in workf
 The registry currently reports `dist.integrity=sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==`, version `1.1.0`, and repository `git+https://github.com/KayzenRoot/gef-bootstrap.git`. The read-only recovery comparison has not run because recovery was not dispatched; no merge, tag movement, publication, or GitHub Release occurred. The evidence-sync commit requires a fresh automatic check set on its exact head.
 
 Current Gate 3 stop: `GBS_V11_WO_010_RELEASE_RECOVERY_SHA512_INTEGRITY_READY_FOR_REAUDIT`. Next action is owner re-audit of the latest draft PR #354 head after its exact-head automatic checks pass. No merge is authorized here.
+
+### Correction Delta #21 — registry smoke correction handoff
+
+Owner authorization is recorded in [Issue #351 comment #5930544513](https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5930544513). The new WO-010 recovery candidate branch `codex/gbs-v11-wo010-recovery-delta21` starts from exact `main` baseline `6adface74ec17361ac50f5b0084f2f0851048344`.
+
+Recovery run [36854526557](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36854526557) passed immutable source/tag, Node 22.17.0, build, validation (1,610 total: 1,606 passed, 0 failed, 4 skipped), high-severity audit and exact SHA-512 SRI comparison. Its actual registry install succeeded (`added 1 package`); the subsequent `npm audit signatures` step failed while resolving intentionally bundled/private `@gef-bootstrap/preflight@0.0.0`. Therefore the failure was not installation and did not indicate a published tarball/SRI mismatch. The recovery publish job was skipped; no npm package or tag changed, and no GitHub Release was created.
+
+Delta #21 keeps that install, removes only the blocking signature-audit command from RECOVERY, verifies the physical installed bundles and runs the real CLI/library/status JSON smoke. Signature and attestation metadata are queried read-only; absent attestations are recorded as `PROVENANCE_NOT_CLAIMED_FOR_BOOTSTRAP_1_1_0`. The existing SHA-512 SRI, version, repository URL, immutable tag/source and no-publication protections remain.
+
+Current Delta #21 candidate checks: pending automatic GitHub checks on the new PR's latest exact HEAD. No manual test campaign, merge, republish, tag movement or GitHub Release is claimed. Owner re-audit follows only after all automatic checks pass. Target stop: `GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT`.
