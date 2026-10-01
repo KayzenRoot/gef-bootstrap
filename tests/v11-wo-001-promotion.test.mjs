@@ -80,6 +80,20 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
     assert.ok(checkpointMd.includes(`V1.1 STOP CONDITION: \`${expectedStop}\``));
   }
 });
+
+test('pre-canonicalization WO-011 checkpoint retains its exact implementation-in-progress state', () => {
+  if (!wo011Current) return;
+
+  const historicalCheckpoint = structuredClone(checkpoint);
+  historicalCheckpoint.v11.stopState = 'GBS_V11_WO_011_IMPLEMENTATION_IN_PROGRESS';
+  historicalCheckpoint.v11.nextLegalAction = 'CONTINUE_GBS_V11_WO_011_IMPLEMENTATION_ON_LOCKED_BASE';
+  historicalCheckpoint.v11.candidateRelease.pullRequest = null;
+  historicalCheckpoint.v11.candidateRelease.contextLockSha256 = '5ABFFB90ECFE32A23B45F361371603FA6F2A4477883030512856F80B65B10C0B';
+  delete historicalCheckpoint.v11.candidateRelease.postProductionPatchRouting;
+
+  assertLaterActiveWorkOrder(historicalCheckpoint, 11, false, 9);
+});
+
 test('V1.1 overlay preserves the objectively audited WO-001 foundation lineage after later admissions', () => {
   assert.equal(checkpoint.v11.releaseLine, '1.1.x');
   assert.ok(legalPostFoundationStates, `unexpected V1.1 state ${checkpoint.v11.status}`);
