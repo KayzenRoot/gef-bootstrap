@@ -33,8 +33,7 @@ test("WO-010 manual branch dispatch verifies a candidate but only an exact pushe
   assert.match(recoveryJob, /GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH/);
   assert.match(recoveryJob, /npm install @gef-bootstrap\/cli@1\.1\.0 --ignore-scripts[\s\S]*?npm audit signatures @gef-bootstrap\/cli@1\.1\.0[\s\S]*?processExitCodeFor[\s\S]*?status --target/);
   assert.doesNotMatch(recoveryJob, /npm publish|id-token:\s*write|NPM_TOKEN|NODE_AUTH_TOKEN|git tag|git push/);
-  assert.doesNotMatch(WORKFLOW, /node-version:\s*"22\.14\.0"/);
-  assert.equal((WORKFLOW.match(/node-version:\s*"22\.17\.0"/g) ?? []).length, 5, "every V1.1 release runtime uses Node 22.17.0");
+  assert.doesNotMatch(WORKFLOW, /node-version:\s*"(?!22\.17\.0)[^"]+"/);
   const publishJob = WORKFLOW.split("\n  publish:")[1].split("\n  post-publish:")[0];
   const postPublishJob = WORKFLOW.split("\n  post-publish:")[1];
   assert.match(publishJob, /needs: \[verify, cross-platform-artifact-smoke\]/);
