@@ -1,6 +1,13 @@
 # GBS-V11-WO-011 Evidence
 
-**State:** implementation committed locally; PR and provider gates pending. **Base:** `a88a61b7fcae632cdf5b282dc4461592b92cad57`. **Implementation commit:** `52af4d4925ca2c19827177d0228fab9a97d6d66d`. **Branch:** `hotfix/v1.1.1-adopt-baseline-rollout`. **Context Lock SHA-256:** `5ABFFB90ECFE32A23B45F361371603FA6F2A4477883030512856F80B65B10C0B`.
+**State:** owner-authorized governance canonicalization for PR #358; exact-head checks pending on the new governance commit. **Base:** `a88a61b7fcae632cdf5b282dc4461592b92cad57`. **Implementation commit preserved:** `52af4d4925ca2c19827177d0228fab9a97d6d66d`. **Previous PR head:** `a09d95b23cf270edf8701988f2ad524963549f73`; all results on that head are historical after the governance commit. **PR:** [#358](https://github.com/KayzenRoot/gef-bootstrap/pull/358), open draft, base `main`. **Owner resolution:** [Issue #357 comment #5935855771](https://github.com/KayzenRoot/gef-bootstrap/issues/357#issuecomment-5935855771), author `KayzenRoot`. **Context Lock SHA-256:** `E100E0B312A37ACEA67F6B1AF761A96D3DE778A6AC8B2C2789354E9771E381B7`.
+
+## Governance canonicalization
+
+- D-0064 / ADR-0009 is allocated as “Post-production patch hotfix routing.” After a minor release reaches `PRODUCTION_ACCEPTED`, same-minor hotfixes use current production `main`; merge requires an exact-head owner audit, all required checks successful, zero CRITICAL/HIGH findings, and a mergeable branch.
+- ADR-0006's `release/1.1` restriction remains historical for pre-production V1.1 and is superseded only for post-production patches after `v1.1.0` acceptance. D-0062@main / ADR-0007, D-0062@release/1.1 / ADR-0006, and D-0063 / ADR-0008 remain distinct and unchanged.
+- `release/1.1` remains historical/pre-production; it will not be force-synchronized, rebased, or used as the patch base while behind accepted production.
+- This delta changes governance records only. The implementation in PR #358 is preserved. No merge, tag, npm publication, or consumer rollout has occurred or is authorized by this canonicalization.
 
 ## Goodz Menu priority gate
 
@@ -29,5 +36,6 @@
 ## Registry, PR and remaining gates
 
 - Public npm registry preflight returned `E404` for `@gef-bootstrap/cli@1.1.1`; the version is unpublished. No trusted-publisher configuration was claimed or changed, and no long-lived npm token was used.
-- No PR has been opened yet. Exact PR-head checks, Ubuntu/Windows/macOS same-tarball CI, security checks, owner audit, trusted-publisher verification, merge, immutable tag/release, OIDC publication, registry consumer smoke, and all consumer rollouts remain pending.
-- Consumer rollout remains blocked until the package is actually published and the registry consumer smoke passes. Goodz Menu is first in the authorized consumer order after that gate.
+- PR #358 is open as a draft, targets `main`, and preserves the technical candidate. The owner resolution records that all currently returned checks on prior head `a09d95b23cf270edf8701988f2ad524963549f73` succeeded; none transfer to the governance commit. The new exact-head checks are pending and must be evaluated on the new SHA before stopping for owner audit.
+- The npm `1.1.1` registry preflight previously returned `E404`; no publication has occurred. Owner audit, trusted-publisher verification, merge, immutable tag/release, OIDC publication, registry consumer smoke, and all consumer rollouts remain unperformed and outside this canonicalization step.
+- Goodz Menu remains first in the previously authorized consumer order after future publication and registry-smoke gates; this governance delta does not begin that rollout.

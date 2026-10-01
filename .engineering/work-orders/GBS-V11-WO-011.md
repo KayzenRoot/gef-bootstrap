@@ -2,6 +2,12 @@
 
 **Issue:** [#357](https://github.com/KayzenRoot/gef-bootstrap/issues/357). **Owner execution order:** user-supplied text attachment, SHA-256 `237965F559E77569803463ECBF35233025DAFC1F407AACCDD351D9AD61F87BF5`. **Admission:** owner explicitly authorized this execution order in the request; implementation is bound by `.engineering/context-locks/GBS-V11-WO-011.json`. **Exact base:** `main` at `a88a61b7fcae632cdf5b282dc4461592b92cad57`. **Branch:** `hotfix/v1.1.1-adopt-baseline-rollout`. **Previous stable release:** `v1.1.0`, published and verified; preserve its tag and package.
 
+## Owner governance resolution — 2026-10-01
+
+Owner resolution: [Issue #357 comment #5935855771](https://github.com/KayzenRoot/gef-bootstrap/issues/357#issuecomment-5935855771). V1.1.1 is a post-production patch hotfix after `v1.1.0` reached `PRODUCTION_ACCEPTED`; PR #358 remains based on current production `main`. Do not retarget, rebase, force-push, or synchronize `release/1.1`. The owner authorized D-0064 / ADR-0009, “Post-production patch hotfix routing,” with the exact-head merge conditions recorded there. The historical ADR-0006 `release/1.1` restriction remains for pre-production V1.1 only.
+
+This amendment authorizes only the governance canonicalization in the same PR #358. Its complete write set is ADR-0009, the Decisions Ledger, the Decisions Supersession Map, ADR-0006, both Checkpoint files, this Work Order, its evidence file, and its Context Lock. Preserve all existing V1.1.1 product, test, runtime, packaging, release-workflow, and Core clone proof changes. Do not publish npm, create a tag, merge, or start consumer rollout. After the governance commit is pushed, run normal required checks on the new exact PR head; checks on `a09d95b23cf270edf8701988f2ad524963549f73` are historical and do not transfer. Stop at `GBS_V11_WO_011_GOVERNANCE_CANONICALIZED_EXACT_HEAD_READY_FOR_OWNER_AUDIT` only when the new head is fully green.
+
 ## Objective
 
 Correct the confirmed V1.1.0 false project drift caused by GEF creating `.gef` and `.gef-private` after recording the pre-apply baseline. Preserve full diagnostic observations and true user-file drift detection, keep valid V1.1.0 state readable, fail closed on invalid/unsupported state, repair the stale V1.1 checkpoint history, ship and validate `1.1.1`, and then resume only the listed consumer rollout.

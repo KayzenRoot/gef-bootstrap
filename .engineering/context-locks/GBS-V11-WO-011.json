@@ -3,7 +3,7 @@
   "workOrderId": "GBS-V11-WO-011",
   "issue": 357,
   "repository": "KayzenRoot/gef-bootstrap",
-  "pullRequest": null,
+  "pullRequest": 358,
   "branch": "hotfix/v1.1.1-adopt-baseline-rollout",
   "capturedAtUtc": "2026-10-01T13:53:23Z",
   "admission": {
@@ -27,6 +27,23 @@
         "tests/v11-wo-002-ownership.test.mjs"
       ],
       "scopeBasis": "Directly affects the fail-closed mutation journal used by init/adopt apply; the correction is limited to refusing replacement content before an owned journal write and preserving the replacement bytes."
+    },
+    {
+      "dateUtc": "2026-10-01",
+      "reason": "Owner governance resolution #5935855771 authorizes a narrowly bounded post-production patch-routing canonicalization for V1.1.1 on the existing PR #358.",
+      "authority": "https://github.com/KayzenRoot/gef-bootstrap/issues/357#issuecomment-5935855771",
+      "allowedPaths": [
+        ".engineering/decisions/ADR-0009-POST-PRODUCTION-PATCH-HOTFIX-ROUTING.md",
+        ".engineering/DECISIONS-LEDGER.md",
+        ".engineering/DECISIONS-SUPERSESSION-MAP.md",
+        ".engineering/CHECKPOINT.md",
+        ".engineering/CHECKPOINT.json",
+        ".engineering/work-orders/GBS-V11-WO-011.md",
+        ".engineering/evidence/GBS-V11-WO-011-EVIDENCE.md",
+        ".engineering/context-locks/GBS-V11-WO-011.json",
+        ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md"
+      ],
+      "scopeBasis": "Only canonicalize D-0064 / ADR-0009 and its bounded applicability in ADR-0006, update the active Work Order, evidence, Context Lock and checkpoint. Preserve all existing technical V1.1.1 work. This amendment does not authorize product, test, runtime, packaging, workflow, dependency, tag, npm, merge, or consumer-rollout changes. Keep PR #358 based on main; do not rebase, force-push, retarget, or synchronize release/1.1."
     }
   ],
   "sourceFingerprintsAtStartingHead": {
@@ -66,6 +83,10 @@
     ".engineering/evidence/GBS-V11-WO-011-EVIDENCE.md",
     ".engineering/evidence/GBS-V11-WO-011-RELEASE-MANIFEST.json",
     ".engineering/work-orders/GBS-V11-WO-011.md",
+    ".engineering/decisions/ADR-0009-POST-PRODUCTION-PATCH-HOTFIX-ROUTING.md",
+    ".engineering/DECISIONS-LEDGER.md",
+    ".engineering/DECISIONS-SUPERSESSION-MAP.md",
+    ".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md",
     ".github/scripts/run-v11-unprivileged-validation.ps1",
     ".github/workflows/v11-publish.yml",
     ".github/workflows/v11-release-assurance.yml",
@@ -117,7 +138,7 @@
     "previous Core drift-reproduction clone and its evidence",
     "consumer .gef/.gef-private state",
     "branch protection, required checks, security policy or coverage thresholds",
-    "unlisted consumer project code or canonical governance",
+    "unlisted consumer project code or unlisted canonical governance",
     "force-push, rebase, history rewrite or destructive cleanup"
   ],
   "proofObligations": [

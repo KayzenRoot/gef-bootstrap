@@ -76,7 +76,13 @@ This bounded supersession replaces ADR-0003-D3's external-audit and no-merge cla
 
 Main source: Git blob `7d6ec3885fb3d029586dc0b7f99aa32b033170e1` at main commit `f6738292c038eb6f0d08d1d32b3752c5c7dc417a`; PR #332 merged as `419b9cd713d4817c05582287ec10793fc7fdc130` after owner audit #5894096435 (NOT_INDEPENDENT).
 
-Release adoption: PR #347 audited head `ab02b706b4ab7de941cdcc1f849fc07003d92949`, owner review #5360335310 (NOT_INDEPENDENT), merged to `release/1.1` as `9f6f069c977868ade34a19cddb346f7bea9a95fe`. D-0062@release / ADR-0006 governed until that merge. This map preserves branch provenance, does not remap D-0062@main / ADR-0007 or D-0062@release / ADR-0006, and does not allocate D-0064 or ADR-0009.
+Release adoption: PR #347 audited head `ab02b706b4ab7de941cdcc1f849fc07003d92949`, owner review #5360335310 (NOT_INDEPENDENT), merged to `release/1.1` as `9f6f069c977868ade34a19cddb346f7bea9a95fe`. D-0062@release / ADR-0006 governed until that merge. This map preserves branch provenance and does not remap D-0062@main / ADR-0007 or D-0062@release / ADR-0006. The owner later separately allocated D-0064 / ADR-0009 for post-production same-minor patch hotfix routing; that allocation does not change D-0063 / ADR-0008.
+
+### D-0064 / ADR-0009 — Post-production patch hotfix routing
+
+After a minor release reaches `PRODUCTION_ACCEPTED`, patches in that same minor line use current production `main` as their base. They may merge back to `main` only after an exact-head owner audit, all required checks succeed on that exact head, CRITICAL/HIGH findings are zero, and the branch is mergeable. This allocation concretely governs GEF Bootstrap `1.1.x` after `v1.1.0` acceptance. `release/1.1` remains the historical/pre-production branch and is not artificially synchronized, rebased, or used as the patch base while behind accepted production.
+
+This supersedes ADR-0006's `release/1.1`-only target solely for post-production same-minor hotfix patches after `v1.1.0` acceptance. ADR-0006's pre-production V1.1 rule and owner-audit/merge authority remain intact. D-0062@main / ADR-0007, D-0062@release/1.1 / ADR-0006, and D-0063 / ADR-0008 remain distinct and unchanged. Owner authority: [Issue #357 comment #5935855771](https://github.com/KayzenRoot/gef-bootstrap/issues/357#issuecomment-5935855771); canonicalization is carried by PR #358, base `main`, and becomes canonical on `main` upon merge.
 
 ## Agent rule
 When a historical D-* entry conflicts with this map or a later frozen controlling source in the same authority domain, the later governed source controls. Never delete the historical entry merely to simplify context. Never use newest-wins across different authority domains.
