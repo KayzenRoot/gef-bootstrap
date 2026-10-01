@@ -51,3 +51,24 @@ Focused regression test first (demonstrate it fails on the old implementation), 
 ## Stop conditions
 
 Stop a dependent stage if source authority, exact base, package identity/trusted-publisher binding, required evidence or branch protections cannot be verified. A real critical package defect found after 1.1.1 publication requires `V1_1_2_REQUIRED`; never overwrite 1.1.1. Leave an individually blocked consumer isolated while continuing other eligible consumers. Do not report completion until the owner order's final conditions are evidenced.
+
+## Release gate closeout — 2026-10-01
+
+The release/registry stage is now objectively complete.
+
+- Release source: `1dc030f1358eab0347043a3d54c7fc311c7c2123`.
+- Immutable release/tag: `v1.1.1`.
+- npm package: `@gef-bootstrap/cli@1.1.1`.
+- Original publish run: `36904947907`; OIDC publication succeeded.
+- Immutable tarball SHA-256: `59cfbe2699c884f9c57bb50594fe3972c5f8667c44bff4f35a5e9a65e4ce53c3`.
+- Registry SRI: `sha512-YuLrx35lCo4aSBV6DI/EmaKPhkZJxjyUyDTQEhjvM8SdktV5x2rWJjeIY0T69A/PlILqOsL5E2zrz3BLRMPGVg==`.
+- Post-publish correction: PR `#359`, audited head `c68114f0f8692551fc871bddd1e2fc6964374017`, merge `5a32a607ccf2055fab722f3d5d452791c6aae3e6`.
+- Read-only registry recovery run `36912440350`: SUCCESS.
+- Exact-head release assurance run `36912440441`: SUCCESS on Ubuntu/Windows/macOS, including same-artifact smoke.
+- Final correction findings: CRITICAL `0`, HIGH `0`.
+
+**Current stage:** consumer rollout.  
+**Next authorized consumer:** `KayzenRoot/goodz-menu`.  
+**Current stop state:** `GBS_V11_WO_011_REGISTRY_SMOKE_VERIFIED_GOODZ_MENU_NEXT`.
+
+No Goodz Menu installation success is claimed by this release-gate promotion; it requires its own consumer evidence.
