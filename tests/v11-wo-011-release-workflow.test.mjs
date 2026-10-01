@@ -45,7 +45,11 @@ test("WO-011 tests the same checksum-bound release tarball on Ubuntu, Windows an
   assert.match(publish, /Refusing to overwrite immutable @gef-bootstrap\/cli@1\.1\.1/);
   assert.doesNotMatch(publish, /NPM_TOKEN|NODE_AUTH_TOKEN|npm_[A-Za-z0-9]{20,}/);
   assert.equal((publisher.match(/id-token:\s*write/g) ?? []).length, 2, "only the two version-specific publish jobs may request OIDC");
-  assert.match(postPublish, /npm audit signatures @gef-bootstrap\/cli@1\.1\.1/);
+  assert.match(postPublish, /npm view @gef-bootstrap\\/cli@1\\.1\\.1 dist\\.signatures/);
+  assert.match(postPublish, /registry\\.npmjs\\.org\\/-\\/npm\\/v1\\/keys/);
+  assert.match(postPublish, /createPublicKey/);
+  assert.match(postPublish, /verify\("sha256"/);
+  assert.doesNotMatch(postPublish, /npm audit signatures/);
   assert.match(postPublish, /gh run download "\\$GITHUB_RUN_ID" --repo "\\$GITHUB_REPOSITORY"/);
   assert.match(postPublish, /published_integrity" = "\$expected_integrity"/);
   assert.match(postPublish, /npm ci --ignore-scripts --no-audit --no-fund/);
