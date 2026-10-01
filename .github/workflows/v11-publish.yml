@@ -4,6 +4,15 @@ on:
   push:
     tags: ["v1.1.0"]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run candidate verification or read-only release recovery"
+        required: true
+        type: choice
+        options:
+          - CANDIDATE
+          - RECOVERY
+        default: CANDIDATE
 
 permissions:
   contents: read
@@ -14,7 +23,7 @@ concurrency:
 
 jobs:
   verify:
-    if: github.ref == 'refs/tags/v1.1.0' || (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch')
+    if: github.ref == 'refs/tags/v1.1.0' || (github.event_name == 'workflow_dispatch' && github.ref_type == 'branch' && inputs.mode != 'RECOVERY')
     name: Verify and pack the accepted v1.1.0 source
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -53,7 +62,7 @@ jobs:
       - name: Set up Node.js and npm registry
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.14.0"
+          node-version: "22.17.0"
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
@@ -218,6 +227,136 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  recovery:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.mode == 'RECOVERY'
+    name: Verify the published v1.1.0 without republishing
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the immutable release tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: v1.1.0
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Require the exact published source commit
+        shell: bash
+        env:
+          EXPECTED_RELEASE_COMMIT: fb2a2e6d41086e82ba03f307dc6ada18a52458ea
+          RECOVERY_MODE: ${{ inputs.mode }}
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "workflow_dispatch"
+          test "$GITHUB_REF" = "refs/heads/main"
+          test "$RECOVERY_MODE" = "RECOVERY"
+          source_commit="$(git rev-parse HEAD)"
+          tag_commit="$(git rev-parse 'v1.1.0^{commit}')"
+          test "$source_commit" = "$EXPECTED_RELEASE_COMMIT"
+          test "$tag_commit" = "$EXPECTED_RELEASE_COMMIT"
+          echo "Verified immutable release source: $source_commit"
+          echo "Recovery dispatch source: $GITHUB_SHA"
+
+      - name: Set up the recovery runtime
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "22.17.0"
+          package-manager-cache: false
+
+      - name: Pin npm signature verification support
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global --ignore-scripts --no-audit --no-fund npm@11.5.1
+          test "$(npm --version)" = "11.5.1"
+
+      - name: Install the immutable tag dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Re-run the failed release validations
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run build
+          npm run validate
+          npm audit --audit-level=high
+
+      - name: Rebuild the tag tarball and compare the published registry package
+        shell: bash
+        env:
+          EXPECTED_RELEASE_COMMIT: fb2a2e6d41086e82ba03f307dc6ada18a52458ea
+        run: |
+          set -euo pipefail
+          destination="$RUNNER_TEMP/gef-v1.1.0-recovery-package"
+          mkdir -p "$destination"
+          tarball="$(node packages/cli/scripts/prepare-package.mjs --pack --destination "$destination")"
+          test -s "$tarball"
+          source_commit="$(git rev-parse HEAD)"
+          test "$source_commit" = "$EXPECTED_RELEASE_COMMIT"
+          tarball_name="$(basename "$tarball")"
+          tarball_sha1="$(sha1sum "$tarball" | awk '{print $1}')"
+          tarball_sha256="$(sha256sum "$tarball" | awk '{print $1}')"
+          package_json="$RUNNER_TEMP/gef-v1.1.0-recovery-package.json"
+          tar -xOzf "$tarball" package/package.json > "$package_json"
+          package_name="$(node -e "console.log(JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')).name)" "$package_json")"
+          package_version="$(node -e "console.log(JSON.parse(require('node:fs').readFileSync(process.argv[1], 'utf8')).version)" "$package_json")"
+          test "$package_name" = "@gef-bootstrap/cli"
+          test "$package_version" = "1.1.0"
+          published_version="$(npm view @gef-bootstrap/cli@1.1.0 version --registry=https://registry.npmjs.org/)"
+          published_shasum="$(npm view @gef-bootstrap/cli@1.1.0 dist.shasum --registry=https://registry.npmjs.org/)"
+          published_repository="$(npm view @gef-bootstrap/cli@1.1.0 repository.url --registry=https://registry.npmjs.org/)"
+          if [ "$published_version" != "1.1.0" ]; then
+            echo "Refusing recovery: npm registry returned version '$published_version'" >&2
+            exit 1
+          fi
+          if [ "$published_shasum" != "$tarball_sha1" ]; then
+            echo "GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH" | tee -a "$GITHUB_STEP_SUMMARY" >&2
+            echo "Published dist.shasum=$published_shasum; rebuilt tag tarball SHA-1=$tarball_sha1" | tee -a "$GITHUB_STEP_SUMMARY" >&2
+            exit 1
+          fi
+          {
+            echo "### Immutable release package receipt"
+            echo "- Package: $package_name@$package_version"
+            echo "- Rebuilt archive: $tarball_name"
+            echo "- Source SHA: $source_commit"
+            echo "- Rebuilt tarball SHA-1: $tarball_sha1"
+            echo "- Published npm dist.shasum: $published_shasum"
+            echo "- Rebuilt tarball SHA-256: $tarball_sha256"
+            echo "- Registry repository.url: $published_repository"
+            echo "- Result: published package matches the rebuilt immutable-tag tarball"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Verified $package_name@$package_version from $source_commit; sha1=$tarball_sha1 sha256=$tarball_sha256"
+
+      - name: Install and smoke-test the actual registry package
+        shell: bash
+        run: |
+          set -euo pipefail
+          consumer="$(mktemp -d "$RUNNER_TEMP/gef-v1.1.0-registry-smoke.XXXXXX")"
+          trap 'rm -rf "$consumer"' EXIT
+          cd "$consumer"
+          npm init -y
+          npm install @gef-bootstrap/cli@1.1.0 --ignore-scripts --no-audit --no-fund --registry=https://registry.npmjs.org/
+          npm audit signatures @gef-bootstrap/cli@1.1.0
+          bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
+          test -s "$bin"
+          ./node_modules/.bin/gef --version
+          node "$bin" --help > /dev/null
+          node --input-type=module -e "import { processExitCodeFor } from '@gef-bootstrap/cli'; if (typeof processExitCodeFor !== 'function') process.exit(1)"
+          node "$bin" status --target "$consumer" --json > "$RUNNER_TEMP/gef-v1.1.0-recovery-status.json"
+          node --input-type=module - "$RUNNER_TEMP/gef-v1.1.0-recovery-status.json" <<'NODE'
+          import { readFileSync } from 'node:fs';
+          JSON.parse(readFileSync(process.argv[2], 'utf8'));
+          NODE
+          attestations="$(npm view @gef-bootstrap/cli@1.1.0 dist.attestations --json --registry=https://registry.npmjs.org/)"
+          if [ "$attestations" = "null" ] || [ -z "$attestations" ]; then
+            echo "npm registry dist.attestations: absent; no provenance attestation is claimed." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "npm registry dist.attestations: present; npm audit signatures completed." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "PASS: installed and exercised the actual @gef-bootstrap/cli@1.1.0 registry package without publication."
+
   cross-platform-artifact-smoke:
     needs: verify
     name: Install and use the exact candidate tarball (${{ matrix.os }})
@@ -246,7 +385,7 @@ jobs:
       - name: Set up the runtime used for package acceptance
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.14.0"
+          node-version: "22.17.0"
           package-manager-cache: false
 
       - name: Bind the tarball checksum and receipt to this exact workflow source
@@ -308,7 +447,7 @@ jobs:
       - name: Set up npm trusted publisher client
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.14.0"
+          node-version: "22.17.0"
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
@@ -393,7 +532,7 @@ jobs:
       - name: Set up Node.js and npm registry
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: "22.14.0"
+          node-version: "22.17.0"
           registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
