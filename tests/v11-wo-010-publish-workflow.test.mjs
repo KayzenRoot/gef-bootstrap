@@ -13,14 +13,33 @@ const UNPRIVILEGED_VALIDATION = readFileSync(resolve(ROOT, ".github/scripts/run-
 
 test("WO-010 manual branch dispatch verifies a candidate but only an exact pushed tag can publish", () => {
   assert.match(WORKFLOW, /push:\s*\n\s+tags:\s*\["v1\.1\.0"\]/);
-  assert.match(WORKFLOW, /workflow_dispatch:/);
-  assert.match(WORKFLOW, /if:\s*github\.ref == 'refs\/tags\/v1\.1\.0' \|\| \(github\.event_name == 'workflow_dispatch' && github\.ref_type == 'branch'\)/);
+  assert.match(WORKFLOW, /workflow_dispatch:\s*\n\s+inputs:\s*\n\s+mode:\s*\n\s+description:[\s\S]*?options:[\s\S]*?- CANDIDATE[\s\S]*?- RECOVERY/);
+  assert.match(WORKFLOW, /if:\s*github\.ref == 'refs\/tags\/v1\.1\.0' \|\| \(github\.event_name == 'workflow_dispatch' && github\.ref_type == 'branch' && inputs\.mode != 'RECOVERY'\)/);
   assert.doesNotMatch(WORKFLOW, /^\s+pull_request:/m);
   assert.doesNotMatch(WORKFLOW, /^\s+branches:/m);
   assert.match(WORKFLOW, /Require manual branch dispatch to test this exact candidate[\s\S]*?test "\$GITHUB_REF_TYPE" = "branch"[\s\S]*?git rev-parse HEAD/);
   assert.match(WORKFLOW, /test "\$GITHUB_REF_TYPE" = "tag"/);
   assert.match(WORKFLOW, /test "\$GITHUB_REF_NAME" = "v1\.1\.0"/);
   assert.match(WORKFLOW, /git merge-base --is-ancestor/);
+  const recoveryJob = WORKFLOW.split("\n  recovery:")[1].split("\n  cross-platform-artifact-smoke:")[0];
+  assert.match(recoveryJob, /if: github\.event_name == 'workflow_dispatch' && github\.ref == 'refs\/heads\/main' && inputs\.mode == 'RECOVERY'/);
+  assert.match(recoveryJob, /ref: v1\.1\.0/);
+  assert.match(recoveryJob, /EXPECTED_RELEASE_COMMIT: fb2a2e6d41086e82ba03f307dc6ada18a52458ea/);
+  assert.match(recoveryJob, /git rev-parse HEAD[\s\S]*?test "\$source_commit" = "\$EXPECTED_RELEASE_COMMIT"/);
+  assert.match(recoveryJob, /node-version: "22\.17\.0"/);
+  assert.match(recoveryJob, /npm ci --ignore-scripts[\s\S]*?npm run build[\s\S]*?npm run validate[\s\S]*?npm audit --audit-level=high/);
+  assert.match(recoveryJob, /prepare-package\.mjs --pack[\s\S]*?sha256sum/);
+  assert.doesNotMatch(recoveryJob, /sha1sum|sha-?1|dist\.shasum/i);
+  assert.match(recoveryJob, /npm view @gef-bootstrap\/cli@1\.1\.0 version[\s\S]*?dist\.integrity[\s\S]*?repository\.url/);
+  assert.match(recoveryJob, /npm view @gef-bootstrap\/cli@1\.1\.0 dist\.integrity --registry=https:\/\/registry\.npmjs\.org\//);
+  assert.match(recoveryJob, /node --input-type=module - "\$tarball" <<'SRI'[\s\S]*?createHash\("sha512"\)[\s\S]*?digest\("base64"\)[\s\S]*?SRI/);
+  assert.match(recoveryJob, /process\.stdout\.write\(`sha512-\$\{createHash\("sha512"\)/);
+  assert.match(recoveryJob, /published_integrity"\s*!=\s*"\$tarball_integrity"/);
+  assert.match(recoveryJob, /if \[ "\$published_repository" != "\$expected_repository" \]; then[\s\S]*?exit 1[\s\S]*?fi/);
+  assert.match(recoveryJob, /GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH/);
+  assert.match(recoveryJob, /npm install @gef-bootstrap\/cli@1\.1\.0 --ignore-scripts[\s\S]*?npm audit signatures @gef-bootstrap\/cli@1\.1\.0[\s\S]*?processExitCodeFor[\s\S]*?status --target/);
+  assert.doesNotMatch(recoveryJob, /npm publish|id-token:\s*write|NPM_TOKEN|NODE_AUTH_TOKEN|git tag|git push/);
+  assert.doesNotMatch(WORKFLOW, /node-version:\s*"(?!22\.17\.0)[^"]+"/);
   const publishJob = WORKFLOW.split("\n  publish:")[1].split("\n  post-publish:")[0];
   const postPublishJob = WORKFLOW.split("\n  post-publish:")[1];
   assert.match(publishJob, /needs: \[verify, cross-platform-artifact-smoke\]/);

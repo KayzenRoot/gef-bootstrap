@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-10-01T02:10:31.000Z",
+  "capturedAtUtc": "2026-10-01T10:59:07Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
@@ -386,12 +386,16 @@
         "ownerReportedGithubConnection": true,
         "credentialDisclosure": "No long-lived npm token used; no credential values copied into repository files or GitHub evidence"
       },
-      "authorizedActivityNow": "Complete final WO-010 sequence on PR #352: wait for automatic required checks; merge normally only after checks pass; build from exact main; perform the authorized first npm publication; configure Trusted Publisher; then create the exact tag and stable release after each receipt gate",
+      "authorizedActivityNow": "Owner exact-head audit of recovery PR #354. Only after owner approval, merge that PR normally and dispatch read-only RECOVERY once from main. Do not move the immutable tag or republish npm.",
       "forbiddenNow": [
         "long-lived npm token",
         "merge before exact-head required checks pass",
         "publish from a dirty tree or a source SHA other than the accepted main SHA",
-        "tag before package checksum and Trusted Publisher verification"
+        "tag before package checksum and Trusted Publisher verification",
+        "merge before owner exact-head audit",
+        "move or recreate v1.1.0",
+        "npm publish or republish",
+        "create GitHub Release before recovery succeeds"
       ],
       "admissionIssue": 351,
       "admissionReview": 5368812257,
@@ -401,17 +405,12 @@
       "correctionDelta16IssueComment": 5919878202,
       "sameArtifactMatrix": "PASS Ubuntu/macOS/Windows; run https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36797272549; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
       "npmPreflight": {
-        "identity": "VERIFIED_KAYZENROOT_NPM_WHOAMI; matches GitHub KayzenRoot case-insensitively",
-        "ownerReport": "Owner completed manual npm web authorization; GitHub profile is connected per owner report",
-        "publicRegistryLookup": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected unpublished package state, not an ownership failure",
-        "trustedPublisherBinding": "NOT_CONFIGURED; configure after first publication as explicitly authorized",
-        "credentialUse": "npm CLI web login; no long-lived npm token used; no credential values copied into repository files or GitHub evidence",
-        "publication": "NOT_ATTEMPTED_AT_AUTHORIZATION_CHECKPOINT",
-        "stopCondition": "OWNER_FINALIZATION_AUTHORIZED; required execution gates remain outstanding",
-        "organizationTeamMembership": "PASS: npm team ls @gef-bootstrap:developers lists kayzenroot",
-        "packageAcl": "npm access list packages @gef-bootstrap exited 0; no package rows returned",
-        "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git",
-        "longLivedToken": "NOT_USED"
+        "identity": "Previously verified as kayzenroot; no authentication was used for Delta 19 registry lookups",
+        "scope": "Previously verified by npm team membership preflight; not changed by Delta 19",
+        "package": "Published @gef-bootstrap/cli@1.1.0; read-only npm view confirmed version, dist.shasum, and repository.url",
+        "trustedPublisherBinding": "No trusted-publishing or OIDC path is used by the recovery job; configuration was not rechecked during Delta 19",
+        "longLivedToken": "NOT_USED",
+        "publication": "Version existed before Delta 19; NOT_REPUBLISHED during recovery preparation"
       },
       "prepublicationChecks": {
         "workingTreePinnedGitleaks": "PASS: no candidate finding; unchanged baseline findings are outside the candidate diff",
@@ -429,7 +428,7 @@
         "dependencyReviewPipelineIntegritySocket": "PASS all three",
         "exactHeadRequiredChecks": "PASS 4/4 required checks; 149 PR check contexts in pass bucket, with CodeRabbit skipped because the PR is draft"
       },
-      "stopCondition": "OWNER_FINALIZATION_AUTHORIZED; required execution gates remain outstanding",
+      "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT",
       "finalPullRequestHead": "526b82869bde5c40e6cba03de91ad92e25d604d1",
       "requiredExactHeadChecks": "4/4 required checks PASS; all 149 PR check contexts in pass bucket on authorization head 526b82869bde5c40e6cba03de91ad92e25d604d1 (CodeRabbit skipped because draft); this finalization commit requires fresh checks on its new SHA",
       "auditReady": false,
@@ -490,6 +489,126 @@
         "localValidation": "Windows x64; npm run build PASS; npm run validate PASS 1610/1610 in normal clone with exact manifest content",
         "npmPreflight": "npm whoami kayzenroot; developers team membership confirmed; package E404 expected unpublished; exact repository.url present in tarball; no long-lived npm token used or credential values copied into repository files or GitHub evidence; no publication attempted",
         "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION"
+      },
+      "releaseRecoveryDelta19": {
+        "correctionDelta": 19,
+        "workOrder": "GBS-V11-WO-010",
+        "issue": 351,
+        "masterIssue": 348,
+        "recoveryPullRequest": 354,
+        "recoveryPullRequestUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/354",
+        "pullRequestState": "OPEN_DRAFT",
+        "branch": "codex/gbs-v11-wo010-release-recovery-delta19",
+        "baseMainSha": "fb2a2e6d41086e82ba03f307dc6ada18a52458ea",
+        "implementationHeadWithChecks": "727c0ab68fb95bb95d2de69cd4f3b79b96e6e6e8",
+        "immutableTag": "v1.1.0",
+        "immutableTagCommit": "fb2a2e6d41086e82ba03f307dc6ada18a52458ea",
+        "originalTagWorkflowRun": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36842127723",
+        "originalFailure": "Node 22.14.0 lacked node:module.registerHooks; 1602 passed, 1 failed, 4 skipped",
+        "requiredChecks": {
+          "state": "PASS 4/4 on implementationHeadWithChecks",
+          "gitleaks": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761748/job/110315392408",
+          "trivy": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761748/job/110315392389",
+          "pipelineIntegrity": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761809/job/110315390403",
+          "repositoryValidation": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845762594/job/110315395551"
+        },
+        "codecovPatch": "PASS 100.00%; target 95.10% https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/354",
+        "releaseAssurance": "PASS Ubuntu/macOS/Windows; run https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761770",
+        "sameArtifactSmoke": "PASS Ubuntu/macOS/Windows; same workflow run 36845761770",
+        "otherChecks": {
+          "codeql": "PASS https://github.com/KayzenRoot/gef-bootstrap/runs/110315793148",
+          "dependencyReview": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761695",
+          "typescriptAnalysis": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761796",
+          "socket": "PASS project report and pull request alerts",
+          "validation": "PASS validate workflow https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36845761814",
+          "cumulativeSonarDiagnosticsAndDuplicateBlocks": "PASS in release assurance run 36845761770"
+        },
+        "additionalSonarQualityGate": "FAIL: Security Rating D on New Code (required A); annotation at .github/workflows/v11-publish.yml:299 flags SHA-1 calculation required only to compare npm dist.shasum. No rule, threshold, configuration, or suppression changed.",
+        "localWorkflowGuard": "PASS 6/6",
+        "localDiffCheck": "PASS",
+        "registryObservation": {
+          "package": "@gef-bootstrap/cli@1.1.0",
+          "version": "1.1.0",
+          "distShasum": "2b9b5cf7fd8610d04238ba7b27aa6d791d796237",
+          "repositoryUrl": "git+https://github.com/KayzenRoot/gef-bootstrap.git",
+          "signatures": "registry signatures advertised",
+          "distAttestations": "not advertised by the npm view response; no provenance claim"
+        },
+        "recoveryDispatch": "NOT_RUN; owner audit and normal PR merge are prerequisites",
+        "mergeAuthorizedNow": false,
+        "tagMoved": false,
+        "npmRepublished": false,
+        "githubReleaseCreated": false,
+        "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT",
+        "previousDocumentationSyncHead": "b4830b425c5a0ec0ac7c4631520189f2f8961962",
+        "previousDocumentationSyncRepositoryValidation": "FAIL: 8 historic admission assertions because the root Gate2 Option B nextLegalAction/stopState were replaced with the Delta19 stop marker",
+        "checkpointCorrection": "Restore the root Gate2 Option B fields; keep the WO-010 recovery stop under gate3Wo010Acceptance and releaseRecoveryDelta19."
+      },
+      "releaseRecoveryDelta20": {
+        "correctionDelta": 20,
+        "ownerReview": 5378094691,
+        "issue": 351,
+        "masterIssue": 348,
+        "pullRequest": 354,
+        "pullRequestUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/354",
+        "pullRequestState": "OPEN_DRAFT",
+        "branch": "codex/gbs-v11-wo010-release-recovery-delta19",
+        "baseMainSha": "fb2a2e6d41086e82ba03f307dc6ada18a52458ea",
+        "workflowCorrectionCommit": "123f0d15855ff0942a563f269c89d512e7ac22ac",
+        "codeHeadWithAllChecks": "829615f6bb42dd13ba212d421477414939e8401e",
+        "guardAssertionCorrectionCommit": "829615f6bb42dd13ba212d421477414939e8401e",
+        "immutableTag": {
+          "name": "v1.1.0",
+          "annotatedTagObject": "5f0ed3e1b130a3d47b0d9781bc5a36dc6149312d",
+          "commit": "fb2a2e6d41086e82ba03f307dc6ada18a52458ea",
+          "unchanged": true
+        },
+        "package": {
+          "name": "@gef-bootstrap/cli",
+          "version": "1.1.0",
+          "repositoryUrl": "git+https://github.com/KayzenRoot/gef-bootstrap.git",
+          "npmDistIntegrity": "sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg=="
+        },
+        "recoveryIntegrity": {
+          "algorithm": "SHA-512 SRI",
+          "encoding": "sha512-<base64>",
+          "computation": "Node crypto.createHash(sha512)",
+          "comparison": "Exact string equality between rebuilt tarball SRI and npm dist.integrity",
+          "mismatch": "FAIL_CLOSED GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH",
+          "recoveryUsesSha1": false,
+          "versionAndRepositoryChecksPreserved": true,
+          "recoveryPublishTagMutationAndOidc": false,
+          "rebuiltTagTarballComparison": "NOT_RUN; recovery workflow was not dispatched"
+        },
+        "priorAutomaticCheckFailure": "On workflow head 123f0d15855ff0942a563f269c89d512e7ac22ac, the existing guard test expected the prior repository comparison spelling. The only observed failures were that stale assertion across validation, coverage, regression, and release assurance; corrected in 829615f6bb42dd13ba212d421477414939e8401e.",
+        "exactHeadAutomaticChecks": {
+          "state": "PASS on codeHeadWithAllChecks",
+          "repositoryValidation": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479159/job/110333902564",
+          "nodeCoverage": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479011/job/110333902692",
+          "regressionAndValidate": "PASS; regression matrix run 36851478990, 36851479013, 36851479024, 36851479037; validate https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851478998/job/110333901724",
+          "gitleaks": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479391/job/110333903370",
+          "trivy": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479391/job/110333903193",
+          "pipelineIntegrity": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479144/job/110333902462",
+          "sonarCloud": "PASS https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=354",
+          "codecovPatch": "PASS https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/354",
+          "codeql": "PASS https://github.com/KayzenRoot/gef-bootstrap/runs/110334258633",
+          "dependencyReview": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479309/job/110333903493",
+          "releaseAssurance": "PASS Ubuntu/macOS/Windows; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479162",
+          "sameArtifact": "PASS Ubuntu/macOS/Windows; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479162",
+          "socket": "PASS project report and pull request alerts",
+          "typeScriptAnalysis": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36851479080/job/110333902480",
+          "otherSonarChecks": "PASS cumulative diagnostics and duplicate blocks",
+          "codeRabbit": "SKIPPED because PR remains draft"
+        },
+        "evidenceSyncCommitFreshChecks": "Fresh automatic checks on the evidence-sync commit govern latest-head readiness and must be verified live on PR #354.",
+        "noManualTestCampaign": true,
+        "recoveryDispatch": "NOT_RUN",
+        "mergeAuthorizedNow": false,
+        "tagMoved": false,
+        "npmPublishedOrRepublished": false,
+        "githubReleaseCreated": false,
+        "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_SHA512_INTEGRITY_READY_FOR_REAUDIT",
+        "issueCorrectionComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5929669084"
       }
     }
   ],
@@ -516,10 +635,10 @@
     }
   },
   "phase1EvidenceBundle": ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md",
-  "mergeAuthorized": true,
-  "publicationAuthorized": true,
+  "mergeAuthorized": false,
+  "publicationAuthorized": false,
   "currentGate": 3,
-  "currentGateState": "OWNER_FINALIZATION_AUTHORIZED",
-  "currentCandidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
-  "mainMergeAuthorized": true
+  "currentGateState": "GBS_V11_WO_010_RELEASE_RECOVERY_SHA512_INTEGRITY_READY_FOR_REAUDIT",
+  "currentCandidateBranch": "codex/gbs-v11-wo010-release-recovery-delta19",
+  "mainMergeAuthorized": false
 }
