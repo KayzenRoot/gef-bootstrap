@@ -1,6 +1,6 @@
 # GBS-V11-RELEASE-ONEPASS-013 — V1.1 closeout master Work Order
 
-Status: `GATE0_MERGED_PHASE1_ADMITTED_EXECUTION_IN_PROGRESS`
+Status: `GATE2_OWNER_APPROVED_GATE3_WO010_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS`
 Issue: [#348](https://github.com/KayzenRoot/gef-bootstrap/issues/348)
 Release target: `release/1.1`
 Owner: `KayzenRoot`
@@ -174,3 +174,13 @@ Owner explicitly selected **Option B** after review #5366930854. This amends onl
 - PR #350 must rerun required checks after this documentation-only amendment and receive a fresh owner exact-head audit before any main merge. Gate 3 / WO-010 remains NOT_ADMITTED until Gate 2 is actually closed.
 
 Current stop: `GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT`.
+
+## Gate 3 / WO-010 acceptance execution update — 2026-09-30
+
+Gate 2 is owner-approved under review #5368812257 on exact reviewed head 8529883a048eb58aa131c68800b22fba87ce8da2 (OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT). Issue #351 admits GBS-V11-WO-010 on the existing open draft PR #350 and branch codex/gbs-v11-release-integration-014. This addendum supersedes earlier planning text stating that Gate 3/WO-010 was not admitted. Gate 2 admission checks do not transfer to a WO-010 candidate head.
+
+Prepublication work produced and inspected a real npm tarball with checksum and vendor-manifest verification, installed and exercised it offline on Windows, passed the focused distribution/package/upgrade/recovery/compatibility/publisher/security suites (32/32), `npm run build`, `npm audit` (0 vulnerabilities) and `npm run validate` (1610/1610; 0 failed, 0 skipped). An exact-head same-tarball Ubuntu/Windows/macOS matrix now runs through the existing PR release-assurance trigger under Issue #351 Correction Delta #6. The npm package manifest remains private and UNLICENSED and the repository LICENSE remains All Rights Reserved. Current PR-head provider checks remain pending until the committed candidate is pushed.
+
+Non-destructive npm preflight returned ENEEDAUTH for npm whoami and HTTP 404 for the @gef-bootstrap scope and @gef-bootstrap/cli@1.1.0. The Trusted Publisher binding cannot be inspected without access to the scope/package. No token, tag or publication was used. Once every safe local and exact-head check is complete, stop at OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC and provide the owner action documented in the WO-010 Evidence Bundle.
+
+The final exact PR head, check results and evidence-sync revision must be recorded in .engineering/evidence/GBS-V11-WO-010-EVIDENCE.md and .engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json. No main merge, tag, GitHub Release or npm publication occurs here.

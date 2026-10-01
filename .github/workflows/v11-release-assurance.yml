@@ -14,6 +14,132 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  exact-head-package-candidate:
+    name: WO-010 exact-head package candidate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Check out exact candidate head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked workspace dependencies and build exact package inputs
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+
+      - name: Pack one exact-head tarball and write its source and checksum receipt
+        shell: bash
+        env:
+          GEF_CANDIDATE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GEF_CANDIDATE_SHA"
+          destination="$RUNNER_TEMP/gef-v1.1.0-exact-head-package"
+          mkdir -p "$destination"
+          tarball="$(node packages/cli/scripts/prepare-package.mjs --pack --destination "$destination")"
+          test -s "$tarball"
+          node --input-type=module - "$tarball" "$destination/GBS-V11-WO-010-RELEASE-MANIFEST.json" <<'NODE'
+          import { createHash } from 'node:crypto';
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const [archive, receiptPath] = process.argv.slice(2);
+          const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+          const expectedCommit = process.env.GEF_CANDIDATE_SHA;
+          const packageJson = JSON.parse(execFileSync('tar', ['-xOzf', archive, 'package/package.json'], { encoding: 'utf8' }));
+          if (sourceCommit !== expectedCommit || packageJson.name !== '@gef-bootstrap/cli' || packageJson.version !== '1.1.0') {
+            throw new Error('Refusing exact-head package artifact: checkout or package identity mismatch');
+          }
+          const receipt = {
+            schemaVersion: 1,
+            kind: 'gef.v11.release-package-candidate',
+            packageName: packageJson.name,
+            version: packageJson.version,
+            sourceCommit,
+            event: process.env.GITHUB_EVENT_NAME,
+            ref: process.env.GITHUB_REF,
+            tag: process.env.GITHUB_REF_TYPE === 'tag' ? process.env.GITHUB_REF_NAME : null,
+            runnerPlatform: process.platform,
+            runnerArchitecture: process.arch,
+            tarball: {
+              file: archive.split(/[\\/]/).at(-1),
+              sha256: createHash('sha256').update(readFileSync(archive)).digest('hex')
+            }
+          };
+          writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n');
+          console.log(`Exact-head source: ${sourceCommit}`);
+          console.log(`Tarball SHA-256: ${receipt.tarball.sha256}`);
+          NODE
+
+      - name: Upload exact-head tarball and checksum receipt for the platform matrix
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: gef-v1.1.0-exact-head-package-${{ github.run_id }}
+          path: ${{ runner.temp }}/gef-v1.1.0-exact-head-package/
+          if-no-files-found: error
+          retention-days: 30
+
+  exact-head-package-platform-smoke:
+    needs: exact-head-package-candidate
+    name: WO-010 same exact tarball / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Check out exact candidate head for the acceptance harness
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Download the exact-head tarball and receipt from this workflow run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: gef-v1.1.0-exact-head-package-${{ github.run_id }}
+          path: ${{ runner.temp }}/gef-v1.1.0-exact-head-package
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 22
+          package-manager-cache: false
+
+      - name: Install, use, migrate with and remove the exact same package tarball (non-Windows)
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          GEF_RELEASE_RECEIPT_DIR: ${{ runner.temp }}/gef-v1.1.0-exact-head-package
+          GEF_EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          GEF_EXPECTED_EVENT: ${{ github.event_name }}
+          GEF_EXPECTED_REF: ${{ github.ref }}
+        run: node tests/v11-wo-010-artifact-smoke.mjs
+
+      - name: Install, use, migrate with and remove the exact same package tarball (unprivileged Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          GEF_RELEASE_RECEIPT_DIR: ${{ runner.temp }}/gef-v1.1.0-exact-head-package
+          GEF_EXPECTED_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+          GEF_EXPECTED_EVENT: ${{ github.event_name }}
+          GEF_EXPECTED_REF: ${{ github.ref }}
+        run: ./.github/scripts/run-v11-unprivileged-validation.ps1 -ReleaseArtifactSmoke
+
   release-assurance:
     name: V1.1 release assurance / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

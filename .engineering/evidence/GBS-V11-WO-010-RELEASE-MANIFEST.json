@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "kind": "gef.v11.clean-replacement.release-manifest",
+  "workOrderId": "GBS-V11-WO-010",
+  "issue": 351,
+  "masterIssue": 348,
+  "historicalPr350": {
+    "pullRequest": 350,
+    "branch": "codex/gbs-v11-release-integration-014",
+    "sourceCommit": "59df2d1feadb18f5f5997f748f79339adb701f43",
+    "implementationHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+    "finalHead": "3cd5ba3f7e3e5cd4c81472f521b8b8a596ad68fe",
+    "tarballSha256": "17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
+    "workflowRun": 36779630179,
+    "review": 5372870208,
+    "state": "OPEN_DRAFT_PRESERVED_UNMODIFIED",
+    "finding": "historical redacted Gitleaks finding; signature omitted; never current evidence"
+  },
+  "replacementPullRequest": null,
+  "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+  "sourceCommitAtPackageInput": null,
+  "captureMode": "PENDING_REAL_PACKAGE_BUILD_FROM_CLEAN_REPLACEMENT_HEAD",
+  "packageProducer": null,
+  "package": {
+    "name": "@gef-bootstrap/cli",
+    "version": "1.1.0",
+    "private": true,
+    "license": "UNLICENSED",
+    "registryPublicationAttempted": false
+  },
+  "toolchain": {
+    "platform": "Windows x64 local executor; Linux/macOS/Windows exact-head producers pending",
+    "node": "v24.19.0",
+    "npm": "11.17.0"
+  },
+  "tarball": {
+    "file": "gef-bootstrap-cli-1.1.0.tgz",
+    "sha256": null,
+    "sizeBytes": null,
+    "entryCount": null,
+    "state": "NOT_BUILT_FOR_CLEAN_REPLACEMENT"
+  },
+  "vendorManifest": {
+    "path": "package/vendor/MANIFEST.json",
+    "artifactEntries": null,
+    "sha256EntriesVerifiedAgainstTarball": null,
+    "nativeSha512LockVerification": "NOT_RUN_ON_CLEAN_REPLACEMENT",
+    "result": "PENDING_REAL_TARBALL"
+  },
+  "provenance": {
+    "method": "npm Trusted Publishing via GitHub Actions OIDC",
+    "workflow": "v11-publish.yml",
+    "environment": "npm-publish",
+    "registryAttestationIssued": false,
+    "prepublicationReceipt": null,
+    "reason": "No clean replacement artifact exists yet; no registry publication is authorized."
+  },
+  "npmPreflight": {
+    "identity": "NOT_VERIFIED_FOR_CLEAN_REPLACEMENT",
+    "scope": "Owner reports creation; authentication/ownership not independently verified",
+    "package": "Unauthenticated public registry lookup returned HTTP 404",
+    "trustedPublisherBinding": "NOT_VERIFIED",
+    "longLivedToken": "NOT_USED",
+    "publication": "NOT_ATTEMPTED",
+    "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+  },
+  "exactHeadCi": {
+    "state": "NOT_RUN_ON_CLEAN_REPLACEMENT",
+    "candidateHead": null,
+    "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "statusContexts": "NOT_RUN",
+    "platforms": {
+      "releaseAssurance": "NOT_RUN",
+      "sameExactTarball": "NOT_RUN",
+      "upgradeRecovery": "NOT_RUN"
+    },
+    "codecovOptionB": "NOT_RUN_ON_CLEAN_REPLACEMENT",
+    "passedSecurityAndIntegrity": [],
+    "failed": {},
+    "required": [
+      "Codecov Option B",
+      "release assurance Ubuntu/macOS/Windows",
+      "same exact-head release tarball on Ubuntu/Windows/macOS",
+      "Gitleaks full main..candidate interval",
+      "Trivy",
+      "CodeQL",
+      "Dependency Review",
+      "Pipeline Integrity",
+      "Sonar",
+      "Socket",
+      "all required PR checks"
+    ],
+    "stopCondition": "IN_PROGRESS",
+    "auditReady": false
+  },
+  "validation": {
+    "build": "PASS on local staged replacement content",
+    "focusedGate2Tests": "PASS 13/13",
+    "focusedPackageBuilderTests": "PASS 4/4",
+    "focusedPublisherDistributionSecurityTests": "27 passed; artifact receipt smoke pending a real exact-source receipt",
+    "sameArtifactSmoke": "PENDING",
+    "npmAudit": "NOT_RUN",
+    "npmRunValidate": "NOT_RUN",
+    "npmPreflight": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC; no publication attempted"
+  }
+}

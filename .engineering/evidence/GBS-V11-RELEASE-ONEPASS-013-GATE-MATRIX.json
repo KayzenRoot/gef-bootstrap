@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-09-30T13:16:08Z",
+  "capturedAtUtc": "2026-10-01T00:03:37.878Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
@@ -66,7 +66,7 @@
     {
       "gate": 2,
       "name": "Fresh cumulative release-to-main integration",
-      "state": "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT",
+      "state": "OWNER_APPROVED",
       "sourceRefs": {
         "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
         "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
@@ -116,11 +116,11 @@
       ],
       "currentCumulativeCodecovSonar": "Sonar Quality Gate PASS. Owner Option B applies: numeric Codecov patch must remain >=97.85% when a numeric denominator exists; when the provider reports zero eligible patch lines / Patch N/A / Coverage not affected on exact bound base/head with successful exact-head LCOV upload and SUCCESS patch status, record N/A_ZERO_DENOMINATOR (never 100%) and require all other exact-head gates green plus owner audit.",
       "sourceAdmissionIssue": 348,
-      "candidateBranch": "codex/gbs-v11-release-integration-014",
+      "candidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
       "preResolutionPlanCommit": "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
       "gate2ContextLock": ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json",
-      "integrationMerge": "NORMAL_TWO_PARENT_MERGE_COMMITTED_CANDIDATE_NOT_PROMOTED sha=554b2627de324058e2264b78c10114eb4c652a9d; tree=01acb6c2379304235b6213e3e9c7a2f87078069b; parents=aa4af40bfd297742bf100f94fbfeda3ef411a35b,4b2f66724ea5df94ddd8fda2d8088b12b9708c10; resolved=14; unresolved=0",
-      "mergeCommit": "554b2627de324058e2264b78c10114eb4c652a9d",
+      "integrationMerge": "FRESH_NORMAL_TWO_PARENT_MERGE_COMMITTED_CANDIDATE_ONLY sha=4e428d4c8657c19e05a30da3ba0064190007ab5f; tree=01acb6c2379304235b6213e3e9c7a2f87078069b; parents=f6738292c038eb6f0d08d1d32b3752c5c7dc417a,4b2f66724ea5df94ddd8fda2d8088b12b9708c10; unresolved=0",
+      "mergeCommit": "4e428d4c8657c19e05a30da3ba0064190007ab5f",
       "mergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
       "resolvedConflictCount": 14,
       "unresolvedConflictCount": 0,
@@ -263,28 +263,20 @@
         ]
       },
       "latestExactHeadEvidence": {
-        "headSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
+        "headSha": "8529883a048eb58aa131c68800b22fba87ce8da2",
         "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
         "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
-        "mergeBaseSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
-        "checks": "145/145 SUCCESS",
-        "releaseAssurance": "Ubuntu/macOS/Windows PASS",
-        "releaseAssuranceRun": 36737779630,
-        "codecovRun": 36737779260,
-        "codecovPatchCheckRun": 109964904340,
-        "codecovPatchFiles": 31,
-        "codecovPatchLines": 0,
-        "codecovPatchHits": 0,
-        "codecovPatchMisses": 0,
-        "codecovPatchPartials": 0,
-        "numericPatchPercent": null,
-        "patchDisposition": "N/A_ZERO_DENOMINATOR",
-        "baseCoveragePercent": 97.85,
-        "headCoveragePercent": 95.26,
-        "codecovPatchSummary": "Coverage not affected when comparing f673829...5c0aa73",
-        "stopCondition": "SUPERSEDED_BY_EVIDENCE_SYNC_DOCS_ONLY_HEAD_REQUIRING_EXACT_HEAD_REVALIDATION"
+        "mergeBaseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "checks": "148/148 SUCCESS across 45/45 completed workflow runs",
+        "repositoryValidation": "1603 total; 1599 passed; 0 failed; 4 skipped",
+        "releaseAssurance": "Ubuntu/macOS/Windows SUCCESS",
+        "security": "Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity and Sonar SUCCESS",
+        "codecovDisposition": "N/A_ZERO_DENOMINATOR under owner-approved Option B at this exact Gate 2 head; N/A is not 100% or numeric threshold satisfaction",
+        "ownerReview": 5368812257,
+        "verdict": "OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT",
+        "scope": "Admission proof only; WO-010 requires its own exact-head checks."
       },
-      "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT",
+      "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OWNER_APPROVED_WO010_ADMITTED",
       "ownerSemanticAmendment": {
         "decision": "OPTION_B_APPROVED",
         "date": "2026-09-30",
@@ -331,33 +323,134 @@
         ],
         "next": "Revalidate the documentation-only Gate Matrix/Evidence follow-up HEAD, then stop for owner reauditoria",
         "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_TEST_ASSERTIONS_READY_FOR_REAUDIT"
+      },
+      "ownerApproval": {
+        "review": 5368812257,
+        "reviewedHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+        "verdict": "OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT",
+        "workflowRuns": "45/45 SUCCESS",
+        "checkRuns": "148/148 SUCCESS",
+        "repositoryValidation": "1603 tests; 1599 passed; 0 failed; 4 skipped",
+        "codecov": "N/A_ZERO_DENOMINATOR under the owner-approved Option B semantics; not interpreted as 100% or numeric threshold satisfaction",
+        "securityAndQuality": "CodeQL, Sonar, Gitleaks, Trivy, Dependency Review and Pipeline Integrity SUCCESS; Ubuntu/macOS/Windows release assurance SUCCESS",
+        "scope": "Gate 2 approval authorizes WO-010 admission only; later WO-010 candidate checks bind to its own exact head.",
+        "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+      },
+      "historicalIntegrationMerge": {
+        "branch": "codex/gbs-v11-release-integration-014",
+        "sha": "554b2627de324058e2264b78c10114eb4c652a9d",
+        "tree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+        "parents": [
+          "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+          "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+        ],
+        "disposition": "historical source reference only; not in clean candidate ancestry"
+      },
+      "recreatedGate2Commit": {
+        "admittedSourceHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+        "commit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
+        "tree": "6e78975f0c552edfe80e472f6198dd884209b26e",
+        "ownerDecision": "OPTION_B_APPROVED",
+        "exactHeadReaudit": "PENDING_CLEAN_REPLACEMENT_CHECKS"
       }
     },
     {
       "gate": 3,
       "name": "WO-010 production acceptance and V1.1 release",
-      "state": "PREPARATION_ONLY_NOT_ADMITTED",
+      "state": "CLEAN_REPLACEMENT_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
       "workOrder": "GBS-V11-WO-010",
-      "workOrderPresent": false,
+      "workOrderPresent": true,
       "packageMetadata": {
         "rootPrivate": true,
         "rootLicense": "UNLICENSED",
         "cliPrivate": true,
-        "cliLicense": "UNLICENSED"
+        "cliLicense": "UNLICENSED",
+        "metadataMutation": "NOT_AUTHORIZED_BEFORE_NPM_SCOPE_AND_OIDC_VERIFICATION"
       },
       "ownerActions": {
-        "licenseDistributionChoice": "UNKNOWN",
-        "npmNamespaceRegistryOwnership": "UNKNOWN_IF_CLAIMED",
-        "npmOidcTrustedPublishing": "UNKNOWN_IF_CLAIMED",
+        "licenseDistributionChoice": "ALL_RIGHTS_RESERVED_PRESERVED",
+        "npmIdentity": "UNVERIFIED_ENEEDAUTH",
+        "npmNamespaceRegistryOwnership": "UNVERIFIED_SCOPE_NOT_FOUND_404",
+        "npmPackage": "UNVERIFIED_PACKAGE_NOT_FOUND_404",
+        "npmOidcTrustedPublishing": "UNVERIFIED_NO_SCOPE_OR_PACKAGE_SETTINGS",
         "finalS4PublicationApproval": "NOT_GRANTED"
       },
-      "authorizedActivityNow": "read-only source inventory only",
+      "authorizedActivityNow": "Complete exact-head production acceptance on the clean replacement; open one draft replacement PR only after the pinned full-interval scan passes. PR #350 remains historical OPEN/DRAFT and unmodified.",
       "forbiddenNow": [
-        "code or CI changes",
         "main promotion",
-        "tag",
-        "package publication"
-      ]
+        "tag v1.1.0",
+        "GitHub Release",
+        "npm publish or npm stage publish",
+        "long-lived npm token",
+        "package visibility or license metadata change before owner verification"
+      ],
+      "admissionIssue": 351,
+      "admissionReview": 5368812257,
+      "admissionHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+      "candidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+      "correctionDelta6IssueComment": 5916761162,
+      "correctionDelta16IssueComment": 5919878202,
+      "sameArtifactMatrix": "NOT_RUN_ON_CLEAN_REPLACEMENT",
+      "npmPreflight": {
+        "identity": "NOT_VERIFIED_FOR_CLEAN_REPLACEMENT",
+        "scope": "Owner reports creation; authentication/ownership not independently verified",
+        "package": "Unauthenticated public registry lookup returned HTTP 404",
+        "trustedPublisherBinding": "NOT_VERIFIED",
+        "longLivedToken": "NOT_USED",
+        "publication": "NOT_ATTEMPTED",
+        "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+      },
+      "prepublicationChecks": {
+        "workingTreePinnedGitleaks": "PASS: no new candidate finding; unchanged baseline findings remain in directory scan",
+        "fullMainToCandidateGitleaks": "PENDING_AFTER_WO010_COMMIT",
+        "realPackageTarballAndReceipt": "PENDING",
+        "packageManifestAndChecksums": "PENDING",
+        "sameArtifactUbuntuWindowsMacos": "PENDING",
+        "upgradeRecovery": "PENDING",
+        "npmRunBuild": "PASS",
+        "focusedTests": "Gate 2 13/13; package builder 4/4; other directed cases 27 passed; receipt smoke pending",
+        "npmAudit": "PENDING",
+        "npmRunValidate": "PENDING",
+        "codecovOptionB": "PENDING",
+        "sonarCodeqlTrivy": "PENDING",
+        "dependencyReviewPipelineIntegritySocket": "PENDING",
+        "exactHeadRequiredChecks": "PENDING"
+      },
+      "stopCondition": "IN_PROGRESS_BEFORE_REPLACEMENT_PR",
+      "finalPullRequestHead": null,
+      "requiredExactHeadChecks": "NOT_RUN_ON_CLEAN_REPLACEMENT",
+      "auditReady": false,
+      "blockingChecks": {},
+      "evidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
+      "releaseManifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json",
+      "historicalPr350": {
+        "pullRequest": 350,
+        "branch": "codex/gbs-v11-release-integration-014",
+        "implementationHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+        "finalHead": "3cd5ba3f7e3e5cd4c81472f521b8b8a596ad68fe",
+        "review": 5372870208,
+        "state": "BLOCKED_HISTORICAL_REDACTED_GITLEAKS_FINDING",
+        "disposition": "preserved historical evidence; branch remains OPEN/DRAFT and unmodified"
+      },
+      "implementationPr": null,
+      "replacementPullRequest": null,
+      "replacementLineage": {
+        "baseMain": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "releaseHead": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+        "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+        "mergeCommit": "4e428d4c8657c19e05a30da3ba0064190007ab5f",
+        "mergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+        "mergeParents": [
+          "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+          "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+        ],
+        "gate2RecreationCommit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
+        "gate2RecreationTree": "6e78975f0c552edfe80e472f6198dd884209b26e",
+        "wo010ImplementationHead": "PENDING_FIRST_CLEAN_WO010_COMMIT",
+        "noPr350CommitsInAncestry": true
+      },
+      "correctionDelta17Review": 5372870208
     }
   ],
   "historicalFacts": {
@@ -367,13 +460,26 @@
     "pr336": {
       "state": "MERGED",
       "mergeSha": "d892d2cb03719dd661bcab86bec995aecc8f4894"
+    },
+    "cleanReplacementSource": {
+      "oldBranch": "codex/gbs-v11-release-integration-014",
+      "oldMerge": "554b2627de324058e2264b78c10114eb4c652a9d",
+      "oldMergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+      "oldMergeParents": [
+        "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+        "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+      ],
+      "oldWoImplementationHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+      "oldPrFinalHead": "3cd5ba3f7e3e5cd4c81472f521b8b8a596ad68fe",
+      "oldReview": 5372870208,
+      "oldPrState": "OPEN_DRAFT_PRESERVED_UNMODIFIED"
     }
   },
   "phase1EvidenceBundle": ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md",
   "mergeAuthorized": false,
   "publicationAuthorized": false,
-  "currentGate": 2,
-  "currentGateState": "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT",
-  "currentCandidateBranch": "codex/gbs-v11-release-integration-014",
+  "currentGate": 3,
+  "currentGateState": "CLEAN_REPLACEMENT_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+  "currentCandidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
   "mainMergeAuthorized": false
 }

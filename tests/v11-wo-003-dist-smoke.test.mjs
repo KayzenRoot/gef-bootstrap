@@ -373,14 +373,22 @@ test("the installed package carries the Windows rights oracle and its prebuilt b
 
   const manifest = JSON.parse(readFileSync(join(cliDir, "vendor", "MANIFEST.json"), "utf8"));
   const natives = manifest.artifacts.filter((entry) => entry.kind === "native-runtime");
-  assert.equal(natives.length, 2, "the manifest records the runtime and the host platform binary");
-  assert.deepEqual(natives.map((entry) => entry.name).sort(), ["@koromix/" + hostPlatformPackage, "koffi"].sort());
+  const portableNativePackages = [
+    "@koromix/koffi-darwin-arm64",
+    "@koromix/koffi-darwin-x64",
+    "@koromix/koffi-linux-x64",
+    "@koromix/koffi-win32-x64",
+  ];
+  assert.equal(natives.length, portableNativePackages.length + 1, "the manifest records Koffi and every supported platform prebuild");
+  assert.deepEqual(natives.map((entry) => entry.name).sort(), [...portableNativePackages, "koffi"].sort());
   for (const entry of natives) assert.match(entry.version, /^\d+\.\d+\.\d+$/, `${entry.name} must carry its exact version`);
 
   // The declared dependency is an exact pin, not a range.
   const packedManifest = JSON.parse(readFileSync(join(cliDir, "package.json"), "utf8"));
   assert.match(packedManifest.dependencies.koffi, /^\d+\.\d+\.\d+$/, "koffi must be pinned exactly");
-  assert.equal(packedManifest.optionalDependencies["@koromix/koffi-win32-x64"], "3.3.0", "the Windows prebuilt is declared exactly as an optional platform binary");
+  for (const nativePackage of portableNativePackages) {
+    assert.equal(packedManifest.optionalDependencies[nativePackage], "3.3.0", `${nativePackage} is pinned exactly as an optional platform binary`);
+  }
 
   // The installed CLI uses its own payload: on Windows that means loading the packaged adapter.
   const project = tempProject(t);
@@ -400,6 +408,6 @@ test("the installed package carries the Windows rights oracle and its prebuilt b
     }
   } else {
     // POSIX never loads the adapter; the effective-write chain is the proof there.
-    assert.equal(existsSync(join(cliDir, "node_modules", "@koromix", "koffi-win32-x64")), false, "a POSIX build stages no Windows binary");
+    assert.equal(existsSync(join(cliDir, "node_modules", "@koromix", "koffi-win32-x64")), true, "the portable package retains the Windows prebuild on POSIX");
   }
 });

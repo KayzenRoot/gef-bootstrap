@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, resolve, sep } from "node:path";
 import { registerHooks } from "node:module";
 import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -12,13 +12,14 @@ import { reportWindowsRights } from "../packages/cli/scripts/rights-diagnostics.
 
 const REAL_SCRIPT = resolve(dirname(fileURLToPath(import.meta.url)), "../packages/cli/scripts/prepare-package.mjs");
 const REAL_CLI_PACKAGE = resolve(dirname(fileURLToPath(import.meta.url)), "../packages/cli");
+const REAL_REPOSITORY_ROOT = resolve(dirname(REAL_CLI_PACKAGE), "..");
 const FIXTURE_ROOT = mkdtempSync(join(tmpdir(), "gef-pack-branch-fixture-"));
 const FIXTURE_REPO = join(FIXTURE_ROOT, "repo");
 const FIXTURE_SCRIPT = join(FIXTURE_REPO, "packages", "cli", "scripts", "prepare-package.mjs");
 const REAL_SCRIPT_URL = pathToFileURL(REAL_SCRIPT).href;
 const SOURCE_BYTES = readFileSync(REAL_SCRIPT);
 const SOURCE_SHA256 = createHash("sha256").update(SOURCE_BYTES).digest("hex");
-const ADMITTED_GIT_BLOB = "10e659ccce15045ed37ffa3e82d06a8408b8f734";
+const ADMITTED_GIT_BLOB = "fe707051614fe54dda689ac223ac073a0a79c553";
 const gitBlobSha1 = bytes => {
   const canonicalBytes = Buffer.from(bytes.toString("utf8").replace(/\r\n/g, "\n"), "utf8");
   return createHash("sha1").update(`blob ${canonicalBytes.length}\0`).update(canonicalBytes).digest("hex");
@@ -41,9 +42,13 @@ const SCHEMA_ASSETS = [
   "gef-cli-upgrade-compatibility-matrix.schema.json",
   "gef-cli-upgrade-compatibility-matrix.json",
 ];
-const RUNTIME_PACKAGES = ["contracts", "kernel", "preflight"];
-const HOST_NATIVE_PACKAGE = `koffi-${process.platform}-${process.arch}`;
+const RUNTIME_PACKAGES = ["contracts", "kernel", "preflight", "config", "project-identity"];
 const ORIGINAL_TEST_PROCESS = process;
+const ORIGINAL_NPM_PLATFORM_CANDIDATE = ORIGINAL_TEST_PROCESS.platform === "win32"
+  ? join(dirname(ORIGINAL_TEST_PROCESS.execPath), "node_modules", "npm", "bin", "npm-cli.js")
+  : resolve(dirname(ORIGINAL_TEST_PROCESS.execPath), "..", "lib", "node_modules", "npm", "bin", "npm-cli.js");
+const ORIGINAL_NPM_CLI = [ORIGINAL_TEST_PROCESS.env.npm_execpath, ORIGINAL_NPM_PLATFORM_CANDIDATE]
+  .find((candidate) => typeof candidate === "string" && isAbsolute(candidate) && existsSync(candidate));
 const executionState = {
   execPath: ORIGINAL_TEST_PROCESS.execPath,
   env: ORIGINAL_TEST_PROCESS.env,
@@ -90,7 +95,8 @@ function writeFixtureFile(relativePath, content = "fixture payload\n") {
   writeFileSync(path, content, "utf8");
 }
 
-function seedFixture({ payload = true, engines = true, support = true, schemas = true, nativeRoot = true, hostNative = true, koffi = true, runtimeDists = true, license = true } = {}) {
+function seedFixture({ payload = true, engines = true, support = true, schemas = true, koffi = true, runtimeDists = true, license = true } = {}) {
+  writeFixtureFile("package-lock.json", readFileSync(join(REAL_REPOSITORY_ROOT, "package-lock.json"), "utf8"));
   if (payload) {
     for (const directory of ["dist", "bin", "schemas"]) mkdirSync(join(FIXTURE_REPO, "packages", "cli", directory), { recursive: true });
     writeFixtureFile("packages/cli/README.md", "fixture CLI readme\n");
@@ -99,20 +105,36 @@ function seedFixture({ payload = true, engines = true, support = true, schemas =
   if (engines) for (const source of ENGINE_SOURCES) writeFixtureFile(source);
   if (support) writeFixtureFile(SUPPORT_SOURCE);
   if (schemas) for (const asset of SCHEMA_ASSETS) writeFixtureFile(`packages/cli/schemas/${asset}`, "{}\n");
-  if (nativeRoot) {
-    const root = join(FIXTURE_REPO, "node_modules", "@koromix");
-    mkdirSync(root, { recursive: true });
-    if (hostNative) writeFixtureFile(`node_modules/@koromix/${HOST_NATIVE_PACKAGE}/package.json`, JSON.stringify({ name: `@koromix/${HOST_NATIVE_PACKAGE}`, version: "3.3.0" }));
-    else writeFixtureFile("node_modules/@koromix/koffi-other-platform-x64/package.json", JSON.stringify({ name: "@koromix/koffi-other-platform-x64", version: "3.3.0" }));
-  }
-  if (koffi) writeFixtureFile("node_modules/koffi/package.json", JSON.stringify({ name: "koffi", version: "3.3.0" }));
-  if (runtimeDists) {
-    for (const name of RUNTIME_PACKAGES) {
-      writeFixtureFile(`packages/${name}/package.json`, JSON.stringify({ name: `@gef-bootstrap/${name}`, version: "0.0.0" }));
-      writeFixtureFile(`packages/${name}/dist/index.mjs`);
-    }
+  if (koffi) writeFixtureFile("node_modules/koffi/package.json", JSON.stringify({
+    name: "koffi",
+    version: "3.3.0",
+    optionalDependencies: {
+      "@koromix/koffi-linux-x64": "3.3.0",
+      "@koromix/koffi-darwin-x64": "3.3.0",
+      "@koromix/koffi-darwin-arm64": "3.3.0",
+      "@koromix/koffi-win32-x64": "3.3.0",
+      "@koromix/koffi-android-arm64": "3.3.0",
+      "@koromix/koffi-linux-arm64": "3.3.0",
+    },
+  }));
+  for (const name of RUNTIME_PACKAGES) {
+    writeFixtureFile(`packages/${name}/package.json`, JSON.stringify({ name: `@gef-bootstrap/${name}`, version: "0.0.0" }));
+    if (runtimeDists) writeFixtureFile(`packages/${name}/dist/index.mjs`);
   }
   if (license) writeFixtureFile("LICENSE", "Synthetic fixture license\n");
+}
+
+function writeDelegatingNpm(scriptPath, nonNativeOutcome) {
+  assert.ok(ORIGINAL_NPM_CLI, "the active Node.js installation must provide its npm CLI");
+  const source = `import { spawnSync } from "node:child_process";\n` +
+    `const args = process.argv.slice(2);\n` +
+    `if (args.some((argument) => /^@koromix\\/koffi-/.test(argument))) {\n` +
+    `  const result = spawnSync(process.execPath, [${JSON.stringify(ORIGINAL_NPM_CLI)}, ...args], { encoding: "utf8" });\n` +
+    `  if (result.stdout) process.stdout.write(result.stdout);\n` +
+    `  if (result.stderr) process.stderr.write(result.stderr);\n` +
+    `  process.exitCode = result.status ?? 1;\n` +
+    `} else {\n  ${nonNativeOutcome}\n}\n`;
+  writeFileSync(scriptPath, source, "utf8");
 }
 
 function resetFixture(options) {
@@ -293,31 +315,38 @@ test("package preparation: real fail-closed branches clean isolated staging and 
   assert.equal(admittedBlob, ADMITTED_GIT_BLOB);
   assert.ok(existsSync(join(initialPackDestination, initialTarballs[0])));
 
-  resetFixture({ payload: false, engines: false, support: false, schemas: false, nativeRoot: false, hostNative: false, koffi: false, runtimeDists: false, license: false });
+  resetFixture({ payload: false, engines: false, support: false, schemas: false, koffi: false, runtimeDists: false, license: false });
   expectStageFailure(stage, /Package payload is missing: dist/);
 
-  resetFixture({ payload: true, engines: false, support: false, schemas: false, nativeRoot: false, hostNative: false, koffi: false, runtimeDists: false, license: false });
+  resetFixture({ payload: true, engines: false, support: false, schemas: false, koffi: false, runtimeDists: false, license: false });
   expectStageFailure(stage, /Engine source is missing: packages\/m48-m54-maintenance\/src\/index\.mjs/);
 
-  resetFixture({ payload: true, engines: true, support: false, schemas: false, nativeRoot: false, hostNative: false, koffi: false, runtimeDists: false, license: false });
+  resetFixture({ payload: true, engines: true, support: false, schemas: false, koffi: false, runtimeDists: false, license: false });
   expectStageFailure(stage, /Engine support source is missing: packages\/m62-m63-final\/src\/v11-performance-telemetry\.mjs/);
 
-  resetFixture({ payload: true, engines: true, support: true, schemas: false, nativeRoot: false, hostNative: false, koffi: false, runtimeDists: false, license: false });
+  resetFixture({ payload: true, engines: true, support: true, schemas: false, koffi: false, runtimeDists: false, license: false });
   expectStageFailure(stage, /CLI schema asset is missing: schemas\/gef-cli-state\.schema\.json/);
 
-  resetFixture({ payload: true, engines: true, support: true, schemas: true, nativeRoot: false, hostNative: false, koffi: false, runtimeDists: false, license: false });
-  expectStageFailure(stage, /Native runtime for this host is missing: @koromix\/koffi-/);
+  resetFixture({ payload: true, engines: true, support: true, schemas: true, koffi: false, runtimeDists: false, license: false });
+  rmSync(join(FIXTURE_REPO, "package-lock.json"));
+  expectStageFailure(stage, /ENOENT.*package-lock\.json/);
 
-  resetFixture({ payload: true, engines: true, support: true, schemas: true, nativeRoot: true, hostNative: false, koffi: false, runtimeDists: false, license: false });
-  expectStageFailure(stage, /Native runtime for this host is missing: @koromix\/koffi-/);
+  resetFixture({ payload: true, engines: true, support: true, schemas: true, koffi: true, runtimeDists: false, license: false });
+  const packageLockPath = join(FIXTURE_REPO, "package-lock.json");
+  const packageLock = JSON.parse(readFileSync(packageLockPath, "utf8"));
+  const linuxNativeLock = packageLock.packages["node_modules/@koromix/koffi-linux-x64"];
+  assert.ok(linuxNativeLock?.integrity, "the root lock pins the Linux native archive");
+  delete linuxNativeLock.integrity;
+  writeFileSync(packageLockPath, `${JSON.stringify(packageLock, null, 2)}\n`, "utf8");
+  expectStageFailure(stage, /Native package has no SHA-512 lockfile integrity: @koromix\/koffi-linux-x64/);
 
-  resetFixture({ payload: true, engines: true, support: true, schemas: true, nativeRoot: true, hostNative: true, koffi: false, runtimeDists: false, license: false });
-  expectStageFailure(stage, /Runtime native package is missing: koffi/);
+  resetFixture({ payload: true, engines: true, support: true, schemas: true, koffi: false, runtimeDists: false, license: false });
+  expectStageFailure(stage, /Koffi runtime package is missing \(run npm ci\)/);
 
-  resetFixture({ payload: true, engines: true, support: true, schemas: true, nativeRoot: true, hostNative: true, koffi: true, runtimeDists: false, license: false });
+  resetFixture({ payload: true, engines: true, support: true, schemas: true, koffi: true, runtimeDists: false, license: false });
   expectStageFailure(stage, /Runtime package is not built: packages\/contracts\/dist/);
 
-  resetFixture({ payload: true, engines: true, support: true, schemas: true, nativeRoot: true, hostNative: true, koffi: true, runtimeDists: true, license: false });
+  resetFixture({ payload: true, engines: true, support: true, schemas: true, koffi: true, runtimeDists: true, license: false });
   expectStageFailure(stage, /Repository LICENSE is missing/);
 
   resetFixture();
@@ -326,6 +355,13 @@ test("package preparation: real fail-closed branches clean isolated staging and 
   try {
     assert.ok(existsSync(join(staged, "vendor", "MANIFEST.json")));
     assert.ok(existsSync(join(staged, "LICENSE")));
+    const stagedKoffi = JSON.parse(readFileSync(join(staged, "node_modules", "koffi", "package.json"), "utf8"));
+    assert.deepEqual(stagedKoffi.optionalDependencies, {
+      "@koromix/koffi-linux-x64": "3.3.0",
+      "@koromix/koffi-darwin-x64": "3.3.0",
+      "@koromix/koffi-darwin-arm64": "3.3.0",
+      "@koromix/koffi-win32-x64": "3.3.0",
+    });
   } finally {
     rmSync(staged, { recursive: true, force: true });
     cleanupNewStages(beforeStage);
@@ -346,14 +382,14 @@ test("package preparation: real fail-closed branches clean isolated staging and 
   );
 
   const failingNpm = join(FIXTURE_ROOT, "fake-npm-failure.mjs");
-  writeFileSync(failingNpm, 'process.stderr.write("fixture npm failure\\n"); process.exitCode = 7;\n', "utf8");
+  writeDelegatingNpm(failingNpm, 'process.stderr.write("fixture npm failure\\n"); process.exitCode = 7;');
   withExecutionState(
     { env: { ...ORIGINAL_TEST_PROCESS.env, npm_execpath: failingNpm } },
     () => expectPackFailure(pack, join(FIXTURE_ROOT, "failed-pack"), /npm pack failed:.*fixture npm failure/),
   );
 
   const silentNpm = join(FIXTURE_ROOT, "fake-npm-no-tarball.mjs");
-  writeFileSync(silentNpm, 'process.stdout.write("fixture completed without a tarball\\n");\n', "utf8");
+  writeDelegatingNpm(silentNpm, 'process.stdout.write("fixture completed without a tarball\\n");');
   withExecutionState(
     { env: { ...ORIGINAL_TEST_PROCESS.env, npm_execpath: silentNpm } },
     () => expectPackFailure(pack, join(FIXTURE_ROOT, "empty-pack"), /npm pack produced no tarball at/),

@@ -494,7 +494,7 @@
       "ownerReview": 5364744639,
       "mergeSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
     },
-    "replacementCumulativeReleaseToMainPr": "PR #350 OPEN_DRAFT / OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT",
+    "replacementCumulativeReleaseToMainPr": "PR #350 OPEN_DRAFT_PRESERVED_UNMODIFIED; clean replacement branch codex/gbs-v11-wo010-clean-replacement-delta17; replacement PR waits for full-interval pinned Gitleaks preflight",
     "wo010Gate": "NOT_ADMITTED until Gate2 owner audit closes: numeric Codecov patch >=97.85% when a numeric denominator exists, or N/A_ZERO_DENOMINATOR only under owner Option B exact-base/head + exact-head LCOV upload SUCCESS + provider patch SUCCESS with zero eligible patch lines/not affected + visible head/project coverage + no weakened coverage semantics + all other required gates green",
     "ecosystemDetachment": {
       "decision": "D-0061",
@@ -558,7 +558,7 @@
       "workOrder": "GBS-V11-RELEASE-INTEGRATION-014",
       "issue": 348,
       "state": "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT",
-      "candidateBranch": "codex/gbs-v11-release-integration-014",
+      "candidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
       "mainBase": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
       "releaseHead": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
       "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
@@ -571,14 +571,14 @@
       "mainMergeAuthorized": false,
       "tagOrPublicationAuthorized": false,
       "integrationCandidateMerge": {
-        "branch": "codex/gbs-v11-release-integration-014",
-        "sha": "554b2627de324058e2264b78c10114eb4c652a9d",
+        "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+        "sha": "4e428d4c8657c19e05a30da3ba0064190007ab5f",
         "tree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
         "parents": [
-          "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+          "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
           "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
         ],
-        "status": "CANDIDATE_ONLY_NOT_PROMOTED_TO_MAIN"
+        "status": "CLEAN_REPLACEMENT_CANDIDATE_ONLY_NOT_PROMOTED_TO_MAIN"
       },
       "resolvedTextualConflicts": 14,
       "unresolvedTextualConflicts": 0,
@@ -592,7 +592,86 @@
         "numericPatchRule": ">=97.85% when Codecov provides a numeric patch denominator",
         "zeroDenominatorRule": "N/A_ZERO_DENOMINATOR accepted only with exact bound base/head, exact-head LCOV upload SUCCESS, provider patch status SUCCESS, zero eligible patch lines / Patch N/A / Coverage not affected, visible head/project coverage, unchanged threshold/exclusions/coverage definition, no synthetic denominator edits, all other required Gate2 checks green, and owner exact-head audit",
         "nAIsNot": "100% or numeric threshold satisfaction"
+      },
+      "recreatedGate2Commit": {
+        "admittedSourceHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+        "commit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
+        "tree": "6e78975f0c552edfe80e472f6198dd884209b26e",
+        "ownerDecision": "OPTION_B_APPROVED",
+        "exactHeadReaudit": "PENDING_CLEAN_REPLACEMENT_CHECKS"
       }
-    }
+    },
+    "gate3Wo010Acceptance": {
+      "state": "CLEAN_REPLACEMENT_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+      "workOrder": "GBS-V11-WO-010",
+      "issue": 351,
+      "masterIssue": 348,
+      "sourcePullRequest": 350,
+      "implementationPr": null,
+      "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+      "admissionReview": 5368812257,
+      "admissionReviewedHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+      "gate2OwnerVerdict": "OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT",
+      "replacementLineage": {
+        "baseMain": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "releaseHead": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+        "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+        "mergeCommit": "4e428d4c8657c19e05a30da3ba0064190007ab5f",
+        "mergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+        "mergeParents": [
+          "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+          "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+        ],
+        "gate2RecreationCommit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
+        "gate2RecreationTree": "6e78975f0c552edfe80e472f6198dd884209b26e",
+        "implementationHead": "PENDING_FIRST_CLEAN_WO010_COMMIT",
+        "replacementPullRequest": null
+      },
+      "historicalPr350": {
+        "state": "OPEN_DRAFT_PRESERVED_UNMODIFIED",
+        "branch": "codex/gbs-v11-release-integration-014",
+        "implementationHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+        "finalHead": "3cd5ba3f7e3e5cd4c81472f521b8b8a596ad68fe",
+        "review": 5372870208,
+        "findingDisposition": "historical redacted finding; signature not copied into replacement"
+      },
+      "npmPreflight": {
+        "identity": "NOT_VERIFIED_FOR_CLEAN_REPLACEMENT",
+        "scope": "Owner reports creation; authentication/ownership not independently verified",
+        "package": "Unauthenticated public registry lookup returned HTTP 404",
+        "trustedPublisherBinding": "NOT_VERIFIED",
+        "longLivedToken": "NOT_USED",
+        "publication": "NOT_ATTEMPTED",
+        "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+      },
+      "packageMetadata": {
+        "name": "@gef-bootstrap/cli",
+        "version": "1.1.0",
+        "private": true,
+        "license": "UNLICENSED"
+      },
+      "candidateHead": null,
+      "exactHeadChecks": "NOT_RUN_ON_CLEAN_REPLACEMENT",
+      "exactHeadProviderEvidence": {},
+      "mainMergeAuthorized": false,
+      "tagAuthorized": false,
+      "publicationAuthorized": false,
+      "stopCondition": "IN_PROGRESS_BEFORE_REPLACEMENT_PR",
+      "localValidation": {
+        "node": "v24.19.0",
+        "npm": "11.17.0",
+        "dependencyInstall": "PASS npm ci added 33 packages",
+        "build": "PASS",
+        "gate2DirectedTests": "PASS 13/13",
+        "packageBuilderTests": "PASS 4/4",
+        "publisherDistributionSecurityTests": "27 passed; receipt-bound smoke pending",
+        "npmAudit": "NOT_RUN",
+        "npmRunValidate": "NOT_RUN",
+        "platform": "Windows x64"
+      }
+    },
+    "gate3NextLegalAction": "Complete package receipt, exact-head validation and all required checks on the clean replacement; open one replacement PR only after the pinned full-interval scan passes.",
+    "gate3EvidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
+    "gate3Manifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json"
   }
 }

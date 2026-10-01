@@ -1,0 +1,362 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-WO-010",
+  "issue": 351,
+  "masterIssue": 348,
+  "repository": "KayzenRoot/gef-bootstrap",
+  "pullRequest": null,
+  "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+  "capturedAtUtc": "2026-10-01T00:03:37.878Z",
+  "admission": {
+    "state": "OWNER_ADMITTED_FOR_ONE_PASS_EXECUTION",
+    "ownerReview": 5368812257,
+    "reviewVerdict": "OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT",
+    "startingHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+    "pullRequestBase": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "mainSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+    "mergeBaseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "mainAheadBehind": [
+      0,
+      100
+    ],
+    "releaseAheadBehind": [
+      0,
+      18
+    ],
+    "pullRequestState": "OPEN_DRAFT_CLEAN",
+    "mergeAuthorized": false,
+    "tagAuthorized": false,
+    "publicationAuthorizedNow": false
+  },
+  "sourceFingerprintsAtStartingHead": {
+    ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    ".engineering/CHECKPOINT.md": "ca49a6217e0c91141efca55b20e3a967f313eb13",
+    ".engineering/CHECKPOINT.json": "09db66defa71cab0cb91046e8e71293e677d6b70",
+    ".engineering/DEPLOYMENT.md": "54b7b86422df2be0463219e31e06025c7d21171b",
+    ".engineering/SECURITY.md": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+    ".engineering/DEFINITION-OF-DONE.md": "28192469f6b66f1329375917def4691dce40ed4e",
+    ".engineering/REQUIREMENTS.md": "49fba49baab46ba5fa64ff9d2bb0f2944c888c8d",
+    ".engineering/SCOPE.md": "2de21b38bd37622099e4058aae9403130dbb4a9f",
+    ".engineering/ARCHITECTURE.md": "86b00afd1207157d8eb591ddcd604b1cbd9aaa2b",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
+    ".engineering/releases/V1.1-SCOPE.md": "b8d05dae2e9584b2fed6670c65751f493f698c8e",
+    ".engineering/releases/V1.1-TEST-MATRIX.md": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74",
+    ".engineering/releases/V1.1-COMPATIBILITY-MIGRATION-CONTRACT.md": "c575e447064d311072a3f3cd3d1f67064a3c8e80",
+    ".engineering/releases/V1.1-COMPATIBILITY-MATRIX.skeleton.json": "faef9888fa24500ae8bdcb24c1c4aad6aea69fa8",
+    ".engineering/releases/V1.1-CLI-DISTRIBUTION-ARCHITECTURE.md": "dde3f82749161ad5c7b82415a160cca5d852e197",
+    ".engineering/releases/V1.1-RELEASE-PLAN.md": "074c99c57f09a13cb2e71cce883e46ee500909ed",
+    "package.json": "c8e17d4121566250595a1966a9314c56272546ac",
+    "package-lock.json": "f7fccd5a338feae645d7c31de6905d6e0e97d998",
+    "packages/cli/package.json": "2ae791155eae41a7d835b0758365356d6136af0c",
+    "packages/cli/README.md": "8ec72261f66694ff3fb66ca7749c6d9408bfd230",
+    "packages/cli/scripts/prepare-package.mjs": "10e659ccce15045ed37ffa3e82d06a8408b8f734",
+    "LICENSE": "648cad75d20c617b197af5d3a685f7736e5da037",
+    "CHANGELOG.md": "9cb95d6c5a6ea845f3040d22237e14a57ed419d0",
+    ".github/workflows/v11-release-assurance.yml": "680bbcee591299685a0a76161698e58097d2b783",
+    ".github/workflows/coverage-codecov.yml": "005e04fe7d3306ef64613317f89115adf67c7791",
+    ".github/workflows/free-security-pilot.yml": "38137ef513fcc52d6e14a42c6a5ebcc2f1b05f69",
+    ".github/workflows/security-codeql.yml": "554e26bf9d16aceee708d48f86251495bd74e993",
+    ".github/workflows/dependency-review.yml": "3d34f93903798345abcbd345640f1e04f5e0d424",
+    ".github/workflows/pipeline-integrity.yml": "8a7f58eefe47240b42b890c18f4f5f30c3e84eec"
+  },
+  "searchLedger": {
+    "requestedPath": ".engineering/TEST-AND-BENCHMARK-PLAN.md",
+    "result": "ABSENT",
+    "authoritativeResolvedPath": ".engineering/TEST-BENCHMARK-PLAN.md",
+    "capturedBlob": "a7b5618ead1a483275a0b0e72126258523349f01"
+  },
+  "writeAllowed": [
+    ".engineering/work-orders/GBS-V11-WO-010.md",
+    ".engineering/context-locks/GBS-V11-WO-010.json",
+    ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
+    ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json",
+    ".engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md",
+    ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json",
+    ".engineering/CHECKPOINT.md",
+    ".engineering/CHECKPOINT.json",
+    "CHANGELOG.md",
+    "docs/INSTALLATION.md",
+    "docs/QUICKSTART.md",
+    "docs/V1.1-OPERATIONS-RUNBOOK.md",
+    ".github/workflows/v11-publish.yml",
+    ".github/workflows/v11-release-assurance.yml",
+    ".github/scripts/run-v11-unprivileged-validation.ps1 for the exact Windows artifact-smoke mode only",
+    "packages/config/src/index.ts",
+    "packages/cli/scripts/prepare-package.mjs",
+    "tests/v11-wo-010-artifact-smoke.mjs",
+    "tests/v11-wo-010-publish-workflow.test.mjs",
+    "tests/v11-wo-010-security-config.test.mjs",
+    "tests/v11-codecov-patch-coverage.test.mjs",
+    "tests/v11-pack-branch-negative.test.mjs",
+    "tests/v11-wo-002-dist-smoke.test.mjs",
+    "tests/v11-wo-003-dist-smoke.test.mjs"
+  ],
+  "readOnly": [
+    "package.json",
+    "package-lock.json",
+    "packages/cli/package.json unless public scope ownership and npm trusted publisher are verified",
+    "runtime source except the precise packages/config/src/index.ts correction approved by Issue #351 comment 5916191651",
+    ".github/workflows/coverage-codecov.yml",
+    "all coverage thresholds, exclusions, Sonar, CodeQL and security policies outside the new tag-only publisher"
+  ],
+  "forbidden": [
+    "main merge",
+    "tag v1.1.0",
+    "GitHub Release",
+    "npm publish or npm stage publish",
+    "force push, rebase or history rewrite",
+    "V1.0.0 tag or acceptance-history mutation",
+    "long-lived npm publish token"
+  ],
+  "correctionDeltas": [
+    {
+      "issue": 351,
+      "comment": 5916191651,
+      "paths": [
+        "packages/config/src/index.ts",
+        "tests/v11-wo-010-security-config.test.mjs"
+      ],
+      "result": "prevented prototype pollution from attacker-controlled __proto__ config paths with a focused regression test"
+    },
+    {
+      "issue": 351,
+      "comment": 5916319765,
+      "paths": [
+        ".github/workflows/v11-publish.yml",
+        "tests/v11-wo-010-publish-workflow.test.mjs"
+      ],
+      "result": "required complete package path allowlist and sensitive filename checks for every archive entry"
+    },
+    {
+      "issue": 351,
+      "comment": 5916451275,
+      "paths": [
+        "docs/INSTALLATION.md",
+        "docs/V1.1-OPERATIONS-RUNBOOK.md"
+      ],
+      "result": "run npm init and install from the isolated consumer working directory"
+    },
+    {
+      "issue": 351,
+      "comment": 5916464847,
+      "paths": [
+        ".github/workflows/v11-publish.yml",
+        "tests/v11-wo-010-publish-workflow.test.mjs"
+      ],
+      "result": "apply consumer working directory behavior to pre-publish and post-publish smoke steps"
+    },
+    {
+      "issue": 351,
+      "comment": 5916540441,
+      "paths": [
+        ".github/workflows/v11-publish.yml",
+        "tests/v11-wo-010-publish-workflow.test.mjs"
+      ],
+      "result": "add a non-publishing branch candidate path and same-run package matrix while keeping publication push-tag-only"
+    },
+    {
+      "issue": 351,
+      "comment": 5916761162,
+      "paths": [
+        ".github/workflows/v11-release-assurance.yml",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        "tests/v11-wo-010-artifact-smoke.mjs"
+      ],
+      "result": "make the same exact-head tarball matrix executable before merge through the existing pull_request assurance workflow"
+    },
+    {
+      "issue": 351,
+      "comment": 5917327074,
+      "paths": [
+        "packages/cli/scripts/prepare-package.mjs",
+        ".github/workflows/v11-publish.yml",
+        "tests/v11-wo-010-artifact-smoke.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "bundle SHA-512-verified Koffi prebuilds for exact cross-platform tarball installs, block lifecycle scripts, lock isolated consumers, and remove the Gitleaks wording false positive"
+    },
+    {
+      "issue": 351,
+      "comment": 5917518687,
+      "paths": [
+        "packages/cli/scripts/prepare-package.mjs",
+        ".github/workflows/v11-publish.yml",
+        "tests/v11-wo-010-artifact-smoke.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "bundle the complete reachable internal workspace runtime closure so offline tarball consumers never request private @gef-bootstrap packages from the public registry"
+    },
+    {
+      "issue": 351,
+      "comment": 5917645177,
+      "paths": [
+        "tests/v11-codecov-patch-coverage.test.mjs",
+        "tests/v11-pack-branch-negative.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "refresh only the two admitted package-builder blob identity constants after authorized same-WO package-preparation corrections"
+    },
+    {
+      "issue": 351,
+      "comment": 5917689147,
+      "paths": [
+        "tests/v11-wo-002-dist-smoke.test.mjs",
+        "tests/v11-wo-003-dist-smoke.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "align legacy distribution assertions with the authorized portable native and complete internal runtime package closure"
+    },
+    {
+      "issue": 351,
+      "comment": 5917783307,
+      "paths": [
+        "tests/v11-codecov-patch-coverage.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "update the isolated package-builder fixture for lockfile-verified portable native staging while retaining fail-closed lock and package assertions"
+    },
+    {
+      "issue": 351,
+      "comment": 5918081266,
+      "paths": [
+        "tests/v11-wo-003-dist-smoke.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "assert the portable tarball retains its Windows prebuild after a POSIX install while preserving the POSIX effective-write behavior"
+    },
+    {
+      "issue": 351,
+      "comment": 5918415058,
+      "paths": [
+        ".github/scripts/run-v11-unprivileged-validation.ps1",
+        ".github/workflows/v11-release-assurance.yml",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "run the Windows same-artifact migration smoke under a standard non-Administrator identity so machine-Git trust remains fail-closed without blocking supported upgrade evidence"
+    },
+    {
+      "issue": 351,
+      "comment": 5918809234,
+      "paths": [
+        ".github/scripts/run-v11-unprivileged-validation.ps1",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "bootstrap the exact-artifact smoke with only its receipt-bound child environment while retaining the standard Windows identity and unchanged default validation mode"
+    },
+    {
+      "issue": 351,
+      "comment": 5919409800,
+      "paths": [
+        ".github/workflows/v11-publish.yml",
+        "packages/cli/scripts/prepare-package.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        "tests/v11-pack-branch-negative.test.mjs",
+        "tests/v11-codecov-patch-coverage.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "enforce generated consumer locks with npm ci, resolve tar through an absolute supported system path, and specify stable existing bundle-name ordering for Sonar reliability/security findings"
+    },
+    {
+      "issue": 351,
+      "comment": 5919562332,
+      "paths": [
+        "tests/v11-wo-010-artifact-smoke.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs"
+      ],
+      "result": "use npm ci in the checksum-bound same-artifact consumer after generating its lockfile"
+    },
+    {
+      "issue": 351,
+      "comment": 5919878202,
+      "paths": [
+        "packages/cli/scripts/prepare-package.mjs",
+        "tests/v11-codecov-patch-coverage.test.mjs",
+        "tests/v11-pack-branch-negative.test.mjs",
+        "tests/v11-wo-010-publish-workflow.test.mjs",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/context-locks/GBS-V11-WO-010.json"
+      ],
+      "result": "narrow staged Koffi optional metadata to the four lock-verified bundled native prebuilds so receipt-bound consumers can run npm ci"
+    },
+    {
+      "issue": 351,
+      "correctionDelta": 17,
+      "review": 5372870208,
+      "paths": [
+        ".engineering/context-locks/GBS-V11-WO-010.json",
+        ".engineering/work-orders/GBS-V11-WO-010.md",
+        ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
+        ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json",
+        ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json",
+        ".engineering/CHECKPOINT.md",
+        ".engineering/CHECKPOINT.json"
+      ],
+      "result": "recreate admitted Gate 2 and WO-010 on a fresh main-based branch; preserve PR #350 as historical draft; require a clean pinned full-interval scan before one replacement PR"
+    }
+  ],
+  "npmPreflight": {
+    "node": "v24.19.0",
+    "npm": "11.17.0",
+    "registry": "https://registry.npmjs.org/",
+    "npmIdentity": "UNVERIFIED_ENEEDAUTH",
+    "scopeQuery": "npm access list packages @gef-bootstrap returned E404 Scope not found",
+    "packageQuery": "@gef-bootstrap/cli@1.1.0 returned E404",
+    "trustedPublisherBinding": "UNVERIFIED_PACKAGE_AND_IDENTITY_NOT_AVAILABLE",
+    "longLivedToken": "NOT_PRESENT_OR_USED",
+    "publication": "NOT_ATTEMPTED"
+  },
+  "stopConditions": [
+    "GBS_V11_WO_010_CLEAN_REPLACEMENT_EXACT_HEAD_READY_FOR_OWNER_AUDIT",
+    "GBS_V11_WO_010_EXACT_HEAD_READY_FOR_PRODUCTION_ACCEPTANCE_AUDIT",
+    "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+  ],
+  "sourcePullRequest": {
+    "number": 350,
+    "branch": "codex/gbs-v11-release-integration-014",
+    "finalHead": "3cd5ba3f7e3e5cd4c81472f521b8b8a596ad68fe",
+    "state": "OPEN_DRAFT_PRESERVED_UNMODIFIED",
+    "review": 5372870208,
+    "disposition": "historical only; no PR #350 commit is in the clean candidate ancestry"
+  },
+  "cleanReplacementCandidate": {
+    "correctionDelta": 17,
+    "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+    "baseMainSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+    "mergeBaseSha": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+    "freshNormalMerge": {
+      "commit": "4e428d4c8657c19e05a30da3ba0064190007ab5f",
+      "tree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+      "parents": [
+        "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+      ]
+    },
+    "recreatedGate2": {
+      "admittedSourceHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+      "commit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
+      "tree": "6e78975f0c552edfe80e472f6198dd884209b26e",
+      "ownerDecision": "OPTION_B_APPROVED",
+      "exactHeadReaudit": "PENDING"
+    },
+    "wo010ImplementationHead": "PENDING_FIRST_CLEAN_WO010_COMMIT",
+    "replacementPullRequest": null,
+    "mainMergeAuthorized": false,
+    "tagOrPublicationAuthorized": false,
+    "stopCondition": "GBS_V11_WO_010_CLEAN_REPLACEMENT_EXACT_HEAD_READY_FOR_OWNER_AUDIT"
+  }
+}
