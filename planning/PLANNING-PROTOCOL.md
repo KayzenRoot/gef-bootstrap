@@ -9,7 +9,7 @@ Planning and construction proceed through stable IDs such as `GBS-Mxx-Syy` and `
 `PLANNED -> IN_DISCUSSION -> DECIDED -> DOCUMENTED -> FROZEN`
 
 ## Construction lifecycle
-`SOURCE_MATCH -> IMPLEMENTING -> EVIDENCE_PENDING -> AUDIT -> APPROVED/CORRECTION_REQUIRED/BLOCKED -> CHECKPOINT_PROMOTION`
+`SOURCE_MATCH -> IMPLEMENTING -> EVIDENCE_PENDING -> OWNER_AUDIT -> OWNER_APPROVED/CORRECTION_REQUIRED/BLOCKED -> CHECKPOINT_PROMOTION -> MERGE`
 
 ## Rules
 1. Do not pre-fill session conclusions.
@@ -26,6 +26,8 @@ Planning and construction proceed through stable IDs such as `GBS-Mxx-Syy` and `
 12. Product weight is earned only through admitted evidence-backed completion. Planning/checkpoint documents do not automatically manufacture product progress.
 13. A HIGH/CRITICAL blocker prevents progression of the affected claim.
 14. Construction starts only after Checkpoint explicitly reaches `READY_FOR_PRODUCTION_CONSTRUCTION`.
+15. Under D-0062/ADR-0006, the project owner account is the required semantic auditor and merger; collaborator review is optional and never a completion gate. Bind the owner audit to the exact PR head and record its disposition.
+16. Required CI, security and evidence gates remain mandatory. Do not merge with a failing, pending, stale or mismatched check, or with unresolved CRITICAL/HIGH findings. Do not claim an owner audit is independent.
 
 ## First construction rule
 After Source Pack closure promotion, start with `GBS-M01 — Deterministic Work Plane Kernel` unless dependency analysis proves a narrower prerequisite slice in M02/M03/M04 must precede it. Any such movement must remain inside admitted Scope/Backlog and be checkpointed.

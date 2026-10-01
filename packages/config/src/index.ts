@@ -346,10 +346,12 @@ function unflattenConfig(value: Readonly<Record<string, unknown>>): Record<strin
     for (let index = 0; index < parts.length; index += 1) {
       const part = parts[index];
       if (part === undefined) continue;
-      if (index === parts.length - 1) cursor[part] = fieldValue;
+      if (index === parts.length - 1) {
+        Object.defineProperty(cursor, part, { value: fieldValue, enumerable: true, configurable: true, writable: true });
+      }
       else {
-        const next = cursor[part];
-        if (!isRecord(next)) cursor[part] = {};
+        const next = Object.hasOwn(cursor, part) ? cursor[part] : undefined;
+        if (!isRecord(next)) Object.defineProperty(cursor, part, { value: {}, enumerable: true, configurable: true, writable: true });
         cursor = cursor[part] as Record<string, unknown>;
       }
     }

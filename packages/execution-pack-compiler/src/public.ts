@@ -71,3 +71,6 @@ export {
 
 // ─── Top-level compilation ────────────────────────────────────────────────────
 export { compileExecutionPack } from './compile.js';
+
+// ─── V1.1 Execution Capsule projection ───────────────────────────────────────
+export * from './execution-capsule.js';

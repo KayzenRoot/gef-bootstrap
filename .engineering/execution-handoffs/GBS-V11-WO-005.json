@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-005",
+  "state": "EXECUTABLE_ON_ADMITTED_BRANCH",
+  "implementationBranch": "feat/1.1/wo-005-execution-capsule",
+  "admissionMergeSha": "89018bbd417be204e0d9bdae6cf42f3cc2c44e3d",
+  "implementationBaseSha": "89018bbd417be204e0d9bdae6cf42f3cc2c44e3d",
+  "authority": "ADR-0003-D3",
+  "governanceAudit": {
+    "pr": 289,
+    "auditedHead": "3d50f9bd310bf752401f715f467c6ae08e9dcc9a",
+    "review": 5291367004,
+    "verdict": "APPROVED",
+    "criticalFindings": 0,
+    "highFindings": 0
+  },
+  "productionBoundary": {
+    "mainSha": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+    "v100TagObject": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+    "v100TagTarget": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+    "mainMutationAuthorized": false,
+    "tagMutationAuthorized": false,
+    "publicationAuthorized": false
+  },
+  "scope": [
+    "pure deterministic V1.1 Execution Capsule projection",
+    "M14 admitted context consumption",
+    "M15 compiled execution-pack consumption",
+    "CTX-DET-01..08",
+    "canonical serialization and fingerprinting",
+    "drift/invalidation mapping",
+    "no ambient I/O"
+  ],
+  "preserve": [
+    "D-0061/ADR-0005 legacy ecosystem detachment",
+    "WO-002 CLI/distribution safety",
+    "WO-003 trusted-Git/process hardening",
+    "WO-004 upgrade/recovery behavior",
+    "M14/M15 canonical ownership"
+  ],
+  "forbidden": [
+    "main mutation",
+    "v1.0.0 tag mutation",
+    "publish",
+    "force-push",
+    "history rewrite",
+    "legacy ecosystem-specific bindings",
+    "WO-006+ implementation",
+    "filesystem/network/Git/provider observation inside compiler"
+  ],
+  "stopCondition": "GBS_V11_WO_005_READY_FOR_OBJECTIVE_AUDIT"
+}

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:gef:schema:cli-receipt:1",
+  "title": "GEF CLI governed run receipt",
+  "description": "Persisted receipt written by the kernel receipt port through the same governed transaction path as the state artifact. There is no ungoverned filesystem side channel. Consumers must fail closed on an unsupported schemaVersion major.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "kind",
+    "runId",
+    "commandId",
+    "contractVersion",
+    "productVersion",
+    "effectStatus",
+    "lifecyclePhases",
+    "resultDigest",
+    "transaction"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0",
+      "description": "Explicit document schema version. A consumer that does not support the major version must fail closed."
+    },
+    "kind": { "const": "gef.cli.receipt" },
+    "runId": { "type": "string", "minLength": 1 },
+    "commandId": { "enum": ["gef.init.run", "gef.adopt.apply"] },
+    "contractVersion": { "const": "1.0" },
+    "productVersion": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:-[0-9A-Za-z.-]+)?$" },
+    "effectStatus": { "enum": ["NONE", "POSSIBLE", "CONFIRMED", "PARTIAL", "RECOVERED", "IRREVERSIBLE"] },
+    "lifecyclePhases": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["RECEIVED", "VALIDATING", "PREFLIGHTING", "READY", "EXECUTING", "VERIFYING", "RECEIPTING"] }
+    },
+    "resultDigest": { "$ref": "#/$defs/sha256" },
+    "transaction": { "$ref": "#/$defs/transactionSummary" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "transactionSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["planDigest", "outcome"],
+      "properties": {
+        "planDigest": { "$ref": "#/$defs/sha256" },
+        "receiptDigest": { "$ref": "#/$defs/sha256" },
+        "outcome": { "enum": ["APPLIED", "NOOP_APPLIED"] },
+        "postFingerprint": { "$ref": "#/$defs/sha256" }
+      }
+    }
+  }
+}

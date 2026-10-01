@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-WO-007",
+  "releaseLine": "1.1.x",
+  "assurance": "ELEVATED",
+  "baseRef": "release/1.1",
+  "baseSha": "5ceb8c6e77b122fcef50d85a26458fb95b388480",
+  "productionShaAtLock": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "v100TagObjectAtLock": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+  "v100TagTargetAtLock": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+  "implementationBranch": "feat/1.1/wo-007-proof-reuse",
+  "authority": "ADR-0003-D3",
+  "canonicalSources": [
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "baseBlobSha": "859a7b480cf974d34095e7653f0a4a52b7408b58",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "baseBlobSha": "65167869fd424b32e82bf912876821cf35d908b1",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0003-V1.1-RELEASE-CHANNEL-AND-EXECUTION-AUTHORITY.md",
+      "baseBlobSha": "62a2e2ef2de3b4f60186f020708f37eee99ca787",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0005-LEGACY-ECOSYSTEM-DETACHMENT.md",
+      "baseBlobSha": "786eba0313202f2f2648461a2fc4e6f81190969a",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-SCOPE.md",
+      "baseBlobSha": "b8d05dae2e9584b2fed6670c65751f493f698c8e",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "baseBlobSha": "c5eda022280e47ff4b45070193d196929a3a1ec0",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+      "baseBlobSha": "59e69438bef728f24ae96da292e3122a83d4ea76",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/releases/V1.1-TEST-MATRIX.md",
+      "baseBlobSha": "9df067efb16a1bb3d5e32c378c1bde9bdb19de74",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/ledgers/M28-TEST-IMPACT-ENGINE-LEDGER-SYNC.md",
+      "baseBlobSha": "4a83c4bdf1b64ee6b307ad998ec14a3604e0a544",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/public.ts",
+      "baseBlobSha": "4830f3488d6abeb5fb7ba719f80633e8ea0a12fd",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/types.ts",
+      "baseBlobSha": "df6b33c4e26f328af14b396081c3e29b1f8e0fd5",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/s01-source-test-map.ts",
+      "baseBlobSha": "fad1a6de63c1ee021b91769f2a25c99bfc9530b7",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/s02-selection-reuse.ts",
+      "baseBlobSha": "30b9d428721b32eccef3ef4110066c56d08808b4",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/s03-regression-radius.ts",
+      "baseBlobSha": "a935237fc62102bb9a1b8b95e9e8dcafaac988e4",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/s04-uncertainty-handoff.ts",
+      "baseBlobSha": "42e4d623645615625cc5959a933e2e296f724495",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": "packages/test-impact-engine/src/v11-incremental-validation.ts",
+      "baseBlobSha": "f9606a9e28b41b23b57b9d1fc94ab934153b1949",
+      "fingerprintKind": "git-blob-sha1"
+    },
+    {
+      "path": ".engineering/work-orders/GBS-V11-WO-007.md",
+      "baseBlobSha": "caa0ecad97d3307004513770b21be88830d0a569",
+      "fingerprintKind": "git-blob-sha1"
+    }
+  ],
+  "requiredTestIds": [
+    "PROOF-INV-01",
+    "PROOF-INV-02",
+    "PROOF-INV-03",
+    "PROOF-INV-04",
+    "PROOF-INV-05"
+  ],
+  "requiredOwners": [
+    "M28 Test Proof Reuse Receipt compatibility",
+    "WO-006 Incremental Validation plan authority",
+    "M24 evidence acceptance remains external",
+    "M25 proof-graph authority remains external",
+    "M27 assurance authority remains external"
+  ],
+  "forbiddenWriteSurface": [
+    "main",
+    "tag:v1.0.0",
+    "registry publication",
+    "WO-008+ implementation",
+    "evidence acceptance",
+    "general proof-graph verdict",
+    "assurance verdict",
+    "legacy ecosystem-specific adapters"
+  ],
+  "staleIf": [
+    "release/1.1 advances before the WO-007 implementation branch is created",
+    "V1.1 PROOF-INV semantics change",
+    "M28 TPRR/validateReuse contracts change",
+    "WO-006 validation plan contract changes incompatibly",
+    "WO-007 scope or acceptance criteria change"
+  ],
+  "stopCondition": "GBS_V11_WO_007_CONTEXT_LOCK_VALID_FOR_ADMISSION"
+}

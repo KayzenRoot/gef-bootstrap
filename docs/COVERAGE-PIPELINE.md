@@ -3,7 +3,7 @@
 This is an **advisory provider integration**, not a mandatory release gate.
 
 ## What executes
-`Codecov Coverage Pilot / Node coverage LCOV` runs after relevant code/tests/manifests/workflow changes on PRs targeting `main`, pushes to `main`, and a manual dispatch. A native Node 22.17.0 LCOV reporter runs the same `tests/*.test.mjs` suite after a normal `npm ci` and `npm run build`. No additional npm library is installed.
+`Codecov Coverage Pilot / Node coverage LCOV` runs after relevant code/tests/manifests/workflow changes on PRs targeting `main`, pushes to `main`, and a manual dispatch. A native Node 22.17.0 LCOV reporter runs the same `tests/*.test.mjs` suite after a locked `npm ci --ignore-scripts` and `npm run build`. No additional npm library is installed.
 
 The job requires `coverage/lcov.info` to contain source-file (`SF`) and line-hit (`DA`) entries, **without claiming source-mapped TypeScript coverage until inspected**. Generated coverage files are locally gitignored.
 

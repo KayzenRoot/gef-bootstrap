@@ -6,6 +6,8 @@ npm ci
 npm run validate
 ```
 
+The V1.1.0 production-acceptance candidate remains unpublished. To exercise its real CLI tarball without registry publication, follow the candidate package steps in [Installation](INSTALLATION.md).
+
 ## 2. Read canonical operating state
 Read `AGENTS.md`, `planning/MASTER-MODULE-INDEX.md` and `.engineering/CHECKPOINT.md` before changing governed state.
 
@@ -20,3 +22,7 @@ Treat the repository as brownfield: inventory existing files/history/config/CI, 
 
 ## 6. Evidence rule
 Tests, workflow results and audits must bind the exact candidate/head. A plan, commit, PR opening or green historical run does not itself award production progress.
+
+## Continue safely in a new chat
+
+Start from the live repository and canonical checkpoint, not from conversation history. Verify the active Work Order, Context Lock, exact branch/head, blockers and current checks. M18 determines whether re-entry is safe; M20 supplies one canonical next action, or `NONE/UNKNOWN` with blockers. Follow the full [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md).

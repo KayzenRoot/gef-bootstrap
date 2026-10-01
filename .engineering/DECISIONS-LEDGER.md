@@ -7,7 +7,7 @@ Status: `ACTIVE`
 - Status: APPROVED
 
 ## D-0002 — Independent product boundary
-- Decision: New GEF Bootstrap improvements remain in this project and are not automatically pushed into UADS, Hive, or UGAS. Those systems may later be optional integrations.
+- Decision: New GEF Bootstrap improvements remain in this project and are not automatically pushed into external ecosystems. Such ecosystems may later be optional integrations through separately governed contracts.
 - Status: APPROVED
 
 ## D-0003 — GEF V1 default
@@ -159,7 +159,7 @@ Status: `ACTIVE`
 - Status: APPROVED
 
 ## D-0040 — Optional integrations never silently block independent core completion
-- Decision: UADS, Hive, UGAS and other ecosystem integrations remain optional unless explicitly admitted into a target profile or future core scope. Their absence/failure may block the corresponding adapter/profile but cannot block independent GEF Bootstrap core completion under the current product boundary.
+- Decision: External ecosystem integrations remain optional unless explicitly admitted into a target profile or future core scope. Their absence/failure may block the corresponding adapter/profile but cannot block independent GEF Bootstrap core completion under the current product boundary.
 - Status: APPROVED
 
 ## D-0041 — CONST-F1 through CONST-F8 are stable constitutional group IDs
@@ -206,11 +206,62 @@ Status: `ACTIVE`
 - Decision: `.engineering/PROJECT-OVERVIEW.md` is frozen as the canonical product overview derived from `GBS-CONSTITUTION-v1.0`, including mission, logical roles, universal/profile boundaries, platform boundary, minimum brownfield value, optimization measurement requirements and explicit non-goals. Detailed requirements, scope and architecture remain delegated to their ordered Source Pack stages.
 - Status: APPROVED
 
-## D-0062 — Retire the Hive-specific development and integration contract
-- Decision: On 2026-09-28 the project owner explicitly disallowed Hive as a GEF Bootstrap development integration, MCP/context dependency or product adapter. Retire all Hive-specific first-party runtime exports, tests, active automation and active Source Pack claims. Keep the previously approved V1.1 neutral, inactive M40 Reserved Context Adapter Slot without inherited Hive identity/protocol/schema, reconciling ADR-0005 (V1.1) and D-0061. Preserve the generic adapter boundary, UADS/UGAS where separately admitted, and the original 64 stable IDs/282 sessions and accepted 61-module/1088-weight release denominator. PR #297 is closed as superseded. Supersede Hive-specific prospective permission in D-0002/D-0040 and ADR-0001-D3 without rewriting approved historical evidence or release tags.
-- Authority: explicit owner request (2026-09-28); ADR-0007; Work Order GBS-MAINT-HIVE-REMOVAL-001. Allocated D-0062 to avoid collision with D-0052 through D-0061 already approved on release/1.1; when release/1.1 is merged, reconcile lineage by SHA rather than duplicating entries.
-- Status: APPROVED AND MERGED, exact reviewed head `5407ad7d0e87aea935705216f3308b87aea58056`, PR #313 merged on `main` at `3c5f1fb96e9d5f3d8a07acdf024687063f82d9d2`, all 11 exact-head workflows SUCCESS. Evidence: `.engineering/evidence/GBS-MAINT-HIVE-REMOVAL-001-EVIDENCE.md`.
+## D-0052 — `main` is the latest PRODUCTION_APPROVED release channel
+- Decision: `main` is the currently production-approved release and the only branch permitted to represent production. V1.1 development occurs on `release/1.1` and subordinate branches and is integration-only until production acceptance. Promotion is exact-head and evidence-bound; release tags are immutable. A V1.0 defect is corrected on a `1.0.x` hotfix lineage and forward-ported into `release/1.1` where still applicable. Detailed contract: `ADR-0003-D1`/`D2`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
 
-## D-0063 — Codex-only code execution, GitHub-first planning and per-response progress
-- Decision: Explicit owner directive (2026-09-29) reopens and prospectively supersedes only the old GEF self-construction actor restriction through ADR-0008, now exact-head audited/merged, effective upon the separately audited checkpoint-promotion merge. Codex is the sole author of implementation/tests/CI/migrations/corrections; ChatGPT is planner, governance author, GitHub issue/Work Order/qualified planning-PR coordinator, objective code/security auditor and progress reporter. As each module plan is approved, prepare complete issue-backed Work Orders and meaningful plan-only draft PRs where a real diff exists; keep downstream implementation gated. Use short copyable GitHub pointers instead of routine PDF prompts. Every construction response includes exact-state evidence-based progress and blockers. V1.0 acceptance 1088/1088, historical ADRs, module IDs, security/DoD and the release/1.1's own gates are unchanged. Exact execution mechanism: `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`.
-- Status: APPROVED by exact-head owner audit (NOT_INDEPENDENT) of documentation PR #332 at `7ff0118fcbb29dfd42434e18e68eed0b0c27de2e`, `28/28` exact-head checks SUCCESS, merge `419b9cd713d4817c05582287ec10793fc7fdc130`; EFFECTIVE on main when the separately reviewed checkpoint-promotion PR containing this record merges. A release/1.1 forward-port and reconciliation of the divergent D-0062 branch lineages remain separate required governance.
+## D-0053 — External executor authority for this repository is bounded and V1.1-scoped
+- Decision: `ADR-0002-D8` (Codex must not build this repository) is superseded for the V1.1 release line only, by `ADR-0003-D3`, after an explicit conflict report. The external executor may work on `release/1.1` and subordinate branches under mandatory bounds: admitted Work Order required, no merge/tag/publish/force-push/history rewrite, no modification of V1.0.0 acceptance history or production checkpoint state, external objective audit, and no self-approval. The permanent implementation model remains an owner decision for V1.1 closure.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0054 — The V1.1 CLI is admitted as the thin mechanical layer of D-0047
+- Decision: The `gef` CLI surface admitted by `V1.1-SCOPE.md` NECESSARY #1 is the thin deterministic tooling layer contemplated by `D-0047`, not a reversal of `D-0004`. It is a transport/rendering surface over the application API, holds no business logic, and is never semantic authority for architecture, scope admission, requirements, risk acceptance or review verdicts. Admission carries a measurable-ROI obligation under the V1.1 benchmark protocol. Detailed contract: `ADR-0003-D4`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0055 — Distribution claims distinguish designed from proven
+- Decision: V1.1 may design an installable distribution model, but no publication, package registration, binary artifact or install command may be described as available until proven by release evidence. The source-workspace path remains the supported distribution until proven otherwise. Detailed contract: `ADR-0003-D5`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0056 — Execution Capsules are deterministic, fingerprinted and fail closed
+- Decision: The V1.1 Execution Capsule is a compiled, deterministic, fingerprinted projection of the existing acceleration mechanisms (`ENM`, `DCC`, `IST`/`FIC`/`BPIC`, validation ladder, `TPRR`, `SDS`), not a competing source of truth. Repeat compilation from identical inputs must be byte-identical. `certainty: INSUFFICIENT` cannot produce a compiled capsule. Drift invalidates by drift class with no optimistic continuation. Contract: `.engineering/releases/V1.1-EXECUTION-CAPSULE-CONTRACT.md`; schema: `urn:gef:schema:execution-capsule:1`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0057 — Incremental validation may narrow execution but never assurance or credit
+- Decision: Validation selection may reduce repeated intermediate work only when the selector can positively prove a test unaffected; uncertain impact widens or escalates and never narrows. Proof reuse requires valid lineage, fingerprints, dependency impact, configuration, toolchain, platform, fixture, policy and validity bindings, and may never manufacture production credit, participate in production accounting or waive a required exact-head sweep. Contract: `.engineering/releases/V1.1-INCREMENTAL-VALIDATION-PROOF-REUSE-CONTRACT.md`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0058 — Incomparable benchmark populations are reported as incomparable
+- Decision: Performance claims require matching population identity across workload, base state, toolchain, platform, assurance policy, cache/proof posture and measurement boundary. A mismatch forbids any speedup claim. Metrics distinguish MEASURED, ESTIMATED and UNAVAILABLE. A quality-gate failure voids an apparent gain. Contract: `.engineering/releases/V1.1-PERFORMANCE-BENCHMARK-PROTOCOL.md`.
+- Status: PROPOSED_FOR_WO_001_AUDIT
+
+## D-0059 — V1.1 foundation decisions are promoted after objective audit
+- Decision: The proposal states recorded by D-0052 through D-0058 are historical. Objective re-audit of `GBS-V11-WO-001` at exact head `989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635` returned `APPROVED` with CRITICAL=0/HIGH=0, and PR #279 merged that audited candidate into `release/1.1` as `c5890620a98f2b23c794d65234824ad2ea084036`. This governance increment performs the checkpoint-promotion step required by D-0042. On merge of the checkpoint-promotion PR into `release/1.1`, D-0052 through D-0058 and ADR-0003-D1 through D5 become effective for the V1.1 release line under their declared bounds. In particular, ADR-0003-D3 authorizes external-executor implementation only on `release/1.1` and subordinate branches, only for admitted Work Orders, and never authorizes merge/tag/publish/force-push/history rewrite or mutation of `main`/V1.0.0 accepted history.
+- Status: APPROVED
+
+## D-0060 — Windows effective-rights oracle is admitted as a bounded corrective dependency
+- Decision: Windows replacement authority is governed by `DELETE` on the target object and `FILE_DELETE_CHILD` on its containing directory, which are independent of generic write access; the supported runtime exposes neither, so the previous Windows chain proof was unsound and the high-assurance policy failed closed there (head `8e8801f2f0292ed1617bc04ac19d36415b1c3ff2`, disposition `BLOCKED`). Permanent loss of Git-backed capability on Windows is not accepted, so a narrow Windows FFI adapter (Koffi, one exact pinned version, three `kernel32.dll` functions, OS access check as the authority) is admitted to prove those rights without weakening the policy. No semantic engine moves into native code, POSIX is unchanged, unknown native proof fails closed, and publication/release remain governed by later Work Orders. Full contract: `ADR-0004-WINDOWS-EFFECTIVE-RIGHTS-ORACLE.md`.
+- Status: APPROVED
+
+
+## D-0061 — Legacy ecosystem-specific bindings are detached before V1.1 completion
+- Decision: The V1.1 line removes ecosystem-specific bindings from M39/M40, runtime adapter exports, tests, planning and active product documentation. M39 becomes a reserved external-adapter slot and M40 becomes a reserved context-adapter slot. The Generic Adapter API remains the only neutral extension boundary. No future ecosystem, context service or memory system inherits the removed contracts automatically; any reintroduction requires a new governed decision, explicit capability/schema contract, compatibility evidence and its own Work Order.
+- Status: APPROVED
+
+## D-0062@main / ADR-0007 — Retire the Hive-specific development and integration contract
+- Decision: On 2026-09-28 the project owner explicitly disallowed Hive as a GEF Bootstrap development integration, MCP/context dependency or product adapter. Retire all Hive-specific first-party runtime exports, tests, active automation and active Source Pack claims. Keep the previously approved V1.1 neutral, inactive M40 Reserved Context Adapter Slot without inherited Hive identity/protocol/schema, reconciling ADR-0005 (V1.1) and D-0061. Preserve the generic adapter boundary, UADS/UGAS where separately admitted, and the original 64 stable IDs/282 sessions and accepted 61-module/1088-weight release denominator. PR #297 is closed as superseded. Supersede Hive-specific prospective permission in D-0002/D-0040 and ADR-0001-D3 without rewriting approved historical evidence or release tags.
+- Authority: explicit owner request (2026-09-28); main ADR-0007; Work Order GBS-MAINT-HIVE-REMOVAL-001. D-0062 is branch-qualified because release/1.1 already uses D-0062 for owner-operated review and merge authority.
+- Status: APPROVED AND MERGED on `main`; exact reviewed head `5407ad7d0e87aea935705216f3308b87aea58056`, PR #313 merge `3c5f1fb96e9d5f3d8a07acdf024687063f82d9d2`, all 11 exact-head workflows SUCCESS. Evidence: `.engineering/evidence/GBS-MAINT-HIVE-REMOVAL-001-EVIDENCE.md`.
+
+## D-0062@release/1.1 / ADR-0006 — Owner-operated review and merge authority
+- Decision: `KayzenRoot` is the sole account for GitHub writes, semantic audit, approval decisions and merge operations in this GEF Bootstrap repository. Collaborator review/approval is optional advice and is never a required gate. The owner performs a substantive exact-head audit recorded on the PR; it is not called independent. The owner may merge only after all Work Order-required checks are successful on the exact head, the audit is `OWNER_APPROVED`, the branch is mergeable and CRITICAL/HIGH blockers are zero. Required CI, security, evidence, release boundaries, no-force-push/history-rewrite and explicit S4 controls remain unchanged. GEF-generated target-project workflows default to the configured project-owner account and must not require collaborators to advance.
+- Supersedes, bounded: ADR-0003-D3 clauses prohibiting owner merge and requiring the audit to be external; conflicting independent-collaborator review requirements in the active WO-008 contract and future GEF templates. Historical approved audit records are preserved.
+- Authority source: explicit Product Owner instruction dated 2026-09-26; `.engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md`.
+- Effective: PR #298 owner-audited exact head `03f81da4c85fe06310ad4c94a79af20e71747681`; 30/30 checks succeeded; merge into `release/1.1` was `d52dcca0840465324582b022c53b5a12fd0a3840`.
+- Owner audit: comment #5847950958; evidence `.engineering/evidence/GBS-V11-GOV-001-PROMOTION-EVIDENCE.md`.
+- Status: EFFECTIVE on `release/1.1`.
+
+## D-0063 / ADR-0008 — Codex-only code execution, GitHub-first planning and per-response progress
+- Decision: Explicit owner directive (2026-09-29) prospectively supersedes only the former GEF self-construction actor restriction. Codex is the sole author of implementation/tests/CI/migrations/corrections; ChatGPT is planner, governance author, GitHub issue/Work Order/qualified planning-PR coordinator, objective code/security auditor and progress reporter. As each module plan is approved, prepare issue-backed Work Orders and meaningful plan-only draft PRs where a real diff exists; keep downstream implementation gated. Use short copyable GitHub pointers instead of routine PDF prompts. Construction responses include exact-state evidence-based progress and blockers. V1.0 acceptance 1088/1088, historical ADRs, module IDs, security/DoD and release gates are unchanged. Exact execution mechanism: `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`.
+- Main provenance: ADR-0008 source at main commit `f6738292c038eb6f0d08d1d32b3752c5c7dc417a`, blob `7d6ec3885fb3d029586dc0b7f99aa32b033170e1`; owner audit #5894096435 (NOT_INDEPENDENT), reviewed head `7ff0118fcbb29dfd42434e18e68eed0b0c27de2e`, 28/28 checks SUCCESS, PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130`. Effective on `main` at that merge.
+- Release adoption: PR #347 audited head `ab02b706b4ab7de941cdcc1f849fc07003d92949`, owner review #5360335310 (NOT_INDEPENDENT), merged into `release/1.1` as `9f6f069c977868ade34a19cddb346f7bea9a95fe`. Effective on `release/1.1` at that merge; until then D-0062@release / ADR-0006 remained in force.
+- Status: APPROVED; branch-specific adoption receipts retained. D-0064 and ADR-0009 are not allocated.

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PIPELINE-001",
+  "releaseLine": "1.1.x",
+  "assurance": "ELEVATED",
+  "baseRef": "release/1.1",
+  "baseSha": "e69d887a0f12b46218f40e849fdcf180e455eb3d",
+  "mainShaAtLock": "73ab68f3f33f894027fb7a04c2696b02b839060a",
+  "sharedAncestor": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+  "implementationBranch": "feat/1.1/maint-pipeline-001",
+  "authority": "User-authorized MASTER EXECUTION ORDER; ADR-0006 for owner audit and merge",
+  "activeProductWorkOrder": "GBS-V11-WO-009",
+  "canonicalSources": [
+    {"path":"AGENTS.md","baseBlobSha":"523aed24ec7039859b75aa51b8a2efaa11e8884b","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/SOURCE-HIERARCHY.md","baseBlobSha":"bedc10c97d28154efe59ff43fc1d175add37f568","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/CHECKPOINT.md","baseBlobSha":"1dcfd6a9c555a8691c53e480f056311a405c0cf2","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/CHECKPOINT.json","baseBlobSha":"9e201c8b59f95813acd8c95102e1acb4092186b3","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/GBS-V1-MAINTENANCE-BOUNDARY.md","baseBlobSha":"289d7cbe88a0682f3385dab6db60686ed9014bc7","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/DECISIONS-LEDGER.md","baseBlobSha":"e57b9ab9c5e93b81e4a3253ecf0e69dfaf19e537","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/decisions/ADR-0006-OWNER-OPERATED-REVIEW-AND-MERGE.md","baseBlobSha":"97bef59b15f557302a7fd625af30ceeb421c01a1","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/DEFINITION-OF-DONE.md","baseBlobSha":"d9209765a268f0e21390a2c6c531c7dd771515b4","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/SECURITY.md","baseBlobSha":"09b8aa12244791b509ecb50ba5c96db867a0797d","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/releases/V1.1-RELEASE-PLAN.md","baseBlobSha":"074c99c57f09a13cb2e71cce883e46ee500909ed","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/releases/V1.1-TEST-MATRIX.md","baseBlobSha":"9df067efb16a1bb3d5e32c378c1bde9bdb19de74","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/work-orders/GBS-V11-WO-009.md","baseBlobSha":"7c6e7c39265f23ac4942175a922923c0c4326c6f","fingerprintKind":"git-blob-sha1"},
+    {"path":".engineering/context-locks/GBS-V11-WO-009.json","baseBlobSha":"3b2af5e9db908d9d266d94ee4e26ee2fe8db6b6f","fingerprintKind":"git-blob-sha1"},
+    {"path":".github/workflows/repository-validation.yml","baseBlobSha":"9b9fd588eb08b9556ffbfc9a7a1d13d0aa9a8ebf","fingerprintKind":"git-blob-sha1"},
+    {"path":".github/workflows/security-codeql.yml","baseBlobSha":"885d14d6f19237f25c71720b2fd03e1f8ba1dd56","fingerprintKind":"git-blob-sha1"},
+    {"path":"package.json","baseBlobSha":"c8e17d4121566250595a1966a9314c56272546ac","fingerprintKind":"git-blob-sha1"},
+    {"path":"package-lock.json","baseBlobSha":"f7fccd5a338feae645d7c31de6905d6e0e97d998","fingerprintKind":"git-blob-sha1"}
+  ],
+  "mainMaintenanceCommits": [
+    "8299045f63a6324320caf712afc12eeac8ea17b8",
+    "3c4455a080055fb65fee7d7021b72c3d40c5ae52",
+    "dfe14590521aead09ab0d8360fefbaea3e230aff",
+    "9c9170f98ee6385e11b2dbf8e1f7584222230cd8",
+    "73ab68f3f33f894027fb7a04c2696b02b839060a"
+  ],
+  "allowedWriteSurface": [
+    ".github/workflows/*.yml",
+    ".engineering/work-orders/GBS-V11-MAINT-PIPELINE-001.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PIPELINE-001.json",
+    ".engineering/evidence/GBS-V11-MAINT-PIPELINE-001-EVIDENCE.md",
+    ".engineering/execution-briefs/GBS-V11-MAINT-PIPELINE-001-DIRECT.md",
+    ".engineering/CHECKPOINT.md and .engineering/CHECKPOINT.json V1.1 overlay only after merge",
+    ".engineering/execution-handoffs/GBS-V11-PIPELINE-RELEASE-MASTER.md"
+  ],
+  "forbiddenWriteSurface": [
+    "product source and tests",
+    "main",
+    "repository rulesets",
+    "tag:v1.0.0",
+    "release artifacts and publication",
+    "other repositories",
+    "deletion or consolidation of WO-003 through WO-008 workflows",
+    "billing or organization-wide app permissions"
+  ],
+  "staleIf": [
+    "release/1.1 advances beyond e69d887a0f12b46218f40e849fdcf180e455eb3d before this branch integrates",
+    "main advances so the selected maintenance changes materially differ from the locked reviewed commits",
+    "any canonical source fingerprint changes on the release/1.1 base",
+    "WO-009 frozen matrix, release plan, or ADR-0006 authority changes",
+    "V1.0 main or v1.0.0 tag object/target changes"
+  ],
+  "stopCondition": "GBS_V11_PIPELINE_ADOPTED_EXACT_HEAD_AND_POST_MERGE_VERIFIED"
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-WO-002",
+  "state": "EXECUTABLE",
+  "releaseLine": "1.1.x",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "admission": {
+    "pullRequest": 281,
+    "auditedHead": "f65b2e1b0ba3feee9aee2bf61aa1e031e683acd9",
+    "objectiveAuditComment": 5706624163,
+    "verdict": "APPROVED",
+    "criticalFindings": 0,
+    "highFindings": 0,
+    "mergeSha": "66e223fe0d791c612e494a180eb12df9516cff87"
+  },
+  "implementation": {
+    "branch": "feat/1.1/wo-002-cli-distribution",
+    "createdFromSha": "66e223fe0d791c612e494a180eb12df9516cff87",
+    "baseReleaseRef": "release/1.1",
+    "executorAuthority": "ADR-0003-D3",
+    "workOrderAdmitted": true,
+    "executionAllowed": true
+  },
+  "productionBoundary": {
+    "ref": "main",
+    "shaAtAdmission": "72c17bd3e7e421790ac382022b1f0ebbb0275ea4",
+    "v100TagObject": "aac89f9c3f0c884474958025bf14828bc338b5ee",
+    "v100TagTarget": "866fe3af8cccc65c929aaf6a47a924401fa448b3",
+    "mainAuthorized": false,
+    "tagMutationAuthorized": false,
+    "mergeAuthorizedForExecutor": false,
+    "publishAuthorized": false,
+    "forcePushAuthorized": false,
+    "historyRewriteAuthorized": false,
+    "selfApprovalAuthorized": false
+  },
+  "artifacts": {
+    "workOrder": ".engineering/work-orders/GBS-V11-WO-002.md",
+    "contextLock": ".engineering/context-locks/GBS-V11-WO-002.json",
+    "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-002-CODEX.md"
+  },
+  "executorFirstRead": [
+    ".engineering/execution-handoffs/GBS-V11-WO-002.json",
+    ".engineering/work-orders/GBS-V11-WO-002.md",
+    ".engineering/context-locks/GBS-V11-WO-002.json",
+    ".engineering/execution-briefs/GBS-V11-WO-002-CODEX.md"
+  ],
+  "instruction": "The NOT_EXECUTABLE_UNTIL_ADMISSION_MERGE guard in the Execution Brief is satisfied by PR #281 merge 66e223fe0d791c612e494a180eb12df9516cff87. Execute only GBS-V11-WO-002 on the named implementation branch. Do not merge, tag, publish, force-push, rewrite history, self-approve, touch main, or mutate V1.0 accepted history.",
+  "stopCondition": "GBS_V11_WO_002_HANDOFF_BOUND_AND_EXECUTABLE"
+}

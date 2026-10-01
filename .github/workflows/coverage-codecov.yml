@@ -56,7 +56,7 @@ jobs:
           node-version: "22.17.0"
           cache: npm
       - name: Install project dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
       - name: Build unchanged production code
         run: npm run build
       - name: Run Node's native test coverage and generate LCOV

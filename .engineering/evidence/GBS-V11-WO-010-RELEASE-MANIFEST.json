@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "kind": "gef.v11.clean-replacement.release-manifest",
+  "workOrderId": "GBS-V11-WO-010",
+  "issue": 351,
+  "masterIssue": 348,
+  "historicalPr350": {
+    "pullRequest": 350,
+    "branch": "codex/gbs-v11-release-integration-014",
+    "sourceCommit": "59df2d1feadb18f5f5997f748f79339adb701f43",
+    "implementationHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+    "finalHead": "3cd5ba3f7e3e5cd4c81472f521b8b8a596ad68fe",
+    "tarballSha256": "17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
+    "workflowRun": 36779630179,
+    "review": 5372870208,
+    "state": "OPEN_DRAFT_PRESERVED_UNMODIFIED",
+    "finding": "historical redacted Gitleaks finding; signature omitted; never current evidence"
+  },
+  "replacementPullRequest": 352,
+  "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+  "sourceCommitAtPackageInput": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f",
+  "captureMode": "GITHUB_ACTIONS_PULL_REQUEST_EXACT_HEAD_PACKAGE",
+  "packageProducer": {
+    "workflow": "V1.1 release assurance",
+    "runId": 36803639314,
+    "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36803639314",
+    "sourceCommit": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f",
+    "event": "pull_request",
+    "ref": "refs/pull/352/merge",
+    "runnerPlatform": "linux",
+    "runnerArchitecture": "x64"
+  },
+  "package": {
+    "name": "@gef-bootstrap/cli",
+    "version": "1.1.0",
+    "private": true,
+    "license": "UNLICENSED",
+    "registryPublicationAttempted": false,
+    "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git"
+  },
+  "toolchain": {
+    "platform": "Exact-head package produced on ubuntu-latest; same artifact consumed on Ubuntu, macOS and Windows; local exact-tarball smoke on Windows x64",
+    "node": "Local validation Node v24.19.0; CI package producer uses workflow-pinned Node",
+    "npm": "Local validation npm 11.17.0; CI package producer uses workflow-pinned npm"
+  },
+  "tarball": {
+    "file": "gef-bootstrap-cli-1.1.0.tgz",
+    "sha256": "b6900bed8b6ce9be7f196719b9384c7a6ecadbf63ca5a82bc55d07ef38978a45",
+    "sizeBytes": 2737237,
+    "entryCount": 379,
+    "state": "PASS_EXACT_HEAD_CI_ARTIFACT_AND_3_OS_SAME_ARTIFACT_MATRIX"
+  },
+  "vendorManifest": {
+    "path": "package/vendor/MANIFEST.json",
+    "artifactEntries": 23,
+    "sha256EntriesVerifiedAgainstTarball": true,
+    "nativeSha512LockVerification": "PASS exact-head release package candidate job",
+    "result": "PASS_EXACT_HEAD_ARCHIVE_REVIEW"
+  },
+  "provenance": {
+    "method": "npm Trusted Publishing via GitHub Actions OIDC",
+    "workflow": "v11-publish.yml",
+    "environment": "npm-publish",
+    "registryAttestationIssued": false,
+    "prepublicationReceipt": "GitHub Actions source/ref-bound package receipt in exact-head release-assurance artifact",
+    "reason": "Pre-publication provenance receipt verified for this exact source HEAD; npm registry attestation requires a later owner-authorized OIDC publication, which was not attempted."
+  },
+  "npmPreflight": {
+    "identity": "VERIFIED: npm whoami returned kayzenroot; GitHub identity KayzenRoot matches case-insensitively",
+    "scope": "npm team ls @gef-bootstrap:developers lists kayzenroot; npm access list packages @gef-bootstrap returned no package rows",
+    "package": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected while unpublished",
+    "trustedPublisherBinding": "NOT_CONFIGURED_OR_VERIFIED; first-publish decision remains separate per review #5373800160",
+    "longLivedToken": "NOT_USED",
+    "publication": "NOT_ATTEMPTED",
+    "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
+    "credentialDisclosure": "No long-lived npm token used; no credential values copied into repository files or GitHub evidence"
+  },
+  "exactHeadCi": {
+    "state": "PASS_REQUIRED_AND_REPORTED_CHECKS",
+    "candidateHead": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f",
+    "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "statusContexts": "4/4 required checks PASS; all 149 PR check contexts in pass bucket (CodeRabbit skipped because draft)",
+    "platforms": {
+      "releaseAssurance": "PASS Ubuntu/macOS/Windows; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36803639314",
+      "sameExactTarball": "PASS Ubuntu/macOS/Windows; one SHA-256-bound artifact b6900bed8b6ce9be7f196719b9384c7a6ecadbf63ca5a82bc55d07ef38978a45",
+      "upgradeRecovery": "PASS release workflow matrix; local Windows upgrade fixture preserved V1.0 state and receipt bytes"
+    },
+    "codecovOptionB": "codecov/patch SUCCESS; provider reports all modified and coverable lines covered; Gate 2 ownerDecision OPTION_B_APPROVED preserved; fresh owner exact-head interpretation/audit pending",
+    "passedSecurityAndIntegrity": [
+      "pinned Gitleaks full main..candidate interval at exact head",
+      "Trivy",
+      "CodeQL",
+      "Dependency Review",
+      "Pipeline Integrity",
+      "Sonar quality and duplicate-block checks",
+      "Socket",
+      "CodeQL tracked-alert evidence",
+      "release package manifest/checksum review"
+    ],
+    "failed": {},
+    "required": [
+      "Codecov Option B",
+      "release assurance Ubuntu/macOS/Windows",
+      "same exact-head release tarball on Ubuntu/Windows/macOS",
+      "Gitleaks full main..candidate interval",
+      "Trivy",
+      "CodeQL",
+      "Dependency Review",
+      "Pipeline Integrity",
+      "Sonar",
+      "Socket",
+      "all required PR checks"
+    ],
+    "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
+    "auditReady": false,
+    "technicalChecksReadyForOwnerAudit": true
+  },
+  "validation": {
+    "build": "PASS npm run build",
+    "focusedGate2Tests": "PASS 13/13",
+    "focusedPackageBuilderTests": "PASS 11/11 directed package-builder/publisher tests",
+    "focusedPublisherDistributionSecurityTests": "27 passed; exact-source receipt-bound smoke additionally PASS on Windows",
+    "sameArtifactSmoke": "PASS Windows local; Ubuntu/macOS/Windows CI same-artifact matrix PASS",
+    "npmAudit": "PASS found 0 vulnerabilities",
+    "npmRunValidate": "PASS 1610/1610 in a normal clone with exact corrected manifest; GitHub Repository Validation PASS on exact candidate head",
+    "npmPreflight": "npm identity and scope-team membership verified; package E404 expected unpublished; no long-lived npm token used or credential values copied into repository files or GitHub evidence; no publication attempted",
+    "npmPackDryRun": "PASS npm pack --dry-run --json --workspace @gef-bootstrap/cli"
+  }
+}

@@ -1,0 +1,351 @@
+{
+  "schemaVersion": 1,
+  "kind": "GBS_V11_WO008_CLI_ROI_BENCHMARK",
+  "measuredAtCommit": "cd2d2c6038260573a20b6d8135a76954decb8c80",
+  "measuredTree": "195eaef31397f489d4c62662f825b0f4de15f82b",
+  "repetitionCount": 7,
+  "timing": {
+    "source": "MEASURED",
+    "unit": "ms",
+    "sourceWorkspace": [
+      74.21998200000002,
+      71.99685399999998,
+      78.061935,
+      73.74503500000003,
+      70.22444700000005,
+      62.52419699999996,
+      72.668182
+    ],
+    "cli": [
+      81.211722,
+      69.61943299999996,
+      67.45700699999998,
+      74.29378299999996,
+      68.85049199999992,
+      71.476628,
+      74.92833200000007
+    ]
+  },
+  "tokens": {
+    "source": "UNAVAILABLE",
+    "unit": "tokens",
+    "value": null,
+    "scope": "ChatGPT Work does not expose token counts to this local runner"
+  },
+  "qualityGateStatus": "PASS",
+  "records": {
+    "sourceWorkspace": {
+      "schemaVersion": 1,
+      "kind": "PERFORMANCE_RECORD",
+      "recordId": "cli-roi-manual-cd2d2c603826",
+      "executionMode": "SOURCE_WORKSPACE_MANUAL",
+      "population": {
+        "P1": {
+          "workloadKind": "GREENFIELD_INIT_PLAN"
+        },
+        "P2": {
+          "workloadInstanceId": "wo008-cli-roi-init-plan-v1",
+          "fixtureId": "empty-target-v1",
+          "fixtureDigest": "38c4a4f4b188707dd51a8d566aa9405b9669aea1ebd786fc65e03063255093d9"
+        },
+        "P3": {
+          "commitSha": "cd2d2c6038260573a20b6d8135a76954decb8c80",
+          "treeFingerprint": "195eaef31397f489d4c62662f825b0f4de15f82b"
+        },
+        "P4": {
+          "node": "v24.19.0",
+          "npm": "11.9.0",
+          "packageManager": "npm",
+          "typescript": "6.0.3"
+        },
+        "P5": {
+          "os": "linux",
+          "osVersion": "6.18.44",
+          "architecture": "x64"
+        },
+        "P6": {
+          "policyDigest": "301e8769ec8abe3f7ef71c41916b8e13626d1f31e80d58fb5a14c14a34198729",
+          "ladder": "STANDARD",
+          "finalSweepRequired": true
+        },
+        "P7": {
+          "posture": "COLD",
+          "reuseSetDigest": "none"
+        },
+        "P8": {
+          "timedRegion": "process-start-to-json-envelope-output",
+          "startEvent": "process-start",
+          "endEvent": "json-envelope-output"
+        }
+      },
+      "populationDigest": "5092a65a9c745f2c25ca468ba1382610fd4848de6f1f1f255b7520a89a9f1e86",
+      "requiredMetricIds": [
+        "M-LAT-01"
+      ],
+      "metrics": {
+        "M-LAT-01": {
+          "value": 72.668182,
+          "unit": "ms",
+          "source": "MEASURED",
+          "direction": "LOWER_IS_BETTER",
+          "summary": {
+            "n": 7,
+            "median": 72.668182,
+            "p90": 74.21998200000002,
+            "p95": 74.21998200000002,
+            "min": 62.52419699999996,
+            "max": 78.061935
+          }
+        },
+        "M-TOK-03": {
+          "value": null,
+          "unit": "tokens",
+          "source": "UNAVAILABLE",
+          "direction": "LOWER_IS_BETTER",
+          "summary": null
+        }
+      },
+      "qualityGate": {
+        "status": "PASS",
+        "digest": "5ffadd46ccf081decfbe242e91d2a7ea19464c3313443ff8000e97010e0a7150"
+      },
+      "accelerationBindings": {
+        "executionCapsule": {
+          "used": false,
+          "id": null,
+          "digest": null
+        },
+        "incrementalValidation": {
+          "used": false,
+          "id": null,
+          "digest": null
+        },
+        "proofReuse": {
+          "used": false,
+          "id": null,
+          "digest": null
+        }
+      },
+      "authority": "READ_ONLY_TELEMETRY",
+      "digest": "20f81ac62f051c2658610485e3669496a28a90938233fafdd56ab3f86762dcc7"
+    },
+    "cli": {
+      "schemaVersion": 1,
+      "kind": "PERFORMANCE_RECORD",
+      "recordId": "cli-roi-cli-cd2d2c603826",
+      "executionMode": "CLI",
+      "population": {
+        "P1": {
+          "workloadKind": "GREENFIELD_INIT_PLAN"
+        },
+        "P2": {
+          "workloadInstanceId": "wo008-cli-roi-init-plan-v1",
+          "fixtureId": "empty-target-v1",
+          "fixtureDigest": "38c4a4f4b188707dd51a8d566aa9405b9669aea1ebd786fc65e03063255093d9"
+        },
+        "P3": {
+          "commitSha": "cd2d2c6038260573a20b6d8135a76954decb8c80",
+          "treeFingerprint": "195eaef31397f489d4c62662f825b0f4de15f82b"
+        },
+        "P4": {
+          "node": "v24.19.0",
+          "npm": "11.9.0",
+          "packageManager": "npm",
+          "typescript": "6.0.3"
+        },
+        "P5": {
+          "os": "linux",
+          "osVersion": "6.18.44",
+          "architecture": "x64"
+        },
+        "P6": {
+          "policyDigest": "301e8769ec8abe3f7ef71c41916b8e13626d1f31e80d58fb5a14c14a34198729",
+          "ladder": "STANDARD",
+          "finalSweepRequired": true
+        },
+        "P7": {
+          "posture": "COLD",
+          "reuseSetDigest": "none"
+        },
+        "P8": {
+          "timedRegion": "process-start-to-json-envelope-output",
+          "startEvent": "process-start",
+          "endEvent": "json-envelope-output"
+        }
+      },
+      "populationDigest": "5092a65a9c745f2c25ca468ba1382610fd4848de6f1f1f255b7520a89a9f1e86",
+      "requiredMetricIds": [
+        "M-LAT-01"
+      ],
+      "metrics": {
+        "M-LAT-01": {
+          "value": 71.476628,
+          "unit": "ms",
+          "source": "MEASURED",
+          "direction": "LOWER_IS_BETTER",
+          "summary": {
+            "n": 7,
+            "median": 71.476628,
+            "p90": 74.92833200000007,
+            "p95": 74.92833200000007,
+            "min": 67.45700699999998,
+            "max": 81.211722
+          }
+        },
+        "M-TOK-03": {
+          "value": null,
+          "unit": "tokens",
+          "source": "UNAVAILABLE",
+          "direction": "LOWER_IS_BETTER",
+          "summary": null
+        }
+      },
+      "qualityGate": {
+        "status": "PASS",
+        "digest": "5ffadd46ccf081decfbe242e91d2a7ea19464c3313443ff8000e97010e0a7150"
+      },
+      "accelerationBindings": {
+        "executionCapsule": {
+          "used": false,
+          "id": null,
+          "digest": null
+        },
+        "incrementalValidation": {
+          "used": false,
+          "id": null,
+          "digest": null
+        },
+        "proofReuse": {
+          "used": false,
+          "id": null,
+          "digest": null
+        }
+      },
+      "authority": "READ_ONLY_TELEMETRY",
+      "digest": "86c663775cfe93f96d20c7b059f9078525781b6b34aa830662a4d1bc4793f4d5"
+    }
+  },
+  "report": {
+    "schemaVersion": 1,
+    "kind": "CLI_ROI_REPORT",
+    "mode": "CLI_ROI",
+    "verdict": "NO_CHANGE",
+    "optimizationClaimEligible": false,
+    "reasonCode": "COMPARABLE",
+    "baselinePopulationDigest": "5092a65a9c745f2c25ca468ba1382610fd4848de6f1f1f255b7520a89a9f1e86",
+    "candidatePopulationDigest": "5092a65a9c745f2c25ca468ba1382610fd4848de6f1f1f255b7520a89a9f1e86",
+    "populationMismatchDimensions": [],
+    "requiredMetricIds": [
+      "M-LAT-01"
+    ],
+    "metrics": {
+      "M-LAT-01": {
+        "verdict": "NO_CHANGE",
+        "unit": "ms",
+        "direction": "LOWER_IS_BETTER",
+        "source": "MEASURED",
+        "baseline": {
+          "value": 72.668182,
+          "summary": {
+            "n": 7,
+            "median": 72.668182,
+            "p90": 74.21998200000002,
+            "p95": 74.21998200000002,
+            "min": 62.52419699999996,
+            "max": 78.061935
+          }
+        },
+        "candidate": {
+          "value": 71.476628,
+          "summary": {
+            "n": 7,
+            "median": 71.476628,
+            "p90": 74.92833200000007,
+            "p95": 74.92833200000007,
+            "min": 67.45700699999998,
+            "max": 81.211722
+          }
+        },
+        "delta": -0.016397190176024996
+      },
+      "M-TOK-03": {
+        "verdict": "INDETERMINATE",
+        "unit": "tokens",
+        "source": "UNAVAILABLE"
+      }
+    },
+    "qualityGate": {
+      "baseline": "PASS",
+      "candidate": "PASS"
+    },
+    "accelerationBindings": {
+      "baseline": {
+        "executionCapsule": {
+          "used": false,
+          "id": null,
+          "digest": null
+        },
+        "incrementalValidation": {
+          "used": false,
+          "id": null,
+          "digest": null
+        },
+        "proofReuse": {
+          "used": false,
+          "id": null,
+          "digest": null
+        }
+      },
+      "candidate": {
+        "executionCapsule": {
+          "used": false,
+          "id": null,
+          "digest": null
+        },
+        "incrementalValidation": {
+          "used": false,
+          "id": null,
+          "digest": null
+        },
+        "proofReuse": {
+          "used": false,
+          "id": null,
+          "digest": null
+        }
+      }
+    },
+    "assurance": {
+      "baselineFinalSweepRequired": true,
+      "candidateFinalSweepRequired": true,
+      "finalSweepSuppressionAllowed": false
+    },
+    "primitives": {
+      "m57PerformanceGateUsedForLatency": true,
+      "m63PerformanceRegression": {
+        "state": "NOT_APPLICABLE"
+      },
+      "m41CompareBenchmarkState": "STABLE"
+    },
+    "executionModes": {
+      "baseline": "SOURCE_WORKSPACE_MANUAL",
+      "candidate": "CLI"
+    },
+    "capabilities": {
+      "canWrite": false,
+      "canMerge": false,
+      "canPublish": false,
+      "canAcceptEvidence": false,
+      "canIssueAssurance": false,
+      "canSuppressFinalSweep": false
+    },
+    "roi": {
+      "verdict": "NO_CHANGE",
+      "metricId": "M-LAT-01",
+      "sourceWorkspaceMedian": 72.668182,
+      "cliMedian": 71.476628,
+      "latencyDeltaPercent": -1.6397190176024996,
+      "m41ComparisonState": "STABLE"
+    },
+    "reportDigest": "d7de0842b128ad36f671390267034e00a13383de32909fd2b408875c9894d546"
+  }
+}

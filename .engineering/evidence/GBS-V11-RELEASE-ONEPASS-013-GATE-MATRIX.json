@@ -1,0 +1,525 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
+  "masterIssue": 348,
+  "capturedAtUtc": "2026-10-01T02:10:31.000Z",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "observedRefs": {
+    "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+    "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+    "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+    "mainOnlyReleaseOnly": [
+      2,
+      84
+    ]
+  },
+  "gates": [
+    {
+      "gate": 0,
+      "name": "Governance promotion and release adoption",
+      "state": "MERGED",
+      "pullRequest": 347,
+      "auditedHead": "ab02b706b4ab7de941cdcc1f849fc07003d92949",
+      "ownerAuditReview": 5360335310,
+      "auditIndependence": "NOT_INDEPENDENT",
+      "exactHeadChecks": "16/16 SUCCESS (provider result recorded in Issue #337 and PR #347)",
+      "mergeSha": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
+      "remainingDebt": "The release checkpoint still had the stale PR #347 actualMergeSha receipt at the source ref; the admitted Gate 2 candidate is reconciling it with provider evidence. Candidate state is not promoted until audit and a later authorized merge."
+    },
+    {
+      "gate": 1,
+      "name": "Issue #337 tests-only package branch coverage correction",
+      "state": "MERGED",
+      "childWorkOrder": "GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012",
+      "executionBase": "9f6f069c977868ade34a19cddb346f7bea9a95fe",
+      "reviewedCandidateHead": "ab81172a009a699542c63c54d80358226d075ab2",
+      "ownerCorrectionReview": 5363391120,
+      "providerRunSummary": "At owner audit/merge, 20 workflow runs returned and all completed SUCCESS on exact PR #349 head ab81172a009a699542c63c54d80358226d075ab2; Repository Validation 1603 total / 1599 PASS / 0 FAIL / 4 SKIPPED. The normal merge to release/1.1 is 4b2f66724ea5df94ddd8fda2d8088b12b9708c10. These results do not transfer to Gate 2.",
+      "criticalScriptBlob": "10e659ccce15045ed37ffa3e82d06a8408b8f734",
+      "criticalTestBlob": "2441961628d20dcc9404d2e51cc1d97b03543137",
+      "allowedSourceChanges": [
+        "tests/v11-codecov-patch-coverage.test.mjs",
+        "tests/v11-pack-branch-negative.test.mjs (only if required for isolated process boundary)"
+      ],
+      "productionSourceState": "READ_ONLY",
+      "checks": {
+        "nativeNode2217Lcov": "PASS at reviewed candidate a2348d39bcd77951900d7d24e2a45a33e67fe9a8: 1603 tests; exact production SF DA 236/238 (99.16%), BRDA 70/87 (80.46%), functions 100%; all 14 historic target lines have positive DA. This does not credit the future cumulative Codecov gate.",
+        "build": "PASS_NODE_22_17_0_NPM_10_8_2 at reviewed candidate a2348d39bcd77951900d7d24e2a45a33e67fe9a8",
+        "validate": "PASS_NODE_22_17_0_NPM_10_8_2_1603_OF_1603 at reviewed candidate a2348d39bcd77951900d7d24e2a45a33e67fe9a8",
+        "packageIntegrationSecurity": "PASS at reviewed candidate; Repository Validation 1603 total / 1599 PASS / 0 FAIL / 4 SKIPPED (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467583/job/109723038271)",
+        "ubuntuWindowsMacos": "PASS at reviewed candidate: Ubuntu 1599 PASS / 0 FAIL / 4 SKIPPED (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038646); macOS 1599 PASS / 0 FAIL / 4 SKIPPED (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038619); Windows 1603 PASS / 0 FAIL / 0 SKIPPED (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038677). Each npm audit found 0 vulnerabilities.",
+        "gitleaksFullNewCommitInterval": "PASS over the complete PR commit interval at reviewed candidate (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346405/job/109725705448); earlier same-SHA run also passed (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467644/job/109723038759)",
+        "trivyCodeqlSonar": "PASS at reviewed candidate: Trivy (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346405/job/109725705282), CodeQL (https://github.com/KayzenRoot/gef-bootstrap/runs/109723352322), Sonar Quality Gate (https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=349). Sonar: 0 security hotspots; 7 open MAJOR javascript:S8784 code smells in tests, retained as quality debt.",
+        "dependencyReview": "PASS (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346401/job/109725705405)",
+        "pipelineIntegrity": "PASS (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36664346526/job/109725705707)",
+        "codeqlTrackedAlertEvidence": "PASS (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038478)",
+        "sonarDiagnosticsAndDuplication": "PASS; quality gate pass, 7 MAJOR code smells in tests remain disclosed (https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038618; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36663467636/job/109723038605)",
+        "securityFindingScope": "No open HIGH/CRITICAL code-scanning alerts on candidate or release/1.1. Repository-wide inventory separately has three open HIGH Scorecard alerts on main only (#14 MaintainedID, #13 CodeReviewID, #3 BranchProtectionID); release HIGH #2 is fixed and release MEDIUM #1 remains open.",
+        "newDocumentationHeadChecks": "Final pre-merge exact-head set: 20/20 workflow runs SUCCESS on ab81172a009a699542c63c54d80358226d075ab2; no evidence transfers to the cumulative candidate."
+      },
+      "cumulativeCodecov": "NOT_RUN_NOT_CREDITED; Gate 2 requires a fresh release-to-main PR exact SHA >=97.85%",
+      "stopCondition": "GBS_V11_MAINT_PACK_BRANCH_CORRECTION_012_EVIDENCE_LOCK_SYNC_READY_FOR_REAUDIT",
+      "implementationPr": 349,
+      "mergeSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+      "ownerReview": 5364744639
+    },
+    {
+      "gate": 2,
+      "name": "Fresh cumulative release-to-main integration",
+      "state": "OWNER_APPROVED",
+      "sourceRefs": {
+        "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "release_1_1": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+        "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+        "mainTree": "0413bf3e8d706738f73c93578c81630ce027f4ec",
+        "releaseTree": "15bdf8462e67daab84152f096a0ab629be25ffc9",
+        "mergeBaseTree": "39d8b61cb70020e87c65f2443ce3790af1c2b5c4",
+        "divergenceMainOnlyReleaseOnly": [
+          2,
+          84
+        ]
+      },
+      "dryRun": "git merge-tree --write-tree --name-only --messages; result tree 797545a324c17e5e14da9ddbc6819f5134bfb21d; 14 textual conflicts (12 content, 2 add/add), all within the approved class; 2 additional semantic overlaps.",
+      "textualConflicts": [
+        ".engineering/ARCHITECTURE.md",
+        ".engineering/CHECKPOINT.json",
+        ".engineering/CONSTITUTION-AMENDMENT-0001-HYBRID.md",
+        ".engineering/CONSTITUTION-LOCK.md",
+        ".engineering/DECISIONS-LEDGER.md",
+        ".engineering/DEFINITION-OF-DONE.md",
+        ".engineering/EXECUTOR-ACCELERATION-CONTRACT.md",
+        ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md (add/add)",
+        ".engineering/PROJECT-OVERVIEW.md",
+        ".engineering/REQUIREMENTS.md",
+        ".engineering/SCOPE.md",
+        ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md (add/add)",
+        "AGENTS.md",
+        "README.md"
+      ],
+      "semanticOverlapsWithoutTextConflict": [
+        ".engineering/CHECKPOINT.md",
+        ".engineering/decisions/ADR-0001-COMPLETE-PRODUCTION-TARGET.md"
+      ],
+      "branchQualifiedDecisions": {
+        "D-0062@main": "ADR-0007: retire Hive-specific development/integration contract; preserve main lineage.",
+        "D-0062@release/1.1": "ADR-0006: owner-operated exact-head audit and merge authority; preserve release lineage.",
+        "D-0063@main": "ADR-0008 effective on main at promotion merge 419b9cd713d4817c05582287ec10793fc7fdc130.",
+        "D-0063@release/1.1": "ADR-0008 effective on release at PR #347 merge 9f6f069c977868ade34a19cddb346f7bea9a95fe.",
+        "D-0064": "UNALLOCATED"
+      },
+      "requiredFutureGates": [
+        "Resolve only the admitted governance/source-document conflicts according to the committed per-path Context Lock.",
+        "Complete full build, validation, package/install/upgrade/recovery and release tests.",
+        "Obtain current Ubuntu/macOS/Windows, Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity, Sonar and applicable assurance checks on the exact cumulative PR HEAD.",
+        "Codecov acceptance: numeric patch >=97.85% when defined; otherwise N/A_ZERO_DENOMINATOR is permitted only under owner Option B exact-base/head, successful exact-head LCOV upload, provider SUCCESS+zero eligible patch lines/not-affected, no weakened coverage semantics, all other required gates green, and fresh owner exact-head audit.",
+        "Owner exact-head audit; no merge to main under Gate 2."
+      ],
+      "currentCumulativeCodecovSonar": "Sonar Quality Gate PASS. Owner Option B applies: numeric Codecov patch must remain >=97.85% when a numeric denominator exists; when the provider reports zero eligible patch lines / Patch N/A / Coverage not affected on exact bound base/head with successful exact-head LCOV upload and SUCCESS patch status, record N/A_ZERO_DENOMINATOR (never 100%) and require all other exact-head gates green plus owner audit.",
+      "sourceAdmissionIssue": 348,
+      "candidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+      "preResolutionPlanCommit": "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+      "gate2ContextLock": ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json",
+      "integrationMerge": "FRESH_NORMAL_TWO_PARENT_MERGE_COMMITTED_CANDIDATE_ONLY sha=4e428d4c8657c19e05a30da3ba0064190007ab5f; tree=01acb6c2379304235b6213e3e9c7a2f87078069b; parents=f6738292c038eb6f0d08d1d32b3752c5c7dc417a,4b2f66724ea5df94ddd8fda2d8088b12b9708c10; unresolved=0",
+      "mergeCommit": "4e428d4c8657c19e05a30da3ba0064190007ab5f",
+      "mergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+      "resolvedConflictCount": 14,
+      "unresolvedConflictCount": 0,
+      "correctionDeltas": [
+        {
+          "issue": 348,
+          "comment": 5909649467,
+          "paths": [
+            "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+            "tests/v11-wo-008-admission.test.mjs",
+            "tests/v11-wo-009-admission.test.mjs"
+          ],
+          "result": "updated stale checkpoint assertions to actual Gate 0/Gate 1 receipts and Gate 2 stop state"
+        },
+        {
+          "issue": 348,
+          "comment": 5909922552,
+          "paths": [
+            "tests/v11-legacy-ecosystem-detachment.test.mjs"
+          ],
+          "result": "bounded historical-governance exclusion to exact canonical receipt paths; active surfaces remain scanned"
+        },
+        {
+          "issue": 348,
+          "comment": 5909940063,
+          "paths": [
+            ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md",
+            ".engineering/context-locks/GBS-MAINT-HIVE-REMOVAL-001.md",
+            ".engineering/evidence/GBS-MAINT-HIVE-REMOVAL-001-EVIDENCE.md",
+            ".engineering/work-orders/GBS-MAINT-HIVE-REMOVAL-001.md"
+          ],
+          "result": "restored byte-for-byte from admitted main source f6738292c038eb6f0d08d1d32b3752c5c7dc417a"
+        },
+        {
+          "issue": 348,
+          "review": 5366327642,
+          "paths": [
+            ".github/workflows/v11-release-assurance.yml",
+            ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013-GATE2.json",
+            ".engineering/context-locks/GBS-V11-RELEASE-ONEPASS-013.json",
+            ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json",
+            ".engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE2-EVIDENCE.md",
+            ".engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md",
+            "pull request #350 description"
+          ],
+          "result": "Only pull_request trigger now includes main and release/1.1; jobs and push trigger unchanged. Provider-bound Codecov diagnosis found no numeric patch percent and no justified mapping-fix hunk; exact cause remains provider/diff mapping limitation. 145/145 checks passed on measured head 07a723cfe30b324b500b46618cef4e451705f39a. Stop OWNER_DECISION_REQUIRED."
+        },
+        {
+          "issue": 348,
+          "review": 5367412324,
+          "sourceHead": "db33e42ca38386be6a601a11bcddaf963cb90a94",
+          "priorReviewedHead": "1d340b6f52d1f61bd887f93e7c228b77018dab5a",
+          "paths": [
+            "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+            "tests/v11-wo-008-admission.test.mjs"
+          ],
+          "result": "Recognize Option B only on the exact ownerDecision value; preserve strict historical assertions when absent. No runtime, workflow, threshold, exclusion, CI or other test path changed."
+        }
+      ],
+      "localValidation": {
+        "dependencyInstall": {
+          "command": "npm ci --ignore-scripts",
+          "result": "PASS",
+          "packagesAdded": 33,
+          "reportedVulnerabilities": 0
+        },
+        "build": {
+          "command": "npm run build",
+          "result": "PASS",
+          "sourceHead": "96ca391e61002c494fcb3d408a344251ef1d2748"
+        },
+        "fullValidation": {
+          "command": "npm run validate",
+          "result": "PASS",
+          "typecheck": "PASS",
+          "tests": 1603,
+          "passed": 1603,
+          "failed": 0,
+          "skipped": 0,
+          "sourceHead": "96ca391e61002c494fcb3d408a344251ef1d2748"
+        },
+        "focusedAdmissionTests": {
+          "command": "node --test tests/v11-wo-009-admission.test.mjs tests/v11-wo-008-admission.test.mjs",
+          "result": "PASS",
+          "passed": 12,
+          "failed": 0
+        },
+        "historicalDetachmentScanner": {
+          "command": "node --test tests/v11-legacy-ecosystem-detachment.test.mjs",
+          "result": "PASS",
+          "passed": 1,
+          "failed": 0
+        },
+        "correctionDelta5": {
+          "sourceHead": "db33e42ca38386be6a601a11bcddaf963cb90a94",
+          "platform": "Windows",
+          "node": "v24.19.0",
+          "dependencyInstall": {
+            "command": "npm ci --ignore-scripts",
+            "result": "PASS",
+            "packagesAdded": 33,
+            "reportedVulnerabilities": 0
+          },
+          "focusedCheckpointTests": {
+            "command": "node --test tests/v11-wo-001-promotion.test.mjs tests/v11-wo-003-admission.test.mjs tests/v11-wo-005-admission.test.mjs tests/v11-wo-006-admission.test.mjs tests/v11-wo-007-admission.test.mjs tests/v11-wo-008-admission.test.mjs tests/v11-wo-009-admission.test.mjs",
+            "result": "PASS",
+            "passed": 48,
+            "failed": 0,
+            "skipped": 0
+          },
+          "fullValidation": {
+            "command": "npm run validate",
+            "typecheck": "PASS",
+            "tests": 1603,
+            "passed": 1603,
+            "failed": 0,
+            "skipped": 0,
+            "result": "PASS"
+          }
+        }
+      },
+      "providerChecks": {
+        "pullRequest": "OPEN_DRAFT https://github.com/KayzenRoot/gef-bootstrap/pull/350",
+        "providerEvidenceHeadSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
+        "exactHead": "145/145 status contexts SUCCESS; CodeRabbit remains non-audit; https://github.com/KayzenRoot/gef-bootstrap/pull/350/checks",
+        "gitleaks": "PASS exact head; workflow 36737779435",
+        "trivy": "PASS exact head; workflow 36737779435",
+        "codeql": "PASS exact head; run 109964564820",
+        "dependencyReview": "PASS exact head; workflow 36737779307",
+        "pipelineIntegrity": "PASS exact head; workflow 36737779650",
+        "crossPlatformAssurance": "PASS exact head; V1.1 release assurance Ubuntu/macOS/Windows, workflow 36737779630",
+        "sonarQualityGateAndDuplication": "PASS exact head; SonarCloud Code Analysis and cumulative diagnostics/duplicate-block checks succeeded",
+        "codecovPatch": "N/A_ZERO_DENOMINATOR under owner Option B: exact base/head bound; LCOV upload succeeded; provider codecov/patch SUCCESS run 109964904340 says Coverage not affected; patch files=31, lines=0, hits=0, misses=0, partials=0; base coverage=97.85%, head coverage=95.26%; no numeric patch percent",
+        "codecovUploadRuns": [
+          36709709431,
+          36710842657,
+          36711283623,
+          36719357762,
+          36737779260
+        ]
+      },
+      "latestExactHeadEvidence": {
+        "headSha": "8529883a048eb58aa131c68800b22fba87ce8da2",
+        "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+        "mergeBaseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "checks": "148/148 SUCCESS across 45/45 completed workflow runs",
+        "repositoryValidation": "1603 total; 1599 passed; 0 failed; 4 skipped",
+        "releaseAssurance": "Ubuntu/macOS/Windows SUCCESS",
+        "security": "Gitleaks, Trivy, CodeQL, Dependency Review, Pipeline Integrity and Sonar SUCCESS",
+        "codecovDisposition": "N/A_ZERO_DENOMINATOR under owner-approved Option B at this exact Gate 2 head; N/A is not 100% or numeric threshold satisfaction",
+        "ownerReview": 5368812257,
+        "verdict": "OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT",
+        "scope": "Admission proof only; WO-010 requires its own exact-head checks."
+      },
+      "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OWNER_APPROVED_WO010_ADMITTED",
+      "ownerSemanticAmendment": {
+        "decision": "OPTION_B_APPROVED",
+        "date": "2026-09-30",
+        "source": "Issue #348 owner decision after review #5366930854",
+        "numericRule": "patch >=97.85% when numeric patch denominator exists",
+        "zeroDenominatorRule": "N/A_ZERO_DENOMINATOR accepted only for exact base/head + exact-head LCOV upload SUCCESS + provider patch status SUCCESS + zero eligible patch lines / not affected + visible head/project coverage + no weakened threshold/exclusion/coverage definition + all other required gates green + owner exact-head audit",
+        "prohibitedInterpretation": "N/A is never 100% and never numeric threshold satisfaction",
+        "currentCandidateBeforeDocsHead": "4884b2aded8130e2af0bd0083caa54e11ce8eca6",
+        "state": "APPLIED_AWAITING_NEW_HEAD_CHECKS_AND_OWNER_REAUDIT"
+      },
+      "latestReview": {
+        "review": 5367412324,
+        "reviewedHead": "1d340b6f52d1f61bd887f93e7c228b77018dab5a",
+        "verdict": "CORRECTION_REQUIRED / NOT_INDEPENDENT",
+        "staleAssertionFailures": 8,
+        "previousSuite": {
+          "total": 1603,
+          "passed": 1591,
+          "failed": 8,
+          "skipped": 4
+        },
+        "failedRuns": {
+          "repositoryValidation": 36726398183,
+          "m01Validation": 36726398316,
+          "codecovCoveragePilot": 36726398023
+        },
+        "disposition": "Superseded by correctionDelta5 source head; do not carry these failures or earlier-head passes to the next exact-head audit."
+      },
+      "postDelta5ExactHeadChecks": {
+        "state": "SUCCESS_ON_5c0aa73; DOCUMENTATION_FOLLOWUP_REQUIRES_EXACT_HEAD_REVALIDATION",
+        "headSha": "5c0aa73fc23683bc295dcba0c0cc185ea25251b7",
+        "checks": "145/145 SUCCESS",
+        "codecovDisposition": "N/A_ZERO_DENOMINATOR",
+        "releaseAssurance": "Ubuntu/macOS/Windows PASS",
+        "required": [
+          "Codecov exact-head LCOV upload and provider patch status",
+          "V1.1 release assurance Ubuntu/macOS/Windows",
+          "Gitleaks and Trivy",
+          "CodeQL",
+          "Sonar",
+          "Dependency Review",
+          "Pipeline Integrity",
+          "all other required exact-head workflows"
+        ],
+        "next": "Revalidate the documentation-only Gate Matrix/Evidence follow-up HEAD, then stop for owner reauditoria",
+        "stopCondition": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_TEST_ASSERTIONS_READY_FOR_REAUDIT"
+      },
+      "ownerApproval": {
+        "review": 5368812257,
+        "reviewedHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+        "verdict": "OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT",
+        "workflowRuns": "45/45 SUCCESS",
+        "checkRuns": "148/148 SUCCESS",
+        "repositoryValidation": "1603 tests; 1599 passed; 0 failed; 4 skipped",
+        "codecov": "N/A_ZERO_DENOMINATOR under the owner-approved Option B semantics; not interpreted as 100% or numeric threshold satisfaction",
+        "securityAndQuality": "CodeQL, Sonar, Gitleaks, Trivy, Dependency Review and Pipeline Integrity SUCCESS; Ubuntu/macOS/Windows release assurance SUCCESS",
+        "scope": "Gate 2 approval authorizes WO-010 admission only; later WO-010 candidate checks bind to its own exact head.",
+        "baseSha": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "releaseSha": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+      },
+      "historicalIntegrationMerge": {
+        "branch": "codex/gbs-v11-release-integration-014",
+        "sha": "554b2627de324058e2264b78c10114eb4c652a9d",
+        "tree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+        "parents": [
+          "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+          "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+        ],
+        "disposition": "historical source reference only; not in clean candidate ancestry"
+      },
+      "recreatedGate2Commit": {
+        "admittedSourceHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+        "commit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
+        "tree": "6e78975f0c552edfe80e472f6198dd884209b26e",
+        "ownerDecision": "OPTION_B_APPROVED",
+        "exactHeadReaudit": "PENDING_CLEAN_REPLACEMENT_CHECKS"
+      }
+    },
+    {
+      "gate": 3,
+      "name": "WO-010 production acceptance and V1.1 release",
+      "state": "OWNER_FINALIZATION_AUTHORIZED",
+      "workOrder": "GBS-V11-WO-010",
+      "workOrderPresent": true,
+      "packageMetadata": {
+        "rootPrivate": true,
+        "rootLicense": "UNLICENSED",
+        "cliPrivate": false,
+        "cliLicense": "UNLICENSED",
+        "metadataMutation": "repository.url from review #5373800160 preserved; owner-finalization authorization sets private:false and publishConfig.access public; name, version, and UNLICENSED preserved",
+        "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git",
+        "publishConfigAccess": "public"
+      },
+      "ownerFinalizationStatuses": [
+        "OWNER_FINALIZATION_AUTHORIZED",
+        "NPM_IDENTITY_VERIFIED",
+        "FIRST_PUBLISH_BOOTSTRAP_AUTHORIZED"
+      ],
+      "authorizationHead": "526b82869bde5c40e6cba03de91ad92e25d604d1",
+      "ownerActions": {
+        "licenseDistributionChoice": "ALL_RIGHTS_RESERVED_PRESERVED",
+        "npmIdentity": "VERIFIED: npm whoami returned kayzenroot; authenticated GitHub identity is KayzenRoot (case-insensitive match)",
+        "npmNamespaceRegistryOwnership": "npm team ls @gef-bootstrap:developers lists kayzenroot as its sole member; npm access list packages @gef-bootstrap exited 0 with no package rows",
+        "npmPackage": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected while unpublished and not treated as an ownership failure",
+        "npmOidcTrustedPublishing": "Package-level binding not yet configured; configure after the authorized first publication",
+        "finalS4PublicationApproval": "OWNER_FINALIZATION_AUTHORIZED_BY_ISSUE_351_EXECUTION_PROMPT",
+        "ownerReportedGithubConnection": true,
+        "credentialDisclosure": "No long-lived npm token used; no credential values copied into repository files or GitHub evidence"
+      },
+      "authorizedActivityNow": "Complete final WO-010 sequence on PR #352: wait for automatic required checks; merge normally only after checks pass; build from exact main; perform the authorized first npm publication; configure Trusted Publisher; then create the exact tag and stable release after each receipt gate",
+      "forbiddenNow": [
+        "long-lived npm token",
+        "merge before exact-head required checks pass",
+        "publish from a dirty tree or a source SHA other than the accepted main SHA",
+        "tag before package checksum and Trusted Publisher verification"
+      ],
+      "admissionIssue": 351,
+      "admissionReview": 5368812257,
+      "admissionHead": "8529883a048eb58aa131c68800b22fba87ce8da2",
+      "candidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+      "correctionDelta6IssueComment": 5916761162,
+      "correctionDelta16IssueComment": 5919878202,
+      "sameArtifactMatrix": "PASS Ubuntu/macOS/Windows; run https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36797272549; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
+      "npmPreflight": {
+        "identity": "VERIFIED_KAYZENROOT_NPM_WHOAMI; matches GitHub KayzenRoot case-insensitively",
+        "ownerReport": "Owner completed manual npm web authorization; GitHub profile is connected per owner report",
+        "publicRegistryLookup": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected unpublished package state, not an ownership failure",
+        "trustedPublisherBinding": "NOT_CONFIGURED; configure after first publication as explicitly authorized",
+        "credentialUse": "npm CLI web login; no long-lived npm token used; no credential values copied into repository files or GitHub evidence",
+        "publication": "NOT_ATTEMPTED_AT_AUTHORIZATION_CHECKPOINT",
+        "stopCondition": "OWNER_FINALIZATION_AUTHORIZED; required execution gates remain outstanding",
+        "organizationTeamMembership": "PASS: npm team ls @gef-bootstrap:developers lists kayzenroot",
+        "packageAcl": "npm access list packages @gef-bootstrap exited 0; no package rows returned",
+        "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git",
+        "longLivedToken": "NOT_USED"
+      },
+      "prepublicationChecks": {
+        "workingTreePinnedGitleaks": "PASS: no candidate finding; unchanged baseline findings are outside the candidate diff",
+        "fullMainToCandidateGitleaks": "PASS pinned Gitleaks 8.30.1 at exact candidate head; 88 commits in main..candidate, zero findings; PR Gitleaks check PASS",
+        "realPackageTarballAndReceipt": "PASS exact-source receipt for aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f; Linux producer run 36803639314",
+        "packageManifestAndChecksums": "PASS 379 archive entries; actual tarball SHA-256 b6900bed8b6ce9be7f196719b9384c7a6ecadbf63ca5a82bc55d07ef38978a45; 2737237 bytes; packed repository.url exact; private/name/version/license preserved",
+        "sameArtifactUbuntuWindowsMacos": "PASS all three operating systems consumed the same SHA-bound artifact in run 36803639314",
+        "upgradeRecovery": "PASS release workflow matrix; local Windows exact tarball migration preserved V1.0 state and receipts",
+        "npmRunBuild": "PASS",
+        "focusedTests": "PASS directed package-builder/publisher tests 11/11; npm run build and npm pack --dry-run PASS",
+        "npmAudit": "PASS 0 vulnerabilities",
+        "npmRunValidate": "PASS 1610/1610 in a normal clone of the exact manifest content; exact-head GitHub Repository Validation PASS",
+        "codecovOptionB": "codecov/patch SUCCESS; provider comment confirms modified and coverable lines covered; existing owner Option B decision preserved; exact-head interpretation remains for owner audit",
+        "sonarCodeqlTrivy": "PASS; Sonar quality/duplicate-block checks PASS with 0 security hotspots and 122 new issues disclosed; CodeQL and Trivy PASS",
+        "dependencyReviewPipelineIntegritySocket": "PASS all three",
+        "exactHeadRequiredChecks": "PASS 4/4 required checks; 149 PR check contexts in pass bucket, with CodeRabbit skipped because the PR is draft"
+      },
+      "stopCondition": "OWNER_FINALIZATION_AUTHORIZED; required execution gates remain outstanding",
+      "finalPullRequestHead": "526b82869bde5c40e6cba03de91ad92e25d604d1",
+      "requiredExactHeadChecks": "4/4 required checks PASS; all 149 PR check contexts in pass bucket on authorization head 526b82869bde5c40e6cba03de91ad92e25d604d1 (CodeRabbit skipped because draft); this finalization commit requires fresh checks on its new SHA",
+      "auditReady": false,
+      "blockingChecks": {
+        "requiredChecksAndPromotion": "Final package/workflow commit must receive fresh required checks before normal merge; production actions then require exact-main source, matching tarball receipts, and successful Trusted Publisher verification.",
+        "npmTrustedPublisherPreflight": "npm CLI identity and scope-team membership are verified; package-level Trusted Publisher remains unconfigured/unverified until the first package exists."
+      },
+      "evidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
+      "releaseManifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json",
+      "historicalPr350": {
+        "pullRequest": 350,
+        "branch": "codex/gbs-v11-release-integration-014",
+        "implementationHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+        "finalHead": "3cd5ba3f7e3e5cd4c81472f521b8b8a596ad68fe",
+        "review": 5372870208,
+        "state": "BLOCKED_HISTORICAL_REDACTED_GITLEAKS_FINDING",
+        "disposition": "preserved historical evidence; branch remains OPEN/DRAFT and unmodified"
+      },
+      "implementationPr": 352,
+      "replacementPullRequest": 352,
+      "replacementLineage": {
+        "baseMain": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "releaseHead": "4b2f66724ea5df94ddd8fda2d8088b12b9708c10",
+        "mergeBase": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+        "mergeCommit": "4e428d4c8657c19e05a30da3ba0064190007ab5f",
+        "mergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+        "mergeParents": [
+          "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+          "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+        ],
+        "gate2RecreationCommit": "72db9380e7ac0afa8b5c339f72f09238f826f2a6",
+        "gate2RecreationTree": "6e78975f0c552edfe80e472f6198dd884209b26e",
+        "wo010ImplementationHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
+        "noPr350CommitsInAncestry": true,
+        "replacementPullRequest": 352,
+        "metadataCorrectionHead": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f"
+      },
+      "correctionDelta17Review": 5372870208,
+      "finalPullRequestUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/352",
+      "technicalChecksReadyForOwnerAudit": true,
+      "exactHeadProviderEvidence": {
+        "head": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f",
+        "implementationHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
+        "base": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
+        "pullRequest": 352,
+        "exactHeadChecks": "4/4 required checks PASS; 149 PR check contexts in pass bucket (CodeRabbit skipped because draft)",
+        "releaseAssurance": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36803639314 (Ubuntu/macOS/Windows SUCCESS)",
+        "sameArtifact": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36803639314; Ubuntu/macOS/Windows SUCCESS; SHA-256 b6900bed8b6ce9be7f196719b9384c7a6ecadbf63ca5a82bc55d07ef38978a45",
+        "codecov": "codecov/patch SUCCESS",
+        "gitleaks": "Pinned Gitleaks 8.30.1 full main..candidate interval and exact-head PR check PASS",
+        "trivy": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36803639235/job/110183186116",
+        "codeql": "PASS https://github.com/KayzenRoot/gef-bootstrap/runs/110183890106",
+        "dependencyReview": "PASS",
+        "pipelineIntegrity": "PASS",
+        "sonar": "PASS quality gate and duplicate-block checks",
+        "socket": "PASS",
+        "npmAudit": "PASS; 0 vulnerabilities",
+        "localValidation": "Windows x64; npm run build PASS; npm run validate PASS 1610/1610 in normal clone with exact manifest content",
+        "npmPreflight": "npm whoami kayzenroot; developers team membership confirmed; package E404 expected unpublished; exact repository.url present in tarball; no long-lived npm token used or credential values copied into repository files or GitHub evidence; no publication attempted",
+        "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION"
+      }
+    }
+  ],
+  "historicalFacts": {
+    "v1Accepted": "1088/1088; unchanged",
+    "pr278": "CLOSED_NOT_MERGED; historic head bbd83a179dd4c11f2f8653251db2b574d0266880; checks and Codecov result do not transfer",
+    "issue334Cause": "LCOV DA line coverage 238/238 versus 14 uncovered BRDA branch outcomes; Codecov changed-line mapping is branch-aware, not an SHA/path mismatch",
+    "pr336": {
+      "state": "MERGED",
+      "mergeSha": "d892d2cb03719dd661bcab86bec995aecc8f4894"
+    },
+    "cleanReplacementSource": {
+      "oldBranch": "codex/gbs-v11-release-integration-014",
+      "oldMerge": "554b2627de324058e2264b78c10114eb4c652a9d",
+      "oldMergeTree": "01acb6c2379304235b6213e3e9c7a2f87078069b",
+      "oldMergeParents": [
+        "aa4af40bfd297742bf100f94fbfeda3ef411a35b",
+        "4b2f66724ea5df94ddd8fda2d8088b12b9708c10"
+      ],
+      "oldWoImplementationHead": "59df2d1feadb18f5f5997f748f79339adb701f43",
+      "oldPrFinalHead": "3cd5ba3f7e3e5cd4c81472f521b8b8a596ad68fe",
+      "oldReview": 5372870208,
+      "oldPrState": "OPEN_DRAFT_PRESERVED_UNMODIFIED"
+    }
+  },
+  "phase1EvidenceBundle": ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md",
+  "mergeAuthorized": true,
+  "publicationAuthorized": true,
+  "currentGate": 3,
+  "currentGateState": "OWNER_FINALIZATION_AUTHORIZED",
+  "currentCandidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
+  "mainMergeAuthorized": true
+}

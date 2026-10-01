@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V11-MAINT-PR278-COMPLEXITY-003",
+  "parent": "GBS-V11-MAINT-POST-WO009-001",
+  "baseRef": "release/1.1",
+  "baseSha": "343c619f1cd39d63ad0a9baeecd8091fa7468873",
+  "branch": "gbs/v11/maint-pr278-complexity-003",
+  "assurance": "ELEVATED",
+  "mainProductionShaAtLock": "e23311e77d79b84f3c70671072a22a6f8896d13d",
+  "sonarProviderEvidence": {
+    "sourcePr": 320,
+    "sourceJob": 109417416793,
+    "originalComplexity": {
+      "capsuleValidator": 62,
+      "downstreamProofClosure": 26
+    }
+  },
+  "authorizedPaths": [
+    "packages/execution-pack-compiler/src/execution-capsule.ts",
+    "packages/test-impact-engine/src/v11-proof-reuse.ts",
+    ".engineering/work-orders/GBS-V11-MAINT-PR278-COMPLEXITY-003.md",
+    ".engineering/context-locks/GBS-V11-MAINT-PR278-COMPLEXITY-003.json",
+    ".engineering/evidence/GBS-V11-MAINT-PR278-COMPLEXITY-003-EVIDENCE.md"
+  ],
+  "exclusions": [
+    "main",
+    "v1.0.0 tag",
+    "scanner suppression",
+    "product release",
+    "unrelated modules",
+    "retired integration"
+  ],
+  "stopCondition": "GBS_V11_PR278_COMPLEXITY_003_EXACT_HEAD_VERIFIED_OR_BLOCKED"
+}

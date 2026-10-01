@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0",
+  "artifact": "V1.1-COMPATIBILITY-MATRIX",
+  "matrixVersion": "0.0.0-skeleton",
+  "status": "SKELETON_UNPOPULATED",
+  "authority": ".engineering/releases/V1.1-COMPATIBILITY-MIGRATION-CONTRACT.md",
+  "owner": "GBS-V11-WO-004",
+  "createdBy": "GBS-V11-WO-001",
+  "provenanceRule": "This is a design skeleton. No row is a compatibility claim. Rows become claims only when populated with reproducible evidence by WO-004 and accepted by audit.",
+  "dimensions": {
+    "D1": { "id": "D1", "name": "gefVersion", "values": ["1.0.x", "1.1.x"], "blocking": true },
+    "D2": { "id": "D2", "name": "adoptionMode", "values": ["NEW_PROJECT", "EXISTING_PROJECT", "ADOPTED_DRIFTED"], "blocking": true },
+    "D3": { "id": "D3", "name": "configSchemaVersion", "values": ["1.0"], "blocking": true },
+    "D4": { "id": "D4", "name": "contractSchemaVersion", "values": ["per-major"], "blocking": true },
+    "D5": { "id": "D5", "name": "managedFileState", "values": ["ABSENT", "CURRENT", "STALE", "USER_MODIFIED", "CONFLICTING", "UNKNOWN"], "blocking": true },
+    "D6": { "id": "D6", "name": "nodeRuntime", "values": ["22", "24"], "blocking": true, "note": "declared engines range is >=22 today" },
+    "D7": { "id": "D7", "name": "platform", "values": ["win32", "linux", "darwin"], "blocking": true },
+    "D8": { "id": "D8", "name": "gitState", "values": ["clean", "dirty", "detached", "no-repo", "submodule", "worktree"], "blocking": false },
+    "D9": { "id": "D9", "name": "providerCapability", "values": ["github-present", "github-absent", "github-partial"], "blocking": false },
+    "D10": { "id": "D10", "name": "optionalAdapters", "values": ["none", "external-slot", "context-slot", "ugas"], "blocking": false }
+  },
+  "rowStates": {
+    "UNVERIFIED": "planned row, no evidence yet; MUST NOT be read as supported",
+    "VERIFIED": "reproducible evidence bound to an exact commit/toolchain/platform",
+    "UNSUPPORTED": "combination is refused; runtime must return UNSUPPORTED and mutate nothing",
+    "INDETERMINATE": "a blocking dimension is UNKNOWN; runtime must fail closed"
+  },
+  "blockingDimensionRule": "A row whose blocking dimension is UNKNOWN resolves to INDETERMINATE, never VERIFIED.",
+  "rows": [
+    { "id": "CM-001", "D1": "1.0.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "linux", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-002", "D1": "1.0.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "win32", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-003", "D1": "1.0.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "darwin", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-004", "D1": "1.0.x", "D2": "EXISTING_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "linux", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-005", "D1": "1.0.x", "D2": "EXISTING_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "USER_MODIFIED", "D6": "22", "D7": "linux", "D8": "dirty", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null, "note": "must never overwrite user content" },
+    { "id": "CM-006", "D1": "1.0.x", "D2": "EXISTING_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "CONFLICTING", "D6": "22", "D7": "win32", "D8": "dirty", "D9": "github-absent", "D10": "none", "status": "UNVERIFIED", "evidence": null, "note": "must escalate, no automatic resolution" },
+    { "id": "CM-007", "D1": "1.0.x", "D2": "ADOPTED_DRIFTED", "D3": "1.0", "D4": "1.x", "D5": "STALE", "D6": "22", "D7": "linux", "D8": "clean", "D9": "github-absent", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-008", "D1": "1.1.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "linux", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-009", "D1": "1.1.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "win32", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-010", "D1": "1.1.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "darwin", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-011", "D1": "1.1.x", "D2": "EXISTING_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "STALE", "D6": "22", "D7": "linux", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null, "note": "V1.0 -> V1.1 upgrade path" },
+    { "id": "CM-012", "D1": "1.1.x", "D2": "EXISTING_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "USER_MODIFIED", "D6": "22", "D7": "win32", "D8": "dirty", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null, "note": "V1.0 -> V1.1 upgrade with user edits" },
+    { "id": "CM-013", "D1": "1.1.x", "D2": "EXISTING_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "CONFLICTING", "D6": "22", "D7": "darwin", "D8": "dirty", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-014", "D1": "1.1.x", "D2": "EXISTING_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "UNKNOWN", "D6": "22", "D7": "linux", "D8": "clean", "D9": "github-present", "D10": "none", "status": "INDETERMINATE", "evidence": null, "note": "blocking dimension UNKNOWN must fail closed" },
+    { "id": "CM-015", "D1": "1.1.x", "D2": "EXISTING_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "linux", "D8": "clean", "D9": "github-present", "D10": "ugas", "status": "UNVERIFIED", "evidence": null, "note": "optional adapter present; must not block core" },
+    { "id": "CM-016", "D1": "1.1.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "24", "D7": "linux", "D8": "clean", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-017", "D1": "1.1.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "linux", "D8": "submodule", "D9": "github-present", "D10": "none", "status": "UNVERIFIED", "evidence": null },
+    { "id": "CM-018", "D1": "1.1.x", "D2": "NEW_PROJECT", "D3": "1.0", "D4": "1.x", "D5": "ABSENT", "D6": "22", "D7": "linux", "D8": "no-repo", "D9": "github-absent", "D10": "none", "status": "UNVERIFIED", "evidence": null, "note": "must refuse or degrade without fabricating repository identity" }
+  ],
+  "summary": {
+    "totalRows": 18,
+    "verified": 0,
+    "unverified": 17,
+    "unsupported": 0,
+    "indeterminate": 1,
+    "note": "verified=0 by construction; this is a skeleton created by WO-001 and MUST NOT be populated without WO-004 evidence."
+  },
+  "knownCandidateEvidence": {
+    "note": "Existing evidence that WO-004 MAY adopt into rows after independent verification. Not adopted here and not a claim of this skeleton.",
+    "items": [
+      {
+        "ref": "V1.0.0 source-workspace install",
+        "description": "git clone -> git checkout v1.0.0 -> npm ci -> npm run validate succeeded with 1153/1153 tests and 0 dependency vulnerabilities",
+        "ciEvidence": "PR #275 exact head fully green on ubuntu-latest, windows-latest and macos-latest",
+        "candidateFor": ["CM-001", "CM-002", "CM-003"]
+      }
+    ]
+  },
+  "stopCondition": "V1_1_COMPATIBILITY_MATRIX_SKELETON_READY_FOR_WO_004"
+}
