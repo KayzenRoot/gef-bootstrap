@@ -107,7 +107,6 @@ jobs:
           if (!present) throw new Error("Expected npm provenance/attestation metadata is absent");
           NODE
 
-          npm audit signatures "$PACKAGE_SPEC"
 
       - name: Install from registry and smoke-test CLI, library, doctor and repeated status
         shell: bash
@@ -121,6 +120,7 @@ jobs:
             npm install --package-lock-only --ignore-scripts --no-audit --no-fund "$PACKAGE_SPEC" --registry="$REGISTRY"
             test -s package-lock.json
             npm ci --ignore-scripts --no-audit --no-fund
+            npm audit signatures
           )
 
           bin="$consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs"
