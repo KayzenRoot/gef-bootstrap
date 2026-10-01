@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "kind": "gef.v11.wo-011-evidence-bundle-manifest",
+  "workOrderId": "GBS-V11-WO-011",
+  "issue": 357,
+  "captureMode": "LOCAL_WINDOWS_EXACT_COMMIT_PRE_PR",
+  "candidate": {
+    "repository": "KayzenRoot/gef-bootstrap",
+    "branch": "hotfix/v1.1.1-adopt-baseline-rollout",
+    "baseCommit": "a88a61b7fcae632cdf5b282dc4461592b92cad57",
+    "sourceCommit": "52af4d4925ca2c19827177d0228fab9a97d6d66d",
+    "pullRequest": null,
+    "tag": null
+  },
+  "package": {
+    "name": "@gef-bootstrap/cli",
+    "version": "1.1.1",
+    "private": false,
+    "license": "UNLICENSED",
+    "tarball": {
+      "file": "gef-bootstrap-cli-1.1.1.tgz",
+      "path": "D:\\Projects\\gef-v1.1.1-wo-011-evidence-20261001-1530\\package-exact-52af4d4\\gef-bootstrap-cli-1.1.1.tgz",
+      "sha256": "CF1F795EF20414E255B88612666C8F87FCFFE68568F765468E49F34655332E91"
+    },
+    "registryPublication": "NOT_ATTEMPTED"
+  },
+  "localValidation": {
+    "build": "PASS",
+    "focusedJournalLifecycleTests": "PASS_3_TESTS",
+    "journalReplacementRegression": "PASS_25_OF_25_ISOLATED_RUNS",
+    "fullValidate": {
+      "state": "PASS",
+      "passed": 1618,
+      "failed": 0
+    },
+    "releaseWorkflowYaml": "PASS_BOTH_CHANGED_WORKFLOWS",
+    "npmAuditHigh": "PASS_ZERO_REPORTED_VULNERABILITIES",
+    "isolatedLocalTarballSmoke": "PASS_VERSION_HELP_DOCTOR_STATUS"
+  },
+  "coreProof": {
+    "state": "PASS_LOCAL_DISPOSABLE_CLONE",
+    "repository": "KayzenRoot/core",
+    "clonePath": "D:\\Projects\\gef-v1.1.1-core-proof-20261001-52af4d4",
+    "coreMainCommit": "f27e3a3f1be64d2dfedc762dea30dd1dce7cab17",
+    "apply": "APPLIED",
+    "stateVersion": "1.1.1",
+    "observationModel": "PROJECT_DRIFT_V1",
+    "doctorExitCode": 0,
+    "doctorOk": true,
+    "doctorObservationLimit": "GOVERNANCE_CHECKPOINT_SCHEMA_UNSUPPORTED:core-gef-checkpoint-bridge-v1",
+    "repeatedStatus": {
+      "state": "PASS_DETERMINISTIC",
+      "sha256": "41D6F7EB64A9DBEBBBDB3545D62C28D733C2419F617BDF46D82A692457640317",
+      "repository": "CLEAN",
+      "operator": "CLEAN",
+      "driftChanged": false
+    },
+    "managedMetadataOnly": "PASS_NO_PROJECT_DRIFT",
+    "userProjectFileChange": "PASS_DRIFT_UNEXPECTED_DETECTED",
+    "afterSyntheticFileRemoval": "PASS_CLEAN_NO_DRIFT",
+    "canonicalEngineeringFiles": "65_OF_65_SHA256_UNCHANGED"
+  },
+  "coreProofEvidence": {
+    "directory": "D:\\Projects\\gef-v1.1.1-wo-011-evidence-20261001-1530\\core-proof",
+    "files": {
+      "core-adopt-apply.json": "785D76EAF69E501483803E8625533E23C4DD80B67B91F00A1F8B39428788356C",
+      "core-adopt-preview.json": "635B83DEDD475470D1DF0A118F6CFC595D0906728AA5B805A96484CE3A9DBE62",
+      "core-doctor-after.json": "8F9897B423B1FC0DB7991EEA9F31D42D73381BB578CD79CED207993FB7ABA322",
+      "core-engineering-before.json": "1E432BFD1E479EEF80A4CCB1782313F52EE224EBDAFFC38F1373F7D897B14473",
+      "core-status-after-1.json": "41D6F7EB64A9DBEBBBDB3545D62C28D733C2419F617BDF46D82A692457640317",
+      "core-status-after-2.json": "41D6F7EB64A9DBEBBBDB3545D62C28D733C2419F617BDF46D82A692457640317",
+      "core-status-metadata-proof.json": "41D6F7EB64A9DBEBBBDB3545D62C28D733C2419F617BDF46D82A692457640317",
+      "core-status-user-drift-proof.json": "5E854C8E25E3E859A73C556FE85A31CF1644D8EEA7D032AA8CFD8B69CC9A994A",
+      "core-status-restored.json": "41D6F7EB64A9DBEBBBDB3545D62C28D733C2419F617BDF46D82A692457640317"
+    }
+  },
+  "registryPreflight": {
+    "packageVersion": "@gef-bootstrap/cli@1.1.1",
+    "result": "E404_UNPUBLISHED",
+    "trustedPublisher": "NOT_VERIFIED",
+    "longLivedNpmToken": "NOT_USED"
+  },
+  "releaseGates": {
+    "pullRequestExactHeadChecks": "PENDING",
+    "ubuntuWindowsMacosSameArtifact": "PENDING",
+    "securityChecks": "PENDING",
+    "ownerExactHeadAudit": "PENDING",
+    "trustedPublisherVerification": "PENDING",
+    "mergeTagAndPublication": "NOT_AUTHORIZED_UNTIL_GATES_PASS",
+    "registryConsumerSmoke": "BLOCKED_UNTIL_PUBLICATION"
+  },
+  "consumerRollout": {
+    "state": "BLOCKED_REGISTRY_SMOKE_REQUIRED",
+    "priority": "KayzenRoot/goodz-menu_first_after_gate",
+    "repositoriesChanged": []
+  }
+}
