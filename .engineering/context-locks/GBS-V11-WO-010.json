@@ -358,8 +358,9 @@
     "mainMergeAuthorized": false,
     "tagOrPublicationAuthorized": false,
     "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
-    "exactHeadChecks": "149/149 SUCCESS on PR #352 head; exact-source package/platform/security gates pass",
+    "exactHeadChecks": "147/147 SUCCESS on PR #352 head 904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d",
     "noPr350CommitsInAncestry": true,
-    "npmTrustedPublisherBinding": "Owner reports GitHub connected to npm; package-level OIDC binding and authenticated scope identity remain unverified"
+    "npmTrustedPublisherBinding": "Owner reports GitHub connected to npm; package-level OIDC binding and authenticated scope identity remain unverified",
+    "currentPrHead": "904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d"
   }
 }

@@ -6,7 +6,7 @@ Issue #351; Master Issue #348. Gate 2 admission review #5368812257 approved Opti
 
 - Replacement PR: [#352](https://github.com/KayzenRoot/gef-bootstrap/pull/352), OPEN/DRAFT.
 - Branch: `codex/gbs-v11-wo010-clean-replacement-delta17`.
-- Candidate implementation HEAD measured below: `f3777fe5824ca061803bb2b45c988861156f55c7`.
+- Candidate implementation commit: `f3777fe5824ca061803bb2b45c988861156f55c7`; current exact PR/package/evidence head: `904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d`.
 - Main base: `f6738292c038eb6f0d08d1d32b3752c5c7dc417a`; admitted release/1.1: `4b2f66724ea5df94ddd8fda2d8088b12b9708c10`; merge base: `e23311e77d79b84f3c70671072a22a6f8896d13d`.
 - Fresh normal two-parent integration commit: `4e428d4c8657c19e05a30da3ba0064190007ab5f`, tree `01acb6c2379304235b6213e3e9c7a2f87078069b`, parents main then release/1.1.
 - Gate 2 recreated in commit `72db9380e7ac0afa8b5c339f72f09238f826f2a6`, tree `6e78975f0c552edfe80e472f6198dd884209b26e`, matching the admitted Gate 2 source tree and retaining `ownerDecision: OPTION_B_APPROVED`.
@@ -18,7 +18,7 @@ PR #350 remains preserved as historical only. Review #5372870208 blocked its fin
 
 ## Local exact-source validation
 
-All commands below ran on Windows x64 with Node `v24.19.0` and npm `11.17.0`, against source commit `f3777fe5824ca061803bb2b45c988861156f55c7` in an ordinary clone.
+All commands below ran on Windows x64 with Node `v24.19.0` and npm `11.17.0`, against current exact PR head `904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d` in an ordinary clone. The implementation-only directed tests also passed on `f3777fe5824ca061803bb2b45c988861156f55c7` before the evidence refresh.
 
 - `npm ci --ignore-scripts --no-audit --no-fund`: PASS; 33 packages installed.
 - `npm run build`: PASS.
@@ -31,7 +31,7 @@ All commands below ran on Windows x64 with Node `v24.19.0` and npm `11.17.0`, ag
 
 ## Real package and platform evidence
 
-The [V1.1 release assurance run](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981622) is tied to source HEAD `f3777fe5824ca061803bb2b45c988861156f55c7`. Its exact-source receipt records event `pull_request`, ref `refs/pull/352/merge`, package `@gef-bootstrap/cli@1.1.0`, tarball SHA-256 `17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898`, size 2,737,245 bytes, and 379 archive entries. The archive includes `package.json`, `LICENSE`, `README.md`, and `vendor/MANIFEST.json`.
+The [V1.1 release assurance run](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36797272549) is tied to source HEAD `904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d`. Its exact-source receipt records event `pull_request`, ref `refs/pull/352/merge`, package `@gef-bootstrap/cli@1.1.0`, tarball SHA-256 `17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898`, size 2,737,245 bytes, and 379 archive entries. The archive includes `package.json`, `LICENSE`, `README.md`, and `vendor/MANIFEST.json`.
 
 - Release assurance: Ubuntu, macOS, and Windows all SUCCESS.
 - The same SHA-bound tarball install/use/upgrade/removal matrix: Ubuntu, macOS, and Windows all SUCCESS.
@@ -40,12 +40,12 @@ The [V1.1 release assurance run](https://github.com/KayzenRoot/gef-bootstrap/act
 
 ## Security, coverage, and supply chain
 
-On this candidate, all 149 PR checks completed SUCCESS. Relevant evidence: [Gitleaks and Trivy](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981392), [Pipeline Integrity](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981532), [Dependency Review](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981523), [CodeQL](https://github.com/KayzenRoot/gef-bootstrap/runs/110156611181), [SonarCloud](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=352), [Codecov](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/352), and [release assurance](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36794981622).
+On exact PR head `904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d`, all 147 PR checks completed SUCCESS. Relevant evidence: [Gitleaks and Trivy](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36798093455), [Pipeline Integrity](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36798093442), [Dependency Review](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36798093436), [CodeQL](https://github.com/KayzenRoot/gef-bootstrap/runs/110163927143), [SonarCloud](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=352), [Codecov](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/352), and [release assurance](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36797272549).
 
-- Pinned Gitleaks 8.30.1 full `main..candidate` interval scan passed before PR creation with zero findings; the repository Gitleaks PR check also passed. The historical baseline findings are unchanged and outside the replacement diff.
+- Pinned Gitleaks 8.30.1 full `main..candidate` interval scan passed on this 88-commit candidate before the evidence refresh was pushed, with zero findings; the exact-head PR Gitleaks check also passed. The historical baseline findings are unchanged and outside the replacement diff.
 - Trivy, CodeQL, Dependency Review, Pipeline Integrity, Socket, and exact-head release security/integrity jobs: PASS.
 - Codecov `codecov/patch`: SUCCESS; the provider comment reports every modified, coverable line covered. The owner-approved Gate 2 decision remains `OPTION_B_APPROVED`. No coverage threshold, exclusion, workflow, or semantics was changed.
-- Sonar quality gate and duplicate-block checks: PASS; zero security hotspots. Sonar reported 122 new issues on this integrated diff; this is disclosed for the owner audit and was not altered merely to reduce the count.
+- Sonar quality gate and duplicate-block checks: PASS; zero security hotspots. Sonar reported 122 new issues on the integrated implementation diff; this is disclosed for the owner audit and was not altered merely to reduce the count.
 - No PR #350 commit is in the replacement ancestry. No token was used; no publish or registry mutation was attempted.
 
 ## npm preflight and stop
