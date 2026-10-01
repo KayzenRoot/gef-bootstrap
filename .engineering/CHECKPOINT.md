@@ -254,3 +254,20 @@ Recovery run [36854526557](https://github.com/KayzenRoot/gef-bootstrap/actions/r
 Delta #21 keeps that install, removes only the blocking signature-audit command from RECOVERY, verifies the physical installed bundles and runs the real CLI/library/status JSON smoke. Signature and attestation metadata are queried read-only; absent attestations are recorded as `PROVENANCE_NOT_CLAIMED_FOR_BOOTSTRAP_1_1_0`. The existing SHA-512 SRI, version, repository URL, immutable tag/source and no-publication protections remain.
 
 Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync HEAD `aecc566dc94220afaedb01f14db2eac59b2a4ee2` on draft PR #355 passed the normal automatic checks. On the latest exact PR head, repository validation, coverage, Gitleaks, Trivy, Pipeline Integrity, Dependency Review, CodeQL, SonarCloud, Codecov, focused/regression validation, TypeScript, and Ubuntu/Windows/macOS release assurance and same-tarball checks passed. Evidence links and run IDs are in the WO-010 Evidence Bundle and at https://github.com/KayzenRoot/gef-bootstrap/pull/355/checks. CodeRabbit was skipped because the PR remains draft. No manual test campaign was run. No merge, recovery dispatch, republish, tag movement or GitHub Release is claimed. Current Delta #21 stop: `GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT`.
+
+
+## V1.1 final production acceptance receipt
+
+**State:** `PRODUCTION_ACCEPTED` · **Version:** `1.1.0` · **Final stop:** `GBS_V11_WO_010_V1_1_0_PRODUCTION_RELEASE_DONE`.
+
+- Immutable release tag: `v1.1.0` → release source `fb2a2e6d41086e82ba03f307dc6ada18a52458ea`.
+- Current post-release recovery main: `a88a61b7fcae632cdf5b282dc4461592b92cad57`.
+- npm package: `@gef-bootstrap/cli@1.1.0`.
+- Final recovery: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36862229818 — SUCCESS. Immutable source, Node 22.17.0, rebuilt SRI, registry install, bundled runtimes and CLI/library/status smoke were verified. No republish and no tag mutation occurred.
+- Rebuilt release tarball SHA-256: `745770064c4d514bfc0ab7e0fbc1b03e55f1b76611f8fc6f69e75218a6edd5b4`.
+- npm `dist.integrity`: `sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==`.
+- GitHub Release: https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0, published 2026-10-01T12:53:14Z, stable/latest, not draft, not prerelease.
+- License: Proprietary / All Rights Reserved.
+- Trusted Publisher is owner-reported configured for future releases; it was not independently re-verified in this final audit. Verify via authenticated `npm trust list @gef-bootstrap/cli --json` before the next OIDC publication.
+
+V1.1 is closed as production accepted. Further development belongs to a separately admitted later version.
