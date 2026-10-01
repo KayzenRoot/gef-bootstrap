@@ -76,22 +76,40 @@
   },
   "registryPreflight": {
     "packageVersion": "@gef-bootstrap/cli@1.1.1",
-    "result": "E404_UNPUBLISHED",
-    "trustedPublisher": "NOT_VERIFIED",
+    "result": "PUBLISHED_VERIFIED",
+    "npmRepository": "git+https://github.com/KayzenRoot/gef-bootstrap.git",
+    "distIntegrity": "sha512-YuLrx35lCo4aSBV6DI/EmaKPhkZJxjyUyDTQEhjvM8SdktV5x2rWJjeIY0T69A/PlILqOsL5E2zrz3BLRMPGVg==",
+    "registrySignature": "ECDSA_SHA256_VERIFIED",
+    "provenance": "PRESENT",
+    "trustedPublisher": "OIDC_PUBLISH_SUCCESS_WITH_PROVENANCE",
     "longLivedNpmToken": "NOT_USED"
   },
   "releaseGates": {
-    "pullRequestExactHeadChecks": "PENDING",
-    "ubuntuWindowsMacosSameArtifact": "PENDING",
-    "securityChecks": "PENDING",
-    "ownerExactHeadAudit": "PENDING",
-    "trustedPublisherVerification": "PENDING",
-    "mergeTagAndPublication": "NOT_AUTHORIZED_UNTIL_GATES_PASS",
-    "registryConsumerSmoke": "BLOCKED_UNTIL_PUBLICATION"
+    "pullRequestExactHeadChecks": "PASS",
+    "ubuntuWindowsMacosSameArtifact": "PASS",
+    "securityChecks": "PASS",
+    "ownerExactHeadAudit": "APPROVED_NOT_INDEPENDENT",
+    "trustedPublisherVerification": "OIDC_PUBLISH_SUCCESS_WITH_PROVENANCE",
+    "mergeTagAndPublication": "COMPLETED",
+    "registryConsumerSmoke": "PASS"
   },
   "consumerRollout": {
-    "state": "BLOCKED_REGISTRY_SMOKE_REQUIRED",
+    "state": "AUTHORIZED_NOT_STARTED",
     "priority": "KayzenRoot/goodz-menu_first_after_gate",
+    "nextAction": "ROLLOUT_GEF_V1_1_1_TO_GOODZ_MENU_FIRST",
     "repositoriesChanged": []
+  },
+  "releaseEvidence": {
+    "releaseSourceSha": "1dc030f1358eab0347043a3d54c7fc311c7c2123",
+    "immutableTag": "v1.1.1",
+    "githubRelease": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.1",
+    "publicationRun": 36904947907,
+    "releaseTarballSha256": "59cfbe2699c884f9c57bb50594fe3972c5f8667c44bff4f35a5e9a65e4ce53c3",
+    "distIntegrity": "sha512-YuLrx35lCo4aSBV6DI/EmaKPhkZJxjyUyDTQEhjvM8SdktV5x2rWJjeIY0T69A/PlILqOsL5E2zrz3BLRMPGVg==",
+    "recoveryPullRequest": 359,
+    "recoveryAuditedHead": "c68114f0f8692551fc871bddd1e2fc6964374017",
+    "recoveryMerge": "5a32a607ccf2055fab722f3d5d452791c6aae3e6",
+    "recoveryRun": 36912440350,
+    "releaseAssuranceRun": 36912440441
   }
 }
