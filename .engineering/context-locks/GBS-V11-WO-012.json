@@ -80,7 +80,13 @@
     "tests/v11-wo-002-cli*.test.mjs",
     "tests/v11-wo-003-doctor-status.test.mjs",
     "tests/v11-wo-004-upgrade.test.mjs",
-    "tests/v11-wo-001-promotion.test.mjs"
+    "tests/v11-wo-001-promotion.test.mjs",
+    "tests/v11-wo-002-dist-smoke.test.mjs",
+    "tests/v11-wo-002-admission.test.mjs",
+    "tests/v11-wo-003-admission.test.mjs",
+    "tests/v11-wo-004-admission.test.mjs",
+    "tests/v11-wo-008-admission.test.mjs",
+    "tests/v11-wo-009-admission.test.mjs"
   ],
   "writeForbidden": [
     "all consumer repositories and consumer .gef/.gef-private state",
@@ -102,5 +108,35 @@
     "candidate tarball pack/install/CLI/library/doctor/status smoke",
     "exact-head required security/provider and applicable cross-platform assurance",
     "Evidence Bundle with remaining HIVE dependency and Neryn UADS blockers explicitly non-fixed unless separately proven"
+  ],
+  "scopeAmendments": [
+    {
+      "id": "WO012-CORRECTION-DELTA-1",
+      "dateUtc": "2026-10-01",
+      "reason": "Codex validation exposed six existing V1.1 tests outside the original allowlist whose expectations are mechanically coupled to the approved WO-012 checkpoint/ordinal/workflow and 1.1.2 distribution wording.",
+      "authority": "owner continuation in ChatGPT plus GBS-V11-WO-012 Correction Delta #1",
+      "allowedPaths": [
+        "tests/v11-wo-002-dist-smoke.test.mjs",
+        "tests/v11-wo-002-admission.test.mjs",
+        "tests/v11-wo-003-admission.test.mjs",
+        "tests/v11-wo-004-admission.test.mjs",
+        "tests/v11-wo-008-admission.test.mjs",
+        "tests/v11-wo-009-admission.test.mjs"
+      ],
+      "sourceFingerprintsAtStartingHead": {
+        "tests/v11-wo-002-dist-smoke.test.mjs": "34410ecf132e61d64f42ccddd7056dc6c3aa2a05",
+        "tests/v11-wo-002-admission.test.mjs": "d425e1dcfcf93781ecc0469792fcbccdd567d9a0",
+        "tests/v11-wo-003-admission.test.mjs": "01311c6e91481cd92b490b662b21a1c24d563609",
+        "tests/v11-wo-004-admission.test.mjs": "a7badb41dec78dedfe479cc73896f71c52ac3d7f",
+        "tests/v11-wo-008-admission.test.mjs": "52d0d89eadf362255b91338071cbeb5467be5b9f",
+        "tests/v11-wo-009-admission.test.mjs": "8e26a4dff2d535da11fc73deaf2f5803c05f416b"
+      },
+      "semanticLimits": [
+        "dist-smoke: only stale README/distribution text expectations required by the approved 1.1.2 transition; preserve package/security/runtime/install smoke assertions",
+        "admission tests: only exact recognition of WO-012, ordinal 12 and approved 1.1.2 checkpoint/workflow fields; preserve all historical branches and exact historical assertions",
+        "no skips, broad regex relaxation, upper-bound removal, assertion deletion or unrelated governance changes",
+        "any additional write path requires a new exact-path authorization"
+      ]
+    }
   ]
 }
