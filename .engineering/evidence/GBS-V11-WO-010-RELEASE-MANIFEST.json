@@ -19,7 +19,7 @@
   "replacementPullRequest": 352,
   "branch": "codex/gbs-v11-wo010-clean-replacement-delta17",
   "sourceCommitAtPackageInput": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f",
-  "captureMode": "GITHUB_ACTIONS_PULL_REQUEST_EXACT_HEAD_PACKAGE",
+  "captureMode": "FINAL_PRODUCTION_RELEASE_RECEIPT",
   "packageProducer": {
     "workflow": "V1.1 release assurance",
     "runId": 36803639314,
@@ -33,10 +33,12 @@
   "package": {
     "name": "@gef-bootstrap/cli",
     "version": "1.1.0",
-    "private": true,
+    "private": false,
     "license": "UNLICENSED",
-    "registryPublicationAttempted": false,
-    "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git"
+    "registryPublicationAttempted": true,
+    "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git",
+    "registryPublicationState": "PUBLISHED",
+    "publishedPackage": "@gef-bootstrap/cli@1.1.0"
   },
   "toolchain": {
     "platform": "Exact-head package produced on ubuntu-latest; same artifact consumed on Ubuntu, macOS and Windows; local exact-tarball smoke on Windows x64",
@@ -63,16 +65,16 @@
     "environment": "npm-publish",
     "registryAttestationIssued": false,
     "prepublicationReceipt": "GitHub Actions source/ref-bound package receipt in exact-head release-assurance artifact",
-    "reason": "Pre-publication provenance receipt verified for this exact source HEAD; npm registry attestation requires a later owner-authorized OIDC publication, which was not attempted."
+    "reason": "v1.1.0 was first published through the approved manual bootstrap path; final recovery verified the already-published artifact. Trusted Publisher is owner-reported configured for future releases and must be re-verified before the next OIDC publication."
   },
   "npmPreflight": {
     "identity": "VERIFIED: npm whoami returned kayzenroot; GitHub identity KayzenRoot matches case-insensitively",
     "scope": "npm team ls @gef-bootstrap:developers lists kayzenroot; npm access list packages @gef-bootstrap returned no package rows",
-    "package": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected while unpublished",
-    "trustedPublisherBinding": "NOT_CONFIGURED_OR_VERIFIED; first-publish decision remains separate per review #5373800160",
+    "package": "@gef-bootstrap/cli@1.1.0 PUBLISHED_AND_RECOVERY_VERIFIED",
+    "trustedPublisherBinding": "OWNER_REPORTED_CONFIGURED_FOR_FUTURE_RELEASES_NOT_REVERIFIED_IN_FINAL_AUDIT",
     "longLivedToken": "NOT_USED",
-    "publication": "NOT_ATTEMPTED",
-    "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
+    "publication": "PUBLISHED_1.1.0; final recovery verified registry install and exact dist.integrity without republish",
+    "stopCondition": "GBS_V11_WO_010_V1_1_0_PRODUCTION_RELEASE_DONE",
     "credentialDisclosure": "No long-lived npm token used; no credential values copied into repository files or GitHub evidence"
   },
   "exactHeadCi": {
@@ -111,8 +113,8 @@
       "Socket",
       "all required PR checks"
     ],
-    "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
-    "auditReady": false,
+    "stopCondition": "GBS_V11_WO_010_V1_1_0_PRODUCTION_RELEASE_DONE",
+    "auditReady": true,
     "technicalChecksReadyForOwnerAudit": true
   },
   "validation": {
@@ -124,6 +126,21 @@
     "npmAudit": "PASS found 0 vulnerabilities",
     "npmRunValidate": "PASS 1610/1610 in a normal clone with exact corrected manifest; GitHub Repository Validation PASS on exact candidate head",
     "npmPreflight": "npm identity and scope-team membership verified; package E404 expected unpublished; no long-lived npm token used or credential values copied into repository files or GitHub evidence; no publication attempted",
-    "npmPackDryRun": "PASS npm pack --dry-run --json --workspace @gef-bootstrap/cli"
+    "npmPackDryRun": "PASS npm pack --dry-run --json --workspace @gef-bootstrap/cli",
+    "finalRecovery": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36862229818; registry install + bundled runtime + CLI/library/status smoke + SRI equality"
+  },
+  "release": {
+    "state": "PRODUCTION_ACCEPTED",
+    "version": "1.1.0",
+    "tag": "v1.1.0",
+    "releaseSourceSha": "fb2a2e6d41086e82ba03f307dc6ada18a52458ea",
+    "currentMainSha": "a88a61b7fcae632cdf5b282dc4461592b92cad57",
+    "githubRelease": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0",
+    "publishedAt": "2026-10-01T12:53:14Z",
+    "npmPackage": "@gef-bootstrap/cli@1.1.0",
+    "recoveryRun": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36862229818",
+    "recoveryOutcome": "SUCCESS",
+    "incident": "RECOVERED",
+    "stopCondition": "GBS_V11_WO_010_V1_1_0_PRODUCTION_RELEASE_DONE"
   }
 }
