@@ -28,8 +28,14 @@ test("WO-010 manual branch dispatch verifies a candidate but only an exact pushe
   assert.match(recoveryJob, /git rev-parse HEAD[\s\S]*?test "\$source_commit" = "\$EXPECTED_RELEASE_COMMIT"/);
   assert.match(recoveryJob, /node-version: "22\.17\.0"/);
   assert.match(recoveryJob, /npm ci --ignore-scripts[\s\S]*?npm run build[\s\S]*?npm run validate[\s\S]*?npm audit --audit-level=high/);
-  assert.match(recoveryJob, /prepare-package\.mjs --pack[\s\S]*?sha1sum[\s\S]*?sha256sum/);
-  assert.match(recoveryJob, /npm view @gef-bootstrap\/cli@1\.1\.0 version[\s\S]*?dist\.shasum[\s\S]*?repository\.url/);
+  assert.match(recoveryJob, /prepare-package\.mjs --pack[\s\S]*?sha256sum/);
+  assert.doesNotMatch(recoveryJob, /sha1sum|sha-?1|dist\.shasum/i);
+  assert.match(recoveryJob, /npm view @gef-bootstrap\/cli@1\.1\.0 version[\s\S]*?dist\.integrity[\s\S]*?repository\.url/);
+  assert.match(recoveryJob, /npm view @gef-bootstrap\/cli@1\.1\.0 dist\.integrity --registry=https:\/\/registry\.npmjs\.org\//);
+  assert.match(recoveryJob, /node --input-type=module - "\$tarball" <<'SRI'[\s\S]*?createHash\("sha512"\)[\s\S]*?digest\("base64"\)[\s\S]*?SRI/);
+  assert.match(recoveryJob, /process\.stdout\.write\(`sha512-\$\{createHash\("sha512"\)/);
+  assert.match(recoveryJob, /published_integrity"\s*!=\s*"\$tarball_integrity"/);
+  assert.match(recoveryJob, /test "\$published_repository" = "\$expected_repository"/);
   assert.match(recoveryJob, /GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH/);
   assert.match(recoveryJob, /npm install @gef-bootstrap\/cli@1\.1\.0 --ignore-scripts[\s\S]*?npm audit signatures @gef-bootstrap\/cli@1\.1\.0[\s\S]*?processExitCodeFor[\s\S]*?status --target/);
   assert.doesNotMatch(recoveryJob, /npm publish|id-token:\s*write|NPM_TOKEN|NODE_AUTH_TOKEN|git tag|git push/);

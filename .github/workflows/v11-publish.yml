@@ -296,7 +296,13 @@ jobs:
           source_commit="$(git rev-parse HEAD)"
           test "$source_commit" = "$EXPECTED_RELEASE_COMMIT"
           tarball_name="$(basename "$tarball")"
-          tarball_sha1="$(sha1sum "$tarball" | awk '{print $1}')"
+          tarball_integrity="$(
+            node --input-type=module - "$tarball" <<'SRI'
+          import { createHash } from "node:crypto";
+          import { readFileSync } from "node:fs";
+          process.stdout.write(`sha512-${createHash("sha512").update(readFileSync(process.argv[2])).digest("base64")}`);
+          SRI
+          )"
           tarball_sha256="$(sha256sum "$tarball" | awk '{print $1}')"
           package_json="$RUNNER_TEMP/gef-v1.1.0-recovery-package.json"
           tar -xOzf "$tarball" package/package.json > "$package_json"
@@ -305,15 +311,20 @@ jobs:
           test "$package_name" = "@gef-bootstrap/cli"
           test "$package_version" = "1.1.0"
           published_version="$(npm view @gef-bootstrap/cli@1.1.0 version --registry=https://registry.npmjs.org/)"
-          published_shasum="$(npm view @gef-bootstrap/cli@1.1.0 dist.shasum --registry=https://registry.npmjs.org/)"
+          published_integrity="$(npm view @gef-bootstrap/cli@1.1.0 dist.integrity --registry=https://registry.npmjs.org/)"
           published_repository="$(npm view @gef-bootstrap/cli@1.1.0 repository.url --registry=https://registry.npmjs.org/)"
           if [ "$published_version" != "1.1.0" ]; then
             echo "Refusing recovery: npm registry returned version '$published_version'" >&2
             exit 1
           fi
-          if [ "$published_shasum" != "$tarball_sha1" ]; then
+          expected_repository="git+https://github.com/KayzenRoot/gef-bootstrap.git"
+          if [ "$published_repository" != "$expected_repository" ]; then
+            echo "Refusing recovery: npm registry returned unexpected repository.url '$published_repository'" >&2
+            exit 1
+          fi
+          if [ "$published_integrity" != "$tarball_integrity" ]; then
             echo "GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH" | tee -a "$GITHUB_STEP_SUMMARY" >&2
-            echo "Published dist.shasum=$published_shasum; rebuilt tag tarball SHA-1=$tarball_sha1" | tee -a "$GITHUB_STEP_SUMMARY" >&2
+            echo "Published dist.integrity=$published_integrity; rebuilt tag tarball integrity=$tarball_integrity" | tee -a "$GITHUB_STEP_SUMMARY" >&2
             exit 1
           fi
           {
@@ -321,13 +332,13 @@ jobs:
             echo "- Package: $package_name@$package_version"
             echo "- Rebuilt archive: $tarball_name"
             echo "- Source SHA: $source_commit"
-            echo "- Rebuilt tarball SHA-1: $tarball_sha1"
-            echo "- Published npm dist.shasum: $published_shasum"
+            echo "- Rebuilt tarball SHA-512 SRI: $tarball_integrity"
+            echo "- Published npm dist.integrity: $published_integrity"
             echo "- Rebuilt tarball SHA-256: $tarball_sha256"
             echo "- Registry repository.url: $published_repository"
             echo "- Result: published package matches the rebuilt immutable-tag tarball"
           } >> "$GITHUB_STEP_SUMMARY"
-          echo "Verified $package_name@$package_version from $source_commit; sha1=$tarball_sha1 sha256=$tarball_sha256"
+          echo "Verified $package_name@$package_version from $source_commit; integrity=$tarball_integrity sha256=$tarball_sha256"
 
       - name: Install and smoke-test the actual registry package
         shell: bash
