@@ -73,7 +73,7 @@
     "longLivedToken": "NOT_USED",
     "publication": "NOT_ATTEMPTED",
     "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
-    "credentialDisclosure": "No token or cookie content exposed"
+    "credentialDisclosure": "No long-lived npm token used; no credential values copied into repository files or GitHub evidence"
   },
   "exactHeadCi": {
     "state": "PASS_REQUIRED_AND_REPORTED_CHECKS",
@@ -123,7 +123,7 @@
     "sameArtifactSmoke": "PASS Windows local; Ubuntu/macOS/Windows CI same-artifact matrix PASS",
     "npmAudit": "PASS found 0 vulnerabilities",
     "npmRunValidate": "PASS 1610/1610 in a normal clone with exact corrected manifest; GitHub Repository Validation PASS on exact candidate head",
-    "npmPreflight": "npm identity and scope-team membership verified; package E404 expected unpublished; no credential contents exposed; no publication attempted",
+    "npmPreflight": "npm identity and scope-team membership verified; package E404 expected unpublished; no long-lived npm token used or credential values copied into repository files or GitHub evidence; no publication attempted",
     "npmPackDryRun": "PASS npm pack --dry-run --json --workspace @gef-bootstrap/cli"
   }
 }
