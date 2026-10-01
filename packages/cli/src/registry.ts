@@ -36,7 +36,8 @@ import { ToolObservationSession } from "@gef-bootstrap/preflight/toolchain";
 import type { MutablePreflightCounters, ToolDescriptor, ToolObservation, ToolPresenceStatus, ToolProbeResult, ToolProbeSpec, ToolResolutionResult } from "@gef-bootstrap/preflight";
 
 import { CLI_CONTRACT_VERSION } from "./parser.js";
-import { buildStateDocument, requireSupportedSchemaVersion } from "./schemas.js";
+import { buildStateDocument, parseStateDocument, PROJECT_DRIFT_OBSERVATION_MODEL } from "./schemas.js";
+import type { StateObservationModel } from "./schemas.js";
 import { applyGovernedCreate } from "./transaction.js";
 import { buildUpgradeStateDocument, composeUpgradePreview, UPGRADE_MIGRATION_ID, UPGRADE_STATE_REF, upgradePreconditionKey, upgradeRepositoryIdentityFingerprint, upgradeStateFingerprint } from "./upgrade.js";
 
@@ -113,8 +114,12 @@ export interface TargetObservation {
   readonly isDirectory: boolean;
   readonly entryCount: number;
   readonly hasGefDirectory: boolean;
+  readonly hasGefPrivateDirectory: boolean;
   readonly entries: readonly string[];
+  /** Full pre-1.1.1 observation retained for diagnostics and V1.1.0 compatibility. */
   readonly stateFingerprint: string;
+  /** Canonical project-only baseline; excludes the reserved GEF metadata directories. */
+  readonly projectDriftFingerprint: string;
 }
 
 export function fingerprint(value: unknown): string {
@@ -336,20 +341,35 @@ export function readGitMetadata(targetRoot: string, relativeRef: string): Diagno
 
 export function observeTarget(targetRef: string): TargetObservation {
   const absolute = resolve(targetRef);
-  let entries: string[] = [];
+  let allEntries: string[] = [];
   let exists = false;
   let isDirectory = false;
   try {
     const stats = statSync(absolute);
     exists = true;
     isDirectory = stats.isDirectory();
-    if (isDirectory) entries = readdirSync(absolute).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).slice(0, OBSERVATION_ENTRY_LIMIT);
+    if (isDirectory) allEntries = readdirSync(absolute).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   } catch {
     exists = false;
     isDirectory = false;
   }
+  const entries = allEntries.slice(0, OBSERVATION_ENTRY_LIMIT);
   const base = { targetRef: absolute, exists, isDirectory, entryCount: entries.length, hasGefDirectory: entries.includes(GEF_STATE_DIRECTORY), entries };
-  return { ...base, stateFingerprint: fingerprint(base) };
+  const projectEntries = allEntries.filter((entry) => entry !== GEF_STATE_DIRECTORY && entry !== ".gef-private").slice(0, OBSERVATION_ENTRY_LIMIT);
+  const projectBase = {
+    targetRef: absolute,
+    exists,
+    isDirectory,
+    entryCount: projectEntries.length,
+    hasGefDirectory: false,
+    entries: projectEntries,
+  };
+  return {
+    ...base,
+    hasGefPrivateDirectory: allEntries.includes(".gef-private"),
+    stateFingerprint: fingerprint(base),
+    projectDriftFingerprint: fingerprint(projectBase),
+  };
 }
 
 const GIT_OPERATION_SENTINELS: readonly (readonly [string, string])[] = Object.freeze([
@@ -1130,7 +1150,13 @@ interface DirtinessEvidence {
   readonly staged: readonly string[];
   readonly untracked: readonly string[];
   readonly conflicted: readonly string[];
+  readonly managedMetadataObserved: boolean;
   readonly detail?: string;
+}
+
+function isGefManagedMetadataPath(path: string): boolean {
+  const normalized = path.replace(/\\/g, "/").replace(/\/+$/, "");
+  return normalized === ".gef" || normalized.startsWith(".gef/") || normalized === ".gef-private" || normalized.startsWith(".gef-private/");
 }
 
 /**
@@ -1148,6 +1174,7 @@ export function observeRepositoryDirtiness(targetRef: string): DirtinessEvidence
   const staged: string[] = [];
   const untracked: string[] = [];
   const conflicted: string[] = [];
+  let managedMetadataObserved = false;
   // The probe runs the resolved approved executable through the same port that verified it, or it
   // does not run at all: an unresolved tool is `UNKNOWN`, never a fallback to whatever `git` the
   // ambient PATH would offer. The port revalidates the physical target and identity immediately
@@ -1156,19 +1183,34 @@ export function observeRepositoryDirtiness(targetRef: string): DirtinessEvidence
   if (!outcome.ok || outcome.result === null) {
     // A refusal before execution is reported by its own code, so an identity change is never
     // presented as an ordinary process failure.
-    return { observation: "UNKNOWN", modified, staged, untracked, conflicted, detail: outcome.reason ?? "GIT_PROBE_REFUSED" };
+    return { observation: "UNKNOWN", modified, staged, untracked, conflicted, managedMetadataObserved, detail: outcome.reason ?? "GIT_PROBE_REFUSED" };
   }
   const result = outcome.result;
   if (result.exitCode !== 0) {
     const detail = result.stderr.trim() || `exit ${String(result.exitCode)}`;
-    return { observation: "UNKNOWN", modified, staged, untracked, conflicted, detail };
+    return { observation: "UNKNOWN", modified, staged, untracked, conflicted, managedMetadataObserved, detail };
   }
   const entries = result.stdout.split("\0").filter((entry) => entry.length > 0);
   for (let index = 0; index < entries.length; index += 1) {
     const entry = entries[index];
     if (entry === undefined || entry.length < 4) continue;
     const code = entry.slice(0, 2);
-    const path = entry.slice(3);
+    let path = entry.slice(3);
+    if (code.startsWith("R") || code.startsWith("C")) {
+      const otherPath = entries[index + 1] ?? "";
+      index += 1;
+      const firstManaged = isGefManagedMetadataPath(path);
+      const secondManaged = isGefManagedMetadataPath(otherPath);
+      if (firstManaged && secondManaged) {
+        managedMetadataObserved = true;
+        continue;
+      }
+      if (firstManaged && !secondManaged) path = otherPath;
+    }
+    if (isGefManagedMetadataPath(path)) {
+      managedMetadataObserved = true;
+      continue;
+    }
     if (code === "??") {
       untracked.push(path);
       continue;
@@ -1176,14 +1218,12 @@ export function observeRepositoryDirtiness(targetRef: string): DirtinessEvidence
     if (CONFLICT_CODES.has(code)) {
       conflicted.push(path);
       // A rename entry carries a second NUL-terminated path.
-      if (code.startsWith("R") || code.startsWith("C")) index += 1;
       continue;
     }
-    if (code.startsWith("R") || code.startsWith("C")) index += 1;
     if (code[0] !== " " && code[0] !== "?") staged.push(path);
     if (code[1] !== " " && code[1] !== "?") modified.push(path);
   }
-  return { observation: "OBSERVED", modified, staged, untracked, conflicted };
+  return { observation: "OBSERVED", modified, staged, untracked, conflicted, managedMetadataObserved };
 }
 
 /**
@@ -1285,7 +1325,10 @@ export function observeRepository(targetRef: string): RepositoryObservation {
       conflicted: evidence.conflicted,
       ...(operation === undefined ? {} : { operation }),
     },
-    observationLimits: [...headLimits],
+    observationLimits: [
+      ...headLimits,
+      ...(evidence.managedMetadataObserved ? ["GEF_MANAGED_METADATA_EXCLUDED_FROM_REPOSITORY_DIRTINESS"] : []),
+    ],
     dirtiness: "OBSERVED",
   };
 }
@@ -1320,6 +1363,7 @@ export interface RecordedArtifact {
   readonly present: boolean;
   readonly fingerprint: string;
   readonly recordedObservationFingerprint: string | null;
+  readonly recordedObservationModel: StateObservationModel | null;
   readonly schemaVersionSupported: boolean;
   /** Set when the path was present but refused by the contained-read policy. */
   readonly refusal?: string;
@@ -1337,29 +1381,41 @@ export function readRecordedArtifact(targetRef: string, verb: MutationVerb): Rec
   // through the shared contained-read policy, so a linked or escaping `.gef` path is refused
   // rather than followed.
   const outcome = readContainedDiagnosticFile(resolve(targetRef), ref);
-  const absent = { ref, present: false, fingerprint: "ABSENT", recordedObservationFingerprint: null, schemaVersionSupported: true } as const;
+  const absent = { ref, present: false, fingerprint: "ABSENT", recordedObservationFingerprint: null, recordedObservationModel: null, schemaVersionSupported: true } as const;
   if (outcome.status === "ABSENT") return absent;
   if (outcome.status !== "OK" || outcome.bytes === null) {
     // Present but not admissible as evidence: the path exists in some form but was refused.
-    return { ref, present: true, fingerprint: "UNREADABLE", recordedObservationFingerprint: null, schemaVersionSupported: false, ...(outcome.limit === null ? {} : { refusal: outcome.limit }) };
+    return { ref, present: true, fingerprint: "UNREADABLE", recordedObservationFingerprint: null, recordedObservationModel: null, schemaVersionSupported: false, ...(outcome.limit === null ? {} : { refusal: outcome.limit }) };
   }
   const body = outcome.bytes;
   const artifactFingerprint = createHash("sha256").update(body).digest("hex");
   try {
-    const parsed: unknown = JSON.parse(body.toString("utf8"));
-    requireSupportedSchemaVersion(parsed);
-    const recorded = (parsed as { readonly observationFingerprint?: unknown }).observationFingerprint;
+    const parsed = parseStateDocument(JSON.parse(body.toString("utf8")) as unknown);
+    if (parsed === null) return { ref, present: true, fingerprint: artifactFingerprint, recordedObservationFingerprint: null, recordedObservationModel: null, schemaVersionSupported: false };
     return {
       ref,
       present: true,
       fingerprint: artifactFingerprint,
-      recordedObservationFingerprint: typeof recorded === "string" ? recorded : null,
+      recordedObservationFingerprint: parsed.observationFingerprint,
+      recordedObservationModel: parsed.observationModel,
       schemaVersionSupported: true,
     };
   } catch (cause: unknown) {
     void cause;
-    return { ref, present: true, fingerprint: artifactFingerprint, recordedObservationFingerprint: null, schemaVersionSupported: false };
+    return { ref, present: true, fingerprint: artifactFingerprint, recordedObservationFingerprint: null, recordedObservationModel: null, schemaVersionSupported: false };
   }
+}
+
+function compareProjectDrift(engines: Engines, recorded: RecordedArtifact, observation: TargetObservation): DriftResult {
+  const baseline = recorded.recordedObservationFingerprint ?? "NO_RECORDED_STATE";
+  let current = observation.projectDriftFingerprint;
+  if (recorded.recordedObservationModel === "LEGACY_FULL_OBSERVATION_V1") {
+    // A V1.1.0 baseline could have been captured before GEF created either managed directory, or
+    // while the same metadata was already present. Match either exact legacy-full observation or
+    // its deterministic project-only projection; any other difference remains real drift.
+    if (baseline === observation.stateFingerprint || baseline === observation.projectDriftFingerprint) current = baseline;
+  }
+  return engines.detectDrift({ observation: baseline }, { observation: current }, { authorized: false });
 }
 
 // ---------------------------------------------------------------------------
@@ -1400,11 +1456,7 @@ function composeFor(engines: Engines, verb: LegacyMutationVerb, targetRef: strin
   const repositoryVerdict: RepositoryStateResult | null = repository.dirtiness === "UNKNOWN" ? null : engines.repositoryState(repository.input);
   const canonical = engines.resolveCanonical([...observeCanonicalSources(targetRef)]);
   const recorded = readRecordedArtifact(targetRef, verb);
-  const drift = engines.detectDrift(
-    { observation: recorded.recordedObservationFingerprint ?? "NO_RECORDED_STATE" },
-    { observation: observation.stateFingerprint },
-    { authorized: false },
-  );
+  const drift = compareProjectDrift(engines, recorded, observation);
   const body = verb === "init"
     ? initComposition(engines, observation, repository, repositoryVerdict, canonical, drift, productVersion)
     : adoptComposition(engines, observation, repository, repositoryVerdict, canonical, drift, productVersion);
@@ -1745,7 +1797,7 @@ async function applyHandler(verb: LegacyMutationVerb, input: CliCommandInput, co
     productVersion: context.identity.productVersion,
     runId: context.runId,
     planDigest: composed.digest,
-    observationFingerprint: composed.observation.stateFingerprint,
+    observationFingerprint: composed.observation.projectDriftFingerprint,
     transaction: { planDigest: composed.digest, outcome: "APPLIED" },
   });
   const content = `${JSON.stringify(document, null, 2)}
@@ -2183,7 +2235,7 @@ async function diagnosisHandler(verb: DiagnosisVerb, input: DiagnosisInput, cont
   // supports.
   const drift =
     recordedBaselineSupported(recorded) && recorded.recordedObservationFingerprint !== null
-      ? engines.detectDrift({ observation: recorded.recordedObservationFingerprint }, { observation: observation.stateFingerprint }, { authorized: false })
+      ? compareProjectDrift(engines, recorded, observation)
       : null;
 
   const composition =

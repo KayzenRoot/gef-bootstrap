@@ -7,14 +7,17 @@ import { tmpdir } from "node:os";
 
 const receiptDirectory = process.env.GEF_RELEASE_RECEIPT_DIR;
 assert.ok(receiptDirectory, "workflow must provide the downloaded release receipt directory");
-const receipt = JSON.parse(readFileSync(join(receiptDirectory, "GBS-V11-WO-010-RELEASE-MANIFEST.json"), "utf8"));
+const expectedProductVersion = process.env.GEF_EXPECTED_PRODUCT_VERSION;
+assert.ok(["1.1.0", "1.1.1"].includes(expectedProductVersion), "workflow must bind the smoke to a supported V1.1 package version");
+const workOrder = expectedProductVersion === "1.1.0" ? "010" : "011";
+const receipt = JSON.parse(readFileSync(join(receiptDirectory, `GBS-V11-WO-${workOrder}-RELEASE-MANIFEST.json`), "utf8"));
 const tarball = join(receiptDirectory, receipt.tarball.file);
 const actualSha256 = createHash("sha256").update(readFileSync(tarball)).digest("hex");
 assert.equal(receipt.sourceCommit, process.env.GEF_EXPECTED_SOURCE_COMMIT, "receipt must bind to this exact workflow source");
 assert.equal(receipt.event, process.env.GEF_EXPECTED_EVENT, "receipt must bind to this workflow event");
 assert.equal(receipt.ref, process.env.GEF_EXPECTED_REF, "receipt must bind to this workflow ref");
 assert.equal(receipt.tarball.sha256, actualSha256, "downloaded tarball must match its SHA-256 receipt");
-assert.equal(receipt.version, "1.1.0");
+assert.equal(receipt.version, expectedProductVersion);
 assert.equal(receipt.packageName, "@gef-bootstrap/cli");
 
 const TIMEOUT_MS = 120_000;
@@ -99,7 +102,7 @@ try {
   assert.ok(help.commands.some((command) => command.id === "gef.init.plan"));
   assert.ok(help.commands.some((command) => command.id === "gef.adopt.preview"));
   assert.ok(help.commands.some((command) => command.id === "gef.upgrade.preview"));
-  assert.equal(JSON.parse(invoke(["--version"])).version, "1.1.0");
+  assert.equal(JSON.parse(invoke(["--version"])).version, expectedProductVersion);
   JSON.parse(invoke(["doctor", "--target", consumer, "--json"]));
   JSON.parse(invoke(["status", "--target", consumer, "--json"]));
   requireSuccess(run(process.execPath, ["--input-type=module", "-e", "import { processExitCodeFor } from '@gef-bootstrap/cli'; if (typeof processExitCodeFor !== 'function') process.exit(1)"], { cwd: consumer }), "installed library import");
@@ -115,7 +118,7 @@ try {
     assert.equal(applied.commandId, "gef.upgrade.apply");
     assert.equal(applied.transaction.outcome, "APPLIED");
     assert.equal(applied.document.sourceVersion, "1.0.0");
-    assert.equal(applied.document.targetVersion, "1.1.0");
+    assert.equal(applied.document.targetVersion, expectedProductVersion);
     assert.equal(readFileSync(join(migrationTarget, ".gef", "init-state.json"), "utf8"), legacy.stateBytes);
     assert.equal(readFileSync(join(migrationTarget, ".gef", "receipts", "legacy-run-wo010-matrix.json"), "utf8"), legacy.receiptBytes);
   } finally {

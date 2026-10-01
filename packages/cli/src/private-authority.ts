@@ -22,6 +22,8 @@
  *
  * Identity is `dev:ino`, so an *ordinary* directory swapped in at the same path is detected exactly
  * like a symlink or reparse point replacement: the token differs and the entry is left untouched.
+ * Journal writers also compare the current path bytes with the last successful write because some
+ * filesystems can recycle a file identity before an open descriptor is closed.
  */
 
 import { createHash, randomBytes } from "node:crypto";
@@ -132,11 +134,9 @@ export interface WriteReport {
 }
 
 /**
- * A journal file claimed exclusively by this invocation.
- *
- * The open handle keeps the original inode allocated, which is what makes replacement detection
- * reliable: an unlinked-but-open inode cannot be reused, so the path entry can only still match the
- * handle while it really refers to this file.
+ * A journal file claimed exclusively by this invocation. Each update binds both the path identity
+ * and the current bytes to the last successful write. This also detects filesystems that recycle a
+ * file identity while the original descriptor remains open.
  */
 export interface OwnedJournal {
   readonly file: OwnedFile;
@@ -169,13 +169,11 @@ export interface PrivateArea {
 }
 
 /** Wrap an open journal descriptor in the ownership-checked writer used by both claim and reopen. */
-function journalHandle(file: OwnedFile, handle: FileHandle): OwnedJournal {
+function journalHandle(file: OwnedFile, handle: FileHandle, expectedFingerprint: string): OwnedJournal {
+  let currentFingerprint = expectedFingerprint;
   return {
     file,
     async write(body: string): Promise<WriteReport> {
-      // The open handle keeps this inode allocated, so the path entry can only still match the
-      // handle while it really refers to this file. A replacement therefore cannot reuse the inode
-      // number and is always detected.
       const entry = await identityOf(file.path);
       const descriptor = await handle.stat().catch(() => undefined);
       if (descriptor === undefined) return { ok: false, detail: "HANDLE_LOST" };
@@ -183,12 +181,20 @@ function journalHandle(file: OwnedFile, handle: FileHandle): OwnedJournal {
       if (entry === undefined || entry.symbolicLink || entry.token !== descriptorToken) {
         return { ok: false, detail: "IDENTITY_CHANGED" };
       }
+      // Some filesystems can immediately reuse dev:ino (and creation time) after unlinking an
+      // open file. Bind the path bytes to the last successful journal write before truncating the
+      // descriptor, so an ordinary replacement is refused even when its recycled identity aliases.
+      const pathContents = await readFile(file.path).catch(() => undefined);
+      if (pathContents === undefined || fingerprintOf(pathContents) !== currentFingerprint) {
+        return { ok: false, detail: "CONTENT_CHANGED" };
+      }
       try {
         await handle.truncate(0);
         await handle.write(body, 0, "utf8");
       } catch (cause: unknown) {
         return { ok: false, detail: `WRITE_FAILED:${errorCode(cause) || "UNKNOWN"}` };
       }
+      currentFingerprint = fingerprintOf(body);
       return { ok: true };
     },
     async close(): Promise<void> {
@@ -463,7 +469,7 @@ export function createPrivateArea(targetRoot: string, options: PrivateAreaOption
       }
       const info = await handle.stat();
       const file: OwnedFile = { path, identity: `${String(info.dev)}:${String(info.ino)}`, fingerprint: "" };
-      return journalHandle(file, handle);
+      return journalHandle(file, handle, fingerprintOf(new Uint8Array()));
     },
 
     async reopenOwnedFile(file: OwnedFile, expectedFingerprint: string): Promise<OwnedJournal> {
@@ -491,7 +497,7 @@ export function createPrivateArea(targetRoot: string, options: PrivateAreaOption
         await handle.close().catch(() => undefined);
         throw cause;
       }
-      return journalHandle(file, handle);
+      return journalHandle(file, handle, expectedFingerprint);
     },
 
     captureOwnedFile,

@@ -2,7 +2,22 @@
 
 All notable release changes are documented here. GEF Bootstrap uses Semantic Versioning.
 
-## [1.1.0] - production-acceptance candidate (2026-09-30; not released)
+## [1.1.1] - hotfix in progress (2026-10-01)
+
+### Fixed
+- Separate GEF-managed root metadata from project-drift fingerprints so `adopt --apply` and `init --apply` do not report their own `.gef`/`.gef-private` directories as project drift or operator dirtiness.
+- Preserve full diagnostic visibility, detect user-owned root-file changes, and read valid V1.1.0 state with explicit legacy semantics.
+
+### Release state
+- Candidate work is admitted as `GBS-V11-WO-011`; version `1.1.1` is not released until exact-head checks, owner audit, merge, tag, npm publication and post-publish smoke all pass.
+- The published V1.1.0 release remains immutable and production accepted.
+
+## [1.1.0] - production accepted (2026-10-01)
+
+- Published as `@gef-bootstrap/cli@1.1.0` and immutable GitHub tag `v1.1.0`.
+- The prior candidate preparation record is retained below as historical evidence from 2026-09-30.
+
+### Historical release-candidate record (2026-09-30)
 
 ### Added
 - Integrated CLI package for `init`, `adopt`, `doctor`, `status` and explicit project-state `upgrade` operations.

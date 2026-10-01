@@ -47,22 +47,18 @@ The GitHub Release for `v1.0.0` provides generated source ZIP/TAR archives. Afte
 ## Important boundary
 Do not advertise or rely on `npm install -g gef-bootstrap` for V1.0.0. The workspace and `@gef-bootstrap/cli` package remain private workspace packages and the CLI surface is a library-facing implementation, not a published executable.
 
-## V1.1.0 production-acceptance candidate
+## Published V1.1.0 and current V1.1.1 patch
 
-V1.1.0 is still a candidate, not a stable production release. For the admitted package proof, create and install the real local tarball from a clean checkout; this does not publish to a registry:
+V1.1.0 is the production-accepted release. V1.1.1 is the admitted hotfix candidate until its own exact-head checks, owner audit and release gates complete. To use the published V1.1.0 package:
 
 ```bash
-npm ci --ignore-scripts
-npm run build
-mkdir -p /tmp/gef-package /tmp/gef-consumer
-node packages/cli/scripts/prepare-package.mjs --pack --destination /tmp/gef-package
-(cd /tmp/gef-consumer && npm init -y && npm install --offline --no-audit --no-fund /tmp/gef-package/gef-bootstrap-cli-1.1.0.tgz)
-node /tmp/gef-consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs --help
-node /tmp/gef-consumer/node_modules/@gef-bootstrap/cli/bin/gef.mjs --version
+npm install --global @gef-bootstrap/cli@1.1.0
+gef --help
+gef --version
 ```
 
-Use an isolated temporary directory appropriate to the operating system. Do not run `npm publish` or `npm stage publish`; npm namespace ownership and trusted-publisher configuration have not yet been verified. `docs/V1.1-OPERATIONS-RUNBOOK.md` describes the candidate's read-only checks, explicit apply boundary and recovery handling.
+The version-specific 1.1.1 package is not available until published. Do not infer availability from a source branch or GitHub tag alone. `docs/V1.1-OPERATIONS-RUNBOOK.md` describes project-state compatibility, explicit apply boundaries and recovery handling.
 
 ## V1.1 operations and fresh-chat continuity
 
-V1.1 remains in development/release-candidate validation until WO-010. For the full project-construction, upgrade and recovery procedure, see [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md). Start every new chat from the canonical checkpoint, active Work Order, Context Lock and verified provider head; use M18/M20 to state exactly one next action or an explicit `NONE/UNKNOWN` stop state.
+V1.1.0 is production accepted; the 1.1.1 maintenance patch is governed by WO-011. For project-construction, upgrade and recovery procedures, see [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md). Start every new chat from the canonical checkpoint, active Work Order, Context Lock and verified provider head; use M18/M20 to state exactly one next action or an explicit `NONE/UNKNOWN` stop state.

@@ -2,6 +2,13 @@
 
 Status: `GBS_V1_PRODUCTION_ACCEPTED`
 
+## Current V1.1 release position — 2026-10-01
+- Stable release: `V1.1.0 PRODUCTION_ACCEPTED`. GitHub Release [GEF Bootstrap v1.1.0](https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0) is stable, non-draft, and non-prerelease. Immutable tag `v1.1.0` targets `fb2a2e6d41086e82ba03f307dc6ada18a52458ea`; registry package `@gef-bootstrap/cli@1.1.0` has SRI `sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==`.
+- Production acceptance was recorded by the owner in [Issue #351 closeout](https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5932018102); the recovery run [36862229818](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36862229818) succeeded. Trusted Publisher remains owner-reported and was not independently verified.
+- Active patch: `V1.1.1 PATCH_IN_PROGRESS`, Work Order `GBS-V11-WO-011`, [Issue #357](https://github.com/KayzenRoot/gef-bootstrap/issues/357), [PR #358](https://github.com/KayzenRoot/gef-bootstrap/pull/358) (open draft, base `main`), branch `hotfix/v1.1.1-adopt-baseline-rollout`, production base `a88a61b7fcae632cdf5b282dc4461592b92cad57`, Context Lock `.engineering/context-locks/GBS-V11-WO-011.json` (SHA-256 `E100E0B312A37ACEA67F6B1AF761A96D3DE778A6AC8B2C2789354E9771E381B7`). Owner resolution #5935855771 allocates D-0064 / ADR-0009 for post-production patch routing. Prior-head checks for `a09d95b23cf270edf8701988f2ad524963549f73` are historical after the governance commit; normal exact-head checks on the new PR head are required. No tag, npm publication, or consumer rollout is authorized in this canonicalization.
+- Gate 2/Gate 3 and WO-010 stop markers below are retained historical records. Their pre-release states are superseded by the final owner closeout above; they are not the current legal-action state.
+- V1.0 remains `1088/1088` on `main`; this V1.1 package release does not rewrite the V1.0 module ledger or claim a V1.1 merge-to-main promotion.
+
 - Project: GEF Bootstrap
 - Phase: `V1_PRODUCTION_ACCEPTED`
 - Completed modules: `GBS-M00` through `GBS-M63`
@@ -34,7 +41,7 @@ Status: `GBS_V1_PRODUCTION_ACCEPTED`
 All release-blocking weighted points are evidence-bound. M62 acceptance remains fail-closed by contract and the promotion records the proven candidate lineage rather than treating implementation activity as acceptance. M63 final execution/performance primitives distinguish cycles, missing dependencies, incomparable populations and insufficient data without optimistic coercion.
 
 ## V1.1 governed development overlay
-The V1.0 production state above remains canonical for `main` and is not rewritten by V1.1 development. The following overlay records the `release/1.1` lineage; its presence in this cumulative Gate 2 candidate does not promote V1.1 production to `main`.
+The V1.0 production state above remains canonical for `main` and is not rewritten by V1.1. The following overlay preserves the historical `release/1.1` lineage, including prior Gate 2 and Gate 3 stop states. Use the current release position above for the latest V1.1.0 acceptance and V1.1.1 patch state.
 
 - Release line: `1.1.x`
 - Foundation Work Order: `GBS-V11-WO-001`
@@ -174,9 +181,9 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Issue [#334 diagnosis](https://github.com/KayzenRoot/gef-bootstrap/issues/334#issuecomment-5894818858) is bound to historical SHA `bbd83a179dd4c11f2f8653251db2b574d0266880`: LCOV recorded DA hits on 238/238 lines, but 14/37 branch outcomes were unhit across lines 73, 83, 97, 117, 139, 140, 144, 159, 173, 199, 203, 219, 222 and 232. Codecov's branch-aware changed-line view mapped these outcomes to 13 uncovered and one partial line (line 139). The mismatch is line-versus-branch coverage, not an SHA or source-path mismatch; the tested pack flow takes the success path. This is historical diagnostic evidence only.
 - [Issue #337](https://github.com/KayzenRoot/gef-bootstrap/issues/337) and Work Order `GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012` are CLOSED / MERGED through [PR #349](https://github.com/KayzenRoot/gef-bootstrap/pull/349): audited head `ab81172a009a699542c63c54d80358226d075ab2`, owner re-audit #5364752304 `OWNER_APPROVED / NOT_INDEPENDENT`, and merge `4b2f66724ea5df94ddd8fda2d8088b12b9708c10`. Its Phase 1 tests-only LCOV evidence (DA 236/238, BRDA 70/87) is release-side evidence, not cumulative Codecov credit. The pre-admission record stated `WO-010 remains NOT_ADMITTED`; owner review #5368812257 superseded that state by admitting WO-010. The owner-approved Codecov rule remains numeric patch `>=97.85%` when defined, or `N/A_ZERO_DENOMINATOR` only under its exact base/head, upload, provider, visibility, unchanged-semantics and all-other-gates conditions.
 - Release adoption of D-0063 / ADR-0008 became effective at [PR #347](https://github.com/KayzenRoot/gef-bootstrap/pull/347) merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`, from audited head `ab02b706b4ab7de941cdcc1f849fc07003d92949`; owner review #5360335310 is NOT_INDEPENDENT. Main adoption remains separately recorded at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130`. D-0062 stays branch-qualified: main ADR-0007 records Hive retirement and release ADR-0006 governs owner audit/merge authority. Historical Gate 2 PR #350 source branch `codex/gbs-v11-release-integration-014` recorded normal release integration merge `554b2627de324058e2264b78c10114eb4c652a9d` (first parent `aa4af40bfd297742bf100f94fbfeda3ef411a35b`, second parent release `4b2f66724ea5df94ddd8fda2d8088b12b9708c10`). This is a historical source/reference merge only; it is not an ancestor of the clean replacement `main`.
-- Current admitted maintenance: `GBS-V11-MAINT-POST-WO009-001`, admitted from `release/1.1` base `cb6cf5cf4f27d9d717921aa833ee342863f0d172` via [PR #318](https://github.com/KayzenRoot/gef-bootstrap/pull/318), merge `903fdf2004307c52fec02269bf0272c983fad475`.
+- Historical admitted maintenance at the WO-009 stage: `GBS-V11-MAINT-POST-WO009-001`, admitted from `release/1.1` base `cb6cf5cf4f27d9d717921aa833ee342863f0d172` via [PR #318](https://github.com/KayzenRoot/gef-bootstrap/pull/318), merge `903fdf2004307c52fec02269bf0272c983fad475`.
 - Historical Next legal V1.1 action (`GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT`): this Gate 2 owner-audit handoff is complete. Owner review #5368812257 approved the Option B candidate and admitted the separately scoped `GBS-V11-WO-010` on PR #350. That owner verdict is `NOT_INDEPENDENT`.
-- Current V1.1 action: finish the prepublication acceptance and evidence synchronization for admitted `GBS-V11-WO-010`; keep PR #350 open/draft and preserve the no-merge/no-tag/no-publication boundary.
+- Historical V1.1 action at the prepublication stage: finish the acceptance and evidence synchronization for admitted `GBS-V11-WO-010`; keep PR #350 open/draft while its owner audit was pending. The final WO-010 closeout and current WO-011 action are recorded above.
 
 ### WO-001 exact-head assurance
 - m01-validation: `35164467278` `SUCCESS`
@@ -191,18 +198,18 @@ The V1.0 production state above remains canonical for `main` and is not rewritte
 - Planning/governance issue: [#331](https://github.com/KayzenRoot/gef-bootstrap/issues/331).
 - Exact-head documentation implementation: PR [#332](https://github.com/KayzenRoot/gef-bootstrap/pull/332), reviewed head `7ff0118fcbb29dfd42434e18e68eed0b0c27de2e`, tree `5bdbf42dca1ce081453e4e6ae61ba750a8c551ee`, owner objective audit comment `5894096435` (NOT_INDEPENDENT), required/candidate checks after ready: `28/28 SUCCESS`, CRITICAL/HIGH known for this doc-only diff `0/0`, squash merge to main `419b9cd713d4817c05582287ec10793fc7fdc130`.
 - Canonical execution rule: **Codex alone authors and fixes code, tests, fixtures, CI/build scripts and migrations**. It is effective on `main` from PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` from PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. ChatGPT owns planning, versioned governance/docs, issue/Work Order and planning-only PR coordination, exact-head code/security review and evidence-based status reporting. No routine PDF prompt.
-- This promotion is **governance-only**, not V1.1 production acceptance or implementation credit. The Gate 2 cumulative candidate is locally integrated but still pending its cumulative PR and exact-head provider checks/audit; it does not authorize production promotion. D-0062 branch lineage remains explicit: main ADR-0007 and release ADR-0006.
+- At that promotion point, the governance change was **governance-only** and the Gate 2 cumulative candidate was still pending its PR and exact-head checks/audit. The later V1.1.0 package acceptance is recorded above and does not alter the V1.0 module ledger. D-0062 branch lineage remains explicit: main ADR-0007 and release ADR-0006.
 - Evidence: `.engineering/evidence/GBS-GOV-CODEX-ISSUES-001-EVIDENCE.md`; next project-construction action remains bounded by the target branch's own admitted Work Order and Context Lock. Historical V1.0: `1088/1088 = 100%`, unchanged.
 - Governance STOP CONDITION after promotion merge: `GBS_GOV_CODEX_ONLY_GITHUB_FIRST_PROMOTED_MAIN`.
 
 ## Boundary
-GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. No V1.1 development state represents production until its own Production Acceptance and exact-head promotion to `main`.
+GEF Bootstrap V1 release-blocking construction is complete. V1.1 is a separately governed backward-compatible release line. The V1.1.0 package release now has its own recorded `PRODUCTION_ACCEPTED` closeout; this does not change the V1.0 production ledger or represent a merge-to-main promotion. V1.1.1 is an active patch candidate.
 
 Next legal production stage: `V1_RELEASE_MAINTENANCE`.
-Next legal V1.1 action: complete the clean replacement candidate on the new branch, then stop for owner re-audit; no V1.1 promotion or publication is authorized.
+Next legal V1.1 action: run and verify the normal required checks on the new exact head of PR #358, then stop at `GBS_V11_WO_011_GOVERNANCE_CANONICALIZED_EXACT_HEAD_READY_FOR_OWNER_AUDIT`. Checks from the previous head do not transfer. This canonicalization does not authorize merge, tag, npm publication, or consumer rollout.
 
 Production STOP CONDITION: `GBS_V1_PRODUCTION_ACCEPTED_1088_OF_1088`.
-V1.1 STOP CONDITION: `GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_READY_FOR_OWNER_AUDIT`.
+Historical V1.1 STOP CONDITION: `GBS_V11_RELEASE_ONEPASS_013_GATE2_CUMULATIVE_EXACT_HEAD_READY_FOR_OWNER_AUDIT`.
 
 
 ### Gate 2 Codecov owner amendment — Option B
@@ -214,7 +221,7 @@ The following PR #350 package and check results are historical only. Correction 
 
 Gate 2 is OWNER_APPROVED by review #5368812257 on exact reviewed head 8529883a048eb58aa131c68800b22fba87ce8da2. The decision is OWNER_APPROVED / GATE 2 COMPLETE / NOT_INDEPENDENT; it admits the separately bounded GBS-V11-WO-010 acceptance on PR #350.
 
-The release-line receipt fields above remain as the historical Gate 2 handoff. Current Gate 3 admission, package preflight and acceptance progress are separately recorded in v11.gate3Wo010Acceptance in CHECKPOINT.json and in .engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json. V1.0 production remains 1088/1088; no V1.1 production promotion is claimed.
+The release-line receipt fields above remain as the historical Gate 2 handoff. Gate 3 admission and package-recovery progress are retained in `v11.gate3Wo010Acceptance` in CHECKPOINT.json and `.engineering/evidence/GBS-V11-RELEASE-ONEPASS-013-GATE-MATRIX.json`; its `finalProductionAcceptance` child records the later owner closeout. V1.0 production remains 1088/1088, and no V1.1 merge-to-main promotion is claimed.
 
 The exact implementation candidate `59df2d1feadb18f5f5997f748f79339adb701f43` produced a receipt-bound tarball with SHA-256 `17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898`. Its same-artifact install/use/migration/uninstall matrix and full release assurance passed on Ubuntu/macOS/Windows; local `npm run build`, `npm audit --audit-level=high` (0 vulnerabilities), focused tests (11/11), and `npm run validate` (1610/1610; 0 failed, 0 skipped) also passed. Exact-head PR checks completed 146/147 SUCCESS; Gitleaks remains the sole FAILURE for a redacted historical `generic-api-key` finding at `.engineering/work-orders/GBS-V11-WO-010.md:40`, commit `e6bb4403537a39d4db8fb3799deb85e49400140a`. Codecov Option B, Sonar, Trivy, CodeQL/tracked evidence, Dependency Review, Pipeline Integrity, release assurance and repository validation passed. npm identity/scope/package/OIDC remain unavailable: `ENEEDAUTH`, 404 Scope not found and 404 package not found. See .engineering/evidence/GBS-V11-WO-010-EVIDENCE.md and the updated Gate Matrix.
 
@@ -235,7 +242,7 @@ The existing WO-010 workflow guard passes 6/6 locally. On implementation head `7
 
 The first documentation-sync head `b4830b425c5a0ec0ac7c4631520189f2f8961962` passed Gitleaks, Pipeline Integrity, and Trivy but Repository Validation failed eight historical admission assertions after the root Gate2 `nextLegalAction` and `stopState` were overwritten by the Delta 19 marker. The follow-up restores those canonical Gate2 values and keeps the recovery status under Gate 3/Delta 19.
 
-The manual recovery workflow has not been dispatched. No merge, tag mutation, npm republish, or GitHub Release occurred. Owner audit is next after required checks pass on the corrected exact head. Current stop: `GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT`.
+At that historical recovery handoff, the manual workflow had not been dispatched, and no merge, tag mutation, republish or GitHub Release had occurred. The stop was `GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT`; the later owner closeout above supersedes it.
 
 ### Correction Delta #20 — SHA-512 SRI recovery handoff
 
@@ -243,7 +250,7 @@ On PR #354, owner review #5378094691's SonarCloud finding was corrected in workf
 
 The registry currently reports `dist.integrity=sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==`, version `1.1.0`, and repository `git+https://github.com/KayzenRoot/gef-bootstrap.git`. The read-only recovery comparison has not run because recovery was not dispatched; no merge, tag movement, publication, or GitHub Release occurred. The evidence-sync commit requires a fresh automatic check set on its exact head.
 
-Current Gate 3 stop: `GBS_V11_WO_010_RELEASE_RECOVERY_SHA512_INTEGRITY_READY_FOR_REAUDIT`. Next action is owner re-audit of the latest draft PR #354 head after its exact-head automatic checks pass. No merge is authorized here.
+Historical Gate 3 stop, superseded by the owner closeout above: `GBS_V11_WO_010_RELEASE_RECOVERY_SHA512_INTEGRITY_READY_FOR_REAUDIT`. At that point the next action was owner re-audit of draft PR #354 after exact-head checks; the later final owner closeout records V1.1.0 acceptance. Current execution is WO-011 as stated above.
 
 ### Correction Delta #21 — registry smoke correction handoff
 
@@ -253,4 +260,4 @@ Recovery run [36854526557](https://github.com/KayzenRoot/gef-bootstrap/actions/r
 
 Delta #21 keeps that install, removes only the blocking signature-audit command from RECOVERY, verifies the physical installed bundles and runs the real CLI/library/status JSON smoke. Signature and attestation metadata are queried read-only; absent attestations are recorded as `PROVENANCE_NOT_CLAIMED_FOR_BOOTSTRAP_1_1_0`. The existing SHA-512 SRI, version, repository URL, immutable tag/source and no-publication protections remain.
 
-Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync HEAD `aecc566dc94220afaedb01f14db2eac59b2a4ee2` on draft PR #355 passed the normal automatic checks. On the latest exact PR head, repository validation, coverage, Gitleaks, Trivy, Pipeline Integrity, Dependency Review, CodeQL, SonarCloud, Codecov, focused/regression validation, TypeScript, and Ubuntu/Windows/macOS release assurance and same-tarball checks passed. Evidence links and run IDs are in the WO-010 Evidence Bundle and at https://github.com/KayzenRoot/gef-bootstrap/pull/355/checks. CodeRabbit was skipped because the PR remains draft. No manual test campaign was run. No merge, recovery dispatch, republish, tag movement or GitHub Release is claimed. Current Delta #21 stop: `GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT`.
+Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync HEAD `aecc566dc94220afaedb01f14db2eac59b2a4ee2` on draft PR #355 passed the normal automatic checks. On the latest exact PR head, repository validation, coverage, Gitleaks, Trivy, Pipeline Integrity, Dependency Review, CodeQL, SonarCloud, Codecov, focused/regression validation, TypeScript, and Ubuntu/Windows/macOS release assurance and same-tarball checks passed. Evidence links and run IDs are in the WO-010 Evidence Bundle and at https://github.com/KayzenRoot/gef-bootstrap/pull/355/checks. CodeRabbit was skipped because the PR remains draft. No manual test campaign was run. That historical Delta #21 stop was `GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT`; the final owner closeout above supersedes it.

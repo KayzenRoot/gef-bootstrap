@@ -44,7 +44,7 @@ introspection proves the delegation instead of leaving it implicit.
 ## Behaviour
 
 - Default `init`/`adopt` paths are read-only. Mutation requires an explicit `--apply`.
-- `upgrade` migrates a governed project state from the matrix-admitted V1.0 `1.0.0` row to V1.1 `1.1.0`; it never updates the installed CLI, contacts a registry or invokes a package manager.
+- `upgrade` migrates a governed project state from the matrix-admitted V1.0 `1.0.0` or V1.1.0 state to the current V1.1.1 state; it never updates the installed CLI, contacts a registry or invokes a package manager.
 - Upgrade preserves the source state and its receipt byte-for-byte and creates a separate `.gef/upgrade-state.json` record through the kernel transaction path. Unsupported, conflicting, user-modified or unobservable inputs fail closed. A verified repeat returns `NOOP_APPLIED` and keeps the existing state bytes.
 - **Output selection:** a JSON envelope is emitted when `--json` is present **or** when stdout
   is not a TTY. The TTY capability is injected into the runner, never sniffed during parsing.
