@@ -358,7 +358,7 @@
     {
       "gate": 3,
       "name": "WO-010 production acceptance and V1.1 release",
-      "state": "OWNER_FINALIZATION_AUTHORIZED",
+      "state": "COMPLETE_PRODUCTION_ACCEPTED",
       "workOrder": "GBS-V11-WO-010",
       "workOrderPresent": true,
       "packageMetadata": {
@@ -428,10 +428,10 @@
         "dependencyReviewPipelineIntegritySocket": "PASS all three",
         "exactHeadRequiredChecks": "PASS 4/4 required checks; 149 PR check contexts in pass bucket, with CodeRabbit skipped because the PR is draft"
       },
-      "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT",
+      "stopCondition": "GBS_V11_WO_010_V1_1_0_PRODUCTION_RELEASE_DONE",
       "finalPullRequestHead": "526b82869bde5c40e6cba03de91ad92e25d604d1",
       "requiredExactHeadChecks": "4/4 required checks PASS; all 149 PR check contexts in pass bucket on authorization head 526b82869bde5c40e6cba03de91ad92e25d604d1 (CodeRabbit skipped because draft); this finalization commit requires fresh checks on its new SHA",
-      "auditReady": false,
+      "auditReady": true,
       "blockingChecks": {
         "requiredChecksAndPromotion": "Final package/workflow commit must receive fresh required checks before normal merge; production actions then require exact-main source, matching tarball receipts, and successful Trusted Publisher verification.",
         "npmTrustedPublisherPreflight": "npm CLI identity and scope-team membership are verified; package-level Trusted Publisher remains unconfigured/unverified until the first package exists."
@@ -609,7 +609,24 @@
         "githubReleaseCreated": false,
         "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_SHA512_INTEGRITY_READY_FOR_REAUDIT",
         "issueCorrectionComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5929669084"
-      }
+      },
+      "finalProductionReceipt": {
+        "recoveryRun": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36862229818",
+        "recoveryOutcome": "SUCCESS",
+        "immutableTag": "v1.1.0",
+        "releaseSourceSha": "fb2a2e6d41086e82ba03f307dc6ada18a52458ea",
+        "currentMainSha": "a88a61b7fcae632cdf5b282dc4461592b92cad57",
+        "npmPackage": "@gef-bootstrap/cli@1.1.0",
+        "npmDistIntegrity": "sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==",
+        "tarballSha256": "745770064c4d514bfc0ab7e0fbc1b03e55f1b76611f8fc6f69e75218a6edd5b4",
+        "githubRelease": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0",
+        "publishedAt": "2026-10-01T12:53:14Z",
+        "trustedPublisherStatus": "OWNER_REPORTED_CONFIGURED_FOR_FUTURE_RELEASES_NOT_REVERIFIED_IN_FINAL_AUDIT",
+        "incident": "RECOVERED"
+      },
+      "mergeAuthorized": true,
+      "productionAccepted": true,
+      "githubReleaseCreated": true
     }
   ],
   "historicalFacts": {
@@ -635,12 +652,12 @@
     }
   },
   "phase1EvidenceBundle": ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md",
-  "mergeAuthorized": false,
-  "publicationAuthorized": false,
+  "mergeAuthorized": true,
+  "publicationAuthorized": true,
   "currentGate": 3,
-  "currentGateState": "GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT",
+  "currentGateState": "COMPLETE_PRODUCTION_ACCEPTED",
   "currentCandidateBranch": "codex/gbs-v11-wo010-recovery-delta21",
-  "mainMergeAuthorized": false,
+  "mainMergeAuthorized": true,
   "correctionDelta21": {
     "correctionDelta": 21,
     "workOrder": "GBS-V11-WO-010",
@@ -722,5 +739,6 @@
     "pullRequestUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/355",
     "implementationHeadWithPassedChecks": "e93216a391c15c0fd23f8d006a320fd6b21e83ae",
     "evidenceSyncHeadWithPassedChecks": "aecc566dc94220afaedb01f14db2eac59b2a4ee2"
-  }
+  },
+  "finalStopCondition": "GBS_V11_WO_010_V1_1_0_PRODUCTION_RELEASE_DONE"
 }
