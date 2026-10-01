@@ -89,6 +89,12 @@ test('pre-canonicalization WO-011 checkpoint retains its exact implementation-in
   historicalCheckpoint.v11.nextLegalAction = 'CONTINUE_GBS_V11_WO_011_IMPLEMENTATION_ON_LOCKED_BASE';
   historicalCheckpoint.v11.candidateRelease.pullRequest = null;
   historicalCheckpoint.v11.candidateRelease.contextLockSha256 = '5ABFFB90ECFE32A23B45F361371603FA6F2A4477883030512856F80B65B10C0B';
+  historicalCheckpoint.v11.stableRelease = structuredClone(historicalCheckpoint.v11.previousStableRelease);
+  historicalCheckpoint.v11.candidateRelease.status = 'PATCH_IN_PROGRESS';
+  historicalCheckpoint.v11.candidateRelease.tag = null;
+  historicalCheckpoint.v11.candidateRelease.npmPublished = false;
+  historicalCheckpoint.v11.candidateRelease.registrySmoke = 'NOT_RUN';
+  historicalCheckpoint.v11.candidateRelease.rolloutStarted = false;
   delete historicalCheckpoint.v11.candidateRelease.postProductionPatchRouting;
 
   assertLaterActiveWorkOrder(historicalCheckpoint, 11, false, 9);
@@ -122,12 +128,15 @@ test('D-0042 promotion is explicit and does not self-authorize main', () => {
   }
 });
 
-test('V1.1.0 release acceptance and the V1.1.1 patch do not rewrite the V1.0 production ledger', () => {
+test('V1.1.1 release acceptance does not rewrite the V1.0 production ledger', () => {
   assert.ok(checkpointMd.includes('The V1.0 production state above remains canonical for `main`'));
   assert.equal(checkpoint.v11.stableRelease.status, 'PRODUCTION_ACCEPTED');
-  assert.equal(checkpoint.v11.stableRelease.version, '1.1.0');
-  assert.equal(checkpoint.v11.candidateRelease.status, 'PATCH_IN_PROGRESS');
+  assert.equal(checkpoint.v11.stableRelease.version, '1.1.1');
+  assert.equal(checkpoint.v11.stableRelease.tag, 'v1.1.1');
+  assert.equal(checkpoint.v11.candidateRelease.status, 'RELEASED_REGISTRY_SMOKE_VERIFIED');
   assert.equal(checkpoint.v11.candidateRelease.version, '1.1.1');
+  assert.equal(checkpoint.v11.previousStableRelease.version, '1.1.0');
+  assert.equal(checkpoint.v11.releaseGateCloseout.recoveryConclusion, 'SUCCESS');
   assert.equal(checkpoint.earnedProductionWeight, 1088);
 });
 
