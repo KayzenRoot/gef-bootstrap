@@ -48,7 +48,9 @@ export function assertWo011CurrentPatch(checkpoint) {
   const v11 = checkpoint.v11;
   const candidateRelease = v11.candidateRelease;
   const canonicalizedStopState = "GBS_V11_WO_011_GOVERNANCE_CANONICALIZED_EXACT_HEAD_CHECKS_PENDING";
+  const releaseGateStopState = "GBS_V11_WO_011_REGISTRY_SMOKE_VERIFIED_GOODZ_MENU_NEXT";
   const governanceCanonicalized = v11.stopState === canonicalizedStopState;
+  const releaseGateClosed = v11.stopState === releaseGateStopState;
 
   assert.equal(v11.status, "GBS_V11_WO_011_ADMITTED");
   assert.equal(v11.activeWorkOrder, "GBS-V11-WO-011");
@@ -57,41 +59,74 @@ export function assertWo011CurrentPatch(checkpoint) {
   assert.equal(v11.contextLock, ".engineering/context-locks/GBS-V11-WO-011.json");
   assert.equal(
     v11.stopState,
-    governanceCanonicalized
-      ? canonicalizedStopState
-      : "GBS_V11_WO_011_IMPLEMENTATION_IN_PROGRESS",
+    releaseGateClosed ? releaseGateStopState : governanceCanonicalized ? canonicalizedStopState : "GBS_V11_WO_011_IMPLEMENTATION_IN_PROGRESS",
   );
   assert.equal(
     v11.nextLegalAction,
-    governanceCanonicalized
-      ? "RUN_REQUIRED_CHECKS_ON_GBS_V11_WO_011_PR_358_EXACT_HEAD"
-      : "CONTINUE_GBS_V11_WO_011_IMPLEMENTATION_ON_LOCKED_BASE",
+    releaseGateClosed ? "ROLLOUT_GEF_V1_1_1_TO_GOODZ_MENU_FIRST" : governanceCanonicalized ? "RUN_REQUIRED_CHECKS_ON_GBS_V11_WO_011_PR_358_EXACT_HEAD" : "CONTINUE_GBS_V11_WO_011_IMPLEMENTATION_ON_LOCKED_BASE",
   );
   assert.equal(v11.nextWorkOrder, "GBS-V11-WO-011");
   assert.equal(v11.activeMaintenanceWorkOrder, "NONE");
   assert.match(v11.wo010Gate, /^PRODUCTION_ACCEPTED:/);
-  assert.equal(v11.stableRelease.version, "1.1.0");
-  assert.equal(v11.stableRelease.status, "PRODUCTION_ACCEPTED");
-  assert.equal(v11.stableRelease.tag, "v1.1.0");
-  assert.equal(v11.stableRelease.tagTarget, "fb2a2e6d41086e82ba03f307dc6ada18a52458ea");
-  assert.equal(v11.stableRelease.npmPackage, "@gef-bootstrap/cli@1.1.0");
-  assert.equal(v11.stableRelease.githubReleaseUrl, "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0");
-  assert.equal(v11.stableRelease.distIntegrity, "sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==");
-  assert.equal(v11.stableRelease.ownerCloseoutComment, "https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5932018102");
+
+  if (releaseGateClosed) {
+    assert.equal(v11.stableRelease.version, "1.1.1");
+    assert.equal(v11.stableRelease.status, "PRODUCTION_ACCEPTED");
+    assert.equal(v11.stableRelease.tag, "v1.1.1");
+    assert.equal(v11.stableRelease.tagTarget, "1dc030f1358eab0347043a3d54c7fc311c7c2123");
+    assert.equal(v11.stableRelease.npmPackage, "@gef-bootstrap/cli@1.1.1");
+    assert.equal(v11.stableRelease.githubReleaseUrl, "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.1");
+    assert.equal(v11.stableRelease.releaseTarballSha256, "59cfbe2699c884f9c57bb50594fe3972c5f8667c44bff4f35a5e9a65e4ce53c3");
+    assert.equal(v11.stableRelease.registrySmoke, "SUCCESS");
+    assert.equal(v11.previousStableRelease.version, "1.1.0");
+    assert.equal(v11.previousStableRelease.status, "PRODUCTION_ACCEPTED");
+  } else {
+    assert.equal(v11.stableRelease.version, "1.1.0");
+    assert.equal(v11.stableRelease.status, "PRODUCTION_ACCEPTED");
+    assert.equal(v11.stableRelease.tag, "v1.1.0");
+    assert.equal(v11.stableRelease.tagTarget, "fb2a2e6d41086e82ba03f307dc6ada18a52458ea");
+    assert.equal(v11.stableRelease.npmPackage, "@gef-bootstrap/cli@1.1.0");
+    assert.equal(v11.stableRelease.githubReleaseUrl, "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0");
+    assert.equal(v11.stableRelease.distIntegrity, "sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==");
+    assert.equal(v11.stableRelease.ownerCloseoutComment, "https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5932018102");
+  }
+
   assert.equal(candidateRelease.version, "1.1.1");
-  assert.equal(candidateRelease.status, "PATCH_IN_PROGRESS");
+  assert.equal(candidateRelease.status, releaseGateClosed ? "RELEASED_REGISTRY_SMOKE_VERIFIED" : "PATCH_IN_PROGRESS");
   assert.equal(candidateRelease.workOrder, "GBS-V11-WO-011");
   assert.equal(candidateRelease.issue, 357);
   assert.equal(candidateRelease.baseMainSha, "a88a61b7fcae632cdf5b282dc4461592b92cad57");
   assert.equal(candidateRelease.branch, "hotfix/v1.1.1-adopt-baseline-rollout");
   assert.equal(candidateRelease.contextLock, ".engineering/context-locks/GBS-V11-WO-011.json");
-  assert.equal(candidateRelease.pullRequest, governanceCanonicalized ? 358 : null);
-  assert.equal(candidateRelease.tag, null);
-  assert.equal(candidateRelease.npmPublished, false);
-  assert.equal(candidateRelease.contextLockSha256, governanceCanonicalized
+  assert.equal(candidateRelease.pullRequest, governanceCanonicalized || releaseGateClosed ? 358 : null);
+  assert.equal(candidateRelease.tag, releaseGateClosed ? "v1.1.1" : null);
+  assert.equal(candidateRelease.npmPublished, releaseGateClosed);
+  assert.equal(candidateRelease.contextLockSha256, governanceCanonicalized || releaseGateClosed
     ? "E100E0B312A37ACEA67F6B1AF761A96D3DE778A6AC8B2C2789354E9771E381B7"
     : "5ABFFB90ECFE32A23B45F361371603FA6F2A4477883030512856F80B65B10C0B");
-  if (governanceCanonicalized) {
+
+  if (releaseGateClosed) {
+    assert.deepEqual(candidateRelease.postProductionPatchRouting, {
+      decision: "D-0064",
+      adr: "ADR-0009",
+      ownerResolution: "https://github.com/KayzenRoot/gef-bootstrap/issues/357#issuecomment-5935855771",
+      canonicalizationPr: 358,
+      prBase: "main",
+      previousHeadChecks: "HISTORICAL_AFTER_GOVERNANCE_COMMIT",
+      exactHeadChecks: "PASS",
+      stopWhen: "GBS_V11_WO_011_REGISTRY_SMOKE_VERIFIED_GOODZ_MENU_NEXT",
+      mergeTagNpmOrRolloutAuthorized: true,
+    });
+    assert.equal(candidateRelease.registrySmoke, "PASS");
+    assert.equal(candidateRelease.rolloutStarted, false);
+    assert.equal(candidateRelease.releaseSourceSha, "1dc030f1358eab0347043a3d54c7fc311c7c2123");
+    assert.equal(candidateRelease.postPublishRecoveryRun, 36912440350);
+    assert.equal(candidateRelease.postPublishCorrectionPr, 359);
+    assert.equal(v11.releaseGateCloseout.state, "GBS_V11_WO_011_REGISTRY_SMOKE_VERIFIED");
+    assert.equal(v11.releaseGateCloseout.criticalFindings, 0);
+    assert.equal(v11.releaseGateCloseout.highFindings, 0);
+    assert.equal(v11.releaseGateCloseout.nextConsumer, "KayzenRoot/goodz-menu");
+  } else if (governanceCanonicalized) {
     assert.deepEqual(candidateRelease.postProductionPatchRouting, {
       decision: "D-0064",
       adr: "ADR-0009",
