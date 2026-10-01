@@ -236,3 +236,11 @@ The existing WO-010 workflow guard passes 6/6 locally. On implementation head `7
 The first documentation-sync head `b4830b425c5a0ec0ac7c4631520189f2f8961962` passed Gitleaks, Pipeline Integrity, and Trivy but Repository Validation failed eight historical admission assertions after the root Gate2 `nextLegalAction` and `stopState` were overwritten by the Delta 19 marker. The follow-up restores those canonical Gate2 values and keeps the recovery status under Gate 3/Delta 19.
 
 The manual recovery workflow has not been dispatched. No merge, tag mutation, npm republish, or GitHub Release occurred. Owner audit is next after required checks pass on the corrected exact head. Current stop: `GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT`.
+
+### Correction Delta #20 — SHA-512 SRI recovery handoff
+
+On PR #354, owner review #5378094691's SonarCloud finding was corrected in workflow commit `123f0d15855ff0942a563f269c89d512e7ac22ac`: the recovery path computes a SHA-512 SRI from the rebuilt tarball and requires exact equality with npm `dist.integrity`, failing closed with `GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH`. Package version `1.1.0`, normalized repository URL, immutable tag, and expected source commit `fb2a2e6d41086e82ba03f307dc6ada18a52458ea` remain guarded. Test-assertion alignment commit `829615f6bb42dd13ba212d421477414939e8401e` is the latest code head with all automatic checks passing, including SonarCloud, Codecov, security, CodeQL, validation, regression, and release assurance/same-artifact checks on Ubuntu/macOS/Windows.
+
+The registry currently reports `dist.integrity=sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==`, version `1.1.0`, and repository `git+https://github.com/KayzenRoot/gef-bootstrap.git`. The read-only recovery comparison has not run because recovery was not dispatched; no merge, tag movement, publication, or GitHub Release occurred. The evidence-sync commit requires a fresh automatic check set on its exact head.
+
+Current Gate 3 stop: `GBS_V11_WO_010_RELEASE_RECOVERY_SHA512_INTEGRITY_READY_FOR_REAUDIT`. Next action is owner re-audit of the latest draft PR #354 head after its exact-head automatic checks pass. No merge is authorized here.
