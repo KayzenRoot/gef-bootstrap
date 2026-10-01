@@ -103,7 +103,7 @@ test("DIST-SMOKE-01b: the packed payload carries README, LICENSE and the schema 
   assert.equal(packedManifest.name, "@gef-bootstrap/cli");
   assert.equal(packedManifest.version, cliPackage.version);
   assert.deepEqual(packedManifest.bin, { gef: "./bin/gef.mjs" });
-  assert.equal(packedManifest.private, true);
+  assert.equal(packedManifest.private, false);
   // Runtime dependencies are bundled, not resolved from a registry. The WO-010 generated manifest
   // adds the complete internal runtime closure and every lockfile-verified Koffi prebuild so this
   // same tarball works on Linux, Windows, and macOS. Source package metadata stays unchanged.
@@ -226,10 +226,10 @@ test("DIST-SMOKE-03: uninstall removes only installed files and never project da
 test("DIST-SMOKE-04: no publication is performed or claimed", (t) => {
   const { cliDir } = freshInstall(t);
 
-  assert.equal(cliPackage.private, true, "the CLI package must stay private");
-  assert.equal(cliPackage.publishConfig, undefined, "no publishConfig may be declared");
+  assert.equal(cliPackage.private, false, "the CLI package is authorized for public distribution");
+  assert.deepEqual(cliPackage.publishConfig, { access: "public" });
   assert.ok(!existsSync(join(CLI_PACKAGE_DIR, ".npmrc")), "no registry credentials may ship with the package");
-  assert.equal(JSON.parse(readFileSync(join(cliDir, "package.json"), "utf8")).private, true);
+  assert.equal(JSON.parse(readFileSync(join(cliDir, "package.json"), "utf8")).private, false);
   assert.equal(JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).private, true);
 
   const cliReadme = readFileSync(join(CLI_PACKAGE_DIR, "README.md"), "utf8");

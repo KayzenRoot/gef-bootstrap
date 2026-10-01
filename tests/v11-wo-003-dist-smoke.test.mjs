@@ -140,7 +140,7 @@ test("the packed payload vendors every engine doctor and status depend on", (t) 
   assert.match(telemetryManifestEntry.sha256, /^[0-9a-f]{64}$/, "the telemetry module must carry a recorded digest");
   // No source-tree injection: build inputs and sources are not part of the payload.
   for (const forbidden of ["src", "tsconfig.json", "scripts"]) assert.ok(!existsSync(join(cliDir, forbidden)), `${forbidden} must not be packaged`);
-  assert.equal(cliPackage.private, true, "the package stays private");
+  assert.equal(cliPackage.private, false, "the CLI package is authorized for public distribution");
 });
 
 test("the installed package exposes doctor and status with source-workspace semantics", (t) => {
