@@ -35,7 +35,7 @@ test("WO-010 manual branch dispatch verifies a candidate but only an exact pushe
   assert.match(recoveryJob, /node --input-type=module - "\$tarball" <<'SRI'[\s\S]*?createHash\("sha512"\)[\s\S]*?digest\("base64"\)[\s\S]*?SRI/);
   assert.match(recoveryJob, /process\.stdout\.write\(`sha512-\$\{createHash\("sha512"\)/);
   assert.match(recoveryJob, /published_integrity"\s*!=\s*"\$tarball_integrity"/);
-  assert.match(recoveryJob, /test "\$published_repository" = "\$expected_repository"/);
+  assert.match(recoveryJob, /if \[ "\$published_repository" != "\$expected_repository" \]; then[\s\S]*?exit 1[\s\S]*?fi/);
   assert.match(recoveryJob, /GBS_V11_WO_010_RELEASE_INCIDENT_PACKAGE_MISMATCH/);
   assert.match(recoveryJob, /npm install @gef-bootstrap\/cli@1\.1\.0 --ignore-scripts[\s\S]*?npm audit signatures @gef-bootstrap\/cli@1\.1\.0[\s\S]*?processExitCodeFor[\s\S]*?status --target/);
   assert.doesNotMatch(recoveryJob, /npm publish|id-token:\s*write|NPM_TOKEN|NODE_AUTH_TOKEN|git tag|git push/);
