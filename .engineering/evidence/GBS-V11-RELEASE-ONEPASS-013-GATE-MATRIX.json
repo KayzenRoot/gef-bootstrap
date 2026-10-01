@@ -358,35 +358,40 @@
     {
       "gate": 3,
       "name": "WO-010 production acceptance and V1.1 release",
-      "state": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
+      "state": "OWNER_FINALIZATION_AUTHORIZED",
       "workOrder": "GBS-V11-WO-010",
       "workOrderPresent": true,
       "packageMetadata": {
         "rootPrivate": true,
         "rootLicense": "UNLICENSED",
-        "cliPrivate": true,
+        "cliPrivate": false,
         "cliLicense": "UNLICENSED",
-        "metadataMutation": "repository.url added by owner review #5373800160; private:true, name, version, and license unchanged",
-        "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git"
+        "metadataMutation": "repository.url from review #5373800160 preserved; owner-finalization authorization sets private:false and publishConfig.access public; name, version, and UNLICENSED preserved",
+        "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git",
+        "publishConfigAccess": "public"
       },
+      "ownerFinalizationStatuses": [
+        "OWNER_FINALIZATION_AUTHORIZED",
+        "NPM_IDENTITY_VERIFIED",
+        "FIRST_PUBLISH_BOOTSTRAP_AUTHORIZED"
+      ],
+      "authorizationHead": "526b82869bde5c40e6cba03de91ad92e25d604d1",
       "ownerActions": {
         "licenseDistributionChoice": "ALL_RIGHTS_RESERVED_PRESERVED",
         "npmIdentity": "VERIFIED: npm whoami returned kayzenroot; authenticated GitHub identity is KayzenRoot (case-insensitive match)",
         "npmNamespaceRegistryOwnership": "npm team ls @gef-bootstrap:developers lists kayzenroot as its sole member; npm access list packages @gef-bootstrap exited 0 with no package rows",
         "npmPackage": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected while unpublished and not treated as an ownership failure",
-        "npmOidcTrustedPublishing": "Package-level binding not configured or verified; separate first-publish decision remains required; owner reports GitHub connection",
-        "finalS4PublicationApproval": "NOT_GRANTED",
+        "npmOidcTrustedPublishing": "Package-level binding not yet configured; configure after the authorized first publication",
+        "finalS4PublicationApproval": "OWNER_FINALIZATION_AUTHORIZED_BY_ISSUE_351_EXECUTION_PROMPT",
         "ownerReportedGithubConnection": true,
         "credentialDisclosure": "No long-lived npm token used; no credential values copied into repository files or GitHub evidence"
       },
-      "authorizedActivityNow": "Reaudit the identity-verified exact-head candidate and prepare a separate first-publish decision; no publish, tag, release, merge, or private:false change",
+      "authorizedActivityNow": "Complete final WO-010 sequence on PR #352: wait for automatic required checks; merge normally only after checks pass; build from exact main; perform the authorized first npm publication; configure Trusted Publisher; then create the exact tag and stable release after each receipt gate",
       "forbiddenNow": [
-        "main promotion",
-        "tag v1.1.0",
-        "GitHub Release",
-        "npm publish or npm stage publish",
         "long-lived npm token",
-        "package visibility or license metadata change before owner verification"
+        "merge before exact-head required checks pass",
+        "publish from a dirty tree or a source SHA other than the accepted main SHA",
+        "tag before package checksum and Trusted Publisher verification"
       ],
       "admissionIssue": 351,
       "admissionReview": 5368812257,
@@ -399,10 +404,10 @@
         "identity": "VERIFIED_KAYZENROOT_NPM_WHOAMI; matches GitHub KayzenRoot case-insensitively",
         "ownerReport": "Owner completed manual npm web authorization; GitHub profile is connected per owner report",
         "publicRegistryLookup": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected unpublished package state, not an ownership failure",
-        "trustedPublisherBinding": "NOT_CONFIGURED_OR_VERIFIED; first publication decision remains separate per review #5373800160",
+        "trustedPublisherBinding": "NOT_CONFIGURED; configure after first publication as explicitly authorized",
         "credentialUse": "npm CLI web login; no long-lived npm token used; no credential values copied into repository files or GitHub evidence",
-        "publication": "NOT_ATTEMPTED",
-        "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
+        "publication": "NOT_ATTEMPTED_AT_AUTHORIZATION_CHECKPOINT",
+        "stopCondition": "OWNER_FINALIZATION_AUTHORIZED; required execution gates remain outstanding",
         "organizationTeamMembership": "PASS: npm team ls @gef-bootstrap:developers lists kayzenroot",
         "packageAcl": "npm access list packages @gef-bootstrap exited 0; no package rows returned",
         "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git",
@@ -424,12 +429,12 @@
         "dependencyReviewPipelineIntegritySocket": "PASS all three",
         "exactHeadRequiredChecks": "PASS 4/4 required checks; 149 PR check contexts in pass bucket, with CodeRabbit skipped because the PR is draft"
       },
-      "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
-      "finalPullRequestHead": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f",
-      "requiredExactHeadChecks": "4/4 required checks PASS; all 149 PR check contexts in pass bucket on aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f (CodeRabbit skipped because draft)",
+      "stopCondition": "OWNER_FINALIZATION_AUTHORIZED; required execution gates remain outstanding",
+      "finalPullRequestHead": "526b82869bde5c40e6cba03de91ad92e25d604d1",
+      "requiredExactHeadChecks": "4/4 required checks PASS; all 149 PR check contexts in pass bucket on authorization head 526b82869bde5c40e6cba03de91ad92e25d604d1 (CodeRabbit skipped because draft); this finalization commit requires fresh checks on its new SHA",
       "auditReady": false,
       "blockingChecks": {
-        "firstPublishDecision": "A separate explicit owner decision is required before the first npm publication; this task did not authorize publication.",
+        "requiredChecksAndPromotion": "Final package/workflow commit must receive fresh required checks before normal merge; production actions then require exact-main source, matching tarball receipts, and successful Trusted Publisher verification.",
         "npmTrustedPublisherPreflight": "npm CLI identity and scope-team membership are verified; package-level Trusted Publisher remains unconfigured/unverified until the first package exists."
       },
       "evidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
@@ -511,10 +516,10 @@
     }
   },
   "phase1EvidenceBundle": ".engineering/evidence/GBS-V11-MAINT-PACK-BRANCH-CORRECTION-012-EVIDENCE.md",
-  "mergeAuthorized": false,
-  "publicationAuthorized": false,
+  "mergeAuthorized": true,
+  "publicationAuthorized": true,
   "currentGate": 3,
-  "currentGateState": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
+  "currentGateState": "OWNER_FINALIZATION_AUTHORIZED",
   "currentCandidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
-  "mainMergeAuthorized": false
+  "mainMergeAuthorized": true
 }

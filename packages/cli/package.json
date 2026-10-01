@@ -1,10 +1,13 @@
 {
   "name": "@gef-bootstrap/cli",
   "version": "1.1.0",
-  "private": true,
+  "private": false,
   "description": "GEF Bootstrap thin operator CLI surface (transport and rendering only)",
   "repository": {
     "url": "https://github.com/KayzenRoot/gef-bootstrap.git"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "type": "module",
   "license": "UNLICENSED",

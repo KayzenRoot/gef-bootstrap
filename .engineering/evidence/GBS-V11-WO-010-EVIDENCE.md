@@ -54,4 +54,14 @@ Review [#5373800160](https://github.com/KayzenRoot/gef-bootstrap/pull/352#pullre
 
 The exact-head tarball and source manifest confirm `repository.url=https://github.com/KayzenRoot/gef-bootstrap.git`. `private:true`, package name, version, and `UNLICENSED` remain unchanged. The package-level npm Trusted Publisher binding is not configured or verified; per review #5373800160 this candidate is ready for the separate first-publish decision, after which Trusted Publishing can be bound for subsequent releases. No long-lived npm token was used, and no credential values were copied into repository files or GitHub evidence. No `private:false`, npm publication, tag, GitHub Release, or merge was performed.
 
-**Current stop:** `GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION`. PR #352 remains OPEN/DRAFT. The first-publication decision and exact-head owner audit remain pending; no merge to `main`, tag, GitHub Release, npm publish, or `private:false` change is authorized.
+**Previous checkpoint stop (superseded by the owner finalization authorization below):** `GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION`. At that checkpoint PR #352 was OPEN/DRAFT and the first-publication decision remained pending.
+
+## Owner finalization authorization
+
+At authorization candidate HEAD `526b82869bde5c40e6cba03de91ad92e25d604d1`, the owner supplied the final WO-010 execution decision. Statuses recorded for this stage:
+
+- `OWNER_FINALIZATION_AUTHORIZED`
+- `NPM_IDENTITY_VERIFIED`
+- `FIRST_PUBLISH_BOOTSTRAP_AUTHORIZED`
+
+The owner-authorized sequence permits the reviewed `private:false` and public `publishConfig.access` package metadata, the tag-only existing-version/SHA-1 guard, and production acceptance only after new-HEAD required checks and the exact-main/tarball gates. This authorization supersedes the earlier first-publish-decision stop above; it does not claim merge, publication, Trusted Publisher setup, tag, or GitHub Release has occurred. The npm CLI identity check returned `kayzenroot`; `npm team ls @gef-bootstrap:developers` listed `kayzenroot`. No credential value was recorded, and no publication had occurred at this authorization checkpoint.
