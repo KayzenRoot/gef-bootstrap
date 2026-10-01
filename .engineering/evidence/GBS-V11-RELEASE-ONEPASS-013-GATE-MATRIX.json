@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-10-01T11:48:43Z",
+  "capturedAtUtc": "2026-10-01T12:01:38Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "6adface74ec17361ac50f5b0084f2f0851048344",
@@ -638,7 +638,7 @@
   "mergeAuthorized": false,
   "publicationAuthorized": false,
   "currentGate": 3,
-  "currentGateState": "GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_CHECKS_PENDING",
+  "currentGateState": "GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_EVIDENCE_SYNC_CHECKS_PENDING",
   "currentCandidateBranch": "codex/gbs-v11-wo010-recovery-delta21",
   "mainMergeAuthorized": false,
   "correctionDelta21": {
@@ -649,7 +649,7 @@
     "ownerAuthorization": "https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5930544513",
     "baselineMainSha": "6adface74ec17361ac50f5b0084f2f0851048344",
     "candidateBranch": "codex/gbs-v11-wo010-recovery-delta21",
-    "state": "IMPLEMENTED_AWAITING_NORMAL_EXACT_HEAD_AUTOMATIC_CHECKS",
+    "state": "IMPLEMENTATION_HEAD_CHECKS_PASS_EVIDENCE_SYNC_HEAD_CHECKS_PENDING",
     "priorRecoveryRun": {
       "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36854526557",
       "dispatchHeadSha": "6adface74ec17361ac50f5b0084f2f0851048344",
@@ -695,7 +695,28 @@
       "githubReleaseCreated": false,
       "noPublishTagMutationTokenOrRecoveryOidc": true
     },
-    "exactHeadAutomaticChecks": "PENDING",
-    "targetStopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT"
+    "exactHeadAutomaticChecks": {
+      "state": "PASS on implementationHeadWithPassedChecks",
+      "repositoryValidation": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088956",
+      "nodeCoverage": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088844",
+      "gitleaksAndTrivy": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088872",
+      "pipelineIntegrity": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088925",
+      "dependencyReview": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858089063",
+      "codeql": "PASS https://github.com/KayzenRoot/gef-bootstrap/runs/110355713803",
+      "sonarCloud": "PASS https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=355",
+      "codecovPatch": "PASS https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/355",
+      "releaseAssurance": "PASS Ubuntu, Windows, macOS; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088886",
+      "sameTarball": "PASS Ubuntu, Windows, macOS; same run 36858088886",
+      "validate": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088665",
+      "typeScriptAnalysis": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088722",
+      "focusedAndRegression": "PASS on Ubuntu, Windows, macOS; runs 36858088668, 36858088774, 36858088837, 36858088861",
+      "codeRabbit": "SKIPPED because the PR is draft; not a required check",
+      "evidenceSyncHead": "PENDING_NORMAL_AUTOMATIC_CHECKS",
+      "latestHeadMustPassBeforeOwnerAudit": true
+    },
+    "targetStopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT",
+    "pullRequest": 355,
+    "pullRequestUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/355",
+    "implementationHeadWithPassedChecks": "e93216a391c15c0fd23f8d006a320fd6b21e83ae"
   }
 }

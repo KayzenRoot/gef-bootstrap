@@ -675,7 +675,7 @@
       "mainMergeAuthorized": false,
       "tagAuthorized": false,
       "publicationAuthorized": false,
-      "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_CHECKS_PENDING",
+      "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_EVIDENCE_SYNC_CHECKS_PENDING",
       "localValidation": {
         "node": "v24.19.0",
         "npm": "11.17.0",
@@ -828,17 +828,37 @@
           "distIntegrity": "sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==",
           "rebuiltTarballSha256": "745770064c4d514bfc0ab7e0fbc1b03e55f1b76611f8fc6f69e75218a6edd5b4"
         },
-        "correctionState": "IMPLEMENTED_AWAITING_NORMAL_EXACT_HEAD_AUTOMATIC_CHECKS",
+        "correctionState": "IMPLEMENTATION_HEAD_CHECKS_PASS_EVIDENCE_SYNC_HEAD_CHECKS_PENDING",
         "targetStopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT",
         "exactHeadAutomaticChecks": "PENDING",
         "npmRepublished": false,
         "privateRuntimePackagesPublished": false,
         "tagMoved": false,
         "githubReleaseCreated": false,
-        "mergeAuthorized": false
+        "mergeAuthorized": false,
+        "pullRequest": 355,
+        "pullRequestUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/355",
+        "implementationHeadWithPassedChecks": "e93216a391c15c0fd23f8d006a320fd6b21e83ae",
+        "implementationHeadChecks": {
+          "repositoryValidation": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088956",
+          "nodeCoverage": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088844",
+          "gitleaksAndTrivy": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088872",
+          "pipelineIntegrity": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088925",
+          "dependencyReview": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858089063",
+          "codeql": "PASS https://github.com/KayzenRoot/gef-bootstrap/runs/110355713803",
+          "sonarCloud": "PASS https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=355",
+          "codecovPatch": "PASS https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/355",
+          "releaseAssurance": "PASS Ubuntu, Windows, macOS; https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088886",
+          "sameTarball": "PASS Ubuntu, Windows, macOS; same run 36858088886",
+          "validate": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088665",
+          "typeScriptAnalysis": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36858088722",
+          "focusedAndRegression": "PASS on Ubuntu, Windows, macOS; runs 36858088668, 36858088774, 36858088837, 36858088861",
+          "codeRabbit": "SKIPPED because the PR is draft; not a required check"
+        },
+        "evidenceSyncHeadChecks": "PENDING_NORMAL_AUTOMATIC_CHECKS"
       }
     },
-    "gate3NextLegalAction": "Run and verify only the normal automatic checks on the latest exact HEAD of codex/gbs-v11-wo010-recovery-delta21; once green, stop for owner re-audit at GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT. Do not merge, republish, move the tag, publish internal runtime packages, or create a GitHub Release.",
+    "gate3NextLegalAction": "Verify normal automatic checks on the latest exact HEAD of draft PR #355 after this evidence-sync commit; if all pass, stop for owner re-audit at GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT. No merge, recovery dispatch, npm publication, tag movement, internal package publication, or GitHub Release.",
     "gate3EvidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
     "gate3Manifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json"
   }
