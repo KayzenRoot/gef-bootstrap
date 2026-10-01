@@ -2,15 +2,18 @@
 
 All notable release changes are documented here. GEF Bootstrap uses Semantic Versioning.
 
-## [1.1.1] - hotfix in progress (2026-10-01)
+## [1.1.1] - production patch accepted (2026-10-01)
 
 ### Fixed
 - Separate GEF-managed root metadata from project-drift fingerprints so `adopt --apply` and `init --apply` do not report their own `.gef`/`.gef-private` directories as project drift or operator dirtiness.
 - Preserve full diagnostic visibility, detect user-owned root-file changes, and read valid V1.1.0 state with explicit legacy semantics.
 
 ### Release state
-- Candidate work is admitted as `GBS-V11-WO-011`; version `1.1.1` is not released until exact-head checks, owner audit, merge, tag, npm publication and post-publish smoke all pass.
-- The published V1.1.0 release remains immutable and production accepted.
+- Published as immutable tag `v1.1.1` and npm package `@gef-bootstrap/cli@1.1.1`.
+- Exact release tarball SHA-256: `59cfbe2699c884f9c57bb50594fe3972c5f8667c44bff4f35a5e9a65e4ce53c3`; npm SRI: `sha512-YuLrx35lCo4aSBV6DI/EmaKPhkZJxjyUyDTQEhjvM8SdktV5x2rWJjeIY0T69A/PlILqOsL5E2zrz3BLRMPGVg==`.
+- Registry recovery verified the exact SRI, npm registry ECDSA signature, provenance metadata, registry install, CLI/library smoke, doctor and deterministic repeated status.
+- V1.1.0 remains immutable historical production evidence; V1.1.1 supersedes it as the current stable V1.1 package.
+- Consumer rollout remains part of WO-011 and starts with `KayzenRoot/goodz-menu`.
 
 ## [1.1.0] - production accepted (2026-10-01)
 
