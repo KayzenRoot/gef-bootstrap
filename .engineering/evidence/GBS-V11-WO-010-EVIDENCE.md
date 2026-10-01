@@ -85,6 +85,8 @@ On implementation head `727c0ab68fb95bb95d2de69cd4f3b79b96e6e6e8`, all four GitH
 
 **Additional SonarCloud Quality Gate: FAIL.** The Security Rating on New Code is D (required A); its annotation points to `.github/workflows/v11-publish.yml:299`, where the workflow computes SHA-1 solely to compare npm's required legacy `dist.shasum`. No Sonar rule, threshold, configuration, or suppression was changed. This failure is disclosed for the owner audit; it is not reported as a pass.
 
-The recovery job has not been dispatched. No merge, tag change, npm republish, or GitHub Release occurred. The draft is at the owner-audit boundary because all required checks passed; the additional Sonar finding remains visible for that audit.
+The first documentation-sync head `b4830b425c5a0ec0ac7c4631520189f2f8961962` passed Gitleaks, Pipeline Integrity, and Trivy but Repository Validation failed eight historical admission assertions after the root Gate2 `nextLegalAction` and `stopState` were overwritten by the Delta 19 marker. The follow-up restores those canonical Gate2 values and records the release-recovery state under Gate 3/Delta 19; no tests or product files were changed.
+
+The recovery job has not been dispatched. No merge, tag change, npm republish, or GitHub Release occurred. The corrected documentation head is distinct from the previously checked implementation head; the exact-head required checks on the current PR commit govern owner-audit readiness. The additional Sonar finding remains visible for that audit.
 
 **Correction Delta #19 stop condition:** `GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT`.

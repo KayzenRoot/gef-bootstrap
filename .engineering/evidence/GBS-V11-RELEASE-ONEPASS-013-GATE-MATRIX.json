@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-10-01T10:08:48.179Z",
+  "capturedAtUtc": "2026-10-01T10:13:10.664Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
@@ -539,7 +539,10 @@
         "tagMoved": false,
         "npmRepublished": false,
         "githubReleaseCreated": false,
-        "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT"
+        "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT",
+        "previousDocumentationSyncHead": "b4830b425c5a0ec0ac7c4631520189f2f8961962",
+        "previousDocumentationSyncRepositoryValidation": "FAIL: 8 historic admission assertions because the root Gate2 Option B nextLegalAction/stopState were replaced with the Delta19 stop marker",
+        "checkpointCorrection": "Restore the root Gate2 Option B fields; keep the WO-010 recovery stop under gate3Wo010Acceptance and releaseRecoveryDelta19."
       }
     }
   ],

@@ -233,4 +233,6 @@ The original `v1.1.0` tag workflow failed because its Node 22.14.0 runner does n
 
 The existing WO-010 workflow guard passes 6/6 locally. On implementation head `727c0ab68fb95bb95d2de69cd4f3b79b96e6e6e8`, all four required checks passed; Codecov patch is 100.00%; exact-head release assurance and same-artifact install/use passed on Ubuntu, macOS, and Windows. SonarCloud additionally reports Security Rating D for new code at the required npm `dist.shasum` SHA-1 comparison; this is disclosed in the Evidence Bundle and has not been suppressed or reconfigured.
 
-The manual recovery workflow has not been dispatched. No merge, tag mutation, npm republish, or GitHub Release occurred. Owner audit is the next action. Current stop: `GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT`.
+The first documentation-sync head `b4830b425c5a0ec0ac7c4631520189f2f8961962` passed Gitleaks, Pipeline Integrity, and Trivy but Repository Validation failed eight historical admission assertions after the root Gate2 `nextLegalAction` and `stopState` were overwritten by the Delta 19 marker. The follow-up restores those canonical Gate2 values and keeps the recovery status under Gate 3/Delta 19.
+
+The manual recovery workflow has not been dispatched. No merge, tag mutation, npm republish, or GitHub Release occurred. Owner audit is next after required checks pass on the corrected exact head. Current stop: `GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT`.

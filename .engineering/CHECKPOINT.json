@@ -461,8 +461,8 @@
     "implementationBranch": "feat/1.1/wo-009-integrated-assurance-clean-history",
     "contextLock": ".engineering/context-locks/GBS-V11-WO-009.json",
     "executionBrief": ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md",
-    "nextLegalAction": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT",
-    "stopState": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT",
+    "nextLegalAction": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT",
+    "stopState": "GBS_V11_RELEASE_ONEPASS_013_GATE2_OPTION_B_APPLIED_READY_FOR_EXACT_HEAD_REAUDIT",
     "codexOnlyAdoption": {
       "workOrder": "GBS-V11-GOV-CODEX-PROMOTION-004",
       "issue": 345,
@@ -743,7 +743,10 @@
         "tagMoved": false,
         "npmRepublished": false,
         "githubReleaseCreated": false,
-        "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT"
+        "stopCondition": "GBS_V11_WO_010_RELEASE_RECOVERY_PR_READY_FOR_OWNER_AUDIT",
+        "previousDocumentationSyncHead": "b4830b425c5a0ec0ac7c4631520189f2f8961962",
+        "previousDocumentationSyncRepositoryValidation": "FAIL: 8 historic admission assertions because the root Gate2 Option B nextLegalAction/stopState were replaced with the Delta19 stop marker",
+        "checkpointCorrection": "Restore the root Gate2 Option B fields; keep the WO-010 recovery stop under gate3Wo010Acceptance and releaseRecoveryDelta19."
       }
     },
     "gate3NextLegalAction": "Owner exact-head audit of draft recovery PR #354. Only after owner approval, merge the recovery PR normally and dispatch the read-only RECOVERY mode once from main; do not move v1.1.0 or republish npm.",
