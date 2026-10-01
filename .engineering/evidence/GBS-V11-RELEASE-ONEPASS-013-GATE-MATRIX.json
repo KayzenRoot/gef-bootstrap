@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "workOrderId": "GBS-V11-RELEASE-ONEPASS-013",
   "masterIssue": 348,
-  "capturedAtUtc": "2026-10-01T00:52:16.303Z",
+  "capturedAtUtc": "2026-10-01T02:10:31.000Z",
   "repository": "KayzenRoot/gef-bootstrap",
   "observedRefs": {
     "main": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
@@ -358,7 +358,7 @@
     {
       "gate": 3,
       "name": "WO-010 production acceptance and V1.1 release",
-      "state": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
+      "state": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
       "workOrder": "GBS-V11-WO-010",
       "workOrderPresent": true,
       "packageMetadata": {
@@ -366,18 +366,20 @@
         "rootLicense": "UNLICENSED",
         "cliPrivate": true,
         "cliLicense": "UNLICENSED",
-        "metadataMutation": "NOT_AUTHORIZED_BEFORE_NPM_SCOPE_AND_OIDC_VERIFICATION"
+        "metadataMutation": "repository.url added by owner review #5373800160; private:true, name, version, and license unchanged",
+        "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git"
       },
       "ownerActions": {
         "licenseDistributionChoice": "ALL_RIGHTS_RESERVED_PRESERVED",
-        "npmIdentity": "UNVERIFIED_NO_AUTHENTICATED_IDENTITY_CHECK",
-        "npmNamespaceRegistryOwnership": "UNVERIFIED_PUBLIC_LOOKUP_E404_PRIVATE_VS_ABSENT_INDETERMINATE",
-        "npmPackage": "OWNER_REPORTS_CREATED; anonymous view E404",
-        "npmOidcTrustedPublishing": "OWNER_REPORTS_GITHUB_CONNECTED; package-level OIDC binding unverified",
+        "npmIdentity": "VERIFIED: npm whoami returned kayzenroot; authenticated GitHub identity is KayzenRoot (case-insensitive match)",
+        "npmNamespaceRegistryOwnership": "npm team ls @gef-bootstrap:developers lists kayzenroot as its sole member; npm access list packages @gef-bootstrap exited 0 with no package rows",
+        "npmPackage": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected while unpublished and not treated as an ownership failure",
+        "npmOidcTrustedPublishing": "Package-level binding not configured or verified; separate first-publish decision remains required; owner reports GitHub connection",
         "finalS4PublicationApproval": "NOT_GRANTED",
-        "ownerReportedGithubConnection": true
+        "ownerReportedGithubConnection": true,
+        "credentialDisclosure": "NO_TOKEN_OR_COOKIE_CONTENTS_EXPOSED"
       },
-      "authorizedActivityNow": "Complete exact-head production acceptance on the clean replacement; open one draft replacement PR only after the pinned full-interval scan passes. PR #350 remains historical OPEN/DRAFT and unmodified.",
+      "authorizedActivityNow": "Reaudit the identity-verified exact-head candidate and prepare a separate first-publish decision; no publish, tag, release, merge, or private:false change",
       "forbiddenNow": [
         "main promotion",
         "tag v1.1.0",
@@ -394,36 +396,41 @@
       "correctionDelta16IssueComment": 5919878202,
       "sameArtifactMatrix": "PASS Ubuntu/macOS/Windows; run https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36797272549; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
       "npmPreflight": {
-        "identity": "NOT_VERIFIED_WITHOUT_AUTHENTICATED_IDENTITY",
-        "ownerReport": "Owner reports npm package created and GitHub connected to npm",
-        "publicRegistryLookup": "E404 using isolated empty npm config; private vs absent is indeterminate",
-        "trustedPublisherBinding": "PACKAGE_LEVEL_OIDC_BINDING_NOT_VERIFIED",
-        "credentialUse": "NO_NPM_CREDENTIAL_USED",
+        "identity": "VERIFIED_KAYZENROOT_NPM_WHOAMI; matches GitHub KayzenRoot case-insensitively",
+        "ownerReport": "Owner completed manual npm web authorization; GitHub profile is connected per owner report",
+        "publicRegistryLookup": "npm view @gef-bootstrap/cli@1.1.0 version returned E404; expected unpublished package state, not an ownership failure",
+        "trustedPublisherBinding": "NOT_CONFIGURED_OR_VERIFIED; first publication decision remains separate per review #5373800160",
+        "credentialUse": "npm CLI web login; no token or cookie content disclosed",
         "publication": "NOT_ATTEMPTED",
-        "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+        "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
+        "organizationTeamMembership": "PASS: npm team ls @gef-bootstrap:developers lists kayzenroot",
+        "packageAcl": "npm access list packages @gef-bootstrap exited 0; no package rows returned",
+        "repositoryUrl": "https://github.com/KayzenRoot/gef-bootstrap.git",
+        "longLivedToken": "NOT_USED"
       },
       "prepublicationChecks": {
         "workingTreePinnedGitleaks": "PASS: no candidate finding; unchanged baseline findings are outside the candidate diff",
         "fullMainToCandidateGitleaks": "PASS pinned Gitleaks 8.30.1 at exact candidate head; 88 commits in main..candidate, zero findings; PR Gitleaks check PASS",
-        "realPackageTarballAndReceipt": "PASS exact-source receipt for 904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d; Linux producer run 36797272549",
-        "packageManifestAndChecksums": "PASS 379 entries; package metadata, vendor manifest, schemas and license payload reviewed; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898; vendor hash/SHA-512 package check PASS",
-        "sameArtifactUbuntuWindowsMacos": "PASS all three operating systems consumed the same SHA-bound artifact",
+        "realPackageTarballAndReceipt": "PASS exact-source receipt for aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f; Linux producer run 36803639314",
+        "packageManifestAndChecksums": "PASS 379 archive entries; actual tarball SHA-256 b6900bed8b6ce9be7f196719b9384c7a6ecadbf63ca5a82bc55d07ef38978a45; 2737237 bytes; packed repository.url exact; private/name/version/license preserved",
+        "sameArtifactUbuntuWindowsMacos": "PASS all three operating systems consumed the same SHA-bound artifact in run 36803639314",
         "upgradeRecovery": "PASS release workflow matrix; local Windows exact tarball migration preserved V1.0 state and receipts",
         "npmRunBuild": "PASS",
-        "focusedTests": "PASS Gate 2 13/13; package builder 4/4; other directed tests 27 passed; real receipt-bound smoke PASS on Windows",
+        "focusedTests": "PASS directed package-builder/publisher tests 11/11; npm run build and npm pack --dry-run PASS",
         "npmAudit": "PASS 0 vulnerabilities",
-        "npmRunValidate": "PASS 1610/1610, zero failures/cancelled/skipped/todo on exact current HEAD",
+        "npmRunValidate": "PASS 1610/1610 in a normal clone of the exact manifest content; exact-head GitHub Repository Validation PASS",
         "codecovOptionB": "codecov/patch SUCCESS; provider comment confirms modified and coverable lines covered; existing owner Option B decision preserved; exact-head interpretation remains for owner audit",
         "sonarCodeqlTrivy": "PASS; Sonar quality/duplicate-block checks PASS with 0 security hotspots and 122 new issues disclosed; CodeQL and Trivy PASS",
         "dependencyReviewPipelineIntegritySocket": "PASS all three",
-        "exactHeadRequiredChecks": "PASS 147/147 SUCCESS on exact current PR head"
+        "exactHeadRequiredChecks": "PASS 4/4 required checks; 149 PR check contexts in pass bucket, with CodeRabbit skipped because the PR is draft"
       },
-      "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC",
-      "finalPullRequestHead": "904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d",
-      "requiredExactHeadChecks": "147/147 SUCCESS on 904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d",
+      "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
+      "finalPullRequestHead": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f",
+      "requiredExactHeadChecks": "4/4 required checks PASS; all 149 PR check contexts in pass bucket on aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f (CodeRabbit skipped because draft)",
       "auditReady": false,
       "blockingChecks": {
-        "npmTrustedPublisherPreflight": "Owner reports GitHub connection, but package-level OIDC binding and npm scope identity are unverified; anonymous E404 is indeterminate. Owner evidence/action required."
+        "firstPublishDecision": "A separate explicit owner decision is required before the first npm publication; this task did not authorize publication.",
+        "npmTrustedPublisherPreflight": "npm CLI identity and scope-team membership are verified; package-level Trusted Publisher remains unconfigured/unverified until the first package exists."
       },
       "evidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
       "releaseManifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json",
@@ -452,31 +459,32 @@
         "gate2RecreationTree": "6e78975f0c552edfe80e472f6198dd884209b26e",
         "wo010ImplementationHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
         "noPr350CommitsInAncestry": true,
-        "replacementPullRequest": 352
+        "replacementPullRequest": 352,
+        "metadataCorrectionHead": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f"
       },
       "correctionDelta17Review": 5372870208,
       "finalPullRequestUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/352",
       "technicalChecksReadyForOwnerAudit": true,
       "exactHeadProviderEvidence": {
-        "head": "904c38dcb9f6bd9d5d04dadca095f3d0b6b7861d",
+        "head": "aa7c170bc57040a7a00c85b4f41d15e4bfb2ff3f",
         "implementationHead": "f3777fe5824ca061803bb2b45c988861156f55c7",
         "base": "f6738292c038eb6f0d08d1d32b3752c5c7dc417a",
         "pullRequest": 352,
-        "exactHeadChecks": "147/147 SUCCESS",
-        "releaseAssurance": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36797272549 (Ubuntu/macOS/Windows SUCCESS)",
-        "sameArtifact": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36797272549; Ubuntu/macOS/Windows SUCCESS; SHA-256 17f22607f9fc7655ab786304256509bc1b646adc0b3a4f11c81dec17ef37b898",
-        "codecov": "codecov/patch SUCCESS; provider reports all modified and coverable lines covered",
-        "gitleaks": "Pinned 8.30.1 full main..candidate scan at this HEAD: 88 commits, 0 findings; PR check PASS",
-        "trivy": "PASS",
-        "codeql": "PASS",
+        "exactHeadChecks": "4/4 required checks PASS; 149 PR check contexts in pass bucket (CodeRabbit skipped because draft)",
+        "releaseAssurance": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36803639314 (Ubuntu/macOS/Windows SUCCESS)",
+        "sameArtifact": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36803639314; Ubuntu/macOS/Windows SUCCESS; SHA-256 b6900bed8b6ce9be7f196719b9384c7a6ecadbf63ca5a82bc55d07ef38978a45",
+        "codecov": "codecov/patch SUCCESS",
+        "gitleaks": "Pinned Gitleaks 8.30.1 full main..candidate interval and exact-head PR check PASS",
+        "trivy": "PASS https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36803639235/job/110183186116",
+        "codeql": "PASS https://github.com/KayzenRoot/gef-bootstrap/runs/110183890106",
         "dependencyReview": "PASS",
         "pipelineIntegrity": "PASS",
-        "sonar": "PASS; 0 security hotspots; 122 new issues disclosed",
+        "sonar": "PASS quality gate and duplicate-block checks",
         "socket": "PASS",
         "npmAudit": "PASS; 0 vulnerabilities",
-        "localValidation": "Windows x64; npm run build PASS; npm run validate PASS 1610/1610; real exact-head tarball smoke PASS",
-        "npmPreflight": "Owner reports package created and GitHub connected to npm; package-level OIDC binding and authenticated npm identity unverified; anonymous npm view E404",
-        "stopCondition": "OWNER_ACTION_REQUIRED_NPM_SCOPE_OR_OIDC"
+        "localValidation": "Windows x64; npm run build PASS; npm run validate PASS 1610/1610 in normal clone with exact manifest content",
+        "npmPreflight": "npm whoami kayzenroot; developers team membership confirmed; package E404 expected unpublished; exact repository.url present in tarball; no credential contents exposed; no publication attempted",
+        "stopCondition": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION"
       }
     }
   ],
@@ -506,7 +514,7 @@
   "mergeAuthorized": false,
   "publicationAuthorized": false,
   "currentGate": 3,
-  "currentGateState": "CLEAN_REPLACEMENT_PREPUBLICATION_ACCEPTANCE_IN_PROGRESS",
+  "currentGateState": "GBS_V11_WO_010_NPM_IDENTITY_VERIFIED_READY_FOR_FIRST_PUBLISH_DECISION",
   "currentCandidateBranch": "codex/gbs-v11-wo010-clean-replacement-delta17",
   "mainMergeAuthorized": false
 }
