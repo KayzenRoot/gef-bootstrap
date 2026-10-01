@@ -47,18 +47,24 @@ The GitHub Release for `v1.0.0` provides generated source ZIP/TAR archives. Afte
 ## Important boundary
 Do not advertise or rely on `npm install -g gef-bootstrap` for V1.0.0. The workspace and `@gef-bootstrap/cli` package remain private workspace packages and the CLI surface is a library-facing implementation, not a published executable.
 
-## Published V1.1.0 and current V1.1.1 patch
+## Current stable V1.1.1 package
 
-V1.1.0 is the production-accepted release. V1.1.1 is the admitted hotfix candidate until its own exact-head checks, owner audit and release gates complete. To use the published V1.1.0 package:
+V1.1.1 is the current production-accepted V1.1 release. Install the published package:
 
 ```bash
-npm install --global @gef-bootstrap/cli@1.1.0
+npm install --global @gef-bootstrap/cli@1.1.1
 gef --help
 gef --version
 ```
 
-The version-specific 1.1.1 package is not available until published. Do not infer availability from a source branch or GitHub tag alone. `docs/V1.1-OPERATIONS-RUNBOOK.md` describes project-state compatibility, explicit apply boundaries and recovery handling.
+Release identity:
+- immutable tag: `v1.1.1`;
+- release source: `1dc030f1358eab0347043a3d54c7fc311c7c2123`;
+- release tarball SHA-256: `59cfbe2699c884f9c57bb50594fe3972c5f8667c44bff4f35a5e9a65e4ce53c3`;
+- npm SRI: `sha512-YuLrx35lCo4aSBV6DI/EmaKPhkZJxjyUyDTQEhjvM8SdktV5x2rWJjeIY0T69A/PlILqOsL5E2zrz3BLRMPGVg==`;
+- post-publish registry smoke: `SUCCESS`.
 
+V1.1.0 remains an immutable historical release but is no longer the current stable V1.1 package.
 ## V1.1 operations and fresh-chat continuity
 
-V1.1.0 is production accepted; the 1.1.1 maintenance patch is governed by WO-011. For project-construction, upgrade and recovery procedures, see [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md). Start every new chat from the canonical checkpoint, active Work Order, Context Lock and verified provider head; use M18/M20 to state exactly one next action or an explicit `NONE/UNKNOWN` stop state.
+V1.1.1 is production accepted and registry-smoke verified; WO-011 now continues only with its authorized consumer rollout. For project-construction, upgrade and recovery procedures, see [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md). Start every new chat from the canonical checkpoint, active Work Order, Context Lock and verified provider head; use M18/M20 to state exactly one next action or an explicit `NONE/UNKNOWN` stop state.
