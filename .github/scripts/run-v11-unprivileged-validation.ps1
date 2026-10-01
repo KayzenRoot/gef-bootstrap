@@ -40,11 +40,11 @@ try {
     if (-not $env:GEF_RELEASE_RECEIPT_DIR) { throw "GEF_RELEASE_RECEIPT_DIR is required for the exact-artifact smoke." }
     if ($env:GEF_EXPECTED_SOURCE_COMMIT -notmatch '^[0-9a-f]{40}$') { throw "GEF_EXPECTED_SOURCE_COMMIT must be an exact commit SHA." }
     if ($env:GEF_EXPECTED_EVENT -notin @("pull_request", "push")) { throw "GEF_EXPECTED_EVENT is unsupported for the exact-artifact smoke." }
-    if ($env:GEF_EXPECTED_PRODUCT_VERSION -notin @("1.1.0", "1.1.1")) { throw "GEF_EXPECTED_PRODUCT_VERSION is unsupported for the exact-artifact smoke." }
-    if ($env:GEF_EXPECTED_REF -notmatch '^refs/(pull/[0-9]+/merge|heads/release/1\.1|tags/v1\.1\.1)$') { throw "GEF_EXPECTED_REF is not an admitted candidate ref." }
+    if ($env:GEF_EXPECTED_PRODUCT_VERSION -notin @("1.1.0", "1.1.1", "1.1.2")) { throw "GEF_EXPECTED_PRODUCT_VERSION is unsupported for the exact-artifact smoke." }
+    if ($env:GEF_EXPECTED_REF -notmatch '^refs/(pull/[0-9]+/merge|heads/release/1\.1|tags/v1\.1\.[0-2])$') { throw "GEF_EXPECTED_REF is not an admitted candidate ref." }
 
     $sourceArtifactDirectory = [System.IO.Path]::GetFullPath($env:GEF_RELEASE_RECEIPT_DIR)
-    $workOrder = if ($env:GEF_EXPECTED_PRODUCT_VERSION -eq "1.1.0") { "010" } else { "011" }
+    $workOrder = switch ($env:GEF_EXPECTED_PRODUCT_VERSION) { "1.1.0" { "010" } "1.1.1" { "011" } default { "012" } }
     $artifactNames = @("GBS-V11-WO-$workOrder-RELEASE-MANIFEST.json", "gef-bootstrap-cli-$($env:GEF_EXPECTED_PRODUCT_VERSION).tgz")
     foreach ($artifactName in $artifactNames) {
       if (-not (Test-Path -LiteralPath (Join-Path $sourceArtifactDirectory $artifactName) -PathType Leaf)) {
@@ -133,7 +133,7 @@ try {
   if ($gitConfig.ExitCode -ne 0) { throw "Could not configure Git safe.directory for the standard user." }
 
   if ($ReleaseArtifactSmoke) {
-    $smokeScript = Join-Path $workspace "tests\v11-wo-010-artifact-smoke.mjs"
+    $smokeScript = if ($env:GEF_EXPECTED_PRODUCT_VERSION -eq "1.1.2") { Join-Path $workspace ".github\scripts\run-v11-wo012-artifact-smoke.mjs" } else { Join-Path $workspace "tests\v11-wo-010-artifact-smoke.mjs" }
     if (-not (Test-Path -LiteralPath $smokeScript -PathType Leaf)) { throw "The exact-artifact acceptance harness is missing." }
     $environmentPath = Join-Path $tempRoot "gef-v11-artifact-smoke-environment.json"
     $bootstrapPath = Join-Path $tempRoot "gef-v11-artifact-smoke-bootstrap.mjs"

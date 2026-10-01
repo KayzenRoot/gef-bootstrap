@@ -52,6 +52,7 @@ jobs:
           case "$version" in
             1.1.0) work_order=010 ;;
             1.1.1) work_order=011 ;;
+            1.1.2) work_order=012 ;;
             *) echo "Refusing unsupported V1.1 candidate package version: $version" >&2; exit 1 ;;
           esac
           destination="$RUNNER_TEMP/gef-v${version}-exact-head-package"
@@ -139,7 +140,12 @@ jobs:
           GEF_EXPECTED_EVENT: ${{ github.event_name }}
           GEF_EXPECTED_REF: ${{ github.ref }}
           GEF_EXPECTED_PRODUCT_VERSION: ${{ needs.exact-head-package-candidate.outputs.package_version }}
-        run: node tests/v11-wo-010-artifact-smoke.mjs
+        run: |
+          if [ "$GEF_EXPECTED_PRODUCT_VERSION" = "1.1.2" ]; then
+            node .github/scripts/run-v11-wo012-artifact-smoke.mjs
+          else
+            node tests/v11-wo-010-artifact-smoke.mjs
+          fi
 
       - name: Install, use, migrate with and remove the exact same package tarball (unprivileged Windows)
         if: runner.os == 'Windows'

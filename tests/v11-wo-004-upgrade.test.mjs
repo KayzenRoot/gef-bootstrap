@@ -23,7 +23,7 @@ import { composeUpgradePreview, UPGRADE_STATE_REF } from "../packages/cli/dist/u
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const CLI_BIN = resolve(ROOT, "packages/cli/bin/gef.mjs");
-const PRODUCT_VERSION = "1.1.1";
+const PRODUCT_VERSION = "1.1.2";
 const TRUSTED_GIT_AVAILABLE = resolveGitToolWith(createCliToolObservationPort(DEFAULT_GIT_TRUST_POLICY)) !== null;
 const UPGRADE_POLICY = "cli:upgrade:managed-write:v1";
 const UPGRADE_COMMAND = "gef.upgrade.apply";
@@ -61,6 +61,7 @@ function fixtureState({ verb = "init", runId = "legacy-run-init-001", productVer
     commandId: sourceCommand,
     contractVersion: "1.0",
     productVersion,
+    ...(productVersion === "1.1.1" || productVersion === "1.1.2" ? { observationModel: "PROJECT_DRIFT_V1" } : {}),
     runId,
     planDigest: sha(`${runId}:semantic-plan`),
     observationFingerprint: sha(`${runId}:observation`),
@@ -190,7 +191,7 @@ test("UPG-MIG-02: V1.0 to V1.1 apply matches preview digest and preserves source
   assert.equal(value.previewDigest, preview.previewDigest);
   assert.equal(value.document.planDigest, preview.previewDigest);
   assert.equal(value.document.sourceVersion, "1.0.0");
-  assert.equal(value.document.targetVersion, "1.1.1");
+  assert.equal(value.document.targetVersion, "1.1.2");
   assert.equal(readFileSync(join(target, fixture.sourceRef), "utf8"), fixture.stateBytes);
   assert.equal(readFileSync(join(target, fixture.receiptRef), "utf8"), fixture.receiptBytes);
   const stateBytes = readFileSync(join(target, UPGRADE_STATE_REF));
@@ -278,30 +279,47 @@ test("UPG-MIG-07: the admitted V1.0 to V1.1 migration row exists and applies", {
   const preview = JSON.parse(gef(["upgrade", "--target", target, "--json"]).stdout).value.preview;
   assert.equal(preview.compatibility.state, "SUPPORTED");
   assert.equal(preview.compatibility.row.from, "1.0.0");
-  assert.equal(preview.compatibility.row.to, "1.1.1");
+  assert.equal(preview.compatibility.row.to, "1.1.2");
   assert.equal(preview.compatibility.row.migrationId, "GEF-UPGRADE-STATE-V1-1-PATCH");
   const applied = gef(["upgrade", "--apply", "--target", target, "--json"]);
   assert.equal(applied.code, 0, applied.stderr);
   const value = JSON.parse(applied.stdout).value;
   assert.equal(value.document.sourceVersion, "1.0.0");
-  assert.equal(value.document.targetVersion, "1.1.1");
+  assert.equal(value.document.targetVersion, "1.1.2");
   assert.equal(value.document.migrationId, "GEF-UPGRADE-STATE-V1-1-PATCH");
   assert.equal(value.transaction.outcome, "APPLIED");
 });
 
-test("WO011-COMPAT-01: published V1.1.0 state has a verified patch path to V1.1.1 without rewriting its source", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
+test("WO012-COMPAT-01: published V1.1.0 state has a verified patch path to V1.1.2 without rewriting its source", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
   const target = tempTarget(t);
   initRepository(target);
   const fixture = seedManagedState(target, { verb: "adopt", runId: "wo011-v110-source", productVersion: "1.1.0" });
   const preview = JSON.parse(gef(["upgrade", "--target", target, "--json"]).stdout).value.preview;
   assert.equal(preview.compatibility.state, "SUPPORTED");
   assert.equal(preview.compatibility.row.from, "1.1.0");
-  assert.equal(preview.compatibility.row.to, "1.1.1");
+  assert.equal(preview.compatibility.row.to, "1.1.2");
   const applied = gef(["upgrade", "--apply", "--target", target, "--json"]);
   assert.equal(applied.code, 0, applied.stderr);
   const value = JSON.parse(applied.stdout).value;
   assert.equal(value.document.sourceVersion, "1.1.0");
-  assert.equal(value.document.targetVersion, "1.1.1");
+  assert.equal(value.document.targetVersion, "1.1.2");
+  assert.equal(readFileSync(join(target, fixture.sourceRef), "utf8"), fixture.stateBytes);
+  assert.equal(readFileSync(join(target, fixture.receiptRef), "utf8"), fixture.receiptBytes);
+});
+
+test("WO012-COMPAT-02: published V1.1.1 state upgrades to 1.1.2 while preserving source and receipt bytes", { skip: !TRUSTED_GIT_AVAILABLE }, (t) => {
+  const target = tempTarget(t);
+  initRepository(target);
+  const fixture = seedManagedState(target, { verb: "adopt", runId: "wo012-v111-source", productVersion: "1.1.1" });
+  const preview = JSON.parse(gef(["upgrade", "--target", target, "--json"]).stdout).value.preview;
+  assert.equal(preview.compatibility.state, "SUPPORTED");
+  assert.equal(preview.compatibility.row.from, "1.1.1");
+  assert.equal(preview.compatibility.row.to, "1.1.2");
+  const applied = gef(["upgrade", "--apply", "--target", target, "--json"]);
+  assert.equal(applied.code, 0, applied.stderr);
+  const value = JSON.parse(applied.stdout).value;
+  assert.equal(value.document.sourceVersion, "1.1.1");
+  assert.equal(value.document.targetVersion, "1.1.2");
   assert.equal(readFileSync(join(target, fixture.sourceRef), "utf8"), fixture.stateBytes);
   assert.equal(readFileSync(join(target, fixture.receiptRef), "utf8"), fixture.receiptBytes);
 });
@@ -398,7 +416,7 @@ test("COMPAT-06: no VERIFIED compatibility row exists without complete evidence 
   assert.equal(matrix["$schema"], "https://json-schema.org/draft/2020-12/schema");
   assert.equal(matrixSchema["$schema"], "https://json-schema.org/draft/2020-12/schema");
   assert.equal(stateSchema["$schema"], "https://json-schema.org/draft/2020-12/schema");
-  assert.equal(matrix.compatibility.length, 3);
+  assert.equal(matrix.compatibility.length, 6);
   const requiredIds = [
     ...Array.from({ length: 7 }, (_, i) => `UPG-MIG-0${i + 1}`),
     ...Array.from({ length: 6 }, (_, i) => `COMPAT-0${i + 1}`),

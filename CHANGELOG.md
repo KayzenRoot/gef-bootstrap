@@ -2,14 +2,26 @@
 
 All notable release changes are documented here. GEF Bootstrap uses Semantic Versioning.
 
-## [1.1.1] - hotfix in progress (2026-10-01)
+## [1.1.2] - hotfix in progress (2026-10-01)
+
+### Fixed
+- Block `init --apply` and `adopt --apply` before mutation when a bounded, recognized local impact contract proves that planned GEF state or receipt paths fail its `UNKNOWN_FILES_FAIL_CLOSED` rule.
+- Preserve normal behavior when no local impact contract exists, and allow compatible contracts that classify all planned paths.
+- Add verified project-state upgrade paths from supported V1.0/V1.1 states to the current 1.1.2 candidate.
+
+### Release state
+- Candidate work is admitted as `GBS-V11-WO-012`; `1.1.2` is not tagged or published. Exact-head checks and owner audit remain required.
+- V1.1.0 remains the production-accepted stable release.
+
+## [1.1.1] - published with post-publish verification incident (2026-10-01)
 
 ### Fixed
 - Separate GEF-managed root metadata from project-drift fingerprints so `adopt --apply` and `init --apply` do not report their own `.gef`/`.gef-private` directories as project drift or operator dirtiness.
 - Preserve full diagnostic visibility, detect user-owned root-file changes, and read valid V1.1.0 state with explicit legacy semantics.
 
 ### Release state
-- Candidate work is admitted as `GBS-V11-WO-011`; version `1.1.1` is not released until exact-head checks, owner audit, merge, tag, npm publication and post-publish smoke all pass.
+- Published as `@gef-bootstrap/cli@1.1.1` with immutable GitHub tag `v1.1.1` targeting `1dc030f1358eab0347043a3d54c7fc311c7c2123`.
+- Publication workflow run `36904947907` succeeded through npm publication. Its post-publish verification failed while downloading the exact run artifact; this Work Order preserves that incident as unresolved history and does not alter the package or tag.
 - The published V1.1.0 release remains immutable and production accepted.
 
 ## [1.1.0] - production accepted (2026-10-01)

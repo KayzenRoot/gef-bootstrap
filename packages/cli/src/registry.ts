@@ -1721,6 +1721,181 @@ function resolveTargetRequested(input: CliCommandInput, context: ExecutionContex
   return context.target?.targetRef ?? input.targetRef ?? context.ports.environment?.values["GEF_TARGET"] ?? process.cwd();
 }
 
+const CONSUMER_IMPACT_CONTRACT_REFS = Object.freeze([
+  "scripts/harness.mjs",
+  "scripts/lib/impact.mjs",
+  "harness/modules.json",
+] as const);
+const CONSUMER_IMPACT_CONTRACT_MAX_BYTES = 128 * 1024;
+
+type ConsumerImpactPreflight =
+  | { readonly status: "NO_CONTRACT" | "SUPPORTED" }
+  | { readonly status: "BLOCKED"; readonly reason: "consumer_impact_contract_unknown" | "consumer_impact_contract_rejects_planned_paths"; readonly metadata: Readonly<Record<string, unknown>> };
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNormalizedImpactPath(value: unknown): value is string {
+  if (typeof value !== "string" || value.length === 0 || value.length > 1024 || value.startsWith("/") || value.includes("\\") || value.includes("\0")) return false;
+  const path = value.endsWith("/") ? value.slice(0, -1) : value;
+  if (path.length === 0 || path.split("/").some((part) => part.length === 0 || part === "." || part === "..")) return false;
+  return true;
+}
+
+function validateConsumerImpactRegistry(value: unknown): value is {
+  readonly schema_version: 1;
+  readonly modules: readonly { readonly id: string; readonly state: "active" | "planned"; readonly depends_on: readonly string[]; readonly paths: readonly string[]; readonly tests: readonly string[] }[];
+} {
+  if (!isPlainRecord(value) || value["schema_version"] !== 1 || !Array.isArray(value["modules"])) return false;
+  const modules = value["modules"];
+  const ids = new Set<string>();
+  for (const module of modules) {
+    if (!isPlainRecord(module)) return false;
+    const id = module["id"];
+    const state = module["state"];
+    const paths = module["paths"];
+    const tests = module["tests"];
+    const dependencies = module["depends_on"];
+    if (typeof id !== "string" || !/^[a-z][a-z0-9-]*$/.test(id) || ids.has(id)) return false;
+    if (state !== "active" && state !== "planned") return false;
+    if (!Array.isArray(paths) || paths.length === 0 || !paths.every(isNormalizedImpactPath)) return false;
+    if (!Array.isArray(tests) || !tests.every((entry) => typeof entry === "string") || (state === "active" && tests.length === 0)) return false;
+    if (!Array.isArray(dependencies) || !dependencies.every((entry) => typeof entry === "string")) return false;
+    ids.add(id);
+  }
+  const highImpact = value["high_impact"];
+  if (highImpact !== undefined && (!Array.isArray(highImpact) || !highImpact.every(isNormalizedImpactPath))) return false;
+
+  const byId = new Map<string, Record<string, unknown>>();
+  for (const module of modules) {
+    if (!isPlainRecord(module) || typeof module["id"] !== "string") return false;
+    byId.set(module["id"], module);
+  }
+  for (const module of modules) {
+    if (!isPlainRecord(module) || typeof module["id"] !== "string" || !Array.isArray(module["depends_on"])) return false;
+    for (const dependency of module["depends_on"]) {
+      if (typeof dependency !== "string" || dependency === module["id"] || !byId.has(dependency)) return false;
+      if (module["state"] === "active" && byId.get(dependency)?.["state"] !== "active") return false;
+    }
+  }
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const visit = (id: string): boolean => {
+    if (visiting.has(id)) return false;
+    if (visited.has(id)) return true;
+    const module = byId.get(id);
+    if (module === undefined || !Array.isArray(module["depends_on"])) return false;
+    visiting.add(id);
+    for (const dependency of module["depends_on"]) {
+      if (typeof dependency !== "string" || !visit(dependency)) return false;
+    }
+    visiting.delete(id);
+    visited.add(id);
+    return true;
+  };
+  for (const id of ids) if (!visit(id)) return false;
+  return true;
+}
+
+function matchesConsumerImpactPath(path: string, registeredPath: string): boolean {
+  return registeredPath.endsWith("/") ? path.startsWith(registeredPath) : path === registeredPath;
+}
+
+function inspectConsumerImpactContract(targetRoot: string, verb: LegacyMutationVerb, runId: string): ConsumerImpactPreflight {
+  const outcomes = CONSUMER_IMPACT_CONTRACT_REFS.map((ref) => readContainedDiagnosticFile(targetRoot, ref, CONSUMER_IMPACT_CONTRACT_MAX_BYTES));
+  if (outcomes.every((outcome) => outcome.status === "ABSENT")) return { status: "NO_CONTRACT" };
+
+  const unknown = (reason: string, extra: Readonly<Record<string, unknown>> = {}): ConsumerImpactPreflight => ({
+    status: "BLOCKED",
+    reason: "consumer_impact_contract_unknown",
+    metadata: {
+      contractRefs: [...CONSUMER_IMPACT_CONTRACT_REFS],
+      observations: outcomes.map(({ ref, status, limit }) => ({ ref, status, ...(limit === null ? {} : { limit }) })),
+      detail: reason,
+      ...extra,
+    },
+  });
+
+  if (outcomes.some((outcome) => outcome.status !== "OK" || outcome.bytes === null)) {
+    return unknown("The local impact contract is incomplete, unreadable, aliased, non-regular or over the bounded read limit.");
+  }
+  const [harnessOutcome, impactOutcome, registryOutcome] = outcomes;
+  if (harnessOutcome === undefined || impactOutcome === undefined || registryOutcome === undefined || harnessOutcome.bytes === null || impactOutcome.bytes === null || registryOutcome.bytes === null) {
+    return unknown("The local impact contract could not be read completely.");
+  }
+  const harness = harnessOutcome.bytes.toString("utf8");
+  const impact = impactOutcome.bytes.toString("utf8");
+  let registry: unknown;
+  try {
+    registry = JSON.parse(registryOutcome.bytes.toString("utf8")) as unknown;
+  } catch {
+    return unknown("The module registry is not valid JSON.", { registryRef: registryOutcome.ref });
+  }
+
+  const supportedHarness =
+    /\bcalculateImpact\b/.test(harness) &&
+    /harness\/modules\.json/.test(harness) &&
+    /if\s*\(\s*result\.unknown\.length\s*\)\s*fail\s*\(\s*["']UNKNOWN_FILES_FAIL_CLOSED["']\s*\)/.test(harness);
+  const supportedImpact =
+    /\bfunction\s+calculateImpact\s*\(|\b(?:export\s+)?function\s+calculateImpact\s*\(/.test(impact) &&
+    /mod\.paths\.some\s*\(\s*prefix\s*=>\s*prefix\.endsWith\s*\(\s*["']\/["']\s*\)\s*\?\s*path\.startsWith\s*\(\s*prefix\s*\)\s*:\s*path\s*===\s*prefix\s*\)/.test(impact) &&
+    /if\s*\(\s*!matched\s*\)\s*unknown\.push\s*\(\s*path\s*\)/.test(impact);
+  if (!supportedHarness || !supportedImpact || !validateConsumerImpactRegistry(registry)) {
+    return unknown("The local impact contract does not match the bounded, supported fail-closed path-classification semantics.");
+  }
+
+  const modulePaths = registry.modules.flatMap((module) => module.paths);
+  const plannedPaths = [
+    `${GEF_STATE_DIRECTORY}/${verb}-state.json`,
+    `${GEF_STATE_DIRECTORY}/${RECEIPTS_DIRECTORY}/${runId}.json`,
+  ];
+  const rejectedPaths = plannedPaths.filter((path) => !modulePaths.some((registeredPath) => matchesConsumerImpactPath(path, registeredPath)));
+  if (rejectedPaths.length > 0) {
+    return {
+      status: "BLOCKED",
+      reason: "consumer_impact_contract_rejects_planned_paths",
+      metadata: {
+        contractRefs: [...CONSUMER_IMPACT_CONTRACT_REFS],
+        rule: "UNKNOWN_FILES_FAIL_CLOSED",
+        plannedPaths,
+        rejectedPaths,
+      },
+    };
+  }
+  return { status: "SUPPORTED" };
+}
+
+function consumerImpactPreflightError(result: Extract<ConsumerImpactPreflight, { readonly status: "BLOCKED" }>, verb: LegacyMutationVerb, commandId: string, runId: string, targetRef: string): ReturnType<typeof createGefError> {
+  const rejectsPaths = result.reason === "consumer_impact_contract_rejects_planned_paths";
+  return createGefError({
+    id: `cli-impact-contract-${verb}-${runId}`,
+    category: "PRECONDITION",
+    reason: result.reason,
+    severity: "ERROR",
+    summary: rejectsPaths
+      ? "Target impact policy rejects the planned GEF state files"
+      : "Target impact policy could not be determined safely",
+    retryability: "MANUAL_ONLY",
+    recoverability: "NONE_REQUIRED",
+    terminal: "BLOCKED",
+    commandId,
+    runId,
+    targetRef,
+    evidenceRefs: [...CONSUMER_IMPACT_CONTRACT_REFS],
+    remediations: [{
+      actionId: "gef.cli.review_consumer_impact_contract",
+      parameters: {
+        workOrder: "GBS-V11-WO-012",
+        ...(rejectsPaths ? { blockingRule: "UNKNOWN_FILES_FAIL_CLOSED" } : {}),
+        rejectedPaths: rejectsPaths ? result.metadata["rejectedPaths"] : [],
+        contractRefs: [...CONSUMER_IMPACT_CONTRACT_REFS],
+      },
+    }],
+    metadata: result.metadata,
+  });
+}
+
 async function planHandler(verb: LegacyMutationVerb, input: CliCommandInput, context: ExecutionContext): Promise<HandlerOutcome<unknown>> {
   const commandId = verb === "init" ? "gef.init.plan" : "gef.adopt.preview";
   let engines: Engines;
@@ -1787,6 +1962,11 @@ async function applyHandler(verb: LegacyMutationVerb, input: CliCommandInput, co
         metadata: { operation },
       }),
     };
+  }
+
+  const impactPreflight = inspectConsumerImpactContract(resolve(targetRef), verb, context.runId);
+  if (impactPreflight.status === "BLOCKED") {
+    return { ok: false, error: consumerImpactPreflightError(impactPreflight, verb, commandId, context.runId, targetRef) };
   }
 
   const artifactName = verb === "init" ? "init-state.json" : "adopt-state.json";

@@ -86,7 +86,10 @@
     "tests/v11-wo-003-admission.test.mjs",
     "tests/v11-wo-004-admission.test.mjs",
     "tests/v11-wo-008-admission.test.mjs",
-    "tests/v11-wo-009-admission.test.mjs"
+    "tests/v11-wo-009-admission.test.mjs",
+    "packages/cli/schemas/gef-cli-upgrade-compatibility-matrix.json",
+    "tests/v11-legacy-ecosystem-detachment.test.mjs",
+    "tests/v11-wo-010-publish-workflow.test.mjs"
   ],
   "writeForbidden": [
     "all consumer repositories and consumer .gef/.gef-private state",
@@ -137,6 +140,40 @@
         "no skips, broad regex relaxation, upper-bound removal, assertion deletion or unrelated governance changes",
         "any additional write path requires a new exact-path authorization"
       ]
+    }
+  ],
+  "ownerAuthorizedScopeAmendments": [
+    {
+      "source": "Owner reply in the active execution conversation on 2026-10-01",
+      "reason": "The admitted-head Repository Validation fails because the retired-ecosystem scan classifies HIVE references in WO-012 governance artifacts as product bindings.",
+      "writeAllowed": [
+        "tests/v11-legacy-ecosystem-detachment.test.mjs"
+      ],
+      "constraint": "Only register the three exact WO-012 governance paths as accepted governance history; preserve the scan for all other paths and content."
+    },
+    {
+      "source": "Owner reply in the active execution conversation on 2026-10-01",
+      "reason": "The 1.1.2 CLI cannot migrate supported 1.1.1 state unless the canonical compatibility matrix contains the exact current target transition.",
+      "writeAllowed": [
+        "packages/cli/schemas/gef-cli-upgrade-compatibility-matrix.json"
+      ],
+      "constraint": "Add only the verified compatibility rows required to reach 1.1.2; preserve historical rows and do not change the matrix schema or gates."
+    },
+    {
+      "source": "Owner reply in the active execution conversation on 2026-10-01",
+      "reason": "The required WO-002 admission regression rejects the WO-012 checkpoint solely because its historical accepted-state bound ends at WO-011.",
+      "writeAllowed": [
+        "tests/v11-wo-002-admission.test.mjs"
+      ],
+      "constraint": "Extend only the historical checkpoint progression assertion through the currently admitted WO-012 state while preserving V1 production assertions and prior Work Order expectations."
+    },
+    {
+      "source": "Owner reply in the active execution conversation on 2026-10-01",
+      "reason": "Full validation after Correction Delta #1 left two historical WO-010 workflow assertions failing because the admitted 1.1.2 publisher adds one exact tag and one version-specific OIDC job.",
+      "writeAllowed": [
+        "tests/v11-wo-010-publish-workflow.test.mjs"
+      ],
+      "constraint": "Only update the exact push-tag allowlist expectation and verify that the v1.1.0, v1.1.1 and v1.1.2 version-specific publication jobs account for exactly three OIDC permissions; preserve historical WO-010 publication protections and all other assertions."
     }
   ]
 }

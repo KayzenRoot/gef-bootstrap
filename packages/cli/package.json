@@ -1,6 +1,6 @@
 {
   "name": "@gef-bootstrap/cli",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "private": false,
   "description": "GEF Bootstrap thin operator CLI surface (transport and rendering only)",
   "repository": {
