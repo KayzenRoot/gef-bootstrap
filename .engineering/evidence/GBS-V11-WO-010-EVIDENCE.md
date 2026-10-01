@@ -125,3 +125,22 @@ The RECOVERY workflow now retains the real registry install and removes `npm aud
 SHA-512 SRI equality, package version, repository URL, immutable source/tag checks, read-only recovery permissions, and no-publish/no-tag-mutation/no-token/no-OIDC protections remain. Recovery queries `dist.signatures` and `dist.attestations` with read-only `npm view` calls and records their presence state. Missing attestations are non-blocking and recorded as `PROVENANCE_NOT_CLAIMED_FOR_BOOTSTRAP_1_1_0`; no provenance is fabricated. No private runtime package is published and no CLI republish or tag movement is authorized.
 
 Only automatic GitHub checks were used; no additional manual test campaign was run. Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync HEAD `aecc566dc94220afaedb01f14db2eac59b2a4ee2` on draft PR [#355](https://github.com/KayzenRoot/gef-bootstrap/pull/355) passed the normal automatic checks. For the latest exact head, results include [Repository Validation](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859124760), [Node coverage](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859124609), [Gitleaks](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859907170), [Trivy](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859907170), [Pipeline Integrity](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859907348), [Dependency Review](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859907312), [CodeQL](https://github.com/KayzenRoot/gef-bootstrap/runs/110359209164), [SonarCloud](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=355), [Codecov patch](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/355), [release assurance and same-tarball install/use on Ubuntu, Windows and macOS](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859124660), [TypeScript analysis](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859124771), [validate](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36859124751), and focused/regression matrices (runs `36859124628`, `36859124729`, `36859124875`, `36859124902`). CodeRabbit was skipped because the PR is a draft. The [current PR checks](https://github.com/KayzenRoot/gef-bootstrap/pull/355/checks) are green on the exact head. No recovery dispatch, merge, npm publication, tag movement, or GitHub Release is authorized. Target stop: `GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT`.
+
+
+## Final production acceptance receipt
+
+The V1.1 production closeout is complete.
+
+- Recovery workflow: https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36862229818 — **SUCCESS**.
+- Immutable release tag: `v1.1.0` → `fb2a2e6d41086e82ba03f307dc6ada18a52458ea`.
+- Current main after recovery fixes: `a88a61b7fcae632cdf5b282dc4461592b92cad57`.
+- npm package: `@gef-bootstrap/cli@1.1.0`; registry install, bundled runtime inspection, CLI/library/status smoke, exact rebuilt SHA-512 SRI and version/repository checks passed in recovery.
+- Rebuilt release tarball SHA-256: `745770064c4d514bfc0ab7e0fbc1b03e55f1b76611f8fc6f69e75218a6edd5b4`.
+- npm `dist.integrity`: `sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==`.
+- GitHub Release: https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0 — stable/latest, draft=false, prerelease=false, published 2026-10-01T12:53:14Z.
+- Recovery incident: **RECOVERED**. No npm republish and no tag mutation occurred during recovery.
+- Trusted Publisher: owner-reported configured for future releases; not independently re-verified in this final audit. This does not change the already-published 1.1.0 artifact. Verify authenticated trust-list state before the next OIDC publication.
+
+Final disposition: `V1.1_PRODUCTION_ACCEPTED=true`.
+
+Final stop: `GBS_V11_WO_010_V1_1_0_PRODUCTION_RELEASE_DONE`.
