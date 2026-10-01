@@ -174,6 +174,15 @@
         "tests/v11-wo-010-publish-workflow.test.mjs"
       ],
       "constraint": "Only update the exact push-tag allowlist expectation and verify that the v1.1.0, v1.1.1 and v1.1.2 version-specific publication jobs account for exactly three OIDC permissions; preserve historical WO-010 publication protections and all other assertions."
+    },
+    {
+      "source": "Owner reply in the active execution conversation on 2026-10-01 delegating the exact-path choice",
+      "reason": "Exact-head regression checks show the retired-binding classifier treats the two required WO-012 Evidence Bundle documents as product references because they explicitly record unchanged consumer-owned blockers.",
+      "writeAllowed": [
+        "tests/v11-legacy-ecosystem-detachment.test.mjs",
+        ".engineering/context-locks/GBS-V11-WO-012.json"
+      ],
+      "constraint": "Add only .engineering/evidence/GBS-V11-WO-012-EVIDENCE.md and .engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json to the exact accepted governance-history set; preserve the retired-binding scan for every other path and content."
     }
   ]
 }

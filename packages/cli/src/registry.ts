@@ -1743,59 +1743,71 @@ function isNormalizedImpactPath(value: unknown): value is string {
   return true;
 }
 
-function validateConsumerImpactRegistry(value: unknown): value is {
-  readonly schema_version: 1;
-  readonly modules: readonly { readonly id: string; readonly state: "active" | "planned"; readonly depends_on: readonly string[]; readonly paths: readonly string[]; readonly tests: readonly string[] }[];
-} {
-  if (!isPlainRecord(value) || value["schema_version"] !== 1 || !Array.isArray(value["modules"])) return false;
-  const modules = value["modules"];
-  const ids = new Set<string>();
-  for (const module of modules) {
-    if (!isPlainRecord(module)) return false;
-    const id = module["id"];
-    const state = module["state"];
-    const paths = module["paths"];
-    const tests = module["tests"];
-    const dependencies = module["depends_on"];
-    if (typeof id !== "string" || !/^[a-z][a-z0-9-]*$/.test(id) || ids.has(id)) return false;
-    if (state !== "active" && state !== "planned") return false;
-    if (!Array.isArray(paths) || paths.length === 0 || !paths.every(isNormalizedImpactPath)) return false;
-    if (!Array.isArray(tests) || !tests.every((entry) => typeof entry === "string") || (state === "active" && tests.length === 0)) return false;
-    if (!Array.isArray(dependencies) || !dependencies.every((entry) => typeof entry === "string")) return false;
-    ids.add(id);
-  }
-  const highImpact = value["high_impact"];
-  if (highImpact !== undefined && (!Array.isArray(highImpact) || !highImpact.every(isNormalizedImpactPath))) return false;
+type ConsumerImpactModule = {
+  readonly id: string;
+  readonly state: "active" | "planned";
+  readonly depends_on: readonly string[];
+  readonly paths: readonly string[];
+  readonly tests: readonly string[];
+};
 
-  const byId = new Map<string, Record<string, unknown>>();
+function isConsumerImpactModule(value: unknown): value is ConsumerImpactModule {
+  if (!isPlainRecord(value)) return false;
+  const id = value["id"];
+  const state = value["state"];
+  const paths = value["paths"];
+  const tests = value["tests"];
+  const dependencies = value["depends_on"];
+  return typeof id === "string" && /^[a-z][a-z0-9-]*$/.test(id) &&
+    (state === "active" || state === "planned") &&
+    Array.isArray(paths) && paths.length > 0 && paths.every(isNormalizedImpactPath) &&
+    Array.isArray(tests) && tests.every((entry) => typeof entry === "string") && (state !== "active" || tests.length > 0) &&
+    Array.isArray(dependencies) && dependencies.every((entry) => typeof entry === "string");
+}
+
+function hasValidConsumerImpactDependencies(modules: readonly ConsumerImpactModule[], byId: ReadonlyMap<string, ConsumerImpactModule>): boolean {
   for (const module of modules) {
-    if (!isPlainRecord(module) || typeof module["id"] !== "string") return false;
-    byId.set(module["id"], module);
+    if (module.depends_on.some((dependency) => dependency === module.id || !byId.has(dependency))) return false;
+    if (module.state === "active" && module.depends_on.some((dependency) => byId.get(dependency)?.state !== "active")) return false;
   }
-  for (const module of modules) {
-    if (!isPlainRecord(module) || typeof module["id"] !== "string" || !Array.isArray(module["depends_on"])) return false;
-    for (const dependency of module["depends_on"]) {
-      if (typeof dependency !== "string" || dependency === module["id"] || !byId.has(dependency)) return false;
-      if (module["state"] === "active" && byId.get(dependency)?.["state"] !== "active") return false;
-    }
-  }
+  return true;
+}
+
+function hasAcyclicConsumerImpactDependencies(modules: readonly ConsumerImpactModule[], byId: ReadonlyMap<string, ConsumerImpactModule>): boolean {
   const visiting = new Set<string>();
   const visited = new Set<string>();
   const visit = (id: string): boolean => {
     if (visiting.has(id)) return false;
     if (visited.has(id)) return true;
     const module = byId.get(id);
-    if (module === undefined || !Array.isArray(module["depends_on"])) return false;
+    if (module === undefined) return false;
     visiting.add(id);
-    for (const dependency of module["depends_on"]) {
-      if (typeof dependency !== "string" || !visit(dependency)) return false;
-    }
+    for (const dependency of module.depends_on) if (!visit(dependency)) return false;
     visiting.delete(id);
     visited.add(id);
     return true;
   };
-  for (const id of ids) if (!visit(id)) return false;
-  return true;
+  return modules.every((module) => visit(module.id));
+}
+
+function validateConsumerImpactRegistry(value: unknown): value is {
+  readonly schema_version: 1;
+  readonly modules: readonly ConsumerImpactModule[];
+} {
+  if (!isPlainRecord(value) || value["schema_version"] !== 1 || !Array.isArray(value["modules"])) return false;
+  const candidateModules = value["modules"];
+  if (!candidateModules.every(isConsumerImpactModule)) return false;
+  const modules = candidateModules as ConsumerImpactModule[];
+  const ids = new Set<string>();
+  const byId = new Map<string, ConsumerImpactModule>();
+  for (const module of modules) {
+    if (ids.has(module.id)) return false;
+    ids.add(module.id);
+    byId.set(module.id, module);
+  }
+  const highImpact = value["high_impact"];
+  if (highImpact !== undefined && (!Array.isArray(highImpact) || !highImpact.every(isNormalizedImpactPath))) return false;
+  return hasValidConsumerImpactDependencies(modules, byId) && hasAcyclicConsumerImpactDependencies(modules, byId);
 }
 
 function matchesConsumerImpactPath(path: string, registeredPath: string): boolean {
