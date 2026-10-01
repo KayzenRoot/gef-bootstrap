@@ -913,7 +913,7 @@ jobs:
       - name: Download the exact released tarball and receipt
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh run download "$GITHUB_RUN_ID" --name "gef-v1.1.1-release-package-$GITHUB_RUN_ID" --dir "$RUNNER_TEMP/gef-v1.1.1-package-receipt"
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --name "gef-v1.1.1-release-package-$GITHUB_RUN_ID" --dir "$RUNNER_TEMP/gef-v1.1.1-package-receipt"
 
       - name: Set up Node.js and signature-capable npm
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
