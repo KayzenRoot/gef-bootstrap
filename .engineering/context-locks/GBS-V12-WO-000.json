@@ -25,9 +25,12 @@
     ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
     ".engineering/DEPLOYMENT.md": "54b7b86422df2be0463219e31e06025c7d21171b",
     ".engineering/DECISIONS-LEDGER.md": "34ca9119054f30a56d2019fb99b6a259f8e2f896",
-    ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md": "687ee037d2dcd4936d118a23666665fc66410aed",
     ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
-    "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+    "package.json": "e917d281c9ba60157e82265d949d9958eac83731",
+    "ADR-0007": {
+      "sha": "687ee037d2dcd4936d118a23666665fc66410aed",
+      "locatorClass": "canonical decision record for retired integration family"
+    }
   },
   "activeRuleset": {
     "id": 23566111,
@@ -157,7 +160,7 @@
     "Archived research assumes V1.1 is in progress; current V1.1.2 is PRODUCTION_ACCEPTED.",
     "Archived research references PR #344 as draft; it is closed without merge.",
     "Archived C07 independent ChatGPT review wording conflicts with current owner-operated NOT_INDEPENDENT audit governance.",
-    "Any Hive-specific integration conflicts with ADR-0007."
+    "Any retired integration-family binding conflicts with ADR-0007."
   ],
   "allowedWrites": [
     ".engineering/work-orders/GBS-V12-WO-000.md",
@@ -197,7 +200,7 @@
     "republish npm",
     "weaken required checks",
     "start consumer rollout",
-    "reintroduce Hive"
+    "reintroduce the retired integration family prohibited by ADR-0007"
   ],
   "staleIf": [
     "main moves from 203dc6a86de035b8502453100ea6e2a4788cae57 before exact-head source audit without explicit refresh",
