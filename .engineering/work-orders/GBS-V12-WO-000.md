@@ -33,7 +33,7 @@ The current canonical route is:
 9. promotion of WO-000;
 10. only then may WO-001 be separately admitted.
 
-ADR-0007 keeps Hive integration retired. ADR-0008 / D-0063 keeps Codex as sole author of implementation, tests, CI and migrations. Owner-operated semantic audit is explicitly `NOT_INDEPENDENT`.
+ADR-0007's retirement of the provider-specific integration remains binding. ADR-0008 / D-0063 keeps Codex as sole author of implementation, tests, CI and migrations. Owner-operated semantic audit is explicitly `NOT_INDEPENDENT`.
 
 ## SCOPE
 
@@ -127,7 +127,7 @@ WO-000 reaches terminal admission only after the proposed canonical Source Pack 
 - rewriting V1/V1.1 accepted history;
 - changing `v1.1.2`, its npm artifact or GitHub Release;
 - lowering coverage/security/branch-protection requirements;
-- Hive reintegration;
+- reinstating the retired provider-specific integration;
 - automatic admission of any D01-D12 domain pack;
 - selecting legal/custody/financial security posture by assumption;
 - claiming V1.2 completion from planning-file count;
@@ -150,7 +150,7 @@ Read before any executor mutation:
 - `.engineering/TEST-BENCHMARK-PLAN.md`;
 - `.engineering/DEPLOYMENT.md`;
 - `.engineering/DECISIONS-LEDGER.md`;
-- `.engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md`;
+- ADR-0007 retirement decision document;
 - `.engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md`;
 - `.engineering/handoffs/V1.2-NEXT-STATE.md`;
 - `package.json`;

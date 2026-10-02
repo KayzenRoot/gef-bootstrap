@@ -1,0 +1,154 @@
+{
+  "schemaVersion": 1,
+  "kind": "GBS_V12_WO_000_V11_BASELINE",
+  "workOrder": "GBS-V12-WO-000",
+  "issue": 367,
+  "phase": "A+B",
+  "measurementBinding": {
+    "repository": "KayzenRoot/gef-bootstrap",
+    "commit": "203dc6a86de035b8502453100ea6e2a4788cae57",
+    "tree": "6b66139b7df03c0041a0c785057afb29d9a47428",
+    "package": "@gef-bootstrap/cli",
+    "version": "1.1.2",
+    "releaseState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
+    "checkout": "separate pinned clone, detached at exact base",
+    "workingTreeAfterRun": "CLEAN"
+  },
+  "environment": {
+    "os": "Microsoft Windows 11 Pro",
+    "osVersion": "10.0.26300",
+    "build": "26300",
+    "architecture": "x64",
+    "node": "v24.19.0",
+    "npm": "11.17.0",
+    "typescript": "6.0.3",
+    "packageManager": "npm"
+  },
+  "lockedSourceFingerprints": {
+    "algorithm": "Git blob object ID",
+    "expectedCount": 16,
+    "matchedCount": 16,
+    "result": "PASS",
+    "paths": [
+      "AGENTS.md",
+      ".engineering/SOURCE-HIERARCHY.md",
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".engineering/SCOPE.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/ARCHITECTURE.md",
+      ".engineering/REQUIREMENTS.md",
+      ".engineering/SECURITY.md",
+      ".engineering/TEST-BENCHMARK-PLAN.md",
+      ".engineering/DEPLOYMENT.md",
+      ".engineering/DECISIONS-LEDGER.md",
+      ".engineering/decisions/ADR-0007-RETIRE-\u0048IVE-INTEGRATION.md",
+      ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+      ".engineering/handoffs/V1.2-NEXT-STATE.md",
+      "package.json"
+    ]
+  },
+  "dependencyMaterialization": {
+    "command": "npm ci --ignore-scripts",
+    "result": "PASS",
+    "elapsedMs": 15742,
+    "packagesAdded": 33,
+    "packagesAudited": 62,
+    "vulnerabilities": 0
+  },
+  "localQualityChecks": [
+    {"command":"npm run build","result":"PASS","elapsedMs":16945},
+    {"command":"npm run typecheck","result":"PASS","elapsedMs":944},
+    {"command":"npm run validate","result":"PASS","elapsedMs":319621,"runnerDurationMs":317950.0967,"tests":1632,"passed":1632,"failed":0,"cancelled":0,"skipped":0,"todo":0},
+    {"command":"npm audit --audit-level=high","result":"PASS","elapsedMs":1991,"vulnerabilities":0}
+  ],
+  "disposableCliFlows": {
+    "source": "MEASURED_SINGLE_OBSERVATION_PER_STEP",
+    "startedAt": "2026-10-02T12:21:47.3512031-03:00",
+    "fixtureDescription": "Temporary empty project plus temporary synthetic brownfield Git repository; both outside the checkout.",
+    "reproductionProcedure": "After npm ci --ignore-scripts and npm run build at the bound commit, create a temporary empty directory and a temporary brownfield directory containing README.md and private package.json; initialize the latter as a Git repository and commit the fixture. For each recorded step, measure with Node performance.now immediately around spawnSync(process.execPath, [packages/cli/bin/gef.mjs, ...args]) with cwd at the pinned checkout, 120000 ms timeout and UTF-8 output; require exit 0 and parse stdout as the ordinary JSON envelope. Use fresh directories for a clean rerun; single-run timings are observations, not stable latency claims.",
+    "allExitCodesZero": true,
+    "allJsonOk": true,
+    "steps": [
+      {"label":"init-preview","command":"node packages/cli/bin/gef.mjs init --target <temporary-greenfield> --json","exitCode":0,"elapsedMs":976.242,"ok":true},
+      {"label":"init-apply","command":"node packages/cli/bin/gef.mjs init --apply --target <temporary-greenfield> --json","exitCode":0,"elapsedMs":575.546,"ok":true},
+      {"label":"new-project-doctor","command":"node packages/cli/bin/gef.mjs doctor --target <temporary-greenfield> --json","exitCode":0,"elapsedMs":349.386,"ok":true},
+      {"label":"new-project-status-1","command":"node packages/cli/bin/gef.mjs status --target <temporary-greenfield> --json","exitCode":0,"elapsedMs":239.454,"ok":true},
+      {"label":"new-project-status-2","command":"node packages/cli/bin/gef.mjs status --target <temporary-greenfield> --json","exitCode":0,"elapsedMs":230.508,"ok":true},
+      {"label":"adopt-preview","command":"node packages/cli/bin/gef.mjs adopt --target <temporary-brownfield> --json","exitCode":0,"elapsedMs":310.323,"ok":true},
+      {"label":"adopt-apply","command":"node packages/cli/bin/gef.mjs adopt --apply --target <temporary-brownfield> --json","exitCode":0,"elapsedMs":491.65,"ok":true},
+      {"label":"brownfield-doctor","command":"node packages/cli/bin/gef.mjs doctor --target <temporary-brownfield> --json","exitCode":0,"elapsedMs":378.115,"ok":true},
+      {"label":"brownfield-status-1","command":"node packages/cli/bin/gef.mjs status --target <temporary-brownfield> --json","exitCode":0,"elapsedMs":339.717,"ok":true},
+      {"label":"brownfield-status-2","command":"node packages/cli/bin/gef.mjs status --target <temporary-brownfield> --json","exitCode":0,"elapsedMs":440.715,"ok":true}
+    ],
+    "limitation": "One observation per step; these values are not a latency distribution or an end-to-end assistant Work Order time."
+  },
+  "cliRoiMatchedBenchmark": {
+    "source": "MEASURED",
+    "workload": "GREENFIELD_INIT_PLAN",
+    "timedBoundary": "Process start to JSON envelope output",
+    "fixtureDigest": "38c4a4f4b188707dd51a8d566aa9405b9669aea1ebd786fc65e03063255093d9",
+    "populationDigest": "c74bfff6a7a6ccf2efc13709c269e44cacb5d515276a92e49cc913cc30d68a03",
+    "qualityGate": "PASS",
+    "repetitionsPerPath": 7,
+    "rawSamplesMs": {
+      "sourceWorkspaceManual": [163.31710000000004,155.04650000000004,172.51839999999993,164.95100000000002,161.6425999999999,154.55470000000014,213.48900000000003],
+      "cli": [179.9731,183.71490000000006,169.2652999999999,159.34269999999992,152.58079999999995,162.61940000000004,167.13569999999982]
+    },
+    "summaryMs": {
+      "sourceWorkspaceManual": {"median":163.31710000000004,"p90":172.51839999999993,"p95":172.51839999999993,"min":154.55470000000014,"max":213.48900000000003},
+      "cli": {"median":167.13569999999982,"p90":179.9731,"p95":179.9731,"min":152.58079999999995,"max":183.71490000000006},
+      "cliMedianDeltaPercent": 2.3381507509010233
+    },
+    "comparison": {
+      "verdict": "NO_CHANGE",
+      "optimizationClaimEligible": false,
+      "m41ComparisonState": "REGRESSED",
+      "reportDigest": "446552c63318db908942a4bd80dcadb9ca57313ca5e420762009f1a750726eb9"
+    },
+    "accelerationBindingsUsed": {"executionCapsule":false,"incrementalValidation":false,"proofReuse":false},
+    "tokenMetric": {"id":"M-TOK-03","source":"UNAVAILABLE","value":null,"reason":"The local runner does not expose ChatGPT Work token counts."},
+    "harness":"Existing .engineering/benchmarks/v1.1/cli-roi.mjs with source entry .engineering/benchmarks/v1.1/source-workspace-manual.mjs; persisted comparison source .engineering/benchmarks/v1.1/cli-roi-result.json."
+  },
+  "hostedChecksAtExactBase": [
+    {"name":"Repository validation","result":"PASS","elapsedSeconds":73,"url":"https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37010949105/job/110850259817"},
+    {"name":"Pipeline integrity","result":"PASS","elapsedSeconds":7,"url":"https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37010949053/job/110850259435"},
+    {"name":"Gitleaks secrets","result":"PASS","elapsedSeconds":14,"url":"https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37010949148/job/110850259334"},
+    {"name":"Trivy filesystem and configuration","result":"PASS","elapsedSeconds":22,"url":"https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37010949148/job/110850259554"},
+    {"name":"Analyze TypeScript (CodeQL)","result":"PASS","elapsedSeconds":137,"url":"https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37010949072/job/110850259250"},
+    {"name":"SonarCloud Code Analysis","result":"PASS","elapsedSeconds":72,"url":"https://github.com/KayzenRoot/gef-bootstrap/runs/110850722477"},
+    {"name":"Socket Security: Project Report","result":"PASS","elapsedSeconds":4,"url":"https://github.com/KayzenRoot/gef-bootstrap/runs/110850264733"}
+  ],
+  "flakeObservations": {
+    "sampleCountPerListedHostedWorkflow": 1,
+    "observedRetries": 0,
+    "observedFailures": 0,
+    "rate": "UNKNOWN",
+    "reason": "A single successful receipt per workflow cannot estimate flake rate."
+  },
+  "security": {
+    "npmAuditHigh": "PASS",
+    "npmAuditVulnerabilities": 0,
+    "gitleaks": "PASS",
+    "trivy": "PASS",
+    "codeql": "PASS",
+    "sonarCloud": "PASS",
+    "socketProjectReport": "PASS",
+    "dependencyChanges": "NONE"
+  },
+  "notMeasuredOrUnavailable": [
+    {"metric":"Small governed assistant-executed Work Order end-to-end wall/active/review time","status":"NOT_YET_BASELINED","reason":"This local runner does not expose Codex active time or complete owner/reviewer wall-time telemetry; a proxy would not measure a Work Order."},
+    {"metric":"Large governed assistant-executed Work Order end-to-end wall/active/review time","status":"NOT_YET_BASELINED","reason":"No instrumented representative large task and comparable historical sample are available in the exact-base environment."},
+    {"metric":"Resume CLI flow","status":"NOT_MEASURED","reason":"The public CLI verbs are init, adopt, doctor, status and upgrade. Resume is an internal engine; its tests are part of the 1,632-test suite."},
+    {"metric":"Codex prompt/context tokens","status":"UNAVAILABLE","reason":"The runner exposes no token counts; M-TOK-03 remains null."},
+    {"metric":"Cost per accepted task and escaped defects","status":"NOT_YET_BASELINED","reason":"No attributable accepted-task population, reliable spend receipt or escaped-defect outcome is available."}
+  ],
+  "candidateCorrection": {
+    "initialHead": "cad18c4306e831c5e8527251d1788bca49f30ec8",
+    "failure": "One pre-existing V1.1 detachment regression treated literal retired-integration terminology in the newly admitted Work Order and Context Lock as an active-surface binding.",
+    "correction": "Neutralized only the wording in the two already allowlisted governance documents; the JSON-escaped ADR fingerprint key parses back to the exact canonical path.",
+    "focusedTest": "tests/v11-legacy-ecosystem-detachment.test.mjs PASS; 1/1",
+    "productTestCiDependencyFilesChanged": false
+  },
+  "phaseABDisposition": "BASELINE_REPRODUCED; owner decisions remain open; no canonical Source Pack or implementation admission."
+}
