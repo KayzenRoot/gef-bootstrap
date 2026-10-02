@@ -1,7 +1,7 @@
 # GBS-V12-WO-000 - V1.2 source admission, baseline and scope freeze
 
 **Issue:** #367  
-**State:** `OWNER_AUTHORIZED / ADMISSION_ONLY / NO_IMPLEMENTATION`  
+**State:** `SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS / NO_IMPLEMENTATION`  
 **Execution base:** `main@203dc6a86de035b8502453100ea6e2a4788cae57`  
 **Base tree:** `6b66139b7df03c0041a0c785057afb29d9a47428`  
 **Current package:** `1.1.2`  
@@ -143,6 +143,21 @@ Measure where reproducible:
 - representative small/large workload cohorts.
 
 No invented speedup percentage. If populations are not comparable, record `NOT_COMPARABLE`. If insufficient samples exist, record `NOT_YET_BASELINED`.
+
+## Phase A/B evidence checkpoint
+
+Source audit and baseline are complete enough to enter the owner decision gate:
+- archived research audited: 25/25;
+- released engine overlap classified for C01-C12;
+- conditional/experimental boundaries preserved for D01-D12/R01-R05;
+- V1.1.2 baseline quality gate passed;
+- full validation: 1632/1632;
+- focused baseline: 84/84;
+- CLI ROI: NO_CHANGE / COMPARABLE;
+- brownfield timing: NOT_YET_BASELINED;
+- no V1.2 implementation or performance claim exists.
+
+Checkpoint: `GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS`
 
 ## Phase C - short owner blocking-decision interview
 
