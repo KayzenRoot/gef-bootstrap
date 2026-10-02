@@ -273,4 +273,4 @@ The first SaaS pilot excludes real-money movement, custody, escrow, payouts and 
 
 ## Resource policy
 
-The initial budget for paid tools and expanded CI is US$ 0. Free/open-source-first does not waive security review or quality gates. Any paid tool, paid CI expansion or external service requires separate owner approval before use. No security/coverage threshold or required check is changed by this proposal.
+The initial budget for paid tools and expanded CI is US$ 0. Free/open-source-first does not waive security review or quality gates. Any paid tool, paid CI expansion or external service requires separate owner approval before use. No security/coverage threshold or required check is changed by this canonical Source Pack.
