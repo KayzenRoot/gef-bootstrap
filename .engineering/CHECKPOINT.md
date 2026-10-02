@@ -292,7 +292,7 @@ Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync
 
 **Terminal state:** `GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION` — EFFECTIVE after governed PR #369 merge.
 
-**Next legal V1.2 action now:** separately create and owner-admit `GBS-V12-WO-001` with a fresh Context Lock. WO-001 has not been started by WO-000 or this effectivity sync.
+**Historical WO-000 next action (superseded by the WO-001 admission recorded below):** separately create and owner-admit `GBS-V12-WO-001` with a fresh Context Lock. That admission is now complete; this line is retained only as WO-000 handoff history.
 
 The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED` release facts remain unchanged and are not converted into V1.2 implementation credit.
 
