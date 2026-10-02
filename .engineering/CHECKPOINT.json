@@ -1080,10 +1080,20 @@
   },
   "v12": {
     "status": "SOURCE_PACK_APPROVED_NO_IMPLEMENTATION",
-    "effectivity": "EFFECTIVE_ON_GOVERNED_PR_369_MERGE_TO_MAIN",
+    "effectivity": "EFFECTIVE",
     "workOrder": "GBS-V12-WO-000",
     "issue": 367,
     "pullRequest": 369,
+    "sourcePackPromotionHead": "9a6f1affaf08f222ebf58bd444b5b549c7aff665",
+    "sourcePackPromotionAuditReview": 5394913905,
+    "sourcePackPromotionAudit": "APPROVED",
+    "sourcePackPromotionMerge": "45d5508cd03d86725b01f0381b03b5922a45d9ee",
+    "postMergeMainChecks": {
+      "head": "45d5508cd03d86725b01f0381b03b5922a45d9ee",
+      "passed": 7,
+      "total": 7,
+      "conclusion": "SUCCESS"
+    },
     "executionBase": "203dc6a86de035b8502453100ea6e2a4788cae57",
     "sourcePackAuditedHead": "290f7a6d6c68ef2500388dcaa604fbed3bb02d56",
     "sourcePackAuditReview": 5394709108,
