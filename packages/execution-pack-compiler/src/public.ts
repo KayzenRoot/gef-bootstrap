@@ -74,3 +74,27 @@ export { compileExecutionPack } from './compile.js';
 
 // ─── V1.1 Execution Capsule projection ───────────────────────────────────────
 export * from './execution-capsule.js';
+
+// ─── S06 – Canonical Planning Completeness and Owner-Change Impact ────────────
+export {
+  CANONICAL_PLANNING_DOMAINS,
+  analyzeCanonicalPlan,
+} from './s06-canonical-planning-analysis.js';
+export type {
+  CanonicalPlanningDomain,
+  PlanningKnowledgeState,
+  CanonicalPlanningState,
+  CanonicalPlanBinding,
+  CanonicalPlanRequirement,
+  CanonicalPlanProof,
+  PlanningSourceFingerprint,
+  CanonicalDomainDependency,
+  PlanningOwnerChange,
+  UnknownAuthorityDomain,
+  CanonicalPlanAnalysisInput,
+  RequirementProofLink,
+  CanonicalRequirementAssessment,
+  CanonicalPlanningUnknown,
+  OwnerChangeImpact,
+  CanonicalPlanAnalysis,
+} from './s06-canonical-planning-analysis.js';
