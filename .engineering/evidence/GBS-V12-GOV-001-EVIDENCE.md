@@ -70,3 +70,9 @@ CodeRabbit found one valid stale qualifier after the PR became ready: `.engineer
 
 No requirement, risk classification, review gate, denominator, profile, implementation authority or predecessor fact changed. The corrected exact head must pass the same full audit gate.
 
+## Correction Delta C2
+
+CodeRabbit found one additional stale effectivity phrase in `.engineering/REQUIREMENTS.md`: a benchmark sentence still said “this proposal” after the Source Pack had become canonical. Owner authorization is Issue #370 comment `#5958567169`. The wording now references the canonical Source Pack.
+
+No benchmark target, paid-tool budget, requirement, denominator, profile, risk gate or implementation authority changed.
+
