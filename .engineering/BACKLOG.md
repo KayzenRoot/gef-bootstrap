@@ -139,9 +139,9 @@ Backlog weights remain production burden, not time. M22 owns empirical ETA/forec
 - any future recalibration records denominator/completion impact before and after.
 
 STOP CONDITION: `BACKLOG_BASELINE_ACTIVE_USE_CURRENT_CHECKPOINT_FOR_CONTINUATION`.
-# V1.2 proposed backlog sequence — GBS-V12-WO-000
+# V1.2 canonical backlog sequence — admitted by GBS-V12-WO-000
 
-**State:** PROPOSED; each item requires its own owner admission, Work Order, Context Lock and completion evidence. This sequence is planning only and does not start WO-001.
+**State:** EFFECTIVE as the canonical V1.2 implementation sequence from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`; each item still requires its own owner admission, Work Order, fresh Context Lock and completion evidence. WO-001 is not started by this sequence.
 
 | Order | Proposed Work Order | Bounded objective | Capability-map basis and sequencing |
 |---|---|---|---|

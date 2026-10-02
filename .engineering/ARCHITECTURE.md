@@ -346,9 +346,9 @@ Detailed threat models/policies belong to Security planning, but Architecture ma
 
 STOP CONDITION: `READY_FOR_ARCHITECTURE_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
 
-# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+# V1.2 canonical Source Pack addendum — admitted by GBS-V12-WO-000
 
-**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; no architecture choice below authorizes implementation. Existing V1/V1.1 architecture and the accepted V1.1.2 line remain preserved.
+**State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`. These architecture constraints are authoritative for admitted V1.2 work but do not themselves authorize implementation. Existing V1/V1.1 architecture and the accepted V1.1.2 line remain preserved.
 
 ## Universal core and profile boundary
 
@@ -364,4 +364,4 @@ Conditional application profiles plug into explicit profile contracts and cannot
 
 ## Composition and constraints
 
-A profile declares required adapters, external services, data boundaries, deployment targets, proof suite and rollback/recovery contract before execution. Profile-specific adapters stay isolated behind existing provider/profile seams. No new dependency or paid service is selected by this proposal. Initial paid-tool and expanded-CI budget remains US$ 0. HIGH_ASSURANCE behavior routes through fail-closed security and independent-specialist review before production; owner ChatGPT audit remains NOT_INDEPENDENT.
+A profile declares required adapters, external services, data boundaries, deployment targets, proof suite and rollback/recovery contract before execution. Profile-specific adapters stay isolated behind existing provider/profile seams. No new dependency or paid service is selected by this canonical Source Pack. Initial paid-tool and expanded-CI budget remains US$ 0. HIGH_ASSURANCE behavior routes through fail-closed security and independent-specialist review before production; owner ChatGPT audit remains NOT_INDEPENDENT.

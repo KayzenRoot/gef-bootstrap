@@ -257,9 +257,9 @@ Security evidence should be compact and deterministic where possible. Token savi
 
 STOP CONDITION: `READY_FOR_SECURITY_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
 
-# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+# V1.2 canonical Source Pack addendum — admitted by GBS-V12-WO-000
 
-**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; the existing frozen security model and thresholds remain unchanged.
+**State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`; the existing frozen security model and thresholds remain unchanged. This admission does not authorize any HIGH_ASSURANCE production operation.
 
 ## HIGH_ASSURANCE classification and gate
 
@@ -273,4 +273,4 @@ The first SaaS pilot excludes real-money movement, custody, escrow, payouts and 
 
 ## Resource policy
 
-The initial budget for paid tools and expanded CI is US$ 0. Free/open-source-first does not waive security review or quality gates. Any paid tool, paid CI expansion or external service requires separate owner approval before use. No security/coverage threshold or required check is changed by this proposal.
+The initial budget for paid tools and expanded CI is US$ 0. Free/open-source-first does not waive security review or quality gates. Any paid tool, paid CI expansion or external service requires separate owner approval before use. No security/coverage threshold or required check is changed by this canonical Source Pack.

@@ -269,7 +269,7 @@ Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync
 
 ## V1.2 governed source admission overlay — WO-000
 
-**Promotion candidate state:** `SOURCE_PACK_APPROVED_NO_IMPLEMENTATION`. This overlay becomes canonical only if the final PR #369 promotion head passes exact-head checks, receives owner audit `APPROVED / NOT_INDEPENDENT`, and is governed-merged to `main`.
+**Canonical state:** `SOURCE_PACK_APPROVED_NO_IMPLEMENTATION`. Effective on `main` from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`. WO-000 admitted governance only and earned no V1.2 implementation credit.
 
 - Work Order: `GBS-V12-WO-000`; Issue: `#367`; PR: `#369`.
 - Execution base preserved: `main@203dc6a86de035b8502453100ea6e2a4788cae57`.
@@ -277,6 +277,8 @@ Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync
 - Phase D owner audit: review `#5394709108`, `APPROVED / NOT_INDEPENDENT`.
 - Phase D findings: CRITICAL `0`; HIGH `0`.
 - Phase E owner continuation authorization: Issue #367 comment `#5957678869`.
+- Final promotion exact head: `9a6f1affaf08f222ebf58bd444b5b549c7aff665`; owner audit review `#5394913905`, `APPROVED / NOT_INDEPENDENT`, CRITICAL/HIGH `0 / 0`.
+- Promotion merge: PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`; post-merge `main` checks `7 / 7 SUCCESS`.
 - Universal V1.2 denominator: `U12-01..U12-10` = 10 obligations.
 - V1.2 implementation credit at WO-000 closeout: `0 / 10 = 0.00%`; remaining `10 / 10 = 100.00%`.
 - Conditional profiles earn no implementation credit from WO-000.
@@ -288,9 +290,9 @@ Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync
 - V1.2 implementation started: `NO`.
 - No tag, package, release, deployment or profile implementation is promoted by WO-000.
 
-**Terminal state after governed PR #369 merge:** `GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION`.
+**Terminal state:** `GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION` — EFFECTIVE after governed PR #369 merge.
 
-**Next legal V1.2 action after that terminal state:** separately create and owner-admit `GBS-V12-WO-001` with a fresh Context Lock. WO-001 is not started by this checkpoint promotion.
+**Next legal V1.2 action now:** separately create and owner-admit `GBS-V12-WO-001` with a fresh Context Lock. WO-001 has not been started by WO-000 or this effectivity sync.
 
 The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED` release facts remain unchanged and are not converted into V1.2 implementation credit.
 

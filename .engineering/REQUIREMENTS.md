@@ -110,15 +110,15 @@ No specific CLI framework, always-on daemon/service, fixed language before Archi
 
 STOP CONDITION: `READY_FOR_REQUIREMENTS_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
 
-# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+# V1.2 canonical Source Pack addendum — admitted by GBS-V12-WO-000
 
-**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; no requirement below is effective before owner audit and checkpoint promotion. Existing V1/V1.1 requirements and V1.1.2 acceptance remain preserved.
+**State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`. The obligations below are admitted requirements but remain NOT_IMPLEMENTED until separately governed Work Orders satisfy them. Existing V1/V1.1 requirements and V1.1.2 acceptance remain preserved.
 
 ## Universal V1.2 delta obligations
 
-Each obligation is a release gate with a finite acceptance contract and exact-head evidence. All ten are required for a V1.2 universal-core claim; all remain NOT_IMPLEMENTED at this planning stop.
+Each obligation is a release gate with a finite acceptance contract and exact-head evidence. All ten are required for a V1.2 universal-core claim; all remain NOT_IMPLEMENTED until their separately admitted implementation Work Orders satisfy them.
 
-| ID | Audited map | Proposed obligation |
+| ID | Audited map | Canonical obligation |
 |---|---|---|
 | U12-01 | C01 | Guided discovery records source-backed answers, asks only unresolved questions, supports bounded 5-7 question rounds where needed, and keeps brownfield discovery gap-only. Answer capsules are attributable, version-bound, and invalidated when their source changes. |
 | U12-02 | C02 | Canonical plans expose requirement-to-proof links, owner-change impact, missing critical-path obligations, dependencies, and truthful unknowns; no completion claim is inferred from plan shape alone. |
@@ -139,4 +139,4 @@ Subscription lifecycle and entitlement tests use deterministic fixtures or non-c
 
 ## Assurance and resource constraints
 
-All existing test, coverage, security and branch-protection floors remain unchanged. No new numerical benchmark target is implied by this proposal. Paid tools, paid CI expansion and paid external services remain at an initial budget of US$ 0; any later spend requires a separate owner-approved decision supported by evidence. HIGH_ASSURANCE surfaces require the independent specialist gate in the proposed ADR-0010 before production.
+All existing test, coverage, security and branch-protection floors remain unchanged. No new numerical benchmark target is implied by this canonical Source Pack. Paid tools, paid CI expansion and paid external services remain at an initial budget of US$ 0; any later spend requires a separate owner-approved decision supported by evidence. HIGH_ASSURANCE surfaces require the independent specialist gate in ADR-0010 before production.

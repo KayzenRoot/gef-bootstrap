@@ -247,13 +247,13 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 
 STOP CONDITION: `READY_FOR_SCOPE_REVIEW_AND_CHECKPOINT`.
 
-# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+# V1.2 canonical Source Pack addendum — admitted by GBS-V12-WO-000
 
-**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; not effective until owner audit and separate checkpoint promotion. The frozen V1/V1.1 scope and accepted V1.1.2 production facts above remain historical and unchanged.
+**State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`. This admission authorizes no V1.2 implementation by itself. The frozen V1/V1.1 scope and accepted V1.1.2 production facts above remain historical and unchanged.
 
 ## Release boundary
 
-V1.2 proposes one universal core and separately accepted conditional reference profiles. The universal-core delta denominator is the ten audited PARTIAL_DELTA items C01, C02, and C04-C11. C03 (Approved visual experience), C12 (Operations feedback), and D01-D12 remain profile-conditional. R01-R05 retain their audited experiment/future/out-of-scope dispositions. No profile enters the universal denominator by naming, roadmap position, or pilot use.
+V1.2 uses one universal core and separately accepted conditional reference profiles. The universal-core delta denominator is the ten audited PARTIAL_DELTA items C01, C02, and C04-C11. C03 (Approved visual experience), C12 (Operations feedback), and D01-D12 remain profile-conditional. R01-R05 retain their audited experiment/future/out-of-scope dispositions. No profile enters the universal denominator by naming, roadmap position, or pilot use.
 
 The first end-to-end pilot is the full-stack multi-tenant SaaS reference profile. It may exercise web/API, data, authentication/authorization, tenant isolation, subscription state and entitlements, security, recovery, observability, and release evidence. It excludes real-money movement, custody, escrow, payouts, and live production financial transactions. This profile has its own denominator and does not redefine universal scope.
 

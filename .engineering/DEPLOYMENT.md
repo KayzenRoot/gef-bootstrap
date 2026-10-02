@@ -255,9 +255,9 @@ Freezing this Source Pack document does not by itself award production earned we
 
 STOP CONDITION: `READY_FOR_DEPLOYMENT_REVIEW_AND_CHECKPOINT`.
 
-# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+# V1.2 canonical Source Pack addendum — admitted by GBS-V12-WO-000
 
-**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; this addendum does not change V1.1.2 release facts, package identity, channels or tag policy.
+**State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`; this addendum does not change V1.1.2 release facts, package identity, channels or tag policy.
 
 ## Release composition
 
@@ -267,6 +267,6 @@ The EVM conditional reference is Solidity + Foundry + Anvil and local determinis
 
 ## Distribution and operations
 
-Preserve the current accepted V1.1.2 release and its artifacts. Future package, version, publication, provenance, rollback and release-channel changes require their own admitted Work Order and current exact-head gates. This WO-000 proposal authorizes no tag, package change, publication, deployment or production rollout.
+Preserve the current accepted V1.1.2 release and its artifacts. Future package, version, publication, provenance, rollback and release-channel changes require their own admitted Work Order and current exact-head gates. WO-000 admitted the Source Pack only and authorized no tag, package change, publication, deployment or production rollout.
 
 Any selected deployment profile records target, operator permissions, backup/restore and rollback or roll-forward evidence, observability, service dependencies, data handling and exact artifact provenance. Initial paid-tool and expanded-CI budget remains US$ 0; paid deployment services require a separate owner decision.
