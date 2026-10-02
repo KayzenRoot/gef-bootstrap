@@ -76,3 +76,13 @@ Required resulting V1.2 checkpoint semantics:
 
 This promotion is canonical only after its final exact PR head passes required checks, owner audit remains `APPROVED / NOT_INDEPENDENT`, CRITICAL/HIGH remain zero, and PR #369 is governed-merged. The final exact promotion head is bound by the GitHub review/merge receipt, not guessed into this pre-merge evidence file.
 
+## Phase E review correction E1
+
+When PR #369 became ready for review, CodeRabbit found two minor internal evidence inconsistencies. Owner authorization for the bounded correction is Issue #367 comment `#5957842897`.
+
+Corrections:
+- D05 rationale now states the already-approved OD-06 requirement for independent specialist review before production;
+- Source Audit header now reflects approved Phase C, audited Phase D and Phase E promotion status.
+
+No C/D/R disposition, measurement, benchmark sample, Source Pack obligation, denominator, risk floor or implementation authority changed. These two paths are included in the refreshed Phase E allowlist and require the same new exact-head check/audit gate as all other promotion changes.
+
