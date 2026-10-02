@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertLaterActiveWorkOrder } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+import { assertLaterActiveWorkOrder, laterV11WorkOrderOrdinal } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -43,8 +43,7 @@ test('machine and human checkpoint preserve WO-003 admission or prove its object
   const wo012Current = checkpoint.v11.status === 'GBS_V11_WO_012_ADMITTED';
   const wo011Current = checkpoint.v11.status === 'GBS_V11_WO_011_ADMITTED';
   const wo012PostMerge = checkpoint.v11.status === 'GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT';
-  const match = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-  const ordinal = wo012PostMerge ? 12 : wo012Current ? 12 : wo011Current ? 11 : wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : match === null ? null : Number.parseInt(match[1], 10);
+  const ordinal = laterV11WorkOrderOrdinal(checkpoint);
   assert.ok(ordinal === null || ordinal <= 12, `unexpected future V1.1 ordinal ${ordinal}`);
   if (ordinal === 3) {
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-003');
