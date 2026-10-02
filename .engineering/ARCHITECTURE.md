@@ -364,4 +364,4 @@ Conditional application profiles plug into explicit profile contracts and cannot
 
 ## Composition and constraints
 
-A profile declares required adapters, external services, data boundaries, deployment targets, proof suite and rollback/recovery contract before execution. Profile-specific adapters stay isolated behind existing provider/profile seams. No new dependency or paid service is selected by this proposal. Initial paid-tool and expanded-CI budget remains US$ 0. HIGH_ASSURANCE behavior routes through fail-closed security and independent-specialist review before production; owner ChatGPT audit remains NOT_INDEPENDENT.
+A profile declares required adapters, external services, data boundaries, deployment targets, proof suite and rollback/recovery contract before execution. Profile-specific adapters stay isolated behind existing provider/profile seams. No new dependency or paid service is selected by this canonical Source Pack. Initial paid-tool and expanded-CI budget remains US$ 0. HIGH_ASSURANCE behavior routes through fail-closed security and independent-specialist review before production; owner ChatGPT audit remains NOT_INDEPENDENT.
