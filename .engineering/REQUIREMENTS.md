@@ -139,4 +139,4 @@ Subscription lifecycle and entitlement tests use deterministic fixtures or non-c
 
 ## Assurance and resource constraints
 
-All existing test, coverage, security and branch-protection floors remain unchanged. No new numerical benchmark target is implied by this proposal. Paid tools, paid CI expansion and paid external services remain at an initial budget of US$ 0; any later spend requires a separate owner-approved decision supported by evidence. HIGH_ASSURANCE surfaces require the independent specialist gate in the proposed ADR-0010 before production.
+All existing test, coverage, security and branch-protection floors remain unchanged. No new numerical benchmark target is implied by this proposal. Paid tools, paid CI expansion and paid external services remain at an initial budget of US$ 0; any later spend requires a separate owner-approved decision supported by evidence. HIGH_ASSURANCE surfaces require the independent specialist gate in ADR-0010 before production.
