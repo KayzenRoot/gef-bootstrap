@@ -123,9 +123,9 @@ ADR-0008 / D-0063 is effective on `main` at PR #332 merge `419b9cd713d4817c05582
 
 STOP CONDITION: `READY_FOR_DOD_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
 
-# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+# V1.2 canonical Source Pack addendum — admitted by GBS-V12-WO-000
 
-**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; this is not a completion claim or checkpoint promotion. Accepted V1/V1.1 history and V1.1.2 production state are inherited without rewriting their denominator.
+**State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`. Source Pack admission is not implementation completion or release acceptance. Accepted V1/V1.1 history and V1.1.2 production state are inherited without rewriting their denominator.
 
 ## V1.2 canonical completion claims — admitted by GBS-V12-WO-000
 
