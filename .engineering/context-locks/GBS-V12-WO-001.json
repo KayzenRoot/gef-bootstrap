@@ -139,12 +139,14 @@
     "any locked canonical source blob differs before owner admission audit",
     "Issue #372 is closed, superseded or materially amended",
     "planning branch no longer descends from admissionBase.sha",
-    "admission planning diff contains any path outside admissionPlanning.writeAllowed"
+    "admission planning diff contains any path outside admissionPlanning.writeAllowed",
+    "any locked implementation-surface fingerprint differs before admission owner audit or fresh implementation lock compilation"
   ],
   "admissionPreflight": [
     "verify repository and owner account",
     "verify main exact SHA equals admissionBase.sha",
     "verify all canonical and implementation-surface fingerprints",
+    "verify all locked implementation-surface fingerprints still match admissionBase before owner audit",
     "verify WO-000 terminal state is effective and active V1.2 implementation Work Order is NONE",
     "verify Issue #372 remains open and matches this bounded contract",
     "verify planning diff contains only the Work Order and Context Lock",
