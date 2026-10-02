@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "1.0",
+  "workOrder": "GBS-V12-WO-001",
+  "issue": 372,
+  "state": "ADMISSION_PLANNING_READY_FOR_OWNER_AUDIT",
+  "risk": "STANDARD",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "ownerAccount": "KayzenRoot",
+  "planningBranch": "planning/v1.2/wo-001-admission",
+  "admissionBase": {
+    "ref": "main",
+    "sha": "4698592b521ee8c5df37be8759312bd76b9d702f",
+    "packageVersion": "1.1.2",
+    "v12State": "SOURCE_PACK_APPROVED_NO_IMPLEMENTATION",
+    "predecessorStop": "GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION"
+  },
+  "planningScaffold": {
+    "workOrderCommit": "cf41d8b3f223c6ab239d3bff045a5c38197fe7f7",
+    "note": "This lock governs admission planning only. Implementation must rebind to the exact post-admission-merge main head before Codex edits source."
+  },
+  "sourceFingerprintsAtAdmissionBase": {
+    "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
+    ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    ".engineering/CHECKPOINT.md": "65680b66a474dc1745ed03d28d1bce86b1ea03cb",
+    ".engineering/CHECKPOINT.json": "125e9d770247b631d78b9de0d14a76f0c0db2766",
+    ".engineering/SCOPE.md": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
+    ".engineering/REQUIREMENTS.md": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+    ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+    ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+    ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+    ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+    ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
+    ".engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md": "536bd06c01e942c5e090a693591d5cd324585c59",
+    ".engineering/V1.2-PROFILE-MATRIX.md": "c9446bedd52469caa593ca5278c725b8e8c84d32",
+    ".engineering/V1.2-RELEASE-DENOMINATOR.md": "f33db46412110584604bb556e8a62ecbef9c59c1",
+    "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+  },
+  "implementationSurfaceFingerprintsAtAdmissionBase": {
+    "packages/task-context-compiler/src/public.ts": "29028d9f8e1857be671f1036f51868bc3135e538",
+    "packages/task-context-compiler/src/s01-task-contract.ts": "4e8b2c4f781e8b46f9c16ddfe298f95e74b045d5",
+    "packages/task-context-compiler/src/s02-source-routing.ts": "b0ac51e22443c87942bf3b373732189b779acba8",
+    "packages/task-context-compiler/src/s03-msc-proof.ts": "702ab840d45d7fa96ca7d339ac7902875645b12d",
+    "packages/task-context-compiler/src/s04-safe-expansion.ts": "df612bd014b2eb76f742c1c38b840ffe7bf0366f",
+    "packages/task-context-compiler/src/s05-receipt-handoff.ts": "9ac06e6e9e127c8c59dd6bc1f9e1dc4c9974b722",
+    "packages/execution-pack-compiler/src/public.ts": "d74d9a5e65d3b018f95e98421d84b80602675c2c",
+    "packages/execution-pack-compiler/src/compile.ts": "d173b6a646b6b2006ec0456360457556a084e049",
+    "packages/execution-pack-compiler/src/s02-work-graph.ts": "f8c7e9ee5877e352726023971590dba4e8b112a4",
+    "packages/checkpoint-engine/src/public.ts": "6f57c6cbcffca8d557a48e4ea23e8a31aedd26e0",
+    "packages/checkpoint-engine/src/s02-promotion.ts": "c157d596be5a118f705ac987959b19d22c0584d7",
+    "packages/checkpoint-engine/src/s03-invalidation.ts": "834dc5e07f462b041261dfe47c1f2f94e31c4d00",
+    "packages/resume-engine/src/public.ts": "03404f48382ad64ba642a7d6a06786f6b396072b",
+    "packages/resume-engine/src/s02-rehydration.ts": "f1c8b411b379590fe22c554294dc8ab739eccf61",
+    "packages/resume-engine/src/s03-drift.ts": "2fececf938364f21be325753c42b293e8c159d77",
+    "packages/planning-workspace/src/public.ts": "477b8b16e99678262791a3551c0d407149684e6f",
+    "packages/source-pack/src/public.ts": "e4ae465e2445f4728192e4adc6940a4452a861b9",
+    "packages/source-pack/src/public-v2.ts": "539db14e2c6a172853b53964ba8f30c7415d6c3e",
+    "packages/decision-system/src/public.ts": "d1750bc464629ae4523a18128481464a1af4856f"
+  },
+  "requiredMainContexts": [
+    "Repository validation",
+    "Pipeline integrity",
+    "Gitleaks secrets",
+    "Trivy filesystem and configuration"
+  ],
+  "admissionPlanning": {
+    "implementationAuthorized": false,
+    "productRuntimeMutationAuthorized": false,
+    "productTestMutationAuthorized": false,
+    "ciMutationAuthorized": false,
+    "migrationMutationAuthorized": false,
+    "dependencyChangeAuthorized": false,
+    "checkpointCanonicalMutationAuthorized": false,
+    "paidToolInstallAuthorized": false,
+    "writeAllowed": [
+      ".engineering/work-orders/GBS-V12-WO-001.md",
+      ".engineering/context-locks/GBS-V12-WO-001.json"
+    ],
+    "expectedDiff": "governance-only admission scaffold"
+  },
+  "implementationCandidate": {
+    "state": "NOT_AUTHORIZED_UNTIL_ADMISSION_MERGE_AND_FRESH_CONTEXT_LOCK",
+    "implementationBase": "TO_BE_BOUND_TO_EXACT_POST_ADMISSION_MERGE_MAIN_HEAD",
+    "codexOnly": true,
+    "preferredWriteSurfaces": [
+      "packages/task-context-compiler/src/**",
+      "packages/execution-pack-compiler/src/**",
+      "packages/checkpoint-engine/src/**",
+      "packages/resume-engine/src/**",
+      "tests/**",
+      ".engineering/evidence/GBS-V12-WO-001-*.md",
+      ".engineering/evidence/GBS-V12-WO-001-*.json",
+      ".engineering/checkpoint-deltas/GBS-V12-WO-001-PROPOSED.md"
+    ],
+    "conditionalWriteSurfaces": [
+      "packages/planning-workspace/src/**",
+      "packages/source-pack/src/**",
+      "packages/decision-system/src/**"
+    ],
+    "prohibitedWithoutCorrectionDelta": [
+      ".github/workflows/**",
+      "package.json",
+      "package-lock.json",
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      "new top-level discovery/impact/marathon package",
+      "paid service or paid CI configuration",
+      "profile implementation D01-D12"
+    ]
+  },
+  "targetObligations": {
+    "required": [
+      "U12-01",
+      "U12-02"
+    ],
+    "conditionalCompletion": [
+      "U12-03"
+    ],
+    "explicitlyNotCreditable": [
+      "U12-04",
+      "U12-05",
+      "U12-06",
+      "U12-07",
+      "U12-08",
+      "U12-09",
+      "U12-10"
+    ]
+  },
+  "governanceConstraints": [
+    "Codex alone authors or fixes implementation code, tests, CI and migrations.",
+    "Owner-operated ChatGPT exact-head audit is NOT_INDEPENDENT.",
+    "Extend existing M09-M18 contracts; do not create duplicate planner, graph, executor, checkpoint or resume engines.",
+    "No V1.2 implementation credit is earned by this admission planning PR.",
+    "No unselected profile, paid tool, external SaaS or HIGH_ASSURANCE production action is admitted.",
+    "No progress percentage or ETA is generated unless current M21/M22 authority independently permits it."
+  ],
+  "staleIf": [
+    "main differs from admissionBase.sha before admission PR is opened",
+    "any locked canonical source blob differs before owner admission audit",
+    "Issue #372 is closed, superseded or materially amended",
+    "planning branch no longer descends from admissionBase.sha",
+    "admission planning diff contains any path outside admissionPlanning.writeAllowed",
+    "any locked implementation-surface fingerprint differs before admission owner audit or fresh implementation lock compilation"
+  ],
+  "admissionPreflight": [
+    "verify repository and owner account",
+    "verify main exact SHA equals admissionBase.sha",
+    "verify all canonical and implementation-surface fingerprints",
+    "verify all locked implementation-surface fingerprints still match admissionBase before owner audit",
+    "verify WO-000 terminal state is effective and active V1.2 implementation Work Order is NONE",
+    "verify Issue #372 remains open and matches this bounded contract",
+    "verify planning diff contains only the Work Order and Context Lock",
+    "if any binding mismatches, stop STALE_CONTEXT"
+  ],
+  "admissionStopCondition": "GBS_V12_WO_001_ADMISSION_READY_FOR_OWNER_AUDIT",
+  "postAdmissionStopCondition": "GBS_V12_WO_001_ADMITTED_READY_FOR_CODEX",
+  "implementationStopCondition": "GBS_V12_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT",
+  "terminalStopCondition": "GBS_V12_WO_001_PROMOTED"
+}
