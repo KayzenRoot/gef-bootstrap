@@ -1,7 +1,7 @@
 # GBS-V12-WO-000 - V1.2 source admission, baseline and scope freeze
 
 **Issue:** #367  
-**State:** `SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS / NO_IMPLEMENTATION`  
+**State:** `CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT / NO_IMPLEMENTATION`  
 **Execution base:** `main@203dc6a86de035b8502453100ea6e2a4788cae57`  
 **Base tree:** `6b66139b7df03c0041a0c785057afb29d9a47428`  
 **Current package:** `1.1.2`  
@@ -196,6 +196,34 @@ The research snapshot's provisional sequence is the starting hypothesis:
 - WO-006 release assurance and promotion
 
 WO-000 may change this decomposition only when capability overlap or release-risk evidence justifies it.
+
+## Phase D proposal completion
+
+Owner decisions V12-D001 through V12-D005 are captured and the full reviewable Source Pack proposal exists under `.engineering/v1.2/proposed/`.
+
+Proposed package:
+- Source Pack Delta
+- Scope
+- Requirements
+- Architecture
+- Security
+- Test/Benchmark Plan
+- Deployment
+- Definition of Done
+- Decisions
+- Profile Matrix
+- Work Order Sequence
+
+Internal consistency review confirms:
+- WEB_APP_API is the only profile-level core release blocker;
+- WEB3_EVM is second priority and non-core-release-blocking;
+- LOCAL_FREE_FIRST remains the default tooling budget;
+- specialist review remains additive for approved high-risk production classes;
+- no second canonical context/execution/proof/status/release engine is proposed;
+- no archived research branch becomes an implementation base;
+- no implementation is authorized by this proposal.
+
+Checkpoint: `GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT`
 
 ## Phase E - admission gate
 
