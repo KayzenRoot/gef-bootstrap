@@ -60,7 +60,7 @@ This is a local candidate artifact, not a release receipt. The exact-head same-a
   - Same tarball: [Ubuntu](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207240/job/110639606505), [macOS](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207240/job/110639606374), [Windows](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207240/job/110639606352)
   - Release assurance: [Ubuntu](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207240/job/110639260132), [macOS](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207240/job/110639260202), [Windows](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207240/job/110639260204)
 - No consumer repository was changed. HIVE's existing dependency-graph blocker and Neryn World's UADS prerequisite remain consumer-owned and unfixed by WO-012.
-- Known release boundary: package registry state, Trusted Publisher execution, immutable `v1.1.2` tag, GitHub Release, publication and registry verification are not exercised or claimed by this pre-audit candidate.
+- The immutable `v1.1.2` publication and registry verification are complete. Correction Delta #3 created the stable GitHub Release for that existing tag; no tag or npm artifact mutation was performed during closeout.
 
 ## Changed paths
 
@@ -109,5 +109,19 @@ Workflow attempt 2 completed SUCCESS:
 - clean package-lock/install with lifecycle scripts disabled: PASS;
 - installed CLI version smoke: PASS at `1.1.2`.
 
-This satisfies the Work Order's technical terminal condition for immutable publication plus registry verification. A GitHub Release for `v1.1.2` was still absent when Correction Delta #3 was admitted, so canonical `PRODUCTION_ACCEPTED` closeout is held until that hosted release is created and exact-head closeout validation is complete.
+This satisfies the Work Order's technical terminal condition for immutable publication plus registry verification. At Correction Delta #3 admission the GitHub Release did not exist; it has now been created for the existing tag. Canonical checkpoint promotion remains with the owner after exact-head closeout audit.
+
+## Correction Delta #3 — production closeout evidence
+
+- Repository/PR: `KayzenRoot/gef-bootstrap`, PR `#364`, branch `docs/v1.1.2-production-closeout`.
+- Main base: `af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`; pre-edit branch head: `24cc02890b84154f25225163154cf53111353062`.
+- GitHub Release: [GEF Bootstrap v1.1.2](https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2), release ID `401675074`, published `2026-10-02T09:10:56Z`, `draft=false`, `prerelease=false`.
+- Release tag object and target remained `d8241d55231fa1a608546e37f4b178c7695d1fdd` and `af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82` after release creation.
+- Package: `@gef-bootstrap/cli@1.1.2`, published through npm Trusted Publishing. Registry SRI is `sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==`; tarball SHA-256 is `331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97`.
+- Workflow run [36957290788, attempt 2](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36957290788) is `SUCCESS`; publish job `110683489629` and registry verification job `110688730992` are `SUCCESS`. npm ECDSA signature and SLSA provenance verification passed; Sigstore log index `3046460318`.
+- The stable release notes record Trusted Publishing, the immutable source target, successful registry-integrity/ECDSA/SLSA verification, the consumer-safe adoption preflight, the v1.1.1 recovery corrections, and the still-unresolved consumer-owned HIVE and Neryn World prerequisites.
+- Operator documentation now identifies 1.1.2 as the current production-accepted package while preserving V1.1.0 acceptance and the V1.1.1 post-publish artifact-download incident. The authorized checkpoint tests recognize only the exact future state `GBS_V11_1_1_2_PRODUCTION_ACCEPTED`; historical state assertions remain intact.
+- Focused WO-012/admission tests: **52 passed, 0 failed, 0 skipped**; the retired-ecosystem detachment regression also passed (**1/1**), for **53/53** combined focused checks.
+- In the conventional validation clone, `npm run build`, `npm run typecheck`, `npm run validate` (**1632/1632**), `npm audit --audit-level=high` (**0 vulnerabilities**) and `git diff --check` all passed. The first linked-worktree full-suite attempt exposed two tests that require a normal `.git` directory; the full suite was then run in the conventional clone and passed.
+- During this correction no npm publish, tag movement/recreation, checkpoint promotion, merge or consumer rollout was performed. Await the exact-head checks and owner audit; stop condition is `GBS_V11_1_1_2_PRODUCTION_CLOSEOUT_READY_FOR_OWNER_AUDIT`.
 

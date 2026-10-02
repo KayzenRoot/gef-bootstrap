@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assertWo012ReleaseStateIfApplicable, isLegalPostFoundationV11State, laterV11WorkOrderOrdinal, wo012CandidateReleaseStatus, wo012CurrentPatchCheckpoint, wo012CurrentPatchCheckpointMd } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+import { assertWo012ProductionAcceptedRelease, assertWo012ReleaseStateIfApplicable, isLegalPostFoundationV11State, isWo012ProductionAcceptedCheckpoint, laterV11WorkOrderOrdinal, wo012CandidateReleaseStatus, wo012CurrentPatchCheckpoint, wo012CurrentPatchCheckpointMd, wo012ProductionAcceptedCheckpoint } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,13 +9,17 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(resolve(ROOT, path), "utf8");
 const json = (path) => JSON.parse(read(path));
 
-test("WO-012 reconciles immutable published v1.1.1 history and keeps v1.1.2 as the active patch", () => {
+test("WO-012 preserves immutable v1.1.1 history and recognizes the exact v1.1.2 release state", () => {
   const checkpoint = json(".engineering/CHECKPOINT.json");
   const v11 = checkpoint.v11;
   const human = read(".engineering/CHECKPOINT.md");
   assert.equal(assertWo012ReleaseStateIfApplicable(checkpoint, human), true);
-  assert.equal(v11.stableRelease.version, "1.1.0");
-  assert.equal(v11.stableRelease.tag, "v1.1.0");
+  if (isWo012ProductionAcceptedCheckpoint(checkpoint)) {
+    assertWo012ProductionAcceptedRelease(checkpoint, human);
+  } else {
+    assert.equal(v11.stableRelease.version, "1.1.0");
+    assert.equal(v11.stableRelease.tag, "v1.1.0");
+  }
   assert.equal(v11.patchHistory.find((entry) => entry.version === "1.1.1")?.status, "PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED");
   const historical = v11.patchHistory.find((entry) => entry.version === "1.1.1");
   assert.equal(historical.tag, "v1.1.1");
@@ -32,9 +36,15 @@ test("WO-012 reconciles immutable published v1.1.1 history and keeps v1.1.2 as t
   assert.equal(candidate.baseMainSha, "5a32a607ccf2055fab722f3d5d452791c6aae3e6");
   assert.equal(candidate.branch, "hotfix/v1.1.2-release-state-preflight");
   assert.equal(candidate.pullRequest, 362);
-  assert.equal(candidate.tag, null);
-  assert.equal(candidate.npmPublished, false);
-  assert.equal(candidate.registrySmoke, "NOT_RUN");
+  if (isWo012ProductionAcceptedCheckpoint(checkpoint)) {
+    assert.equal(candidate.tag, "v1.1.2");
+    assert.equal(candidate.npmPublished, true);
+    assertWo012ProductionAcceptedRelease(checkpoint, human);
+  } else {
+    assert.equal(candidate.tag, null);
+    assert.equal(candidate.npmPublished, false);
+    assert.equal(candidate.registrySmoke, "NOT_RUN");
+  }
   assert.match(human, /V1\.1\.1.*PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED/);
 });
 
@@ -57,7 +67,7 @@ test("WO-012 sets the active workspace, CLI, lockfile and generated runtime iden
   assert.ok(matrix.compatibility.some((row) => row.from === "1.1.0" && row.to === "1.1.2" && row.evidenceState === "VERIFIED"));
 });
 
-test("WO-012 updates supported package and operator documentation without claiming publication", () => {
+test("WO-012 operator documentation identifies production-accepted v1.1.2 and preserves earlier release history", () => {
   const changelog = read("CHANGELOG.md");
   const installation = read("docs/INSTALLATION.md");
   const quickstart = read("docs/QUICKSTART.md");
@@ -69,8 +79,11 @@ test("WO-012 updates supported package and operator documentation without claimi
     assert.match(text, /1\.1\.1/);
     assert.match(text, /1\.1\.2/);
   }
-  assert.match(installation, /1\.1\.2 package is not available until published/i);
-  assert.match(runbook, /1\.1\.2.*candidate/i);
+  assert.match(installation, /@gef-bootstrap\/cli@1\.1\.2/);
+  assert.match(installation, /1\.1\.2.*current production-accepted V1\.1 package/i);
+  assert.doesNotMatch(installation, /1\.1\.2 package is not available until published/i);
+  assert.match(runbook, /1\.1\.2.*current production-accepted package/i);
+  assert.doesNotMatch(runbook, /V1\.1\.2 remains a candidate/i);
 });
 
 test("WO-012 adds exact v1.1.2 release, assurance and read-only post-publish recovery paths", () => {
@@ -121,4 +134,26 @@ test("WO-012 checkpoint assertions preserve the admitted history and exact later
   assert.equal(assertWo012ReleaseStateIfApplicable(current, wo012CurrentPatchCheckpointMd), true);
   assert.equal(assertWo012ReleaseStateIfApplicable(checkpoint, read(".engineering/CHECKPOINT.md")), true);
   assert.equal(assertWo012ReleaseStateIfApplicable(other, ""), false);
+});
+
+test("WO-012 recognizes only the exact production-accepted state with its immutable release facts", () => {
+  const accepted = wo012ProductionAcceptedCheckpoint(json(".engineering/CHECKPOINT.json"));
+  const acceptedMd = "Current V1.1 release position\nV1.1.2 PRODUCTION_ACCEPTED\n@gef-bootstrap/cli@1.1.2\nGBS_V11_1_1_2_PRODUCTION_ACCEPTED\nV1.1.0 historical production acceptance";
+
+  assert.equal(isWo012ProductionAcceptedCheckpoint(accepted), true);
+  assert.equal(laterV11WorkOrderOrdinal(accepted), 12);
+  assert.equal(isLegalPostFoundationV11State(accepted), true);
+  assert.equal(wo012CandidateReleaseStatus(accepted), "PRODUCTION_ACCEPTED");
+  assert.equal(assertWo012ReleaseStateIfApplicable(accepted, acceptedMd), true);
+
+  const wrongReleaseTarget = structuredClone(accepted);
+  wrongReleaseTarget.v11.stableRelease.tagTarget = "1dc030f1358eab0347043a3d54c7fc311c7c2123";
+  assert.throws(() => assertWo012ProductionAcceptedRelease(wrongReleaseTarget, acceptedMd));
+
+  const unrelated = structuredClone(accepted);
+  unrelated.v11.status = "GBS_V11_1_1_2_PRODUCTION_ACCEPTED_APPROVED";
+  assert.equal(isWo012ProductionAcceptedCheckpoint(unrelated), false);
+  assert.equal(laterV11WorkOrderOrdinal(unrelated), null);
+  assert.equal(isLegalPostFoundationV11State(unrelated), false);
+  assert.equal(assertWo012ReleaseStateIfApplicable(unrelated, ""), false);
 });

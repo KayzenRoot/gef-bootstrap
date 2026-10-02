@@ -47,7 +47,7 @@
     "license": "UNLICENSED",
     "repository": "https://github.com/KayzenRoot/gef-bootstrap.git",
     "enginesNode": ">=22",
-    "registryPublication": "NOT_ATTEMPTED",
+    "registryPublication": "PUBLISHED_BY_TRUSTED_PUBLISHER; VERIFIED; NO_REPUBLICATION_IN_CORRECTION_DELTA_3",
     "artifact": {
       "file": "gef-bootstrap-cli-1.1.2.tgz",
       "localPath": "%TEMP%\\gef-wo012-bcc81a8-smoke-70470969f3c34391a5808a622b50baf2\\gef-bootstrap-cli-1.1.2.tgz",
@@ -56,8 +56,8 @@
       "sha256": "47cb63ac50dcd3369c72f4f7c8ae0f73b5a210a6e997fe015a586e9ead7f4fcc",
       "sri": "sha512-AVjYd6eZ4vgzNXFhgMA5ngA3Bhofrp2uVGXz3qm/6pHNMUYvTc3BlTbyxRoebmIEzGGff1UoI83iH+/td9RfMw=="
     },
-    "releaseTag": "NOT_CREATED",
-    "githubRelease": "NOT_CREATED"
+    "releaseTag": "LOCAL_VALIDATION_ARTIFACT_NOT_TAGGED",
+    "githubRelease": "LOCAL_VALIDATION_ARTIFACT_NOT_ATTACHED_TO_RELEASE"
   },
   "localValidation": {
     "focusedTests": {
@@ -213,7 +213,7 @@
     "tagPublicationAuthorized": false
   },
   "immutableRelease": {
-    "state": "PUBLISHED_REGISTRY_VERIFIED_AWAITING_GITHUB_RELEASE_AND_CANONICAL_CLOSEOUT",
+    "state": "PUBLISHED_REGISTRY_AND_GITHUB_RELEASE_VERIFIED_AWAITING_CANONICAL_CLOSEOUT",
     "tag": "v1.1.2",
     "tagObject": "d8241d55231fa1a608546e37f4b178c7695d1fdd",
     "tagTarget": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
@@ -254,15 +254,77 @@
       "cleanConsumerInstallIgnoreScripts": "PASS",
       "cliVersionSmoke": "1.1.2 PASS"
     },
-    "githubRelease": "NOT_CREATED_AT_DELTA_ADMISSION"
+    "githubReleaseAtDeltaAdmission": "NOT_CREATED",
+    "githubRelease": {
+      "id": 401675074,
+      "tag": "v1.1.2",
+      "title": "GEF Bootstrap v1.1.2",
+      "tagObject": "d8241d55231fa1a608546e37f4b178c7695d1fdd",
+      "tagTarget": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+      "url": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2",
+      "publishedAt": "2026-10-02T09:10:56Z",
+      "draft": false,
+      "prerelease": false
+    }
   },
   "productionCloseout": {
-    "state": "ADMITTED_PENDING_GITHUB_RELEASE_AND_CODEX_SYNC",
+    "state": "GITHUB_RELEASE_CREATED_PENDING_EXACT_HEAD_OWNER_AUDIT",
     "branch": "docs/v1.1.2-production-closeout",
+    "baseMainSha": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+    "startingHead": "24cc02890b84154f25225163154cf53111353062",
     "targetState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
+    "githubReleaseCreated": true,
+    "githubReleaseId": 401675074,
+    "githubReleaseUrl": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2",
+    "githubReleasePublishedAt": "2026-10-02T09:10:56Z",
+    "githubReleaseDraft": false,
+    "githubReleasePrerelease": false,
     "npmRepublishAuthorized": false,
+    "npmRepublishPerformed": false,
     "tagMutationAuthorized": false,
+    "tagMutationPerformed": false,
+    "checkpointPromotionPerformed": false,
     "rolloutAuthorized": false,
+    "focusedCloseoutTests": {
+      "state": "PASS",
+      "passed": 52,
+      "failed": 0,
+      "skipped": 0
+    },
+    "correctionDelta3Validation": {
+      "environment": "conventional temporary clone with normal .git directory",
+      "focusedAdmissionAndReleaseStateTests": {
+        "state": "PASS",
+        "passed": 52,
+        "failed": 0,
+        "skipped": 0
+      },
+      "legacyEcosystemDetachmentRegression": {
+        "state": "PASS",
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0
+      },
+      "combinedFocusedTests": {
+        "state": "PASS",
+        "passed": 53,
+        "failed": 0,
+        "skipped": 0
+      },
+      "build": "PASS",
+      "typecheck": "PASS",
+      "fullValidate": {
+        "state": "PASS",
+        "passed": 1632,
+        "failed": 0,
+        "skipped": 0
+      },
+      "npmAuditHigh": {
+        "state": "PASS",
+        "vulnerabilities": 0
+      },
+      "diffCheck": "PASS"
+    },
     "stopCondition": "GBS_V11_1_1_2_PRODUCTION_CLOSEOUT_READY_FOR_OWNER_AUDIT"
   }
 }

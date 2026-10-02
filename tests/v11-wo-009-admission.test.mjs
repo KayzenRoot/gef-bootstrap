@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assertWo009ContextLockRefreshHandoff, assertWo009BranchReconciliationNote, assertWo009MergedPromotionHandoff, assertWo011CurrentPatch, assertWo012ReleaseStateIfApplicable } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+import { assertWo009ContextLockRefreshHandoff, assertWo009BranchReconciliationNote, assertWo009MergedPromotionHandoff, assertWo011CurrentPatch, assertWo012ProductionAcceptedRelease, assertWo012ReleaseStateIfApplicable, isWo012ProductionAcceptedCheckpoint } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,7 +29,9 @@ test("WO-008 stays owner-audited and merged while the V1 production baseline sta
 });
 
 test("Checkpoint names one admitted V1.1 action with branch and source references", () => {
-  if (assertWo012ReleaseStateIfApplicable(checkpoint, checkpointMd)) {
+  if (isWo012ProductionAcceptedCheckpoint(checkpoint)) {
+    assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd);
+  } else if (assertWo012ReleaseStateIfApplicable(checkpoint, checkpointMd)) {
     assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-012");
   } else if (checkpoint.v11.status === "GBS_V11_WO_011_ADMITTED") {
     assertWo011CurrentPatch(checkpoint);

@@ -1,5 +1,5 @@
 import test from 'node:test';
-import { assertLaterActiveWorkOrder, isLegalPostFoundationV11State, isWo012PostMergeCheckpoint, laterV11WorkOrderOrdinal, wo012CandidateReleaseStatus } from './helpers/v11-context-lock-refresh-assertions.mjs';
+import { assertLaterActiveWorkOrder, assertWo012ProductionAcceptedRelease, isLegalPostFoundationV11State, isWo012PostMergeCheckpoint, isWo012ProductionAcceptedCheckpoint, laterV11WorkOrderOrdinal, wo012CandidateReleaseStatus } from './helpers/v11-context-lock-refresh-assertions.mjs';
 import assert from 'node:assert/strict';
 
 import { readFileSync } from 'node:fs';
@@ -23,6 +23,7 @@ const wo009Completed = checkpoint.v11.status === 'GBS_V11_WO_009_OWNER_AUDIT_APP
 const wo011Current = checkpoint.v11.status === 'GBS_V11_WO_011_ADMITTED';
 const wo012Current = checkpoint.v11.status === 'GBS_V11_WO_012_ADMITTED';
 const wo012PostMerge = isWo012PostMergeCheckpoint(checkpoint);
+const wo012ProductionAccepted = isWo012ProductionAcceptedCheckpoint(checkpoint);
 const admittedOrdinal = laterV11WorkOrderOrdinal(checkpoint);
 const legalPostFoundationStates = isLegalPostFoundationV11State(checkpoint);
 
@@ -82,6 +83,10 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
     assert.ok(checkpointMd.includes('Current V1.1 release position'));
     return;
   }
+  if (wo012ProductionAccepted) {
+    assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
+    return;
+  }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2 && admittedOrdinal <= 12, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
   const id = String(admittedOrdinal).padStart(3, '0');
   if (admittedOrdinal === 9 || admittedOrdinal === 11 || admittedOrdinal === 12 || wo009Completed) {
@@ -133,10 +138,15 @@ test('D-0042 promotion is explicit and does not self-authorize main', () => {
   }
 });
 
-test('V1.1.0 acceptance and published V1.1.1 history do not rewrite the V1.0 ledger while WO-012 advances', () => {
+test('V1.1 release history and production acceptance do not rewrite the V1.0 ledger while WO-012 advances', () => {
   assert.ok(checkpointMd.includes('The V1.0 production state above remains canonical for `main`'));
   assert.equal(checkpoint.v11.stableRelease.status, 'PRODUCTION_ACCEPTED');
-  assert.equal(checkpoint.v11.stableRelease.version, '1.1.0');
+  if (wo012ProductionAccepted) {
+    assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd);
+    assert.equal(checkpoint.v11.stableRelease.version, '1.1.2');
+  } else {
+    assert.equal(checkpoint.v11.stableRelease.version, '1.1.0');
+  }
   const historicalV111 = checkpoint.v11.patchHistory.find((release) => release.version === '1.1.1');
   assert.equal(historicalV111.status, 'PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED');
   assert.equal(checkpoint.v11.candidateRelease.status, wo012CandidateReleaseStatus(checkpoint));
@@ -209,7 +219,7 @@ test('WO-002 remains the first governed increment and later admissions preserve 
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-008');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY');
-  } else if (wo009Completed || wo011Current || wo012Current || wo012PostMerge) {
+  } else if (wo009Completed || wo011Current || wo012Current || wo012PostMerge || wo012ProductionAccepted) {
     assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
   } else {
     const activeId = String(admittedOrdinal).padStart(3, '0');

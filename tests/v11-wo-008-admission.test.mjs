@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assertWo011CurrentPatch, assertWo012Gate2CarryForward, assertWo012ReleaseStateIfApplicable } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+import { assertWo011CurrentPatch, assertWo012Gate2CarryForward, assertWo012ProductionAcceptedRelease, assertWo012ReleaseStateIfApplicable, isWo012ProductionAcceptedCheckpoint } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -43,7 +43,10 @@ test("WO-007 objective approval is promoted before WO-008 admission", () => {
 test("machine and human checkpoint record completed WO-008 and admitted WO-009", () => {
   const completed = checkpoint.v11.completedWorkOrders["GBS-V11-WO-008"];
   const optionBApproved = checkpoint.v11.gate2CumulativeIntegration?.codecovAcceptanceSemantics?.ownerDecision === "OPTION_B_APPROVED";
-  if (assertWo012ReleaseStateIfApplicable(checkpoint, checkpointMd)) {
+  if (isWo012ProductionAcceptedCheckpoint(checkpoint)) {
+    assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd);
+    assertWo012Gate2CarryForward(checkpoint);
+  } else if (assertWo012ReleaseStateIfApplicable(checkpoint, checkpointMd)) {
     assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-012");
     assertWo012Gate2CarryForward(checkpoint);
   } else if (checkpoint.v11.status === "GBS_V11_WO_011_ADMITTED") {

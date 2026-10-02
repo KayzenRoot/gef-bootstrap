@@ -47,18 +47,20 @@ The GitHub Release for `v1.0.0` provides generated source ZIP/TAR archives. Afte
 ## Important boundary
 Do not advertise or rely on `npm install -g gef-bootstrap` for V1.0.0. The workspace and `@gef-bootstrap/cli` package remain private workspace packages and the CLI surface is a library-facing implementation, not a published executable.
 
-## Published V1.1.1 and current V1.1.2 patch
+## Published V1.1 releases
 
-V1.1.0 remains the production-accepted stable base. The `@gef-bootstrap/cli@1.1.1` package and immutable `v1.1.1` tag were published. Its publication job succeeded, but the post-publish verification job failed while downloading the run artifact; the package and tag remain unchanged. The 1.1.2 patch is an unreleased candidate. To install the verified stable package:
+`@gef-bootstrap/cli@1.1.2` is the current production-accepted V1.1 package. Its immutable `v1.1.2` tag points to `af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`; the npm registry integrity, ECDSA signature and SLSA provenance were verified. V1.1.0 remains the earlier production-accepted release. V1.1.1's publication succeeded, while its initial post-publish verification recorded an artifact-download incident; its package and tag were preserved during recovery.
+
+Install the current stable package at the exact version:
 
 ```bash
-npm install --global @gef-bootstrap/cli@1.1.0
+npm install --global @gef-bootstrap/cli@1.1.2
 gef --help
 gef --version
 ```
 
-The version-specific 1.1.2 package is not available until published. Do not infer availability from a source branch or GitHub tag alone. `docs/V1.1-OPERATIONS-RUNBOOK.md` describes project-state compatibility, explicit apply boundaries and recovery handling.
+The consumer-safe adoption preflight and v1.1.1 post-publish recovery corrections are included. `docs/V1.1-OPERATIONS-RUNBOOK.md` describes project-state compatibility, explicit apply boundaries and recovery handling.
 
 ## V1.1 operations and fresh-chat continuity
 
-V1.1.0 remains production accepted; the published 1.1.1 package has a recorded post-publish verification incident, and the 1.1.2 maintenance patch is governed by WO-012. For project-construction, upgrade and recovery procedures, see [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md). Start every new chat from the canonical checkpoint, active Work Order, Context Lock and verified provider head; use M18/M20 to state exactly one next action or an explicit `NONE/UNKNOWN` stop state.
+V1.1.2 is the current production-accepted release; V1.1.0 acceptance and the V1.1.1 post-publish verification incident remain historical evidence. For project-construction, upgrade and recovery procedures, see [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md). Start every new chat from the canonical checkpoint, active Work Order, Context Lock and verified provider head; use M18/M20 to state exactly one next action or an explicit `NONE/UNKNOWN` stop state.

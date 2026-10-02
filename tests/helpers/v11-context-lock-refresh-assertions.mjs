@@ -2,17 +2,21 @@ import assert from "node:assert/strict";
 
 const WO012_POST_MERGE_STATE = "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT";
 const WO012_ADMITTED_STATE = "GBS_V11_WO_012_ADMITTED";
+const WO012_PRODUCTION_ACCEPTED_STATE = "GBS_V11_1_1_2_PRODUCTION_ACCEPTED";
 
 export const isWo012PostMergeCheckpoint = (checkpoint) => checkpoint.v11.status === WO012_POST_MERGE_STATE;
+export const isWo012ProductionAcceptedCheckpoint = (checkpoint) => checkpoint.v11.status === WO012_PRODUCTION_ACCEPTED_STATE;
 
-export const wo012CandidateReleaseStatus = (checkpoint) => isWo012PostMergeCheckpoint(checkpoint)
-  ? "MERGED_AWAITING_PUBLICATION"
-  : "PATCH_IN_PROGRESS";
+export const wo012CandidateReleaseStatus = (checkpoint) => isWo012ProductionAcceptedCheckpoint(checkpoint)
+  ? "PRODUCTION_ACCEPTED"
+  : isWo012PostMergeCheckpoint(checkpoint)
+    ? "MERGED_AWAITING_PUBLICATION"
+    : "PATCH_IN_PROGRESS";
 
 export function laterV11WorkOrderOrdinal(checkpoint) {
   const state = checkpoint.v11.status;
   const admitted = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(state);
-  if (state === WO012_POST_MERGE_STATE || state === WO012_ADMITTED_STATE) return 12;
+  if (state === WO012_POST_MERGE_STATE || state === WO012_ADMITTED_STATE || state === WO012_PRODUCTION_ACCEPTED_STATE) return 12;
   if (state === "GBS_V11_WO_011_ADMITTED") return 11;
   if (state === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT") return 10;
   if (state === "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY" || state === "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT") return 8;
@@ -41,6 +45,37 @@ export function wo012CurrentPatchCheckpoint(checkpoint) {
 
 export const wo012CurrentPatchCheckpointMd = "Current V1.1 release position\nCurrent V1.1 execution state: `GBS_V11_WO_012_ADMITTED`; active Work Order `GBS-V11-WO-012`\nV1.1.2 PATCH_IN_PROGRESS\nGBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT";
 
+export function wo012ProductionAcceptedCheckpoint(checkpoint) {
+  const accepted = structuredClone(checkpoint);
+  const v11 = accepted.v11;
+  v11.status = WO012_PRODUCTION_ACCEPTED_STATE;
+  v11.activeWorkOrder = "NONE";
+  v11.activeWorkOrderStatus = "NONE";
+  v11.nextLegalAction = "V1_1_2_PRODUCTION_MAINTENANCE_OR_NEXT_GOVERNED_WORK_ORDER";
+  v11.stopState = WO012_PRODUCTION_ACCEPTED_STATE;
+  v11.candidateRelease.status = "PRODUCTION_ACCEPTED";
+  v11.candidateRelease.stopWhen = WO012_PRODUCTION_ACCEPTED_STATE;
+  v11.candidateRelease.tag = "v1.1.2";
+  v11.candidateRelease.npmPublished = true;
+  v11.stableRelease = {
+    ...v11.stableRelease,
+    version: "1.1.2",
+    status: "PRODUCTION_ACCEPTED",
+    tag: "v1.1.2",
+    tagObject: "d8241d55231fa1a608546e37f4b178c7695d1fdd",
+    tagTarget: "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+    githubReleaseId: 401675074,
+    githubReleaseUrl: "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2",
+    githubReleasePublishedAt: "2026-10-02T09:10:56Z",
+    draft: false,
+    prerelease: false,
+    npmPackage: "@gef-bootstrap/cli@1.1.2",
+    distIntegrity: "sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==",
+    releaseTarballSha256: "331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97",
+  };
+  return accepted;
+}
+
 function assertWo012CandidateReleaseIdentity(candidateRelease) {
   assert.equal(candidateRelease.version, "1.1.2");
   assert.equal(candidateRelease.workOrder, "GBS-V11-WO-012");
@@ -65,7 +100,9 @@ export function assertWo012ReleaseState(checkpoint, checkpointMd) {
   const candidate = checkpoint.v11.candidateRelease;
   assert.equal(candidate.status, wo012CandidateReleaseStatus(checkpoint));
   assert.ok(checkpointMd.includes("Current V1.1 release position"));
-  if (isWo012PostMergeCheckpoint(checkpoint)) {
+  if (isWo012ProductionAcceptedCheckpoint(checkpoint)) {
+    assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd);
+  } else if (isWo012PostMergeCheckpoint(checkpoint)) {
     assertWo012PostMergeReleaseGates(checkpoint, checkpointMd);
     assert.match(checkpointMd, /V1\.1\.2.*MERGED_AWAITING_PUBLICATION/);
     assert.match(checkpointMd, /GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT/);
@@ -78,7 +115,7 @@ export function assertWo012ReleaseState(checkpoint, checkpointMd) {
 
 export function assertWo012ReleaseStateIfApplicable(checkpoint, checkpointMd) {
   const status = checkpoint.v11.status;
-  if (status !== WO012_POST_MERGE_STATE && status !== WO012_ADMITTED_STATE) return false;
+  if (status !== WO012_POST_MERGE_STATE && status !== WO012_ADMITTED_STATE && status !== WO012_PRODUCTION_ACCEPTED_STATE) return false;
   assertWo012ReleaseState(checkpoint, checkpointMd);
   return true;
 }
@@ -98,6 +135,7 @@ export function assertWo009BranchReconciliationNote(checkpointMd) {
 }
 
 export function assertLaterActiveWorkOrder(checkpoint, ordinal, ownerGovernancePromoted, minimumOrdinal, wo008Completed = false) {
+  if (isWo012ProductionAcceptedCheckpoint(checkpoint)) return assertWo012ProductionAcceptedRelease(checkpoint);
   if (isWo012PostMergeCheckpoint(checkpoint)) return assertWo012PostMergeReleaseGates(checkpoint);
   assert.ok(Number.isInteger(ordinal) && ordinal >= minimumOrdinal && ordinal <= 12, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (wo008Completed) {
@@ -282,6 +320,52 @@ export function assertWo012PostMergeReleaseGates(checkpoint, checkpointMd = "") 
     assert.ok(checkpointMd.includes("Current V1.1 execution state: `GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT`"));
     assert.ok(checkpointMd.includes("Current V1.1 next legal action: `CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER`"));
     assert.ok(checkpointMd.includes("WO-012 post-merge state: owner audit and merge are complete."));
+  }
+}
+
+export function assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd = "") {
+  const v11 = checkpoint.v11;
+  const release = v11.stableRelease;
+  const candidate = v11.candidateRelease;
+
+  assert.equal(v11.status, WO012_PRODUCTION_ACCEPTED_STATE);
+  assert.equal(v11.activeWorkOrder, "NONE");
+  assert.equal(v11.activeWorkOrderStatus, "NONE");
+  assert.equal(v11.nextLegalAction, "V1_1_2_PRODUCTION_MAINTENANCE_OR_NEXT_GOVERNED_WORK_ORDER");
+  assert.equal(v11.stopState, WO012_PRODUCTION_ACCEPTED_STATE);
+
+  assert.equal(candidate.version, "1.1.2");
+  assert.equal(candidate.workOrder, "GBS-V11-WO-012");
+  assert.equal(candidate.status, "PRODUCTION_ACCEPTED");
+  assert.equal(candidate.stopWhen, WO012_PRODUCTION_ACCEPTED_STATE);
+  assert.equal(candidate.tag, "v1.1.2");
+  assert.equal(candidate.npmPublished, true);
+  assert.equal(candidate.rolloutStarted, false);
+
+  assert.equal(release.version, "1.1.2");
+  assert.equal(release.status, "PRODUCTION_ACCEPTED");
+  assert.equal(release.tag, "v1.1.2");
+  assert.equal(release.tagObject, "d8241d55231fa1a608546e37f4b178c7695d1fdd");
+  assert.equal(release.tagTarget, "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82");
+  assert.equal(release.githubReleaseId, 401675074);
+  assert.equal(release.githubReleaseUrl, "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2");
+  assert.equal(release.githubReleasePublishedAt, "2026-10-02T09:10:56Z");
+  assert.equal(release.draft, false);
+  assert.equal(release.prerelease, false);
+  assert.equal(release.npmPackage, "@gef-bootstrap/cli@1.1.2");
+  assert.equal(release.distIntegrity, "sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==");
+  assert.equal(release.releaseTarballSha256, "331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97");
+
+  const historicalV111 = v11.patchHistory.find((entry) => entry.version === "1.1.1");
+  assert.ok(historicalV111, "published 1.1.1 history must remain recorded");
+  assert.equal(historicalV111.status, "PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED");
+  assert.equal(historicalV111.tag, "v1.1.1");
+  assert.equal(historicalV111.tagTarget, "1dc030f1358eab0347043a3d54c7fc311c7c2123");
+
+  if (checkpointMd !== "") {
+    assert.ok(checkpointMd.includes("GBS_V11_1_1_2_PRODUCTION_ACCEPTED"));
+    assert.ok(checkpointMd.includes("@gef-bootstrap/cli@1.1.2"));
+    assert.ok(checkpointMd.includes("V1.1.0"), "historical V1.1.0 acceptance must remain documented");
   }
 }
 
