@@ -16,6 +16,16 @@ const wo = read(".engineering/work-orders/GBS-V11-WO-009.md");
 const brief = read(".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
 const releasePlan = read(".engineering/releases/V1.1-RELEASE-PLAN.md");
 
+function assertWo009AdmissionReleaseState(current, currentMd) {
+  if (isWo012ProductionAcceptedCheckpoint(current)) {
+    assertWo012ProductionAcceptedRelease(current, currentMd);
+    return true;
+  } else if (assertWo012ReleaseStateIfApplicable(current, currentMd)) {
+    assert.equal(current.v11.activeWorkOrder, "GBS-V11-WO-012");
+    return true;
+  }
+}
+
 test("WO-008 stays owner-audited and merged while the V1 production baseline stays unchanged", () => {
   assert.equal(checkpoint.status, "GBS_V1_PRODUCTION_ACCEPTED");
   assert.equal(checkpoint.phase, "V1_PRODUCTION_ACCEPTED");
@@ -29,35 +39,29 @@ test("WO-008 stays owner-audited and merged while the V1 production baseline sta
 });
 
 test("Checkpoint names one admitted V1.1 action with branch and source references", () => {
-  const checkpoints = [
-    [checkpoint, checkpointMd],
-    [wo012CurrentPatchCheckpoint(checkpoint), `${checkpointMd}\n${wo012CurrentPatchCheckpointMd}`],
-  ];
-  for (const [current, currentMd] of checkpoints) {
-    if (isWo012ProductionAcceptedCheckpoint(current)) {
-      assertWo012ProductionAcceptedRelease(current, currentMd);
-    } else if (assertWo012ReleaseStateIfApplicable(current, currentMd)) {
-      assert.equal(current.v11.activeWorkOrder, "GBS-V11-WO-012");
-    } else if (current.v11.status === "GBS_V11_WO_011_ADMITTED") {
-      assertWo011CurrentPatch(current);
-      assert.equal(current.v11.activeWorkOrder, "GBS-V11-WO-011");
-      assert.ok(currentMd.includes("Current V1.1 release position"));
-    } else if (current.v11.status === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT") {
-      assertWo009MergedPromotionHandoff(current, currentMd);
-      assert.equal(current.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
-      assert.equal(current.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
-    } else {
-      assert.equal(current.v11.status, "GBS_V11_WO_009_ADMITTED");
-      assert.equal(current.v11.activeWorkOrder, "GBS-V11-WO-009");
-      assert.equal(current.v11.activeWorkOrderStatus, "ADMITTED");
-      assert.equal(current.v11.nextWorkOrder, "GBS-V11-WO-009");
-      assert.equal(current.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
-      assert.equal(current.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
-      assert.equal(current.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
-      assertWo009ContextLockRefreshHandoff(current, currentMd);
-      assert.ok(currentMd.includes("### Active V1.1 increment — WO-009"));
-      assertWo009BranchReconciliationNote(currentMd);
-    }
+  const currentStateHandled = assertWo009AdmissionReleaseState(checkpoint, checkpointMd)
+    && assertWo009AdmissionReleaseState(wo012CurrentPatchCheckpoint(checkpoint), `${checkpointMd}\n${wo012CurrentPatchCheckpointMd}`);
+  if (currentStateHandled) {
+    assert.equal(currentStateHandled, true);
+  } else if (checkpoint.v11.status === "GBS_V11_WO_011_ADMITTED") {
+    assertWo011CurrentPatch(checkpoint);
+    assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-011");
+    assert.ok(checkpointMd.includes("Current V1.1 release position"));
+  } else if (checkpoint.v11.status === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT") {
+    assertWo009MergedPromotionHandoff(checkpoint, checkpointMd);
+    assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
+    assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
+  } else {
+  assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_ADMITTED");
+  assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
+  assert.equal(checkpoint.v11.activeWorkOrderStatus, "ADMITTED");
+  assert.equal(checkpoint.v11.nextWorkOrder, "GBS-V11-WO-009");
+  assert.equal(checkpoint.v11.implementationBranch, "feat/1.1/wo-009-integrated-assurance");
+  assert.equal(checkpoint.v11.contextLock, ".engineering/context-locks/GBS-V11-WO-009.json");
+  assert.equal(checkpoint.v11.executionBrief, ".engineering/execution-briefs/GBS-V11-WO-009-DIRECT.md");
+  assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd);
+  assert.ok(checkpointMd.includes("### Active V1.1 increment — WO-009"));
+  assertWo009BranchReconciliationNote(checkpointMd);
   }
 });
 
