@@ -4,20 +4,22 @@
   "issue": 365,
   "repository": "KayzenRoot/gef-bootstrap",
   "branch": "maint/open-surface-reconciliation",
-  "capturedAtUtc": "2026-10-02T11:15:00Z",
+  "capturedAtUtc": "2026-10-02T12:49:00Z",
   "admission": {
-    "state": "OWNER_AUTHORIZED",
-    "baseMainSha": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
-    "phase0ExistingAuthority": "GBS-V11-WO-012",
+    "state": "PHASE_0_COMPLETE_FINAL_RECONCILIATION",
+    "baseMainSha": "ac4cd82a98383eed30ec8363c7a173b3486a7de7",
+    "phase0ExistingAuthority": "GBS-V11-WO-012_COMPLETE",
     "phase0Pr": 364,
     "v12PlanningPr": 344,
-    "v12GateIssue": 346
+    "v12GateIssue": 346,
+    "phase0Merge": "ac4cd82a98383eed30ec8363c7a173b3486a7de7",
+    "phase0Issue361": "CLOSED_COMPLETED"
   },
   "sourceFingerprints": {
     "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
     ".engineering/BACKLOG.md": "08ebe04810aac50ac5225dfef2768200df6c3f11",
-    ".engineering/CHECKPOINT.md": "db6132f0438f059a5ceafe3bf820534e4b900c5b",
-    ".engineering/CHECKPOINT.json": "dd07b255728978f72239645c24fc164768b45497",
+    ".engineering/CHECKPOINT.md": "e8f9ce2a96b6dcbfafe3d9071ca69e43941130af",
+    ".engineering/CHECKPOINT.json": "df5cd7d1b5a2e965256f179245ddf50aceeccc81",
     ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
     ".engineering/DEFINITION-OF-DONE.md": "28192469f6b66f1329375917def4691dce40ed4e"
   },
@@ -74,10 +76,19 @@
     "v112Tag": "v1.1.2",
     "v112TagTarget": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
     "v112GithubReleaseId": 401675074,
-    "v112Package": "@gef-bootstrap/cli@1.1.2"
+    "v112Package": "@gef-bootstrap/cli@1.1.2",
+    "v112ProductionAccepted": true,
+    "v112ProductionAcceptedState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
+    "v112CloseoutPr": 364,
+    "v112CloseoutMerge": "ac4cd82a98383eed30ec8363c7a173b3486a7de7",
+    "v112PostMergeChecks": {
+      "passed": 8,
+      "total": 8,
+      "conclusion": "SUCCESS"
+    }
   },
   "staleIf": [
-    "main moves before a phase that depends on exact main state and the phase is not refreshed",
+    "main moves from ac4cd82a98383eed30ec8363c7a173b3486a7de7 before final exact-head audit without an explicit refresh",
     "canonical Backlog changes module completion for M05/M08/M16/M22",
     "ruleset required-context set changes materially",
     "owner changes the one-Work-Order cleanup strategy"
@@ -105,5 +116,12 @@
     "consumer rollout",
     "admit V1.2 implementation"
   ],
-  "stopCondition": "GBS_MAINT_OPEN_SURFACE_001_REPOSITORY_QUEUE_RECONCILED"
+  "stopCondition": "GBS_MAINT_OPEN_SURFACE_001_READY_FOR_FINAL_OWNER_AUDIT",
+  "currentOpenSurface": {
+    "pullRequests": [],
+    "issues": [
+      365
+    ],
+    "note": "Before opening the final reconciliation PR, only this Work Order remains open."
+  }
 }
