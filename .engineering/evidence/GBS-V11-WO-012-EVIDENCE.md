@@ -69,3 +69,17 @@ The complete branch change inventory, including the five admission/governance fi
 ## Proposed checkpoint disposition
 
 Keep V1.0 production at `1088/1088`; retain V1.1.0 production acceptance and V1.1.1's published-but-post-publish-verification-failed history. WO-012 / 1.1.2 remains the sole active patch. After all final-head checks pass, the proposed stop marker is `GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT` and the next action is the owner's exact-head audit. This bundle does **not** promote the checkpoint, mark 1.1.2 accepted, or authorize merge/tag/publication.
+
+## Post-merge owner audit and merge receipt
+
+The pre-audit evidence above remains the execution record for implementation head `bcc81a81f910a5064fe325077730df508303b195` and the evidence-sync head that followed it. The final exact implementation PR head was `ca22282dd6f6891797430451968bc6bf244a28af`.
+
+- Owner exact-head review: `#5387212864`, verdict `OWNER_APPROVED / NOT_INDEPENDENT`.
+- Ready-state retrigger proof: `157/157` check-runs SUCCESS on `ca22282dd6f6891797430451968bc6bf244a28af`, with no pending/failing run before merge.
+- PR #362 merge: squash merge to `main` as `4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5`.
+- Post-merge merge-commit checks observed before checkpoint promotion: Repository Validation `SUCCESS`, Node coverage LCOV `SUCCESS`, Analyze TypeScript `SUCCESS`.
+- No `v1.1.2` tag, npm publication, GitHub Release, registry verification or consumer rollout had occurred at this checkpoint-promotion admission.
+- HIVE dependency-graph and Neryn World UADS remain consumer-owned boundaries.
+
+The next governed state is `MERGED_AWAITING_PUBLICATION`. Production acceptance remains prohibited until the immutable `v1.1.2` publication path and post-publish registry verification succeed.
+
