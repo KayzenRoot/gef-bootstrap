@@ -196,7 +196,7 @@
   },
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT",
+    "status": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -437,7 +437,7 @@
         "sonarCumulativePr278": "FAILURE"
       },
       "GBS-V11-WO-012": {
-        "status": "OWNER_AUDIT_APPROVED_MERGED",
+        "status": "PRODUCTION_ACCEPTED_CLOSED",
         "implementationPr": 362,
         "implementationBranch": "hotfix/v1.1.2-release-state-preflight",
         "auditedHead": "ca22282dd6f6891797430451968bc6bf244a28af",
@@ -457,11 +457,27 @@
           "repositoryValidation": "SUCCESS",
           "nodeCoverageLcov": "SUCCESS",
           "analyzeTypeScript": "SUCCESS"
-        }
+        },
+        "productionAcceptedState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
+        "immutableTag": "v1.1.2",
+        "tagObject": "d8241d55231fa1a608546e37f4b178c7695d1fdd",
+        "tagTarget": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+        "githubReleaseId": 401675074,
+        "githubReleaseUrl": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2",
+        "githubReleasePublishedAt": "2026-10-02T09:10:56Z",
+        "npmPackage": "@gef-bootstrap/cli@1.1.2",
+        "publicationRun": 36957290788,
+        "publishJob": 110683489629,
+        "registryVerificationJob": 110688730992,
+        "releaseTarballSha256": "331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97",
+        "distIntegrity": "sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==",
+        "registrySignature": "VERIFIED",
+        "slsaProvenance": "VERIFIED",
+        "sigstoreLogIndex": 3046460318
       }
     },
-    "activeWorkOrder": "GBS-V11-WO-012",
-    "activeWorkOrderStatus": "OWNER_AUDIT_APPROVED_MERGED_AWAITING_RELEASE",
+    "activeWorkOrder": "NONE",
+    "activeWorkOrderStatus": "NONE",
     "maintenanceForwardPort": {
       "workOrder": "GBS-V11-MAINT-PIPELINE-001",
       "status": "COMPLETED",
@@ -484,8 +500,8 @@
     "implementationBranch": "hotfix/v1.1.2-release-state-preflight",
     "contextLock": ".engineering/context-locks/GBS-V11-WO-012.json",
     "executionBrief": ".engineering/work-orders/GBS-V11-WO-012.md",
-    "nextLegalAction": "CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER",
-    "stopState": "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT",
+    "nextLegalAction": "V1_1_2_PRODUCTION_MAINTENANCE_OR_NEXT_GOVERNED_WORK_ORDER",
+    "stopState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
     "codexOnlyAdoption": {
       "workOrder": "GBS-V11-GOV-CODEX-PROMOTION-004",
       "issue": 345,
@@ -561,7 +577,7 @@
         "head": "03f81da4c85fe06310ad4c94a79af20e71747681"
       }
     },
-    "nextWorkOrder": "GBS-V11-WO-012",
+    "nextWorkOrder": "NONE",
     "nextCandidateWorkOrder": "NONE",
     "activeMaintenanceWorkOrder": "NONE",
     "activeMaintenanceContextLock": "NONE",
@@ -925,38 +941,45 @@
     "gate3EvidenceBundle": ".engineering/evidence/GBS-V11-WO-010-EVIDENCE.md",
     "gate3Manifest": ".engineering/evidence/GBS-V11-WO-010-RELEASE-MANIFEST.json",
     "stableRelease": {
-      "version": "1.1.0",
+      "version": "1.1.2",
       "status": "PRODUCTION_ACCEPTED",
-      "tag": "v1.1.0",
-      "tagObject": "5f0ed3e1b130a3d47b0d9781bc5a36dc6149312d",
-      "tagTarget": "fb2a2e6d41086e82ba03f307dc6ada18a52458ea",
-      "githubReleaseId": 400965602,
-      "githubReleaseUrl": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0",
-      "githubReleasePublishedAt": "2026-10-01T12:53:14Z",
+      "tag": "v1.1.2",
+      "tagObject": "d8241d55231fa1a608546e37f4b178c7695d1fdd",
+      "tagTarget": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+      "githubReleaseId": 401675074,
+      "githubReleaseUrl": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2",
+      "githubReleasePublishedAt": "2026-10-02T09:10:56Z",
       "draft": false,
       "prerelease": false,
-      "npmPackage": "@gef-bootstrap/cli@1.1.0",
+      "npmPackage": "@gef-bootstrap/cli@1.1.2",
       "npmRepository": "git+https://github.com/KayzenRoot/gef-bootstrap.git",
-      "distIntegrity": "sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==",
-      "releaseTarballSha256": "745770064c4d514bfc0ab7e0fbc1b03e55f1b76611f8fc6f69e75218a6edd5b4",
+      "distIntegrity": "sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==",
+      "releaseTarballSha256": "331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97",
       "sourcePullRequest": 355,
       "sourceMergeSha": "a88a61b7fcae632cdf5b282dc4461592b92cad57",
       "recoveryRunUrl": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36862229818",
       "ownerCloseoutComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5932018102",
-      "trustedPublisherVerification": "OWNER_REPORTED_NOT_INDEPENDENTLY_VERIFIED"
+      "trustedPublisherVerification": "OWNER_REPORTED_NOT_INDEPENDENTLY_VERIFIED",
+      "publicationRun": 36957290788,
+      "publishJob": 110683489629,
+      "registryVerificationJob": 110688730992,
+      "registryVerification": "SUCCESS",
+      "registrySignature": "VERIFIED",
+      "slsaProvenance": "VERIFIED",
+      "sigstoreLogIndex": 3046460318
     },
     "candidateRelease": {
       "version": "1.1.2",
-      "status": "MERGED_AWAITING_PUBLICATION",
+      "status": "PRODUCTION_ACCEPTED",
       "workOrder": "GBS-V11-WO-012",
       "issue": 361,
       "baseMainSha": "5a32a607ccf2055fab722f3d5d452791c6aae3e6",
       "branch": "hotfix/v1.1.2-release-state-preflight",
       "contextLock": ".engineering/context-locks/GBS-V11-WO-012.json",
       "pullRequest": 362,
-      "tag": null,
-      "npmPublished": false,
-      "registrySmoke": "NOT_RUN",
+      "tag": "v1.1.2",
+      "npmPublished": true,
+      "registrySmoke": "SUCCESS",
       "rolloutStarted": false,
       "stopWhen": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
       "auditedHead": "ca22282dd6f6891797430451968bc6bf244a28af",
@@ -973,7 +996,14 @@
         "repositoryValidation": "SUCCESS",
         "nodeCoverageLcov": "SUCCESS",
         "analyzeTypeScript": "SUCCESS"
-      }
+      },
+      "registrySignature": "VERIFIED",
+      "slsaProvenance": "VERIFIED",
+      "githubReleaseId": 401675074,
+      "githubReleaseUrl": "https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2",
+      "githubReleasePublishedAt": "2026-10-02T09:10:56Z",
+      "releaseTarballSha256": "331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97",
+      "distIntegrity": "sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw=="
     },
     "patchHistory": [
       {
@@ -1034,6 +1064,18 @@
       "correctionDelta": 2,
       "tagPublicationAuthorized": false,
       "targetStopCondition": "GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT"
+    },
+    "productionCloseout": {
+      "state": "OWNER_AUDIT_CANDIDATE",
+      "sourceMainSha": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+      "branch": "docs/v1.1.2-production-closeout",
+      "githubReleaseId": 401675074,
+      "releaseVerified": true,
+      "npmRepublished": false,
+      "tagMutated": false,
+      "rolloutStarted": false,
+      "targetState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
+      "stopCondition": "GBS_V11_1_1_2_PRODUCTION_CLOSEOUT_READY_FOR_OWNER_AUDIT"
     }
   }
 }
