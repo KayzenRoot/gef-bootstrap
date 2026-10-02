@@ -1,6 +1,6 @@
 # GBS-V12-WO-000 — Source audit and owner decision handoff
 
-Status: PHASE A+B COMPLETE; owner decisions pending. This is evidence from a preserved research snapshot, not canonical product authority.
+Status: PHASE A+B COMPLETE; Phase C owner decisions OD-01..OD-06 APPROVED; Phase D Source Pack proposal owner-audited APPROVED / NOT_INDEPENDENT; Phase E checkpoint promotion in progress. This is evidence from a preserved research snapshot, not canonical product authority.
 
 ## Exact-state and authority
 
