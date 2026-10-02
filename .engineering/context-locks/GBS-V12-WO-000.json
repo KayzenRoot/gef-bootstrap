@@ -162,7 +162,8 @@
   "allowedWrites": [
     ".engineering/work-orders/GBS-V12-WO-000.md",
     ".engineering/context-locks/GBS-V12-WO-000.json",
-    ".engineering/v1.2/GBS-V12-WO-000-SOURCE-MAP.md"
+    ".engineering/v1.2/GBS-V12-WO-000-SOURCE-MAP.md",
+    ".engineering/execution-briefs/GBS-V12-WO-000-CODEX-BASELINE.md"
   ],
   "forbiddenWrites": [
     "packages/**",
@@ -184,7 +185,8 @@
   "providerActionsAllowed": [
     "open and maintain the WO-000 planning-only PR",
     "comment source-audit evidence on Issue #367 and the WO-000 PR",
-    "request Codex read-only/reproducible baseline execution only after a separate execution brief"
+    "request Codex read-only/reproducible baseline execution only after a separate execution brief",
+    "Codex read-only baseline execution against the exact pinned V1.1.2 base using the WO-000 baseline brief"
   ],
   "providerActionsForbidden": [
     "merge archived PR #344",
@@ -201,5 +203,12 @@
     "ruleset required contexts change",
     "owner changes the V1.2 admission strategy"
   ],
-  "stopCondition": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS"
+  "stopCondition": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS",
+  "phaseA": {
+    "state": "RESEARCH_AUDIT_COMPLETE_BASELINE_EXECUTION_NEXT",
+    "researchFilesAudited": 25,
+    "sourceMapPath": ".engineering/v1.2/GBS-V12-WO-000-SOURCE-MAP.md",
+    "baselineBriefPath": ".engineering/execution-briefs/GBS-V12-WO-000-CODEX-BASELINE.md",
+    "nextStop": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS"
+  }
 }
