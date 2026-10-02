@@ -63,3 +63,10 @@ Before merge, verify:
 STOP: `GBS_V12_GOV_001_EFFECTIVITY_SYNC_READY_FOR_OWNER_AUDIT`
 
 After governed merge: `GBS_V12_GOV_001_EFFECTIVE_WO001_ADMISSION_READY`.
+
+## Correction Delta C1
+
+CodeRabbit found one valid stale qualifier after the PR became ready: `.engineering/REQUIREMENTS.md` still referred to the already-effective ADR-0010 as “proposed.” Owner authorization is recorded on Issue #370 comment `#5958474264`. The one-line correction removes only that stale qualifier.
+
+No requirement, risk classification, review gate, denominator, profile, implementation authority or predecessor fact changed. The corrected exact head must pass the same full audit gate.
+
