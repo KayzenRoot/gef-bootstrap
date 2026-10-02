@@ -23,6 +23,8 @@ The promotion delta is restricted to:
 - .engineering/work-orders/GBS-V12-WO-000.md
 - .engineering/checkpoint-deltas/GBS-V12-WO-000-PROPOSED.md
 - .engineering/evidence/GBS-V12-WO-000-EVIDENCE.md
+- .engineering/evidence/GBS-V12-WO-000-CAPABILITY-MAP.json (Correction Delta E1 only)
+- .engineering/evidence/GBS-V12-WO-000-SOURCE-AUDIT.md (Correction Delta E1 only)
 - this promotion evidence file
 
 No runtime/product code, product tests, CI/workflows, migrations, dependency manifests, package version, release tag or deployment configuration is authorized.
@@ -60,3 +62,8 @@ GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION
 The next legal action is a separate owner-admitted GBS-V12-WO-001 with a fresh Context Lock.
 
 The final promotion exact head and merge receipt are intentionally bound by GitHub's final review and merge metadata rather than precomputed inside this pre-merge file.
+
+## Review correction delta E1
+
+CodeRabbit review on the ready candidate identified two MINOR stale evidence statements. Owner authorization is recorded at Issue #367 comment `#5957842897`. The capability-map D05 rationale and Source Audit status header were updated without changing dispositions, measurements, denominator, risk floors, or implementation authority. Both review threads must be resolved and the new exact head must pass the full promotion gate.
+
