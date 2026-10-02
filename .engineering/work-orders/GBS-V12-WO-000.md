@@ -434,3 +434,15 @@ At that terminal state:
 - V1.2 implementation remains not started;
 - a separate owner-admitted WO-001 is required before Codex implementation.
 
+### Phase E Correction Delta E1 — CodeRabbit evidence alignment
+
+After PR #369 was marked ready, CodeRabbit posted two valid MINOR evidence-integrity findings:
+- capability-map D05 rationale still said the specialist trigger was unresolved after OD-06 had resolved it;
+- Source Audit header still said owner decisions were pending although Phase C was approved and Phase D had been audited.
+
+Owner authorization is recorded on Issue #367 comment `#5957842897`. The correction delta adds only:
+- `.engineering/evidence/GBS-V12-WO-000-CAPABILITY-MAP.json`
+- `.engineering/evidence/GBS-V12-WO-000-SOURCE-AUDIT.md`
+
+The D05 disposition, baseline measurements, C/D/R counts, approved decisions, release denominator and checkpoint semantics are unchanged. Re-run exact-head checks and resolve both CodeRabbit threads before final audit.
+
