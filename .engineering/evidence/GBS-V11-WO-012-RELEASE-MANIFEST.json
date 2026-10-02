@@ -4,20 +4,26 @@
   "workOrderId": "GBS-V11-WO-012",
   "issue": 361,
   "pullRequest": 362,
-  "captureMode": "LOCAL_WINDOWS_AND_EXACT_HEAD_BCC81A_PRE_OWNER_AUDIT",
+  "captureMode": "LOCAL_WINDOWS_PLUS_FINAL_EXACT_HEAD_OWNER_AUDITED_AND_MERGED",
   "candidate": {
     "repository": "KayzenRoot/gef-bootstrap",
     "branch": "hotfix/v1.1.2-release-state-preflight",
     "baseCommit": "5a32a607ccf2055fab722f3d5d452791c6aae3e6",
     "implementationCommit": "bcc81a81f910a5064fe325077730df508303b195",
-    "evidenceSyncCommit": null,
-    "exactHeadWithRecordedChecks": "bcc81a81f910a5064fe325077730df508303b195",
-    "recheckRequiredAfterEvidenceSync": true,
-    "evidenceSyncCommitReference": "Use the live PR #362 head; the bundle does not embed its own commit SHA.",
-    "pullRequestState": "OPEN_DRAFT",
-    "ownerExactHeadAudit": "PENDING",
+    "evidenceSyncCommit": "ca22282dd6f6891797430451968bc6bf244a28af",
+    "exactHeadWithRecordedChecks": "ca22282dd6f6891797430451968bc6bf244a28af",
+    "recheckRequiredAfterEvidenceSync": false,
+    "evidenceSyncCommitReference": "Final audited PR #362 head ca22282dd6f6891797430451968bc6bf244a28af.",
+    "pullRequestState": "MERGED",
+    "ownerExactHeadAudit": "OWNER_APPROVED_NOT_INDEPENDENT",
     "tag": null,
-    "checkpointPromotion": "NOT_PERFORMED"
+    "checkpointPromotion": "POST_MERGE_GOVERNANCE_CANDIDATE",
+    "ownerReview": 5387212864,
+    "readyStateCheckRuns": {
+      "count": 157,
+      "conclusion": "SUCCESS"
+    },
+    "mergeCommit": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5"
   },
   "contextLock": {
     "path": ".engineering/context-locks/GBS-V11-WO-012.json",
@@ -54,29 +60,63 @@
     "githubRelease": "NOT_CREATED"
   },
   "localValidation": {
-    "focusedTests": { "state": "PASS", "passed": 26, "failed": 0, "skipped": 0 },
-    "wo012ReleaseStateTests": { "state": "PASS", "passed": 4, "failed": 0, "skipped": 0 },
+    "focusedTests": {
+      "state": "PASS",
+      "passed": 26,
+      "failed": 0,
+      "skipped": 0
+    },
+    "wo012ReleaseStateTests": {
+      "state": "PASS",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
     "build": "PASS",
     "typecheck": "PASS",
-    "fullValidate": { "state": "PASS", "passed": 1630, "failed": 0, "skipped": 0 },
-    "npmAuditHigh": { "state": "PASS", "vulnerabilities": 0 },
-    "changedJsonDocuments": { "state": "PASS", "parsed": 6 },
+    "fullValidate": {
+      "state": "PASS",
+      "passed": 1630,
+      "failed": 0,
+      "skipped": 0
+    },
+    "npmAuditHigh": {
+      "state": "PASS",
+      "vulnerabilities": 0
+    },
+    "changedJsonDocuments": {
+      "state": "PASS",
+      "parsed": 6
+    },
     "diffCheck": "PASS",
-    "credentialPatternPreflight": { "state": "NOT_REPEATED_FOR_CORRECTION_DELTA", "priorImplementationScan": { "changedFilesScanned": 37, "matches": 0 } },
+    "credentialPatternPreflight": {
+      "state": "NOT_REPEATED_FOR_CORRECTION_DELTA",
+      "priorImplementationScan": {
+        "changedFilesScanned": 37,
+        "matches": 0
+      }
+    },
     "packageInstallAndUse": {
       "state": "PASS",
       "sourceCommit": "bcc81a81f910a5064fe325077730df508303b195",
       "platform": "win32-x64",
       "lifecycleScripts": "DISABLED",
       "networkMode": "OFFLINE",
-      "smokes": ["CLI version/help", "library import", "doctor --json", "status --json", "1.0.0 to 1.1.2 migration with source preservation", "uninstall"]
+      "smokes": [
+        "CLI version/help",
+        "library import",
+        "doctor --json",
+        "status --json",
+        "1.0.0 to 1.1.2 migration with source preservation",
+        "uninstall"
+      ]
     }
   },
   "providerChecks": {
-    "exactHead": "bcc81a81f910a5064fe325077730df508303b195",
-    "reportedCheckCount": 141,
+    "exactHead": "ca22282dd6f6891797430451968bc6bf244a28af",
+    "reportedCheckCount": 157,
     "reportedChecks": "PASS",
-    "recheckRequiredAfterEvidenceSync": true,
+    "recheckRequiredAfterEvidenceSync": false,
     "gitleaks": "PASS",
     "trivy": "PASS",
     "codeql": "PASS",
@@ -100,7 +140,11 @@
       "releaseAssurance": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207240"
     }
   },
-  "securityFindings": { "state": "SECURITY_GATES_PASS_ON_RECORDED_HEAD", "exactHead": "bcc81a81f910a5064fe325077730df508303b195", "criticalAndHighCounts": "No blocking findings reported by the passing exact-head gates." },
+  "securityFindings": {
+    "state": "EXACT_HEAD_SECURITY_GATES_PASS_OWNER_AUDITED",
+    "exactHead": "ca22282dd6f6891797430451968bc6bf244a28af",
+    "criticalAndHighCounts": "0 candidate-introduced blocking CRITICAL/HIGH findings; inherited repository-wide Scorecard maturity/configuration signals remain separately triaged."
+  },
   "knownConsumerOwnedBlockers": [
     "HIVE existing dependency-graph blocker is not fixed by WO-012",
     "Neryn World UADS prerequisite is not fixed by WO-012"
@@ -149,6 +193,26 @@
     "tests/v11-wo-012-adoption-preflight.test.mjs",
     "tests/v11-wo-012-release-state.test.mjs"
   ],
-  "stopCondition": "GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT",
-  "actionsNotPerformed": ["merge", "checkpoint promotion", "v1.1.2 tag", "npm publish", "GitHub Release", "consumer repository mutation"]
+  "stopCondition": "GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT",
+  "actionsNotPerformed": [
+    "checkpoint promotion merge",
+    "v1.1.2 tag",
+    "npm publish",
+    "GitHub Release",
+    "registry verification",
+    "consumer repository mutation"
+  ],
+  "postMergeCheckpointPromotion": {
+    "sourceMainSha": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+    "branch": "docs/v1.1.2-post-merge-checkpoint",
+    "state": "CANDIDATE_FOR_OWNER_AUDIT",
+    "mainChecks": {
+      "repositoryValidation": "SUCCESS",
+      "nodeCoverageLcov": "SUCCESS",
+      "analyzeTypeScript": "SUCCESS"
+    },
+    "targetCandidateState": "MERGED_AWAITING_PUBLICATION",
+    "nextLegalActionAfterMerge": "CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER",
+    "tagPublicationAuthorized": false
+  }
 }
