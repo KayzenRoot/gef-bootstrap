@@ -163,7 +163,9 @@
     ".engineering/work-orders/GBS-V12-WO-000.md",
     ".engineering/context-locks/GBS-V12-WO-000.json",
     ".engineering/v1.2/GBS-V12-WO-000-SOURCE-MAP.md",
-    ".engineering/execution-briefs/GBS-V12-WO-000-CODEX-BASELINE.md"
+    ".engineering/execution-briefs/GBS-V12-WO-000-CODEX-BASELINE.md",
+    ".engineering/evidence/GBS-V12-WO-000-BASELINE.md",
+    ".engineering/evidence/GBS-V12-WO-000-BASELINE.json"
   ],
   "forbiddenWrites": [
     "packages/**",
@@ -210,5 +212,11 @@
     "sourceMapPath": ".engineering/v1.2/GBS-V12-WO-000-SOURCE-MAP.md",
     "baselineBriefPath": ".engineering/execution-briefs/GBS-V12-WO-000-CODEX-BASELINE.md",
     "nextStop": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS"
+  },
+  "baselineEvidence": {
+    "markdown": ".engineering/evidence/GBS-V12-WO-000-BASELINE.md",
+    "json": ".engineering/evidence/GBS-V12-WO-000-BASELINE.json",
+    "sourceBase": "203dc6a86de035b8502453100ea6e2a4788cae57",
+    "productMutationAuthorized": false
   }
 }
