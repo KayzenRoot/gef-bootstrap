@@ -60,3 +60,23 @@ export {
   evaluateCapsuleValidity,
 } from './s05-receipt-handoff.js';
 export type { FingerprintBinding, PreviousCapsuleSnapshot, ValidityEvalInput } from './s05-receipt-handoff.js';
+
+// ─── S06 – Guided Discovery and Source-Bound Answer Capsules ──────────────────
+export {
+  createGuidedDiscoveryAnswerCapsule,
+  buildGuidedDiscoveryPlan,
+} from './s06-guided-discovery.js';
+export type {
+  GuidedDiscoveryAnswerState,
+  GuidedDiscoveryProjectMode,
+  GuidedDiscoveryOperationMode,
+  GuidedDiscoveryPlanState,
+  GuidedDiscoveryBinding,
+  DiscoverySourceBinding,
+  GuidedDiscoveryAnswerCapsuleInput,
+  GuidedDiscoveryAnswerCapsule,
+  GuidedDiscoveryQuestion,
+  CurrentDiscoverySourceFingerprint,
+  BuildGuidedDiscoveryPlanInput,
+  GuidedDiscoveryPlan,
+} from './s06-guided-discovery.js';
