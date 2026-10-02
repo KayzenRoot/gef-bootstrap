@@ -1,9 +1,9 @@
 # GBS-MAINT-OPEN-SURFACE-001 — Repository open-surface reconciliation
 
 **Issue:** #365  
-**State:** OWNER_AUTHORIZED / PHASED_EXECUTION  
+**State:** FINAL_RECONCILIATION_READY_FOR_PR  
 **Risk:** ELEVATED governance / dependency hygiene  
-**Admission base:** `main@af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`
+**Refreshed base:** `main@ac4cd82a98383eed30ec8363c7a173b3486a7de7`
 
 ## Objective
 
@@ -16,15 +16,17 @@ Reconcile every currently open GitHub Issue and Pull Request into a truthful ter
 - Codex remains sole author of code/tests/CI/migrations.
 - ChatGPT may author governance/planning docs, close objectively superseded GitHub items, coordinate provider state and perform exact-head audits.
 
-## Phase 0 — V1.1.2 terminal closeout
+## Phase 0 — V1.1.2 terminal closeout — COMPLETE
 
-Finish PR #364 cleanly:
-- canonical production checkpoint promotion;
-- keep required main ruleset contexts green;
-- require `codecov/patch` green too for a clean repository surface, despite it being non-required;
-- no threshold lowering/exclusions/padding;
-- if checkpoint promotion alone does not exercise the new accepted-state branches sufficiently, Codex may add only causal coverage inside the already-authorized WO-012 test/helper paths;
-- exact-head owner audit, ready-state retriggers, merge, close #361.
+- PR #364 exact audited head: `f2c2e28a321d4e7e5293b5d4b623da891fd04c8c`
+- owner audit: `APPROVED / NOT_INDEPENDENT`, CRITICAL 0, HIGH 0
+- all 43 candidate checks passed, including `codecov/patch`
+- ready-state retrigger preserved the same exact head and all four required main checks passed
+- squash merge: `ac4cd82a98383eed30ec8363c7a173b3486a7de7`
+- post-merge main checks: `8/8 SUCCESS`
+- canonical state: `GBS_V11_1_1_2_PRODUCTION_ACCEPTED`
+- Issue #361: `CLOSED / COMPLETED`
+- no threshold weakening, tag movement, npm republish or consumer rollout occurred.
 
 ## Phase 1 — V1.1 / maintenance cleanup
 
@@ -93,5 +95,7 @@ No threshold reduction, required-check removal, failing/stale merge, force-push,
 ## STOP CONDITIONS
 
 Intermediate: `GBS_MAINT_OPEN_SURFACE_001_READY_FOR_FINAL_OWNER_AUDIT`
+
+Current state: all original open items are disposed; only this Work Order remains until its governance-only reconciliation PR is exact-head audited and merged.
 
 Terminal: `GBS_MAINT_OPEN_SURFACE_001_REPOSITORY_QUEUE_RECONCILED`
