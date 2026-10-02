@@ -292,7 +292,32 @@ Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync
 
 **Terminal state:** `GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION` — EFFECTIVE after governed PR #369 merge.
 
-**Next legal V1.2 action now:** separately create and owner-admit `GBS-V12-WO-001` with a fresh Context Lock. WO-001 has not been started by WO-000 or this effectivity sync.
+**Historical WO-000 next action (superseded by the WO-001 admission recorded below):** separately create and owner-admit `GBS-V12-WO-001` with a fresh Context Lock. That admission is now complete; this line is retained only as WO-000 handoff history.
 
 The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED` release facts remain unchanged and are not converted into V1.2 implementation credit.
+
+## V1.2 WO-001 admission effectivity — governance sync
+
+**State:** `WO001_ADMITTED_IMPLEMENTATION_NOT_STARTED`. GBS-V12-WO-001 admission planning is effective from PR #373 squash merge `3b576e7b090a7f49ea7397b2c3840147158d2a72`. This sync records admission only and earns no V1.2 implementation credit.
+
+- Work Order: `GBS-V12-WO-001`; Issue: `#372`; admission PR: `#373`.
+- Admission base: `main@4698592b521ee8c5df37be8759312bd76b9d702f`.
+- Exact admission head: `9d9788fc03c0b19eab09c7fdd0c231ca7891d1c9`.
+- Owner exact-head audit: review `#5395657110`, `APPROVED / NOT_INDEPENDENT`.
+- Findings: CRITICAL `0`; HIGH `0`; CodeRabbit's one MINOR stale-lock finding was corrected on the audited head and its thread is resolved.
+- Admission merge: `3b576e7b090a7f49ea7397b2c3840147158d2a72`.
+- Universal denominator remains `U12-01..U12-10` = 10 obligations.
+- Implementation credit remains `0 / 10 = 0.00%`; remaining `10 / 10 = 100.00%`.
+- Target obligations for WO-001: U12-01 and U12-02 required; U12-03 candidate only if its full canonical acceptance contract is proven.
+- U12-01, U12-02 and U12-03 remain `NOT_IMPLEMENTED`.
+- U12-04..U12-10 receive no credit from WO-001 admission.
+- No profile implementation, product/runtime code, product tests, CI/workflow, dependency, package/tag/release or paid-tool change is admitted by this sync.
+- Active admitted V1.2 Work Order: `GBS-V12-WO-001`.
+- V1.2 implementation started: `NO`.
+
+**Current stop:** `GBS_V12_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`.
+
+**Next legal V1.2 action:** compile a fresh implementation Context Lock from the exact post-sync `main` head. Only after that lock is exact and owner-authorized may Codex begin implementation. The target next stop is `GBS_V12_WO_001_ADMITTED_READY_FOR_CODEX`.
+
+The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED` release facts remain unchanged.
 
