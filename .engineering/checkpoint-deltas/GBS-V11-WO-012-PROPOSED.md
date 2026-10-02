@@ -6,9 +6,11 @@
 
 **Base:** `main@5a32a607ccf2055fab722f3d5d452791c6aae3e6`
 
-**Implementation source commit:** `2f2ed16969bab21184d7d26e50d4aca7008159a3`
+**Implementation source and correction commit:** `bcc81a81f910a5064fe325077730df508303b195`
 
-**Final candidate SHA:** use the exact live head of PR #362 after the Evidence Bundle sync commit and its fresh required checks.
+**Recorded implementation-head checks:** all 141 reported checks passed on `bcc81a81f910a5064fe325077730df508303b195`. The Evidence Bundle sync changes the PR head; this result is not reusable for that newer SHA.
+
+**Final candidate SHA:** use the exact live head of PR #362 after the Evidence Bundle sync commit and confirm its fresh required checks before the owner audit.
 
 ## Proposed state after exact-head checks
 

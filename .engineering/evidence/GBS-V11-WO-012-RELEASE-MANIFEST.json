@@ -4,13 +4,16 @@
   "workOrderId": "GBS-V11-WO-012",
   "issue": 361,
   "pullRequest": 362,
-  "captureMode": "LOCAL_WINDOWS_EXACT_IMPLEMENTATION_COMMIT_PRE_OWNER_AUDIT",
+  "captureMode": "LOCAL_WINDOWS_AND_EXACT_HEAD_BCC81A_PRE_OWNER_AUDIT",
   "candidate": {
     "repository": "KayzenRoot/gef-bootstrap",
     "branch": "hotfix/v1.1.2-release-state-preflight",
     "baseCommit": "5a32a607ccf2055fab722f3d5d452791c6aae3e6",
-    "implementationCommit": "2f2ed16969bab21184d7d26e50d4aca7008159a3",
+    "implementationCommit": "bcc81a81f910a5064fe325077730df508303b195",
     "evidenceSyncCommit": null,
+    "exactHeadWithRecordedChecks": "bcc81a81f910a5064fe325077730df508303b195",
+    "recheckRequiredAfterEvidenceSync": true,
+    "evidenceSyncCommitReference": "Use the live PR #362 head; the bundle does not embed its own commit SHA.",
     "pullRequestState": "OPEN_DRAFT",
     "ownerExactHeadAudit": "PENDING",
     "tag": null,
@@ -18,7 +21,7 @@
   },
   "contextLock": {
     "path": ".engineering/context-locks/GBS-V11-WO-012.json",
-    "sha256": "ff0f7602a4bc6677a09ec42fe3761f355fa8bb8fce4d7e410728109909775d26",
+    "sha256": "d263388e82c1e3ddd154b0dde943bd5f6fef42aef0c11124d5de9dac4062f505",
     "base": "5a32a607ccf2055fab722f3d5d452791c6aae3e6",
     "changedPathsMatchedAgainstAllowlist": 40,
     "unauthorizedPaths": 0,
@@ -27,7 +30,8 @@
       "Owner-authorized legacy-detachment test path",
       "Owner-authorized compatibility matrix path",
       "Owner-authorized WO-002 admission test path",
-      "Owner-authorized WO-010 publisher test path"
+      "Owner-authorized WO-010 publisher test path",
+      "Owner-delegated exact two Evidence Bundle paths in legacy-detachment classification"
     ]
   },
   "package": {
@@ -40,26 +44,28 @@
     "registryPublication": "NOT_ATTEMPTED",
     "artifact": {
       "file": "gef-bootstrap-cli-1.1.2.tgz",
-      "localPath": "%TEMP%\\gef-wo012-exact-2f2ed169-package\\gef-bootstrap-cli-1.1.2.tgz",
-      "sourceCommit": "2f2ed16969bab21184d7d26e50d4aca7008159a3",
-      "sizeBytes": 2742868,
-      "sha256": "65cf97205343f6448b793a691ed2068d0b937fdc8da50f5a9c3cc9cd6dc9fc30",
-      "sri": "sha512-JwK5PSzYdNOnS7VBMe5JFt2bqpZswngoPV9ssAkoaCm5mzSPtbFDUABdqogqzsjjLggrn+Z0OwMBgVYMzFGJEg=="
+      "localPath": "%TEMP%\\gef-wo012-bcc81a8-smoke-70470969f3c34391a5808a622b50baf2\\gef-bootstrap-cli-1.1.2.tgz",
+      "sourceCommit": "bcc81a81f910a5064fe325077730df508303b195",
+      "sizeBytes": 2742869,
+      "sha256": "47cb63ac50dcd3369c72f4f7c8ae0f73b5a210a6e997fe015a586e9ead7f4fcc",
+      "sri": "sha512-AVjYd6eZ4vgzNXFhgMA5ngA3Bhofrp2uVGXz3qm/6pHNMUYvTc3BlTbyxRoebmIEzGGff1UoI83iH+/td9RfMw=="
     },
     "releaseTag": "NOT_CREATED",
     "githubRelease": "NOT_CREATED"
   },
   "localValidation": {
-    "focusedTests": { "state": "PASS", "passed": 91, "failed": 0, "skipped": 0 },
+    "focusedTests": { "state": "PASS", "passed": 26, "failed": 0, "skipped": 0 },
+    "wo012ReleaseStateTests": { "state": "PASS", "passed": 4, "failed": 0, "skipped": 0 },
     "build": "PASS",
     "typecheck": "PASS",
     "fullValidate": { "state": "PASS", "passed": 1630, "failed": 0, "skipped": 0 },
     "npmAuditHigh": { "state": "PASS", "vulnerabilities": 0 },
     "changedJsonDocuments": { "state": "PASS", "parsed": 6 },
     "diffCheck": "PASS",
-    "credentialPatternPreflight": { "state": "PASS", "changedFilesScanned": 37, "matches": 0 },
+    "credentialPatternPreflight": { "state": "NOT_REPEATED_FOR_CORRECTION_DELTA", "priorImplementationScan": { "changedFilesScanned": 37, "matches": 0 } },
     "packageInstallAndUse": {
       "state": "PASS",
+      "sourceCommit": "bcc81a81f910a5064fe325077730df508303b195",
       "platform": "win32-x64",
       "lifecycleScripts": "DISABLED",
       "networkMode": "OFFLINE",
@@ -67,18 +73,34 @@
     }
   },
   "providerChecks": {
-    "exactHead": "PENDING_ON_FINAL_PR_362_HEAD",
-    "gitleaks": "PENDING",
-    "trivy": "PENDING",
-    "codeql": "PENDING",
-    "sonarCloud": "PENDING",
-    "codecov": "PENDING",
-    "dependencyReview": "PENDING",
-    "pipelineIntegrity": "PENDING",
-    "socket": "PENDING",
-    "ubuntuWindowsMacosExactArtifact": "PENDING"
+    "exactHead": "bcc81a81f910a5064fe325077730df508303b195",
+    "reportedCheckCount": 141,
+    "reportedChecks": "PASS",
+    "recheckRequiredAfterEvidenceSync": true,
+    "gitleaks": "PASS",
+    "trivy": "PASS",
+    "codeql": "PASS",
+    "sonarCloud": "PASS",
+    "codecov": "PASS",
+    "dependencyReview": "PASS",
+    "pipelineIntegrity": "PASS",
+    "socket": "PASS",
+    "repositoryValidation": "PASS",
+    "ubuntuWindowsMacosExactArtifact": "PASS",
+    "pullRequestChecksUrl": "https://github.com/KayzenRoot/gef-bootstrap/pull/362/checks",
+    "runUrls": {
+      "codecov": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207247/job/110639261645",
+      "sonarCloud": "https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=362",
+      "gitleaks": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207401/job/110639260572",
+      "trivy": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207401/job/110639260703",
+      "codeql": "https://github.com/KayzenRoot/gef-bootstrap/runs/110639720046",
+      "dependencyReview": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207323/job/110639260021",
+      "pipelineIntegrity": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207284/job/110639306425",
+      "repositoryValidation": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207344/job/110639260378",
+      "releaseAssurance": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36943207240"
+    }
   },
-  "securityFindings": { "critical": "PENDING_EXACT_HEAD_PROVIDER_SCANS", "high": "PENDING_EXACT_HEAD_PROVIDER_SCANS" },
+  "securityFindings": { "state": "SECURITY_GATES_PASS_ON_RECORDED_HEAD", "exactHead": "bcc81a81f910a5064fe325077730df508303b195", "criticalAndHighCounts": "No blocking findings reported by the passing exact-head gates." },
   "knownConsumerOwnedBlockers": [
     "HIVE existing dependency-graph blocker is not fixed by WO-012",
     "Neryn World UADS prerequisite is not fixed by WO-012"
