@@ -168,7 +168,19 @@
     ".engineering/v1.2/GBS-V12-WO-000-SOURCE-MAP.md",
     ".engineering/execution-briefs/GBS-V12-WO-000-CODEX-BASELINE.md",
     ".engineering/evidence/GBS-V12-WO-000-BASELINE.md",
-    ".engineering/evidence/GBS-V12-WO-000-BASELINE.json"
+    ".engineering/evidence/GBS-V12-WO-000-BASELINE.json",
+    ".engineering/v1.2/GBS-V12-WO-000-OWNER-DECISIONS.md",
+    ".engineering/v1.2/proposed/SOURCE-PACK-DELTA.md",
+    ".engineering/v1.2/proposed/SCOPE.md",
+    ".engineering/v1.2/proposed/REQUIREMENTS.md",
+    ".engineering/v1.2/proposed/ARCHITECTURE.md",
+    ".engineering/v1.2/proposed/SECURITY.md",
+    ".engineering/v1.2/proposed/TEST-BENCHMARK-PLAN.md",
+    ".engineering/v1.2/proposed/DEPLOYMENT.md",
+    ".engineering/v1.2/proposed/DEFINITION-OF-DONE.md",
+    ".engineering/v1.2/proposed/DECISIONS.md",
+    ".engineering/v1.2/proposed/PROFILE-MATRIX.md",
+    ".engineering/v1.2/proposed/WORK-ORDER-SEQUENCE.md"
   ],
   "forbiddenWrites": [
     "packages/**",
@@ -208,7 +220,7 @@
     "ruleset required contexts change",
     "owner changes the V1.2 admission strategy"
   ],
-  "stopCondition": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS",
+  "stopCondition": "GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT",
   "phaseA": {
     "state": "COMPLETE_READY_FOR_OWNER_DECISIONS",
     "researchFilesAudited": 25,
@@ -227,5 +239,47 @@
     "json": ".engineering/evidence/GBS-V12-WO-000-BASELINE.json",
     "sourceBase": "203dc6a86de035b8502453100ea6e2a4788cae57",
     "productMutationAuthorized": false
+  },
+  "ownerDecisionGate": {
+    "state": "APPROVED",
+    "approvedAtUtc": "2026-10-02T14:29:00Z",
+    "decisions": [
+      {
+        "id": "V12-D001",
+        "subject": "firstReferencePilot",
+        "value": "WEB_APP_API",
+        "rationale": "prove the universal V1.2 flow without introducing asset/custody/chain/MMO risk"
+      },
+      {
+        "id": "V12-D002",
+        "subject": "packagingBoundary",
+        "value": "CORE_1_2_PLUS_ONE_PROVEN_REFERENCE_PROFILE",
+        "referenceProfile": "WEB_APP_API",
+        "otherDomainPacks": "CONDITIONAL_NOT_RELEASE_BLOCKING"
+      },
+      {
+        "id": "V12-D003",
+        "subject": "secondPriorityDomain",
+        "value": "WEB3_EVM",
+        "releaseBlocking": false
+      },
+      {
+        "id": "V12-D004",
+        "subject": "validationBudget",
+        "value": "LOCAL_FREE_FIRST",
+        "paidToolsRequireExplicitApproval": true
+      },
+      {
+        "id": "V12-D005",
+        "subject": "specialistReviewTrigger",
+        "value": "MANDATORY_FOR_REAL_ASSET_MAINNET_CUSTODY_CRITICAL_LEDGER_PRIVILEGED_OR_IRREVERSIBLE_HIGH_IMPACT_OPERATIONS"
+      }
+    ]
+  },
+  "phaseD": {
+    "state": "SOURCE_PACK_PROPOSAL_AUTHORIZED",
+    "canonicalFilesMayBeMutatedNow": false,
+    "proposedRoot": ".engineering/v1.2/proposed",
+    "nextStop": "GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT"
   }
 }
