@@ -2,27 +2,36 @@
   "schemaVersion": "1.0",
   "workOrder": "GBS-V12-WO-001",
   "issue": 372,
-  "state": "ADMISSION_PLANNING_READY_FOR_OWNER_AUDIT",
+  "state": "IMPLEMENTATION_LOCK_READY_FOR_OWNER_AUDIT",
   "risk": "STANDARD",
   "repository": "KayzenRoot/gef-bootstrap",
   "ownerAccount": "KayzenRoot",
-  "planningBranch": "planning/v1.2/wo-001-admission",
-  "admissionBase": {
+  "implementationBranch": "feat/v1.2/wo-001-guided-planning-marathon",
+  "implementationBase": {
     "ref": "main",
-    "sha": "4698592b521ee8c5df37be8759312bd76b9d702f",
+    "sha": "8e63ae5a2733139080063eab9434639c772a04ec",
     "packageVersion": "1.1.2",
     "v12State": "SOURCE_PACK_APPROVED_NO_IMPLEMENTATION",
-    "predecessorStop": "GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION"
+    "checkpointStop": "GBS_V12_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+    "predecessorAdmissionMerge": "3b576e7b090a7f49ea7397b2c3840147158d2a72",
+    "governanceSyncMerge": "8e63ae5a2733139080063eab9434639c772a04ec"
   },
-  "planningScaffold": {
-    "workOrderCommit": "cf41d8b3f223c6ab239d3bff045a5c38197fe7f7",
-    "note": "This lock governs admission planning only. Implementation must rebind to the exact post-admission-merge main head before Codex edits source."
+  "admissionReceipt": {
+    "admissionBase": "4698592b521ee8c5df37be8759312bd76b9d702f",
+    "pullRequest": 373,
+    "auditedHead": "9d9788fc03c0b19eab09c7fdd0c231ca7891d1c9",
+    "ownerAuditReview": 5395657110,
+    "mergeSha": "3b576e7b090a7f49ea7397b2c3840147158d2a72",
+    "governanceSyncIssue": 374,
+    "governanceSyncPullRequest": 376,
+    "governanceSyncOwnerAuditReview": 5396175403,
+    "governanceSyncMerge": "8e63ae5a2733139080063eab9434639c772a04ec"
   },
-  "sourceFingerprintsAtAdmissionBase": {
+  "sourceFingerprintsAtImplementationBase": {
     "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
     ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
-    ".engineering/CHECKPOINT.md": "65680b66a474dc1745ed03d28d1bce86b1ea03cb",
-    ".engineering/CHECKPOINT.json": "125e9d770247b631d78b9de0d14a76f0c0db2766",
+    ".engineering/CHECKPOINT.md": "ae4db0902901b556ace6c09506c05abe1028d095",
+    ".engineering/CHECKPOINT.json": "03a8363ccb817ef3d46caffb61a2b24484bfc8b4",
     ".engineering/SCOPE.md": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
     ".engineering/REQUIREMENTS.md": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
     ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
@@ -34,9 +43,10 @@
     ".engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md": "536bd06c01e942c5e090a693591d5cd324585c59",
     ".engineering/V1.2-PROFILE-MATRIX.md": "c9446bedd52469caa593ca5278c725b8e8c84d32",
     ".engineering/V1.2-RELEASE-DENOMINATOR.md": "f33db46412110584604bb556e8a62ecbef9c59c1",
-    "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+    "package.json": "e917d281c9ba60157e82265d949d9958eac83731",
+    ".engineering/work-orders/GBS-V12-WO-001.md": "1bbd6cff85358a5e37e9c39ef3519bd93d5dd16e"
   },
-  "implementationSurfaceFingerprintsAtAdmissionBase": {
+  "implementationSurfaceFingerprintsAtImplementationBase": {
     "packages/task-context-compiler/src/public.ts": "29028d9f8e1857be671f1036f51868bc3135e538",
     "packages/task-context-compiler/src/s01-task-contract.ts": "4e8b2c4f781e8b46f9c16ddfe298f95e74b045d5",
     "packages/task-context-compiler/src/s02-source-routing.ts": "b0ac51e22443c87942bf3b373732189b779acba8",
@@ -63,26 +73,22 @@
     "Gitleaks secrets",
     "Trivy filesystem and configuration"
   ],
-  "admissionPlanning": {
-    "implementationAuthorized": false,
-    "productRuntimeMutationAuthorized": false,
-    "productTestMutationAuthorized": false,
-    "ciMutationAuthorized": false,
-    "migrationMutationAuthorized": false,
-    "dependencyChangeAuthorized": false,
-    "checkpointCanonicalMutationAuthorized": false,
-    "paidToolInstallAuthorized": false,
-    "writeAllowed": [
-      ".engineering/work-orders/GBS-V12-WO-001.md",
-      ".engineering/context-locks/GBS-V12-WO-001.json"
-    ],
-    "expectedDiff": "governance-only admission scaffold"
-  },
-  "implementationCandidate": {
-    "state": "NOT_AUTHORIZED_UNTIL_ADMISSION_MERGE_AND_FRESH_CONTEXT_LOCK",
-    "implementationBase": "TO_BE_BOUND_TO_EXACT_POST_ADMISSION_MERGE_MAIN_HEAD",
+  "implementationAuthorization": {
+    "current": "PENDING_OWNER_AUDIT_OF_THIS_LOCK_HEAD",
     "codexOnly": true,
-    "preferredWriteSurfaces": [
+    "becomesEffectiveOnlyWhen": [
+      "this exact lock head receives owner audit APPROVED / NOT_INDEPENDENT",
+      "CRITICAL and HIGH findings are zero",
+      "all required exact-head checks are green or a superseded run has a current same-head SUCCESS replacement",
+      "Issue #372 remains open and materially unchanged",
+      "branch still descends from implementationBase.sha",
+      "main canonical source fingerprints have not changed before Codex first implementation commit"
+    ],
+    "ownerAuditDoesNotSatisfyIndependentSpecialistGate": true,
+    "implementationMayStartBeforeAudit": false
+  },
+  "implementationWriteSurfaces": {
+    "preferred": [
       "packages/task-context-compiler/src/**",
       "packages/execution-pack-compiler/src/**",
       "packages/checkpoint-engine/src/**",
@@ -90,9 +96,11 @@
       "tests/**",
       ".engineering/evidence/GBS-V12-WO-001-*.md",
       ".engineering/evidence/GBS-V12-WO-001-*.json",
-      ".engineering/checkpoint-deltas/GBS-V12-WO-001-PROPOSED.md"
+      ".engineering/checkpoint-deltas/GBS-V12-WO-001-PROPOSED.md",
+      ".engineering/context-locks/GBS-V12-WO-001.json",
+      ".engineering/work-orders/GBS-V12-WO-001.md"
     ],
-    "conditionalWriteSurfaces": [
+    "conditional": [
       "packages/planning-workspace/src/**",
       "packages/source-pack/src/**",
       "packages/decision-system/src/**"
@@ -126,34 +134,37 @@
       "U12-10"
     ]
   },
-  "governanceConstraints": [
-    "Codex alone authors or fixes implementation code, tests, CI and migrations.",
-    "Owner-operated ChatGPT exact-head audit is NOT_INDEPENDENT.",
+  "implementationRules": [
     "Extend existing M09-M18 contracts; do not create duplicate planner, graph, executor, checkpoint or resume engines.",
-    "No V1.2 implementation credit is earned by this admission planning PR.",
-    "No unselected profile, paid tool, external SaaS or HIGH_ASSURANCE production action is admitted.",
-    "No progress percentage or ETA is generated unless current M21/M22 authority independently permits it."
+    "Codex alone authors or fixes implementation code, tests, CI and migrations.",
+    "ChatGPT may author governance/evidence and perform owner-operated exact-head audit, always labeled NOT_INDEPENDENT.",
+    "Do not start D01-D12 profile implementation in WO-001.",
+    "No paid tools, new external SaaS or HIGH_ASSURANCE production activity.",
+    "No progress percentage or ETA is generated unless M21/M22 independently permit it.",
+    "U12-03 receives credit only if every canonical U12-03 acceptance case is proven; otherwise remain NOT_IMPLEMENTED.",
+    "No canonical checkpoint promotion until implementation exact-head audit and governed promotion."
   ],
-  "staleIf": [
-    "main differs from admissionBase.sha before admission PR is opened",
-    "any locked canonical source blob differs before owner admission audit",
+  "staleIfBeforeCodexFirstImplementationCommit": [
+    "main differs from implementationBase.sha due a canonical or implementation-surface change not reconciled into this lock",
+    "any sourceFingerprintsAtImplementationBase value changes on main",
+    "any implementationSurfaceFingerprintsAtImplementationBase value changes on main",
     "Issue #372 is closed, superseded or materially amended",
-    "planning branch no longer descends from admissionBase.sha",
-    "admission planning diff contains any path outside admissionPlanning.writeAllowed",
-    "any locked implementation-surface fingerprint differs before admission owner audit or fresh implementation lock compilation"
+    "branch no longer descends from implementationBase.sha",
+    "this lock head has not received the required owner audit",
+    "required exact-head checks contain an unresolved failure or pending required context"
   ],
-  "admissionPreflight": [
+  "codexPreflight": [
     "verify repository and owner account",
-    "verify main exact SHA equals admissionBase.sha",
-    "verify all canonical and implementation-surface fingerprints",
-    "verify all locked implementation-surface fingerprints still match admissionBase before owner audit",
-    "verify WO-000 terminal state is effective and active V1.2 implementation Work Order is NONE",
-    "verify Issue #372 remains open and matches this bounded contract",
-    "verify planning diff contains only the Work Order and Context Lock",
-    "if any binding mismatches, stop STALE_CONTEXT"
+    "verify branch equals implementationBranch and descends from implementationBase.sha",
+    "verify current main and locked source/implementation fingerprints still match implementationBase before first source edit",
+    "verify Issue #372 remains open and matches the admitted Work Order",
+    "verify owner audit of the exact implementation-lock head is APPROVED / NOT_INDEPENDENT with CRITICAL/HIGH 0",
+    "verify required exact-head checks for the lock head are green",
+    "verify implementation diff before first source edit contains only the fresh lock/evidence scaffold",
+    "if any binding mismatches, stop STALE_CONTEXT and do not edit implementation source"
   ],
-  "admissionStopCondition": "GBS_V12_WO_001_ADMISSION_READY_FOR_OWNER_AUDIT",
-  "postAdmissionStopCondition": "GBS_V12_WO_001_ADMITTED_READY_FOR_CODEX",
+  "lockAuditStopCondition": "GBS_V12_WO_001_IMPLEMENTATION_LOCK_READY_FOR_OWNER_AUDIT",
+  "postLockAuditStopCondition": "GBS_V12_WO_001_ADMITTED_READY_FOR_CODEX",
   "implementationStopCondition": "GBS_V12_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT",
   "terminalStopCondition": "GBS_V12_WO_001_PROMOTED"
 }
