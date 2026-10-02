@@ -52,7 +52,35 @@ export function wo012CurrentPatchCheckpoint(checkpoint) {
   return historical;
 }
 
+export function wo012PostMergeCheckpoint(checkpoint) {
+  const merged = structuredClone(checkpoint);
+  const v11 = merged.v11;
+  v11.status = WO012_POST_MERGE_STATE;
+  v11.activeWorkOrder = "GBS-V11-WO-012";
+  v11.activeWorkOrderStatus = "OWNER_AUDIT_APPROVED_MERGED_AWAITING_RELEASE";
+  v11.nextLegalAction = "CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER";
+  v11.nextWorkOrder = "GBS-V11-WO-012";
+  v11.nextCandidateWorkOrder = "NONE";
+  v11.stopState = WO012_POST_MERGE_STATE;
+  v11.candidateRelease.status = "MERGED_AWAITING_PUBLICATION";
+  v11.candidateRelease.stopWhen = WO012_PRODUCTION_ACCEPTED_STATE;
+  v11.candidateRelease.tag = null;
+  v11.candidateRelease.npmPublished = false;
+  v11.candidateRelease.registrySmoke = "NOT_RUN";
+  v11.completedWorkOrders["GBS-V11-WO-012"] = {
+    ...v11.completedWorkOrders["GBS-V11-WO-012"],
+    status: "OWNER_AUDIT_APPROVED_MERGED",
+  };
+  v11.stableRelease = {
+    ...v11.stableRelease,
+    version: "1.1.0",
+    tag: "v1.1.0",
+  };
+  return merged;
+}
+
 export const wo012CurrentPatchCheckpointMd = "Current V1.1 release position\nCurrent V1.1 execution state: `GBS_V11_WO_012_ADMITTED`; active Work Order `GBS-V11-WO-012`\nV1.1.2 PATCH_IN_PROGRESS\nGBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT";
+export const wo012PostMergeCheckpointMd = "Current V1.1 release position\nCurrent V1.1 execution state: `GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT`\nCurrent V1.1 next legal action: `CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER`\nV1.1.2 MERGED_AWAITING_PUBLICATION\nGBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT\nWO-012 post-merge state: owner audit and merge are complete.";
 
 export function wo012ProductionAcceptedCheckpoint(checkpoint) {
   const accepted = structuredClone(checkpoint);

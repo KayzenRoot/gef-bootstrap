@@ -1,5 +1,5 @@
 import test from 'node:test';
-import { assertLaterActiveWorkOrder, assertWo012ProductionAcceptedRelease, isLegalPostFoundationV11State, isWo012PostMergeCheckpoint, isWo012ProductionAcceptedCheckpoint, laterV11WorkOrderOrdinal, wo012CandidateReleaseStatus } from './helpers/v11-context-lock-refresh-assertions.mjs';
+import { assertLaterActiveWorkOrder, assertWo012ProductionAcceptedRelease, isLegalPostFoundationV11State, isWo012PostMergeCheckpoint, isWo012ProductionAcceptedCheckpoint, laterV11WorkOrderOrdinal, wo012CandidateReleaseStatus, wo012CurrentPatchCheckpoint, wo012CurrentPatchCheckpointMd } from './helpers/v11-context-lock-refresh-assertions.mjs';
 import assert from 'node:assert/strict';
 
 import { readFileSync } from 'node:fs';
@@ -139,20 +139,26 @@ test('D-0042 promotion is explicit and does not self-authorize main', () => {
 });
 
 test('V1.1 release history and production acceptance do not rewrite the V1.0 ledger while WO-012 advances', () => {
-  assert.ok(checkpointMd.includes('The V1.0 production state above remains canonical for `main`'));
-  assert.equal(checkpoint.v11.stableRelease.status, 'PRODUCTION_ACCEPTED');
-  if (wo012ProductionAccepted) {
-    assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd);
-    assert.equal(checkpoint.v11.stableRelease.version, '1.1.2');
-  } else {
-    assert.equal(checkpoint.v11.stableRelease.version, '1.1.0');
+  const checkpoints = [
+    [checkpoint, checkpointMd],
+    [wo012CurrentPatchCheckpoint(checkpoint), `${checkpointMd}\n${wo012CurrentPatchCheckpointMd}`],
+  ];
+  for (const [current, currentMd] of checkpoints) {
+    assert.ok(currentMd.includes('The V1.0 production state above remains canonical for `main`'));
+    assert.equal(current.v11.stableRelease.status, 'PRODUCTION_ACCEPTED');
+    if (isWo012ProductionAcceptedCheckpoint(current)) {
+      assertWo012ProductionAcceptedRelease(current, currentMd);
+      assert.equal(current.v11.stableRelease.version, '1.1.2');
+    } else {
+      assert.equal(current.v11.stableRelease.version, '1.1.0');
+    }
+    const historicalV111 = current.v11.patchHistory.find((release) => release.version === '1.1.1');
+    assert.equal(historicalV111.status, 'PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED');
+    assert.equal(current.v11.candidateRelease.status, wo012CandidateReleaseStatus(current));
+    assert.equal(current.v11.candidateRelease.version, '1.1.2');
+    assert.equal(current.v11.candidateRelease.workOrder, 'GBS-V11-WO-012');
+    assert.equal(current.earnedProductionWeight, 1088);
   }
-  const historicalV111 = checkpoint.v11.patchHistory.find((release) => release.version === '1.1.1');
-  assert.equal(historicalV111.status, 'PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED');
-  assert.equal(checkpoint.v11.candidateRelease.status, wo012CandidateReleaseStatus(checkpoint));
-  assert.equal(checkpoint.v11.candidateRelease.version, '1.1.2');
-  assert.equal(checkpoint.v11.candidateRelease.workOrder, 'GBS-V11-WO-012');
-  assert.equal(checkpoint.earnedProductionWeight, 1088);
 });
 
 test('promotion ledger preserves proposal history and records the later effective transition', () => {
