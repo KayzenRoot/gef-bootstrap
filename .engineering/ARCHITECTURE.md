@@ -346,7 +346,7 @@ Detailed threat models/policies belong to Security planning, but Architecture ma
 
 STOP CONDITION: `READY_FOR_ARCHITECTURE_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
 
-# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+# V1.2 canonical Source Pack addendum — admitted by GBS-V12-WO-000
 
 **State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`. These architecture constraints are authoritative for admitted V1.2 work but do not themselves authorize implementation. Existing V1/V1.1 architecture and the accepted V1.1.2 line remain preserved.
 
