@@ -61,14 +61,18 @@ function currentSources(questions, extra = []) {
 test('source-bound answer capsules are attributable, version-bound and deterministic', () => {
   if (!hasGuidedDiscoveryApi()) return;
 
-  const one = answer('q-decided').value;
+  const sourcePair = [
+    { sourceId: 'source-a', fingerprint: 'fp-a' },
+    { sourceId: 'source-b', fingerprint: 'fp-b' },
+  ];
+  const one = answer('q-decided', { sourceBindings: sourcePair }).value;
   const reordered = m14.createGuidedDiscoveryAnswerCapsule({
     binding,
     questionId: 'q-decided',
     state: 'DECIDED',
     answer: 'Answer for q-decided',
     recordedBy: 'owner:kaizenroot',
-    sourceBindings: [{ sourceId: 'source-q-decided', fingerprint: 'fp-q-decided' }],
+    sourceBindings: [...sourcePair].reverse(),
   }, options).value;
   const nextSourceVersion = m14.createGuidedDiscoveryAnswerCapsule({
     binding: { ...binding, sourcePackIdentity: 'source-pack-v12-2' },
@@ -83,7 +87,7 @@ test('source-bound answer capsules are attributable, version-bound and determini
   assert.equal(one.semanticIdentity, reordered.semanticIdentity);
   assert.notEqual(one.semanticIdentity, nextSourceVersion.semanticIdentity);
   assert.equal(one.recordedBy, 'owner:kaizenroot');
-  assert.deepEqual(one.sourceBindings, [{ sourceId: 'source-q-decided', fingerprint: 'fp-q-decided' }]);
+  assert.deepEqual(one.sourceBindings, sourcePair);
   assert.equal(Object.isFrozen(one), true);
   assert.equal(m14.createGuidedDiscoveryAnswerCapsule({
     binding,

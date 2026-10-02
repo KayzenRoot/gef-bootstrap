@@ -224,6 +224,9 @@ test('unknown domain topology and mismatched owner-change fingerprints remain un
   assert.equal(missingDomain.state, 'INDETERMINATE');
   assert.equal(missingDomain.ownerChangeImpact.state, 'UNRESOLVED');
   assert.equal(missingDomain.ownerChangeImpact.unknownDomains.includes('DEFINITION_OF_DONE'), true);
+  assert.equal(missingDomain.unknowns.filter(item =>
+    item.kind === 'DOMAIN_TOPOLOGY_INCOMPLETE' && item.subject === 'DEFINITION_OF_DONE',
+  ).length, 1);
 
   const changedWithoutCurrentProof = m15.analyzeCanonicalPlan(fixture({
     ownerChanges: [{

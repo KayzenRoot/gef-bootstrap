@@ -62,7 +62,7 @@
       "failed": 0,
       "skipped": 0,
       "cancelled": 0,
-      "environment": "normal clone of the admitted branch with the six candidate source/test files copied; per-process safe.directory limited to that clone"
+      "environment": "normal clone with per-process safe.directory scoped to that clone; corrected source/test set"
     },
     "initialLinkedWorktreeValidation": {
       "result": "ENVIRONMENT_FAILURES_RESOLVED_IN_NORMAL_CLONE",
@@ -78,7 +78,7 @@
       "vulnerabilities": 0
     },
     "gitDiffCheck": "PASS",
-    "exactHeadHostedChecks": "PENDING_AFTER_PUSH"
+    "exactHeadHostedChecks": "PENDING_AFTER_PUSH_NEW_HEAD"
   },
   "scope": {
     "canonicalCheckpointFilesChanged": false,

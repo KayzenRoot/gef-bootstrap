@@ -345,11 +345,6 @@ export function analyzeCanonicalPlan(
 
   const topologyUnknownDomains = CANONICAL_PLANNING_DOMAINS
     .filter(domain => !topologyByDomain.has(domain));
-  for (const node of topologyByDomain.values()) {
-    for (const dependent of node.dependentDomains) {
-      if (!topologyByDomain.has(dependent)) topologyUnknownDomains.push(dependent);
-    }
-  }
   const explicitUnknownDomains: CanonicalPlanningDomain[] = [];
   for (const unknown of input.unknownAuthorityDomains) {
     if (!isDomain(unknown.domain) || !unknown.reason.trim()) {
