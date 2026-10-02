@@ -274,7 +274,7 @@ Status: `ACTIVE`
 
 ## V1.2 Phase C owner decisions — OD-01 through OD-06
 
-**Authority:** owner-approved Phase C receipt at .engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md and Issue #367 owner comment. **Status:** binding choices for the Phase D proposal; canonical Source Pack effectiveness remains pending exact-head owner audit and checkpoint promotion.
+**Authority:** owner-approved Phase C receipt at .engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md and Issue #367 owner comment. **Status:** APPROVED and EFFECTIVE as canonical V1.2 Source Pack decisions from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`; implementation still requires separately admitted Work Orders.
 
 - OD-01: first end-to-end pilot is full-stack multi-tenant SaaS covering web/API, data, authentication/authorization, tenant isolation, subscription/billing/entitlements, security, recovery, observability and release evidence as applicable. It excludes real-money movement, custody, escrow, payouts and live financial transactions.
 - OD-02: V1.2 is a universal core plus separately accepted reference conditional profiles. Each profile has its own acceptance contract and denominator; unselected profiles do not silently block the core.
