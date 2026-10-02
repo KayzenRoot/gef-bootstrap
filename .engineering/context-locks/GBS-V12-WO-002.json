@@ -1,0 +1,149 @@
+{
+  "schemaVersion": "1.0",
+  "workOrder": "GBS-V12-WO-002",
+  "issue": 380,
+  "state": "ADMISSION_PLANNING_READY_FOR_OWNER_AUDIT",
+  "risk": "ELEVATED",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "ownerAccount": "KayzenRoot",
+  "planningBranch": "planning/v1.2/wo-002-admission",
+  "admissionBase": {
+    "ref": "main",
+    "sha": "3213cc59293285748221b43b8dd7c6a51c8b5c2a",
+    "packageVersion": "1.1.2",
+    "v12State": "V12_IMPLEMENTATION_IN_PROGRESS",
+    "implementationCredit": "2/10",
+    "predecessorStop": "GBS_V12_WO_001_PROMOTED"
+  },
+  "planningScaffold": {
+    "workOrderBlob": "8405eef5c8aac221e96112541d3f83c853be2e9c",
+    "note": "This lock governs WO-002 admission planning only. After admission merge and checkpoint/effectivity sync, compile a fresh implementation Context Lock against exact then-current main before Codex edits any implementation source."
+  },
+  "sourceFingerprintsAtAdmissionBase": {
+    "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
+    ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    ".engineering/CHECKPOINT.md": "2ef2398a2d917770647380f98d0d50cfa8da8408",
+    ".engineering/CHECKPOINT.json": "2c673c1dfdb7b4217cd9b3b0c2f6d9f45e735bca",
+    ".engineering/SCOPE.md": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
+    ".engineering/REQUIREMENTS.md": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+    ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+    ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+    ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+    ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+    ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
+    ".engineering/V1.2-RELEASE-DENOMINATOR.md": "f33db46412110584604bb556e8a62ecbef9c59c1",
+    ".engineering/V1.2-PROFILE-MATRIX.md": "c9446bedd52469caa593ca5278c725b8e8c84d32",
+    ".engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md": "536bd06c01e942c5e090a693591d5cd324585c59",
+    "package.json": "e917d281c9ba60157e82265d949d9958eac83731",
+    ".engineering/work-orders/GBS-V12-WO-002.md": "8405eef5c8aac221e96112541d3f83c853be2e9c"
+  },
+  "implementationSurfaceFingerprintsAtAdmissionBase": {
+    "packages/evidence-engine/src/public.ts": "af2ab94b97108f2f2acb640acaeac0b8eeae689e",
+    "packages/evidence-engine/src/types.ts": "75aa63943d2afa557a5e53008ff2f372787015e4",
+    "packages/proof-graph/src/public.ts": "d92ec11631aba2e5a1a9586653bd3668a2941fb2",
+    "packages/proof-graph/src/types-base.ts": "5aa8b3f51e95593700c7f210319c71e6b73e7782",
+    "packages/proof-graph/src/types-graph.ts": "79a16a21d52d3037524cc0683719c4578a6e4ead",
+    "packages/proof-graph/src/s02-graph.ts": "6879495f3d8b6c531bd935c8a52a3c8ce9de8864",
+    "packages/heds-delta-review/src/public.ts": "bfa66439d54c4c0a554a9664873484a2a57aa986",
+    "packages/heds-delta-review/src/types.ts": "e5b4c838a330015f87faa57a9efa858a794bb9fe",
+    "packages/heds-delta-review/src/s05-finding.ts": "d30197edd5c68b682855c3c771508cee4644d5f1",
+    "packages/assurance-pipeline/src/public.ts": "b170f0205818f8796ef124dda53ea8bad4e2046e",
+    "packages/assurance-pipeline/src/types.ts": "a9e2346d1ee77ea009a3016927adeed1e831f9f0",
+    "packages/test-impact-engine/src/public.ts": "65397af95edcd81c96f86ddf96ff1d122d03ecb2",
+    "packages/test-impact-engine/src/types.ts": "df6b33c4e26f328af14b396081c3e29b1f8e0fd5"
+  },
+  "requiredMainContexts": [
+    "Repository validation",
+    "Pipeline integrity",
+    "Gitleaks secrets",
+    "Trivy filesystem and configuration"
+  ],
+  "admissionPlanning": {
+    "implementationAuthorized": false,
+    "productRuntimeMutationAuthorized": false,
+    "productTestMutationAuthorized": false,
+    "ciMutationAuthorized": false,
+    "migrationMutationAuthorized": false,
+    "dependencyChangeAuthorized": false,
+    "checkpointCanonicalMutationAuthorized": false,
+    "paidToolInstallAuthorized": false,
+    "writeAllowed": [
+      ".engineering/work-orders/GBS-V12-WO-002.md",
+      ".engineering/context-locks/GBS-V12-WO-002.json"
+    ],
+    "expectedDiff": "governance-only WO-002 admission scaffold"
+  },
+  "targetObligations": {
+    "required": [
+      "U12-04"
+    ],
+    "explicitlyNotCreditable": [
+      "U12-03",
+      "U12-05",
+      "U12-06",
+      "U12-07",
+      "U12-08",
+      "U12-09",
+      "U12-10"
+    ]
+  },
+  "implementationCandidate": {
+    "state": "NOT_AUTHORIZED_UNTIL_ADMISSION_PROMOTION_AND_FRESH_IMPLEMENTATION_LOCK",
+    "codexOnly": true,
+    "preferredWriteSurfaces": [
+      "packages/evidence-engine/src/**",
+      "packages/proof-graph/src/**",
+      "packages/heds-delta-review/src/**",
+      "packages/assurance-pipeline/src/**",
+      "packages/test-impact-engine/src/**",
+      "tests/**",
+      ".engineering/evidence/GBS-V12-WO-002-*.md",
+      ".engineering/evidence/GBS-V12-WO-002-*.json",
+      ".engineering/checkpoint-deltas/GBS-V12-WO-002-PROPOSED.md"
+    ],
+    "prohibitedWithoutCorrectionDelta": [
+      ".github/workflows/**",
+      "package.json",
+      "package-lock.json",
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      "new top-level Bug Hunter/mutation/proof/finding/assurance/test-impact package",
+      "profile implementation C03/C12/D01-D12",
+      "paid service or paid CI configuration",
+      "package version/tag/release/deployment"
+    ]
+  },
+  "governanceConstraints": [
+    "Codex alone authors or fixes implementation code, tests, CI and migrations.",
+    "Owner-operated ChatGPT audit is NOT_INDEPENDENT.",
+    "U12-04 is the only universal obligation creditable by WO-002.",
+    "Do not import U12-05 causal repair, first-failure or flake-control semantics.",
+    "Extend M24-M28; do not create duplicate evidence/proof/finding/assurance/test-impact engines.",
+    "Mutation/probe descriptors are inert governed data and do not authorize source/process/Git mutation.",
+    "No conditional profile or HIGH_ASSURANCE production activity is admitted.",
+    "Canonical V1.2 credit remains 2/10 throughout admission planning."
+  ],
+  "staleIf": [
+    "main differs from admissionBase.sha before admission owner audit",
+    "any locked canonical source blob differs before admission owner audit",
+    "Issue #380 is closed, superseded or materially amended",
+    "planning branch no longer descends from admissionBase.sha",
+    "planning diff contains any path outside admissionPlanning.writeAllowed",
+    "any locked M24-M28 implementation-surface fingerprint differs before admission owner audit"
+  ],
+  "admissionPreflight": [
+    "verify repository and owner account",
+    "verify current main exact SHA equals admissionBase.sha",
+    "verify all canonical and M24-M28 surface fingerprints",
+    "verify canonical checkpoint is GBS_V12_WO_001_PROMOTED with 2/10 credit and no active implementation Work Order",
+    "verify Issue #380 remains open and matches this bounded U12-04 contract",
+    "verify planning diff contains only this Work Order and admission Context Lock",
+    "if any binding mismatches, stop STALE_CONTEXT"
+  ],
+  "admissionStopCondition": "GBS_V12_WO_002_ADMISSION_READY_FOR_OWNER_AUDIT",
+  "postAdmissionStopCondition": "GBS_V12_WO_002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+  "postFreshLockStopCondition": "GBS_V12_WO_002_ADMITTED_READY_FOR_CODEX",
+  "implementationStopCondition": "GBS_V12_WO_002_IMPLEMENTATION_READY_FOR_OWNER_AUDIT",
+  "terminalStopCondition": "GBS_V12_WO_002_PROMOTED"
+}
