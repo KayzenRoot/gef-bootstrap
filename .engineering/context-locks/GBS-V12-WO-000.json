@@ -3,7 +3,7 @@
   "workOrderId": "GBS-V12-WO-000",
   "issue": 367,
   "repository": "KayzenRoot/gef-bootstrap",
-  "state": "OWNER_AUTHORIZED_ADMISSION_ONLY_NO_IMPLEMENTATION",
+  "state": "SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS_NO_IMPLEMENTATION",
   "executionBase": {
     "branch": "main",
     "sha": "203dc6a86de035b8502453100ea6e2a4788cae57",
@@ -210,11 +210,17 @@
   ],
   "stopCondition": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS",
   "phaseA": {
-    "state": "RESEARCH_AUDIT_COMPLETE_BASELINE_EXECUTION_NEXT",
+    "state": "COMPLETE_READY_FOR_OWNER_DECISIONS",
     "researchFilesAudited": 25,
     "sourceMapPath": ".engineering/v1.2/GBS-V12-WO-000-SOURCE-MAP.md",
     "baselineBriefPath": ".engineering/execution-briefs/GBS-V12-WO-000-CODEX-BASELINE.md",
-    "nextStop": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS"
+    "nextStop": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS",
+    "baselineCaptured": true,
+    "baselineOutcome": "BASELINE_CAPTURED_NO_V12_COMPARISON",
+    "fullValidation": "1632/1632 PASS",
+    "focusedValidation": "84/84 PASS",
+    "cliRoi": "NO_CHANGE_COMPARABLE",
+    "brownfieldTiming": "NOT_YET_BASELINED"
   },
   "baselineEvidence": {
     "markdown": ".engineering/evidence/GBS-V12-WO-000-BASELINE.md",
