@@ -254,3 +254,19 @@ Before the Deployment surface can support `PRODUCTION_RELEASE_DONE`, current evi
 Freezing this Source Pack document does not by itself award production earned weight. Credit changes only when admitted backlog items/modules satisfy the frozen DoD with valid evidence. Current audited baseline remains `16 / 1088 = 1.47%` until a later audited delta earns additional weight.
 
 STOP CONDITION: `READY_FOR_DEPLOYMENT_REVIEW_AND_CHECKPOINT`.
+
+# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+
+**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; this addendum does not change V1.1.2 release facts, package identity, channels or tag policy.
+
+## Release composition
+
+A future V1.2 release candidate must identify the exact universal-core denominator and list every selected profile with its own acceptance denominator. Report core and each profile separately; a profile not selected for that release is NOT_SELECTED and cannot block the universal-core claim. The SaaS full-stack multi-tenant profile is the first end-to-end pilot and has a separate gate. Subscription/entitlement verification must not create real-money movement, custody, escrow or payout.
+
+The EVM conditional reference is Solidity + Foundry + Anvil and local deterministic execution unless separately admitted. The Godot 4 reference is conditional and names each tested desktop/browser target. No profile implies mainnet, production signing, live payment, or hosted GEF service.
+
+## Distribution and operations
+
+Preserve the current accepted V1.1.2 release and its artifacts. Future package, version, publication, provenance, rollback and release-channel changes require their own admitted Work Order and current exact-head gates. This WO-000 proposal authorizes no tag, package change, publication, deployment or production rollout.
+
+Any selected deployment profile records target, operator permissions, backup/restore and rollback or roll-forward evidence, observability, service dependencies, data handling and exact artifact provenance. Initial paid-tool and expanded-CI budget remains US$ 0; paid deployment services require a separate owner decision.

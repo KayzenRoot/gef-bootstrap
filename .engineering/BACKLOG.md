@@ -139,3 +139,19 @@ Backlog weights remain production burden, not time. M22 owns empirical ETA/forec
 - any future recalibration records denominator/completion impact before and after.
 
 STOP CONDITION: `BACKLOG_BASELINE_ACTIVE_USE_CURRENT_CHECKPOINT_FOR_CONTINUATION`.
+# V1.2 proposed backlog sequence — GBS-V12-WO-000
+
+**State:** PROPOSED; each item requires its own owner admission, Work Order, Context Lock and completion evidence. This sequence is planning only and does not start WO-001.
+
+| Order | Proposed Work Order | Bounded objective | Capability-map basis and sequencing |
+|---|---|---|---|
+| 1 | WO-001 — Guided planning and context acceleration | Deliver U12-01/U12-02 and the bounded M14-M18 orchestration contract without a second executor. | C01/C02/C04 are PARTIAL_DELTA; source-backed planning and checkpoint/resume already exist. |
+| 2 | WO-002 — Requirement, invariant and bug proof | Extend the M24-M28 proof graph with reproducible hypotheses, negative controls and domain-aware bug evidence. | C05 is PARTIAL_DELTA; avoids replacing contract evidence and impact selection. |
+| 3 | WO-003 — Delta Assurance and flake control | Bind causal repair, failure preservation, flake records and conservative validation expansion. | C06 is PARTIAL_DELTA; exact invalidation exists and must not be weakened. |
+| 4 | WO-004 — Review, evidence and GitHub hardening | Complete review/evidence role boundaries, exact-head audit semantics and truthful provider permission states. | C07 is PARTIAL_DELTA; M31/proof/release evidence already exists, and owner audit remains NOT_INDEPENDENT. |
+| 5 | WO-005 — Engineering intelligence and admitted profiles | Improve measurable intelligence/reporting/profile routing; admit only the separately approved SaaS pilot or another profile with a bounded contract. | C08-C10 are PARTIAL_DELTA; C03/C12 and D01-D12 remain conditional. The baseline has unavailable token, cost, escaped-defect and end-to-end Work Order metrics; do not claim measured gains. |
+| 6 | WO-006 — Reproducible release assurance and promotion | Prove release artifacts and exact selected-profile denominators with compatibility, provenance, security and recovery evidence. | C11 is PARTIAL_DELTA; package release machinery exists, but app-profile build-once/proof-many is not demonstrated. |
+
+The audit found existing execution/wave capability in M14-M18, proof/delta/impact capability in M24-M28, status/telemetry primitives in M20-M23 and M43/M45/M63, and review/release evidence in M31 plus proof and release engines. The sequence composes and extends these surfaces; it does not authorize parallel engines or treat renamed existing capability as new. C03 and C12, D01-D12, and R01-R05 keep their profile/research dispositions from the Phase A+B map.
+
+No item in this backlog authorizes implementation by itself. Do not create or execute WO-001 until WO-000 has passed owner audit and its separate admission is approved.

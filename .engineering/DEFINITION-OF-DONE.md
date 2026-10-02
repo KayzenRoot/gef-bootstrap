@@ -122,3 +122,19 @@ Progress percentage is not DONE. Partial credit may use only the frozen weighted
 ADR-0008 / D-0063 is effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. Implementation admission identifies the Codex-only code executor, stable GitHub issue/Work Order, legal branch/base, precise file/read/write map and Context Lock. Planning-only PRs do not earn implementation credit. Construction status separates frozen-denominator release credit from Work Order counts, discloses blockers/unknowns and cites exact-state evidence. Existing exact-head assurance, security, test and rollback criteria remain unchanged; this overlay does not retroactively alter V1 acceptance or authorize V1.1 production promotion.
 
 STOP CONDITION: `READY_FOR_DOD_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
+
+# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+
+**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; this is not a completion claim or checkpoint promotion. Accepted V1/V1.1 history and V1.1.2 production state are inherited without rewriting their denominator.
+
+## V1.2 completion claims
+
+A universal-core claim requires all ten U12-01..U12-10 obligations in the finite V1.2 universal denominator to pass on the exact release candidate, with current evidence and all inherited V1.1.2 security, compatibility, quality, recovery and release gates still satisfied. Each obligation is PASS or FAIL; UNKNOWN, stale evidence, missing proof or accepted activity is not credit. Preserve the accepted V1.1 denominator and measurements as predecessor evidence; do not retroactively recalculate V1/V1.1.
+
+A profile claim additionally requires every obligation in that profile's separately declared denominator. The initial SaaS full-stack multi-tenant pilot is evaluated separately and excludes real-money movement/custody. EVM and Godot 4 remain conditional unless their own profile contracts are admitted. Unselected profiles are excluded from both the claimed release's selected-profile denominator and its blockers.
+
+## Blocking and review
+
+All required exact-head checks and existing floors must pass; CRITICAL/HIGH findings are zero; no unresolved source conflict, release-integrity defect or profile-contract blocker remains. HIGH_ASSURANCE work is not production-DONE until the independent specialist review is complete and its exact-head evidence passes. Owner-operated ChatGPT audit remains NOT_INDEPENDENT and cannot substitute. Paid tools/expanded CI stay at US$ 0 unless separately approved.
+
+WO-000 ends at the exact-head owner-audit stop with no implementation admission. A later WO-001 requires a separate owner-admitted Work Order and Context Lock.

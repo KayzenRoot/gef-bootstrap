@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "workOrder": "GBS-V12-WO-000",
+  "issue": 367,
+  "phase": "A+B",
+  "authority": "ARCHIVED_RESEARCH_IS_EVIDENCE_ONLY_NOT_CANONICAL",
+  "baseline": {
+    "commit": "203dc6a86de035b8502453100ea6e2a4788cae57",
+    "tree": "6b66139b7df03c0041a0c785057afb29d9a47428",
+    "package": "@gef-bootstrap/cli",
+    "version": "1.1.2",
+    "releaseState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED"
+  },
+  "archivedResearch": {
+    "branch": "planning/gef-v12-research-dossier-001",
+    "commit": "c85cc91c899b553c1c37fe53ada236b8f76de3e2",
+    "expectedFileCount": 25,
+    "actualFileCount": 25,
+    "sourcePathPrefix": "planning/v1.2/",
+    "inventorySource": ".engineering/evidence/GBS-V12-WO-000-SOURCE-AUDIT.md",
+    "inventoryBytes": 288725,
+    "inventoryDigestAlgorithm": "SHA-256(path<TAB>gitBlobOid<TAB>sizeBytes joined by LF, without terminal LF)",
+    "inventoryDigest": "d0628d4f3f78106f8795fcdc7be145c6bdf62e2eac3db4c2ab23e5bb30db8cb6"
+  },
+  "dispositionCounts": {
+    "PARTIAL_DELTA": 10,
+    "CONDITIONAL_PROFILE": 14,
+    "EXPERIMENT": 3,
+    "FUTURE": 1,
+    "OUT_OF_SCOPE": 1
+  },
+  "items": [
+    {"id":"C01","title":"Guided project discovery","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","PRODUCT-DISCOVERY-INTERVIEW.md","STARTUP-DEFAULT-PROFILE.md"],"current":["M04","M09-M15","source-pack","planning-workspace","decision-system"],"rationale":"Source-backed planning exists; adaptive 5-7 question rounds, gap-only brownfield discovery and answer capsules are not implemented.","v112Insufficient":"No complete guided interview/mode-selection flow or preserved answer capsule spans new and existing projects."},
+    {"id":"C02","title":"Canonical project planning","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","ROADMAP-AND-WORK-ORDERS.md"],"current":["M09-M15","M14-M18","Scope/DoD","Source Pack","execution-pack compiler"],"rationale":"Canonical artifacts, contracts and scoped packs exist; an integrated owner-change impact and critical-path completeness experience is not evidenced.","v112Insufficient":"No complete impact traversal spans requirements, architecture, security, deployment, test and proof decisions."},
+    {"id":"C03","title":"Approved visual experience","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","UI-UX-DESIGN-FACTORY.md"],"current":["project profiles","adoption foundations"],"rationale":"Applies only to owner-confirmed products with UI; V1.1.2 has no visual design factory.","v112Insufficient":"No wireflow, semantic design tokens, responsive states or visual/accessibility proof engine; UI-free apps must not receive it."},
+    {"id":"C04","title":"Marathon execution and critical path","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","ROADMAP-AND-WORK-ORDERS.md","VISION-AND-ARCHITECTURE.md"],"current":["M14/M15 execution packs","M17/M18 checkpoint and resume","M63 telemetry"],"rationale":"Dependency-ordered packs, exact checkpoints and resume logic exist; long-running multi-wave operator coordination remains a proposal.","v112Insufficient":"No admitted multi-wave orchestration with owner feedback and bounded stop/resume across long Work Orders."},
+    {"id":"C05","title":"Bug Hunter and requirement/invariant proof","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","QUALITY-AND-TEST-STRATEGY.md","VISION-AND-ARCHITECTURE.md"],"current":["M27/M28 contract and test-impact selection","proof graph","mandatory final sweep"],"rationale":"Contract evidence, proof graph and conservative impact selection exist; generated hypotheses, selective mutation and domain-aware bug hunting are not one current feature.","v112Insufficient":"No hypothesis-to-invariant-to-targeted-mutation loop or profile-specific adapter exists."},
+    {"id":"C06","title":"Delta Assurance, causal repair and flake control","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","QUALITY-AND-TEST-STRATEGY.md","VISION-AND-ARCHITECTURE.md"],"current":["M24-M28 proof/delta/assurance/impact","validity-bound reuse","mandatory final sweep"],"rationale":"Delta evidence and exact invalidation exist; flake registry, causal repair and blinded comparisons remain proposals.","v112Insufficient":"No cross-run flake registry or causal-repair workflow; neither may weaken risk floors or final proof."},
+    {"id":"C07","title":"Autonomous review and evidence","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","V12-CANDIDATE-ACCEPTANCE-AND-RELEASE-GATES.md","VISION-AND-ARCHITECTURE.md"],"current":["M31 exact-head governance","evidence/proof engines","Codex-only implementation authorship"],"rationale":"Evidence chains exist but do not establish independent review. Owner semantic audit remains NOT_INDEPENDENT.","v112Insufficient":"No governed independent exact-head reviewer or specialist-review routing; Codex self-report is not independence."},
+    {"id":"C08","title":"Engineering Intelligence","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","THROUGHPUT-OPTIMIZATIONS.md","OPERATIONS-AND-RELEASE-INNOVATIONS.md"],"current":["M43/M45/M63 telemetry","M22 estimates and selected CI receipts"],"rationale":"Comparable latency and ROI verdict exist; tokens, task costs, escaped defects and calibrated confidence are unavailable.","v112Insufficient":"No broad observable quality/cost/speed dataset or comparable cohort supports the full proposal."},
+    {"id":"C09","title":"Always-on truthful operator reporting","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","OPERATOR-RESPONSE-AND-FORECAST.md"],"current":["M20-M23 response/progress/estimation/status"],"rationale":"Machine-readable status and estimate primitives exist; complete pt-BR turn-level response is not verified as always-on.","v112Insufficient":"No full status response on every substantive turn or reliable ETA without comparable samples."},
+    {"id":"C10","title":"Default installer and profile router","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","STARTUP-DEFAULT-PROFILE.md","DOMAIN-ROUTER-AND-HYBRID-PROFILES.md"],"current":["M08 profiles","M13 adoption","M38 capability","init/adopt/doctor/status/upgrade"],"rationale":"Profile and brownfield lifecycle commands exist; verified stack/domain detection, cost/entitlement doctor and installable sample are incomplete.","v112Insufficient":"No versioned router combines owner-confirmed domains, reversible per-target tools and verified cross-platform sample."},
+    {"id":"C11","title":"Release and reproducibility","disposition":"PARTIAL_DELTA","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","OPERATIONS-AND-RELEASE-INNOVATIONS.md","TOOLING-AND-GITHUB-SETUP.md"],"current":["V1.1.2 exact tag/package/provenance/release evidence","security/workflow gates"],"rationale":"Package release path exists; cross-application build-once/proof-many and reproducible app-profile evidence are not demonstrated.","v112Insufficient":"Accepted release proves the CLI artifact, not general artifact sharing across heterogeneous profiles."},
+    {"id":"C12","title":"Operations feedback","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","OPERATIONS-AND-RELEASE-INNOVATIONS.md"],"current":["M43/M44/M61 generic observability, audit and runbook primitives"],"rationale":"Only where the approved app DoD includes deployment; no hosted GEF runtime is required.","v112Insufficient":"No deployed-app SLO, privacy-safe reproduction and release-to-regression loop is provided by generic evidence primitives."},
+    {"id":"D01","title":"Web frontend/API","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","API-PERFORMANCE-AND-DECISION-INNOVATIONS.md"],"current":["generic contracts","tests","profiles","release evidence"],"rationale":"Only for an approved web/API target; UI-free APIs do not need browser tooling.","v112Insufficient":"No API compatibility/adversarial/browser/accessibility/preview profile exists."},
+    {"id":"D02","title":"Data-heavy application","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","SAAS-TENANT-AND-DATA-GOVERNANCE.md"],"current":["database-agnostic test and proof machinery"],"rationale":"Only where owner-confirmed data and recovery requirements require it.","v112Insufficient":"No disposable migration, data invariant, tenant isolation or restore/RPO/RTO adapter."},
+    {"id":"D03","title":"SaaS subscription and usage","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","SAAS-FINANCE-FACTORY.md"],"current":["planning","evidence","generic security controls"],"rationale":"Only for a subscription/usage product; simple SaaS does not automatically get a money-moving ledger.","v112Insufficient":"No billing, signed/idempotent webhook, entitlement, refund or finance-reconciliation contract."},
+    {"id":"D04","title":"SaaS enterprise and tenant governance","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","SAAS-TENANT-AND-DATA-GOVERNANCE.md"],"current":["generic identity","policy","security boundaries"],"rationale":"Only for multi-tenant enterprise needs explicitly selected by the owner.","v112Insufficient":"No end-to-end tenant isolation, lifecycle, redaction, SSO/SCIM or data-plane proof profile."},
+    {"id":"D05","title":"Financial value movement","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","SAAS-FINANCE-FACTORY.md"],"current":["generic policy and evidence only"],"rationale":"Only for credits, balances, escrow, marketplaces or payouts; HIGH_ASSURANCE; OD-06 requires independent specialist review before production.","v112Insufficient":"No financial ledger, idempotent transfer, reconciliation or segregation proof."},
+    {"id":"D06","title":"Web3 EVM","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","WEB3-FACTORY-PROFILE.md"],"current":["generic package/release security"],"rationale":"Requires confirmed chain/product; HIGH_ASSURANCE for signing/deployment/assets. No mainnet action implied.","v112Insufficient":"No Solidity/Foundry, chain identity, signer, reorg, ABI/storage or contract security adapter."},
+    {"id":"D07","title":"Web3 Solana","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","WEB3-FACTORY-PROFILE.md"],"current":["generic contract-neutral test/proof foundations"],"rationale":"Requires an approved target and separately validated adapter; other-chain support does not imply this profile.","v112Insufficient":"No Rust/Anchor, account/PDA/CPI, program-upgrade adapter or chain-specific tests."},
+    {"id":"D08","title":"Web3 data security","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","WEB3-DATA-SECURITY.md"],"current":["generic secrets, policy, audit and evidence safeguards"],"rationale":"Only for an approved chain product handling protected data/keys; HIGH_ASSURANCE. Cryptographic options remain research unless admitted.","v112Insufficient":"No product-specific key lifecycle, signing-intent, metadata privacy or cross-role custody controls."},
+    {"id":"D09","title":"Game 2D/3D","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","GAME-FACTORY-PROFILE.md"],"current":["generic project profiles, planning and adoption"],"rationale":"Only for an owner-selected game target with accepted engine/art/licensing constraints.","v112Insufficient":"No playable slice, asset pipeline, engine decision, frame budget or visual playtest profile."},
+    {"id":"D10","title":"Game multiplayer/MMO","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","GAME-FACTORY-PROFILE.md"],"current":["generic tests and estimates"],"rationale":"Only where the selected game requires authoritative multiplayer; single-player does not inherit this burden.","v112Insufficient":"No authoritative server, reconnect/loss replay, anti-cheat or measured capacity profile."},
+    {"id":"D11","title":"Game plus Web3","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","DOMAIN-ROUTER-AND-HYBRID-PROFILES.md"],"current":["generic project, security and evidence primitives"],"rationale":"Only if justified by an approved product; game state stays distinct from settlement; no universal token/NFT requirement.","v112Insufficient":"No cross-boundary idempotency/finality/reorg or inventory-consistency proof."},
+    {"id":"D12","title":"AI-native target app","disposition":"CONDITIONAL_PROFILE","sources":["V12-CANDIDATE-SCOPE-FREEZE.md","SAAS-WEB3-REMAINING-AREAS.md"],"current":["generic security, policy and test proof"],"rationale":"Only for an approved AI-dependent app; ordinary apps remain free of runtime AI dependencies.","v112Insufficient":"No model/prompt/tool schema, evaluation, injection/exfiltration, per-tenant quota or model-change regression profile."},
+    {"id":"R01","title":"Formal, symbolic and deep fuzz proof","disposition":"EXPERIMENT","sources":["EXPERIMENTS-AND-DECISIONS.md","QUALITY-AND-TEST-STRATEGY.md"],"current":["deterministic contract/test/proof and security gates"],"rationale":"Research track, not a universal blocker; automated scans are not qualified external assurance.","v112Insufficient":"No admitted workload, proof obligation or measured ROI justifies a campaign."},
+    {"id":"R02","title":"Advanced cryptography and custody research","disposition":"EXPERIMENT","sources":["EXPERIMENTS-AND-DECISIONS.md","WEB3-DATA-SECURITY.md"],"current":["general security boundaries"],"rationale":"ZK/FHE/TEE/MPC/post-quantum work remains experimental and protocol-dependent.","v112Insufficient":"No accepted product requirement, compatible protocol or independently proven implementation is selected."},
+    {"id":"R03","title":"Enterprise-scale always-on operations","disposition":"FUTURE","sources":["EXPERIMENTS-AND-DECISIONS.md","OPERATIONS-AND-RELEASE-INNOVATIONS.md"],"current":["local-first status, evidence and runbook foundations"],"rationale":"24/7 multi-region, all-chain, global MMO and paid remote services lack an accepted workload.","v112Insufficient":"No customer SLO, capacity evidence or owner-approved spend supports these commitments."},
+    {"id":"R04","title":"Regulated operations and jurisdictional tax","disposition":"OUT_OF_SCOPE","sources":["EXPERIMENTS-AND-DECISIONS.md","SAAS-FINANCE-FACTORY.md"],"current":["no regulatory/custodial product capability claimed"],"rationale":"Country-specific tax, regulated operations and certifications need explicit scope and qualified review.","v112Insufficient":"No owner-approved jurisdiction, operating model or qualified professional authority exists in WO-000."},
+    {"id":"R05","title":"Framework, vendor and runner swaps","disposition":"EXPERIMENT","sources":["EXPERIMENTS-AND-DECISIONS.md","THROUGHPUT-OPTIMIZATIONS.md","TOOLING-AND-GITHUB-SETUP.md"],"current":["TypeScript/npm and existing validation/CI primitives"],"rationale":"Tool replacement remains a hypothesis, not an unconditional migration.","v112Insufficient":"Measured baseline reports no optimization benefit and no accepted tooling-swap ROI evidence."}
+  ],
+  "overlapFindings": [
+    {"proposal":"Marathon and execution waves","existing":["M14-M18 execution-pack, checkpoint and resume"],"finding":"Compose existing engines; do not create a second executor."},
+    {"proposal":"Requirement-to-proof, delta assurance and test impact","existing":["M24-M28 proof graph, delta review, assurance and impact selection"],"finding":"Only evidenced missing behavior qualifies as a new delta."},
+    {"proposal":"Status, forecast and intelligence","existing":["M20-M23 response/progress/estimate/status","M43/M45/M63 telemetry"],"finding":"Primitives exist; broad time/cost/defect/token/ETA claims lack observable cohorts."},
+    {"proposal":"Review and release evidence","existing":["M31 governance","evidence/proof engines","release workflows"],"finding":"Exact-head evidence exists; owner audit remains NOT_INDEPENDENT."}
+  ],
+  "unresolvedOwnerDecisions": [],
+  "resolvedOwnerDecisions": [
+    {
+      "id": "OD-01",
+      "decision": "First end-to-end V1.2 pilot profile",
+      "status": "OWNER_APPROVED",
+      "receipt": ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md",
+      "approvedValue": "FIRST_PILOT_SAAS_FULLSTACK_MULTITENANT_NO_REAL_MONEY_CUSTODY"
+    },
+    {
+      "id": "OD-02",
+      "decision": "Core-only or core plus selected conditional profiles",
+      "status": "OWNER_APPROVED",
+      "receipt": ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md",
+      "approvedValue": "UNIVERSAL_CORE_PLUS_SEPARATELY_ACCEPTED_REFERENCE_CONDITIONAL_PROFILES"
+    },
+    {
+      "id": "OD-03",
+      "decision": "First Web3 chain",
+      "status": "OWNER_APPROVED",
+      "receipt": ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md",
+      "approvedValue": "WEB3_EVM_FIRST_SOLIDITY_FOUNDRY_ANVIL"
+    },
+    {
+      "id": "OD-04",
+      "decision": "First game engine/platform",
+      "status": "OWNER_APPROVED",
+      "receipt": ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md",
+      "approvedValue": "GAME_GODOT4_FIRST_REFERENCE"
+    },
+    {
+      "id": "OD-05",
+      "decision": "Paid-tool and CI budget boundary",
+      "status": "OWNER_APPROVED",
+      "receipt": ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md",
+      "approvedValue": "PAID_TOOL_AND_EXPANDED_CI_BUDGET_USD_0_FREE_OPEN_SOURCE_FIRST"
+    },
+    {
+      "id": "OD-06",
+      "decision": "Specialist independent-review trigger for high-risk financial/contract/privileged operations",
+      "status": "OWNER_APPROVED",
+      "receipt": ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md",
+      "approvedValue": "INDEPENDENT_SPECIALIST_REVIEW_REQUIRED_BEFORE_PRODUCTION_FOR_HIGH_ASSURANCE_SURFACES"
+    }
+  ],
+  "phaseD": {
+    "state": "CANONICAL_SOURCE_PACK_PROPOSAL",
+    "proposalOnly": true,
+    "universalCoreIds": [
+      "C01",
+      "C02",
+      "C04",
+      "C05",
+      "C06",
+      "C07",
+      "C08",
+      "C09",
+      "C10",
+      "C11"
+    ],
+    "conditionalIds": [
+      "C03",
+      "C12",
+      "D01",
+      "D02",
+      "D03",
+      "D04",
+      "D05",
+      "D06",
+      "D07",
+      "D08",
+      "D09",
+      "D10",
+      "D11",
+      "D12"
+    ],
+    "ownerDecisionReceipt": ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md",
+    "profileMatrix": ".engineering/V1.2-PROFILE-MATRIX.md",
+    "releaseDenominator": ".engineering/V1.2-RELEASE-DENOMINATOR.md",
+    "checkpointDelta": ".engineering/checkpoint-deltas/GBS-V12-WO-000-PROPOSED.md",
+    "implementationAuthorized": false
+  },
+    "recommendation":"Phase C decisions approved; present the Phase D Source Pack proposal for exact-head owner audit. Do not promote checkpoint or admit WO-001."
+}

@@ -109,3 +109,34 @@ No specific CLI framework, always-on daemon/service, fixed language before Archi
 - open requirement questions: 0
 
 STOP CONDITION: `READY_FOR_REQUIREMENTS_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
+
+# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+
+**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; no requirement below is effective before owner audit and checkpoint promotion. Existing V1/V1.1 requirements and V1.1.2 acceptance remain preserved.
+
+## Universal V1.2 delta obligations
+
+Each obligation is a release gate with a finite acceptance contract and exact-head evidence. All ten are required for a V1.2 universal-core claim; all remain NOT_IMPLEMENTED at this planning stop.
+
+| ID | Audited map | Proposed obligation |
+|---|---|---|
+| U12-01 | C01 | Guided discovery records source-backed answers, asks only unresolved questions, supports bounded 5-7 question rounds where needed, and keeps brownfield discovery gap-only. Answer capsules are attributable, version-bound, and invalidated when their source changes. |
+| U12-02 | C02 | Canonical plans expose requirement-to-proof links, owner-change impact, missing critical-path obligations, dependencies, and truthful unknowns; no completion claim is inferred from plan shape alone. |
+| U12-03 | C04 | Long-running work uses dependency-ordered waves over M14-M18; checkpoint/resume is exact-state bound, and repeated execution cannot duplicate a promoted side effect. No second executor is introduced. |
+| U12-04 | C05 | Bug Hunter links requirement, invariant, hypothesis, test and finding; evidence distinguishes reproduced defects from hypotheses and retains negative/false-positive controls. It extends M24-M28 rather than replacing their proof graph. |
+| U12-05 | C06 | Delta Assurance retains the first failure, binds causal repair to the affected proof set, records flake observations, and escalates uncertain impact. Retry or selection cannot suppress a required failure or weaken the full assurance sweep. |
+| U12-06 | C07 | Review/evidence binds author, reviewer, role, exact head, findings and resolution. Owner-operated ChatGPT semantic audit is always labeled NOT_INDEPENDENT and never satisfies the independent specialist gate. |
+| U12-07 | C08 | Intelligence reports measured, estimated, and unavailable metrics separately; optimization claims require comparable workload, population, toolchain, platform, policy and quality gates. Missing token, cost, defect or ETA telemetry remains unavailable. |
+| U12-08 | C09 | Operator responses are continuously truthful and available in pt-BR, with machine-readable status, next legal action, blockers, uncertainty and evidence references kept consistent. |
+| U12-09 | C10 | Setup and brownfield routing use explicit owner-confirmed profiles and detected evidence; doctor reports applicable prerequisites, cost/entitlement and permission gaps without silently installing paid tools or selecting a domain profile. |
+| U12-10 | C11 | Release artifacts and application-profile proofs bind reproducible inputs, exact source, build, compatibility and provenance. Build-once/proof-many is a measured claim, not an assumption. |
+
+## Conditional requirement rule
+
+C03, C12, and D01-D12 activate only through a separately admitted profile acceptance contract. The first SaaS pilot is the first profile selected for validation, not a transfer of its obligations into U12-01..U12-10. Each profile contract declares included capabilities, exclusions, test fixtures, evidence, compatibility and release denominator before implementation begins.
+
+Subscription lifecycle and entitlement tests use deterministic fixtures or non-charging test facilities. No live charge, payout, custody, escrow or real-money transfer is admitted by the SaaS pilot.
+
+## Assurance and resource constraints
+
+All existing test, coverage, security and branch-protection floors remain unchanged. No new numerical benchmark target is implied by this proposal. Paid tools, paid CI expansion and paid external services remain at an initial budget of US$ 0; any later spend requires a separate owner-approved decision supported by evidence. HIGH_ASSURANCE surfaces require the independent specialist gate in the proposed ADR-0010 before production.
