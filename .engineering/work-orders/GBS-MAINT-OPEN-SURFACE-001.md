@@ -59,15 +59,17 @@ Close broken/stale bot PRs:
 
 Current V1.1.2 release evidence has no high npm vulnerability requiring these failing branches to be merged. Future dependency refresh remains FUTURE within this Work Order record, with no extra open Issue required.
 
-## Phase 4 — V1.2 planning preservation
+## Phase 4 — V1.2 planning preservation without stale merge
 
-After Phase 0:
-- refresh only stale V1.1 precondition wording in planning PR #344;
-- keep all 25 `planning/v1.2/**` files `PLANNING_ONLY / NOT_IMPLEMENTATION_AUTHORITY`;
-- exact-head checks + owner audit;
-- squash-merge #344 if clean;
-- close #346 as gate satisfied/superseded by merged planning archive and this Work Order;
-- do not admit V1.2 implementation automatically.
+PR #344 is a valuable planning snapshot but is now a stale branch: 42 commits ahead and 116 commits behind current main. Merging it would import dated V1.1 assumptions into canonical main merely to clear the queue.
+
+Disposition:
+- preserve the exact planning snapshot at branch `planning/gef-v12-research-dossier-001`, commit `c85cc91c899b553c1c37fe53ada236b8f76de3e2`;
+- record the snapshot and Issue #346 gate in `.engineering/handoffs/V1.2-NEXT-STATE.md`;
+- close PR #344 **without merge** as archived/superseded planning, explicitly retaining its branch/history;
+- close Issue #346 as superseded by the versioned handoff and this Work Order;
+- after Phase 0, the handoff may record that the V1.1 production prerequisite is satisfied, but **no V1.2 implementation is admitted automatically**;
+- a future explicit owner directive must create a fresh V1.2 admission from current main and selectively import/revalidate the preserved planning snapshot.
 
 ## Closure policy
 
@@ -80,7 +82,7 @@ Every closed item receives a short evidence comment pointing to Issue #365 and t
 - stale V1.1/maintenance Issues/PRs above closed truthfully.
 - module ghosts closed without merging stale branches.
 - #195/#353 closed, not force-merged.
-- #344 planning archive merged cleanly, #346 closed, no V1.2 implementation admitted.
+- #344 planning snapshot preserved and closed without stale merge; #346 superseded by the versioned handoff; no V1.2 implementation admitted.
 - final GitHub inventory has no stale open Issue/PR; during execution only #365 and its reconciliation PR may remain open.
 - final evidence records before/after inventory and all dispositions.
 
