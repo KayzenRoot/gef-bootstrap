@@ -1081,9 +1081,9 @@
   "v12": {
     "status": "SOURCE_PACK_APPROVED_NO_IMPLEMENTATION",
     "effectivity": "EFFECTIVE",
-    "workOrder": "GBS-V12-WO-000",
-    "issue": 367,
-    "pullRequest": 369,
+    "workOrder": "GBS-V12-WO-001",
+    "issue": 372,
+    "pullRequest": 373,
     "sourcePackPromotionHead": "9a6f1affaf08f222ebf58bd444b5b549c7aff665",
     "sourcePackPromotionAuditReview": 5394913905,
     "sourcePackPromotionAudit": "APPROVED",
@@ -1152,8 +1152,32 @@
     },
     "implementationStarted": false,
     "implementationCredit": 0,
-    "activeImplementationWorkOrder": "NONE",
-    "nextLegalAction": "SEPARATELY_ADMIT_GBS_V12_WO_001",
-    "stopState": "GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION"
+    "activeImplementationWorkOrder": "GBS-V12-WO-001",
+    "nextLegalAction": "COMPILE_FRESH_WO001_IMPLEMENTATION_CONTEXT_LOCK_FROM_EXACT_POST_SYNC_MAIN",
+    "stopState": "GBS_V12_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+    "wo001Admission": {
+      "status": "ADMITTED_NO_IMPLEMENTATION",
+      "admissionBase": "4698592b521ee8c5df37be8759312bd76b9d702f",
+      "issue": 372,
+      "pullRequest": 373,
+      "auditedHead": "9d9788fc03c0b19eab09c7fdd0c231ca7891d1c9",
+      "ownerAuditReview": 5395657110,
+      "ownerAudit": "APPROVED_NOT_INDEPENDENT",
+      "mergeSha": "3b576e7b090a7f49ea7397b2c3840147158d2a72",
+      "implementationContextLock": "REQUIRED_FRESH_POST_SYNC_MAIN",
+      "implementationAuthorized": false,
+      "implementationStarted": false,
+      "denominatorCredit": 0,
+      "targetObligations": {
+        "required": [
+          "U12-01",
+          "U12-02"
+        ],
+        "candidate": [
+          "U12-03"
+        ],
+        "currentState": "NOT_IMPLEMENTED"
+      }
+    }
   }
 }
