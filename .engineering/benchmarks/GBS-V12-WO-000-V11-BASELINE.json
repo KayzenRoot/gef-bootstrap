@@ -150,5 +150,13 @@
     "focusedTest": "tests/v11-legacy-ecosystem-detachment.test.mjs PASS; 1/1",
     "productTestCiDependencyFilesChanged": false
   },
-  "phaseABDisposition": "BASELINE_REPRODUCED; owner decisions remain open; no canonical Source Pack or implementation admission."
+  "phaseABDisposition": "BASELINE_REPRODUCED; Phase A+B measurements unchanged; six owner decisions approved; Phase D Source Pack proposal prepared for exact-head owner audit; no implementation admission.",
+  "phaseDSourcePackProposal": {
+    "status": "PROPOSED_FOR_EXACT_HEAD_OWNER_AUDIT",
+    "measurementValuesChanged": false,
+    "profileMatrix": ".engineering/V1.2-PROFILE-MATRIX.md",
+    "releaseDenominator": ".engineering/V1.2-RELEASE-DENOMINATOR.md",
+    "evidenceBundle": ".engineering/evidence/GBS-V12-WO-000-EVIDENCE.md",
+    "exactHeadChecks": "MUST_BE_REVALIDATED_ON_PHASE_D_CANDIDATE"
+  }
 }

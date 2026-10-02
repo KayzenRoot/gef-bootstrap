@@ -246,3 +246,15 @@ Until those conditions hold, overall percentage remains `NOT_YET_BASELINED`.
 - remaining Scope closure questions: 0
 
 STOP CONDITION: `READY_FOR_SCOPE_REVIEW_AND_CHECKPOINT`.
+
+# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+
+**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; not effective until owner audit and separate checkpoint promotion. The frozen V1/V1.1 scope and accepted V1.1.2 production facts above remain historical and unchanged.
+
+## Release boundary
+
+V1.2 proposes one universal core and separately accepted conditional reference profiles. The universal-core delta denominator is the ten audited PARTIAL_DELTA items C01, C02, and C04-C11. C03 (Approved visual experience), C12 (Operations feedback), and D01-D12 remain profile-conditional. R01-R05 retain their audited experiment/future/out-of-scope dispositions. No profile enters the universal denominator by naming, roadmap position, or pilot use.
+
+The first end-to-end pilot is the full-stack multi-tenant SaaS reference profile. It may exercise web/API, data, authentication/authorization, tenant isolation, subscription state and entitlements, security, recovery, observability, and release evidence. It excludes real-money movement, custody, escrow, payouts, and live production financial transactions. This profile has its own denominator and does not redefine universal scope.
+
+EVM-first (Solidity, Foundry, Anvil) and Godot 4 are approved first reference choices but remain conditional profiles with separate acceptance contracts. They do not make Solana, other engines, mainnet activity, production key custody, or real-fund signing universal requirements.

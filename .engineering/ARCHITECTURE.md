@@ -345,3 +345,23 @@ Detailed threat models/policies belong to Security planning, but Architecture ma
 - open Architecture questions: 0
 
 STOP CONDITION: `READY_FOR_ARCHITECTURE_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
+
+# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+
+**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; no architecture choice below authorizes implementation. Existing V1/V1.1 architecture and the accepted V1.1.2 line remain preserved.
+
+## Universal core and profile boundary
+
+Retain the library/application API as the semantic surface and keep the CLI as a thin transport. Extend M00-M63 contracts and proof paths; do not create a parallel planner, executor, review engine, telemetry plane or release engine. Preserve deterministic plan → stage → verify → promote/recover behavior, provider-neutral core semantics, exact-state evidence and targeted invalidation.
+
+Conditional application profiles plug into explicit profile contracts and cannot redefine shared authority, risk, completion, evidence or review semantics. The first SaaS full-stack multi-tenant pilot composes web/API (D01), data lifecycle (D02), subscription/usage (D03) and tenant governance (D04) only within its own profile contract. Its billing/entitlement proof uses fixtures or non-charging test facilities; it has no real-money movement, custody, escrow, payout or live financial operation.
+
+## Conditional reference stacks
+
+- EVM reference profile: Solidity contracts, Foundry compile/test/fuzz/invariant workflows, and Anvil for deterministic local-chain execution. The profile is conditional and grants no production key custody, real-fund signing, asset movement or mainnet deployment authority.
+- Game reference profile: Godot 4 is the first conditional engine reference. Prefer deterministic/headless proof where supported; desktop and browser/Web targets enter only when the profile contract makes them applicable and testable.
+- Visual-experience C03 and operations-feedback C12 remain conditional capabilities. Their absence cannot block a release that did not select the corresponding profile obligation.
+
+## Composition and constraints
+
+A profile declares required adapters, external services, data boundaries, deployment targets, proof suite and rollback/recovery contract before execution. Profile-specific adapters stay isolated behind existing provider/profile seams. No new dependency or paid service is selected by this proposal. Initial paid-tool and expanded-CI budget remains US$ 0. HIGH_ASSURANCE behavior routes through fail-closed security and independent-specialist review before production; owner ChatGPT audit remains NOT_INDEPENDENT.

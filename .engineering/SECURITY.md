@@ -256,3 +256,21 @@ Security evidence should be compact and deterministic where possible. Token savi
 - open Security decisions: 0
 
 STOP CONDITION: `READY_FOR_SECURITY_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
+
+# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+
+**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; the existing frozen security model and thresholds remain unchanged.
+
+## HIGH_ASSURANCE classification and gate
+
+Classify as HIGH_ASSURANCE any admitted work that moves financial value; creates custody or escrow; signs blockchain transactions; deploys or changes smart contracts controlling real value; changes privileged authentication or authorization; performs irreversible schema/data migration; or performs destructive/irreversible privileged operations.
+
+Before production, each such surface requires an independent specialist review separate from the implementer and from owner-operated ChatGPT semantic audit. Bind the review to the exact candidate head and profile contract. Record reviewer identity and relevant specialist capacity, conflict disclosure, scope, evidence examined, findings, remediation, and disposition. A missing reviewer, unavailable qualification evidence, unresolved finding, stale review subject or failed review is BLOCKED; do not claim production readiness or bypass the gate. Codex plus owner ChatGPT review remains NOT_INDEPENDENT.
+
+## Pilot and reference-profile exclusions
+
+The first SaaS pilot excludes real-money movement, custody, escrow, payouts and live financial transactions. Subscription and entitlement behavior must be proven with deterministic fixtures or non-charging test facilities. EVM/Foundry/Anvil work is local and conditional unless a separate contract admits more; no real-fund signing, production key custody, asset movement or mainnet authority is implied. Godot 4 remains a conditional profile. Profile-specific secret, supply-chain, data isolation, recovery and deployment controls apply only when that profile is selected, while existing universal security floors remain mandatory.
+
+## Resource policy
+
+The initial budget for paid tools and expanded CI is US$ 0. Free/open-source-first does not waive security review or quality gates. Any paid tool, paid CI expansion or external service requires separate owner approval before use. No security/coverage threshold or required check is changed by this proposal.

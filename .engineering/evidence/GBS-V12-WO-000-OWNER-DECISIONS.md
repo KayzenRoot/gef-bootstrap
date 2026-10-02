@@ -89,3 +89,7 @@ The above decisions authorize Codex to prepare the canonical V1.2 Source Pack pr
 `GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT`
 
 No merge and no WO-001 implementation is authorized.
+
+## Phase D execution reference
+
+All six decisions above were treated as binding in the Phase D Source Pack proposal. The proposal and exact-head evidence are in .engineering/evidence/GBS-V12-WO-000-EVIDENCE.md, .engineering/V1.2-PROFILE-MATRIX.md and .engineering/V1.2-RELEASE-DENOMINATOR.md. This reference does not amend the approved decision values or authorize implementation, checkpoint promotion, merge, publication or WO-001.

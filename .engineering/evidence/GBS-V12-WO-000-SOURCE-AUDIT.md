@@ -85,19 +85,16 @@ At initial PR head cad18c4306e831c5e8527251d1788bca49f30ec8, the V1.1 detachment
 
 Those earlier PR checks are not exact-head evidence for the forthcoming commit. Candidate checks must be read from the new HEAD.
 
-## Unresolved owner decisions
+## Phase C owner decision resolution
 
-1. First end-to-end V1.2 pilot profile.
-2. Core-only versus core plus explicitly selected conditional reference profiles.
-3. First Web3 chain only if a Web3 pilot is chosen.
-4. First game engine/platform only if a game pilot is chosen.
-5. Paid-tool and CI budget boundary.
-6. Specialist independent-review trigger for high-risk financial, contract or privileged operations.
+All six blocking decisions have been approved and recorded in .engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md. They are binding for this Phase D proposal; owner-operated semantic audit remains NOT_INDEPENDENT. No blocking Phase C owner decisions remain unresolved.
 
-Only decisions materially changing V1.2 scope remain open. Conditional decisions are requested only if the corresponding profile is selected.
+The approved choices are: first pilot SaaS full-stack multi-tenant without real-money movement/custody; universal core plus separately accepted conditional profiles; EVM-first Solidity/Foundry/Anvil; Godot 4 first game reference; US$ 0 initial paid-tool/expanded-CI budget; and mandatory independent specialist review before production for the OD-06 HIGH_ASSURANCE surfaces.
 
 ## Proposed checkpoint disposition and stop
 
-Record only that WO-000 Phase A+B evidence is ready for owner decisions. Keep V1.2 unadmitted and checkpoint v12 null; do not author/promote the canonical Source Pack and do not start WO-001. Owner audit classification: NOT_INDEPENDENT.
+This Phase D candidate proposes only that the canonical V1.2 Source Pack be presented for exact-head owner audit. The canonical CHECKPOINT.md and CHECKPOINT.json remain unchanged; v12 remains null on main. No V1.2 implementation or WO-001 admission is claimed. The Phase D proposal is in .engineering/evidence/GBS-V12-WO-000-EVIDENCE.md and its proposed checkpoint delta is not applied. Historical A+B measurements and predecessor-head hosted checks remain unchanged and do not transfer to this candidate.
 
-GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS
+Owner audit classification: NOT_INDEPENDENT.
+
+GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT

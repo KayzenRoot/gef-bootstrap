@@ -278,3 +278,19 @@ Testing/benchmark evidence is sufficient only when all are true:
 - open Test/Benchmark questions: 0
 
 STOP CONDITION: `READY_FOR_TEST_BENCHMARK_REVIEW_AND_CHECKPOINT`.
+
+# V1.2 Source Pack proposal addendum — GBS-V12-WO-000
+
+**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; no test or workflow changes are authorized by this planning proposal. All existing validation, quality, security and branch-protection floors remain unchanged.
+
+## Universal-core proof matrix
+
+Every U12 obligation has an exact-head acceptance suite and evidence reference. Required groups are: U12-01 discovery completeness, brownfield gap-only behavior and capsule invalidation; U12-02 requirement/proof trace and owner-change impact; U12-03 multi-wave ordering, interruption/resume and duplicate-side-effect prevention; U12-04 hypothesis reproduction and negative controls; U12-05 first-failure retention, causal-repair linkage and flake classification; U12-06 role separation and exact-head review/evidence binding; U12-07 benchmark comparability and unavailable-metric truthfulness; U12-08 pt-BR response/status consistency; U12-09 profile-routing and prerequisite/entitlement reporting; U12-10 reproducible release-input and provenance binding.
+
+All claimed acceptance cases must pass. Existing coverage thresholds, full-sweep triggers, security checks and quality gates are inherited without reduction. Property, mutation, fuzz and invariant methods are selected by the applicable risk and contract; this proposal establishes no unsupported numeric score or benchmark target.
+
+## Profile proof and measurement
+
+A profile runs only the universal suite plus its own admitted acceptance matrix. Unselected profile tests are reported as NOT_SELECTED and do not enter the universal denominator. The SaaS pilot proves web/API behavior, data lifecycle/recovery, authentication and cross-tenant isolation, subscription/entitlement states through fixtures or non-charging test facilities, and its selected security/observability/release surfaces. It must not execute real-money movement or custody. EVM proof uses Solidity, Foundry and deterministic Anvil scenarios; Godot 4 proof is headless/deterministic where supported and explicitly records target applicability.
+
+Benchmarks compare the same workload population, source, environment/toolchain, policy, cache/proof posture and timed boundary. Report raw samples and quality-gate results; separate MEASURED, ESTIMATED and UNAVAILABLE. No synthetic speedup, paid-tool benefit or flake-rate claim is accepted. Initial paid tooling and expanded CI budget is US$ 0.

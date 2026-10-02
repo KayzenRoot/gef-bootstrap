@@ -271,3 +271,16 @@ Status: `ACTIVE`
 - Authority: owner resolution, Issue #357 comment #5935855771; ADR-0009. Canonicalized on the existing PR #358, whose base remains `main`.
 - Supersedes, bounded: ADR-0006's `release/1.1`-only target solely for post-production same-minor hotfix patches after `v1.1.0` reaches `PRODUCTION_ACCEPTED`. ADR-0006 remains historical authority for pre-production V1.1 development and retains owner-operated audit and merge authority. D-0062@main / ADR-0007, D-0062@release/1.1 / ADR-0006, and D-0063 / ADR-0008 retain their meanings and provenance.
 - Status: OWNER-APPROVED; canonicalized in PR #358; effective on `main` upon merge. No merge, tag, npm publication, or rollout is authorized by this entry.
+
+## V1.2 Phase C owner decisions — OD-01 through OD-06
+
+**Authority:** owner-approved Phase C receipt at .engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md and Issue #367 owner comment. **Status:** binding choices for the Phase D proposal; canonical Source Pack effectiveness remains pending exact-head owner audit and checkpoint promotion.
+
+- OD-01: first end-to-end pilot is full-stack multi-tenant SaaS covering web/API, data, authentication/authorization, tenant isolation, subscription/billing/entitlements, security, recovery, observability and release evidence as applicable. It excludes real-money movement, custody, escrow, payouts and live financial transactions.
+- OD-02: V1.2 is a universal core plus separately accepted reference conditional profiles. Each profile has its own acceptance contract and denominator; unselected profiles do not silently block the core.
+- OD-03: EVM-first reference uses Solidity, Foundry and Anvil. It grants no production key custody, real-fund signing or mainnet authority.
+- OD-04: Godot 4 is the first conditional game reference, prioritizing deterministic/headless proof and applicable desktop/browser targets.
+- OD-05: initial paid-tool and expanded-CI budget is US$ 0; free/open-source first. Later spend requires separate evidence-backed owner approval.
+- OD-06: independent specialist review is mandatory before production for financial value movement, custody/escrow, blockchain transaction signing, real-value smart contracts, privileged authentication/authorization, irreversible migrations, and destructive/irreversible privileged operations.
+
+The owner-operated ChatGPT semantic audit remains NOT_INDEPENDENT. This entry records approved owner decisions; it does not admit implementation, production launch, a release profile, paid services or WO-001.
