@@ -390,3 +390,47 @@ At this stop:
 - do not merge;
 - do not promote checkpoint;
 - do not start WO-001.
+
+## PHASE E — OWNER-AUTHORIZED CHECKPOINT PROMOTION
+
+Owner continuation is recorded on Issue #367 comment #5957678869 after Phase D exact-head owner audit review #5394709108 returned `APPROVED / NOT_INDEPENDENT` on PR #369 head `290f7a6d6c68ef2500388dcaa604fbed3bb02d56`.
+
+This phase is a bounded governance-only promotion step. It does not authorize implementation.
+
+### Phase E WRITE_ALLOWED
+
+- `.engineering/CHECKPOINT.md`
+- `.engineering/CHECKPOINT.json`
+- `.engineering/context-locks/GBS-V12-WO-000.json`
+- `.engineering/work-orders/GBS-V12-WO-000.md`
+- `.engineering/checkpoint-deltas/GBS-V12-WO-000-PROPOSED.md`
+- `.engineering/evidence/GBS-V12-WO-000-EVIDENCE.md`
+- `.engineering/evidence/GBS-V12-WO-000-PROMOTION-EVIDENCE.md`
+
+No other path is admitted by this phase.
+
+### Phase E required semantics
+
+- Preserve all V1/V1.1.2 production history, package/release facts and the accepted V1 denominator.
+- Record V1.2 only as `SOURCE_PACK_APPROVED_NO_IMPLEMENTATION`.
+- Universal V1.2 implementation credit remains `0 / 10`; no profile earns implementation credit from WO-000.
+- Record Phase D audited head `290f7a6d6c68ef2500388dcaa604fbed3bb02d56`, owner review `#5394709108`, audit classification `NOT_INDEPENDENT`, and CRITICAL/HIGH `0 / 0`.
+- Keep active V1.2 implementation Work Order `NONE`.
+- The next legal implementation action is a separately created/admitted `GBS-V12-WO-001`; this phase must not create or execute it.
+- Do not change product/runtime source, product tests, CI/workflows, migrations, dependencies, package identity, tag/release state or conditional profile implementation.
+- The checkpoint promotion becomes canonical only after the final promotion candidate passes exact-head checks, receives owner audit `APPROVED / NOT_INDEPENDENT`, and PR #369 is governed-merged.
+
+### Phase E validation and stop
+
+Validate JSON/Markdown consistency, exact-path allowlist, unchanged predecessor facts and all exact-head required/candidate checks. Any CRITICAL/HIGH finding, stale base, unauthorized path or failed required check blocks merge.
+
+Target terminal state after governed merge:
+
+`GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION`
+
+At that terminal state:
+- WO-000 is complete;
+- V1.2 Source Pack is admitted;
+- V1.2 implementation remains not started;
+- a separate owner-admitted WO-001 is required before Codex implementation.
+
