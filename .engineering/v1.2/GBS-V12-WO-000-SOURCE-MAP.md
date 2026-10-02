@@ -327,4 +327,39 @@ After the baseline evidence is attached, Phase A may stop at:
 
 `GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS`
 
+## 14. Captured V1.1.2 baseline review
+
+Baseline receipts:
+- `.engineering/evidence/GBS-V12-WO-000-BASELINE.md`
+- `.engineering/evidence/GBS-V12-WO-000-BASELINE.json`
+
+Reviewed findings:
+- pinned source commit/tree matched the accepted V1.1.2 base;
+- package version was `1.1.2`;
+- build, typecheck, `npm run validate`, dependency audit and diff/status cleanliness passed;
+- full validation: `1632/1632` tests passed;
+- focused baseline: `84/84` passed;
+- dependency audit: 0 vulnerabilities;
+- tracked source mutation: false;
+- CLI ROI population matched on P1-P8 with seven samples per mode;
+- aggregate CLI ROI verdict: `NO_CHANGE / COMPARABLE`;
+- optimization claim: ineligible;
+- token metrics: `UNAVAILABLE`;
+- brownfield timing: `NOT_YET_BASELINED`;
+- V1.2 comparison: `NOT_PERFORMED`.
+
+### Baseline consequence for V1.2
+
+1. **Do not optimize for CLI process-entry latency as a headline V1.2 objective.** The existing CLI/manual comparison is already within the current no-material-change band. V1.2 throughput work must target accepted end-to-end engineering flow: fewer redundant reads/searches, safer parallel waves, proof reuse, reduced correction loops, faster first usable journey and shorter validated work-cycle latency.
+2. **Brownfield performance remains an evidence gap, not a claimed weakness or gain.** If WO-001/WO-003 changes adoption/context/validation behavior, a repeatable brownfield cohort must be admitted before percentage claims.
+3. **Existing acceleration foundations are real and green.** Execution capsule, incremental validation, proof reuse, telemetry and adoption-preflight behavior all passed focused baseline tests.
+4. **V1.2 still has zero implementation credit.** The baseline establishes the comparison floor only.
+
+## 15. Phase A checkpoint
+
+All 25 archived research files are audited, C01-C12 are classified against released engine/API reality, D/R categories remain bounded, stale governance assumptions are identified, and the V1.1.2 baseline is captured.
+
+Phase A is therefore ready for the short owner decision gate.
+
+**Stop:** `GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS`
 
