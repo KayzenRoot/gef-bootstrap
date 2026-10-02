@@ -315,3 +315,31 @@ The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED`
 **Pre-merge stop:** `GBS_V12_GOV_002_WO001_EFFECTIVITY_SYNC_READY_FOR_OWNER_AUDIT`.
 
 **Post-merge next state:** `GBS_V12_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`.
+
+## V1.2 WO-001 implementation promotion — GBS-V12-GOV-003
+
+**State:** `WO001_PROMOTED_2_OF_10`. This section becomes effective only after the exact-head owner audit and governed merge of GBS-V12-GOV-003. It records only already-proven WO-001 implementation facts; it does not implement WO-002 or any profile.
+
+- Governance issue: `#378`.
+- Implementation Work Order: `GBS-V12-WO-001`; issue `#372`.
+- Implementation PR: `#377`.
+- Substantive implementation candidate: `7b185a284004567217b98213d568c70f26077bfd`.
+- Final audited PR head: `4ea5bb6b40bdbf19128ff37ae7a573b720c62879`.
+- Final owner audit: review `#5397342271`, `APPROVED / NOT_INDEPENDENT`, CRITICAL/HIGH `0 / 0`.
+- Governed implementation squash merge: `bd6d0e9884386d7ec8828ba3bd15de7777ebe362`.
+- Exact post-merge main assurance on that SHA: `8 / 8 SUCCESS`, zero pending/failed check-runs; commit status `codecov/patch = SUCCESS`.
+- Main ruleset required contexts all passed on the exact merge SHA: `Repository validation`, `Pipeline integrity`, `Gitleaks secrets`, `Trivy filesystem and configuration`.
+- Additional exact-main checks passed: `Analyze TypeScript`, `Node coverage LCOV`, `Socket Security: Project Report`, `SonarCloud Code Analysis`.
+- `U12-01` = `IMPLEMENTED / PASS`.
+- `U12-02` = `IMPLEMENTED / PASS`.
+- `U12-03` remains `NOT_IMPLEMENTED`; WO-001 did not prove the full integrated next-wave/resume/no-duplicate-side-effect contract.
+- `U12-04..U12-10` remain `NOT_IMPLEMENTED`.
+- Universal V1.2 implementation denominator after promotion: `2 / 10 = 20%`; remaining `8 / 10 = 80%`.
+- Conditional profiles remain separately unimplemented. SaaS pilot boundaries, EVM/Godot references, US$ 0 paid-tool/expanded-CI budget and HIGH_ASSURANCE independent specialist gate remain unchanged.
+- Active V1.2 implementation Work Order after promotion: `NONE`.
+- No package version, tag, release, deployment or profile implementation is promoted by GOV-003.
+- Next legal V1.2 action after promotion: separately owner-admit canonical backlog `GBS-V12-WO-002` with its own fresh Context Lock. This GOV-003 increment does not create, admit or execute WO-002.
+
+**Pre-merge stop:** `GBS_V12_GOV_003_WO001_PROMOTION_READY_FOR_OWNER_AUDIT`.
+
+**Post-merge terminal state:** `GBS_V12_WO_001_PROMOTED`.
