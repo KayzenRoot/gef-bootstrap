@@ -6,7 +6,7 @@ npm ci
 npm run validate
 ```
 
-V1.1.0 is the published production release. V1.1.1 is an in-progress patch; use [Installation](INSTALLATION.md) to install the released version and [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md) for governed project-state operations.
+V1.1.0 remains the production-accepted stable base. V1.1.1 was published, but its post-publish artifact verification failed; V1.1.2 is the current unreleased patch candidate. Use [Installation](INSTALLATION.md) for exact package availability and [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md) for governed project-state operations.
 
 ## 2. Read canonical operating state
 Read `AGENTS.md`, `planning/MASTER-MODULE-INDEX.md` and `.engineering/CHECKPOINT.md` before changing governed state.

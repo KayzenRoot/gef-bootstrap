@@ -62,7 +62,7 @@ test("CLI-E2E-02: version agrees with the canonical and packaged provenance", ()
   assert.equal(result.code, 0);
   assert.equal(JSON.parse(result.stdout).version, rootPackage.version);
   assert.equal(rootPackage.version, cliPackage.version);
-  assert.equal(cliPackage.version, "1.1.1");
+  assert.equal(cliPackage.version, "1.1.2");
 });
 
 test("CLI-E2E-03: unknown command and malformed flags exit 10 with no mutation", () => {

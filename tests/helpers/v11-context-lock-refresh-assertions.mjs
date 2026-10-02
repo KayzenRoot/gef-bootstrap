@@ -15,7 +15,7 @@ export function assertWo009BranchReconciliationNote(checkpointMd) {
 }
 
 export function assertLaterActiveWorkOrder(checkpoint, ordinal, ownerGovernancePromoted, minimumOrdinal, wo008Completed = false) {
-  assert.ok(Number.isInteger(ordinal) && ordinal >= minimumOrdinal && ordinal <= 11, `unexpected V1.1 state: ${checkpoint.v11.status}`);
+  assert.ok(Number.isInteger(ordinal) && ordinal >= minimumOrdinal && ordinal <= 12, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (wo008Completed) {
     assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
     assert.equal(checkpoint.v11.stopState, "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_READY_FOR_WO_009_ADMISSION");
@@ -27,6 +27,10 @@ export function assertLaterActiveWorkOrder(checkpoint, ordinal, ownerGovernanceP
   }
   if (ordinal === 11) {
     assertWo011CurrentPatch(checkpoint);
+    return;
+  }
+  if (ordinal === 12) {
+    assertWo012CurrentPatch(checkpoint);
     return;
   }
   if (ordinal === 9) {
@@ -108,6 +112,50 @@ export function assertWo011CurrentPatch(checkpoint) {
   }
   assert.equal(v11.gate3Wo010Acceptance.finalProductionAcceptance.status, "PRODUCTION_ACCEPTED");
   assert.equal(v11.gate3Wo010Acceptance.finalProductionAcceptance.historicalRecoveryEvidencePreserved, true);
+}
+
+export function assertWo012CurrentPatch(checkpoint) {
+  const v11 = checkpoint.v11;
+  const candidateRelease = v11.candidateRelease;
+  const publishedV111 = v11.patchHistory.find((release) => release.version === "1.1.1");
+
+  assert.equal(v11.status, "GBS_V11_WO_012_ADMITTED");
+  assert.equal(v11.activeWorkOrder, "GBS-V11-WO-012");
+  assert.equal(v11.activeWorkOrderStatus, "IMPLEMENTATION_IN_PROGRESS");
+  assert.equal(v11.implementationBranch, "hotfix/v1.1.2-release-state-preflight");
+  assert.equal(v11.contextLock, ".engineering/context-locks/GBS-V11-WO-012.json");
+  assert.equal(v11.nextLegalAction, "CONTINUE_GBS_V11_WO_012_IMPLEMENTATION_ON_LOCKED_BASE");
+  assert.equal(v11.stopState, "GBS_V11_WO_012_IMPLEMENTATION_IN_PROGRESS");
+  assert.equal(v11.nextWorkOrder, "GBS-V11-WO-012");
+  assert.equal(v11.nextCandidateWorkOrder, "NONE");
+  assert.equal(v11.activeMaintenanceWorkOrder, "NONE");
+  assert.match(v11.wo010Gate, /^PRODUCTION_ACCEPTED:/);
+  assert.match(v11.wo010Gate, /WO-012 is the active V1\.1\.2 patch/);
+
+  assert.equal(v11.stableRelease.version, "1.1.0");
+  assert.equal(v11.stableRelease.status, "PRODUCTION_ACCEPTED");
+  assert.equal(candidateRelease.version, "1.1.2");
+  assert.equal(candidateRelease.status, "PATCH_IN_PROGRESS");
+  assert.equal(candidateRelease.workOrder, "GBS-V11-WO-012");
+  assert.equal(candidateRelease.issue, 361);
+  assert.equal(candidateRelease.baseMainSha, "5a32a607ccf2055fab722f3d5d452791c6aae3e6");
+  assert.equal(candidateRelease.branch, "hotfix/v1.1.2-release-state-preflight");
+  assert.equal(candidateRelease.contextLock, ".engineering/context-locks/GBS-V11-WO-012.json");
+  assert.equal(candidateRelease.pullRequest, 362);
+  assert.equal(candidateRelease.tag, null);
+  assert.equal(candidateRelease.npmPublished, false);
+  assert.equal(candidateRelease.registrySmoke, "NOT_RUN");
+  assert.equal(candidateRelease.rolloutStarted, false);
+  assert.equal(candidateRelease.stopWhen, "GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT");
+
+  assert.ok(publishedV111, "published 1.1.1 release history must remain recorded");
+  assert.equal(publishedV111.status, "PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED");
+  assert.equal(publishedV111.tag, "v1.1.1");
+  assert.equal(publishedV111.tagTarget, "1dc030f1358eab0347043a3d54c7fc311c7c2123");
+  assert.equal(publishedV111.priorAdmissionRecord.workOrder, "GBS-V11-WO-011");
+  assert.equal(publishedV111.priorAdmissionRecord.issue, 357);
+  assert.equal(publishedV111.priorAdmissionRecord.pullRequest, 358);
+  assert.equal(publishedV111.priorAdmissionRecord.status, "PATCH_IN_PROGRESS");
 }
 
 export function assertWo009MergedPromotionHandoff(checkpoint, checkpointMd) {

@@ -12,7 +12,7 @@ const PACKAGE_PREPARER = readFileSync(resolve(ROOT, "packages/cli/scripts/prepar
 const UNPRIVILEGED_VALIDATION = readFileSync(resolve(ROOT, ".github/scripts/run-v11-unprivileged-validation.ps1"), "utf8");
 
 test("WO-010 manual branch dispatch verifies a candidate but only an exact pushed tag can publish", () => {
-  assert.match(WORKFLOW, /push:\s*\n\s+tags:\s*\["v1\.1\.0", "v1\.1\.1"\]/);
+  assert.match(WORKFLOW, /push:\s*\n\s+tags:\s*\["v1\.1\.0", "v1\.1\.1", "v1\.1\.2"\]/);
   assert.match(WORKFLOW, /workflow_dispatch:\s*\n\s+inputs:\s*\n\s+mode:\s*\n\s+description:[\s\S]*?options:[\s\S]*?- CANDIDATE[\s\S]*?- RECOVERY/);
   assert.match(WORKFLOW, /if:\s*github\.ref == 'refs\/tags\/v1\.1\.0' \|\| \(github\.event_name == 'workflow_dispatch' && github\.ref_type == 'branch' && inputs\.mode != 'RECOVERY'\)/);
   assert.doesNotMatch(WORKFLOW, /^\s+pull_request:/m);
@@ -67,7 +67,14 @@ test("WO-010 publisher uses short-lived OIDC with least privilege and no publish
   assert.match(WORKFLOW, /npm install --global --ignore-scripts --no-audit --no-fund npm@11\.5\.1/);
   assert.match(WORKFLOW, /test "\$\(npm --version\)" = "11\.5\.1"/);
   const publishJobSection = WORKFLOW.split("\n  publish:")[1].split("\n  post-publish:")[0];
-  assert.equal((WORKFLOW.match(/id-token:\s*write/g) ?? []).length, 2, "only version-specific publish jobs may request OIDC identity");
+  assert.equal((WORKFLOW.match(/id-token:\s*write/g) ?? []).length, 3, "only v1.1.0, v1.1.1 and v1.1.2 publish jobs may request OIDC identity");
+  const publish111Job = WORKFLOW.split("\n  publish-1-1-1:")[1].split("\n  post-publish-1-1-1:")[0];
+  assert.match(publish111Job, /if: github\.event_name == 'push' && github\.ref == 'refs\/tags\/v1\.1\.1'/);
+  assert.match(publish111Job, /id-token:\s*write/);
+  const publish112Job = WORKFLOW.split("\n  publish-1-1-2:")[1].split("\n  post-publish-1-1-2:")[0];
+  assert.match(publish112Job, /if: github\.event_name == 'push' && github\.ref == 'refs\/tags\/v1\.1\.2'/);
+  assert.match(publish112Job, /environment:\s*\n\s+name: npm-publish/);
+  assert.match(publish112Job, /id-token:\s*write/);
   assert.match(publishJobSection, /needs: \[verify, cross-platform-artifact-smoke\]/);
 });
 

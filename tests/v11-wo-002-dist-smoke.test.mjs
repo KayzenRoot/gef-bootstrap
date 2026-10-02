@@ -233,7 +233,7 @@ test("DIST-SMOKE-04: no publication is performed or claimed", (t) => {
   assert.equal(JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")).private, true);
 
   const cliReadme = readFileSync(join(CLI_PACKAGE_DIR, "README.md"), "utf8");
-  assert.match(cliReadme, /No publication to npm, GitHub Releases or any registry is performed or claimed/);
+  assert.match(cliReadme, /This 1\.1\.2 candidate\s+is not published by WO-012/);
 
   // The shipped runtime carries no registry-write capability at all.
   for (const file of readdirSync(join(cliDir, "dist")).filter((name) => name.endsWith(".js"))) {

@@ -23,6 +23,11 @@ const acceptedGovernanceHistory = new Set([
   ".engineering/work-orders/GBS-V11-RELEASE-ONEPASS-013.md",
   // The active Work Order is governance text and names its consumer repo; it is not a product binding.
   ".engineering/work-orders/GBS-V11-WO-011.md",
+  ".engineering/context-locks/GBS-V11-WO-012.json",
+  ".engineering/execution-briefs/GBS-V11-WO-012-DIRECT.md",
+  ".engineering/work-orders/GBS-V11-WO-012.md",
+  ".engineering/evidence/GBS-V11-WO-012-EVIDENCE.md",
+  ".engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json",
   "AGENTS.md",
   ".engineering/decisions/ADR-0007-RETIRE-" + retirementName + "-INTEGRATION.md",
   ".engineering/context-locks/GBS-MAINT-" + retirementName + "-REMOVAL-001.md",

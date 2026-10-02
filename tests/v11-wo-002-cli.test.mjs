@@ -382,7 +382,7 @@ test("emitted documents are bound to their schema version", () => {
     verb: "init",
     commandId: "gef.init.run",
     contractVersion: CLI_CONTRACT_VERSION,
-    productVersion: "1.1.1",
+    productVersion: "1.1.2",
     runId: "run-1",
     planDigest: "a".repeat(64),
     observationFingerprint: "b".repeat(64),
@@ -396,7 +396,7 @@ test("emitted documents are bound to their schema version", () => {
     runId: "run-1",
     commandId: "gef.init.run",
     contractVersion: CLI_CONTRACT_VERSION,
-    productVersion: "1.1.1",
+    productVersion: "1.1.2",
     effectStatus: "CONFIRMED",
     lifecyclePhases: ["RECEIVED", "READY", "EXECUTING"],
     resultDigest: "c".repeat(64),
@@ -415,7 +415,7 @@ test("reading a persisted document with an unsupported version is refused", (t) 
     verb: "init",
     commandId: "gef.init.run",
     contractVersion: CLI_CONTRACT_VERSION,
-    productVersion: "1.1.1",
+    productVersion: "1.1.2",
     runId: "read-supported-state",
     planDigest: "a".repeat(64),
     observationFingerprint: "b".repeat(64),
@@ -525,6 +525,6 @@ test("fingerprint is stable under key reordering and sensitive to value change",
 
 test("version provenance is mechanically single-sourced", () => {
   assert.equal(rootPackage.version, cliPackage.version);
-  assert.equal(cliPackage.version, "1.1.1");
+  assert.equal(cliPackage.version, "1.1.2");
   assert.equal(cliPackage.bin.gef, "./bin/gef.mjs");
 });

@@ -44,7 +44,7 @@ introspection proves the delegation instead of leaving it implicit.
 ## Behaviour
 
 - Default `init`/`adopt` paths are read-only. Mutation requires an explicit `--apply`.
-- `upgrade` migrates a governed project state from the matrix-admitted V1.0 `1.0.0` or V1.1.0 state to the current V1.1.1 state; it never updates the installed CLI, contacts a registry or invokes a package manager.
+- `upgrade` migrates a governed project state from a matrix-admitted V1.0/V1.1 state to the current V1.1.2 candidate state; it never updates the installed CLI, contacts a registry or invokes a package manager.
 - Upgrade preserves the source state and its receipt byte-for-byte and creates a separate `.gef/upgrade-state.json` record through the kernel transaction path. Unsupported, conflicting, user-modified or unobservable inputs fail closed. A verified repeat returns `NOOP_APPLIED` and keeps the existing state bytes.
 - **Output selection:** a JSON envelope is emitted when `--json` is present **or** when stdout
   is not a TTY. The TTY capability is injected into the runner, never sniffed during parsing.
@@ -228,9 +228,10 @@ Six engine modules are vendored: `m48-m54-maintenance`, `area-h-governance`,
 The last three were added by the WO-003 increment so the installed package can serve `doctor`
 and `status` from the packaged payload alone.
 
-**No publication to npm, GitHub Releases or any registry is performed or claimed by this
-increment.** `private: true` and the absence of `publishConfig` make an accidental publication
-mechanically impossible.
+`@gef-bootstrap/cli@1.1.1` is published and remains immutable; its post-publish artifact download
+verification incident is recorded in the canonical checkpoint and changelog. This 1.1.2 candidate
+is not published by WO-012. Its release still requires exact-head checks, owner audit, merge and
+the trusted-publisher workflow.
 
 ## License
 

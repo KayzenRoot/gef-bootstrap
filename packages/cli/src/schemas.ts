@@ -127,7 +127,7 @@ export function parseStateDocument(value: unknown): ParsedStateDocument | null {
   if (state["verb"] !== verb || state["commandId"] !== commandId) return null;
   if (typeof state["productVersion"] !== "string" || !/^[0-9]+\.[0-9]+\.[0-9]+$/.test(state["productVersion"])) return null;
   if (legacy && !["1.0.0", "1.1.0"].includes(state["productVersion"])) return null;
-  if (current && state["productVersion"] !== "1.1.1") return null;
+  if (current && !["1.1.1", "1.1.2"].includes(state["productVersion"])) return null;
   if (typeof state["runId"] !== "string" || !/^[A-Za-z0-9-]{1,128}$/.test(state["runId"])) return null;
   if (typeof state["planDigest"] !== "string" || !/^[0-9a-f]{64}$/.test(state["planDigest"])) return null;
   if (typeof state["observationFingerprint"] !== "string" || !/^[0-9a-f]{64}$/.test(state["observationFingerprint"])) return null;
