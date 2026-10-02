@@ -1,0 +1,262 @@
+{
+  "schemaVersion": 1,
+  "kind": "GBS_V12_WO000_V11_BASELINE",
+  "sourceCommit": "203dc6a86de035b8502453100ea6e2a4788cae57",
+  "sourceTree": "6b66139b7df03c0041a0c785057afb29d9a47428",
+  "packageVersion": "1.1.2",
+  "environment": {
+    "os": "Windows 11 Pro",
+    "osRelease": "10.0.26300",
+    "osBuild": "26300",
+    "architecture": "x64",
+    "node": "v24.19.0",
+    "npm": "11.17.0",
+    "typescript": "6.0.3",
+    "packageManager": "npm",
+    "dependencyInstall": {
+      "command": "npm ci --ignore-scripts",
+      "status": "PASS",
+      "packagesAdded": 33,
+      "packagesAudited": 62,
+      "vulnerabilitiesReported": 0
+    }
+  },
+  "qualityGate": {
+    "status": "PASS",
+    "executionCheckout": "plain detached clone",
+    "commands": [
+      {
+        "command": "npm run build -- --force",
+        "status": "PASS",
+        "wallTimeMs": 18365
+      },
+      {
+        "command": "npm run typecheck",
+        "status": "PASS",
+        "wallTimeMs": 813
+      },
+      {
+        "command": "npm run validate",
+        "status": "PASS",
+        "wallTimeMs": 299776,
+        "testCount": 1632,
+        "passed": 1632,
+        "failed": 0,
+        "nodeDurationMs": 297837.5615
+      },
+      {
+        "command": "npm audit --audit-level=high",
+        "status": "PASS",
+        "wallTimeMs": 1926,
+        "vulnerabilities": 0
+      },
+      {
+        "command": "git diff --check",
+        "status": "PASS",
+        "wallTimeMs": 69
+      },
+      {
+        "command": "git status --porcelain",
+        "status": "PASS",
+        "result": "EMPTY"
+      }
+    ]
+  },
+  "focusedBaseline": {
+    "status": "PASS",
+    "command": "node --test tests/v11-wo-002-cli-e2e.test.mjs tests/v11-wo-005-execution-capsule.test.mjs tests/v11-wo-006-incremental-validation.test.mjs tests/v11-wo-007-proof-reuse.test.mjs tests/v11-wo-008-performance-telemetry.test.mjs tests/v11-wo-012-adoption-preflight.test.mjs",
+    "testFiles": [
+      "tests/v11-wo-002-cli-e2e.test.mjs",
+      "tests/v11-wo-005-execution-capsule.test.mjs",
+      "tests/v11-wo-006-incremental-validation.test.mjs",
+      "tests/v11-wo-007-proof-reuse.test.mjs",
+      "tests/v11-wo-008-performance-telemetry.test.mjs",
+      "tests/v11-wo-012-adoption-preflight.test.mjs"
+    ],
+    "testCount": 84,
+    "passed": 84,
+    "failed": 0,
+    "wallTimeMs": 5819,
+    "nodeDurationMs": 5705.92,
+    "dimensions": [
+      {
+        "id": "B1",
+        "capability": "Greenfield bootstrap",
+        "status": "PRESENT",
+        "evidence": "WO-002 CLI E2E and matched GREENFIELD_INIT_PLAN benchmark; CLI and source-workspace paths returned READY with equal plan digests across seven repetitions."
+      },
+      {
+        "id": "B2",
+        "capability": "Brownfield adoption",
+        "status": "PRESENT",
+        "timing": "NOT_YET_BASELINED",
+        "evidence": "WO-002 CLI E2E and WO-012 adoption preflight; safe adoption coverage exists, but no repeatable brownfield timing harness is present."
+      },
+      {
+        "id": "B3",
+        "capability": "Execution-pack / Marathon precursor",
+        "status": "PRESENT",
+        "evidence": "WO-005 capsule tests cover deterministic compilation, semantic identity, M14 handoff freshness, M15 receipt/sealed-pack binding, unresolved-question indeterminacy, and final-sweep preservation; no V1.2 completion percentage is assigned."
+      },
+      {
+        "id": "B4",
+        "capability": "Incremental validation / proof reuse",
+        "status": "PRESENT",
+        "evidence": "WO-006/007 tests cover narrow selection only with proven mappings, widening/fail-closed handling for unknowns, matching receipts, stale platform/toolchain refusal, and no production-credit manufacture."
+      },
+      {
+        "id": "B5",
+        "capability": "Performance telemetry",
+        "status": "PRESENT",
+        "evidence": "WO-008 tests cover P1-P8 identity, incomparable populations, missing metrics, token unavailability, quality-gate invalidation, deterministic samples and no final-sweep suppression."
+      },
+      {
+        "id": "B6",
+        "capability": "Adoption compatibility safety",
+        "status": "PRESENT",
+        "evidence": "WO-012 tests prove unknown generated-file classification and ambiguous contracts fail closed before mutation; valid contracts permit adoption; absence of a local contract preserves normal adoption."
+      }
+    ]
+  },
+  "cliRoi": {
+    "benchmark": ".engineering/benchmarks/v1.1/cli-roi.mjs",
+    "status": "PASS",
+    "measuredAtCommit": "203dc6a86de035b8502453100ea6e2a4788cae57",
+    "measuredTree": "6b66139b7df03c0041a0c785057afb29d9a47428",
+    "repetitionCount": 7,
+    "population": {
+      "P1": {
+        "workloadKind": "GREENFIELD_INIT_PLAN"
+      },
+      "P2": {
+        "workloadInstanceId": "wo008-cli-roi-init-plan-v1",
+        "fixtureId": "empty-target-v1",
+        "fixtureDigest": "38c4a4f4b188707dd51a8d566aa9405b9669aea1ebd786fc65e03063255093d9"
+      },
+      "P3": {
+        "commitSha": "203dc6a86de035b8502453100ea6e2a4788cae57",
+        "treeFingerprint": "6b66139b7df03c0041a0c785057afb29d9a47428"
+      },
+      "P4": {
+        "node": "v24.19.0",
+        "npm": "11.17.0",
+        "packageManager": "npm",
+        "typescript": "6.0.3"
+      },
+      "P5": {
+        "os": "win32",
+        "osVersion": "10.0.26300",
+        "architecture": "x64"
+      },
+      "P6": {
+        "policyDigest": "301e8769ec8abe3f7ef71c41916b8e13626d1f31e80d58fb5a14c14a34198729",
+        "ladder": "STANDARD",
+        "finalSweepRequired": true
+      },
+      "P7": {
+        "posture": "COLD",
+        "reuseSetDigest": "none"
+      },
+      "P8": {
+        "timedRegion": "process-start-to-json-envelope-output",
+        "startEvent": "process-start",
+        "endEvent": "json-envelope-output"
+      }
+    },
+    "populationDigest": "c74bfff6a7a6ccf2efc13709c269e44cacb5d515276a92e49cc913cc30d68a03",
+    "timing": {
+      "source": "MEASURED",
+      "unit": "ms",
+      "sourceWorkspace": [
+        140.03289999999998,
+        137.47119999999995,
+        155.99289999999996,
+        157.6839,
+        188.23519999999985,
+        168.82760000000007,
+        161.0695999999998
+      ],
+      "cli": [
+        147.38770000000002,
+        135.43409999999994,
+        141.34029999999996,
+        155.18979999999988,
+        156.12549999999987,
+        154.01119999999992,
+        161.4086000000002
+      ]
+    },
+    "summaries": {
+      "sourceWorkspace": {
+        "n": 7,
+        "medianMs": 157.6839,
+        "p90Ms": 168.82760000000007,
+        "p95Ms": 168.82760000000007,
+        "minMs": 137.47119999999995,
+        "maxMs": 188.23519999999985
+      },
+      "cli": {
+        "n": 7,
+        "medianMs": 154.01119999999992,
+        "p90Ms": 156.12549999999987,
+        "p95Ms": 156.12549999999987,
+        "minMs": 135.43409999999994,
+        "maxMs": 161.4086000000002
+      }
+    },
+    "tokens": {
+      "source": "UNAVAILABLE",
+      "unit": "tokens",
+      "value": null
+    },
+    "qualityGate": {
+      "status": "PASS",
+      "digest": "6ba6d8677c6ddb5df29607ac019eeb526954399569488797f4740b93866734f0"
+    },
+    "records": {
+      "sourceWorkspaceId": "cli-roi-manual-203dc6a86de0",
+      "sourceWorkspaceDigest": "111d4d1c20343ab14cdcaed9b1c0d0e737770e99f891db7aa0ad90b384996b30",
+      "cliId": "cli-roi-cli-203dc6a86de0",
+      "cliDigest": "f95815cdbad14567fd9dc3eb741939bbe7fe98c890032fff1403d4dcd93e17e5"
+    },
+    "report": {
+      "verdict": "NO_CHANGE",
+      "reasonCode": "COMPARABLE",
+      "optimizationClaimEligible": false,
+      "baselinePopulationDigest": "c74bfff6a7a6ccf2efc13709c269e44cacb5d515276a92e49cc913cc30d68a03",
+      "candidatePopulationDigest": "c74bfff6a7a6ccf2efc13709c269e44cacb5d515276a92e49cc913cc30d68a03",
+      "requiredMetricIds": [
+        "M-LAT-01"
+      ],
+      "tokenMetricVerdict": "INDETERMINATE",
+      "primitives": {
+        "m57PerformanceGateUsedForLatency": true,
+        "m63PerformanceRegressionState": "NOT_APPLICABLE",
+        "m41CompareBenchmarkState": "IMPROVED"
+      },
+      "reportDigest": "175d7cb1fb80b094350505cc13f528ff0d728c50fa2e160fe0a10e9bce19fba0"
+    }
+  },
+  "comparability": {
+    "exactP1P8Matched": true,
+    "populationDigest": "c74bfff6a7a6ccf2efc13709c269e44cacb5d515276a92e49cc913cc30d68a03",
+    "comparedModes": [
+      "SOURCE_WORKSPACE_MANUAL",
+      "CLI"
+    ],
+    "status": "COMPARABLE",
+    "scope": "V1.1.2_BASELINE_ONLY",
+    "v12Candidate": "NOT_AVAILABLE",
+    "v12Comparison": "NOT_PERFORMED",
+    "outcome": "BASELINE_CAPTURED_NO_V12_COMPARISON"
+  },
+  "limitations": [
+    "Brownfield adoption timing: NOT_YET_BASELINED; the released test evidence has no repeatable brownfield timing harness.",
+    "Token metrics: UNAVAILABLE; this local runner does not expose token counts.",
+    "This is a single Windows 11 x64 environment capture; no cross-platform latency comparison was performed.",
+    "No V1.2 candidate exists in this run. The report verdict is NO_CHANGE and optimizationClaimEligible=false; no V1.2 speedup, improvement percentage, implementation progress, or ETA is claimed.",
+    "An initial linked-worktree attempt was excluded because two existing WO-003 tests read .git/index directly and failed when .git was a worktree indirection file. The final quality gate and focused run used a full detached clone at the exact same source commit, with core.autocrlf=false, and completed with a clean tracked status.",
+    "The existing benchmark exited successfully and emitted Node DEP0190 warning during its npm-version probe on Windows; no benchmark output or sample was rejected."
+  ],
+  "trackedSourceMutation": false
+}
