@@ -8,10 +8,40 @@
   "candidateStop": "GBS_V12_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT",
   "authority": {
     "latestHandoffComment": 5960594160,
-    "ownerAuditReview": 5396264955,
-    "ownerAudit": "APPROVED / NOT_INDEPENDENT",
-    "criticalFindings": 0,
-    "highFindings": 0
+    "latestCorrectionDeltaComment": 5961964299,
+    "contextLockOwnerAudit": {
+      "review": 5396264955,
+      "verdict": "APPROVED / NOT_INDEPENDENT",
+      "criticalFindings": 0,
+      "highFindings": 0
+    },
+    "substantiveCandidateOwnerAudit": {
+      "review": 5397151681,
+      "verdict": "CORRECTION REQUIRED",
+      "criticalFindings": 0,
+      "highFindings": 1,
+      "minorFindings": 1,
+      "runtimeCriticalFindings": 0,
+      "runtimeHighFindings": 0
+    },
+    "correctionDisposition": "EVIDENCE_AND_PR_METADATA_ONLY",
+    "ownerExactHeadAuditAfterCorrectionRequired": true
+  },
+  "headBinding": {
+    "implementationBase": "8e63ae5a2733139080063eab9434639c772a04ec",
+    "admittedLockHead": "09cecbbda587f9e9dd57bbef87296429f82d1bda",
+    "substantiveCandidateHeadBeforeEvidenceOnlyCommit": "7b185a284004567217b98213d568c70f26077bfd",
+    "evidenceOnlyCorrectionCommit": {
+      "scope": [
+        ".engineering/evidence/GBS-V12-WO-001-IMPLEMENTATION-EVIDENCE.md",
+        ".engineering/evidence/GBS-V12-WO-001-IMPLEMENTATION-EVIDENCE.json"
+      ],
+      "selfReferentialShaEmbedded": false,
+      "reason": "The bundle follows the V1.1 pattern and records the substantive parent; the live final PR HEAD is bound externally after push."
+    },
+    "finalPullRequestHead": "PENDING_AFTER_EVIDENCE_ONLY_PUSH",
+    "finalHeadChecks": "PENDING_AFTER_EVIDENCE_ONLY_PUSH",
+    "substantiveHeadChecksTransferable": false
   },
   "preflight": {
     "implementationBase": "8e63ae5a2733139080063eab9434639c772a04ec",
@@ -20,7 +50,7 @@
     "lockedFingerprintsMatched": true,
     "branchDescendsFromBase": true,
     "preEditDiffContainedOnlyLockAndEvidenceScaffold": true,
-    "remoteStateRecheckedBeforeCommit": {
+    "remoteStateRecheckedBeforeImplementationCommit": {
       "main": "8e63ae5a2733139080063eab9434639c772a04ec",
       "branch": "09cecbbda587f9e9dd57bbef87296429f82d1bda",
       "pullRequestState": "OPEN",
@@ -43,7 +73,8 @@
     "universalDenominatorCreditNow": 0,
     "canonicalCheckpointPromoted": false
   },
-  "validation": {
+  "validationOnSubstantiveCandidate": {
+    "head": "7b185a284004567217b98213d568c70f26077bfd",
     "npmRunBuild": "PASS",
     "npmRunTypecheck": "PASS",
     "focusedU12Tests": {
@@ -77,8 +108,138 @@
       "result": "PASS",
       "vulnerabilities": 0
     },
-    "gitDiffCheck": "PASS",
-    "exactHeadHostedChecks": "PENDING_AFTER_PUSH_NEW_HEAD"
+    "gitDiffCheck": "PASS"
+  },
+  "hostedChecksOnSubstantiveCandidate": {
+    "head": "7b185a284004567217b98213d568c70f26077bfd",
+    "result": "PASS",
+    "statusContexts": {
+      "total": 58,
+      "success": 58,
+      "pending": 0,
+      "nonSuccess": 0
+    },
+    "checks": [
+      {
+        "name": "Repository Validation",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780038/job/111036530938"
+      },
+      {
+        "name": "Pipeline Integrity",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066913822/job/111036968723"
+      },
+      {
+        "name": "Gitleaks and Trivy",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066913849"
+      },
+      {
+        "name": "Dependency Review",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066913866/job/111036968800"
+      },
+      {
+        "name": "Security CodeQL",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780107/job/111036531138"
+      },
+      {
+        "name": "CodeQL",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/runs/111036932999"
+      },
+      {
+        "name": "SonarCloud",
+        "result": "PASS",
+        "url": "https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=377",
+        "securityHotspots": 0
+      },
+      {
+        "name": "Codecov Node coverage",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780062/job/111036530730"
+      },
+      {
+        "name": "Codecov patch",
+        "result": "PASS",
+        "url": "https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/377"
+      },
+      {
+        "name": "V1.1 release assurance and same exact tarball",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780023",
+        "platforms": ["ubuntu-latest", "windows-latest", "macos-latest"]
+      },
+      {
+        "name": "M14 Task and Context Compiler",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066800740"
+      },
+      {
+        "name": "M15 Execution Pack Compiler",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780066"
+      },
+      {
+        "name": "M41-M47 Integrated Assurance",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780079"
+      },
+      {
+        "name": "M48-M54 Integrated Assurance",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780039"
+      },
+      {
+        "name": "M55-M61 Integrated Assurance",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780036"
+      },
+      {
+        "name": "M62-M63 Final Assurance",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780165"
+      },
+      {
+        "name": "CTX-DET all OS",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780019"
+      },
+      {
+        "name": "INC-VAL all OS",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780054"
+      },
+      {
+        "name": "Repository validate",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37066780077"
+      },
+      {
+        "name": "Socket security report and PR alerts",
+        "result": "PASS",
+        "url": "https://socket.dev/dashboard/org/nexlabs/sbom/1510dbf3-2285-4eee-b479-3b2f8bc08f7e"
+      }
+    ],
+    "codeRabbit": {
+      "result": "SUCCESS",
+      "observedAt": "2026-10-02T21:37:09Z",
+      "resolvedImplementationFindings": 2,
+      "resolvedThreads": 3,
+      "openThreads": 0
+    }
+  },
+  "evidenceOnlyCorrection": {
+    "changedFiles": [
+      ".engineering/evidence/GBS-V12-WO-001-IMPLEMENTATION-EVIDENCE.md",
+      ".engineering/evidence/GBS-V12-WO-001-IMPLEMENTATION-EVIDENCE.json"
+    ],
+    "runtimeSemanticsChanged": false,
+    "implementationTestsChanged": false,
+    "canonicalCheckpointChanged": false,
+    "pullRequestBodySynchronized": true
   },
   "scope": {
     "canonicalCheckpointFilesChanged": false,
@@ -87,5 +248,5 @@
     "releaseOrTagChanged": false,
     "mergePerformed": false
   },
-  "nextAction": "OWNER_EXACT_HEAD_AUDIT_AFTER_ALL_REQUIRED_EXACT_HEAD_CHECKS_PASS"
+  "nextAction": "WAIT_FOR_ALL_APPLICABLE_CHECKS_ON_NEW_EVIDENCE_ONLY_HEAD_THEN_REPEAT_OWNER_EXACT_HEAD_AUDIT"
 }
