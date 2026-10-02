@@ -1,0 +1,205 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V12-WO-000",
+  "issue": 367,
+  "repository": "KayzenRoot/gef-bootstrap",
+  "state": "OWNER_AUTHORIZED_ADMISSION_ONLY_NO_IMPLEMENTATION",
+  "executionBase": {
+    "branch": "main",
+    "sha": "203dc6a86de035b8502453100ea6e2a4788cae57",
+    "tree": "6b66139b7df03c0041a0c785057afb29d9a47428",
+    "packageVersion": "1.1.2",
+    "v11State": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED"
+  },
+  "workingBranch": "planning/v1.2-wo-000-admission",
+  "canonicalSourceFingerprints": {
+    "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
+    ".engineering/CHECKPOINT.md": "e8f9ce2a96b6dcbfafe3d9071ca69e43941130af",
+    ".engineering/CHECKPOINT.json": "df5cd7d1b5a2e965256f179245ddf50aceeccc81",
+    ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    ".engineering/SCOPE.md": "2de21b38bd37622099e4058aae9403130dbb4a9f",
+    ".engineering/DEFINITION-OF-DONE.md": "28192469f6b66f1329375917def4691dce40ed4e",
+    ".engineering/ARCHITECTURE.md": "86b00afd1207157d8eb591ddcd604b1cbd9aaa2b",
+    ".engineering/REQUIREMENTS.md": "49fba49baab46ba5fa64ff9d2bb0f2944c888c8d",
+    ".engineering/SECURITY.md": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
+    ".engineering/DEPLOYMENT.md": "54b7b86422df2be0463219e31e06025c7d21171b",
+    ".engineering/DECISIONS-LEDGER.md": "34ca9119054f30a56d2019fb99b6a259f8e2f896",
+    ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md": "687ee037d2dcd4936d118a23666665fc66410aed",
+    ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
+    "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+  },
+  "activeRuleset": {
+    "id": 23566111,
+    "name": "Main Branch Protection",
+    "enforcement": "active",
+    "requiredStatusChecks": [
+      "Repository validation",
+      "Pipeline integrity",
+      "Gitleaks secrets",
+      "Trivy filesystem and configuration"
+    ]
+  },
+  "archivedResearchSnapshot": {
+    "branch": "planning/gef-v12-research-dossier-001",
+    "commit": "c85cc91c899b553c1c37fe53ada236b8f76de3e2",
+    "historicalPr": 344,
+    "disposition": "CLOSED_WITHOUT_MERGE_ARCHIVED_INPUT_ONLY",
+    "files": [
+      [
+        "planning/v1.2/API-PERFORMANCE-AND-DECISION-INNOVATIONS.md",
+        "e4f88c7cc1354f62efbabc3c774854cc37e0fe16"
+      ],
+      [
+        "planning/v1.2/DOMAIN-ROUTER-AND-HYBRID-PROFILES.md",
+        "49550e6717128ef2d955872a027f9700de3115b0"
+      ],
+      [
+        "planning/v1.2/EXPERIMENTS-AND-DECISIONS.md",
+        "cdafa4d6d4d40493be766141f90474e2d7bcc2c5"
+      ],
+      [
+        "planning/v1.2/GAME-FACTORY-PROFILE.md",
+        "984cbc6a19031aedde3b2ba4cf9598360a68f1ff"
+      ],
+      [
+        "planning/v1.2/OPERATIONS-AND-RELEASE-INNOVATIONS.md",
+        "8f372f35b53cd92fe8c1166e6dfc20379bf3413f"
+      ],
+      [
+        "planning/v1.2/OPERATOR-RESPONSE-AND-FORECAST.md",
+        "cfca32005de966cd20d1efcec43f045bee48799a"
+      ],
+      [
+        "planning/v1.2/PRODUCT-DISCOVERY-INTERVIEW.md",
+        "de99b23715907b0543d37e4ce946e7866999b853"
+      ],
+      [
+        "planning/v1.2/QUALITY-AND-TEST-STRATEGY.md",
+        "04290625020b83ab25ddd2d376fd47a33c7834e8"
+      ],
+      [
+        "planning/v1.2/README.md",
+        "be72b7804db13ccb04c520e6bcd1d475dd4beb6a"
+      ],
+      [
+        "planning/v1.2/REMAINING-GAPS-AND-OPTIMIZATION-AUDIT.md",
+        "997ab5130b39025aec0fd26e9d61753a17a4e208"
+      ],
+      [
+        "planning/v1.2/ROADMAP-AND-WORK-ORDERS.md",
+        "c124b27de9dcdc32120fa941f07a9c36043fbc00"
+      ],
+      [
+        "planning/v1.2/SAAS-FINANCE-FACTORY.md",
+        "6b0c79c3392c1dddefe629b382daf2a8772da2b0"
+      ],
+      [
+        "planning/v1.2/SAAS-TENANT-AND-DATA-GOVERNANCE.md",
+        "b45a7efc937798e1e31f942211d7151163449e9d"
+      ],
+      [
+        "planning/v1.2/SAAS-WEB3-CROSS-DOMAIN-AND-GAPS.md",
+        "e39bd234f3e16f0d303aa262763bb895e2d0eecc"
+      ],
+      [
+        "planning/v1.2/SAAS-WEB3-REMAINING-AREAS.md",
+        "44622cab9527680c3671185974d5ca2fc67d04f8"
+      ],
+      [
+        "planning/v1.2/STARTUP-DEFAULT-PROFILE.md",
+        "f25c46799d01d8e6b6ba6e4ee264381cbbe4446b"
+      ],
+      [
+        "planning/v1.2/THROUGHPUT-OPTIMIZATIONS.md",
+        "a9827fe5081890269df5114748f338c50b03c156"
+      ],
+      [
+        "planning/v1.2/TOOLING-AND-GITHUB-SETUP.md",
+        "467d4c076e8daa3f2b1b82b3996bd94e098aa52c"
+      ],
+      [
+        "planning/v1.2/UI-UX-DESIGN-FACTORY.md",
+        "1f20ca4295da713225c383a57347a794717a75ae"
+      ],
+      [
+        "planning/v1.2/V12-CANDIDATE-ACCEPTANCE-AND-RELEASE-GATES.md",
+        "31a8e9ddbd3c280c9cd5b388622a56cb96f2fd4b"
+      ],
+      [
+        "planning/v1.2/V12-CANDIDATE-SCOPE-FREEZE.md",
+        "b8f8e48d4a6442c771a2d401d38acfcdd5f29905"
+      ],
+      [
+        "planning/v1.2/V12-IDEA-CLOSURE-AND-HANDOFF.md",
+        "9964e1e2ebdb047601d9d4b78aaedb1cafad99bc"
+      ],
+      [
+        "planning/v1.2/VISION-AND-ARCHITECTURE.md",
+        "eec1e5de4f3348a4eef36eb08d22cd83665dc15d"
+      ],
+      [
+        "planning/v1.2/WEB3-DATA-SECURITY.md",
+        "54967e004a03fd172d78154fb52a88fccd3189d1"
+      ],
+      [
+        "planning/v1.2/WEB3-FACTORY-PROFILE.md",
+        "05d7db54135109e097343ec4f7f776a28cf892a2"
+      ]
+    ]
+  },
+  "candidateClassModel": {
+    "C": "UNIVERSAL_CANDIDATE_REQUIRES_WO000_RECONCILIATION",
+    "D": "CONDITIONAL_PROFILE_NOT_IN_RELEASE_DENOMINATOR_BY_DEFAULT",
+    "R": "EXPERIMENT_OR_FUTURE_BY_DEFAULT"
+  },
+  "knownConflicts": [
+    "Archived research assumes V1.1 is in progress; current V1.1.2 is PRODUCTION_ACCEPTED.",
+    "Archived research references PR #344 as draft; it is closed without merge.",
+    "Archived C07 independent ChatGPT review wording conflicts with current owner-operated NOT_INDEPENDENT audit governance.",
+    "Any Hive-specific integration conflicts with ADR-0007."
+  ],
+  "allowedWrites": [
+    ".engineering/work-orders/GBS-V12-WO-000.md",
+    ".engineering/context-locks/GBS-V12-WO-000.json",
+    ".engineering/v1.2/GBS-V12-WO-000-SOURCE-MAP.md"
+  ],
+  "forbiddenWrites": [
+    "packages/**",
+    "src/**",
+    "tests/**",
+    ".github/workflows/**",
+    "package.json",
+    "package-lock.json",
+    ".engineering/CHECKPOINT.md",
+    ".engineering/CHECKPOINT.json",
+    ".engineering/SCOPE.md",
+    ".engineering/REQUIREMENTS.md",
+    ".engineering/ARCHITECTURE.md",
+    ".engineering/SECURITY.md",
+    ".engineering/TEST-BENCHMARK-PLAN.md",
+    ".engineering/DEPLOYMENT.md",
+    ".engineering/DEFINITION-OF-DONE.md"
+  ],
+  "providerActionsAllowed": [
+    "open and maintain the WO-000 planning-only PR",
+    "comment source-audit evidence on Issue #367 and the WO-000 PR",
+    "request Codex read-only/reproducible baseline execution only after a separate execution brief"
+  ],
+  "providerActionsForbidden": [
+    "merge archived PR #344",
+    "admit or implement WO-001",
+    "move/recreate v1.1.2 tag",
+    "republish npm",
+    "weaken required checks",
+    "start consumer rollout",
+    "reintroduce Hive"
+  ],
+  "staleIf": [
+    "main moves from 203dc6a86de035b8502453100ea6e2a4788cae57 before exact-head source audit without explicit refresh",
+    "canonical source fingerprints change",
+    "ruleset required contexts change",
+    "owner changes the V1.2 admission strategy"
+  ],
+  "stopCondition": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS"
+}
