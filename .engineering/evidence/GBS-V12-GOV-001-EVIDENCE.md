@@ -76,3 +76,9 @@ CodeRabbit found one additional stale effectivity phrase in `.engineering/REQUIR
 
 No benchmark target, paid-tool budget, requirement, denominator, profile, risk gate or implementation authority changed.
 
+## Correction Delta C3
+
+An independent stale-wording scan found two remaining `this proposal` phrases in `.engineering/ARCHITECTURE.md` and `.engineering/SECURITY.md`. Owner authorization is Issue #370 comment `#5958693430`. Both phrases now reference the effective canonical Source Pack.
+
+No dependency selection, paid-tool policy, security threshold, architecture boundary, denominator, profile, risk gate or implementation authority changed.
+
