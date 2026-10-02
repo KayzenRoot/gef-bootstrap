@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-MAINT-OPEN-SURFACE-001",
+  "issue": 365,
+  "repository": "KayzenRoot/gef-bootstrap",
+  "branch": "maint/open-surface-reconciliation",
+  "capturedAtUtc": "2026-10-02T11:15:00Z",
+  "admission": {
+    "state": "OWNER_AUTHORIZED",
+    "baseMainSha": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+    "phase0ExistingAuthority": "GBS-V11-WO-012",
+    "phase0Pr": 364,
+    "v12PlanningPr": 344,
+    "v12GateIssue": 346
+  },
+  "sourceFingerprints": {
+    "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
+    ".engineering/BACKLOG.md": "08ebe04810aac50ac5225dfef2768200df6c3f11",
+    ".engineering/CHECKPOINT.md": "db6132f0438f059a5ceafe3bf820534e4b900c5b",
+    ".engineering/CHECKPOINT.json": "dd07b255728978f72239645c24fc164768b45497",
+    ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    ".engineering/DEFINITION-OF-DONE.md": "28192469f6b66f1329375917def4691dce40ed4e"
+  },
+  "observedOpenSurface": {
+    "pullRequests": [
+      364,
+      360,
+      353,
+      344,
+      226,
+      200,
+      195
+    ],
+    "issues": [
+      361,
+      357,
+      346,
+      345,
+      340,
+      338,
+      335,
+      334,
+      312,
+      304,
+      149,
+      148,
+      147,
+      146,
+      145,
+      144,
+      143,
+      142,
+      141,
+      140,
+      139,
+      102
+    ]
+  },
+  "objectiveFacts": {
+    "moduleDone": [
+      "M05",
+      "M08",
+      "M16",
+      "M22"
+    ],
+    "m16CanonicalMerge": "61f9c2839335346083169b8a2fe49a3b1e797dba",
+    "m22CanonicalMerge": "48548157573cf221e7105d82a0b2f8189588d1d6",
+    "currentMainRulesetRequiredContexts": [
+      "Repository validation",
+      "Pipeline integrity",
+      "Gitleaks secrets",
+      "Trivy filesystem and configuration"
+    ],
+    "v112Tag": "v1.1.2",
+    "v112TagTarget": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+    "v112GithubReleaseId": 401675074,
+    "v112Package": "@gef-bootstrap/cli@1.1.2"
+  },
+  "staleIf": [
+    "main moves before a phase that depends on exact main state and the phase is not refreshed",
+    "canonical Backlog changes module completion for M05/M08/M16/M22",
+    "ruleset required-context set changes materially",
+    "owner changes the one-Work-Order cleanup strategy"
+  ],
+  "writeAllowed": [
+    ".engineering/work-orders/GBS-MAINT-OPEN-SURFACE-001.md",
+    ".engineering/context-locks/GBS-MAINT-OPEN-SURFACE-001.json",
+    ".engineering/evidence/GBS-MAINT-OPEN-SURFACE-001-EVIDENCE.md",
+    ".engineering/handoffs/V1.2-NEXT-STATE.md",
+    "planning/v1.2/**"
+  ],
+  "providerActionsAllowed": [
+    "comment on and close objectively completed/superseded Issues",
+    "comment on and close stale/broken Pull Requests",
+    "mark PR #344 ready only after Phase 0 and planning refresh",
+    "merge PR #344 only after exact-head audit/checks",
+    "close #346 only after V1.2 planning preservation"
+  ],
+  "providerActionsForbidden": [
+    "merge PR #195, #200, #226, #353, #360",
+    "delete branches",
+    "change branch protection or required checks",
+    "move or recreate v1.1.2",
+    "npm republish",
+    "consumer rollout",
+    "admit V1.2 implementation"
+  ],
+  "stopCondition": "GBS_MAINT_OPEN_SURFACE_001_REPOSITORY_QUEUE_RECONCILED"
+}
