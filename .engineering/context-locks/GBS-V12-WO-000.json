@@ -251,8 +251,19 @@
       ".engineering/work-orders/GBS-V12-WO-000.md",
       ".engineering/checkpoint-deltas/GBS-V12-WO-000-PROPOSED.md",
       ".engineering/evidence/GBS-V12-WO-000-EVIDENCE.md",
+      ".engineering/evidence/GBS-V12-WO-000-CAPABILITY-MAP.json",
+      ".engineering/evidence/GBS-V12-WO-000-SOURCE-AUDIT.md",
       ".engineering/evidence/GBS-V12-WO-000-PROMOTION-EVIDENCE.md"
     ],
+    "correctionDeltaE1": {
+      "ownerAuthorizationCommentId": 5957842897,
+      "reason": "CodeRabbit found two valid stale evidence statements after the Phase E candidate was marked ready.",
+      "paths": [
+        ".engineering/evidence/GBS-V12-WO-000-CAPABILITY-MAP.json",
+        ".engineering/evidence/GBS-V12-WO-000-SOURCE-AUDIT.md"
+      ],
+      "semanticEffect": "EVIDENCE_ALIGNMENT_ONLY_NO_MEASUREMENT_OR_DISPOSITION_CHANGE"
+    },
     "requiredCheckpointState": "SOURCE_PACK_APPROVED_NO_IMPLEMENTATION",
     "requiredImplementationCredit": 0,
     "requiredActiveImplementationWorkOrder": "NONE",
