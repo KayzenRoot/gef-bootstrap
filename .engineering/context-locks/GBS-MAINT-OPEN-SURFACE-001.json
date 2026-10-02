@@ -103,8 +103,6 @@
   "providerActionsAllowed": [
     "comment on and close objectively completed/superseded Issues",
     "comment on and close stale/broken Pull Requests",
-    "mark PR #344 ready only after Phase 0 and planning refresh",
-    "merge PR #344 only after exact-head audit/checks",
     "close #346 only after V1.2 planning preservation"
   ],
   "providerActionsForbidden": [
