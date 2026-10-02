@@ -1079,7 +1079,7 @@
     }
   },
   "v12": {
-    "status": "SOURCE_PACK_APPROVED_NO_IMPLEMENTATION",
+    "status": "V12_IMPLEMENTATION_IN_PROGRESS",
     "effectivity": "EFFECTIVE",
     "workOrder": "GBS-V12-WO-001",
     "issue": 372,
@@ -1116,10 +1116,22 @@
         "U12-09",
         "U12-10"
       ],
-      "implemented": 0,
-      "remaining": 10,
-      "implementationPercent": 0,
-      "state": "NOT_IMPLEMENTED"
+      "implemented": 2,
+      "remaining": 8,
+      "implementationPercent": 20,
+      "state": "PARTIALLY_IMPLEMENTED",
+      "disposition": {
+        "U12-01": "IMPLEMENTED_PASS",
+        "U12-02": "IMPLEMENTED_PASS",
+        "U12-03": "NOT_IMPLEMENTED",
+        "U12-04": "NOT_IMPLEMENTED",
+        "U12-05": "NOT_IMPLEMENTED",
+        "U12-06": "NOT_IMPLEMENTED",
+        "U12-07": "NOT_IMPLEMENTED",
+        "U12-08": "NOT_IMPLEMENTED",
+        "U12-09": "NOT_IMPLEMENTED",
+        "U12-10": "NOT_IMPLEMENTED"
+      }
     },
     "profiles": {
       "firstPilot": {
@@ -1150,11 +1162,11 @@
       "independentSpecialistReviewRequiredBeforeProduction": true,
       "ownerChatgptAuditSatisfiesIndependentGate": false
     },
-    "implementationStarted": false,
-    "implementationCredit": 0,
-    "activeImplementationWorkOrder": "GBS-V12-WO-001",
-    "nextLegalAction": "COMPILE_FRESH_WO001_IMPLEMENTATION_CONTEXT_LOCK_FROM_EXACT_POST_SYNC_MAIN",
-    "stopState": "GBS_V12_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+    "implementationStarted": true,
+    "implementationCredit": 2,
+    "activeImplementationWorkOrder": "NONE",
+    "nextLegalAction": "SEPARATELY_OWNER_ADMIT_GBS_V12_WO_002_WITH_FRESH_CONTEXT_LOCK",
+    "stopState": "GBS_V12_WO_001_PROMOTED",
     "wo001Admission": {
       "status": "ADMITTED_NO_IMPLEMENTATION",
       "admissionBase": "4698592b521ee8c5df37be8759312bd76b9d702f",
@@ -1178,6 +1190,44 @@
         ],
         "currentState": "NOT_IMPLEMENTED"
       }
+    },
+    "wo001Promotion": {
+      "status": "PROMOTED_AFTER_GOV003_MERGE",
+      "governanceIssue": 378,
+      "implementationIssue": 372,
+      "implementationPullRequest": 377,
+      "substantiveCandidateHead": "7b185a284004567217b98213d568c70f26077bfd",
+      "finalAuditedHead": "4ea5bb6b40bdbf19128ff37ae7a573b720c62879",
+      "ownerAuditReview": 5397342271,
+      "ownerAudit": "APPROVED_NOT_INDEPENDENT",
+      "implementationMergeSha": "bd6d0e9884386d7ec8828ba3bd15de7777ebe362",
+      "criticalFindings": 0,
+      "highFindings": 0,
+      "postMergeExactHeadChecks": {
+        "head": "bd6d0e9884386d7ec8828ba3bd15de7777ebe362",
+        "checkRunsPassed": 8,
+        "checkRunsTotal": 8,
+        "commitStatus": "SUCCESS",
+        "requiredRulesetContexts": {
+          "Repository validation": "SUCCESS",
+          "Pipeline integrity": "SUCCESS",
+          "Gitleaks secrets": "SUCCESS",
+          "Trivy filesystem and configuration": "SUCCESS"
+        },
+        "additionalChecks": {
+          "Analyze TypeScript": "SUCCESS",
+          "Node coverage LCOV": "SUCCESS",
+          "Socket Security: Project Report": "SUCCESS",
+          "SonarCloud Code Analysis": "SUCCESS",
+          "codecov/patch": "SUCCESS"
+        }
+      },
+      "obligationDisposition": {
+        "U12-01": "IMPLEMENTED_PASS",
+        "U12-02": "IMPLEMENTED_PASS",
+        "U12-03": "NOT_IMPLEMENTED"
+      },
+      "terminalState": "GBS_V12_WO_001_PROMOTED"
     }
   }
 }
