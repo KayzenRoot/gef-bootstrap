@@ -35,11 +35,20 @@ export function isLegalPostFoundationV11State(checkpoint) {
 export function wo012CurrentPatchCheckpoint(checkpoint) {
   const historical = structuredClone(checkpoint);
   historical.v11.status = WO012_ADMITTED_STATE;
+  historical.v11.activeWorkOrder = "GBS-V11-WO-012";
   historical.v11.activeWorkOrderStatus = "IMPLEMENTATION_IN_PROGRESS";
   historical.v11.nextLegalAction = "CONTINUE_GBS_V11_WO_012_IMPLEMENTATION_ON_LOCKED_BASE";
   historical.v11.stopState = "GBS_V11_WO_012_IMPLEMENTATION_IN_PROGRESS";
+  historical.v11.nextWorkOrder = "GBS-V11-WO-012";
+  historical.v11.nextCandidateWorkOrder = "NONE";
+  historical.v11.activeMaintenanceWorkOrder = "NONE";
+  historical.v11.stableRelease.version = "1.1.0";
+  historical.v11.stableRelease.tag = "v1.1.0";
   historical.v11.candidateRelease.status = "PATCH_IN_PROGRESS";
   historical.v11.candidateRelease.stopWhen = "GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT";
+  historical.v11.candidateRelease.tag = null;
+  historical.v11.candidateRelease.npmPublished = false;
+  historical.v11.candidateRelease.registrySmoke = "NOT_RUN";
   return historical;
 }
 
@@ -57,6 +66,7 @@ export function wo012ProductionAcceptedCheckpoint(checkpoint) {
   v11.candidateRelease.stopWhen = WO012_PRODUCTION_ACCEPTED_STATE;
   v11.candidateRelease.tag = "v1.1.2";
   v11.candidateRelease.npmPublished = true;
+  v11.candidateRelease.registrySmoke = "SUCCESS";
   v11.stableRelease = {
     ...v11.stableRelease,
     version: "1.1.2",
@@ -76,7 +86,7 @@ export function wo012ProductionAcceptedCheckpoint(checkpoint) {
   return accepted;
 }
 
-function assertWo012CandidateReleaseIdentity(candidateRelease) {
+function assertWo012CandidateReleaseIdentity(candidateRelease, checkpointState) {
   assert.equal(candidateRelease.version, "1.1.2");
   assert.equal(candidateRelease.workOrder, "GBS-V11-WO-012");
   assert.equal(candidateRelease.issue, 361);
@@ -84,9 +94,15 @@ function assertWo012CandidateReleaseIdentity(candidateRelease) {
   assert.equal(candidateRelease.branch, "hotfix/v1.1.2-release-state-preflight");
   assert.equal(candidateRelease.contextLock, ".engineering/context-locks/GBS-V11-WO-012.json");
   assert.equal(candidateRelease.pullRequest, 362);
-  assert.equal(candidateRelease.tag, null);
-  assert.equal(candidateRelease.npmPublished, false);
-  assert.equal(candidateRelease.registrySmoke, "NOT_RUN");
+  if (checkpointState === WO012_PRODUCTION_ACCEPTED_STATE) {
+    assert.equal(candidateRelease.tag, "v1.1.2");
+    assert.equal(candidateRelease.npmPublished, true);
+    assert.equal(candidateRelease.registrySmoke, "SUCCESS");
+  } else {
+    assert.equal(candidateRelease.tag, null);
+    assert.equal(candidateRelease.npmPublished, false);
+    assert.equal(candidateRelease.registrySmoke, "NOT_RUN");
+  }
   assert.equal(candidateRelease.rolloutStarted, false);
 }
 
@@ -241,7 +257,7 @@ export function assertWo012CurrentPatch(checkpoint) {
   const candidateRelease = v11.candidateRelease;
   const publishedV111 = v11.patchHistory.find((release) => release.version === "1.1.1");
 
-  assertWo012CandidateReleaseIdentity(candidateRelease);
+  assertWo012CandidateReleaseIdentity(candidateRelease, v11.status);
   assert.equal(v11.status, "GBS_V11_WO_012_ADMITTED");
   assert.equal(v11.activeWorkOrder, "GBS-V11-WO-012");
   assert.equal(v11.activeWorkOrderStatus, "IMPLEMENTATION_IN_PROGRESS");
@@ -275,7 +291,7 @@ export function assertWo012PostMergeReleaseGates(checkpoint, checkpointMd = "") 
   const candidateRelease = v11.candidateRelease;
   const completed = v11.completedWorkOrders["GBS-V11-WO-012"];
 
-  assertWo012CandidateReleaseIdentity(candidateRelease);
+  assertWo012CandidateReleaseIdentity(candidateRelease, v11.status);
   assert.equal(v11.status, "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT");
   assert.equal(v11.activeWorkOrder, "GBS-V11-WO-012");
   assert.equal(v11.activeWorkOrderStatus, "OWNER_AUDIT_APPROVED_MERGED_AWAITING_RELEASE");
@@ -334,6 +350,7 @@ export function assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd = 
   assert.equal(v11.nextLegalAction, "V1_1_2_PRODUCTION_MAINTENANCE_OR_NEXT_GOVERNED_WORK_ORDER");
   assert.equal(v11.stopState, WO012_PRODUCTION_ACCEPTED_STATE);
 
+  assertWo012CandidateReleaseIdentity(candidate, v11.status);
   assert.equal(candidate.version, "1.1.2");
   assert.equal(candidate.workOrder, "GBS-V11-WO-012");
   assert.equal(candidate.status, "PRODUCTION_ACCEPTED");
