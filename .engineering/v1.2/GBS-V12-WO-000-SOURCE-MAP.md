@@ -363,3 +363,27 @@ Phase A is therefore ready for the short owner decision gate.
 
 **Stop:** `GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS`
 
+## 16. Source Pack proposal readiness
+
+Owner decisions V12-D001 through V12-D005 have been incorporated into a complete proposed V1.2 Source Pack under `.engineering/v1.2/proposed/`.
+
+The proposal is internally consistent with the WO-000 source audit:
+- C01-C12 form the finite universal core contract;
+- D01 WEB_APP_API is the sole release-blocking reference profile;
+- D06 WEB3_EVM is second priority but remains a conditional pack;
+- D02-D05 and D07-D12 remain conditional;
+- R01-R05 remain experimental/future by default;
+- no V1.2 implementation credit exists;
+- no performance improvement claim exists beyond the preserved V1.1.2 baseline.
+
+The following proposed derived decisions require owner-audit acceptance before canonical promotion:
+- V12-D006 extend existing authorities rather than duplicate engines;
+- V12-D007 one reference profile in core denominator;
+- V12-D008 conditional pack truth;
+- V12-D009 matched-population performance claims only;
+- V12-D010 no universal hosted control plane;
+- V12-D011 owner audit terminology remains NOT_INDEPENDENT;
+- V12-D012 archived research remains input only.
+
+**Current stop:** `GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT`
+
