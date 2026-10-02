@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "1.0",
+  "workOrder": "GBS-V12-WO-000",
+  "issue": 367,
+  "state": "ADMITTED_PHASE_AB_AUDIT_ONLY",
+  "risk": "STANDARD",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "ownerAccount": "KayzenRoot",
+  "branch": "planning/v1.2/wo-000-source-admission",
+  "executionBase": {
+    "ref": "main",
+    "sha": "203dc6a86de035b8502453100ea6e2a4788cae57",
+    "packageVersion": "1.1.2",
+    "releaseState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED"
+  },
+  "planningScaffold": {
+    "workOrderCommit": "0d7d97aa02b03260036baa7fe86758fd10535e61",
+    "note": "The Context Lock commit itself advances the planning branch. Executor must verify the branch descends from this scaffold and that executionBase plus locked source blobs remain unchanged."
+  },
+  "archivedResearch": {
+    "branch": "planning/gef-v12-research-dossier-001",
+    "commit": "c85cc91c899b553c1c37fe53ada236b8f76de3e2",
+    "expectedMarkdownFileCount": 25,
+    "authority": "EVIDENCE_ONLY_NOT_CANONICAL"
+  },
+  "sourceFingerprintsAtExecutionBase": {
+    "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
+    ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    ".engineering/CHECKPOINT.md": "e8f9ce2a96b6dcbfafe3d9071ca69e43941130af",
+    ".engineering/CHECKPOINT.json": "df5cd7d1b5a2e965256f179245ddf50aceeccc81",
+    ".engineering/SCOPE.md": "2de21b38bd37622099e4058aae9403130dbb4a9f",
+    ".engineering/DEFINITION-OF-DONE.md": "28192469f6b66f1329375917def4691dce40ed4e",
+    ".engineering/ARCHITECTURE.md": "86b00afd1207157d8eb591ddcd604b1cbd9aaa2b",
+    ".engineering/REQUIREMENTS.md": "49fba49baab46ba5fa64ff9d2bb0f2944c888c8d",
+    ".engineering/SECURITY.md": "09b8aa12244791b509ecb50ba5c96db867a0797d",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
+    ".engineering/DEPLOYMENT.md": "54b7b86422df2be0463219e31e06025c7d21171b",
+    ".engineering/DECISIONS-LEDGER.md": "34ca9119054f30a56d2019fb99b6a259f8e2f896",
+    ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md": "687ee037d2dcd4936d118a23666665fc66410aed",
+    ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
+    ".engineering/handoffs/V1.2-NEXT-STATE.md": "7d4b28b886d85e500abdb142a9a3e83dc0d232d2",
+    "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+  },
+  "requiredMainContexts": [
+    "Repository validation",
+    "Pipeline integrity",
+    "Gitleaks secrets",
+    "Trivy filesystem and configuration"
+  ],
+  "phaseAB": {
+    "mode": "READ_ONLY_PRODUCT_SOURCE",
+    "productRuntimeMutationAuthorized": false,
+    "productTestMutationAuthorized": false,
+    "ciMutationAuthorized": false,
+    "dependencyChangeAuthorized": false,
+    "paidToolInstallAuthorized": false,
+    "writeAllowed": [
+      ".engineering/work-orders/GBS-V12-WO-000.md",
+      ".engineering/context-locks/GBS-V12-WO-000.json",
+      ".engineering/evidence/GBS-V12-WO-000-SOURCE-AUDIT.md",
+      ".engineering/evidence/GBS-V12-WO-000-CAPABILITY-MAP.json",
+      ".engineering/benchmarks/GBS-V12-WO-000-V11-BASELINE.json"
+    ],
+    "requiredDispositionSets": {
+      "core": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07",
+        "C08",
+        "C09",
+        "C10",
+        "C11",
+        "C12"
+      ],
+      "domain": [
+        "D01",
+        "D02",
+        "D03",
+        "D04",
+        "D05",
+        "D06",
+        "D07",
+        "D08",
+        "D09",
+        "D10",
+        "D11",
+        "D12"
+      ],
+      "research": [
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05"
+      ]
+    },
+    "allowedDispositions": [
+      "ALREADY_EXISTS",
+      "PARTIAL_DELTA",
+      "GENUINE_V12_DELTA",
+      "CONDITIONAL_PROFILE",
+      "EXPERIMENT",
+      "FUTURE",
+      "OUT_OF_SCOPE",
+      "STALE_OR_DUPLICATE"
+    ]
+  },
+  "governanceConstraints": [
+    "Archived V1.2 research is evidence only and must not be merged as canonical authority.",
+    "ADR-0007 keeps Hive integration retired.",
+    "ADR-0008/D-0063 keeps Codex as sole author of implementation, tests, CI and migrations.",
+    "Owner exact-head semantic audit is NOT_INDEPENDENT.",
+    "Do not lower required checks, coverage or security thresholds.",
+    "Do not infer owner legal, custody, paid-tool or release-profile decisions.",
+    "Financial value movement, signing, privileged authentication and irreversible Web3 operations are HIGH_ASSURANCE if later admitted."
+  ],
+  "staleIf": [
+    "main moves before executor starts",
+    "any locked source blob changes on the execution lineage before executor starts",
+    "the archived research commit is not retrievable exactly",
+    "Issue #367 is closed, superseded or materially amended",
+    "branch ancestry no longer descends from the exact execution base"
+  ],
+  "executorPreflight": [
+    "verify repository and owner account",
+    "verify main exact SHA equals executionBase.sha",
+    "verify every locked blob SHA",
+    "verify archived research commit and 25-file inventory",
+    "verify working tree/branch is the admitted planning branch or a direct continuation of it",
+    "verify no product/runtime/test/CI mutations exist in the PR before Phase A",
+    "if any binding mismatches, stop STALE_CONTEXT without continuing"
+  ],
+  "firstStopCondition": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS",
+  "secondStopCondition": "GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT",
+  "terminalStopCondition": "GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION"
+}
