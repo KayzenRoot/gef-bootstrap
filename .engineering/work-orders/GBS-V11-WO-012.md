@@ -207,3 +207,66 @@ Additional WRITE_ALLOWED paths:
 
 Codex must show that the six failures are GREEN after the bounded changes, then rerun `npm run build`, `npm run typecheck`, `npm run validate` and `npm audit --audit-level=high`. Any additional failing path outside this delta remains BLOCKED and requires a new exact-path authorization. This delta does not authorize merge, checkpoint promotion, tag or npm publication.
 
+## CORRECTION DELTA #2 — POST-MERGE CHECKPOINT PROMOTION
+
+**Reason:** PR #362 passed exact-head owner audit and ready-state retriggers, then merged to `main` as `4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5`. The pre-merge checkpoint that was intentionally frozen at `GBS_V11_WO_012_IMPLEMENTATION_IN_PROGRESS` is now stale relative to observed repository state. PROJECT_STATE must be promoted before tag/publication progression.
+
+**Post-merge source state:** `main@4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5`.
+
+**Owner audit:** review `#5387212864`, exact audited head `ca22282dd6f6891797430451968bc6bf244a28af`, `OWNER_APPROVED / NOT_INDEPENDENT`.
+
+**Ready-state proof:** after PR #362 left draft, the same exact head reached **157/157 check-runs SUCCESS** with no pending/failing run before merge.
+
+**Merge receipt:** PR #362 merged by squash to `main` as `4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5`.
+
+**Post-merge main proof:** Repository Validation, Node coverage LCOV and Analyze TypeScript completed SUCCESS on the merge commit before this delta was admitted. Dependabot jobs are informational and are not imported as release-authority gates.
+
+### Authorized governance writes
+
+ChatGPT may author only the governance/evidence synchronization:
+- `.engineering/CHECKPOINT.md`
+- `.engineering/CHECKPOINT.json`
+- `.engineering/work-orders/GBS-V11-WO-012.md`
+- `.engineering/context-locks/GBS-V11-WO-012.json`
+- `.engineering/evidence/GBS-V11-WO-012-EVIDENCE.md`
+- `.engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json`
+- `.engineering/checkpoint-deltas/GBS-V11-WO-012-POST-MERGE.md`
+
+The promoted checkpoint must record only already-proven facts. It MUST NOT claim `v1.1.2` tag creation, npm publication, GitHub Release, registry verification, rollout, or production acceptance.
+
+### Authorized Codex test synchronization
+
+Because canonical checkpoint assertions are executable tests and ADR-0008 / D-0063 makes Codex their sole author, Codex is authorized to modify only these exact test paths as mechanically required by the new post-merge state:
+- `tests/helpers/v11-context-lock-refresh-assertions.mjs`
+- `tests/v11-wo-001-promotion.test.mjs`
+- `tests/v11-wo-002-admission.test.mjs`
+- `tests/v11-wo-003-admission.test.mjs`
+- `tests/v11-wo-004-admission.test.mjs`
+- `tests/v11-wo-008-admission.test.mjs`
+- `tests/v11-wo-009-admission.test.mjs`
+- `tests/v11-wo-012-release-state.test.mjs`
+
+Semantic limits:
+- preserve every historical V1.1 branch/state assertion;
+- add only the exact WO-012 post-merge state and release-next semantics;
+- no skipped tests, permissive truthiness conversions, blanket regex broadening, threshold changes or unrelated cleanup;
+- any additional path is blocked and requires a new exact-path owner authorization.
+
+### Promoted state
+
+After this governance PR itself is audited and merged, the intended canonical state is:
+- `v11.status = GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT`;
+- `activeWorkOrder = GBS-V11-WO-012`;
+- `activeWorkOrderStatus = OWNER_AUDIT_APPROVED_MERGED_AWAITING_RELEASE`;
+- `nextLegalAction = CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER`;
+- `stopState = GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT`;
+- candidate `1.1.2` remains unpublished, with tag `null`, `npmPublished=false`, `registrySmoke=NOT_RUN`, `rolloutStarted=false`.
+
+### Required proof
+
+Codex must run focused checkpoint-state tests, then `npm run build`, `npm run typecheck`, `npm run validate`, `npm audit --audit-level=high` and `git diff --check`. The governance PR must then reach exact-head owner audit with all required checks successful and no new CRITICAL/HIGH blocker.
+
+This delta authorizes checkpoint promotion only. It does **not** authorize tag creation, GitHub Release, npm publication, registry verification or consumer rollout.
+
+**STOP CONDITION:** `GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT`.
+
