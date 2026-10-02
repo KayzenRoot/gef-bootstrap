@@ -21,7 +21,7 @@ Current source precedence follows `.engineering/SOURCE-HIERARCHY.md`. Current ch
 - archived V1.2 PR #344: closed without merge;
 - archived planning commit: `c85cc91c899b553c1c37fe53ada236b8f76de3e2`;
 - current actor model: Codex sole implementation/test/CI/migration author; owner exact-head semantic audit is recorded as `NOT_INDEPENDENT`;
-- Hive integration: prohibited;
+- retired integration-family binding covered by ADR-0007: prohibited;
 - required main checks: Repository validation, Pipeline integrity, Gitleaks secrets, Trivy filesystem and configuration.
 
 ### Stale research assumptions
@@ -180,7 +180,7 @@ Observed released interfaces include:
 
 The source audit removes several questions that no longer need owner input:
 - whether to build a second context/execution/proof/status/release engine: **NO**, reuse/extend current engines;
-- whether Hive is part of V1.2: **NO**, prohibited by ADR-0007;
+- whether the retired integration family governed by ADR-0007 is part of V1.2: **NO**;
 - whether ChatGPT audit is labeled independent: **NO**, current owner audit is `NOT_INDEPENDENT`;
 - whether every D-profile enters the core denominator: **NO**, conditional by default.
 
