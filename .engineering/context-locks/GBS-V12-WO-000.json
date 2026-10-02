@@ -3,7 +3,7 @@
   "workOrderId": "GBS-V12-WO-000",
   "issue": 367,
   "repository": "KayzenRoot/gef-bootstrap",
-  "state": "SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS_NO_IMPLEMENTATION",
+  "state": "CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT_NO_IMPLEMENTATION",
   "executionBase": {
     "branch": "main",
     "sha": "203dc6a86de035b8502453100ea6e2a4788cae57",
@@ -277,9 +277,22 @@
     ]
   },
   "phaseD": {
-    "state": "SOURCE_PACK_PROPOSAL_AUTHORIZED",
+    "state": "COMPLETE_READY_FOR_OWNER_AUDIT",
     "canonicalFilesMayBeMutatedNow": false,
     "proposedRoot": ".engineering/v1.2/proposed",
-    "nextStop": "GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT"
+    "nextStop": "GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT",
+    "proposedFiles": [
+      "SOURCE-PACK-DELTA.md",
+      "SCOPE.md",
+      "REQUIREMENTS.md",
+      "ARCHITECTURE.md",
+      "SECURITY.md",
+      "TEST-BENCHMARK-PLAN.md",
+      "DEPLOYMENT.md",
+      "DEFINITION-OF-DONE.md",
+      "DECISIONS.md",
+      "PROFILE-MATRIX.md",
+      "WORK-ORDER-SEQUENCE.md"
+    ]
   }
 }
