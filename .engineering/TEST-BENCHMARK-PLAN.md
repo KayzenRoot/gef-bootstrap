@@ -281,7 +281,7 @@ STOP CONDITION: `READY_FOR_TEST_BENCHMARK_REVIEW_AND_CHECKPOINT`.
 
 # V1.2 Source Pack proposal addendum — GBS-V12-WO-000
 
-**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; no test or workflow changes are authorized by this planning proposal. All existing validation, quality, security and branch-protection floors remain unchanged.
+**State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`. The test/benchmark obligations are authoritative for future admitted V1.2 work; this governance sync does not itself authorize test or workflow implementation changes. All existing validation, quality, security and branch-protection floors remain unchanged.
 
 ## Universal-core proof matrix
 
