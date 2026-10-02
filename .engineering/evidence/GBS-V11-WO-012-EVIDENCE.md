@@ -83,3 +83,31 @@ The pre-audit evidence above remains the execution record for implementation hea
 
 The next governed state is `MERGED_AWAITING_PUBLICATION`. Production acceptance remains prohibited until the immutable `v1.1.2` publication path and post-publish registry verification succeed.
 
+## Immutable V1.1.2 publication and registry-verification receipt
+
+The post-merge checkpoint promotion merged to `main` as `af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`. The owner then created annotated tag `v1.1.2` on that exact commit.
+
+- Annotated tag object: `d8241d55231fa1a608546e37f4b178c7695d1fdd`
+- Tag target: `af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`
+- Trusted Publisher workflow run: `36957290788`
+- Publish job `110683489629`: SUCCESS
+- Package: `@gef-bootstrap/cli@1.1.2`
+- Release artifact id: `11206700200`
+- Workflow artifact ZIP digest: `sha256:1015261f76b8a66c48150d44697bc1b386c7522021b166a6da710a468f6b7092`
+- Exact release tarball SHA-256: `331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97`
+- Exact release SRI: `sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==`
+- npm Trusted Publishing emitted SLSA provenance and Sigstore transparency log index `3046460318`.
+
+The first post-publish public verification ran immediately after npm reported that the package was still being processed and received `E404 No match found for version 1.1.2`. This was after the publish job had succeeded. The failed-jobs-only rerun did not republish the package.
+
+Workflow attempt 2 completed SUCCESS:
+- public verification job `110688730992`: SUCCESS;
+- registry version lookup: PASS;
+- exact SRI equality: PASS;
+- npm registry ECDSA signature: VERIFIED with active signing key `SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U`;
+- SLSA provenance metadata: VERIFIED;
+- clean package-lock/install with lifecycle scripts disabled: PASS;
+- installed CLI version smoke: PASS at `1.1.2`.
+
+This satisfies the Work Order's technical terminal condition for immutable publication plus registry verification. A GitHub Release for `v1.1.2` was still absent when Correction Delta #3 was admitted, so canonical `PRODUCTION_ACCEPTED` closeout is held until that hosted release is created and exact-head closeout validation is complete.
+
