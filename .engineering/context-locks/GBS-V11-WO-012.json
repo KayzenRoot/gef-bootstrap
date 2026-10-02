@@ -89,7 +89,10 @@
     "tests/v11-wo-009-admission.test.mjs",
     "packages/cli/schemas/gef-cli-upgrade-compatibility-matrix.json",
     "tests/v11-legacy-ecosystem-detachment.test.mjs",
-    "tests/v11-wo-010-publish-workflow.test.mjs"
+    "tests/v11-wo-010-publish-workflow.test.mjs",
+    ".engineering/checkpoint-deltas/GBS-V11-WO-012-POST-MERGE.md",
+    "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+    "tests/v11-wo-012-release-state.test.mjs"
   ],
   "writeForbidden": [
     "all consumer repositories and consumer .gef/.gef-private state",
@@ -140,6 +143,62 @@
         "no skips, broad regex relaxation, upper-bound removal, assertion deletion or unrelated governance changes",
         "any additional write path requires a new exact-path authorization"
       ]
+    },
+    {
+      "id": "WO012-CORRECTION-DELTA-2",
+      "dateUtc": "2026-10-02",
+      "phase": "POST_MERGE_CHECKPOINT_PROMOTION",
+      "startingMainSha": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+      "reason": "PR #362 is owner-audited and merged; the pre-merge PROJECT_STATE is stale and must be promoted before tag/publication progression.",
+      "authority": "owner continuation in ChatGPT plus GBS-V11-WO-012 Correction Delta #2",
+      "auditedImplementationHead": "ca22282dd6f6891797430451968bc6bf244a28af",
+      "ownerReview": 5387212864,
+      "implementationMerge": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+      "readyStateChecks": {
+        "count": 157,
+        "conclusion": "SUCCESS",
+        "head": "ca22282dd6f6891797430451968bc6bf244a28af"
+      },
+      "allowedPaths": [
+        ".engineering/CHECKPOINT.md",
+        ".engineering/CHECKPOINT.json",
+        ".engineering/work-orders/GBS-V11-WO-012.md",
+        ".engineering/context-locks/GBS-V11-WO-012.json",
+        ".engineering/evidence/GBS-V11-WO-012-EVIDENCE.md",
+        ".engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json",
+        ".engineering/checkpoint-deltas/GBS-V11-WO-012-POST-MERGE.md",
+        "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+        "tests/v11-wo-001-promotion.test.mjs",
+        "tests/v11-wo-002-admission.test.mjs",
+        "tests/v11-wo-003-admission.test.mjs",
+        "tests/v11-wo-004-admission.test.mjs",
+        "tests/v11-wo-008-admission.test.mjs",
+        "tests/v11-wo-009-admission.test.mjs",
+        "tests/v11-wo-012-release-state.test.mjs"
+      ],
+      "sourceFingerprintsAtStartingHead": {
+        ".engineering/CHECKPOINT.md": "e49128462946278d218fa51d008b55d1757a9185",
+        ".engineering/CHECKPOINT.json": "2882b65ad558e6804ef1e517715fb7bb17df2f09",
+        ".engineering/work-orders/GBS-V11-WO-012.md": "48f8672a099915c2ce67c6af64ecf5a28230dfa3",
+        ".engineering/context-locks/GBS-V11-WO-012.json": "43132852c93b5dceb84b0baa725c7aa8fab9ff3e",
+        ".engineering/evidence/GBS-V11-WO-012-EVIDENCE.md": "10f1e227c1b5b074b67143ce118e475c2a99d6b6",
+        ".engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json": "0f2174f249d41642cd05b930b6420348f6997e67",
+        "tests/helpers/v11-context-lock-refresh-assertions.mjs": "d4c800560302956163b07023e7a5d8cb1f0b7cc3",
+        "tests/v11-wo-001-promotion.test.mjs": "8fea82acf82105e1e9ebecdfe3defa6ae21c7a1d",
+        "tests/v11-wo-002-admission.test.mjs": "4079e6bc48b6b1c43ad1bac5e2e566fba62a0e66",
+        "tests/v11-wo-003-admission.test.mjs": "b0c704f87239040b72a25b295f6f75dce5dcff73",
+        "tests/v11-wo-004-admission.test.mjs": "fd1d9887fac610a2672b21a8c9f4cff4871d9ac2",
+        "tests/v11-wo-008-admission.test.mjs": "6a8575cf7e76b4e3d9c6ab4b9991e87dceecd4af",
+        "tests/v11-wo-009-admission.test.mjs": "75a6e76c0ed8cf6396c2e52b935962fb3acb02d0",
+        "tests/v11-wo-012-release-state.test.mjs": "822f7c176d2236d6862b78893be64616e5ce5375"
+      },
+      "semanticLimits": [
+        "governance edits may record only already-proven audit, merge and post-merge check facts",
+        "test edits are Codex-only and may only add exact WO-012 post-merge checkpoint/release-next recognition while preserving historical assertions",
+        "no product source, CI, package identity, thresholds, tag, publication, release object or consumer repository mutation",
+        "any additional path requires a new exact-path authorization"
+      ],
+      "stopCondition": "GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT"
     }
   ],
   "ownerAuthorizedScopeAmendments": [
@@ -184,5 +243,13 @@
       ],
       "constraint": "Add only .engineering/evidence/GBS-V11-WO-012-EVIDENCE.md and .engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json to the exact accepted governance-history set; preserve the retired-binding scan for every other path and content."
     }
-  ]
+  ],
+  "postMergeCheckpointDelta": {
+    "state": "ADMITTED",
+    "branch": "docs/v1.1.2-post-merge-checkpoint",
+    "baseMainSha": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+    "targetState": "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT",
+    "tagPublicationAuthorized": false,
+    "stopCondition": "GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT"
+  }
 }
