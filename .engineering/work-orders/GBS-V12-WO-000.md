@@ -104,7 +104,7 @@ They do not block the core V1.2 admission unless a concrete risk requirement pro
 1. Archived V1.2 text repeatedly says V1.1 is still in progress. Current canonical state is V1.1.2 `PRODUCTION_ACCEPTED`.
 2. Archived PR #344 is no longer DRAFT. It is closed without merge and preserved only as research history.
 3. Candidate C07 uses language implying an independent ChatGPT exact-head review. Current ADR-0008/AGENTS requires an owner-operated exact-head semantic audit and explicitly records it as `NOT_INDEPENDENT`. Any canonical C07 must be rewritten to current authority.
-4. Hive-specific integration remains prohibited by ADR-0007.
+4. The retired integration family governed by ADR-0007 remains prohibited.
 5. Codex remains the sole author of implementation code, tests, CI/build corrections and migrations. ChatGPT authors approved governance/planning artifacts, coordinates GitHub and performs the owner exact-head audit workflow.
 6. Main Branch Protection currently requires exactly `Repository validation`, `Pipeline integrity`, `Gitleaks secrets`, and `Trivy filesystem and configuration`.
 7. Current package manifest remains `1.1.2`; WO-000 must not change release/package identity.
@@ -206,7 +206,7 @@ This terminal state allows preparation/admission of WO-001. It does not authoriz
 - V1/V1.1 history rewrite;
 - `v1.1.2` tag movement or npm republish;
 - required-check/threshold weakening;
-- Hive reintegration;
+- reintegration of the retired integration family prohibited by ADR-0007;
 - unbounded feature ideation;
 - guessed owner choices;
 - V1.2 completion percentage derived from planning docs or file count.
