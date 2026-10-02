@@ -1,6 +1,6 @@
 # Proposed Checkpoint Delta — GBS-V12-WO-000 Phase D
 
-Status: PROPOSED ONLY — DO NOT APPLY AT THIS STOP.
+Status: OWNER-AUTHORIZED FOR BOUNDED PROMOTION CANDIDATE — effective only after final exact-head checks, owner audit and governed PR #369 merge.
 Repository: KayzenRoot/gef-bootstrap
 Execution base: main@203dc6a86de035b8502453100ea6e2a4788cae57
 Phase D admission head: 07d26cebeaf15d945beffb83d0528596cad4c4dc
@@ -21,3 +21,23 @@ The canonical checkpoint files are unchanged. Current main continues to record V
 ## Application guard
 
 This delta must not be copied into CHECKPOINT.md or CHECKPOINT.json by this WO-000 Phase D executor. Its facts and candidate head must be re-audited at the final exact head. If a later owner audit rejects or corrects the Source Pack, regenerate the delta from the accepted evidence; do not apply this proposal.
+
+## Phase D audit and Phase E authorization
+
+- Phase D exact audited head: `290f7a6d6c68ef2500388dcaa604fbed3bb02d56`.
+- Owner semantic review: `#5394709108`, `APPROVED / NOT_INDEPENDENT`, CRITICAL/HIGH `0 / 0`.
+- Phase E continuation authorization: Issue #367 comment `#5957678869`.
+- Promotion writes are restricted by the refreshed Context Lock. No product/runtime/test/CI/migration/dependency change is authorized.
+
+## Promotion semantics
+
+If the final promotion candidate remains exact-head green and receives the required owner audit, PR #369 may carry this checkpoint delta into `main`. The canonical V1.2 overlay must state only:
+- `SOURCE_PACK_APPROVED_NO_IMPLEMENTATION`;
+- universal obligations `U12-01..U12-10`, implementation credit `0 / 10`;
+- conditional profile implementation credit `0`;
+- active V1.2 implementation Work Order `NONE`;
+- next legal action: separately admit `GBS-V12-WO-001`;
+- terminal WO-000 stop after governed merge: `GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION`.
+
+The source-pack approval must not alter accepted V1/V1.1.2 production facts or imply any V1.2 runtime capability is implemented.
+
