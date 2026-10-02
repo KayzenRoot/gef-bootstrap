@@ -112,7 +112,7 @@ STOP CONDITION: `READY_FOR_REQUIREMENTS_EXACT_DELTA_REVIEW_AND_CHECKPOINT`.
 
 # V1.2 Source Pack proposal addendum — GBS-V12-WO-000
 
-**State:** PROPOSED FOR EXACT-HEAD OWNER AUDIT; no requirement below is effective before owner audit and checkpoint promotion. Existing V1/V1.1 requirements and V1.1.2 acceptance remain preserved.
+**State:** EFFECTIVE CANONICAL V1.2 SOURCE PACK from PR #369 squash merge `45d5508cd03d86725b01f0381b03b5922a45d9ee`. The obligations below are admitted requirements but remain NOT_IMPLEMENTED until separately governed Work Orders satisfy them. Existing V1/V1.1 requirements and V1.1.2 acceptance remain preserved.
 
 ## Universal V1.2 delta obligations
 
