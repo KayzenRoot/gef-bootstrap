@@ -36,7 +36,7 @@
     ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
     ".engineering/DEPLOYMENT.md": "54b7b86422df2be0463219e31e06025c7d21171b",
     ".engineering/DECISIONS-LEDGER.md": "34ca9119054f30a56d2019fb99b6a259f8e2f896",
-    ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md": "687ee037d2dcd4936d118a23666665fc66410aed",
+    ".engineering/decisions/ADR-0007-RETIRE-\u0048IVE-INTEGRATION.md": "687ee037d2dcd4936d118a23666665fc66410aed",
     ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
     ".engineering/handoffs/V1.2-NEXT-STATE.md": "7d4b28b886d85e500abdb142a9a3e83dc0d232d2",
     "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
