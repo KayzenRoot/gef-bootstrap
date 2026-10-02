@@ -128,7 +128,81 @@ The research snapshot proposes:
 
 This is a starting hypothesis only. WO-000 must reduce duplicate work against released 1.1.2 capabilities before these become canonical.
 
-## 6. Phase A work still required
+## 6. Evidence-backed C01-C12 technical classification
+
+The following is the first WO-000 implementation-overlap classification against released V1.1.2. It classifies architecture shape only; it does not authorize implementation.
+
+| ID | WO-000 technical disposition | Released V1.1.2 evidence | V1.2 delta |
+|---|---|---|---|
+| C01 | `NECESSARY_CORE_DELTA_NEW_DISCOVERY_LAYER` | Preflight/adoption/planning already exist, but exact-source search found no governed product interview API or adaptive unanswered-question engine. | Add owner-guided discovery contract that feeds existing Source Pack/Planning/Decision/Scope engines. Do not create a parallel planning authority. |
+| C02 | `NECESSARY_CORE_EXTENSION_NO_NEW_ENGINE` | `source-pack`, `planning-workspace`, `decision-system`, `scope-dod-engine`, M09-M15 are released surfaces. | Compose/strengthen canonical project-plan generation, requirement-to-proof and owner-change impact. |
+| C03 | `NECESSARY_CORE_CONTRACT_CONDITIONAL_EXECUTION` | Current profiles include generic/TS/Node/Python/Web App, but exact-source search found no wireflow, design-token, Storybook or visual-approval engine. Browser automation is explicitly outside M08 profile processing. | Add a governed visual-experience contract for UI-bearing apps; actual browser/design tooling remains profile-conditional. |
+| C04 | `NECESSARY_CORE_EXTENSION_NO_NEW_ENGINE` | M15 already exposes executable work DAG, semantic critical path, safe parallelism matrix, atomic increment boundaries, guardrail/validation closures, cognition budget, read-once index, negative search ledger and replay receipts. M63 exposes `executionWaves`. M17/M18 provide checkpoint/resume. | Extend these into durable multi-wave Marathon execution semantics, not a second executor or duplicate DAG engine. |
+| C05 | `NECESSARY_ASSURANCE_EXTENSION` | M24 Evidence, M25 Proof Graph, M27 Assurance and M28 Test Impact are released. Exact search did not find a released property-testing/mutation-testing subsystem; generic "mutation" references are filesystem/state mutation, not mutation testing. | Add contract/property and selective mutation adapters bound into existing proof/evidence/impact authorities. No parallel proof store. |
+| C06 | `NECESSARY_CORE_EXTENSION` | M25 carry-forward/invalidation, M27 assurance and M28 source-test selection/reuse/regression-radius already exist. ADR/AGENTS already require causal repair behavior operationally. | Add machine-verifiable shadow selective-vs-full comparison, failure fingerprints/causal repair receipts and flake registry semantics while preserving full release risk floors. |
+| C07 | `NECESSARY_GOVERNANCE_COMPOSITION_REWRITE` | M24/M25/M27 plus Area-H governance already bind evidence/checks/reviewed head. Current AGENTS/ADR-0008 says owner exact-head audit is `NOT_INDEPENDENT`. | Rewrite archived "independent ChatGPT" wording. Consolidate reviewer packet/evidence without claiming independence from owner/Codex process. |
+| C08 | `NECESSARY_CORE_EXTENSION_NO_NEW_TELEMETRY_ENGINE` | V1.1.2 already has `compareBenchmark`, `benchmarkSummary`, `performanceGate`, `executorBudget`, `performanceRegression`, `capturePerformanceRecord`, immutable baselines and comparable-population guards. | Expand accepted-functionality/time/cost/quality cohorts and decision reporting. Preserve `INCOMPARABLE`/`INSUFFICIENT_DATA` truth states. |
+| C09 | `NECESSARY_COMPOSITION_EXTENSION_NO_NEW_ENGINE` | M20 Response Contract, M21 Progress, M22 Estimation and M23 Project Status expose explicit machine/human projections, evidence-bound progress, forecast and next-legal-action semantics. | Define one compact pt-BR composition contract and source-bound "changed since last turn"; do not add a fifth status engine. |
+| C10 | `NECESSARY_CORE_EXTENSION_NO_NEW_BASE_ENGINE` | `project-profiles` ships generic, TypeScript/Node, Python and Web App profiles; M13 adoption supports new/brownfield; M38 exposes capability envelopes; M49 exposes `installPlan`; CLI already delegates init/adopt/upgrade to these authorities. | Add owner-confirmed domain routing, conditional domain profiles and scoped/reversible tool installation. Extend existing profiles/adoption/capability/install surfaces. |
+| C11 | `NECESSARY_RELEASE_EXTENSION_NO_NEW_RELEASE_AUTHORITY` | Area-H exposes `releasePlan`; M34-M38 provide security/integrity/capability; M36 recovery; M49-M51 install/upgrade/compatibility; V1.1.2 already proves signed/provenance-aware distribution. | Strengthen reproducible environment/artifact/preview/recovery contracts where profile-applicable. Keep existing release authority. |
+| C12 | `NECESSARY_CORE_CONTRACT_CONDITIONAL_EXECUTION` | Telemetry, evidence, recovery, audit/benchmark foundations exist, but a target-application post-release feedback-to-regression loop is not a universal released runtime feature. | Define the operations-feedback contract in core; activate collection/SLO/reproduction only for deployed profiles that admit it. No universal hosted runtime. |
+
+### Consequence for V1.2 architecture
+
+WO-000 currently finds **no justification for twelve new engines**.
+
+The likely architecture is:
+- new core discovery/visual-domain contracts where genuinely absent;
+- extensions/compositions over released M09-M15, M17-M18, M20-M28, M34-M38, M41-M63;
+- profile adapters for property/mutation/browser/domain tooling;
+- conditional operational/domain execution;
+- current evidence/proof/release authorities remain canonical.
+
+This materially reduces implementation duplication and V1.2 risk.
+
+## 7. Exact released surfaces supporting the classification
+
+Observed released interfaces include:
+
+- M14 Task & Context Compiler: task intent, authority-bound context units, source routing, minimum sufficient context proof, safe expansion, semantic digest/capsule and selective invalidation.
+- M15 Execution Pack Compiler: execution envelope/provenance, executable work DAG, critical path, safe parallelism, atomic increment boundaries, guardrails, validation closure, rollback proof, cognition budget, tool blueprint, read-once index, negative-search ledger and replay receipts.
+- M17 Checkpoint: semantic compare-and-swap, promotion fence/proposal, split-brain detection, invalidation/rollback, freshness/admission/resume handoff.
+- M18 Resume: continuation/lineage/authority proof, minimum sufficient rehydration, drift/orphan/conflict quarantine and safe reentry receipts.
+- M20-M23: response, evidence-bound progress, estimation and project-status/next-action composition.
+- M24-M28: evidence authority/receipts, proof graph, semantic delta review, assurance and source-to-test impact/reuse.
+- M38: verified capability envelope + compatibility.
+- M41/M55/M63: comparable benchmark guards, benchmark summaries/gates, executor budgets, execution waves and performance regression.
+- V1.1 telemetry: immutable performance records/baselines with explicit measured/estimated/unavailable semantics and population comparability.
+- Project Profiles: generic, TypeScript/Node, Python and Web App profile contracts plus inheritance/template binding.
+- Adoption/maintenance/CLI: new/brownfield adoption, reversible planning, install/upgrade/doctor contracts and governed CLI delegation.
+
+## 8. Owner decision queue after source reconciliation
+
+The source audit removes several questions that no longer need owner input:
+- whether to build a second context/execution/proof/status/release engine: **NO**, reuse/extend current engines;
+- whether Hive is part of V1.2: **NO**, prohibited by ADR-0007;
+- whether ChatGPT audit is labeled independent: **NO**, current owner audit is `NOT_INDEPENDENT`;
+- whether every D-profile enters the core denominator: **NO**, conditional by default.
+
+The remaining material owner choices are intentionally short:
+
+1. **First end-to-end V1.2 reference pilot.** Recommended baseline candidate from the research matrix is a conventional Web App/API because it exercises discovery, planning, visual experience, Marathon, assurance, reporting, installer/profile routing and release flow without introducing custody/chain/MMO risk.
+2. **Packaging boundary.** Ship V1.2 core with one proven reference profile, or require multiple domain packs to be production-ready in the same 1.2 release.
+3. **Second priority domain, if any, for 1.2:** SaaS/finance, Web3, game, or keep all as post-core conditional packs.
+4. **Paid validation/tool budget:** free/local-first only, or an explicit monthly/one-off ceiling for tools/CI/audit.
+5. **Specialist-review trigger:** define when smart-contract, financial-value/custody or privileged operations require qualified external review before a profile can claim production readiness.
+
+Web3 chain and game engine questions are deferred unless the owner actually selects those profiles for the V1.2 release/pilot.
+
+## 9. Phase A work still required
+
+Before `GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS`:
+1. inventory all 25 archived files for tool/vendor assumptions and stale branch/version claims;
+2. create the Codex read-only baseline execution brief against the pinned V1.1.2 base;
+3. bind baseline populations/comparability rules to existing V1.1 telemetry contracts;
+4. update this map with any final contradiction found by the complete research-file audit.
+
+## 10. Phase A work still required
 
 Before `GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS`:
 1. inspect released 1.1.2 interfaces/evidence for all engines named by the research;
