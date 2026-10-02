@@ -35,8 +35,7 @@
     ".engineering/V1.2-RELEASE-DENOMINATOR.md": "f33db46412110584604bb556e8a62ecbef9c59c1",
     ".engineering/V1.2-PROFILE-MATRIX.md": "c9446bedd52469caa593ca5278c725b8e8c84d32",
     ".engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md": "536bd06c01e942c5e090a693591d5cd324585c59",
-    "package.json": "e917d281c9ba60157e82265d949d9958eac83731",
-    ".engineering/work-orders/GBS-V12-WO-002.md": "8405eef5c8aac221e96112541d3f83c853be2e9c"
+    "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
   },
   "implementationSurfaceFingerprintsAtAdmissionBase": {
     "packages/evidence-engine/src/public.ts": "af2ab94b97108f2f2acb640acaeac0b8eeae689e",
