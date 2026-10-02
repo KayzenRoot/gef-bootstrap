@@ -222,3 +222,109 @@ Until WO-000 freezes canonical V1.2 Scope/DoD, release progress and ETA are:
 - ETA: `NOT_YET_BASELINED`.
 
 **Current stop:** `GBS_V12_WO_000_PHASE_A_SOURCE_RECONCILIATION_IN_PROGRESS`
+
+## 11. Complete archived research audit — 25/25 exact files
+
+The exact 25 archived files were inspected from `c85cc91c899b553c1c37fe53ada236b8f76de3e2`.
+
+### Current-state contradictions found
+
+Only a small number of statements require canonical rewrite before admission:
+
+1. `planning/v1.2/README.md` says V1.1 is `IN PROGRESS`. Current state is V1.1.2 `PRODUCTION_ACCEPTED`.
+2. The same README still says PR #344 stays DRAFT. PR #344 is closed without merge and retained only as archived input.
+3. `OPERATIONS-AND-RELEASE-INNOVATIONS.md` refers to the research dossier as living in draft PR #344. That provider-state statement is historical only.
+4. Candidate C07 in `V12-CANDIDATE-SCOPE-FREEZE.md` says "independent ChatGPT exact-head audit". Current ADR-0008/AGENTS requires owner-operated exact-head audit recorded as `NOT_INDEPENDENT`.
+
+Other "after V1.1 release/completion" prerequisites are now satisfied preconditions, not contradictions.
+
+### Research/tooling safety result
+
+The research corpus is generally disciplined:
+- documents repeatedly label themselves research/proposal/conditional;
+- no file proves a listed external tool is currently installed or production-ready;
+- no domain profile authorizes real asset deployment, customer-money handling, custody, mainnet write, regulated certification or destructive provider action;
+- tool versions/pricing/service allowances are explicitly required to be freshly verified at future implementation time.
+
+### External technology disposition classes
+
+The research mentions concrete technologies, but WO-000 classifies them by role rather than installing them:
+
+**Core-support / evaluate only where admission proves value**
+- actionlint, zizmor, CodeQL, Trivy, Gitleaks, Scorecard;
+- existing GitHub/provider security surfaces remain authoritative.
+
+**Conditional Web/API/UI profile**
+- Playwright, Storybook, Schemathesis, k6, Lighthouse;
+- Vitest only if a selected target/project/toolchain justifies it.
+
+**Conditional Web3 EVM**
+- Foundry, Slither, optional bounded Echidna.
+
+**Conditional Web3 Solana**
+- Anchor, LiteSVM, Mollusk.
+
+**Conditional games**
+- Phaser, Godot, Babylon/Three.js;
+- Colyseus or Nakama selected by workload, never both by default.
+
+**Conditional SaaS/finance**
+- Lago, OpenMeter, Formance, Temporal, OpenFGA, TigerBeetle;
+- each requires a real product need and compatibility/ROI/security proof.
+
+**Experimental/high-assurance research**
+- Noir, FHEVM and other ZK/FHE/TEE/MPC/PQ tracks remain experimental/deferred unless a real admitted requirement exists.
+
+**Framework/platform swap experiments**
+- Nx, Turborepo, Kubernetes and similar architecture/toolchain migrations remain non-default and require measured accepted-functionality ROI plus equal/stronger assurance.
+
+### File-family result
+
+The 25 files collapse cleanly into seven source families:
+
+1. **Core execution/quality** — Vision, Throughput, Quality/Test, API/Performance, Experiments.
+2. **Owner/product experience** — Product Discovery, UI/UX Factory, Operator Response, Startup Default.
+3. **Operations/release** — Operations and Tooling/GitHub.
+4. **Domain routing** — Domain Router + hybrid profile coordination.
+5. **Games** — Game Factory.
+6. **SaaS/Web3/finance/security** — SaaS finance, tenant/data, cross-domain, remaining areas, Web3 data security, Web3 factory.
+7. **Release governance** — Scope Freeze, Acceptance Gates, Roadmap/WOs, Idea Closure, README/index.
+
+No extra universal category was found outside C01-C12. No new uncontrolled feature-ideation pass is required.
+
+## 12. V1.1.2 baseline reuse decision
+
+WO-000 will reuse the released V1.1 benchmark contract instead of inventing a second benchmark authority.
+
+Authoritative baseline rules:
+- population identity P1-P8 must match for comparison;
+- any mismatch => `INCOMPARABLE`;
+- missing required metric => `INDETERMINATE`;
+- token counts remain `UNAVAILABLE` when not exposed;
+- quality/security failure voids optimization claims;
+- repeated samples and dispersion are required where practical;
+- benchmark evidence is derived/inspectable state, never canonical product truth.
+
+Existing benchmark assets:
+- `.engineering/benchmarks/v1.1/cli-roi.mjs`
+- `.engineering/benchmarks/v1.1/source-workspace-manual.mjs`
+- `.engineering/benchmarks/v1.1/README.md`
+- `.engineering/releases/V1.1-PERFORMANCE-BENCHMARK-PROTOCOL.md`
+- released telemetry primitives `capturePerformanceRecord`, immutable baselines, `compareBenchmark`, `benchmarkSummary`, `performanceGate`, `performanceRegression`.
+
+WO-000 baseline must extend this evidence, not replace it.
+
+## 13. Phase A disposition
+
+The complete research audit found no source conflict that blocks V1.2 admission planning.
+
+Current unresolved work before the owner decision checkpoint is now limited to:
+1. execute the pinned V1.1.2 read-only/reproducible baseline;
+2. capture objective baseline evidence and comparability verdicts;
+3. present the short owner decision queue already listed above.
+
+After the baseline evidence is attached, Phase A may stop at:
+
+`GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS`
+
+
