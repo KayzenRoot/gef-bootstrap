@@ -1,8 +1,8 @@
 # Evidence Bundle — GBS-MAINT-OPEN-SURFACE-001
 
 **Issue:** #365  
-**State:** `IN_PROGRESS / PHASE_0_BLOCKED_ON_WO012_TEST_SYNC`  
-**Admission base:** `main@af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`
+**State:** `READY_FOR_FINAL_OWNER_AUDIT`  
+**Refreshed base:** `main@ac4cd82a98383eed30ec8363c7a173b3486a7de7`
 
 ## Initial observed open surface
 
@@ -58,28 +58,35 @@ Created `.engineering/handoffs/V1.2-NEXT-STATE.md`.
 
 The full 25-file planning snapshot remains preserved on PR #344's branch/commit. It is intentionally not merged from its stale branch. Future V1.2 work must start from then-current main and explicitly re-admit/revalidate selected concepts. No V1.2 implementation is authorized by cleanup.
 
-## Remaining open surface after administrative cleanup
+## V1.1.2 production closeout completion
 
-Expected remaining until Phase 0 finishes:
-- PR #364 — V1.1.2 production closeout
-- Issue #361 — WO-012 V1.1.2 hotfix/release
-- Issue #365 — this reconciliation Work Order
+WO-012 / PR #364 completed after the repository cleanup had reduced the queue.
 
-PR #364 production checkpoint promotion moved its branch to `e3529e993517f729815e5cf9b31003bfebb5e9c0`.
+- exact audited candidate head: `f2c2e28a321d4e7e5293b5d4b623da891fd04c8c`
+- exact-head checks: `43/43 SUCCESS`
+- `codecov/patch`: SUCCESS without threshold reduction/exclusion
+- owner audit: `APPROVED / NOT_INDEPENDENT`
+- CRITICAL/HIGH: `0 / 0`
+- squash merge: `ac4cd82a98383eed30ec8363c7a173b3486a7de7`
+- post-merge `main`: `8/8 SUCCESS`
+- canonical V1.1 state: `GBS_V11_1_1_2_PRODUCTION_ACCEPTED`
+- Issue #361: CLOSED / COMPLETED
+- tag `v1.1.2`, npm package and GitHub Release remained immutable; no republish or rollout occurred.
 
-The first CI run after promotion exposed a causal historical-test mismatch:
-`assertWo012CandidateReleaseIdentity` still unconditionally expected pre-publication values (`tag=null`, `npmPublished=false`, `registrySmoke=NOT_RUN`) while the canonical state is now `GBS_V11_1_1_2_PRODUCTION_ACCEPTED`.
+## Final provider inventory before opening this closeout PR
 
-Correction instructions were recorded on PR #364 comment `5951132038`. Under repository governance, Codex must author the test correction. Threshold weakening/exclusions are prohibited.
+GitHub API state after #364 merge and #361 closure:
+- open Pull Requests: **0**
+- open non-PR Issues: **1** — #365 only
+
+Opening the governance-only final reconciliation PR will temporarily make the live surface:
+- one PR for this Work Order;
+- Issue #365.
+
+After that PR is exact-head audited and merged, close #365 and verify zero open Pull Requests / zero open Issues.
 
 ## Next exact action
 
-1. Codex fixes only the authorized WO-012 accepted-state test/helper semantics.
-2. Full #364 validation reruns.
-3. Require all main ruleset contexts **and** Codecov patch green.
-4. Owner exact-head audit and ready-state retriggers.
-5. Merge #364.
-6. Close #361.
-7. Refresh this Work Order against the new main, open/merge its governance-only reconciliation PR, verify final API inventory, then close #365.
+Open one governance-only PR from `maint/open-surface-reconciliation` to current `main`, run the repository checks, exact-head audit it, merge it, close #365, and verify the final API inventory.
 
-**Current stop:** `GBS_MAINT_OPEN_SURFACE_001_WAITING_FOR_WO012_PRODUCTION_CLOSEOUT_REVALIDATION`
+**Current stop:** `GBS_MAINT_OPEN_SURFACE_001_READY_FOR_FINAL_OWNER_AUDIT`
