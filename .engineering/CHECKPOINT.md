@@ -266,3 +266,31 @@ Recovery run [36854526557](https://github.com/KayzenRoot/gef-bootstrap/actions/r
 Delta #21 keeps that install, removes only the blocking signature-audit command from RECOVERY, verifies the physical installed bundles and runs the real CLI/library/status JSON smoke. Signature and attestation metadata are queried read-only; absent attestations are recorded as `PROVENANCE_NOT_CLAIMED_FOR_BOOTSTRAP_1_1_0`. The existing SHA-512 SRI, version, repository URL, immutable tag/source and no-publication protections remain.
 
 Implementation HEAD `e93216a391c15c0fd23f8d006a320fd6b21e83ae` and evidence-sync HEAD `aecc566dc94220afaedb01f14db2eac59b2a4ee2` on draft PR #355 passed the normal automatic checks. On the latest exact PR head, repository validation, coverage, Gitleaks, Trivy, Pipeline Integrity, Dependency Review, CodeQL, SonarCloud, Codecov, focused/regression validation, TypeScript, and Ubuntu/Windows/macOS release assurance and same-tarball checks passed. Evidence links and run IDs are in the WO-010 Evidence Bundle and at https://github.com/KayzenRoot/gef-bootstrap/pull/355/checks. CodeRabbit was skipped because the PR remains draft. No manual test campaign was run. That historical Delta #21 stop was `GBS_V11_WO_010_RELEASE_RECOVERY_REGISTRY_SMOKE_READY_FOR_OWNER_AUDIT`; the final owner closeout above supersedes it.
+
+## V1.2 governed source admission overlay — WO-000
+
+**Promotion candidate state:** `SOURCE_PACK_APPROVED_NO_IMPLEMENTATION`. This overlay becomes canonical only if the final PR #369 promotion head passes exact-head checks, receives owner audit `APPROVED / NOT_INDEPENDENT`, and is governed-merged to `main`.
+
+- Work Order: `GBS-V12-WO-000`; Issue: `#367`; PR: `#369`.
+- Execution base preserved: `main@203dc6a86de035b8502453100ea6e2a4788cae57`.
+- Phase D Source Pack audited exact head: `290f7a6d6c68ef2500388dcaa604fbed3bb02d56`.
+- Phase D owner audit: review `#5394709108`, `APPROVED / NOT_INDEPENDENT`.
+- Phase D findings: CRITICAL `0`; HIGH `0`.
+- Phase E owner continuation authorization: Issue #367 comment `#5957678869`.
+- Universal V1.2 denominator: `U12-01..U12-10` = 10 obligations.
+- V1.2 implementation credit at WO-000 closeout: `0 / 10 = 0.00%`; remaining `10 / 10 = 100.00%`.
+- Conditional profiles earn no implementation credit from WO-000.
+- First future profile pilot: full-stack multi-tenant SaaS, excluding real-money movement, custody, escrow and payouts.
+- Conditional reference profiles: EVM-first `Solidity + Foundry + Anvil`; first game reference `Godot 4`.
+- Initial paid-tool / expanded-CI budget: `US$ 0`.
+- HIGH_ASSURANCE production surfaces require independent specialist review; owner-operated ChatGPT audit remains `NOT_INDEPENDENT`.
+- Active V1.2 implementation Work Order: `NONE`.
+- V1.2 implementation started: `NO`.
+- No tag, package, release, deployment or profile implementation is promoted by WO-000.
+
+**Terminal state after governed PR #369 merge:** `GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION`.
+
+**Next legal V1.2 action after that terminal state:** separately create and owner-admit `GBS-V12-WO-001` with a fresh Context Lock. WO-001 is not started by this checkpoint promotion.
+
+The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED` release facts remain unchanged and are not converted into V1.2 implementation credit.
+
