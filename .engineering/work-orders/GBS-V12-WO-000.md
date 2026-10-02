@@ -299,3 +299,94 @@ Second stop:
 Terminal after approved promotion:
 
 `GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION`
+
+
+## PHASE C OWNER DECISIONS — APPROVED 2026-10-02
+
+Phase A+B was owner-audited `APPROVED / NOT_INDEPENDENT` at exact HEAD `6c654ae870f12375ed13787d98f1d9d2935491b9` (PR review `#5393995298`). The owner then explicitly approved the six blocking decisions recorded in:
+
+- `.engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md`
+
+Binding Phase C choices:
+
+1. first end-to-end pilot: full-stack multi-tenant SaaS with web/API, data, auth, tenant isolation, subscription/billing/entitlements, security/recovery/observability, excluding real-money movement/custody in the first pilot;
+2. release model: universal core plus separately accepted reference conditional profiles; unselected profiles do not enter the universal-core denominator;
+3. Web3 reference: EVM-first using Solidity + Foundry + Anvil; no real-fund signing/custody/mainnet authority;
+4. game reference: Godot 4, prioritizing deterministic/headless proof and desktop/browser targets where applicable;
+5. paid-tool/expanded-CI budget: US$ 0 initially; free/open-source first; any paid addition requires a separate owner-approved evidence-backed decision;
+6. independent specialist review: mandatory before production for financial value movement, custody/escrow, blockchain transaction signing, real-value smart contracts, privileged auth, irreversible migrations and destructive/irreversible privileged operations.
+
+These decisions resolve Phase C. They do not authorize V1.2 implementation, merge, checkpoint promotion, publication or WO-001.
+
+## PHASE D — CANONICAL SOURCE PACK PROPOSAL AUTHORIZATION
+
+Codex is authorized to prepare the V1.2 canonical Source Pack proposal on this same draft PR. This is a governance/documentation delta only.
+
+### Phase D WRITE_ALLOWED
+
+Existing canonical sources that may be updated:
+- `.engineering/SCOPE.md`
+- `.engineering/REQUIREMENTS.md`
+- `.engineering/ARCHITECTURE.md`
+- `.engineering/SECURITY.md`
+- `.engineering/TEST-BENCHMARK-PLAN.md`
+- `.engineering/DEPLOYMENT.md`
+- `.engineering/DEFINITION-OF-DONE.md`
+- `.engineering/DECISIONS-LEDGER.md`
+- `.engineering/BACKLOG.md`
+- `.engineering/work-orders/GBS-V12-WO-000.md`
+- `.engineering/context-locks/GBS-V12-WO-000.json`
+
+New bounded governance artifacts that may be created:
+- `.engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md`
+- `.engineering/V1.2-PROFILE-MATRIX.md`
+- `.engineering/V1.2-RELEASE-DENOMINATOR.md`
+- `.engineering/evidence/GBS-V12-WO-000-EVIDENCE.md`
+- `.engineering/checkpoint-deltas/GBS-V12-WO-000-PROPOSED.md`
+
+Existing Phase A+B evidence may be updated only to add truthful Phase C/D references without changing measured results:
+- `.engineering/evidence/GBS-V12-WO-000-SOURCE-AUDIT.md`
+- `.engineering/evidence/GBS-V12-WO-000-CAPABILITY-MAP.json`
+- `.engineering/benchmarks/GBS-V12-WO-000-V11-BASELINE.json`
+- `.engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md`
+
+Any additional path requires an explicit bounded owner delta.
+
+### Phase D requirements
+
+- Convert the approved decisions and audited C/D/R map into finite, internally consistent canonical obligations.
+- Preserve all accepted V1/V1.1 history and current V1.1.2 production facts.
+- Keep conditional profiles outside the universal-core denominator unless explicitly selected by their own acceptance contract.
+- Define the SaaS pilot acceptance surface without admitting real-money movement/custody.
+- Define EVM and Godot reference profiles as conditional profiles with explicit proof boundaries.
+- Encode HIGH_ASSURANCE specialist-review stop/fail-closed behavior.
+- Keep paid tools at US$ 0 / free-open-source-first unless a later owner decision says otherwise.
+- Reconcile C07 so owner-operated ChatGPT audit remains `NOT_INDEPENDENT`; independent specialist review is a separate role/gate.
+- Define a finite release denominator and profile matrix.
+- Justify WO-001 through WO-006 or replace that sequence only with evidence from the audited capability map.
+- Produce a proposed Checkpoint Delta only. Do not mutate `.engineering/CHECKPOINT.md` or `.engineering/CHECKPOINT.json` in Phase D.
+- Do not author product/runtime code, product tests, CI/workflow changes, migrations or dependency changes.
+
+### Phase D validation
+
+At minimum:
+- JSON/Markdown/source consistency checks;
+- `npm run build`;
+- `npm run typecheck`;
+- `npm run validate`;
+- `npm audit --audit-level=high`;
+- `git diff --check`;
+- exact-path diff allowlist verification;
+- exact-head required GitHub checks after commit/push.
+
+If an existing test fails only because it asserts frozen Source Pack text/state, Codex must stop and report the exact failing path/assertion. It may not modify tests in Phase D without a separate owner-authorized Correction Delta.
+
+### Phase D STOP
+
+`GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT`
+
+At this stop:
+- keep PR #369 open;
+- do not merge;
+- do not promote checkpoint;
+- do not start WO-001.
