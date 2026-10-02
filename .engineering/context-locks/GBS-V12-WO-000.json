@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "workOrder": "GBS-V12-WO-000",
   "issue": 367,
-  "state": "ADMITTED_PHASE_AB_AUDIT_ONLY",
+  "state": "OWNER_DECISIONS_RECORDED_PHASE_D_SOURCE_PACK_PROPOSAL",
   "risk": "STANDARD",
   "repository": "KayzenRoot/gef-bootstrap",
   "ownerAccount": "KayzenRoot",
@@ -36,7 +36,7 @@
     ".engineering/TEST-BENCHMARK-PLAN.md": "a7b5618ead1a483275a0b0e72126258523349f01",
     ".engineering/DEPLOYMENT.md": "54b7b86422df2be0463219e31e06025c7d21171b",
     ".engineering/DECISIONS-LEDGER.md": "34ca9119054f30a56d2019fb99b6a259f8e2f896",
-    ".engineering/decisions/ADR-0007-RETIRE-\u0048IVE-INTEGRATION.md": "687ee037d2dcd4936d118a23666665fc66410aed",
+    ".engineering/decisions/ADR-0007-RETIRE-HIVE-INTEGRATION.md": "687ee037d2dcd4936d118a23666665fc66410aed",
     ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
     ".engineering/handoffs/V1.2-NEXT-STATE.md": "7d4b28b886d85e500abdb142a9a3e83dc0d232d2",
     "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
@@ -123,7 +123,9 @@
     "any locked source blob changes on the execution lineage before executor starts",
     "the archived research commit is not retrievable exactly",
     "Issue #367 is closed, superseded or materially amended",
-    "branch ancestry no longer descends from the exact execution base"
+    "branch ancestry no longer descends from the exact execution base",
+    "owner decision receipt is changed or superseded",
+    "Phase D write allowlist is changed without owner authorization"
   ],
   "executorPreflight": [
     "verify repository and owner account",
@@ -136,5 +138,88 @@
   ],
   "firstStopCondition": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS",
   "secondStopCondition": "GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT",
-  "terminalStopCondition": "GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION"
+  "terminalStopCondition": "GBS_V12_WO_000_ADMITTED_NO_IMPLEMENTATION",
+  "phaseABApproval": {
+    "auditedHead": "6c654ae870f12375ed13787d98f1d9d2935491b9",
+    "verdict": "APPROVED_NOT_INDEPENDENT",
+    "reviewId": 5393995298,
+    "stopCondition": "GBS_V12_WO_000_SOURCE_AUDIT_READY_FOR_OWNER_DECISIONS"
+  },
+  "ownerDecisionReceipt": {
+    "path": ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md",
+    "commit": "f07933241fb5230f6c78753709b823966025af8f",
+    "date": "2026-10-02",
+    "status": "APPROVED"
+  },
+  "ownerDecisions": [
+    {
+      "id": "OD-01",
+      "value": "FIRST_PILOT_SAAS_FULLSTACK_MULTITENANT_NO_REAL_MONEY_CUSTODY"
+    },
+    {
+      "id": "OD-02",
+      "value": "UNIVERSAL_CORE_PLUS_SEPARATELY_ACCEPTED_REFERENCE_CONDITIONAL_PROFILES"
+    },
+    {
+      "id": "OD-03",
+      "value": "WEB3_EVM_FIRST_SOLIDITY_FOUNDRY_ANVIL"
+    },
+    {
+      "id": "OD-04",
+      "value": "GAME_GODOT4_FIRST_REFERENCE"
+    },
+    {
+      "id": "OD-05",
+      "value": "PAID_TOOL_AND_EXPANDED_CI_BUDGET_USD_0_FREE_OPEN_SOURCE_FIRST"
+    },
+    {
+      "id": "OD-06",
+      "value": "INDEPENDENT_SPECIALIST_REVIEW_REQUIRED_BEFORE_PRODUCTION_FOR_HIGH_ASSURANCE_SURFACES"
+    }
+  ],
+  "phaseD": {
+    "mode": "CANONICAL_SOURCE_PACK_PROPOSAL_ONLY",
+    "implementationAuthorized": false,
+    "productRuntimeMutationAuthorized": false,
+    "productTestMutationAuthorized": false,
+    "ciMutationAuthorized": false,
+    "migrationMutationAuthorized": false,
+    "dependencyChangeAuthorized": false,
+    "checkpointCanonicalMutationAuthorized": false,
+    "paidToolInstallAuthorized": false,
+    "writeAllowed": [
+      ".engineering/SCOPE.md",
+      ".engineering/REQUIREMENTS.md",
+      ".engineering/ARCHITECTURE.md",
+      ".engineering/SECURITY.md",
+      ".engineering/TEST-BENCHMARK-PLAN.md",
+      ".engineering/DEPLOYMENT.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/DECISIONS-LEDGER.md",
+      ".engineering/BACKLOG.md",
+      ".engineering/work-orders/GBS-V12-WO-000.md",
+      ".engineering/context-locks/GBS-V12-WO-000.json",
+      ".engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md",
+      ".engineering/V1.2-PROFILE-MATRIX.md",
+      ".engineering/V1.2-RELEASE-DENOMINATOR.md",
+      ".engineering/evidence/GBS-V12-WO-000-EVIDENCE.md",
+      ".engineering/checkpoint-deltas/GBS-V12-WO-000-PROPOSED.md",
+      ".engineering/evidence/GBS-V12-WO-000-SOURCE-AUDIT.md",
+      ".engineering/evidence/GBS-V12-WO-000-CAPABILITY-MAP.json",
+      ".engineering/benchmarks/GBS-V12-WO-000-V11-BASELINE.json",
+      ".engineering/evidence/GBS-V12-WO-000-OWNER-DECISIONS.md"
+    ],
+    "mandatorySemantics": [
+      "Universal core has a finite denominator separate from conditional profile acceptance.",
+      "First pilot is full-stack multi-tenant SaaS without real-money movement/custody.",
+      "EVM reference is Solidity plus Foundry plus Anvil and remains conditional.",
+      "Godot 4 is the first game reference and remains conditional.",
+      "Paid tool and expanded CI budget remains USD 0 unless separately owner-approved.",
+      "Independent specialist review is mandatory before production for HIGH_ASSURANCE surfaces.",
+      "Owner-operated ChatGPT semantic audit remains NOT_INDEPENDENT.",
+      "No product/runtime implementation, product test/CI/migration/dependency changes, checkpoint promotion, merge or WO-001 execution."
+    ],
+    "proposedCheckpointOnly": true,
+    "stopCondition": "GBS_V12_WO_000_CANONICAL_SOURCE_PACK_READY_FOR_OWNER_AUDIT"
+  }
 }
