@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { assertWo012PostMergeReleaseGates } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -11,6 +12,7 @@ const json = (path) => JSON.parse(read(path));
 test("WO-012 reconciles immutable published v1.1.1 history and keeps v1.1.2 as the active patch", () => {
   const checkpoint = json(".engineering/CHECKPOINT.json");
   const v11 = checkpoint.v11;
+  const postMergeState = v11.status === "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT";
   assert.equal(v11.stableRelease.version, "1.1.0");
   assert.equal(v11.stableRelease.tag, "v1.1.0");
   assert.equal(v11.patchHistory.find((entry) => entry.version === "1.1.1")?.status, "PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED");
@@ -23,7 +25,7 @@ test("WO-012 reconciles immutable published v1.1.1 history and keeps v1.1.2 as t
 
   const candidate = v11.candidateRelease;
   assert.equal(candidate.version, "1.1.2");
-  assert.equal(candidate.status, "PATCH_IN_PROGRESS");
+  assert.equal(candidate.status, postMergeState ? "MERGED_AWAITING_PUBLICATION" : "PATCH_IN_PROGRESS");
   assert.equal(candidate.workOrder, "GBS-V11-WO-012");
   assert.equal(candidate.issue, 361);
   assert.equal(candidate.baseMainSha, "5a32a607ccf2055fab722f3d5d452791c6aae3e6");
@@ -32,11 +34,21 @@ test("WO-012 reconciles immutable published v1.1.1 history and keeps v1.1.2 as t
   assert.equal(candidate.tag, null);
   assert.equal(candidate.npmPublished, false);
   assert.equal(candidate.registrySmoke, "NOT_RUN");
+  if (postMergeState) assertWo012PostMergeReleaseGates(checkpoint);
 
   const human = read(".engineering/CHECKPOINT.md");
   assert.match(human, /V1\.1\.1.*PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED/);
-  assert.match(human, /V1\.1\.2.*PATCH_IN_PROGRESS/);
-  assert.match(human, /GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT/);
+  if (postMergeState) {
+    assertWo012PostMergeReleaseGates(checkpoint, human);
+    assert.match(human, /V1\.1\.2.*MERGED_AWAITING_PUBLICATION/);
+  } else {
+    assert.match(human, /V1\.1\.2.*PATCH_IN_PROGRESS/);
+  }
+  if (postMergeState) {
+    assert.match(human, /GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT/);
+  } else {
+    assert.match(human, /GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT/);
+  }
 });
 
 test("WO-012 sets the active workspace, CLI, lockfile and generated runtime identity to 1.1.2", () => {

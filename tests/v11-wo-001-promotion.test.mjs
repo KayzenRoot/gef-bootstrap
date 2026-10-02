@@ -1,5 +1,5 @@
 import test from 'node:test';
-import { assertLaterActiveWorkOrder } from './helpers/v11-context-lock-refresh-assertions.mjs';
+import { assertLaterActiveWorkOrder, assertWo012PostMergeReleaseGates } from './helpers/v11-context-lock-refresh-assertions.mjs';
 import assert from 'node:assert/strict';
 
 import { readFileSync } from 'node:fs';
@@ -22,9 +22,10 @@ const wo008Completed = checkpoint.v11.status === 'GBS_V11_WO_008_OWNER_AUDIT_APP
 const wo009Completed = checkpoint.v11.status === 'GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT';
 const wo011Current = checkpoint.v11.status === 'GBS_V11_WO_011_ADMITTED';
 const wo012Current = checkpoint.v11.status === 'GBS_V11_WO_012_ADMITTED';
+const wo012PostMerge = checkpoint.v11.status === 'GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT';
 const admittedMatch = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(checkpoint.v11.status);
-const admittedOrdinal = wo012Current ? 12 : wo011Current ? 11 : wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
-const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || wo008Completed || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2 && admittedOrdinal <= 12);
+const admittedOrdinal = wo012PostMerge ? 12 : wo012Current ? 12 : wo011Current ? 11 : wo009Completed ? 10 : (ownerGovernancePromoted || wo008Completed) ? 8 : admittedMatch === null ? null : Number.parseInt(admittedMatch[1], 10);
+const legalPostFoundationStates = foundationPromoted || ownerGovernancePromoted || wo008Completed || wo012PostMerge || (Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2 && admittedOrdinal <= 12);
 
 test('V1.0 production acceptance remains byte-semantically preserved at the checkpoint boundary', () => {
   assert.equal(checkpoint.status, 'GBS_V1_PRODUCTION_ACCEPTED');
@@ -75,6 +76,12 @@ test('human and machine checkpoints preserve production stop state while V1.1 ad
     assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
     assert.ok(checkpointMd.includes('Current V1.1 release position'));
     assert.ok(checkpointMd.includes('Current V1.1 next legal action: `CONTINUE_GBS_V11_WO_012_IMPLEMENTATION_ON_LOCKED_BASE`'));
+    return;
+  }
+  if (wo012PostMerge) {
+    assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
+    assert.ok(checkpointMd.includes('Current V1.1 release position'));
+    assertWo012PostMergeReleaseGates(checkpoint, checkpointMd);
     return;
   }
   assert.ok(Number.isInteger(admittedOrdinal) && admittedOrdinal >= 2 && admittedOrdinal <= 12, `unexpected V1.1 lifecycle state after foundation promotion: ${checkpoint.v11.status}`);
@@ -134,7 +141,7 @@ test('V1.1.0 acceptance and published V1.1.1 history do not rewrite the V1.0 led
   assert.equal(checkpoint.v11.stableRelease.version, '1.1.0');
   const historicalV111 = checkpoint.v11.patchHistory.find((release) => release.version === '1.1.1');
   assert.equal(historicalV111.status, 'PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED');
-  assert.equal(checkpoint.v11.candidateRelease.status, 'PATCH_IN_PROGRESS');
+  assert.equal(checkpoint.v11.candidateRelease.status, wo012PostMerge ? 'MERGED_AWAITING_PUBLICATION' : 'PATCH_IN_PROGRESS');
   assert.equal(checkpoint.v11.candidateRelease.version, '1.1.2');
   assert.equal(checkpoint.v11.candidateRelease.workOrder, 'GBS-V11-WO-012');
   assert.equal(checkpoint.earnedProductionWeight, 1088);
@@ -204,7 +211,7 @@ test('WO-002 remains the first governed increment and later admissions preserve 
     assert.equal(checkpoint.v11.activeWorkOrder, 'GBS-V11-WO-008');
     assert.equal(checkpoint.v11.activeWorkOrderStatus, 'IMPLEMENTED_PR_OPEN_AWAITING_OWNER_AUDIT');
     assert.equal(checkpoint.v11.stopState, 'GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY');
-  } else if (wo009Completed || wo011Current || wo012Current) {
+  } else if (wo009Completed || wo011Current || wo012Current || wo012PostMerge) {
     assertLaterActiveWorkOrder(checkpoint, admittedOrdinal, false, 9);
   } else {
     const activeId = String(admittedOrdinal).padStart(3, '0');

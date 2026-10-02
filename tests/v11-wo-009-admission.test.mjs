@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { assertWo009ContextLockRefreshHandoff, assertWo009BranchReconciliationNote, assertWo009MergedPromotionHandoff, assertWo011CurrentPatch, assertWo012CurrentPatch } from "./helpers/v11-context-lock-refresh-assertions.mjs";
+import { assertWo009ContextLockRefreshHandoff, assertWo009BranchReconciliationNote, assertWo009MergedPromotionHandoff, assertWo011CurrentPatch, assertWo012CurrentPatch, assertWo012PostMergeReleaseGates } from "./helpers/v11-context-lock-refresh-assertions.mjs";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -29,7 +29,9 @@ test("WO-008 stays owner-audited and merged while the V1 production baseline sta
 });
 
 test("Checkpoint names one admitted V1.1 action with branch and source references", () => {
-  if (checkpoint.v11.status === "GBS_V11_WO_012_ADMITTED") {
+  if (checkpoint.v11.status === "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT") {
+    assertWo012PostMergeReleaseGates(checkpoint, checkpointMd);
+  } else if (checkpoint.v11.status === "GBS_V11_WO_012_ADMITTED") {
     assertWo012CurrentPatch(checkpoint);
     assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-012");
     assert.ok(checkpointMd.includes("Current V1.1 execution state: `GBS_V11_WO_012_ADMITTED`; active Work Order `GBS-V11-WO-012`"));
