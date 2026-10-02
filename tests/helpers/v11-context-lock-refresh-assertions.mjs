@@ -1,5 +1,88 @@
 import assert from "node:assert/strict";
 
+const WO012_POST_MERGE_STATE = "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT";
+const WO012_ADMITTED_STATE = "GBS_V11_WO_012_ADMITTED";
+
+export const isWo012PostMergeCheckpoint = (checkpoint) => checkpoint.v11.status === WO012_POST_MERGE_STATE;
+
+export const wo012CandidateReleaseStatus = (checkpoint) => isWo012PostMergeCheckpoint(checkpoint)
+  ? "MERGED_AWAITING_PUBLICATION"
+  : "PATCH_IN_PROGRESS";
+
+export function laterV11WorkOrderOrdinal(checkpoint) {
+  const state = checkpoint.v11.status;
+  const admitted = /^GBS_V11_WO_(\d{3})_ADMITTED$/.exec(state);
+  if (state === WO012_POST_MERGE_STATE || state === WO012_ADMITTED_STATE) return 12;
+  if (state === "GBS_V11_WO_011_ADMITTED") return 11;
+  if (state === "GBS_V11_WO_009_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT") return 10;
+  if (state === "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY" || state === "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT") return 8;
+  return admitted === null ? null : Number.parseInt(admitted[1], 10);
+}
+
+export function isLegalPostFoundationV11State(checkpoint) {
+  const status = checkpoint.v11.status;
+  const ordinal = laterV11WorkOrderOrdinal(checkpoint);
+  return status === "GBS_V11_FOUNDATION_PROMOTED"
+    || status === "GBS_V11_GOV_001_PROMOTED_OWNER_ONLY_WO008_AUDIT_READY"
+    || status === "GBS_V11_WO_008_OWNER_AUDIT_APPROVED_MERGED_WO_009_ADMISSION_NEXT"
+    || (Number.isInteger(ordinal) && ordinal >= 2 && ordinal <= 12);
+}
+
+export function wo012CurrentPatchCheckpoint(checkpoint) {
+  const historical = structuredClone(checkpoint);
+  historical.v11.status = WO012_ADMITTED_STATE;
+  historical.v11.activeWorkOrderStatus = "IMPLEMENTATION_IN_PROGRESS";
+  historical.v11.nextLegalAction = "CONTINUE_GBS_V11_WO_012_IMPLEMENTATION_ON_LOCKED_BASE";
+  historical.v11.stopState = "GBS_V11_WO_012_IMPLEMENTATION_IN_PROGRESS";
+  historical.v11.candidateRelease.status = "PATCH_IN_PROGRESS";
+  historical.v11.candidateRelease.stopWhen = "GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT";
+  return historical;
+}
+
+export const wo012CurrentPatchCheckpointMd = "Current V1.1 release position\nCurrent V1.1 execution state: `GBS_V11_WO_012_ADMITTED`; active Work Order `GBS-V11-WO-012`\nV1.1.2 PATCH_IN_PROGRESS\nGBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT";
+
+function assertWo012CandidateReleaseIdentity(candidateRelease) {
+  assert.equal(candidateRelease.version, "1.1.2");
+  assert.equal(candidateRelease.workOrder, "GBS-V11-WO-012");
+  assert.equal(candidateRelease.issue, 361);
+  assert.equal(candidateRelease.baseMainSha, "5a32a607ccf2055fab722f3d5d452791c6aae3e6");
+  assert.equal(candidateRelease.branch, "hotfix/v1.1.2-release-state-preflight");
+  assert.equal(candidateRelease.contextLock, ".engineering/context-locks/GBS-V11-WO-012.json");
+  assert.equal(candidateRelease.pullRequest, 362);
+  assert.equal(candidateRelease.tag, null);
+  assert.equal(candidateRelease.npmPublished, false);
+  assert.equal(candidateRelease.registrySmoke, "NOT_RUN");
+  assert.equal(candidateRelease.rolloutStarted, false);
+}
+
+export function assertWo012Gate2CarryForward(checkpoint) {
+  assert.equal(checkpoint.v11.completedWorkOrders["GBS-V11-WO-009"].implementationPr, 316);
+  assert.equal(checkpoint.v11.gate2CumulativeIntegration.state, "OWNER_OPTION_B_APPLIED_AWAITING_EXACT_HEAD_REAUDIT");
+  assert.equal(checkpoint.v11.gate3Wo010Acceptance.finalProductionAcceptance.status, "PRODUCTION_ACCEPTED");
+}
+
+export function assertWo012ReleaseState(checkpoint, checkpointMd) {
+  const candidate = checkpoint.v11.candidateRelease;
+  assert.equal(candidate.status, wo012CandidateReleaseStatus(checkpoint));
+  assert.ok(checkpointMd.includes("Current V1.1 release position"));
+  if (isWo012PostMergeCheckpoint(checkpoint)) {
+    assertWo012PostMergeReleaseGates(checkpoint, checkpointMd);
+    assert.match(checkpointMd, /V1\.1\.2.*MERGED_AWAITING_PUBLICATION/);
+    assert.match(checkpointMd, /GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT/);
+  } else {
+    assertWo012CurrentPatch(checkpoint);
+    assert.match(checkpointMd, /V1\.1\.2.*PATCH_IN_PROGRESS/);
+    assert.match(checkpointMd, /GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT/);
+  }
+}
+
+export function assertWo012ReleaseStateIfApplicable(checkpoint, checkpointMd) {
+  const status = checkpoint.v11.status;
+  if (status !== WO012_POST_MERGE_STATE && status !== WO012_ADMITTED_STATE) return false;
+  assertWo012ReleaseState(checkpoint, checkpointMd);
+  return true;
+}
+
 export function assertWo009ContextLockRefreshHandoff(checkpoint, checkpointMd) {
   assert.equal(checkpoint.v11.status, "GBS_V11_WO_009_ADMITTED");
   assert.equal(checkpoint.v11.activeWorkOrder, "GBS-V11-WO-009");
@@ -15,6 +98,7 @@ export function assertWo009BranchReconciliationNote(checkpointMd) {
 }
 
 export function assertLaterActiveWorkOrder(checkpoint, ordinal, ownerGovernancePromoted, minimumOrdinal, wo008Completed = false) {
+  if (isWo012PostMergeCheckpoint(checkpoint)) return assertWo012PostMergeReleaseGates(checkpoint);
   assert.ok(Number.isInteger(ordinal) && ordinal >= minimumOrdinal && ordinal <= 12, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (wo008Completed) {
     assert.equal(checkpoint.v11.activeWorkOrder, "NONE");
@@ -119,6 +203,7 @@ export function assertWo012CurrentPatch(checkpoint) {
   const candidateRelease = v11.candidateRelease;
   const publishedV111 = v11.patchHistory.find((release) => release.version === "1.1.1");
 
+  assertWo012CandidateReleaseIdentity(candidateRelease);
   assert.equal(v11.status, "GBS_V11_WO_012_ADMITTED");
   assert.equal(v11.activeWorkOrder, "GBS-V11-WO-012");
   assert.equal(v11.activeWorkOrderStatus, "IMPLEMENTATION_IN_PROGRESS");
@@ -134,18 +219,7 @@ export function assertWo012CurrentPatch(checkpoint) {
 
   assert.equal(v11.stableRelease.version, "1.1.0");
   assert.equal(v11.stableRelease.status, "PRODUCTION_ACCEPTED");
-  assert.equal(candidateRelease.version, "1.1.2");
   assert.equal(candidateRelease.status, "PATCH_IN_PROGRESS");
-  assert.equal(candidateRelease.workOrder, "GBS-V11-WO-012");
-  assert.equal(candidateRelease.issue, 361);
-  assert.equal(candidateRelease.baseMainSha, "5a32a607ccf2055fab722f3d5d452791c6aae3e6");
-  assert.equal(candidateRelease.branch, "hotfix/v1.1.2-release-state-preflight");
-  assert.equal(candidateRelease.contextLock, ".engineering/context-locks/GBS-V11-WO-012.json");
-  assert.equal(candidateRelease.pullRequest, 362);
-  assert.equal(candidateRelease.tag, null);
-  assert.equal(candidateRelease.npmPublished, false);
-  assert.equal(candidateRelease.registrySmoke, "NOT_RUN");
-  assert.equal(candidateRelease.rolloutStarted, false);
   assert.equal(candidateRelease.stopWhen, "GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT");
 
   assert.ok(publishedV111, "published 1.1.1 release history must remain recorded");
@@ -156,6 +230,59 @@ export function assertWo012CurrentPatch(checkpoint) {
   assert.equal(publishedV111.priorAdmissionRecord.issue, 357);
   assert.equal(publishedV111.priorAdmissionRecord.pullRequest, 358);
   assert.equal(publishedV111.priorAdmissionRecord.status, "PATCH_IN_PROGRESS");
+}
+
+export function assertWo012PostMergeReleaseGates(checkpoint, checkpointMd = "") {
+  const v11 = checkpoint.v11;
+  const candidateRelease = v11.candidateRelease;
+  const completed = v11.completedWorkOrders["GBS-V11-WO-012"];
+
+  assertWo012CandidateReleaseIdentity(candidateRelease);
+  assert.equal(v11.status, "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT");
+  assert.equal(v11.activeWorkOrder, "GBS-V11-WO-012");
+  assert.equal(v11.activeWorkOrderStatus, "OWNER_AUDIT_APPROVED_MERGED_AWAITING_RELEASE");
+  assert.equal(v11.implementationBranch, "hotfix/v1.1.2-release-state-preflight");
+  assert.equal(v11.contextLock, ".engineering/context-locks/GBS-V11-WO-012.json");
+  assert.equal(v11.executionBrief, ".engineering/work-orders/GBS-V11-WO-012.md");
+  assert.equal(v11.nextLegalAction, "CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER");
+  assert.equal(v11.nextWorkOrder, "GBS-V11-WO-012");
+  assert.equal(v11.nextCandidateWorkOrder, "NONE");
+  assert.equal(v11.stopState, "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT");
+
+  assert.equal(candidateRelease.status, "MERGED_AWAITING_PUBLICATION");
+  assert.equal(candidateRelease.stopWhen, "GBS_V11_1_1_2_PRODUCTION_ACCEPTED");
+  assert.equal(candidateRelease.auditedHead, "ca22282dd6f6891797430451968bc6bf244a28af");
+  assert.equal(candidateRelease.ownerAudit, "OWNER_APPROVED_NOT_INDEPENDENT");
+  assert.equal(candidateRelease.ownerReview, 5387212864);
+  assert.equal(candidateRelease.mergeSha, "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5");
+  assert.deepEqual(candidateRelease.readyStateChecks, {
+    count: 157,
+    conclusion: "SUCCESS",
+    head: "ca22282dd6f6891797430451968bc6bf244a28af",
+  });
+  assert.deepEqual(candidateRelease.postMergeMainChecks, {
+    head: "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+    repositoryValidation: "SUCCESS",
+    nodeCoverageLcov: "SUCCESS",
+    analyzeTypeScript: "SUCCESS",
+  });
+
+  assert.equal(completed.status, "OWNER_AUDIT_APPROVED_MERGED");
+  assert.equal(completed.implementationPr, 362);
+  assert.equal(completed.implementationBranch, "hotfix/v1.1.2-release-state-preflight");
+  assert.equal(completed.auditedHead, "ca22282dd6f6891797430451968bc6bf244a28af");
+  assert.equal(completed.objectiveAudit, "OWNER_APPROVED");
+  assert.equal(completed.auditIndependence, "NOT_INDEPENDENT");
+  assert.equal(completed.objectiveReview, 5387212864);
+  assert.equal(completed.implementationMerge, "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5");
+  assert.equal(completed.criticalFindings, 0);
+  assert.equal(completed.highFindings, 0);
+
+  if (checkpointMd !== "") {
+    assert.ok(checkpointMd.includes("Current V1.1 execution state: `GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT`"));
+    assert.ok(checkpointMd.includes("Current V1.1 next legal action: `CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER`"));
+    assert.ok(checkpointMd.includes("WO-012 post-merge state: owner audit and merge are complete."));
+  }
 }
 
 export function assertWo009MergedPromotionHandoff(checkpoint, checkpointMd) {

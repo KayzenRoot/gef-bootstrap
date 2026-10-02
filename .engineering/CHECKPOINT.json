@@ -196,7 +196,7 @@
   },
   "v11": {
     "releaseLine": "1.1.x",
-    "status": "GBS_V11_WO_012_ADMITTED",
+    "status": "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT",
     "foundation": {
       "workOrder": "GBS-V11-WO-001",
       "auditedHead": "989dacef39a4d4bcbd6c3e8ef73ae7d54df6e635",
@@ -435,10 +435,33 @@
         },
         "sonarImplementationPr": "SUCCESS",
         "sonarCumulativePr278": "FAILURE"
+      },
+      "GBS-V11-WO-012": {
+        "status": "OWNER_AUDIT_APPROVED_MERGED",
+        "implementationPr": 362,
+        "implementationBranch": "hotfix/v1.1.2-release-state-preflight",
+        "auditedHead": "ca22282dd6f6891797430451968bc6bf244a28af",
+        "objectiveAudit": "OWNER_APPROVED",
+        "auditIndependence": "NOT_INDEPENDENT",
+        "objectiveReview": 5387212864,
+        "implementationMerge": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+        "criticalFindings": 0,
+        "highFindings": 0,
+        "readyStateChecks": {
+          "count": 157,
+          "conclusion": "SUCCESS",
+          "head": "ca22282dd6f6891797430451968bc6bf244a28af"
+        },
+        "postMergeMainChecks": {
+          "head": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+          "repositoryValidation": "SUCCESS",
+          "nodeCoverageLcov": "SUCCESS",
+          "analyzeTypeScript": "SUCCESS"
+        }
       }
     },
     "activeWorkOrder": "GBS-V11-WO-012",
-    "activeWorkOrderStatus": "IMPLEMENTATION_IN_PROGRESS",
+    "activeWorkOrderStatus": "OWNER_AUDIT_APPROVED_MERGED_AWAITING_RELEASE",
     "maintenanceForwardPort": {
       "workOrder": "GBS-V11-MAINT-PIPELINE-001",
       "status": "COMPLETED",
@@ -461,8 +484,8 @@
     "implementationBranch": "hotfix/v1.1.2-release-state-preflight",
     "contextLock": ".engineering/context-locks/GBS-V11-WO-012.json",
     "executionBrief": ".engineering/work-orders/GBS-V11-WO-012.md",
-    "nextLegalAction": "CONTINUE_GBS_V11_WO_012_IMPLEMENTATION_ON_LOCKED_BASE",
-    "stopState": "GBS_V11_WO_012_IMPLEMENTATION_IN_PROGRESS",
+    "nextLegalAction": "CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER",
+    "stopState": "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT",
     "codexOnlyAdoption": {
       "workOrder": "GBS-V11-GOV-CODEX-PROMOTION-004",
       "issue": 345,
@@ -924,7 +947,7 @@
     },
     "candidateRelease": {
       "version": "1.1.2",
-      "status": "PATCH_IN_PROGRESS",
+      "status": "MERGED_AWAITING_PUBLICATION",
       "workOrder": "GBS-V11-WO-012",
       "issue": 361,
       "baseMainSha": "5a32a607ccf2055fab722f3d5d452791c6aae3e6",
@@ -935,7 +958,22 @@
       "npmPublished": false,
       "registrySmoke": "NOT_RUN",
       "rolloutStarted": false,
-      "stopWhen": "GBS_V11_WO_012_EXACT_HEAD_READY_FOR_OWNER_AUDIT"
+      "stopWhen": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
+      "auditedHead": "ca22282dd6f6891797430451968bc6bf244a28af",
+      "ownerAudit": "OWNER_APPROVED_NOT_INDEPENDENT",
+      "ownerReview": 5387212864,
+      "mergeSha": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+      "readyStateChecks": {
+        "count": 157,
+        "conclusion": "SUCCESS",
+        "head": "ca22282dd6f6891797430451968bc6bf244a28af"
+      },
+      "postMergeMainChecks": {
+        "head": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+        "repositoryValidation": "SUCCESS",
+        "nodeCoverageLcov": "SUCCESS",
+        "analyzeTypeScript": "SUCCESS"
+      }
     },
     "patchHistory": [
       {
@@ -987,6 +1025,15 @@
           "rolloutStarted": false
         }
       }
-    ]
+    ],
+    "postMergeCheckpointPromotion": {
+      "state": "CANDIDATE",
+      "sourceMainSha": "4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5",
+      "branch": "docs/v1.1.2-post-merge-checkpoint",
+      "workOrder": "GBS-V11-WO-012",
+      "correctionDelta": 2,
+      "tagPublicationAuthorized": false,
+      "targetStopCondition": "GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT"
+    }
   }
 }
