@@ -6,7 +6,7 @@ npm ci
 npm run validate
 ```
 
-V1.1.0 remains the production-accepted stable base. V1.1.1 was published, but its post-publish artifact verification failed; V1.1.2 is the current unreleased patch candidate. Use [Installation](INSTALLATION.md) for exact package availability and [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md) for governed project-state operations.
+V1.1.2 is the current production-accepted stable package. Install the exact release with `npm install --global @gef-bootstrap/cli@1.1.2`. V1.1.0 remains the earlier accepted release, and V1.1.1's artifact-download verification incident remains in the historical record. Use [Installation](INSTALLATION.md) for release details and [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md) for governed project-state operations.
 
 ## 2. Read canonical operating state
 Read `AGENTS.md`, `planning/MASTER-MODULE-INDEX.md` and `.engineering/CHECKPOINT.md` before changing governed state.

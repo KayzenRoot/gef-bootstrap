@@ -270,3 +270,121 @@ This delta authorizes checkpoint promotion only. It does **not** authorize tag c
 
 **STOP CONDITION:** `GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT`.
 
+## CORRECTION DELTA #3 — V1.1.2 PRODUCTION CLOSEOUT
+
+**Reason:** the immutable `v1.1.2` tag now targets the promoted `main` state, Trusted Publisher successfully published `@gef-bootstrap/cli@1.1.2`, and public registry verification succeeded on rerun after the npm registry's initial propagation delay. Canonical state and operator documentation are now stale relative to proven release facts.
+
+**Closeout source state:** `main@af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`.
+
+### Immutable release facts
+
+- tag: `v1.1.2`
+- annotated tag object: `d8241d55231fa1a608546e37f4b178c7695d1fdd`
+- tag target: `af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`
+- publication workflow/run: `V1.1 trusted npm publication` / `36957290788`
+- publish job: `110683489629` — SUCCESS
+- npm package: `@gef-bootstrap/cli@1.1.2`
+- release artifact id: `11206700200`
+- tarball SHA-256: `331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97`
+- SRI: `sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==`
+- Sigstore transparency log index: `3046460318`
+
+Attempt 1 of the post-publish job observed npm `E404 No match found for version 1.1.2` immediately after the successful publish while npm reported that the package was still being processed. No second publish occurred. A failed-jobs-only rerun produced workflow attempt 2 SUCCESS.
+
+- public verification job: `110688730992` — SUCCESS
+- registry version lookup: PASS
+- exact SRI equality: PASS
+- npm registry ECDSA signature: VERIFIED
+- verified npm signing key: `SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U`
+- SLSA provenance metadata: VERIFIED
+- clean consumer install with lifecycle scripts disabled: PASS
+- CLI version smoke: PASS, `1.1.2`
+
+These facts satisfy the WO-012 technical stop condition for immutable publication plus registry verification.
+
+### GitHub Release closeout
+
+A GitHub Release for `v1.1.2` is not present at this delta's admission. Codex is authorized to create exactly one non-draft, non-prerelease GitHub Release bound to the existing immutable `v1.1.2` tag. It MUST NOT move/recreate the tag and MUST NOT run `npm publish`.
+
+Release title: `GEF Bootstrap v1.1.2`.
+
+Release notes must state:
+- package `@gef-bootstrap/cli@1.1.2` published through npm Trusted Publishing;
+- immutable target `af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`;
+- post-publish registry integrity/signature/SLSA verification succeeded;
+- consumer-safe adoption preflight and v1.1.1 post-publish recovery corrections are included;
+- HIVE dependency blocker and Neryn World UADS prerequisite remain consumer-owned and are not claimed fixed.
+
+### Authorized ChatGPT governance writes
+
+- `.engineering/CHECKPOINT.md`
+- `.engineering/CHECKPOINT.json`
+- `.engineering/work-orders/GBS-V11-WO-012.md`
+- `.engineering/context-locks/GBS-V11-WO-012.json`
+- `.engineering/evidence/GBS-V11-WO-012-EVIDENCE.md`
+- `.engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json`
+- `.engineering/checkpoint-deltas/GBS-V11-WO-012-PRODUCTION-CLOSEOUT.md`
+
+Governance may record only the proven immutable release facts above. The GitHub Release ID/URL/published timestamp may be added only after the provider confirms the Release exists.
+
+### Authorized Codex synchronization
+
+Operator docs:
+- `docs/INSTALLATION.md`
+- `docs/QUICKSTART.md`
+- `docs/V1.1-OPERATIONS-RUNBOOK.md`
+
+Executable checkpoint tests:
+- `tests/helpers/v11-context-lock-refresh-assertions.mjs`
+- `tests/v11-wo-001-promotion.test.mjs`
+- `tests/v11-wo-002-admission.test.mjs`
+- `tests/v11-wo-003-admission.test.mjs`
+- `tests/v11-wo-004-admission.test.mjs`
+- `tests/v11-wo-008-admission.test.mjs`
+- `tests/v11-wo-009-admission.test.mjs`
+- `tests/v11-wo-012-release-state.test.mjs`
+
+Semantic limits:
+- preserve all historical V1.1 release states and assertions;
+- add only the exact `GBS_V11_1_1_2_PRODUCTION_ACCEPTED` closeout branch and published 1.1.2 facts;
+- V1.1.0 and V1.1.1 historical evidence must remain intact;
+- no skipped tests, threshold changes, assertion deletion, broad regex weakening or unrelated cleanup;
+- docs must stop advertising 1.1.0 as the current install target and must show `@gef-bootstrap/cli@1.1.2` as the production-accepted package;
+- no product/runtime source, CI workflow, dependency, package identity or release-tag mutation;
+- no npm republish;
+- any additional path requires a new exact-path authorization.
+
+### Target canonical state
+
+After exact-head validation, owner audit, merge and confirmed GitHub Release:
+- `v11.status = GBS_V11_1_1_2_PRODUCTION_ACCEPTED`;
+- `activeWorkOrder = NONE`;
+- `activeWorkOrderStatus = NONE`;
+- `nextLegalAction = V1_1_2_PRODUCTION_MAINTENANCE_OR_NEXT_GOVERNED_WORK_ORDER`;
+- `stopState = GBS_V11_1_1_2_PRODUCTION_ACCEPTED`;
+- `stableRelease.version = 1.1.2`;
+- `stableRelease.status = PRODUCTION_ACCEPTED`;
+- stable release records immutable tag object/target, GitHub Release, npm package, SRI, tarball SHA-256, publication run and successful registry verification;
+- prior `1.1.0` production acceptance remains preserved as historical release evidence;
+- `1.1.1` remains preserved as `PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED` historical patch evidence;
+- candidate release becomes closed/accepted and rollout remains `NOT_STARTED` until a separately governed consumer rollout.
+
+### Required proof
+
+Codex must:
+1. create the GitHub Release only if it is still absent;
+2. synchronize only the authorized docs/tests;
+3. run focused closeout tests;
+4. run `npm run build`;
+5. run `npm run typecheck`;
+6. run `npm run validate`;
+7. run `npm audit --audit-level=high`;
+8. run `git diff --check`;
+9. commit/push only to `docs/v1.1.2-production-closeout`;
+10. update the closeout PR with exact GitHub Release metadata and Evidence Bundle;
+11. stop for owner audit.
+
+No consumer rollout is authorized by this delta.
+
+**STOP CONDITION:** `GBS_V11_1_1_2_PRODUCTION_CLOSEOUT_READY_FOR_OWNER_AUDIT`.
+

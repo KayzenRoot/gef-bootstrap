@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertWo011CurrentPatch, assertWo012CurrentPatch, assertWo012PostMergeReleaseGates, laterV11WorkOrderOrdinal } from './helpers/v11-context-lock-refresh-assertions.mjs';
+import { assertWo011CurrentPatch, assertWo012CurrentPatch, assertWo012PostMergeReleaseGates, assertWo012ProductionAcceptedRelease, isWo012ProductionAcceptedCheckpoint, laterV11WorkOrderOrdinal } from './helpers/v11-context-lock-refresh-assertions.mjs';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -44,6 +44,7 @@ test('WO-004 promotion is preserved after every later V1.1 admission', () => {
   const wo012Current = checkpoint.v11.status === 'GBS_V11_WO_012_ADMITTED';
   const wo011Current = checkpoint.v11.status === 'GBS_V11_WO_011_ADMITTED';
   const wo012PostMerge = checkpoint.v11.status === 'GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT';
+  const wo012ProductionAccepted = isWo012ProductionAcceptedCheckpoint(checkpoint);
   const ordinal = laterV11WorkOrderOrdinal(checkpoint);
   assert.ok(ordinal === null || ordinal <= 12, `unexpected future V1.1 ordinal ${ordinal}`);
   assert.ok(Number.isInteger(ordinal) && ordinal >= 5, `unexpected V1.1 state: ${checkpoint.v11.status}`);
@@ -67,6 +68,8 @@ test('WO-004 promotion is preserved after every later V1.1 admission', () => {
     assertWo012CurrentPatch(checkpoint);
   } else if (wo012PostMerge) {
     assertWo012PostMergeReleaseGates(checkpoint, checkpointMd);
+  } else if (wo012ProductionAccepted) {
+    assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd);
   } else {
     assert.equal(checkpoint.v11.activeWorkOrder, `GBS-V11-WO-${String(ordinal).padStart(3, '0')}`);
   }

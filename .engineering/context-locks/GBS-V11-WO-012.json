@@ -92,7 +92,8 @@
     "tests/v11-wo-010-publish-workflow.test.mjs",
     ".engineering/checkpoint-deltas/GBS-V11-WO-012-POST-MERGE.md",
     "tests/helpers/v11-context-lock-refresh-assertions.mjs",
-    "tests/v11-wo-012-release-state.test.mjs"
+    "tests/v11-wo-012-release-state.test.mjs",
+    ".engineering/checkpoint-deltas/GBS-V11-WO-012-PRODUCTION-CLOSEOUT.md"
   ],
   "writeForbidden": [
     "all consumer repositories and consumer .gef/.gef-private state",
@@ -199,6 +200,75 @@
         "any additional path requires a new exact-path authorization"
       ],
       "stopCondition": "GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT"
+    },
+    {
+      "id": "WO012-CORRECTION-DELTA-3",
+      "dateUtc": "2026-10-02",
+      "phase": "V1_1_2_PRODUCTION_CLOSEOUT",
+      "startingMainSha": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+      "reason": "Immutable v1.1.2 publication and public registry verification succeeded; canonical state and operator docs require governed production closeout.",
+      "authority": "owner continuation in ChatGPT plus GBS-V11-WO-012 Correction Delta #3",
+      "immutableRelease": {
+        "tag": "v1.1.2",
+        "tagObject": "d8241d55231fa1a608546e37f4b178c7695d1fdd",
+        "tagTarget": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+        "package": "@gef-bootstrap/cli@1.1.2",
+        "publicationRun": 36957290788,
+        "publishJob": 110683489629,
+        "verificationJob": 110688730992,
+        "tarballSha256": "331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97",
+        "sri": "sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==",
+        "sigstoreLogIndex": 3046460318,
+        "registrySignatureKey": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+      },
+      "allowedPaths": [
+        ".engineering/CHECKPOINT.md",
+        ".engineering/CHECKPOINT.json",
+        ".engineering/work-orders/GBS-V11-WO-012.md",
+        ".engineering/context-locks/GBS-V11-WO-012.json",
+        ".engineering/evidence/GBS-V11-WO-012-EVIDENCE.md",
+        ".engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json",
+        ".engineering/checkpoint-deltas/GBS-V11-WO-012-PRODUCTION-CLOSEOUT.md",
+        "docs/INSTALLATION.md",
+        "docs/QUICKSTART.md",
+        "docs/V1.1-OPERATIONS-RUNBOOK.md",
+        "tests/helpers/v11-context-lock-refresh-assertions.mjs",
+        "tests/v11-wo-001-promotion.test.mjs",
+        "tests/v11-wo-002-admission.test.mjs",
+        "tests/v11-wo-003-admission.test.mjs",
+        "tests/v11-wo-004-admission.test.mjs",
+        "tests/v11-wo-008-admission.test.mjs",
+        "tests/v11-wo-009-admission.test.mjs",
+        "tests/v11-wo-012-release-state.test.mjs"
+      ],
+      "sourceFingerprintsAtStartingHead": {
+        ".engineering/CHECKPOINT.md": "db6132f0438f059a5ceafe3bf820534e4b900c5b",
+        ".engineering/CHECKPOINT.json": "dd07b255728978f72239645c24fc164768b45497",
+        ".engineering/work-orders/GBS-V11-WO-012.md": "b5b0dbbdad59eb97532e6acbfd03660f49f02f32",
+        ".engineering/context-locks/GBS-V11-WO-012.json": "144acb35f14b77af28c941185cbf03e5db961fd6",
+        ".engineering/evidence/GBS-V11-WO-012-EVIDENCE.md": "fda8acb94b7a3cb3dd03faa9c9c38acc6b674c64",
+        ".engineering/evidence/GBS-V11-WO-012-RELEASE-MANIFEST.json": "50b9c1eebfd644b09319d6d73f52c3f641e0ab92",
+        "docs/INSTALLATION.md": "88a8210be21c4b67552a722430b7c2bb7d327022",
+        "docs/QUICKSTART.md": "90cfd2c6c775c4fa51b121b94476eef2ca430328",
+        "docs/V1.1-OPERATIONS-RUNBOOK.md": "96d3e218682f8964fd52692eeceb190af651e798",
+        "tests/helpers/v11-context-lock-refresh-assertions.mjs": "123af336076e85b8ef52ba98f2e24fcbe7efa1fc",
+        "tests/v11-wo-001-promotion.test.mjs": "c7a67299589ba0be632299b207660f6d234f5aa0",
+        "tests/v11-wo-002-admission.test.mjs": "4e25ad6cd42379a600463d29a134fe61b469a6e6",
+        "tests/v11-wo-003-admission.test.mjs": "f97dac6089bc261af78f4bd085949c21a6a1a535",
+        "tests/v11-wo-004-admission.test.mjs": "aad1d0e3d1278bdda74ce75ec8be7caeda6e2289",
+        "tests/v11-wo-008-admission.test.mjs": "69317be274a08040a0c2087e704d910fe0f1c48b",
+        "tests/v11-wo-009-admission.test.mjs": "7c68e13a8a159f603d6ee4128a5d663763f231bd",
+        "tests/v11-wo-012-release-state.test.mjs": "8196d57c0c018d8f8f7f4cf84cb5d6487ab397c4"
+      },
+      "semanticLimits": [
+        "create at most one non-draft non-prerelease GitHub Release for existing immutable tag v1.1.2; never move or recreate the tag",
+        "never run npm publish again",
+        "operator docs may only replace stale candidate/stable-install language with proven v1.1.2 production facts",
+        "tests may only add exact GBS_V11_1_1_2_PRODUCTION_ACCEPTED recognition while preserving all historical release states/assertions",
+        "no product/runtime source, CI workflow, dependency, package identity, threshold, or unrelated cleanup",
+        "any additional path requires exact-path owner authorization"
+      ],
+      "stopCondition": "GBS_V11_1_1_2_PRODUCTION_CLOSEOUT_READY_FOR_OWNER_AUDIT"
     }
   ],
   "ownerAuthorizedScopeAmendments": [
@@ -251,5 +321,16 @@
     "targetState": "GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT",
     "tagPublicationAuthorized": false,
     "stopCondition": "GBS_V11_WO_012_POST_MERGE_CHECKPOINT_READY_FOR_OWNER_AUDIT"
+  },
+  "productionCloseout": {
+    "state": "ADMITTED",
+    "branch": "docs/v1.1.2-production-closeout",
+    "baseMainSha": "af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82",
+    "targetState": "GBS_V11_1_1_2_PRODUCTION_ACCEPTED",
+    "githubReleaseRequiredBeforeCheckpointPromotion": true,
+    "npmRepublishAuthorized": false,
+    "tagMutationAuthorized": false,
+    "consumerRolloutAuthorized": false,
+    "stopCondition": "GBS_V11_1_1_2_PRODUCTION_CLOSEOUT_READY_FOR_OWNER_AUDIT"
   }
 }

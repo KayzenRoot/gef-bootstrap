@@ -2,15 +2,17 @@
 
 Status: `GBS_V1_PRODUCTION_ACCEPTED`
 
-## Current V1.1 release position — 2026-10-01
-- Stable release: `V1.1.0 PRODUCTION_ACCEPTED`. GitHub Release [GEF Bootstrap v1.1.0](https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.0) is stable, non-draft, and non-prerelease. Immutable tag `v1.1.0` targets `fb2a2e6d41086e82ba03f307dc6ada18a52458ea`; registry package `@gef-bootstrap/cli@1.1.0` has SRI `sha512-Cb4ZGrpIq+WsU9fKkAqCobBFSNvIqb8X4xuphFXi2PZFh2TUxWAGcnpzjeGmwcLatNoYvBvGUIrJOfHOCPh4kg==`.
-- Production acceptance was recorded by the owner in [Issue #351 closeout](https://github.com/KayzenRoot/gef-bootstrap/issues/351#issuecomment-5932018102); the recovery run [36862229818](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36862229818) succeeded. Trusted Publisher remains owner-reported and was not independently verified.
-- Historical patch: `V1.1.1 PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED`; immutable tag `v1.1.1` targets `1dc030f1358eab0347043a3d54c7fc311c7c2123`, GitHub Release [GEF Bootstrap v1.1.1](https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.1), and registry package `@gef-bootstrap/cli@1.1.1` reports SRI `sha512-YuLrx35lCo4aSBV6DI/EmaKPhkZJxjyUyDTQEhjvM8SdktV5x2rWJjeIY0T69A/PlILqOsL5E2zrz3BLRMPGVg==`. Publication run [36904947907](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/36904947907) published successfully; post-publish verification failed only while downloading that run’s artifact. The tag and published package remain unchanged.
-- Active patch: `V1.1.2 MERGED_AWAITING_PUBLICATION`, Work Order `GBS-V11-WO-012`, [Issue #361](https://github.com/KayzenRoot/gef-bootstrap/issues/361), [PR #362](https://github.com/KayzenRoot/gef-bootstrap/pull/362) merged from audited head `ca22282dd6f6891797430451968bc6bf244a28af` into `main` as `4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5`. Owner review `#5387212864` is `OWNER_APPROVED / NOT_INDEPENDENT`; the ready-state exact head completed `157/157` check-runs SUCCESS before merge. No `v1.1.2` tag, npm publication, GitHub Release, registry smoke or consumer rollout is recorded.
-- Current V1.1 execution state: `GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT`; active Work Order `GBS-V11-WO-012`; product implementation is merged and the patch is awaiting immutable release. Current V1.1 next legal action: `CREATE_IMMUTABLE_V1_1_2_TAG_AT_CURRENT_MAIN_AND_OBSERVE_TRUSTED_PUBLISHER`.
-- WO-012 post-merge state: owner audit and merge are complete. Repository Validation, Node coverage LCOV and Analyze TypeScript passed on merge commit `4c0f9bdab51e3c831263f7d45d6b5a8ee533dfd5`. Tag creation, npm publication, GitHub Release, registry verification and rollout remain separate release gates; final stop remains `GBS_V11_1_1_2_PRODUCTION_ACCEPTED` only after immutable publication and registry verification.
-- Gate 2/Gate 3 and WO-010 stop markers below are retained historical records. Their pre-release states are superseded by the final owner closeout above; they are not the current legal-action state.
-- V1.0 remains `1088/1088` on `main`; this V1.1 package release does not rewrite the V1.0 module ledger or claim a V1.1 merge-to-main promotion.
+## Current V1.1 release position — 2026-10-02
+- Current stable release: `V1.1.2 PRODUCTION_ACCEPTED`. Immutable annotated tag `v1.1.2` has tag object `d8241d55231fa1a608546e37f4b178c7695d1fdd` and targets `af1fe9371a3883cbd8a4aafcbb405ddcd4c2ca82`.
+- GitHub Release [GEF Bootstrap v1.1.2](https://github.com/KayzenRoot/gef-bootstrap/releases/tag/v1.1.2) is published, non-draft and non-prerelease (Release `#401675074`, published `2026-10-02T09:10:56Z`).
+- Registry package `@gef-bootstrap/cli@1.1.2` was published through npm Trusted Publishing. Publication run `36957290788` / publish job `110683489629` succeeded. Exact tarball SHA-256 is `331a5d035188ef1dc1c92e5c4e5317edcdbf45956dc07703231bbc64dbb7ab97`; SRI is `sha512-zLu0oaBWqwIPviZgN0PTk1/5QlsHK8r7aCNOkMop0MnlzqFZ1um3zfkRO2l8hx005nd/2xZ/Ll/lDzYUbH01uw==`.
+- The first post-publish lookup hit npm propagation delay after publish success. Failed-jobs-only retry succeeded: verification job `110688730992` confirmed registry version/integrity, npm ECDSA signature and SLSA provenance, clean install with lifecycle scripts disabled, and CLI `1.1.2` smoke. No republish occurred.
+- Historical release: `V1.1.0 PRODUCTION_ACCEPTED` remains preserved as earlier acceptance evidence.
+- Historical patch: `V1.1.1 PUBLISHED_POST_PUBLISH_VERIFICATION_FAILED`; immutable `v1.1.1` artifacts remain unchanged and its post-publish artifact-download incident remains historical evidence.
+- WO-012 terminal state: `GBS_V11_1_1_2_PRODUCTION_ACCEPTED`. Active Work Order: `NONE`. Next legal action: `V1_1_2_PRODUCTION_MAINTENANCE_OR_NEXT_GOVERNED_WORK_ORDER`.
+- Consumer rollout is `NOT_STARTED` by this closeout. HIVE's dependency blocker and Neryn World's UADS prerequisite remain consumer-owned and are not claimed fixed.
+- Gate 2/Gate 3 and WO-010 stop markers below are retained historical records only.
+- V1.0 remains `1088/1088` on `main`; the V1.1 release line does not rewrite the V1.0 module ledger.
 
 - Project: GEF Bootstrap
 - Phase: `V1_PRODUCTION_ACCEPTED`

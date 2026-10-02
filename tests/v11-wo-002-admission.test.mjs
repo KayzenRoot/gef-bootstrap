@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { assertWo011CurrentPatch, assertWo012CurrentPatch, assertWo012PostMergeReleaseGates, laterV11WorkOrderOrdinal } from './helpers/v11-context-lock-refresh-assertions.mjs';
+import { assertWo011CurrentPatch, assertWo012CurrentPatch, assertWo012PostMergeReleaseGates, assertWo012ProductionAcceptedRelease, isWo012ProductionAcceptedCheckpoint, laterV11WorkOrderOrdinal } from './helpers/v11-context-lock-refresh-assertions.mjs';
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,6 +30,7 @@ test('V1.1 checkpoint progression preserves WO-002 through the current patch adm
   const wo011Current = checkpoint.v11.status === 'GBS_V11_WO_011_ADMITTED';
   const wo012Current = checkpoint.v11.status === 'GBS_V11_WO_012_ADMITTED';
   const wo012PostMerge = checkpoint.v11.status === 'GBS_V11_WO_012_OWNER_AUDIT_APPROVED_MERGED_RELEASE_GATES_NEXT';
+  const wo012ProductionAccepted = isWo012ProductionAcceptedCheckpoint(checkpoint);
   const ordinal = laterV11WorkOrderOrdinal(checkpoint);
   assert.ok(Number.isInteger(ordinal) && ordinal >= 2 && ordinal <= 12, `unexpected V1.1 state: ${checkpoint.v11.status}`);
   if (ordinal === 2) {
@@ -46,6 +47,7 @@ test('V1.1 checkpoint progression preserves WO-002 through the current patch adm
     if (wo011Current) assertWo011CurrentPatch(checkpoint);
     if (wo012Current) assertWo012CurrentPatch(checkpoint);
     if (wo012PostMerge) assertWo012PostMergeReleaseGates(checkpoint, checkpointMd);
+    if (wo012ProductionAccepted) assertWo012ProductionAcceptedRelease(checkpoint, checkpointMd);
   }
 });
 
