@@ -117,7 +117,7 @@ These hosted results belong only to `a4ed44f493da1a492ecdc01aca1a16aca5932a56`. 
 - U12-03 and U12-05..U12-10 remain unimplemented and receive no credit. Conditional profiles C03/C12/D01–D12 remain out of scope.
 - Canonical V1.2 implementation denominator remains `2/10`; no implementation credit is claimed at this pre-audit stage.
 - `CHECKPOINT.md` and `CHECKPOINT.json` are unchanged. No merge, release, tag or npm publication occurred.
-- No unresolved review finding or open CodeRabbit thread remains on substantive head `a4ed44f`; no valid unresolved CRITICAL/HIGH finding was observed in the reported exact-head gates. Lock owner review #5398225036 recorded CRITICAL 0/HIGH 0; final implementation exact-head owner audit remains outstanding.
+- Review #5399949535 findings F-01 (HIGH) and F-02 (MEDIUM) are implemented on substantive head `a4ed44f` and await owner re-audit. Both existing inline CodeRabbit threads are resolved; open inline thread count is 0. Lock owner review #5398225036 recorded CRITICAL 0/HIGH 0; final implementation exact-head owner audit remains outstanding.
 - The proposed delta is `.engineering/checkpoint-deltas/GBS-V12-WO-002-PROPOSED.md` and is not canonical promotion.
 
 **Next action:** complete all applicable checks on the final evidence-only PR head, then stop for the owner exact-head audit. Preserve `GBS_V12_WO_002_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`.

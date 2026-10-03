@@ -89,7 +89,7 @@
         "correctionDelta": 5967669367,
         "finding": "Replay receipt verification requires actual POSITIVE and NEGATIVE controls; maxHistory selection is permutation-invariant and processing is capped.",
         "correctionCommit": "a4ed44f493da1a492ecdc01aca1a16aca5932a56",
-        "status": "ADDRESSED"
+        "status": "IMPLEMENTED_PENDING_OWNER_REAUDIT"
       }
     ],
     "u12_04": "IMPLEMENTED_CANDIDATE_PENDING_FINAL_EXACT_HEAD_OWNER_AUDIT_AND_GOVERNED_PROMOTION",
@@ -101,7 +101,8 @@
       "72fa31529261cdf87cf5bc17a21f033db59d0f0a",
       "ba7e21f7bf2903e29d746c6416b8c76a92269a53",
       "a4ed44f493da1a492ecdc01aca1a16aca5932a56"
-    ]
+    ],
+    "ownerReauditState": "PENDING_ON_FINAL_EVIDENCE_ONLY_PR_HEAD"
   },
   "acceptanceEvidence": [
     {
