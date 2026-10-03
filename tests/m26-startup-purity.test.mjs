@@ -8,8 +8,9 @@ test('heds-delta-review import is startup-pure',async()=>{
  try{
   const mod=await import('../packages/heds-delta-review/dist/public.js');
   assert.equal(Array.isArray(mod.M26_MECHANISMS),true);
-  assert.equal(mod.M26_MECHANISMS.length,40);
-  assert.equal(new Set(mod.M26_MECHANISMS).size,40);
+  assert.equal(mod.M26_MECHANISMS.length,43);
+  assert.deepEqual(mod.M26_MECHANISMS.slice(40),['BPI26','BPE26','BPR26']);
+  assert.equal(new Set(mod.M26_MECHANISMS).size,43);
   assert.equal(touched,false);
  }finally{Date.now=originalNow;globalThis.fetch=originalFetch;}
 });

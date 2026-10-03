@@ -6,3 +6,5 @@ export*from'./s03-review.js';
 export*from'./s04-gates.js';
 export*from'./s05-finding.js';
 export*from'./s05-verdict.js';
+export*from'./bug-proof-types.js';
+export*from'./s06-bug-proof.js';
