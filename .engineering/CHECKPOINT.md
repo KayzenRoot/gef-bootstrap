@@ -343,3 +343,25 @@ The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED`
 **Pre-merge stop:** `GBS_V12_GOV_003_WO001_PROMOTION_READY_FOR_OWNER_AUDIT`.
 
 **Post-merge terminal state:** `GBS_V12_WO_001_PROMOTED`.
+
+## V1.2 WO-002 admission effectivity sync — GBS-V12-GOV-004
+
+**State:** `WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`. Effective only after this governance sync is owner-audited on its exact head and governed-merged to `main`. This increment earns no new implementation credit.
+
+- Governance issue: `#382`.
+- Admission Work Order: `GBS-V12-WO-002`; issue `#380`.
+- Admission PR: `#381`, exact audited head `a5dc8faec18d68742928a350e377f1a7bd5bb460`.
+- Admission owner audit: review `#5398163456`, `APPROVED / NOT_INDEPENDENT`.
+- Admission squash merge: `fb58ca309271bbea11b5f7a60e44168dd10c58e8`.
+- Universal V1.2 implementation credit remains `2 / 10 = 20%`; remaining `8 / 10 = 80%`.
+- `U12-04` remains `NOT_IMPLEMENTED`; admission grants no runtime/product credit.
+- Active admitted V1.2 implementation Work Order becomes `GBS-V12-WO-002`, but WO-002 implementation remains `NOT_STARTED / NOT_AUTHORIZED`.
+- `U12-03` and `U12-05..U12-10` remain `NOT_IMPLEMENTED`.
+- V1, V1.1.2, WO-001 promotion facts, V1.2 Source Pack, profile boundaries, US$ 0 paid-tool/expanded-CI budget and HIGH_ASSURANCE specialist-review gate remain unchanged.
+- No runtime/product source, tests, CI/workflows, dependencies, package identity, profile implementation, tag, release or deployment is changed by this sync.
+- The next legal action is to compile a **fresh WO-002 implementation Context Lock** against the exact post-sync `main` head. The admission-time Context Lock is not implementation authority.
+
+**Pre-merge stop:** `GBS_V12_GOV_004_WO002_EFFECTIVITY_SYNC_READY_FOR_OWNER_AUDIT`.
+
+**Post-merge next state:** `GBS_V12_WO_002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`.
+
