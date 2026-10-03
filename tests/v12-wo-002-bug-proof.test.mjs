@@ -228,6 +228,39 @@ test('false-positive adjudication requires explicit rationale and accepted evide
   assert.equal(falsePositive.falsePositiveRationale, 'Current controls and accepted reproduction evidence refute the prior finding.');
   assert.deepEqual(falsePositive.falsePositiveEvidenceIds, ['evidence:positive:current']);
   assert.notEqual(falsePositive.finding.findingDigest, priorReceipt.finding.findingDigest);
+  const refutedInput = {
+    ...f.input,
+    probes: f.input.probes.map(p => p.role === 'POSITIVE' ? { ...p, observedOutcome: 'DEFECT_ABSENT' } : p),
+  };
+  const otherProof = fixture({ evidenceRun: 'other-proof' });
+  const otherProofReceipt = unwrap(evaluateBugProof({
+    ...otherProof.input,
+    bugProofId: 'bug-proof:other',
+    findingId: 'finding:other',
+  }, proofOptions, m26Options));
+  const crossProofLineage = evaluateBugProof({
+    ...refutedInput,
+    findingId: 'finding:cross-proof-lineage',
+    falsePositive: {
+      priorFinding: otherProofReceipt.finding,
+      priorReceipt: otherProofReceipt,
+      rationale: 'Current evidence must not resolve a different bug proof.',
+      evidenceIds: ['evidence:positive:current'],
+    },
+  }, proofOptions, m26Options);
+  assert.equal(crossProofLineage.ok, false);
+  const forgedPriorFinding = { ...priorReceipt.finding, afterSemanticDigest: H('forged-predecessor') };
+  const mismatchedPriorFinding = evaluateBugProof({
+    ...refutedInput,
+    findingId: 'finding:mismatched-prior',
+    falsePositive: {
+      priorFinding: forgedPriorFinding,
+      priorReceipt,
+      rationale: 'The predecessor fields must match the verified prior receipt.',
+      evidenceIds: ['evidence:positive:current'],
+    },
+  }, proofOptions, m26Options);
+  assert.equal(mismatchedPriorFinding.ok, false);
   const shortRationale = evaluateBugProof({
     ...f.input,
     findingId: 'finding:short-rationale',

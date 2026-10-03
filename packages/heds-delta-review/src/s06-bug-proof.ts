@@ -551,11 +551,16 @@ function validateFalsePositiveAdjudication(input: BugProofEvaluationInput, facts
   const positiveEvidence = new Set(probes.filter(probe => probe.role === 'POSITIVE').map(probe => probe.evidenceId));
   const { currentEvidence, chainProven, selectionClear, invalidationComplete, controlsMatch, positiveRefuted } = conditions;
   const rationaleValid = falsePositive.rationale.trim().length >= 8 && falsePositive.rationale.trim().length <= 2048;
+  const predecessorIdentityMatches = falsePositive.priorReceipt.bugProofId === input.bugProofId
+    && falsePositive.priorReceipt.requirementClaimId === input.requirementClaimId
+    && falsePositive.priorReceipt.invariantClaimId === input.invariantClaimId
+    && falsePositive.priorReceipt.hypothesisClaimId === input.hypothesisClaimId;
+  const predecessorFindingMatches = stableStringify(falsePositive.priorFinding) === stableStringify(falsePositive.priorReceipt.finding);
   const predecessorValid = validId(falsePositive.priorFinding.findingId)
     && falsePositive.priorFinding.subjectId === input.subjectId
     && ['OPEN', 'INDETERMINATE'].includes(falsePositive.priorFinding.state)
     && falsePositive.priorFinding.findingId !== input.findingId
-    && falsePositive.priorFinding.findingDigest === falsePositive.priorReceipt.finding.findingDigest
+    && predecessorIdentityMatches && predecessorFindingMatches
     && falsePositive.priorReceipt.disposition === 'REPRODUCED_DEFECT'
     && falsePositive.priorReceipt.finding.subjectId === input.subjectId
     && falsePositive.priorReceipt.projectId === facts.manifest.projectId
@@ -613,7 +618,7 @@ function assessBugProofDisposition(input: BugProofEvaluationInput, facts: BugPro
     reasons.push(positives.some(probe => probe.observedOutcome === 'NOT_RUN') ? 'POSITIVE_PROBE_NOT_RUN' : 'DEFECT_NOT_REPRODUCED');
   }
 
-  const predecessor = disposition === 'FALSE_POSITIVE' ? falsePositive?.priorFinding ?? null : null;
+  const predecessor = disposition === 'FALSE_POSITIVE' ? falsePositive?.priorReceipt.finding ?? null : null;
   return ok({ disposition, reasons, predecessor });
 }
 
