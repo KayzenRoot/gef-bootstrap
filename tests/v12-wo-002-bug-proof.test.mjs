@@ -228,7 +228,14 @@ test('false-positive adjudication requires explicit rationale and accepted evide
   assert.equal(falsePositive.falsePositiveRationale, 'Current controls and accepted reproduction evidence refute the prior finding.');
   assert.deepEqual(falsePositive.falsePositiveEvidenceIds, ['evidence:positive:current']);
   assert.notEqual(falsePositive.finding.findingDigest, priorReceipt.finding.findingDigest);
-  assert.equal(evaluateBugProof({ ...f.input, falsePositive: { priorFinding: priorReceipt.finding, priorReceipt, rationale: 'too short', evidenceIds: ['evidence:positive:current'] } }, proofOptions, m26Options).ok, false);
+  const shortRationale = evaluateBugProof({
+    ...f.input,
+    findingId: 'finding:short-rationale',
+    probes: f.input.probes.map(p => p.role === 'POSITIVE' ? { ...p, observedOutcome: 'DEFECT_ABSENT' } : p),
+    falsePositive: { priorFinding: priorReceipt.finding, priorReceipt, rationale: 'brief', evidenceIds: ['evidence:positive:current'] },
+  }, proofOptions, m26Options);
+  assert.equal(shortRationale.ok, false);
+  assert.equal(shortRationale.diagnostics[0].code, 'BPE26_FALSE_POSITIVE_UNSUPPORTED');
 
   for (const foreign of [fixture({ projectId: 'other-project' }), fixture({ lineageId: 'other-lineage' })]) {
     const foreignReceipt = unwrap(evaluateBugProof(foreign.input, proofOptions, m26Options));
