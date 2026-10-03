@@ -2,9 +2,9 @@
 
 **State:** PROPOSED_NOT_PROMOTED
 **Work Order:** GBS-V12-WO-002
-**Candidate implementation head:** `ba7e21f7bf2903e29d746c6416b8c76a92269a53`
+**Candidate implementation head:** `a4ed44f493da1a492ecdc01aca1a16aca5932a56`
 **Implementation base:** `main@639b6c430fa9c722e491e8108115f8ed2e5f7556`
-**PR:** #384, open; `a26de6d` corrected the short-rationale test, `72fa315` refactored U12-04 validators/replay without changing decisions, and `ba7e21f` bound false-positive resolution to the exact predecessor receipt. The final evidence-only head and its checks must be bound separately.
+**PR:** #384, open; `a26de6d` corrected the short-rationale test, `72fa315` refactored U12-04 validators/replay without changing decisions, `ba7e21f` bound false-positive resolution to the exact predecessor receipt, and `a4ed44f` enforces actual positive/negative replay controls plus permutation-invariant bounded history. The final evidence-only head and its checks must be bound separately.
 
 ## Current canonical state
 

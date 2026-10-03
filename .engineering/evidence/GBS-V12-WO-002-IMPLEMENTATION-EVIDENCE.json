@@ -23,7 +23,7 @@
   "headBinding": {
     "implementationBase": "639b6c430fa9c722e491e8108115f8ed2e5f7556",
     "admittedLockHead": "04b878b0369e6bbffe7263acd9d1a1e8f8cbb899",
-    "substantiveCandidateHead": "ba7e21f7bf2903e29d746c6416b8c76a92269a53",
+    "substantiveCandidateHead": "a4ed44f493da1a492ecdc01aca1a16aca5932a56",
     "evidenceOnlyCommit": {
       "selfReferentialShaEmbedded": false,
       "finalPrHead": "EVIDENCE_ONLY_HEAD_NOT_SELF_REFERENCED; VERIFY_LIVE_PR_384",
@@ -66,10 +66,10 @@
       "packages/heds-delta-review/src/bug-proof-types.ts": "052a2ee87c3fe6b2de47eca2efa85c50648602fd6c35bc1123809d160dcc023d",
       "packages/heds-delta-review/src/public.ts": "3e1ec0f7ca277270097c436f2acd60829205fb733b6b32d75afe7375eb44ecc2",
       "packages/heds-delta-review/src/registry.ts": "e2f34887806ad20c683682c36651fbb3ed3d66a52a5dab4930d428fc3a646126",
-      "packages/heds-delta-review/src/s06-bug-proof.ts": "6da2d4190e51bd0b5dd5187816093165b84bf966af5a6df5ca0b71a7a4dff42a",
+      "packages/heds-delta-review/src/s06-bug-proof.ts": "7961110c2f580834063fc2b0e6eb88532d1fb2471382cb7eafa7c483ff45b7d1",
       "tests/m26-heds-delta-review.test.mjs": "cb68f38ecf1065383e784e6688ee3418c8a2799dc089bce5e3523f0c1d4e5cf3",
       "tests/m26-startup-purity.test.mjs": "4f27f0f4368945a13bcb014f1f0610844a5f1fbbebe137a0cbe8fc59cfb02706",
-      "tests/v12-wo-002-bug-proof.test.mjs": "31b47c8fd1321347c0db098ae330fb6cc979746f6f1f9853d7b8a5b68f5adeb2"
+      "tests/v12-wo-002-bug-proof.test.mjs": "5a7b3fe666553607e633007501574ce62ac5a0810aa798aa6e26be1e43b4f157"
     },
     "reviewCorrections": [
       {
@@ -83,6 +83,13 @@
         "finding": "false-positive predecessor needed exact bug-proof/claim identity and receipt finding binding",
         "correctionCommit": "ba7e21f7bf2903e29d746c6416b8c76a92269a53",
         "status": "ADDRESSED"
+      },
+      {
+        "review": 5399949535,
+        "correctionDelta": 5967669367,
+        "finding": "Replay receipt verification requires actual POSITIVE and NEGATIVE controls; maxHistory selection is permutation-invariant and processing is capped.",
+        "correctionCommit": "a4ed44f493da1a492ecdc01aca1a16aca5932a56",
+        "status": "ADDRESSED"
       }
     ],
     "u12_04": "IMPLEMENTED_CANDIDATE_PENDING_FINAL_EXACT_HEAD_OWNER_AUDIT_AND_GOVERNED_PROMOTION",
@@ -92,7 +99,8 @@
     "followupCommits": [
       "a26de6d50d05a31ed4c32a3605ffec562fda7ecf",
       "72fa31529261cdf87cf5bc17a21f033db59d0f0a",
-      "ba7e21f7bf2903e29d746c6416b8c76a92269a53"
+      "ba7e21f7bf2903e29d746c6416b8c76a92269a53",
+      "a4ed44f493da1a492ecdc01aca1a16aca5932a56"
     ]
   },
   "acceptanceEvidence": [
@@ -124,7 +132,7 @@
     {
       "criterion": 6,
       "result": "PASS",
-      "evidence": "False-positive rationale/evidence and superseding finding lineage test."
+      "evidence": "Exact false-positive predecessor lineage; digest-valid FALSE_POSITIVE without NEGATIVE is rejected; all replay receipts require actual POSITIVE and NEGATIVE controls."
     },
     {
       "criterion": 7,
@@ -144,7 +152,7 @@
     {
       "criterion": 10,
       "result": "PASS",
-      "evidence": "Replay deduplication, split-brain detection and bounded history test."
+      "evidence": "Replay deduplication, same-context split-brain detection, retained conflict/dedup/truncation behavior, permutation-invariant normalized history/digest beyond maxHistory, and bounded input limit."
     },
     {
       "criterion": 11,
@@ -154,7 +162,7 @@
     {
       "criterion": 12,
       "result": "PASS",
-      "evidence": "Equivalent reordered inputs yield the same semantic receipt test."
+      "evidence": "Equivalent reordered inputs yield the same semantic receipt; permutations of histories larger than maxHistory yield the same normalized state and digest."
     },
     {
       "criterion": 13,
@@ -168,136 +176,122 @@
     }
   ],
   "validationOnSubstantiveCandidate": {
+    "head": "a4ed44f493da1a492ecdc01aca1a16aca5932a56",
     "npmRunBuild": "PASS",
     "npmRunTypecheck": "PASS",
+    "focusedWo002Suite": {
+      "result": "PASS",
+      "passed": 13,
+      "failed": 0
+    },
     "focusedRelevantSuites": {
       "result": "PASS",
-      "passed": 239,
-      "failed": 0
+      "passed": 222,
+      "failed": 0,
+      "scope": "M24-M28 plus relevant V1.1 incremental regressions"
     },
     "npmRunValidate": {
       "result": "PASS",
-      "head": "ba7e21f7bf2903e29d746c6416b8c76a92269a53",
-      "passed": 1657,
+      "head": "a4ed44f493da1a492ecdc01aca1a16aca5932a56",
+      "passed": 1659,
       "failed": 0,
       "skipped": 0,
       "cancelled": 0,
-      "environment": "normal clone of exact candidate"
+      "todo": 0,
+      "durationMs": 387563,
+      "environment": "clean normal clone of exact candidate"
     },
     "npmAuditHigh": {
       "result": "PASS",
       "vulnerabilities": 0
     },
     "gitDiffCheck": "PASS",
+    "cleanCloneGeneratedFile": "packages/cli/bin/gef.mjs differed only by line endings after build; not included in PR",
     "initialLinkedWorktreeIssues": {
       "m26RegistryAssertion": "Corrected before final validation",
-      "v11CliGitOwnershipAndGitIndexPath": "Two environment-specific failures in linked worktree; final unchanged source/test candidate passed full validation in normal clone",
+      "v11CliGitOwnershipAndGitIndexPath": "Two environment-specific failures in linked worktree; exact correction candidate then passed all 1659 tests in a clean normal clone",
       "globalGitConfigurationChanged": false
     }
   },
   "hostedChecksOnSubstantiveCandidate": {
-    "head": "ba7e21f7bf2903e29d746c6416b8c76a92269a53",
+    "head": "a4ed44f493da1a492ecdc01aca1a16aca5932a56",
+    "totalChecks": 44,
     "result": "ALL_APPLICABLE_CHECKS_SUCCESS",
     "checks": [
       {
         "name": "Repository validation",
         "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469129/job/111124371954"
-      },
-      {
-        "name": "Pipeline integrity",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095538095/job/111124575737"
-      },
-      {
-        "name": "Gitleaks",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095538111/job/111124575312"
-      },
-      {
-        "name": "Trivy filesystem and configuration",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095538111/job/111124575148"
-      },
-      {
-        "name": "Dependency Review",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095538084/job/111124575133"
-      },
-      {
-        "name": "CodeQL",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/runs/111124574907"
-      },
-      {
-        "name": "CodeQL tracked alert evidence",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469176/job/111124372491"
-      },
-      {
-        "name": "SonarCloud",
-        "result": "PASS",
-        "url": "https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=384"
-      },
-      {
-        "name": "Cumulative Sonar diagnostics and duplicate-block checks",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469176"
-      },
-      {
-        "name": "Codecov patch",
-        "result": "PASS",
-        "url": "https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/384"
-      },
-      {
-        "name": "M26 HEDS Delta Review",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469158"
-      },
-      {
-        "name": "M41-M47 integrated assurance",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469126"
-      },
-      {
-        "name": "M48-M54 integrated assurance",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469130"
-      },
-      {
-        "name": "M55-M61 integrated assurance",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469255"
-      },
-      {
-        "name": "M62-M63 final assurance",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469193"
-      },
-      {
-        "name": "V1.1 exact package, same tarball, Ubuntu/Windows/macOS",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469176"
-      },
-      {
-        "name": "TypeScript analysis",
-        "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469192/job/111124372169"
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810188/job/111176623783"
       },
       {
         "name": "Node validate",
         "result": "PASS",
-        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37095469181/job/111124371876"
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810228/job/111176623731"
       },
       {
-        "name": "Socket security",
+        "name": "Pipeline integrity",
         "result": "PASS",
-        "url": "https://socket.dev/dashboard/org/nexlabs/sbom/2d81bc9c-b7a6-4f85-a34c-0cd3fe714985"
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810185/job/111176623915"
+      },
+      {
+        "name": "Gitleaks and Trivy",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810173"
+      },
+      {
+        "name": "Dependency Review",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810207/job/111176623795"
+      },
+      {
+        "name": "CodeQL",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/runs/111176756746"
+      },
+      {
+        "name": "CodeQL tracked alert evidence",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810244/job/111176624097"
+      },
+      {
+        "name": "SonarCloud Quality Gate and diagnostics",
+        "result": "PASS",
+        "url": "https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=384"
+      },
+      {
+        "name": "Codecov patch and Node coverage",
+        "result": "PASS",
+        "url": "https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/384"
+      },
+      {
+        "name": "Focused and regression matrices: Ubuntu/Windows/macOS",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810238"
+      },
+      {
+        "name": "M26 HEDS Delta Review",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810188"
+      },
+      {
+        "name": "V1.1 exact package and Ubuntu/Windows/macOS release assurance",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810244"
+      },
+      {
+        "name": "TypeScript analysis",
+        "result": "PASS",
+        "url": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/37113810186/job/111176623693"
       },
       {
         "name": "CodeRabbit",
         "result": "PASS",
         "url": "https://github.com/KayzenRoot/gef-bootstrap/pull/384"
+      },
+      {
+        "name": "Socket security checks",
+        "result": "PASS",
+        "url": "https://socket.dev"
       }
     ],
     "substantiveHeadResultsTransferable": false
