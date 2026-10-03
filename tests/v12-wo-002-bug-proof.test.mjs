@@ -26,6 +26,18 @@ const PROJECT = 'gef-bootstrap';
 const LINEAGE = 'wo-002-lineage';
 const SOURCE = H('exact-source');
 const POLICY = H('proof-policy');
+const stableStringify = value => {
+  if (value === null || typeof value === 'number' || typeof value === 'boolean' || typeof value === 'string') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  if (typeof value === 'object') {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+  }
+  throw new Error('UNSUPPORTED_CANONICAL_VALUE');
+};
+const resealReceipt = receipt => {
+  const { receiptDigest: _receiptDigest, ...payload } = receipt;
+  return { ...payload, receiptDigest: `sha256:${digest.digest(`BPE26\n${stableStringify(payload)}`)}` };
+};
 const unwrap = result => {
   assert.equal(result.ok, true, result.ok ? '' : JSON.stringify(result.diagnostics));
   return result.value;
@@ -287,6 +299,31 @@ test('false-positive adjudication requires explicit rationale and accepted evide
   }
 });
 
+test('false-positive replay rejects a digest-valid receipt without a retained negative control', () => {
+  const prior = fixture();
+  const priorReceipt = unwrap(evaluateBugProof(prior.input, proofOptions, m26Options));
+  const f = fixture({ evidenceRun: 'false-positive-replay' });
+  const receipt = unwrap(evaluateBugProof({
+    ...f.input,
+    findingId: 'finding:false-positive-replay',
+    probes: f.input.probes.map(probe => probe.role === 'POSITIVE' ? { ...probe, observedOutcome: 'DEFECT_ABSENT' } : probe),
+    falsePositive: {
+      priorFinding: priorReceipt.finding,
+      priorReceipt,
+      rationale: 'Current accepted controls refute the prior finding.',
+      evidenceIds: ['evidence:positive:false-positive-replay'],
+    },
+  }, proofOptions, m26Options));
+  const missingNegativeControl = resealReceipt({
+    ...receipt,
+    probeEvidence: receipt.probeEvidence.filter(probe => probe.role !== 'NEGATIVE'),
+  });
+  assert.equal(resealReceipt(missingNegativeControl).receiptDigest, missingNegativeControl.receiptDigest);
+  const replay = createBugProofReplayGuard([missingNegativeControl], m26Options);
+  assert.equal(replay.ok, false);
+  assert.equal(replay.diagnostics[0].code, 'BPR26_CONTROLS_REQUIRED');
+});
+
 test('M28 uncertainty widens to L4 and remains indeterminate; mandatory/final targets cannot be omitted', () => {
   const widened = fixture({ uncertaintySource: 'src:unknown' });
   assert.equal(widened.testImpactResult.selection.uncertainty, 'UNKNOWN');
@@ -341,6 +378,32 @@ test('replay deduplicates exact receipts, detects same-context split brain and b
   const bounded = unwrap(createBugProofReplayGuard([receipt, receipt], { ...m26Options, maxHistory: 1 }));
   assert.equal(bounded.state, 'TRUNCATED');
   assert.equal(bounded.historyTruncated, true);
+});
+
+test('bounded replay selection is permutation-invariant beyond maxHistory and has a fixed input bound', () => {
+  const f = fixture();
+  const receipt = unwrap(evaluateBugProof(f.input, proofOptions, m26Options));
+  const hypothesis = unwrap(evaluateBugProof({
+    ...f.input,
+    probes: f.input.probes.map(probe => probe.role === 'POSITIVE' ? { ...probe, observedOutcome: 'NOT_RUN' } : probe),
+  }, proofOptions, m26Options));
+  const secondFinding = unwrap(evaluateBugProof({ ...f.input, bugProofId: 'bug-proof:selection', findingId: 'finding:selection' }, proofOptions, m26Options));
+  const history = [receipt, hypothesis, secondFinding, receipt];
+  const boundedOptions = { ...m26Options, maxHistory: 2 };
+  const normalized = unwrap(createBugProofReplayGuard(history, boundedOptions));
+  for (const permutation of [
+    [...history].reverse(),
+    [history[1], history[3], history[0], history[2]],
+  ]) {
+    const replay = unwrap(createBugProofReplayGuard(permutation, boundedOptions));
+    assert.deepEqual(replay, normalized);
+  }
+  assert.equal(normalized.historyTruncated, true);
+  assert.equal(normalized.processedCount, 2);
+  assert.equal(normalized.totalCount, history.length);
+  const overBound = createBugProofReplayGuard(new Array(65537).fill(receipt), boundedOptions);
+  assert.equal(overBound.ok, false);
+  assert.equal(overBound.diagnostics[0].code, 'BPR26_HISTORY_INPUT_LIMIT');
 });
 
 test('input order does not change semantic receipt; duplicate probes and U12-05/profile fields are excluded', () => {

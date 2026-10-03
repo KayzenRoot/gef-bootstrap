@@ -28,6 +28,7 @@ import {
 
 const LEVELS = ['L0', 'L1', 'L2', 'L3', 'L4', 'L5'] as const;
 const PROOF_STATES = new Set<BugProofProofState>(['PROVEN', 'UNPROVEN', 'STALE', 'CONFLICT', 'INDETERMINATE', 'TRUNCATED']);
+const MAX_REPLAY_HISTORY_INPUT = 65536;
 const levelRank = (level: string) => LEVELS.indexOf(level as typeof LEVELS[number]);
 
 function uncertaintyValidationFloor(uncertainty: BugProofTestImpactInput['result']['selection']['uncertainty']): number {
@@ -48,6 +49,56 @@ function findingProjection(disposition: BugProofDisposition): { state: 'OPEN' | 
 function replayState(conflicts: ReadonlySet<string>, doubleCountedEvidence: ReadonlySet<string>, historyTruncated: boolean): BugProofReplayState {
   if (conflicts.size > 0 || doubleCountedEvidence.size > 0) return 'CONFLICT';
   return historyTruncated ? 'TRUNCATED' : 'CLEAR';
+}
+
+function compareReplayReceipt(left: BugProofReceipt, right: BugProofReceipt): number {
+  return compareCodePoint(`${left.bugProofId}:${left.receiptDigest}`, `${right.bugProofId}:${right.receiptDigest}`);
+}
+
+function siftReplayHeapUp(heap: BugProofReceipt[], start: number): void {
+  let index = start;
+  while (index > 0) {
+    const parent = Math.floor((index - 1) / 2);
+    const parentValue = heap[parent]!;
+    const currentValue = heap[index]!;
+    if (compareReplayReceipt(parentValue, currentValue) >= 0) return;
+    heap[parent] = currentValue;
+    heap[index] = parentValue;
+    index = parent;
+  }
+}
+
+function siftReplayHeapDown(heap: BugProofReceipt[]): void {
+  let index = 0;
+  while (true) {
+    const left = (index * 2) + 1;
+    const right = left + 1;
+    let largest = index;
+    if (left < heap.length && compareReplayReceipt(heap[left]!, heap[largest]!) > 0) largest = left;
+    if (right < heap.length && compareReplayReceipt(heap[right]!, heap[largest]!) > 0) largest = right;
+    if (largest === index) return;
+    const currentValue = heap[index]!;
+    heap[index] = heap[largest]!;
+    heap[largest] = currentValue;
+    index = largest;
+  }
+}
+
+function selectReplayHistory(history: readonly BugProofReceipt[], limit: number): Result<BugProofReceipt[]> {
+  if (history.length > MAX_REPLAY_HISTORY_INPUT) {
+    return fail('BPR26_HISTORY_INPUT_LIMIT', 'Bug-proof replay history exceeds its bounded selection input limit.', 'bug-proof-replay-history');
+  }
+  const selected: BugProofReceipt[] = [];
+  for (const receipt of history) {
+    if (selected.length < limit) {
+      selected.push(receipt);
+      siftReplayHeapUp(selected, selected.length - 1);
+    } else if (compareReplayReceipt(receipt, selected[0]!) < 0) {
+      selected[0] = receipt;
+      siftReplayHeapDown(selected);
+    }
+  }
+  return ok(selected.sort(compareReplayReceipt));
 }
 
 function sameSet(left: readonly string[], right: readonly string[]) {
@@ -230,6 +281,11 @@ function validateReceiptProbeEvidence(receipt: BugProofReceipt, proofStates: rea
       return fail('BPR26_PROBE_EVIDENCE_INVALID', 'Bug-proof replay contains an invalid or inconsistent probe/evidence binding.', receipt.bugProofId);
     }
   }
+  const hasPositive = receipt.probeEvidence.some(probe => probe.role === 'POSITIVE');
+  const hasNegative = receipt.probeEvidence.some(probe => probe.role === 'NEGATIVE');
+  if (!hasPositive || !hasNegative) {
+    return fail('BPR26_CONTROLS_REQUIRED', 'Bug-proof replay must retain at least one positive probe and one negative control.', receipt.bugProofId);
+  }
   return ok(true);
 }
 
@@ -282,8 +338,11 @@ function validateFalsePositiveReceipt(receipt: BugProofReceipt, proofStates: rea
   const validRationale = rationale !== null && rationale.trim().length >= 8 && rationale.trim().length <= 2048;
   const validEvidence = receipt.falsePositiveEvidenceIds.length > 0 && receipt.falsePositiveEvidenceIds.length <= 4096
     && receipt.falsePositiveEvidenceIds.every(id => acceptedPositiveEvidence.has(id));
-  const validControls = receipt.probeEvidence.filter(probe => probe.role === 'NEGATIVE').every(probe => probe.observedOutcome === 'DEFECT_ABSENT')
-    && receipt.probeEvidence.filter(probe => probe.role === 'POSITIVE').every(probe => probe.observedOutcome === 'DEFECT_ABSENT');
+  const negatives = receipt.probeEvidence.filter(probe => probe.role === 'NEGATIVE');
+  const positives = receipt.probeEvidence.filter(probe => probe.role === 'POSITIVE');
+  const validControls = negatives.length > 0 && positives.length > 0
+    && negatives.every(probe => probe.observedOutcome === 'DEFECT_ABSENT')
+    && positives.every(probe => probe.observedOutcome === 'DEFECT_ABSENT');
   if (receipt.finding.state !== 'RESOLVED' || receipt.finding.ruleId !== 'U12-04-FALSE-POSITIVE'
     || !validRationale || !validEvidence || receipt.predecessorFindingDigest === null
     || !receiptProofIsProven(proofStates) || !receiptProbesAreAccepted(receipt) || !validControls
@@ -784,7 +843,9 @@ function processReplayReceipt(receipt: BugProofReceipt, accumulator: ReplayAccum
 
 export function createBugProofReplayGuard(history: readonly BugProofReceipt[], options: OperationOptions): Result<BugProofReplayGuard> {
   const limit = Math.max(1, Math.min(options.maxHistory ?? 4096, 65536));
-  const processed = history.slice(0, limit).slice().sort((left, right) => compareCodePoint(`${left.bugProofId}:${left.receiptDigest}`, `${right.bugProofId}:${right.receiptDigest}`));
+  const selectedHistory = selectReplayHistory(history, limit);
+  if (!selectedHistory.ok) return selectedHistory;
+  const processed = selectedHistory.value;
   const accumulator: ReplayAccumulator = {
     accepted: [], acceptedSet: new Set<string>(), duplicates: [], duplicateFindings: new Set<string>(),
     doubleCountedEvidence: new Set<string>(), conflicts: new Set<string>(), byContext: new Map<string, string>(),
