@@ -2,6 +2,7 @@ import type {
   BugProofDisposition,
   BugProofEvaluationInput,
   BugProofProbeEvidenceReceipt,
+  BugProofProofState,
   BugProofReceipt,
   BugProofReplayGuard,
   BugProofReplayState,
@@ -26,7 +27,28 @@ import {
 } from './utils.js';
 
 const LEVELS = ['L0', 'L1', 'L2', 'L3', 'L4', 'L5'] as const;
+const PROOF_STATES = new Set<BugProofProofState>(['PROVEN', 'UNPROVEN', 'STALE', 'CONFLICT', 'INDETERMINATE', 'TRUNCATED']);
 const levelRank = (level: string) => LEVELS.indexOf(level as typeof LEVELS[number]);
+
+function uncertaintyValidationFloor(uncertainty: BugProofTestImpactInput['result']['selection']['uncertainty']): number {
+  if (uncertainty === 'BOUNDARY') return 3;
+  if (uncertainty === 'SYSTEMIC' || uncertainty === 'CONFLICT' || uncertainty === 'UNKNOWN' || uncertainty === 'TRUNCATED') return 4;
+  return 0;
+}
+
+function findingProjection(disposition: BugProofDisposition): { state: 'OPEN' | 'RESOLVED' | 'INDETERMINATE'; ruleId: string } {
+  switch (disposition) {
+    case 'REPRODUCED_DEFECT': return { state: 'OPEN', ruleId: 'U12-04-REPRODUCED-DEFECT' };
+    case 'FALSE_POSITIVE': return { state: 'RESOLVED', ruleId: 'U12-04-FALSE-POSITIVE' };
+    case 'HYPOTHESIS': return { state: 'INDETERMINATE', ruleId: 'U12-04-UNRESOLVED-HYPOTHESIS' };
+    case 'INDETERMINATE': return { state: 'INDETERMINATE', ruleId: 'U12-04-INDETERMINATE' };
+  }
+}
+
+function replayState(conflicts: ReadonlySet<string>, doubleCountedEvidence: ReadonlySet<string>, historyTruncated: boolean): BugProofReplayState {
+  if (conflicts.size > 0 || doubleCountedEvidence.size > 0) return 'CONFLICT';
+  return historyTruncated ? 'TRUNCATED' : 'CLEAR';
+}
 
 function sameSet(left: readonly string[], right: readonly string[]) {
   return sortedUnique(left).join('\u0000') === sortedUnique(right).join('\u0000');
@@ -48,7 +70,7 @@ function digestM28(options: OperationOptions, kind: string, payload: unknown): R
   }
 }
 
-function verifyTestImpact(input: BugProofTestImpactInput, options: OperationOptions): Result<true> {
+function validateTestImpactInput(input: BugProofTestImpactInput): Result<true> {
   const { result, handoff } = input;
   const selection = result.selection;
   if (result.waves.length > 4096 || selection.tests.length > 16384 || result.unresolved.length > 16384 || result.reusableTests.length > 16384) {
@@ -81,7 +103,12 @@ function verifyTestImpact(input: BugProofTestImpactInput, options: OperationOpti
   if ([...selection.tests, ...result.reusableTests, ...result.unresolved, ...input.mandatoryTargetIds, ...input.finalAssuranceTargetIds].some(id => !validId(id))) {
     return fail('BPE26_M28_TARGET_ID_INVALID', 'M28 target identifier is invalid.');
   }
+  return ok(true);
+}
 
+function verifyTestImpactDigests(input: BugProofTestImpactInput, options: OperationOptions): Result<true> {
+  const { result, handoff } = input;
+  const selection = result.selection;
   const selectionBody = {
     tests: selection.tests,
     level: selection.level,
@@ -122,9 +149,14 @@ function verifyTestImpact(input: BugProofTestImpactInput, options: OperationOpti
   });
   if (!handoffDigest.ok) return handoffDigest;
   if (handoffDigest.value !== handoff.digest) return fail('BPE26_M28_HANDOFF_TAMPERED', 'M28 candidate handoff does not recompute.');
+  return ok(true);
+}
 
+function validateTestImpactAssurance(input: BugProofTestImpactInput): Result<true> {
+  const { result } = input;
+  const selection = result.selection;
   if (levelRank(selection.level) < levelRank(input.requiredLevel)) return fail('BPE26_ASSURANCE_FLOOR_DOWNGRADE', 'Test selection fell below its declared assurance floor.');
-  const uncertaintyFloor = selection.uncertainty === 'BOUNDARY' ? 3 : ['SYSTEMIC', 'CONFLICT', 'UNKNOWN', 'TRUNCATED'].includes(selection.uncertainty) ? 4 : 0;
+  const uncertaintyFloor = uncertaintyValidationFloor(selection.uncertainty);
   if (levelRank(selection.level) < uncertaintyFloor) return fail('BPE26_UNCERTAINTY_NOT_WIDENED', 'M28 uncertainty did not conservatively widen the validation level.');
   const selected = new Set(selection.tests);
   for (const target of [...input.mandatoryTargetIds, ...input.finalAssuranceTargetIds]) {
@@ -139,12 +171,20 @@ function verifyTestImpact(input: BugProofTestImpactInput, options: OperationOpti
   return ok(true);
 }
 
+function verifyTestImpact(input: BugProofTestImpactInput, options: OperationOptions): Result<true> {
+  const validInput = validateTestImpactInput(input);
+  if (!validInput.ok) return validInput;
+  const validDigests = verifyTestImpactDigests(input, options);
+  if (!validDigests.ok) return validDigests;
+  return validateTestImpactAssurance(input);
+}
+
 function receiptPayload(receipt: BugProofReceipt) {
   const { receiptDigest: _receiptDigest, ...body } = receipt;
   return body;
 }
 
-function verifyReceipt(receipt: BugProofReceipt, options: OperationOptions): Result<true> {
+function validateReceiptIdentity(receipt: BugProofReceipt): Result<true> {
   if (!validId(receipt.bugProofId) || !validId(receipt.findingId) || !isSha256(receipt.hypothesisDigest)
     || !validId(receipt.requirementClaimId) || !validId(receipt.invariantClaimId) || !validId(receipt.hypothesisClaimId)
     || !isSha256(receipt.sourceIdentityDigest) || !isSha256(receipt.proofPolicyDigest) || !isSha256(receipt.sourceAuthorityDigest)
@@ -156,6 +196,131 @@ function verifyReceipt(receipt: BugProofReceipt, options: OperationOptions): Res
     || levelRank(receipt.testImpactValidationLevel) < 0 || levelRank(receipt.testImpactRequiredLevel) < 0) {
     return fail('BPR26_RECEIPT_INVALID', 'Bug-proof replay contains an invalid receipt.', receipt.bugProofId);
   }
+  return ok(true);
+}
+
+function validateReceiptContext(receipt: BugProofReceipt): Result<true> {
+  const targets = [...receipt.selectedTargetIds, ...receipt.mandatoryTargetIds, ...receipt.finalAssuranceTargetIds, ...receipt.unresolvedTestIds];
+  const invalidInvalidation = receipt.invalidationVectorDigest === null
+    ? receipt.invalidationChangedDependencyDigests.length > 0 || receipt.invalidationKnowledgeComplete !== null
+    : !isSha256(receipt.invalidationVectorDigest) || receipt.invalidationChangedDependencyDigests.length === 0 || receipt.invalidationKnowledgeComplete === null;
+  if (receipt.probeEvidence.length > 4096 || receipt.invalidationChangedDependencyDigests.length > 16384
+    || !isCanonical(receipt.invalidationChangedDependencyDigests) || !isCanonical(receipt.selectedTargetIds)
+    || !isCanonical(receipt.mandatoryTargetIds) || !isCanonical(receipt.finalAssuranceTargetIds)
+    || !isCanonical(receipt.unresolvedTestIds) || !isCanonical(receipt.falsePositiveEvidenceIds) || !isCanonical(receipt.reasonCodes)
+    || targets.some(id => !validId(id)) || receipt.invalidationChangedDependencyDigests.some(digest => !isSha256(digest))
+    || receipt.reasonCodes.some(code => typeof code !== 'string' || !/^[A-Z0-9_:-]{1,128}$/.test(code)) || invalidInvalidation) {
+    return fail('BPR26_CONTEXT_INVALID', 'Bug-proof replay contains malformed invalidation or selection context.', receipt.bugProofId);
+  }
+  return ok(true);
+}
+
+function validateReceiptProbeEvidence(receipt: BugProofReceipt, proofStates: readonly BugProofProofState[]): Result<true> {
+  if (proofStates.some(state => !PROOF_STATES.has(state))) {
+    return fail('BPR26_PROOF_STATE_INVALID', 'Bug-proof replay contains an unknown M25 proof state.', receipt.bugProofId);
+  }
+  for (const probe of receipt.probeEvidence) {
+    const invalidRoleOrOutcome = !['POSITIVE', 'NEGATIVE'].includes(probe.role)
+      || (probe.role === 'POSITIVE' && probe.expectedOutcome !== 'DEFECT_PRESENT')
+      || (probe.role === 'NEGATIVE' && probe.expectedOutcome !== 'DEFECT_ABSENT')
+      || !['DEFECT_PRESENT', 'DEFECT_ABSENT', 'NOT_RUN'].includes(probe.observedOutcome);
+    if (!validId(probe.probeId) || !validId(probe.targetId) || !validId(probe.evidenceId)
+      || !isSha256(probe.evidenceSemanticDigest) || invalidRoleOrOutcome
+      || !PROOF_STATES.has(probe.proofState) || probe.accepted !== (probe.proofState === 'PROVEN')) {
+      return fail('BPR26_PROBE_EVIDENCE_INVALID', 'Bug-proof replay contains an invalid or inconsistent probe/evidence binding.', receipt.bugProofId);
+    }
+  }
+  return ok(true);
+}
+
+function receiptTargetsAreSelected(receipt: BugProofReceipt): boolean {
+  const requiredTargets = [...receipt.probeEvidence.map(probe => probe.targetId), ...receipt.mandatoryTargetIds, ...receipt.finalAssuranceTargetIds];
+  return requiredTargets.every(target => receipt.selectedTargetIds.includes(target));
+}
+
+function receiptHasCurrentReadyImpact(receipt: BugProofReceipt): boolean {
+  return receipt.testImpactState === 'READY' && receipt.testImpactUncertainty === 'NONE'
+    && receipt.unresolvedTestIds.length === 0
+    && levelRank(receipt.testImpactValidationLevel) >= levelRank(receipt.testImpactRequiredLevel)
+    && receipt.invalidationKnowledgeComplete !== false && receiptTargetsAreSelected(receipt);
+}
+
+function receiptProofIsProven(proofStates: readonly BugProofProofState[]): boolean {
+  return proofStates.every(state => state === 'PROVEN');
+}
+
+function receiptProbesAreAccepted(receipt: BugProofReceipt): boolean {
+  return receipt.probeEvidence.every(probe => probe.accepted);
+}
+
+function validateReproducedReceipt(receipt: BugProofReceipt, proofStates: readonly BugProofProofState[]): Result<true> {
+  if (receipt.disposition !== 'REPRODUCED_DEFECT') return ok(true);
+  const positives = receipt.probeEvidence.filter(probe => probe.role === 'POSITIVE');
+  const negatives = receipt.probeEvidence.filter(probe => probe.role === 'NEGATIVE');
+  const invalidEvidence = !receiptProofIsProven(proofStates) || !receiptProbesAreAccepted(receipt)
+    || positives.length === 0 || negatives.length === 0
+    || positives.some(probe => probe.observedOutcome !== 'DEFECT_PRESENT')
+    || negatives.some(probe => probe.observedOutcome !== 'DEFECT_ABSENT');
+  if (receipt.finding.state !== 'OPEN' || receipt.finding.ruleId !== 'U12-04-REPRODUCED-DEFECT'
+    || invalidEvidence || !receiptHasCurrentReadyImpact(receipt)) {
+    return fail('BPR26_DISPOSITION_MISMATCH', 'Only an OPEN U12-04 reproduced-defect finding may carry that disposition.', receipt.bugProofId);
+  }
+  return ok(true);
+}
+
+function validateFalsePositiveReceipt(receipt: BugProofReceipt, proofStates: readonly BugProofProofState[]): Result<true> {
+  if (receipt.disposition !== 'FALSE_POSITIVE') {
+    if (receipt.falsePositiveRationale !== null || receipt.falsePositiveEvidenceIds.length !== 0) {
+      return fail('BPR26_FALSE_POSITIVE_UNEXPECTED', 'Non-false-positive receipt contains an unclassified adjudication.', receipt.bugProofId);
+    }
+    return ok(true);
+  }
+  const acceptedPositiveEvidence = new Set(receipt.probeEvidence
+    .filter(probe => probe.role === 'POSITIVE' && probe.accepted && probe.observedOutcome === 'DEFECT_ABSENT')
+    .map(probe => probe.evidenceId));
+  const rationale = receipt.falsePositiveRationale;
+  const validRationale = rationale !== null && rationale.trim().length >= 8 && rationale.trim().length <= 2048;
+  const validEvidence = receipt.falsePositiveEvidenceIds.length > 0 && receipt.falsePositiveEvidenceIds.length <= 4096
+    && receipt.falsePositiveEvidenceIds.every(id => acceptedPositiveEvidence.has(id));
+  const validControls = receipt.probeEvidence.filter(probe => probe.role === 'NEGATIVE').every(probe => probe.observedOutcome === 'DEFECT_ABSENT')
+    && receipt.probeEvidence.filter(probe => probe.role === 'POSITIVE').every(probe => probe.observedOutcome === 'DEFECT_ABSENT');
+  if (receipt.finding.state !== 'RESOLVED' || receipt.finding.ruleId !== 'U12-04-FALSE-POSITIVE'
+    || !validRationale || !validEvidence || receipt.predecessorFindingDigest === null
+    || !receiptProofIsProven(proofStates) || !receiptProbesAreAccepted(receipt) || !validControls
+    || !receiptHasCurrentReadyImpact(receipt)) {
+    return fail('BPR26_FALSE_POSITIVE_LINEAGE_INVALID', 'False-positive replay requires accepted evidence, rationale and predecessor lineage.', receipt.bugProofId);
+  }
+  return ok(true);
+}
+
+function validateHypothesisReceipt(receipt: BugProofReceipt, proofStates: readonly BugProofProofState[]): Result<true> {
+  if (['HYPOTHESIS', 'INDETERMINATE'].includes(receipt.disposition) && receipt.finding.state !== 'INDETERMINATE') {
+    return fail('BPR26_HYPOTHESIS_FINDING_INVALID', 'An unreproduced hypothesis must remain an indeterminate finding.', receipt.bugProofId);
+  }
+  const positiveReproduction = receipt.probeEvidence.filter(probe => probe.role === 'POSITIVE')
+    .every(probe => probe.observedOutcome === 'DEFECT_PRESENT');
+  const negativeControlsHold = receipt.probeEvidence.filter(probe => probe.role === 'NEGATIVE')
+    .every(probe => probe.observedOutcome === 'DEFECT_ABSENT');
+  const hypothesisSuppressesReproduction = receipt.disposition === 'HYPOTHESIS' && receiptProbesAreAccepted(receipt)
+    && receiptProofIsProven(proofStates) && receiptHasCurrentReadyImpact(receipt)
+    && negativeControlsHold && positiveReproduction;
+  if (hypothesisSuppressesReproduction) {
+    return fail('BPR26_REPRODUCTION_SUPPRESSED', 'A fully current positive reproduction cannot be replayed as an unresolved hypothesis.', receipt.bugProofId);
+  }
+  return ok(true);
+}
+
+function validateUniqueEvidenceIds(receipt: BugProofReceipt): Result<true> {
+  const ids = receipt.probeEvidence.map(probe => probe.evidenceId);
+  if (ids.some(id => !validId(id)) || ids.length !== sortedUnique(ids).length) {
+    return fail('BPR26_EVIDENCE_DOUBLE_COUNT', 'A bug-proof receipt must retain each evidence identity once.', receipt.bugProofId);
+  }
+  return ok(true);
+}
+
+function verifyReceipt(receipt: BugProofReceipt, options: OperationOptions): Result<true> {
+  const identity = validateReceiptIdentity(receipt);
+  if (!identity.ok) return identity;
   const expected = digestValue(options, 'BPE26', receiptPayload(receipt));
   if (!expected.ok) return expected;
   if (expected.value !== receipt.receiptDigest) return fail('BPR26_RECEIPT_TAMPERED', 'Bug-proof receipt does not match its semantic digest.', receipt.bugProofId);
@@ -167,87 +332,23 @@ function verifyReceipt(receipt: BugProofReceipt, options: OperationOptions): Res
     || receipt.predecessorFindingDigest !== receipt.finding.supersedesFindingDigest) {
     return fail('BPR26_FINDING_BINDING_INVALID', 'Bug-proof finding identity or predecessor lineage does not match the receipt.', receipt.bugProofId);
   }
-  if (receipt.probeEvidence.length > 4096 || receipt.invalidationChangedDependencyDigests.length > 16384
-    || !isCanonical(receipt.invalidationChangedDependencyDigests) || !isCanonical(receipt.selectedTargetIds)
-    || !isCanonical(receipt.mandatoryTargetIds) || !isCanonical(receipt.finalAssuranceTargetIds)
-    || !isCanonical(receipt.unresolvedTestIds) || !isCanonical(receipt.falsePositiveEvidenceIds) || !isCanonical(receipt.reasonCodes)
-    || [...receipt.selectedTargetIds, ...receipt.mandatoryTargetIds, ...receipt.finalAssuranceTargetIds, ...receipt.unresolvedTestIds].some(id => !validId(id))
-    || receipt.invalidationChangedDependencyDigests.some(digest => !isSha256(digest))
-    || receipt.reasonCodes.some(code => typeof code !== 'string' || !/^[A-Z0-9_:-]{1,128}$/.test(code))
-    || (receipt.invalidationVectorDigest === null && (receipt.invalidationChangedDependencyDigests.length > 0 || receipt.invalidationKnowledgeComplete !== null))
-    || (receipt.invalidationVectorDigest !== null && (!isSha256(receipt.invalidationVectorDigest)
-      || receipt.invalidationChangedDependencyDigests.length === 0 || receipt.invalidationKnowledgeComplete === null))) {
-    return fail('BPR26_CONTEXT_INVALID', 'Bug-proof replay contains malformed invalidation or selection context.', receipt.bugProofId);
-  }
   const proofStates = [receipt.requirementProofState, receipt.invariantProofState, receipt.hypothesisProofState];
-  const validProofStates = ['PROVEN', 'UNPROVEN', 'STALE', 'CONFLICT', 'INDETERMINATE', 'TRUNCATED'];
-  if (proofStates.some(state => !validProofStates.includes(state))) return fail('BPR26_PROOF_STATE_INVALID', 'Bug-proof replay contains an unknown M25 proof state.', receipt.bugProofId);
-  for (const probe of receipt.probeEvidence) {
-    if (!validId(probe.probeId) || !validId(probe.targetId) || !validId(probe.evidenceId) || !isSha256(probe.evidenceSemanticDigest)
-      || !['POSITIVE', 'NEGATIVE'].includes(probe.role)
-      || (probe.role === 'POSITIVE' && probe.expectedOutcome !== 'DEFECT_PRESENT')
-      || (probe.role === 'NEGATIVE' && probe.expectedOutcome !== 'DEFECT_ABSENT')
-      || !['DEFECT_PRESENT', 'DEFECT_ABSENT', 'NOT_RUN'].includes(probe.observedOutcome)
-      || !validProofStates.includes(probe.proofState) || probe.accepted !== (probe.proofState === 'PROVEN')) {
-      return fail('BPR26_PROBE_EVIDENCE_INVALID', 'Bug-proof replay contains an invalid or inconsistent probe/evidence binding.', receipt.bugProofId);
-    }
-  }
-  if (receipt.disposition === 'REPRODUCED_DEFECT'
-    && (receipt.finding.state !== 'OPEN' || receipt.finding.ruleId !== 'U12-04-REPRODUCED-DEFECT'
-      || proofStates.some(state => state !== 'PROVEN') || receipt.probeEvidence.some(probe => !probe.accepted)
-      || !receipt.probeEvidence.some(probe => probe.role === 'POSITIVE') || !receipt.probeEvidence.some(probe => probe.role === 'NEGATIVE')
-      || receipt.probeEvidence.filter(probe => probe.role === 'POSITIVE').some(probe => probe.observedOutcome !== 'DEFECT_PRESENT')
-      || receipt.probeEvidence.filter(probe => probe.role === 'NEGATIVE').some(probe => probe.observedOutcome !== 'DEFECT_ABSENT')
-      || receipt.testImpactState !== 'READY' || receipt.testImpactUncertainty !== 'NONE' || receipt.unresolvedTestIds.length > 0
-      || levelRank(receipt.testImpactValidationLevel) < levelRank(receipt.testImpactRequiredLevel)
-      || receipt.invalidationKnowledgeComplete === false
-      || [...receipt.probeEvidence.map(probe => probe.targetId), ...receipt.mandatoryTargetIds, ...receipt.finalAssuranceTargetIds]
-        .some(target => !receipt.selectedTargetIds.includes(target)))) {
-    return fail('BPR26_DISPOSITION_MISMATCH', 'Only an OPEN U12-04 reproduced-defect finding may carry that disposition.', receipt.bugProofId);
-  }
-  if (receipt.disposition === 'FALSE_POSITIVE') {
-    const acceptedPositiveEvidence = new Set(receipt.probeEvidence.filter(p => p.role === 'POSITIVE' && p.accepted && p.observedOutcome === 'DEFECT_ABSENT').map(p => p.evidenceId));
-    if (receipt.finding.state !== 'RESOLVED' || receipt.finding.ruleId !== 'U12-04-FALSE-POSITIVE'
-      || receipt.falsePositiveRationale === null || receipt.falsePositiveRationale.trim().length < 8
-      || receipt.falsePositiveEvidenceIds.length === 0 || receipt.falsePositiveEvidenceIds.length > 4096 || receipt.predecessorFindingDigest === null
-      || receipt.falsePositiveRationale.trim().length > 2048 || receipt.falsePositiveEvidenceIds.some(id => !acceptedPositiveEvidence.has(id))
-      || proofStates.some(state => state !== 'PROVEN') || receipt.probeEvidence.some(probe => !probe.accepted)
-      || receipt.probeEvidence.filter(probe => probe.role === 'NEGATIVE').some(probe => probe.observedOutcome !== 'DEFECT_ABSENT')
-      || receipt.probeEvidence.filter(probe => probe.role === 'POSITIVE').some(probe => probe.observedOutcome !== 'DEFECT_ABSENT')
-      || receipt.testImpactState !== 'READY' || receipt.testImpactUncertainty !== 'NONE' || receipt.unresolvedTestIds.length > 0
-      || levelRank(receipt.testImpactValidationLevel) < levelRank(receipt.testImpactRequiredLevel)
-      || receipt.invalidationKnowledgeComplete === false
-      || [...receipt.probeEvidence.map(probe => probe.targetId), ...receipt.mandatoryTargetIds, ...receipt.finalAssuranceTargetIds]
-        .some(target => !receipt.selectedTargetIds.includes(target))) {
-      return fail('BPR26_FALSE_POSITIVE_LINEAGE_INVALID', 'False-positive replay requires accepted evidence, rationale and predecessor lineage.', receipt.bugProofId);
-    }
-  } else if (receipt.falsePositiveRationale !== null || receipt.falsePositiveEvidenceIds.length !== 0) {
-    return fail('BPR26_FALSE_POSITIVE_UNEXPECTED', 'Non-false-positive receipt contains an unclassified adjudication.', receipt.bugProofId);
-  }
-  if (['HYPOTHESIS', 'INDETERMINATE'].includes(receipt.disposition) && receipt.finding.state !== 'INDETERMINATE') {
-    return fail('BPR26_HYPOTHESIS_FINDING_INVALID', 'An unreproduced hypothesis must remain an indeterminate finding.', receipt.bugProofId);
-  }
-  if (receipt.disposition === 'HYPOTHESIS' && receipt.probeEvidence.every(probe => probe.accepted)
-    && proofStates.every(state => state === 'PROVEN') && receipt.testImpactState === 'READY'
-    && receipt.testImpactUncertainty === 'NONE' && receipt.unresolvedTestIds.length === 0
-    && receipt.invalidationKnowledgeComplete !== false
-    && receipt.probeEvidence.filter(probe => probe.role === 'NEGATIVE').every(probe => probe.observedOutcome === 'DEFECT_ABSENT')
-    && receipt.probeEvidence.filter(probe => probe.role === 'POSITIVE').every(probe => probe.observedOutcome === 'DEFECT_PRESENT')) {
-    return fail('BPR26_REPRODUCTION_SUPPRESSED', 'A fully current positive reproduction cannot be replayed as an unresolved hypothesis.', receipt.bugProofId);
-  }
-  const ids = receipt.probeEvidence.map(p => p.evidenceId);
-  if (ids.some(id => !validId(id)) || ids.length !== sortedUnique(ids).length) {
-    return fail('BPR26_EVIDENCE_DOUBLE_COUNT', 'A bug-proof receipt must retain each evidence identity once.', receipt.bugProofId);
-  }
+  const context = validateReceiptContext(receipt);
+  if (!context.ok) return context;
+  const probes = validateReceiptProbeEvidence(receipt, proofStates);
+  if (!probes.ok) return probes;
+  const reproduced = validateReproducedReceipt(receipt, proofStates);
+  if (!reproduced.ok) return reproduced;
+  const falsePositive = validateFalsePositiveReceipt(receipt, proofStates);
+  if (!falsePositive.ok) return falsePositive;
+  const hypothesis = validateHypothesisReceipt(receipt, proofStates);
+  if (!hypothesis.ok) return hypothesis;
+  const evidenceIds = validateUniqueEvidenceIds(receipt);
+  if (!evidenceIds.ok) return evidenceIds;
   return ok(true);
 }
 
-export function evaluateBugProof(
-  input: BugProofEvaluationInput,
-  proofOptions: import('@gef-bootstrap/proof-graph').OperationOptions,
-  options: OperationOptions,
-): Result<BugProofReceipt> {
-  const guard = new Guard(options);
+function validateBugProofHeader(input: BugProofEvaluationInput): Result<true> {
   if (input.probes.length > 4096) return fail('BPE26_PROBE_LIMIT', 'Bug-proof probe/control count exceeds its bounded limit.', input.bugProofId);
   for (const id of [input.bugProofId, input.requirementClaimId, input.invariantClaimId, input.hypothesisClaimId, input.findingId, input.subjectId]) {
     if (!validId(id)) return fail('BPE26_ID_INVALID', 'Bug-proof identity contains an invalid stable ID.', id);
@@ -258,24 +359,40 @@ export function evaluateBugProof(
   const positive = input.probes.filter(probe => probe.role === 'POSITIVE');
   const negative = input.probes.filter(probe => probe.role === 'NEGATIVE');
   if (positive.length === 0 || negative.length === 0) return fail('BPE26_CONTROLS_REQUIRED', 'At least one positive probe and one retained negative control are required.', input.bugProofId);
+  return ok(true);
+}
+
+function validateProbe(probe: BugProofEvaluationInput['probes'][number], guard: Guard,
+  identities: { probeIds: Set<string>; targetIds: Set<string>; evidenceIds: Set<string> }): Result<true> {
+  const { probeIds, targetIds, evidenceIds } = identities;
+  const step = guard.step(`probe:${probe.probeId}`);
+  if (!step.ok) return step;
+  if (!validId(probe.probeId) || !validId(probe.targetId) || !validId(probe.evidenceId)) return fail('BPE26_PROBE_ID_INVALID', 'Probe, M28 target and M24 evidence IDs must be stable.', probe.probeId);
+  if (probeIds.has(probe.probeId) || targetIds.has(probe.targetId) || evidenceIds.has(probe.evidenceId)) return fail('BPE26_PROBE_DUPLICATE', 'Probe, target and evidence identities cannot be counted more than once.', probe.probeId);
+  probeIds.add(probe.probeId);
+  targetIds.add(probe.targetId);
+  evidenceIds.add(probe.evidenceId);
+  if (!['POSITIVE', 'NEGATIVE'].includes(probe.role)) return fail('BPE26_PROBE_ROLE_INVALID', 'Probe role must be explicitly positive or negative.', probe.probeId);
+  if ((probe.role === 'POSITIVE' && probe.expectedOutcome !== 'DEFECT_PRESENT') || (probe.role === 'NEGATIVE' && probe.expectedOutcome !== 'DEFECT_ABSENT')) {
+    return fail('BPE26_EXPECTATION_ROLE_MISMATCH', 'Probe expectation conflicts with its declared positive/negative role.', probe.probeId);
+  }
+  if (!['DEFECT_PRESENT', 'DEFECT_ABSENT', 'NOT_RUN'].includes(probe.observedOutcome)) return fail('BPE26_OUTCOME_INVALID', 'Probe observation is invalid.', probe.probeId);
+  return ok(true);
+}
+
+function validateBugProofProbes(input: BugProofEvaluationInput, guard: Guard): Result<Set<string>> {
   const probeIds = new Set<string>();
   const targetIds = new Set<string>();
   const evidenceIds = new Set<string>();
+  const identities = { probeIds, targetIds, evidenceIds };
   for (const probe of input.probes) {
-    const step = guard.step(`probe:${probe.probeId}`);
-    if (!step.ok) return step;
-    if (!validId(probe.probeId) || !validId(probe.targetId) || !validId(probe.evidenceId)) return fail('BPE26_PROBE_ID_INVALID', 'Probe, M28 target and M24 evidence IDs must be stable.', probe.probeId);
-    if (probeIds.has(probe.probeId) || targetIds.has(probe.targetId) || evidenceIds.has(probe.evidenceId)) return fail('BPE26_PROBE_DUPLICATE', 'Probe, target and evidence identities cannot be counted more than once.', probe.probeId);
-    probeIds.add(probe.probeId);
-    targetIds.add(probe.targetId);
-    evidenceIds.add(probe.evidenceId);
-    if (!['POSITIVE', 'NEGATIVE'].includes(probe.role)) return fail('BPE26_PROBE_ROLE_INVALID', 'Probe role must be explicitly positive or negative.', probe.probeId);
-    if ((probe.role === 'POSITIVE' && probe.expectedOutcome !== 'DEFECT_PRESENT') || (probe.role === 'NEGATIVE' && probe.expectedOutcome !== 'DEFECT_ABSENT')) {
-      return fail('BPE26_EXPECTATION_ROLE_MISMATCH', 'Probe expectation conflicts with its declared positive/negative role.', probe.probeId);
-    }
-    if (!['DEFECT_PRESENT', 'DEFECT_ABSENT', 'NOT_RUN'].includes(probe.observedOutcome)) return fail('BPE26_OUTCOME_INVALID', 'Probe observation is invalid.', probe.probeId);
+    const valid = validateProbe(probe, guard, identities);
+    if (!valid.ok) return valid;
   }
+  return ok(targetIds);
+}
 
+function validateBugProofTestSelection(input: BugProofEvaluationInput, options: OperationOptions): Result<true> {
   const impact = verifyTestImpact(input.testImpact, options);
   if (!impact.ok) return impact;
   if (input.testImpact.candidateDigest !== input.sourceIdentityDigest) return fail('BPE26_CANDIDATE_SOURCE_MISMATCH', 'M28 candidate does not match the exact hypothesis source identity.', input.bugProofId);
@@ -283,18 +400,29 @@ export function evaluateBugProof(
   for (const probe of input.probes) {
     if (!selectedTargets.has(probe.targetId)) return fail('BPE26_PROBE_TARGET_OMITTED', 'M28 did not select every declared positive and negative probe target.', probe.targetId);
   }
+  return ok(true);
+}
 
-  const computation = input.computation;
+function validateBugProofInput(input: BugProofEvaluationInput, guard: Guard, options: OperationOptions): Result<true> {
+  const header = validateBugProofHeader(input);
+  if (!header.ok) return header;
+  const probes = validateBugProofProbes(input, guard);
+  if (!probes.ok) return probes;
+  return validateBugProofTestSelection(input, options);
+}
+
+function validateM24M25ContextAndClaims(input: BugProofEvaluationInput): Result<true> {
+  const { computation, proofSnapshot } = input;
   const manifest = computation.manifest;
   const firstEvaluation = computation.m24.evaluations[0];
   if (!firstEvaluation || manifest.projectId !== firstEvaluation.intent.projectId || manifest.lineageId !== firstEvaluation.intent.lineageId) {
     return fail('BPE26_M24_PROJECT_LINEAGE_MISMATCH', 'M24 and M25 project/lineage contexts do not match.', input.bugProofId);
   }
-  if (input.proofSnapshot.projectId !== manifest.projectId || input.proofSnapshot.lineageId !== manifest.lineageId
-    || input.proofSnapshot.proofPolicyDigest !== manifest.proofPolicyDigest) {
+  if (proofSnapshot.projectId !== manifest.projectId || proofSnapshot.lineageId !== manifest.lineageId
+    || proofSnapshot.proofPolicyDigest !== manifest.proofPolicyDigest) {
     return fail('BPE26_PROOF_CONTEXT_MISMATCH', 'Proof snapshot, manifest and evidence context do not share one exact project/proof context.', input.bugProofId);
   }
-  if (input.currentProofSnapshotDigest !== input.proofSnapshot.snapshotDigest) return fail('BPE26_PROOF_SNAPSHOT_STALE', 'Bug proof requires the exact current M25 snapshot.', input.bugProofId);
+  if (input.currentProofSnapshotDigest !== proofSnapshot.snapshotDigest) return fail('BPE26_PROOF_SNAPSHOT_STALE', 'Bug proof requires the exact current M25 snapshot.', input.bugProofId);
 
   const claims = new Map(manifest.claims.map(claim => [claim.claimId, claim]));
   const requirement = claims.get(input.requirementClaimId);
@@ -314,7 +442,7 @@ export function evaluateBugProof(
   if (!requirementObligation?.applicable || !requirementObligation.required || requirementObligation.mode !== 'ALL') {
     return fail('BPE26_REQUIREMENT_OBLIGATION_INVALID', 'Requirement claim must have an applicable required M25 obligation.', input.requirementClaimId);
   }
-  if (!invariantObligation || !invariantObligation.applicable || !invariantObligation.required || invariantObligation.mode !== 'ALL'
+  if (invariantObligation?.applicable !== true || !invariantObligation.required || invariantObligation.mode !== 'ALL'
     || invariantObligation.dependencies.length !== 1 || invariantObligation.dependencies[0]?.kind !== 'CLAIM'
     || invariantObligation.dependencies[0]?.id !== input.requirementClaimId) {
     return fail('BPE26_REQUIREMENT_INVARIANT_LINK_MISSING', 'M25 invariant must depend on the declared requirement claim.', input.invariantClaimId);
@@ -327,28 +455,49 @@ export function evaluateBugProof(
     || hypothesisObligation.dependencies.length !== expectedEvidence.length + 1) {
     return fail('BPE26_HYPOTHESIS_OBLIGATION_INCOMPLETE', 'Hypothesis obligation must require the invariant and every declared M24 probe/control evidence item.', input.hypothesisClaimId);
   }
+  return ok(true);
+}
 
+type ProofGraphEvaluation = Extract<ReturnType<typeof evaluateProofGraph>, { ok: true }>['value'];
+type ClaimProofResult = ProofGraphEvaluation['results'][number];
+type BugProofProofFacts = {
+  manifest: BugProofEvaluationInput['computation']['manifest'];
+  evaluation: ProofGraphEvaluation;
+  sourceAuthorityDigest: string;
+  requirementProof: ClaimProofResult;
+  invariantProof: ClaimProofResult;
+  hypothesisProof: ClaimProofResult;
+};
+type BugProofEvidenceEntry = { semanticDigest: string; sourceIdentityDigest: string; claimIds: readonly string[]; kind: string; subjectId: string };
+
+function evaluateM25Proof(input: BugProofEvaluationInput, proofOptions: import('@gef-bootstrap/proof-graph').OperationOptions,
+  options: OperationOptions): Result<BugProofProofFacts> {
+  const { computation, proofSnapshot } = input;
+  const manifest = computation.manifest;
   const evaluated = evaluateProofGraph(computation, computation.m24.options, proofOptions);
   if (!evaluated.ok) return evaluated;
   const sourceAuthorityDigest = evaluated.value.sourceAuthorityDigest;
   if (!sourceAuthorityDigest || !isSha256(sourceAuthorityDigest)) return fail('BPE26_SOURCE_AUTHORITY_MISSING', 'M25 evaluation did not bind source authority.', input.bugProofId);
-  const proofHandoff = createDownstreamProofHandoff(input.proofSnapshot, computation, 'M26_DELTA_REVIEW', computation.m24.options, proofOptions);
+  const proofHandoff = createDownstreamProofHandoff(proofSnapshot, computation, 'M26_DELTA_REVIEW', computation.m24.options, proofOptions);
   if (!proofHandoff.ok) return proofHandoff;
   const proofGate = verifyM25ProofHandoff(proofHandoff.value, options, input.currentProofSnapshotDigest);
   if (!proofGate.ok) return proofGate;
   if (!proofGate.value.valid || !proofGate.value.current) return fail('BPE26_PROOF_HANDOFF_STALE', 'M25 proof handoff is not valid for the current exact snapshot.', input.bugProofId);
-  if (input.proofSnapshot.sourceAuthorityDigest !== sourceAuthorityDigest || input.proofSnapshot.m24ContextDigest !== evaluated.value.m24ContextDigest) {
+  if (proofSnapshot.sourceAuthorityDigest !== sourceAuthorityDigest || proofSnapshot.m24ContextDigest !== evaluated.value.m24ContextDigest) {
     return fail('BPE26_PROOF_BINDING_MISMATCH', 'M25 snapshot source authority or M24 context differs from recomputed proof.', input.bugProofId);
   }
-
   const proofByClaim = new Map(evaluated.value.results.map(result => [result.claimId, result]));
   const requirementProof = proofByClaim.get(input.requirementClaimId);
   const invariantProof = proofByClaim.get(input.invariantClaimId);
   const hypothesisProof = proofByClaim.get(input.hypothesisClaimId);
   if (!requirementProof || !invariantProof || !hypothesisProof) return fail('BPE26_PROOF_CLAIM_MISSING', 'M25 evaluation omitted a declared chain claim.', input.bugProofId);
-  const evidenceById = new Map<string, { semanticDigest: string; sourceIdentityDigest: string; claimIds: readonly string[]; kind: string; subjectId: string }>();
+  return ok({ manifest, evaluation: evaluated.value, sourceAuthorityDigest, requirementProof, invariantProof, hypothesisProof });
+}
+
+function indexM24Evidence(input: BugProofEvaluationInput, guard: Guard): Result<Map<string, BugProofEvidenceEntry>> {
+  const evidenceById = new Map<string, BugProofEvidenceEntry>();
   let observedItems = 0;
-  for (const evaluation of computation.m24.evaluations) {
+  for (const evaluation of input.computation.m24.evaluations) {
     for (const item of evaluation.manifest.items) {
       const step = guard.step(`evidence-index:${item.evidenceId}`);
       if (!step.ok) return step;
@@ -369,6 +518,11 @@ export function evaluateBugProof(
       });
     }
   }
+  return ok(evidenceById);
+}
+
+function bindProbeEvidence(input: BugProofEvaluationInput, evidenceById: ReadonlyMap<string, BugProofEvidenceEntry>,
+  hypothesisProof: ClaimProofResult): Result<BugProofProbeEvidenceReceipt[]> {
   const dependencyStates = new Map(hypothesisProof.dependencyStates.map(dependency => [dependency.id, dependency.state]));
   const probeEvidence: BugProofProbeEvidenceReceipt[] = [];
   for (const probe of input.probes) {
@@ -381,11 +535,48 @@ export function evaluateBugProof(
     probeEvidence.push({ ...probe, evidenceSemanticDigest: evidence.semanticDigest, proofState: state, accepted: state === 'PROVEN' });
   }
   probeEvidence.sort((left, right) => compareCodePoint(`${left.role}:${left.probeId}`, `${right.role}:${right.probeId}`));
+  return ok(probeEvidence);
+}
 
-  const currentEvidence = probeEvidence.every(probe => probe.accepted);
+type BugProofAssessment = { disposition: BugProofDisposition; reasons: string[]; predecessor: SemanticFinding | null };
+
+function validateFalsePositiveAdjudication(input: BugProofEvaluationInput, facts: BugProofProofFacts,
+  probes: readonly BugProofProbeEvidenceReceipt[], conditions: { currentEvidence: boolean; chainProven: boolean; selectionClear: boolean;
+    invalidationComplete: boolean; controlsMatch: boolean; positiveRefuted: boolean }, options: OperationOptions): Result<true> {
+  const falsePositive = input.falsePositive;
+  if (!falsePositive) return ok(true);
+  const priorReceipt = verifyReceipt(falsePositive.priorReceipt, options);
+  if (!priorReceipt.ok) return priorReceipt;
+  const acceptedEvidence = new Set(probes.filter(probe => probe.accepted).map(probe => probe.evidenceId));
+  const positiveEvidence = new Set(probes.filter(probe => probe.role === 'POSITIVE').map(probe => probe.evidenceId));
+  const { currentEvidence, chainProven, selectionClear, invalidationComplete, controlsMatch, positiveRefuted } = conditions;
+  const rationaleValid = falsePositive.rationale.trim().length >= 8 && falsePositive.rationale.trim().length <= 2048;
+  const predecessorValid = validId(falsePositive.priorFinding.findingId)
+    && falsePositive.priorFinding.subjectId === input.subjectId
+    && ['OPEN', 'INDETERMINATE'].includes(falsePositive.priorFinding.state)
+    && falsePositive.priorFinding.findingId !== input.findingId
+    && falsePositive.priorFinding.findingDigest === falsePositive.priorReceipt.finding.findingDigest
+    && falsePositive.priorReceipt.disposition === 'REPRODUCED_DEFECT'
+    && falsePositive.priorReceipt.finding.subjectId === input.subjectId
+    && falsePositive.priorReceipt.projectId === facts.manifest.projectId
+    && falsePositive.priorReceipt.lineageId === facts.manifest.lineageId;
+  const adjudicationEvidenceValid = falsePositive.evidenceIds.length > 0
+    && falsePositive.evidenceIds.length === sortedUnique(falsePositive.evidenceIds).length
+    && falsePositive.evidenceIds.every(id => acceptedEvidence.has(id) && positiveEvidence.has(id));
+  if (!currentEvidence || !chainProven || !selectionClear || !invalidationComplete || !controlsMatch || !positiveRefuted
+    || !rationaleValid || !predecessorValid || !adjudicationEvidenceValid) {
+    return fail('BPE26_FALSE_POSITIVE_UNSUPPORTED', 'False-positive disposition requires current accepted exact-state evidence, complete controls, rationale, and unresolved predecessor lineage.', input.bugProofId);
+  }
+  return ok(true);
+}
+
+function assessBugProofDisposition(input: BugProofEvaluationInput, facts: BugProofProofFacts,
+  probes: readonly BugProofProbeEvidenceReceipt[], options: OperationOptions): Result<BugProofAssessment> {
+  const positives = probes.filter(probe => probe.role === 'POSITIVE');
+  const currentEvidence = probes.every(probe => probe.accepted);
+  const { requirementProof, invariantProof, hypothesisProof } = facts;
   const chainProven = requirementProof.state === 'PROVEN' && invariantProof.state === 'PROVEN' && hypothesisProof.state === 'PROVEN';
-  const controlsMatch = probeEvidence.filter(probe => probe.role === 'NEGATIVE').every(probe => probe.observedOutcome === 'DEFECT_ABSENT');
-  const positives = probeEvidence.filter(probe => probe.role === 'POSITIVE');
+  const controlsMatch = probes.filter(probe => probe.role === 'NEGATIVE').every(probe => probe.observedOutcome === 'DEFECT_ABSENT');
   const positiveReproduced = positives.length > 0 && positives.every(probe => probe.observedOutcome === 'DEFECT_PRESENT');
   const positiveRefuted = positives.length > 0 && positives.every(probe => probe.observedOutcome === 'DEFECT_ABSENT');
   const selectionClear = input.testImpact.result.state === 'READY'
@@ -393,27 +584,13 @@ export function evaluateBugProof(
     && input.testImpact.result.unresolved.length === 0;
   const invalidationComplete = input.proofSnapshot.invalidationKnowledgeComplete !== false;
   const falsePositive = input.falsePositive;
-  let disposition: BugProofDisposition;
+  const conditions = { currentEvidence, chainProven, selectionClear, invalidationComplete, controlsMatch, positiveRefuted };
   const reasons: string[] = [];
+  let disposition: BugProofDisposition;
 
   if (falsePositive) {
-    const priorReceipt = verifyReceipt(falsePositive.priorReceipt, options);
-    if (!priorReceipt.ok) return priorReceipt;
-    const acceptedEvidence = new Set(probeEvidence.filter(probe => probe.accepted).map(probe => probe.evidenceId));
-    const positiveEvidence = new Set(positives.map(probe => probe.evidenceId));
-    if (!currentEvidence || !chainProven || !selectionClear || !invalidationComplete || !controlsMatch || !positiveRefuted
-      || falsePositive.rationale.trim().length < 8 || falsePositive.rationale.trim().length > 2048
-      || !validId(falsePositive.priorFinding.findingId) || falsePositive.priorFinding.subjectId !== input.subjectId
-      || !['OPEN', 'INDETERMINATE'].includes(falsePositive.priorFinding.state)
-      || falsePositive.priorReceipt.disposition !== 'REPRODUCED_DEFECT'
-      || falsePositive.priorReceipt.finding.findingDigest !== falsePositive.priorFinding.findingDigest
-      || falsePositive.priorReceipt.projectId !== manifest.projectId || falsePositive.priorReceipt.lineageId !== manifest.lineageId
-      || falsePositive.priorReceipt.finding.subjectId !== input.subjectId
-      || falsePositive.priorFinding.findingId === input.findingId || falsePositive.evidenceIds.length === 0
-      || falsePositive.evidenceIds.length !== sortedUnique(falsePositive.evidenceIds).length
-      || falsePositive.evidenceIds.some(id => !acceptedEvidence.has(id) || !positiveEvidence.has(id))) {
-      return fail('BPE26_FALSE_POSITIVE_UNSUPPORTED', 'False-positive disposition requires current accepted exact-state evidence, complete controls, rationale, and unresolved predecessor lineage.', input.bugProofId);
-    }
+    const validAdjudication = validateFalsePositiveAdjudication(input, facts, probes, conditions, options);
+    if (!validAdjudication.ok) return validAdjudication;
     disposition = 'FALSE_POSITIVE';
     reasons.push('FALSE_POSITIVE_EXPLICIT_EVIDENCE_AND_LINEAGE');
   } else if (!currentEvidence || !chainProven || !selectionClear || !invalidationComplete) {
@@ -436,19 +613,43 @@ export function evaluateBugProof(
     reasons.push(positives.some(probe => probe.observedOutcome === 'NOT_RUN') ? 'POSITIVE_PROBE_NOT_RUN' : 'DEFECT_NOT_REPRODUCED');
   }
 
-  const evidenceDigests = sortedUnique(probeEvidence.map(probe => probe.evidenceSemanticDigest));
-  const proofDigests = sortedUnique([evaluated.value.evaluationDigest, input.proofSnapshot.snapshotDigest, evaluated.value.m24ContextDigest]);
-  const predecessor: SemanticFinding | null = disposition === 'FALSE_POSITIVE' ? falsePositive?.priorFinding ?? null : null;
-  const findingState = disposition === 'REPRODUCED_DEFECT' ? 'OPEN' : disposition === 'FALSE_POSITIVE' ? 'RESOLVED' : 'INDETERMINATE';
-  const ruleId = disposition === 'REPRODUCED_DEFECT' ? 'U12-04-REPRODUCED-DEFECT'
-    : disposition === 'FALSE_POSITIVE' ? 'U12-04-FALSE-POSITIVE'
-      : disposition === 'HYPOTHESIS' ? 'U12-04-UNRESOLVED-HYPOTHESIS' : 'U12-04-INDETERMINATE';
+  const predecessor = disposition === 'FALSE_POSITIVE' ? falsePositive?.priorFinding ?? null : null;
+  return ok({ disposition, reasons, predecessor });
+}
+
+export function evaluateBugProof(
+  input: BugProofEvaluationInput,
+  proofOptions: import('@gef-bootstrap/proof-graph').OperationOptions,
+  options: OperationOptions,
+): Result<BugProofReceipt> {
+  const guard = new Guard(options);
+  const validInput = validateBugProofInput(input, guard, options);
+  if (!validInput.ok) return validInput;
+
+  const validContext = validateM24M25ContextAndClaims(input);
+  if (!validContext.ok) return validContext;
+  const facts = evaluateM25Proof(input, proofOptions, options);
+  if (!facts.ok) return facts;
+  const evidenceIndex = indexM24Evidence(input, guard);
+  if (!evidenceIndex.ok) return evidenceIndex;
+  const probeEvidence = bindProbeEvidence(input, evidenceIndex.value, facts.value.hypothesisProof);
+  if (!probeEvidence.ok) return probeEvidence;
+  const { manifest, evaluation: evaluated, sourceAuthorityDigest, requirementProof, invariantProof, hypothesisProof } = facts.value;
+  const probeEvidenceItems = probeEvidence.value;
+  const assessment = assessBugProofDisposition(input, facts.value, probeEvidenceItems, options);
+  if (!assessment.ok) return assessment;
+  const falsePositive = input.falsePositive;
+  const { disposition, reasons, predecessor } = assessment.value;
+
+  const evidenceDigests = sortedUnique(probeEvidenceItems.map(probe => probe.evidenceSemanticDigest));
+  const proofDigests = sortedUnique([evaluated.evaluationDigest, input.proofSnapshot.snapshotDigest, evaluated.m24ContextDigest]);
+  const findingSemantics = findingProjection(disposition);
   const finding = createSemanticFinding({
     findingId: input.findingId,
     subjectId: input.subjectId,
     severity: input.severity,
-    state: findingState,
-    ruleId,
+    state: findingSemantics.state,
+    ruleId: findingSemantics.ruleId,
     beforeSemanticDigest: predecessor?.afterSemanticDigest ?? null,
     afterSemanticDigest: input.sourceIdentityDigest,
     evidenceDigests,
@@ -461,7 +662,7 @@ export function evaluateBugProof(
     if (!register.ok) return register;
   }
 
-  const normalizedProbes = probeEvidence.map(probe => ({ ...probe }));
+  const normalizedProbes = probeEvidenceItems.map(probe => ({ ...probe }));
   const hypothesisBody = {
     subjectId: input.subjectId,
     projectId: manifest.projectId,
@@ -473,7 +674,7 @@ export function evaluateBugProof(
     invariantClaimId: input.invariantClaimId,
     hypothesisClaimId: input.hypothesisClaimId,
     proofSnapshotDigest: input.proofSnapshot.snapshotDigest,
-    m24ContextDigest: evaluated.value.m24ContextDigest,
+    m24ContextDigest: evaluated.m24ContextDigest,
     testImpactResultDigest: input.testImpact.result.digest,
     testImpactHandoffDigest: input.testImpact.handoff.digest,
     probeIdentity: normalizedProbes.map(probe => ({
@@ -499,8 +700,8 @@ export function evaluateBugProof(
     proofPolicyDigest: manifest.proofPolicyDigest,
     sourceAuthorityDigest,
     proofSnapshotDigest: input.proofSnapshot.snapshotDigest,
-    proofEvaluationDigest: evaluated.value.evaluationDigest,
-    m24ContextDigest: evaluated.value.m24ContextDigest,
+    proofEvaluationDigest: evaluated.evaluationDigest,
+    m24ContextDigest: evaluated.m24ContextDigest,
     invalidationVectorDigest: input.proofSnapshot.invalidationVectorDigest,
     invalidationChangedDependencyDigests: sortedUnique(input.proofSnapshot.invalidationChangedDependencyDigests),
     invalidationKnowledgeComplete: input.proofSnapshot.invalidationKnowledgeComplete,
@@ -529,61 +730,76 @@ export function evaluateBugProof(
   return receiptDigest.ok ? ok(deepFreeze({ ...receiptBody, receiptDigest: receiptDigest.value })) : receiptDigest;
 }
 
+type ReplayAccumulator = {
+  accepted: string[];
+  acceptedSet: Set<string>;
+  duplicates: string[];
+  duplicateFindings: Set<string>;
+  doubleCountedEvidence: Set<string>;
+  conflicts: Set<string>;
+  byContext: Map<string, string>;
+  byFinding: Map<string, string>;
+  evidenceOwner: Map<string, string>;
+};
+
+function processReplayReceipt(receipt: BugProofReceipt, accumulator: ReplayAccumulator, guard: Guard,
+  options: OperationOptions): Result<true> {
+  const step = guard.step(`bug-proof-replay:${receipt.bugProofId}`);
+  if (!step.ok) return step;
+  const verified = verifyReceipt(receipt, options);
+  if (!verified.ok) return verified;
+  if (accumulator.acceptedSet.has(receipt.receiptDigest)) {
+    accumulator.duplicates.push(receipt.receiptDigest);
+    return ok(true);
+  }
+  accumulator.acceptedSet.add(receipt.receiptDigest);
+  const contextKey = `${receipt.bugProofId}:${receipt.hypothesisDigest}:${receipt.proofSnapshotDigest}:${receipt.testImpactResultDigest}`;
+  const sameContext = accumulator.byContext.get(contextKey);
+  if (sameContext && sameContext !== receipt.receiptDigest) accumulator.conflicts.add(receipt.bugProofId);
+  else accumulator.byContext.set(contextKey, receipt.receiptDigest);
+  const findingOwner = accumulator.byFinding.get(receipt.finding.findingDigest);
+  if (findingOwner) {
+    accumulator.duplicateFindings.add(receipt.finding.findingDigest);
+    return ok(true);
+  }
+  accumulator.byFinding.set(receipt.finding.findingDigest, receipt.bugProofId);
+  let reused = false;
+  for (const probe of receipt.probeEvidence) {
+    const owner = accumulator.evidenceOwner.get(probe.evidenceSemanticDigest);
+    if (owner && owner !== receipt.bugProofId) {
+      accumulator.doubleCountedEvidence.add(probe.evidenceSemanticDigest);
+      accumulator.conflicts.add(owner);
+      accumulator.conflicts.add(receipt.bugProofId);
+      reused = true;
+    } else accumulator.evidenceOwner.set(probe.evidenceSemanticDigest, receipt.bugProofId);
+  }
+  if (!reused) accumulator.accepted.push(receipt.receiptDigest);
+  return ok(true);
+}
+
 export function createBugProofReplayGuard(history: readonly BugProofReceipt[], options: OperationOptions): Result<BugProofReplayGuard> {
   const limit = Math.max(1, Math.min(options.maxHistory ?? 4096, 65536));
   const processed = history.slice(0, limit).slice().sort((left, right) => compareCodePoint(`${left.bugProofId}:${left.receiptDigest}`, `${right.bugProofId}:${right.receiptDigest}`));
-  const accepted: string[] = [];
-  const acceptedSet = new Set<string>();
-  const duplicates: string[] = [];
-  const duplicateFindings = new Set<string>();
-  const doubleCountedEvidence = new Set<string>();
-  const conflicts = new Set<string>();
-  const byContext = new Map<string, string>();
-  const byFinding = new Map<string, string>();
-  const evidenceOwner = new Map<string, string>();
+  const accumulator: ReplayAccumulator = {
+    accepted: [], acceptedSet: new Set<string>(), duplicates: [], duplicateFindings: new Set<string>(),
+    doubleCountedEvidence: new Set<string>(), conflicts: new Set<string>(), byContext: new Map<string, string>(),
+    byFinding: new Map<string, string>(), evidenceOwner: new Map<string, string>(),
+  };
   const guard = new Guard(options);
 
   for (const receipt of processed) {
-    const step = guard.step(`bug-proof-replay:${receipt.bugProofId}`);
-    if (!step.ok) return step;
-    const verified = verifyReceipt(receipt, options);
-    if (!verified.ok) return verified;
-    if (acceptedSet.has(receipt.receiptDigest)) {
-      duplicates.push(receipt.receiptDigest);
-      continue;
-    }
-    acceptedSet.add(receipt.receiptDigest);
-    const contextKey = `${receipt.bugProofId}:${receipt.hypothesisDigest}:${receipt.proofSnapshotDigest}:${receipt.testImpactResultDigest}`;
-    const sameContext = byContext.get(contextKey);
-    if (sameContext && sameContext !== receipt.receiptDigest) conflicts.add(receipt.bugProofId);
-    else byContext.set(contextKey, receipt.receiptDigest);
-    const findingOwner = byFinding.get(receipt.finding.findingDigest);
-    if (findingOwner) {
-      duplicateFindings.add(receipt.finding.findingDigest);
-      continue;
-    }
-    byFinding.set(receipt.finding.findingDigest, receipt.bugProofId);
-    let reused = false;
-    for (const probe of receipt.probeEvidence) {
-      const owner = evidenceOwner.get(probe.evidenceSemanticDigest);
-      if (owner && owner !== receipt.bugProofId) {
-        doubleCountedEvidence.add(probe.evidenceSemanticDigest);
-        conflicts.add(owner);
-        conflicts.add(receipt.bugProofId);
-        reused = true;
-      } else evidenceOwner.set(probe.evidenceSemanticDigest, receipt.bugProofId);
-    }
-    if (!reused) accepted.push(receipt.receiptDigest);
+    const result = processReplayReceipt(receipt, accumulator, guard, options);
+    if (!result.ok) return result;
   }
   const historyTruncated = history.length > processed.length;
-  const state: BugProofReplayState = conflicts.size > 0 || doubleCountedEvidence.size > 0 ? 'CONFLICT' : historyTruncated ? 'TRUNCATED' : 'CLEAR';
+  const state = replayState(accumulator.conflicts, accumulator.doubleCountedEvidence, historyTruncated);
   const body = {
     state,
-    acceptedReceiptDigests: sortedUnique(accepted),
-    duplicateReceiptDigests: sortedUnique(duplicates),
-    duplicateFindingDigests: sortedUnique([...duplicateFindings]),
-    doubleCountedEvidenceDigests: sortedUnique([...doubleCountedEvidence]),
-    conflictingBugProofIds: sortedUnique([...conflicts]),
+    acceptedReceiptDigests: sortedUnique(accumulator.accepted),
+    duplicateReceiptDigests: sortedUnique(accumulator.duplicates),
+    duplicateFindingDigests: sortedUnique([...accumulator.duplicateFindings]),
+    doubleCountedEvidenceDigests: sortedUnique([...accumulator.doubleCountedEvidence]),
+    conflictingBugProofIds: sortedUnique([...accumulator.conflicts]),
     historyTruncated,
     processedCount: processed.length,
     totalCount: history.length,

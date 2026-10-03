@@ -7,6 +7,7 @@ export type BugProofDisposition='HYPOTHESIS'|'REPRODUCED_DEFECT'|'FALSE_POSITIVE
 export type BugProofValidationLevel='L0'|'L1'|'L2'|'L3'|'L4'|'L5';
 export type BugProofUncertainty='NONE'|'LOCAL'|'BOUNDARY'|'SYSTEMIC'|'CONFLICT'|'UNKNOWN'|'TRUNCATED';
 export type BugProofImpactState='READY'|'WIDENED'|'CORRECTION_REQUIRED'|'BLOCKED'|'INDETERMINATE'|'TRUNCATED';
+export type BugProofProofState='PROVEN'|'UNPROVEN'|'STALE'|'CONFLICT'|'INDETERMINATE'|'TRUNCATED';
 
 export interface BugProofProbeInput{
  readonly probeId:string;
@@ -49,11 +50,11 @@ export interface BugProofEvaluationInput{
  readonly testImpact:BugProofTestImpactInput;
  readonly falsePositive?:BugProofFalsePositiveInput;
 }
-export interface BugProofProbeEvidenceReceipt extends BugProofProbeInput{readonly evidenceSemanticDigest:string;readonly proofState:'PROVEN'|'UNPROVEN'|'STALE'|'CONFLICT'|'INDETERMINATE'|'TRUNCATED';readonly accepted:boolean;}
+export interface BugProofProbeEvidenceReceipt extends BugProofProbeInput{readonly evidenceSemanticDigest:string;readonly proofState:BugProofProofState;readonly accepted:boolean;}
 export interface BugProofReceipt{
  readonly bugProofId:string;readonly hypothesisDigest:string;readonly requirementClaimId:string;readonly invariantClaimId:string;readonly hypothesisClaimId:string;readonly findingId:string;readonly projectId:string;readonly lineageId:string;readonly sourceIdentityDigest:string;readonly proofPolicyDigest:string;
  readonly sourceAuthorityDigest:string;readonly proofSnapshotDigest:string;readonly proofEvaluationDigest:string;readonly m24ContextDigest:string;readonly invalidationVectorDigest:string|null;readonly invalidationChangedDependencyDigests:readonly string[];readonly invalidationKnowledgeComplete:boolean|null;readonly testImpactResultDigest:string;readonly testImpactHandoffDigest:string;
- readonly requirementProofState:'PROVEN'|'UNPROVEN'|'STALE'|'CONFLICT'|'INDETERMINATE'|'TRUNCATED';readonly invariantProofState:'PROVEN'|'UNPROVEN'|'STALE'|'CONFLICT'|'INDETERMINATE'|'TRUNCATED';readonly hypothesisProofState:'PROVEN'|'UNPROVEN'|'STALE'|'CONFLICT'|'INDETERMINATE'|'TRUNCATED';
+ readonly requirementProofState:BugProofProofState;readonly invariantProofState:BugProofProofState;readonly hypothesisProofState:BugProofProofState;
  readonly testImpactState:BugProofImpactState;readonly testImpactUncertainty:BugProofUncertainty;readonly testImpactValidationLevel:BugProofValidationLevel;readonly testImpactRequiredLevel:BugProofValidationLevel;readonly selectedTargetIds:readonly string[];readonly mandatoryTargetIds:readonly string[];readonly finalAssuranceTargetIds:readonly string[];readonly unresolvedTestIds:readonly string[];
  readonly probeEvidence:readonly BugProofProbeEvidenceReceipt[];readonly disposition:BugProofDisposition;readonly reasonCodes:readonly string[];readonly finding:SemanticFinding;readonly predecessorFindingDigest:string|null;readonly falsePositiveRationale:string|null;readonly falsePositiveEvidenceIds:readonly string[];readonly receiptDigest:string;
 }
