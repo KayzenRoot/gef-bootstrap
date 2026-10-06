@@ -365,3 +365,28 @@ The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED`
 
 **Post-merge next state:** `GBS_V12_WO_002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`.
 
+## V1.2 WO-002 implementation promotion — GBS-V12-GOV-005
+
+**State:** `WO002_PROMOTION_CANDIDATE_3_OF_10`. This section becomes effective only after the exact-head owner audit and governed merge of GBS-V12-GOV-005. It records only already-proven WO-002 implementation facts; it does not implement another U12 obligation or any profile.
+
+- Governance issue: `#389`.
+- Implementation Work Order: `GBS-V12-WO-002`; issue `#380`.
+- Implementation PR: `#384`.
+- Final audited PR head: `ea721c46010e99391f39b3714554bede9c1e0238`.
+- Final owner re-audit: review `#5428340938`, `APPROVED / NOT_INDEPENDENT`, CRITICAL/HIGH `0 / 0`.
+- Governed implementation squash merge: `0a5e9196bcea423ed48197bfe78629ed10d23bec`.
+- Exact post-merge main assurance on that SHA: `8 / 8 SUCCESS`, zero pending/failed check-runs.
+- Main ruleset required contexts passed: `Repository validation`, `Pipeline integrity`, `Gitleaks secrets`, `Trivy filesystem and configuration`.
+- Additional exact-main checks passed: `Analyze TypeScript`, `Node coverage LCOV`, `Socket Security: Project Report`, `SonarCloud Code Analysis`.
+- All 12 changed-path Git blobs are identical between the final audited PR head and the squash-merge main commit.
+- `U12-04` = `IMPLEMENTED / PASS`.
+- `U12-03` and `U12-05..U12-10` remain `NOT_IMPLEMENTED`.
+- Universal V1.2 implementation denominator after promotion: `3 / 10 = 30%`; remaining `7 / 10 = 70%`.
+- Conditional profiles remain separately unimplemented. SaaS no-real-money, EVM/Godot, US$ 0 paid-tool/expanded-CI and HIGH_ASSURANCE specialist-review boundaries remain unchanged.
+- Active V1.2 implementation Work Order after promotion: `NONE`.
+- No package version, tag, release, deployment, dependency, workflow or profile implementation is promoted by GOV-005.
+- Next legal V1.2 action after promotion: admit the next owner-authorized governed Work Order from current canonical truth.
+
+**Pre-merge stop:** `GBS_V12_GOV_005_WO002_PROMOTION_READY_FOR_OWNER_AUDIT`.
+
+**Post-merge terminal state:** `GBS_V12_WO_002_PROMOTED`.
