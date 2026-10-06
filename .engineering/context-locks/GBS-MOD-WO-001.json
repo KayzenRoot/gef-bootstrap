@@ -3,7 +3,7 @@
   "programIssue": 393,
   "workOrder": "GBS-MOD-WO-001",
   "issue": 394,
-  "state": "ADMISSION_PLANNING_READY_FOR_OWNER_AUDIT",
+  "state": "ADMITTED_READY_FOR_CODEX",
   "risk": "ELEVATED",
   "repository": "KayzenRoot/gef-bootstrap",
   "ownerAccount": "KayzenRoot",
@@ -40,10 +40,21 @@
     ".github/workflows/m01-validation.yml": "2a2846b851796342abf387b2190f41647634e7f8"
   },
   "baselineObservation": {
-    "referencePr": 390,
-    "changedPaths": 3,
-    "observedCheckRuns": 38,
-    "note": "Baseline observation only; no speed percentage claim."
+    "referencePrs": [
+      {
+        "pr": 390,
+        "changedPaths": 3,
+        "observedCheckRuns": 38,
+        "class": "GOVERNANCE_PROMOTION"
+      },
+      {
+        "pr": 395,
+        "changedPaths": 2,
+        "observedCheckRuns": 38,
+        "class": "PLANNING_ADMISSION"
+      }
+    ],
+    "note": "Baseline only. No percentage speed claim until comparable post-change fixtures exist."
   },
   "planningAuthorization": {
     "implementationAuthorized": false,
@@ -59,19 +70,172 @@
     ]
   },
   "staleIf": [
-    "main differs from admissionBase.sha before admission owner audit",
-    "any sourceFingerprintAtAdmissionBase differs before admission owner audit",
-    "Issue #394 is closed, superseded or materially amended",
-    "planning branch no longer descends from admissionBase.sha",
-    "planning diff contains paths outside planningAuthorization.writeAllowed"
+    "main no longer equals implementationBase.sha before first executor mutation",
+    "Work Order #394 is closed, superseded or materially amended",
+    "any critical canonical or implementation fingerprint changes before first executor mutation",
+    "implementation branch is not descended from implementationBase.sha",
+    "required ruleset contexts change before workflow routing design is frozen",
+    "executor requires a write outside implementationAuthorization.writeAllowed",
+    "a Source Hierarchy/Architecture/Security/DoD conflict is discovered"
   ],
-  "admissionStopCondition": "GBS_MOD_WO_001_ADMISSION_READY_FOR_OWNER_AUDIT",
-  "postAdmissionStopCondition": "GBS_MOD_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+  "admissionStopCondition": "GBS_MOD_WO_001_ADMITTED",
+  "postAdmissionStopCondition": "GBS_MOD_WO_001_ADMITTED_READY_FOR_CODEX",
   "implementationStopCondition": "GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT",
   "terminalStopCondition": "GBS_MOD_WO_001_PROMOTED",
   "workOrderBlobAtPlanningHead": "18fc19b1679c44dfdfa2f54b181e3a641b68abbc",
   "issueUpdatedAt": "2026-10-06T13:01:19Z",
   "planningAmendmentCommit": "0952057c404e48339a1ba9aa634d6bd15deb648f",
   "lockRefreshReason": "Issue/Work Order materially amended to add mandatory FILE INTENT / WRITE_ALLOWED / WRITE_FORBIDDEN boundaries; prior planning lock superseded.",
-  "priorPlanningLockSuperseded": true
+  "priorPlanningLockSuperseded": true,
+  "admissionPromotion": {
+    "pullRequest": 395,
+    "auditedHead": "635440163abbd626d738a39338f2f7d723c63196",
+    "finalOwnerAuditReview": 5428935943,
+    "verdict": "APPROVED_NOT_INDEPENDENT",
+    "mergeSha": "921493797728a43aadc9f7840c954ce7e3ebc416",
+    "exactHeadChecks": {
+      "passed": 38,
+      "total": 38,
+      "failed": 0,
+      "pending": 0
+    },
+    "postMergeChecks": {
+      "passed": 7,
+      "total": 7,
+      "failed": 0,
+      "pending": 0
+    },
+    "coderabbitFindingDisposition": "NOT_AFFECTED_STALE_LOCAL_REFS"
+  },
+  "implementationBase": {
+    "ref": "main",
+    "sha": "921493797728a43aadc9f7840c954ce7e3ebc416",
+    "v12Credit": "3/10",
+    "v12Stop": "GBS_V12_WO_002_PROMOTED"
+  },
+  "implementationBranch": "feat/mod/wo-001-agent-native-gate",
+  "implementationPr": "PENDING_DRAFT_PR_CREATION",
+  "implementationAuthorization": {
+    "implementationAuthorized": true,
+    "executor": "Codex",
+    "ownerAudit": "ChatGPT_NOT_INDEPENDENT",
+    "writeAllowed": [
+      "AGENTS.md",
+      "packages/contracts/src/**",
+      "packages/preflight/src/**",
+      "packages/task-context-compiler/src/**",
+      "packages/test-impact-engine/src/**",
+      "packages/assurance-pipeline/src/**",
+      "packages/cli/src/** only if thin exposure is proven necessary",
+      "packages/cli/schemas/** only if schema exposure is proven necessary",
+      "focused tests/**",
+      "minimum necessary .github/workflows/** routing changes after equivalence proof",
+      ".engineering/evidence/GBS-MOD-WO-001-*",
+      ".engineering/checkpoint-deltas/GBS-MOD-WO-001-*",
+      ".engineering/work-orders/GBS-MOD-WO-001.md factual execution/evidence binding only",
+      ".engineering/context-locks/GBS-MOD-WO-001.json factual execution/evidence binding only"
+    ],
+    "writeForbidden": [
+      "unrelated product/profile packages",
+      "unrelated V1.2 obligation implementation",
+      "canonical .engineering/CHECKPOINT.md",
+      "canonical .engineering/CHECKPOINT.json",
+      "package version/tags/releases/deployment",
+      "branch/ruleset protection settings",
+      "new dependencies without owner-approved Correction Delta",
+      "broad workflow deletion or threshold reduction",
+      "force-push/history rewrite"
+    ]
+  },
+  "implementationSourceFingerprints": {
+    "canonical": {
+      "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
+      ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+      ".engineering/CHECKPOINT.md": "ea31e6cab8964aca4b0f74296b2953e6da51d6d7",
+      ".engineering/CHECKPOINT.json": "468dec80ad5a48c044e4282d87481a8267f44866",
+      ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+      ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+      ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+      ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+      ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+      ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md": "b734c110d48311e339295fdd834ebff91a8cc461",
+      ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
+      ".engineering/work-orders/GBS-MOD-WO-001.md": "18fc19b1679c44dfdfa2f54b181e3a641b68abbc",
+      "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+    },
+    "taskContextCompiler": {
+      "types.ts": "1f50794072fba694d1129fa0318e6dcad9f616b3",
+      "s02-source-routing.ts": "b0ac51e22443c87942bf3b373732189b779acba8",
+      "s03-msc-proof.ts": "702ab840d45d7fa96ca7d339ac7902875645b12d",
+      "s04-safe-expansion.ts": "df612bd014b2eb76f742c1c38b840ffe7bf0366f"
+    },
+    "preflight": {
+      "types.ts": "f4a31569c10b3ad5862bbcbfae504d7a99c10e1e",
+      "canonical.ts": "9b83eb0c45360e68e3013e17ccfd22f8c90d0dc4",
+      "project-state.ts": "05c8329ee79be20ab8e033a2db4cbf33df32e604"
+    },
+    "testImpact": {
+      "types.ts": "df6b33c4e26f328af14b396081c3e29b1f8e0fd5",
+      "s02-selection-reuse.ts": "30b9d428721b32eccef3ef4110066c56d08808b4",
+      "s03-regression-radius.ts": "a935237fc62102bb9a1b8b95e9e8dcafaac988e4"
+    },
+    "assurance": {
+      "types.ts": "a9e2346d1ee77ea009a3016927adeed1e831f9f0",
+      "s01-classification.ts": "c1e603b4a92208c6c53d853df1977aac823d16cb",
+      "s02-requirements.ts": "99f5e73b210c2ef8e3d3443235cc325796cb514e",
+      "s04-gates.ts": "514d90df883bdfba4f614b354bd62cd03e4e1ee3"
+    },
+    "contracts": {
+      "index.ts": "b56ed1a8b871a791895c628e57287fd10e1b494f"
+    }
+  },
+  "workflowFingerprintsAtImplementationBase": {
+    ".github/workflows/repository-validation.yml": "38c801e6009663448194045ab27ef25c7dcbf0f0",
+    ".github/workflows/pipeline-integrity.yml": "8a7f58eefe47240b42b890c18f4f5f30c3e84eec",
+    ".github/workflows/free-security-pilot.yml": "38137ef513fcc52d6e14a42c6a5ebcc2f1b05f69",
+    ".github/workflows/dependency-review.yml": "3d34f93903798345abcbd345640f1e04f5e0d424",
+    ".github/workflows/coverage-codecov.yml": "005e04fe7d3306ef64613317f89115adf67c7791",
+    ".github/workflows/security-codeql.yml": "554e26bf9d16aceee708d48f86251495bd74e993",
+    ".github/workflows/v11-release-assurance.yml": "9f4d326e4f23eabcc61f8d6719de43c60dd82aef",
+    ".github/workflows/m14-platform.yml": "d266007035a508560ef113d588e847dc2e8e27a2",
+    ".github/workflows/m27-platform.yml": "452590f5fc3f12e36c1fddf95674f9ed85734d37",
+    ".github/workflows/m28-platform.yml": "3f37c5770373e6a67c8c3903254461bb52d2e8e1"
+  },
+  "requiredMainRulesetContexts": [
+    "Repository validation",
+    "Pipeline integrity",
+    "Gitleaks secrets",
+    "Trivy filesystem and configuration"
+  ],
+  "executionMap": {
+    "preferredOrder": [
+      "A machine-readable WO contract/schema",
+      "B deterministic change-impact + risk classification",
+      "C risk-adaptive context/preflight",
+      "D dependency/test-impact closure",
+      "E stable GEF Gate receipt",
+      "F minimum workflow routing after equivalence proof",
+      "G adversarial fixtures + comparable benchmark"
+    ],
+    "regressions": [
+      "tests/m14-task-context-compiler.test.mjs",
+      "tests/m14-startup-purity.test.mjs",
+      "tests/v12-wo-001-guided-discovery.test.mjs",
+      "tests/m27-assurance-pipeline.test.mjs",
+      "tests/m27-startup-purity.test.mjs",
+      "tests/m27-hardening.test.mjs",
+      "tests/m28-test-impact-engine.test.mjs",
+      "tests/m28-radius.test.mjs",
+      "tests/m28-closure.test.mjs",
+      "tests/m28-wave-safety.test.mjs",
+      "tests/m28-policy-drift.test.mjs",
+      "tests/m28-assurance-floor.test.mjs",
+      "tests/m28-context-binding.test.mjs",
+      "tests/m28-hardening.test.mjs",
+      "tests/m04.test.mjs",
+      "tests/m04-smallest-fact-graph.test.mjs",
+      "tests/m04-compact-snapshot.test.mjs"
+    ]
+  },
+  "executionStartCondition": "GBS_MOD_WO_001_CODEX_EXECUTION_AUTHORIZED"
 }
