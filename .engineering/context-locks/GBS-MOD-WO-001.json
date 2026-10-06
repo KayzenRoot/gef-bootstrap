@@ -114,7 +114,7 @@
     "v12Stop": "GBS_V12_WO_002_PROMOTED"
   },
   "implementationBranch": "feat/mod/wo-001-agent-native-gate",
-  "implementationPr": "PENDING_DRAFT_PR_CREATION",
+  "implementationPr": 407,
   "implementationAuthorization": {
     "implementationAuthorized": true,
     "executor": "Codex",
@@ -237,5 +237,7 @@
       "tests/m04-compact-snapshot.test.mjs"
     ]
   },
-  "executionStartCondition": "GBS_MOD_WO_001_CODEX_EXECUTION_AUTHORIZED"
+  "executionStartCondition": "GBS_MOD_WO_001_CODEX_EXECUTION_AUTHORIZED_ON_PR_407",
+  "implementationPrState": "DRAFT",
+  "implementationPrInitialHead": "b74c25745552b3b2e81e0d013a9704b3356c0541"
 }
