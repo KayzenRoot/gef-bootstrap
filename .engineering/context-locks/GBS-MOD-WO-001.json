@@ -68,5 +68,10 @@
   "admissionStopCondition": "GBS_MOD_WO_001_ADMISSION_READY_FOR_OWNER_AUDIT",
   "postAdmissionStopCondition": "GBS_MOD_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
   "implementationStopCondition": "GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT",
-  "terminalStopCondition": "GBS_MOD_WO_001_PROMOTED"
+  "terminalStopCondition": "GBS_MOD_WO_001_PROMOTED",
+  "workOrderBlobAtPlanningHead": "18fc19b1679c44dfdfa2f54b181e3a641b68abbc",
+  "issueUpdatedAt": "2026-10-06T13:01:19Z",
+  "planningAmendmentCommit": "0952057c404e48339a1ba9aa634d6bd15deb648f",
+  "lockRefreshReason": "Issue/Work Order materially amended to add mandatory FILE INTENT / WRITE_ALLOWED / WRITE_FORBIDDEN boundaries; prior planning lock superseded.",
+  "priorPlanningLockSuperseded": true
 }
