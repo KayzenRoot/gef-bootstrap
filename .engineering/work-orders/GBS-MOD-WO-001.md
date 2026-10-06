@@ -79,6 +79,43 @@ READ_IF_TRIGGERED:
 - profile docs only if a profile path is touched;
 - migration/data contracts only when changed paths/contracts require them.
 
+## FILE INTENT / WRITE BOUNDARY
+
+MUST_READ implementation ownership candidates:
+- `packages/contracts/src/**`
+- `packages/preflight/src/**`
+- `packages/task-context-compiler/src/**`
+- `packages/test-impact-engine/src/**`
+- `packages/assurance-pipeline/src/**`
+- `packages/cli/src/**` only if a thin CLI exposure is required
+- relevant existing tests and workflow trigger definitions
+
+WRITE_ALLOWED after fresh implementation-lock audit:
+- `AGENTS.md`
+- `packages/contracts/src/**`
+- `packages/preflight/src/**`
+- `packages/task-context-compiler/src/**`
+- `packages/test-impact-engine/src/**`
+- `packages/assurance-pipeline/src/**`
+- `packages/cli/src/**` and `packages/cli/schemas/**` only for thin public/schema exposure proven necessary
+- focused `tests/**`
+- only the minimum existing `.github/workflows/**` files whose trigger/routing logic is proven necessary by exact preflight
+- `.engineering/evidence/GBS-MOD-WO-001-*`
+- `.engineering/checkpoint-deltas/GBS-MOD-WO-001-*`
+- this Work Order / Context Lock only for factual execution/evidence binding
+
+WRITE_FORBIDDEN without separately owner-approved Correction Delta:
+- product/profile-specific packages unrelated to the routing contract
+- V1.2 U12 implementation surfaces unrelated to shared preflight/context/assurance ownership
+- package version, tags, releases or deployment manifests
+- canonical `CHECKPOINT.md` / `CHECKPOINT.json` during implementation
+- branch/ruleset protection settings
+- dependency additions
+- broad workflow deletion or threshold reduction
+- generated/vendor files except deterministic regeneration already required by an authorized source change
+
+Any need to write outside WRITE_ALLOWED is a STOP + Correction Delta, not implicit scope expansion.
+
 ## ARCHITECTURE RULES
 - Extend existing preflight/context/test-impact/assurance engines. No parallel policy engine.
 - GitHub remains provider adapter/evidence surface, not semantic authority.
