@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "1.0",
+  "programIssue": 393,
+  "workOrder": "GBS-MOD-WO-001",
+  "issue": 394,
+  "state": "ADMISSION_PLANNING_READY_FOR_OWNER_AUDIT",
+  "risk": "ELEVATED",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "ownerAccount": "KayzenRoot",
+  "planningBranch": "planning/mod/wo-001-agent-native-admission",
+  "admissionBase": {
+    "ref": "main",
+    "sha": "d81759c534da0bc0ac0df7a3f5372ed8d1e0089e",
+    "v12Credit": "3/10",
+    "v12Stop": "GBS_V12_WO_002_PROMOTED"
+  },
+  "productCredit": "NONE",
+  "sourceFingerprintsAtAdmissionBase": {
+    "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
+    ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    ".engineering/CHECKPOINT.md": "ea31e6cab8964aca4b0f74296b2953e6da51d6d7",
+    ".engineering/CHECKPOINT.json": "468dec80ad5a48c044e4282d87481a8267f44866",
+    ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+    ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+    ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+    ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+    ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md": "b734c110d48311e339295fdd834ebff91a8cc461",
+    ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
+    "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+  },
+  "workflowFingerprintsAtAdmissionBase": {
+    ".github/workflows/repository-validation.yml": "38c801e6009663448194045ab27ef25c7dcbf0f0",
+    ".github/workflows/pipeline-integrity.yml": "8a7f58eefe47240b42b890c18f4f5f30c3e84eec",
+    ".github/workflows/free-security-pilot.yml": "38137ef513fcc52d6e14a42c6a5ebcc2f1b05f69",
+    ".github/workflows/dependency-review.yml": "3d34f93903798345abcbd345640f1e04f5e0d424",
+    ".github/workflows/coverage-codecov.yml": "005e04fe7d3306ef64613317f89115adf67c7791",
+    ".github/workflows/security-codeql.yml": "554e26bf9d16aceee708d48f86251495bd74e993",
+    ".github/workflows/v11-release-assurance.yml": "9f4d326e4f23eabcc61f8d6719de43c60dd82aef",
+    ".github/workflows/m01-validation.yml": "2a2846b851796342abf387b2190f41647634e7f8"
+  },
+  "baselineObservation": {
+    "referencePr": 390,
+    "changedPaths": 3,
+    "observedCheckRuns": 38,
+    "note": "Baseline observation only; no speed percentage claim."
+  },
+  "planningAuthorization": {
+    "implementationAuthorized": false,
+    "codeTestCiMigrationAuthor": "Codex",
+    "chatgptMayAuthor": [
+      "work-order",
+      "planning-context-lock",
+      "governance/evidence"
+    ],
+    "writeAllowed": [
+      ".engineering/work-orders/GBS-MOD-WO-001.md",
+      ".engineering/context-locks/GBS-MOD-WO-001.json"
+    ]
+  },
+  "staleIf": [
+    "main differs from admissionBase.sha before admission owner audit",
+    "any sourceFingerprintAtAdmissionBase differs before admission owner audit",
+    "Issue #394 is closed, superseded or materially amended",
+    "planning branch no longer descends from admissionBase.sha",
+    "planning diff contains paths outside planningAuthorization.writeAllowed"
+  ],
+  "admissionStopCondition": "GBS_MOD_WO_001_ADMISSION_READY_FOR_OWNER_AUDIT",
+  "postAdmissionStopCondition": "GBS_MOD_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+  "implementationStopCondition": "GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT",
+  "terminalStopCondition": "GBS_MOD_WO_001_PROMOTED"
+}
