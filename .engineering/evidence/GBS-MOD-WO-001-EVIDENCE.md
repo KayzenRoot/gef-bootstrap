@@ -164,8 +164,8 @@ restore on the provider side.
 | `npm ci --ignore-scripts` | 33 packages, 0 vulnerabilities |
 | `npm run build` | success, 27 packages |
 | `npm run typecheck` | success, 27 packages |
-| `npm run validate` (typecheck + `node --test tests/*.test.mjs`) | **1781 tests, 1781 pass, 0 fail, 0 skipped** |
-| `npm run validate` in a **depth-1 checkout** (the CI condition) | **1781 tests, 1781 pass, 0 fail, 0 skipped** |
+| `npm run validate` (typecheck + `node --test tests/*.test.mjs`) | **1778 tests, 1778 pass, 0 fail, 0 skipped** |
+| `npm run validate` in a **depth-1 checkout** (the CI condition) | **1781 tests, 1781 pass, 0 fail, 0 skipped** (before the deduplication below) |
 | `npm audit --audit-level=high` | 0 vulnerabilities |
 | `git diff --check` | clean |
 
@@ -319,6 +319,15 @@ missing revision or an absent path is a test failure rather than a skip. Three t
 that the same file has two different SHA-1 values under CRLF/LF while one stored identity, one proves
 that a missing path or unusable revision fails closed, and one corroborates the recorded base blob
 whenever the base revision happens to be fetched.
+
+After the Reliability condition went green, the Quality Gate moved to its next failing condition,
+`new_duplicated_lines_density` (4.127% against a 3% ceiling: 190 duplicated lines of 4604 new
+lines). That duplication was self-inflicted: re-applying the extraction refactors after the lost
+working tree left a 57-line copy of three gate tests, two copies of a twelve-field gate-input
+literal, and two orphaned JSDoc blocks. All four were removed and the literal was replaced with one
+shared `gateInput` factory, after which a local six-line CPD scan over the entire delta reports zero
+duplicated blocks in the new files. No rule was suppressed and no threshold was lowered; the ceiling
+is unchanged.
 
 **The first attempt at this correction was itself defective, and is recorded here.** It also required
 the recorded base revision, which made the suite fail on a depth-1 pull-request checkout — exactly how

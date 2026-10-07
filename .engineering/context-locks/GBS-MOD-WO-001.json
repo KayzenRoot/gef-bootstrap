@@ -267,8 +267,8 @@
       },
       "post": {
         "command": "npm run validate",
-        "tests": 1781,
-        "pass": 1781,
+        "tests": 1778,
+        "pass": 1778,
         "fail": 0,
         "skipped": 0
       },
@@ -285,8 +285,8 @@
       },
       "depthOneCheckout": {
         "command": "npm run validate",
-        "tests": 1781,
-        "pass": 1781,
+        "tests": 1778,
+        "pass": 1778,
         "fail": 0,
         "why": "CI checks out the pull request at depth 1, so the recorded implementation base is not fetched. The equivalence proof reads only the candidate stored object IDs; the base corroboration states its absence when the base is not present."
       }
@@ -368,11 +368,26 @@
       "repositoryValidationWorkingTreeSha1Crlf": "cec22b62b1c1779e3cc118f0ab93d1c4ee1047d0",
       "repositoryValidationStoredObjectId": "38c801e6009663448194045ab27ef25c7dcbf0f0",
       "recordedBlobAtImplementationBase": "38c801e6009663448194045ab27ef25c7dcbf0f0",
-      "tests": 1781,
-      "pass": 1781,
+      "tests": 1778,
+      "pass": 1778,
       "fail": 0,
       "interpretation": "The working-tree hash differs from the recorded identity while the stored object ID matches it, which is the platform dependence blocker 1 removed.",
       "scope": "local corroboration on a Linux host; authoritative Ubuntu, macOS and Windows results are the GitHub Actions runs on the candidate head"
+    },
+    "sonarDisposition": {
+      "reliabilityRatingCondition": "RESOLVED_ON_CANDIDATE",
+      "resolvedBy": "all 10 typescript:S2871 BUG findings removed via one canonical code-point comparator per package",
+      "remainingGateCondition": "new_duplicated_lines_density",
+      "measuredAtAuditedHead": {
+        "new_duplicated_lines": 190,
+        "new_duplicated_lines_density": "4.126846220677671",
+        "new_lines": 4604,
+        "threshold": "<= 3%"
+      },
+      "rootCauseOfRemainingCondition": "copy/paste duplication introduced by the extraction refactors and by re-applying those refactors after a lost working tree: a duplicated 57-line test block in tests/gbs-mod-wo-001-gef-gate.test.mjs, two duplicated gate-input literals in tests/gbs-mod-wo-001-pipeline-integrity.test.mjs, and two orphaned JSDoc blocks.",
+      "resolution": "duplicated block removed and replaced by a shared gateInput factory; orphaned JSDoc removed; local 6-line CPD scan over the whole delta now reports zero duplicated blocks in the new files",
+      "suppressedRules": "NONE",
+      "thresholdReductions": "NONE"
     }
   }
 }

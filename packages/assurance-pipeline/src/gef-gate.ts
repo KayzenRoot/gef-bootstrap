@@ -241,16 +241,11 @@ const IMPACT_STATES = ['CLASSIFIED', 'BLOCKED'] as const;
 const CONTEXT_LOCK_STATES = ['COMPILED', 'EXPANDED', 'BLOCKED'] as const;
 
 const SHA40 = /^[0-9a-f]{40}$/;
+
 function isStringArray(value: unknown): value is readonly string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string' && entry.length > 0);
 }
 
-/**
- * Derives the gate decision and receipt.
- *
- * Fail-closed order matters: an unproven ruleset context set blocks before anything else, because
- * "which checks are required" cannot be answered without knowing the ruleset.
- */
 /** The upstream states the gate consumes must be states this contract defines. */
 function validateUpstreamStates(input: GefGateInput): Result<never> | null {
   if (!IMPACT_STATES.includes(input.impactState)) {

@@ -528,12 +528,6 @@ const TIER_FOR_RISK: Readonly<Record<ChangeImpactTier, ChangeImpactTier>> = Obje
   HIGH_ASSURANCE: "HIGH_ASSURANCE",
 });
 
-/**
- * Classifies a changed-path set into a tier, an obligation set and a governance fast-path verdict.
- *
- * The result is a snapshot, not a verdict: the caller still has to bind it to an exact head and
- * the gate still has to decide. It never throws and never partially classifies.
- */
 /** Reasons a candidate cannot take the governance-only fast path, and why the tier must widen. */
 interface ImpactReasons {
   readonly escalate: string[];

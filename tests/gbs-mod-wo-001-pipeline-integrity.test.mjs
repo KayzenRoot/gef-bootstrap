@@ -83,6 +83,40 @@ const options = {
   digest: { algorithm: 'sha256', digest: (input) => createHash('sha256').update(input).digest('hex') },
 };
 
+/**
+ * A minimal gate input for the ruleset-contract assertions.
+ *
+ * Factored out because the two ruleset tests differ only in which contexts they present, and
+ * duplicating a dozen binding fields twice is exactly the copy/paste this file must not rely on.
+ */
+function gateInput(rulesetRequiredContexts) {
+  return {
+    gateId: 'GATE-RULESET-CONTRACT',
+    repository: 'KayzenRoot/gef-bootstrap',
+    workOrderId: 'GBS-MOD-WO-001',
+    baseRef: 'main',
+    baseSha: '1'.repeat(40),
+    headSha: '2'.repeat(40),
+    changedPaths: ['.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md'],
+    changeImpactDigest: sha('impact'),
+    impactState: 'CLASSIFIED',
+    riskTier: 'LOW',
+    governanceFastPath: 'PERMITTED',
+    escalateReasons: [],
+    obligations: MANDATORY_OBLIGATION_FLOOR,
+    contextLockDigest: sha('lock'),
+    contextLockState: 'COMPILED',
+    closureDigest: null,
+    validationFloor: null,
+    rulesetRequiredContexts,
+    mandatoryObligationFloor: MANDATORY_OBLIGATION_FLOOR,
+    providerCandidateChecks: [],
+    policyDigest: sha('policy'),
+    candidateSemanticDigest: sha('candidate'),
+  };
+}
+
+
 const sha = (value) => `sha256:${createHash('sha256').update(value).digest('hex')}`;
 
 const BLOB_ID = /^[0-9a-f]{40}$/;
@@ -203,65 +237,13 @@ test('no existing workflow has been rewired to consume the GEF Gate contract', (
 });
 
 test('the gate contract refuses to decide while the ruleset context set is unknown', () => {
-  const blocked = decideGefGate(
-    {
-      gateId: 'GATE-RULESET-UNKNOWN',
-      repository: 'KayzenRoot/gef-bootstrap',
-      workOrderId: 'GBS-MOD-WO-001',
-      baseRef: 'main',
-      baseSha: '1'.repeat(40),
-      headSha: '2'.repeat(40),
-      changedPaths: ['.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md'],
-      changeImpactDigest: sha('impact'),
-      impactState: 'CLASSIFIED',
-      riskTier: 'LOW',
-      governanceFastPath: 'PERMITTED',
-      escalateReasons: [],
-      obligations: MANDATORY_OBLIGATION_FLOOR,
-      contextLockDigest: sha('lock'),
-      contextLockState: 'COMPILED',
-      closureDigest: null,
-      validationFloor: null,
-      rulesetRequiredContexts: [],
-      mandatoryObligationFloor: MANDATORY_OBLIGATION_FLOOR,
-      providerCandidateChecks: [],
-      policyDigest: sha('policy'),
-      candidateSemanticDigest: sha('candidate'),
-    },
-    options,
-  );
+  const blocked = decideGefGate(gateInput([]), options);
   assert.equal(blocked.ok, false);
   assert.equal(blocked.diagnostics[0].code, 'GEF_GATE_RULESET_CONTEXTS_UNPROVEN');
 });
 
 test('the gate contract names exactly the required ruleset contexts, so a later ruleset update is auditable', () => {
-  const receipt = decideGefGate(
-    {
-      gateId: 'GATE-RULESET-BOUND',
-      repository: 'KayzenRoot/gef-bootstrap',
-      workOrderId: 'GBS-MOD-WO-001',
-      baseRef: 'main',
-      baseSha: '1'.repeat(40),
-      headSha: '2'.repeat(40),
-      changedPaths: ['.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md'],
-      changeImpactDigest: sha('impact'),
-      impactState: 'CLASSIFIED',
-      riskTier: 'LOW',
-      governanceFastPath: 'PERMITTED',
-      escalateReasons: [],
-      obligations: MANDATORY_OBLIGATION_FLOOR,
-      contextLockDigest: sha('lock'),
-      contextLockState: 'COMPILED',
-      closureDigest: null,
-      validationFloor: null,
-      rulesetRequiredContexts: MAIN_RULESET_CONTEXTS,
-      mandatoryObligationFloor: MANDATORY_OBLIGATION_FLOOR,
-      providerCandidateChecks: [],
-      policyDigest: sha('policy'),
-      candidateSemanticDigest: sha('candidate'),
-    },
-    options,
-  );
+  const receipt = decideGefGate(gateInput(MAIN_RULESET_CONTEXTS), options);
   assert.equal(receipt.ok, true);
   assert.deepEqual(
     receipt.value.requiredChecks.filter((check) => check.kind === 'RULESET_REQUIRED').map((check) => check.checkId),

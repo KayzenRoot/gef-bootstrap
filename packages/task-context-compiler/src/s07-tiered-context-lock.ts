@@ -147,13 +147,6 @@ function compareByPath(left: { readonly path: string }, right: { readonly path: 
   return compareCodePoint(left.path, right.path);
 }
 
-/**
- * Compiles the tiered Context Lock.
- *
- * Returns `LOCK_TIER_BELOW_FLOOR` rather than silently using the floor: a caller that believes it
- * may work at a weaker tier than the change proves has a governance defect worth surfacing, and
- * quietly repairing it would hide the disagreement from the audit.
- */
 /** True when every value in `values` is a non-empty trimmed string. */
 function allNonEmptyStrings(values: readonly unknown[]): boolean {
   return values.every((value) => typeof value === 'string' && value.trim().length > 0);

@@ -211,63 +211,6 @@ test('unknown upstream states and malformed collections are refused rather than 
   }
 });
 
-test('a receipt cannot waive the mandatory obligation floor', () => {
-  for (const obligation of ['GIT_DIFF_INTEGRITY', 'JSON_SCHEMA_PARSE', 'SOURCE_HIERARCHY_BINDING', 'SECRET_CONFIG_SECURITY']) {
-    const result = decide({ obligations: gateInput().obligations.filter((entry) => entry !== obligation) });
-    assert.equal(result.ok, false, `${obligation} must not be waivable`);
-    assert.equal(result.diagnostics[0].code, GEF_GATE_DIAGNOSTIC_CODES.GATE_OBLIGATION_FLOOR_MISSING);
-    assert.equal(result.diagnostics[0].subject, obligation);
-  }
-});
-
-test('the decision does not depend on the order provider candidates are listed in', () => {
-  const candidates = gateInput().providerCandidateChecks;
-  const reversed = [...candidates].reverse().map((entry) => ({ ...entry }));
-  const duplicated = [
-    { ...candidates[0], outsideChangedClosure: true },
-    { ...candidates[0], outsideChangedClosure: false },
-  ];
-  const strict = decide({ providerCandidateChecks: duplicated });
-  const strictReversed = decide({ providerCandidateChecks: [...duplicated].reverse() });
-  assert.equal(strict.ok && strictReversed.ok, true);
-  assert.equal(strict.value.decision, 'FULL_ASSURANCE', 'a duplicated claim that includes the closure is read strictly');
-  assert.deepEqual(strict.value.narrowingCandidates, []);
-  assert.equal(strict.value.receiptDigest, strictReversed.value.receiptDigest);
-  const forward = must({ providerCandidateChecks: candidates });
-  const backward = must({ providerCandidateChecks: reversed });
-  assert.equal(forward.receiptDigest, backward.receiptDigest);
-});
-
-test('unknown upstream states and malformed collections are refused rather than trusted', () => {
-  for (const over of [
-    { impactState: 'WHATEVER' },
-    { contextLockState: 'WHATEVER' },
-    { validationFloor: 'GARBAGE' },
-    { validationFloor: '' },
-    { changedPaths: null },
-    { changedPaths: ['a', 42] },
-    { rulesetRequiredContexts: null },
-    { obligations: null },
-    { escalateReasons: null },
-    { mandatoryObligationFloor: null },
-    { providerCandidateChecks: null },
-    { providerCandidateChecks: {} },
-    { providerCandidateChecks: [{ checkId: 'c1' }] },
-    { closureDigest: 42 },
-  ]) {
-    const result = decide(over);
-    assert.equal(result.ok, false, `${JSON.stringify(over)} must be refused`);
-    assert.ok(
-      [
-        GEF_GATE_DIAGNOSTIC_CODES.GATE_INPUT_INVALID,
-        GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID,
-        GEF_GATE_DIAGNOSTIC_CODES.GATE_STATE_UNKNOWN,
-      ].includes(result.diagnostics[0].code),
-      `${JSON.stringify(over)} produced ${result.diagnostics[0].code}`,
-    );
-  }
-});
-
 test('a caller claim of an outside-closure check is not believed without a proven dependency closure', () => {
   const withoutClosure = must({ closureDigest: null, validationFloor: null });
   assert.equal(withoutClosure.decision, 'FULL_ASSURANCE');
