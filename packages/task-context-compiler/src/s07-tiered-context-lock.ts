@@ -131,7 +131,20 @@ function isCleanRelativePath(value: unknown): value is string {
 }
 
 function dedupeSorted(values: readonly string[]): readonly string[] {
-  return [...new Set(values)].sort(compareCodePoint);
+  return byPathless([...new Set(values)]);
+}
+
+/** Sorts path-bearing entries in canonical order, as a statement rather than a chained call. */
+function byPath<T extends { readonly path: string }>(values: readonly T[]): T[] {
+  return [...values].sort(compareByPath);
+}
+
+function byPathless(values: readonly string[]): string[] {
+  return [...values].sort(compareCodePoint);
+}
+
+function compareByPath(left: { readonly path: string }, right: { readonly path: string }): number {
+  return compareCodePoint(left.path, right.path);
 }
 
 /**
@@ -141,10 +154,18 @@ function dedupeSorted(values: readonly string[]): readonly string[] {
  * may work at a weaker tier than the change proves has a governance defect worth surfacing, and
  * quietly repairing it would hide the disagreement from the audit.
  */
-export function compileTieredContextLock(
-  input: TieredContextLockInput,
-  options: OperationOptions,
-): Result<TieredContextLock> {
+/** True when every value in `values` is a non-empty trimmed string. */
+function allNonEmptyStrings(values: readonly unknown[]): boolean {
+  return values.every((value) => typeof value === 'string' && value.trim().length > 0);
+}
+
+/**
+ * Refuses a lock that could not have been honestly produced.
+ *
+ * A malformed collection is refused rather than coerced: coercing it would silently shorten the
+ * required source set, which is a narrower lock reached through a malformed request.
+ */
+function validateLockInput(input: TieredContextLockInput): Result<true> {
   if (input === null || typeof input !== 'object') {
     return fail(TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_INPUT_INVALID, 'Context lock input must be an object');
   }
@@ -154,47 +175,47 @@ export function compileTieredContextLock(
   if (!SHA40.test(input.baseSha) || !SHA40.test(input.headSha)) {
     return fail(TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_INPUT_INVALID, 'Base and head must be 40 character commit ids');
   }
-  for (const [field, value] of [
-    ['workOrderPath', input.workOrderPath],
-    ['contextLockPath', input.contextLockPath],
-  ] as const) {
-    if (!isCleanRelativePath(value)) {
-      return fail(
-        TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_SOURCE_INVALID,
-        `${field} must be a clean repository-relative path`,
-        value,
-      );
-    }
+  if (!isCleanRelativePath(input.workOrderPath) || !isCleanRelativePath(input.contextLockPath)) {
+    return fail(
+      TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_SOURCE_INVALID,
+      'Work Order and Context Lock paths must be clean repository-relative paths',
+    );
   }
-  for (const [field, value] of [
+  const arrays: readonly (readonly [string, unknown])[] = [
     ['affectedPaths', input.affectedPaths],
     ['readIfTriggered', input.readIfTriggered],
     ['triggeredDomains', input.triggeredDomains],
     ['obligations', input.obligations],
-  ] as const) {
+  ];
+  for (const [field, value] of arrays) {
     if (!Array.isArray(value)) {
       return fail(TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_INPUT_INVALID, `${field} must be an array`, field);
     }
   }
-  for (const path of input.affectedPaths) {
-    if (!isCleanRelativePath(path)) {
-      return fail(TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_SOURCE_INVALID, 'Affected paths must be clean repository-relative paths', path);
-    }
+  if (!allNonEmptyStrings(input.triggeredDomains) || !allNonEmptyStrings(input.obligations)) {
+    return fail(
+      TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_INPUT_INVALID,
+      'triggeredDomains and obligations entries must be non-empty strings',
+    );
   }
-  for (const domain of input.triggeredDomains) {
-    if (typeof domain !== 'string' || domain.trim().length === 0) {
-      return fail(TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_INPUT_INVALID, 'triggeredDomains entries must be non-empty strings');
-    }
+  const malformedPath = input.affectedPaths.find((path) => !isCleanRelativePath(path));
+  if (malformedPath !== undefined) {
+    return fail(
+      TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_SOURCE_INVALID,
+      'Affected paths must be clean repository-relative paths',
+      malformedPath,
+    );
   }
-  for (const obligation of input.obligations) {
-    if (typeof obligation !== 'string' || obligation.trim().length === 0) {
-      return fail(TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_INPUT_INVALID, 'obligations entries must be non-empty strings');
-    }
-  }
+  return { ok: true, value: true };
+}
 
-  const tier = maxContextLockTier(input.declaredTier, input.floorTier);
-  const expansionReasons: string[] = [];
-
+/**
+ * Refuses a lock whose inputs are structurally fine but whose authority is not currently usable.
+ *
+ * Returning a diagnostic rather than a `BLOCKED` lock keeps "no lock exists" distinguishable from
+ * "a lock exists and is blocked", which is what the gate's `contextLockState` binding relies on.
+ */
+function validateLockAuthority(input: TieredContextLockInput): Result<true> {
   if (input.authorityConflict === true) {
     return fail(
       TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_AUTHORITY_CONFLICT,
@@ -214,6 +235,27 @@ export function compileTieredContextLock(
       input.declaredTier,
     );
   }
+  return { ok: true, value: true };
+}
+
+/**
+ * Compiles the tiered Context Lock.
+ *
+ * Returns `LOCK_TIER_BELOW_FLOOR` rather than silently using the floor: a caller that believes it
+ * may work at a weaker tier than the change proves has a governance defect worth surfacing, and
+ * quietly repairing it would hide the disagreement from the audit.
+ */
+export function compileTieredContextLock(
+  input: TieredContextLockInput,
+  options: OperationOptions,
+): Result<TieredContextLock> {
+  const shape = validateLockInput(input);
+  if (shape.ok !== true) return shape;
+  const authority = validateLockAuthority(input);
+  if (authority.ok !== true) return authority;
+
+  const tier = maxContextLockTier(input.declaredTier, input.floorTier);
+  const expansionReasons: string[] = [];
 
   const included = new Map<string, ContextSourceInclusion>();
   const include = (path: string, reason: string): void => {
@@ -266,8 +308,8 @@ export function compileTieredContextLock(
     tier,
     floorTier: input.floorTier,
     requiredSources,
-    includedSources: [...included.values()].sort((left, right) => compareCodePoint(left.path, right.path)),
-    excludedTriggeredSources: excludedTriggeredSources.sort((left, right) => compareCodePoint(left.path, right.path)),
+    includedSources: byPath([...included.values()]),
+    excludedTriggeredSources: byPath(excludedTriggeredSources),
     affectedPaths: dedupeSorted(input.affectedPaths),
     obligations,
     specialistGateRequired,

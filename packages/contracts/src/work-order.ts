@@ -103,12 +103,24 @@ const REQUIRED_TOP_LEVEL_FIELDS = Object.freeze([
 
 const OPTIONAL_BINDING_FIELDS = Object.freeze(["branch", "issue", "planningPullRequest", "pullRequest"] as const);
 
+/**
+ * Canonical string ordering by UTF-16 code point.
+ *
+ * `localeCompare` is deliberately avoided: collation depends on locale and ICU build, so the same
+ * repository state could produce two different receipt digests on two runners. Code-point order is
+ * locale-independent, which is what an exact-state receipt requires.
+ */
+function compareCodePoint(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
+/** Characters outside the supported glob language. */
+const PROHIBITED_PATTERN_CHARACTERS = Object.freeze(["\\", "\u0000", "~", "[", "]", "{", "}"]);
+
 const SHA40 = /^[0-9a-f]{40}$/;
-const WORK_ORDER_ID = /^GBS-[A-Z0-9]+(?:-[A-Z0-9]+)*-[0-9]{3}$/;
+const WORK_ORDER_ID = /^GBS-[A-Z\d]+(?:-[A-Z\d]+)*-\d{3}$/;
 const REPOSITORY = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/;
 const BRANCH = /^[A-Za-z0-9][A-Za-z0-9._/-]*$/;
-const PROHIBITED_PATTERN_CHARACTERS = ["\\", "\0", "~"] as const;
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -127,7 +139,7 @@ function isPositiveInteger(value: unknown): value is number {
  */
 export function normalizeWorkOrderPath(value: string): string {
   const kept: string[] = [];
-  for (const segment of value.replace(/\\/g, "/").split("/")) {
+  for (const segment of value.replaceAll("\\", "/").split("/")) {
     if (segment === "" || segment === ".") continue;
     kept.push(segment);
   }
@@ -280,6 +292,21 @@ interface ParseState {
   readonly diagnostics: WorkOrderDiagnostic[];
 }
 
+/**
+ * Renders an untrusted value for a diagnostic subject.
+ *
+ * A subject is operator-facing text, never canonical data. Objects and arrays are reduced to their
+ * type rather than stringified implicitly, so a malformed field can never reach a report as
+ * `[object Object]`.
+ */
+function describe(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null) return "null";
+  if (Array.isArray(value)) return `array(${value.length})`;
+  if (typeof value === "object") return "object";
+  return typeof value;
+}
+
 function report(state: ParseState, code: string, message: string, subject?: string): void {
   const diagnostic = subject === undefined ? { code, message } : { code, message, subject };
   state.diagnostics.push(diagnostic);
@@ -320,7 +347,7 @@ function parseStringList(
     }
     seen.add(normalized);
   }
-  return valid ? [...seen].sort() : null;
+  return valid ? [...seen].sort(compareCodePoint) : null;
 }
 
 function parseBindings(state: ParseState, raw: unknown): WorkOrderBindings | null {
@@ -329,7 +356,7 @@ function parseBindings(state: ParseState, raw: unknown): WorkOrderBindings | nul
     return null;
   }
   let valid = true;
-  for (const key of Object.keys(raw).sort()) {
+  for (const key of Object.keys(raw).sort(compareCodePoint)) {
     if (!(OPTIONAL_BINDING_FIELDS as readonly string[]).includes(key)) {
       report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_UNKNOWN, `bindings.${key} is not a known binding field`, `bindings.${key}`);
       valid = false;
@@ -358,6 +385,10 @@ function parseBindings(state: ParseState, raw: unknown): WorkOrderBindings | nul
   return valid ? (bindings as unknown as WorkOrderBindings) : null;
 }
 
+function compareTriggeredSources(left: WorkOrderTriggeredSource, right: WorkOrderTriggeredSource): number {
+  return compareCodePoint(left.path, right.path) || compareCodePoint(left.trigger, right.trigger);
+}
+
 function parseTriggeredSources(state: ParseState, raw: unknown): readonly WorkOrderTriggeredSource[] | null {
   if (!Array.isArray(raw)) {
     report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_INVALID, "readIfTriggered must be an array", "readIfTriggered");
@@ -372,7 +403,7 @@ function parseTriggeredSources(state: ParseState, raw: unknown): readonly WorkOr
       valid = false;
       continue;
     }
-    for (const key of Object.keys(entry).sort()) {
+    for (const key of Object.keys(entry).sort(compareCodePoint)) {
       if (key !== "path" && key !== "trigger") {
         report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_UNKNOWN, `readIfTriggered.${key} is not a known field`, `readIfTriggered.${key}`);
         valid = false;
@@ -381,12 +412,12 @@ function parseTriggeredSources(state: ParseState, raw: unknown): readonly WorkOr
     const path = entry["path"];
     const trigger = entry["trigger"];
     if (typeof path !== "string" || !isValidWorkOrderPattern(path)) {
-      report(state, WORK_ORDER_DIAGNOSTIC_CODES.PATTERN_INVALID, "readIfTriggered.path must be a supported relative glob", String(path));
+      report(state, WORK_ORDER_DIAGNOSTIC_CODES.PATTERN_INVALID, "readIfTriggered.path must be a supported relative glob", describe(path));
       valid = false;
       continue;
     }
     if (typeof trigger !== "string" || trigger.trim() !== trigger || trigger.length === 0) {
-      report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_INVALID, "readIfTriggered.trigger must be a non-empty trimmed string", String(trigger));
+      report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_INVALID, "readIfTriggered.trigger must be a non-empty trimmed string", describe(trigger));
       valid = false;
       continue;
     }
@@ -399,7 +430,8 @@ function parseTriggeredSources(state: ParseState, raw: unknown): readonly WorkOr
     seen.add(key);
     out.push({ path: normalizeWorkOrderPath(path), trigger });
   }
-  return valid ? out.sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : left.trigger < right.trigger ? -1 : left.trigger > right.trigger ? 1 : 0)) : null;
+  if (!valid) return null;
+  return [...out].sort(compareTriggeredSources);
 }
 
 /**
@@ -408,6 +440,52 @@ function parseTriggeredSources(state: ParseState, raw: unknown): readonly WorkOr
  * Diagnostics are accumulated rather than thrown so a caller can report every authority defect
  * at once; the contract is produced only when the diagnostic list is empty.
  */
+/** Checks the document envelope: object shape, contract version and known top-level fields. */
+function checkEnvelope(state: ParseState, input: Record<string, unknown>): void {
+  const schemaVersion = input["schemaVersion"];
+  if (schemaVersion === undefined) {
+    report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_MISSING, "schemaVersion is required", "schemaVersion");
+  } else if (typeof schemaVersion !== "string" || !SUPPORTED_WORK_ORDER_CONTRACT_VERSIONS.includes(schemaVersion as "1.0")) {
+    report(state, WORK_ORDER_DIAGNOSTIC_CODES.SCHEMA_VERSION_UNSUPPORTED, "schemaVersion is not a supported contract version", describe(schemaVersion));
+  }
+  for (const key of Object.keys(input).sort(compareCodePoint)) {
+    if (!(REQUIRED_TOP_LEVEL_FIELDS as readonly string[]).includes(key)) {
+      report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_UNKNOWN, `${key} is not a known work order contract field`, key);
+    }
+  }
+  for (const field of REQUIRED_TOP_LEVEL_FIELDS) {
+    if (input[field] === undefined) report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_MISSING, `${field} is required`, field);
+  }
+}
+
+const IDENTITY_FIELDS: readonly { readonly field: string; readonly pattern: RegExp; readonly message: string }[] = Object.freeze([
+  { field: "workOrderId", pattern: WORK_ORDER_ID, message: "workOrderId must match GBS-...-NNN" },
+  { field: "repository", pattern: REPOSITORY, message: "repository must be owner/name" },
+  { field: "risk", pattern: /^(?:LOW|STANDARD|ELEVATED|HIGH_ASSURANCE)$/, message: "risk must be a known work order risk class" },
+  { field: "baseSha", pattern: SHA40, message: "baseSha must be a 40 character lowercase commit id" },
+]);
+
+/** Checks the identity fields that bind a contract to one repository, one revision and one class. */
+function checkIdentityFields(state: ParseState, input: Record<string, unknown>): void {
+  for (const { field, pattern, message } of IDENTITY_FIELDS) {
+    const value = input[field];
+    if (value === undefined) continue;
+    if (typeof value === "string" && pattern.test(value)) continue;
+    report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_INVALID, message, describe(value));
+  }
+  const stopCondition = input["stopCondition"];
+  const stopConditionBlank = typeof stopCondition !== "string" || stopCondition.trim() !== stopCondition || stopCondition.length === 0;
+  if (stopCondition !== undefined && stopConditionBlank) {
+    report(state, WORK_ORDER_DIAGNOSTIC_CODES.STOP_CONDITION_INVALID, "stopCondition must be a non-empty trimmed string", describe(stopCondition));
+  }
+}
+
+/**
+ * Parses an untrusted document into a `WorkOrderContract`.
+ *
+ * Diagnostics are accumulated rather than thrown so a caller can report every authority defect at
+ * once; the contract is produced only when the diagnostic list is empty.
+ */
 export function parseWorkOrderContract(input: unknown): WorkOrderParseResult {
   const state: ParseState = { diagnostics: [] };
   if (!isRecord(input)) {
@@ -415,48 +493,8 @@ export function parseWorkOrderContract(input: unknown): WorkOrderParseResult {
     return { ok: false, diagnostics: state.diagnostics };
   }
 
-  const schemaVersion = input["schemaVersion"];
-  if (schemaVersion === undefined) {
-    report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_MISSING, "schemaVersion is required", "schemaVersion");
-  } else if (typeof schemaVersion !== "string" || !SUPPORTED_WORK_ORDER_CONTRACT_VERSIONS.includes(schemaVersion as "1.0")) {
-    report(state, WORK_ORDER_DIAGNOSTIC_CODES.SCHEMA_VERSION_UNSUPPORTED, "schemaVersion is not a supported contract version", String(schemaVersion));
-  }
-
-  for (const key of Object.keys(input).sort()) {
-    if (!(REQUIRED_TOP_LEVEL_FIELDS as readonly string[]).includes(key)) {
-      report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_UNKNOWN, `${key} is not a known work order contract field`, key);
-    }
-  }
-  for (const field of REQUIRED_TOP_LEVEL_FIELDS) {
-    if (input[field] === undefined) {
-      report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_MISSING, `${field} is required`, field);
-    }
-  }
-
-  const workOrderId = input["workOrderId"];
-  if (workOrderId !== undefined && (typeof workOrderId !== "string" || !WORK_ORDER_ID.test(workOrderId))) {
-    report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_INVALID, "workOrderId must match GBS-...-NNN", String(workOrderId));
-  }
-
-  const repository = input["repository"];
-  if (repository !== undefined && (typeof repository !== "string" || !REPOSITORY.test(repository))) {
-    report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_INVALID, "repository must be owner/name", String(repository));
-  }
-
-  const risk = input["risk"];
-  if (risk !== undefined && (typeof risk !== "string" || !(workOrderRiskClasses as readonly string[]).includes(risk))) {
-    report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_INVALID, "risk must be a known work order risk class", String(risk));
-  }
-
-  const baseSha = input["baseSha"];
-  if (baseSha !== undefined && (typeof baseSha !== "string" || !SHA40.test(baseSha))) {
-    report(state, WORK_ORDER_DIAGNOSTIC_CODES.FIELD_INVALID, "baseSha must be a 40 character lowercase commit id", String(baseSha));
-  }
-
-  const stopCondition = input["stopCondition"];
-  if (stopCondition !== undefined && (typeof stopCondition !== "string" || stopCondition.trim() !== stopCondition || stopCondition.length === 0)) {
-    report(state, WORK_ORDER_DIAGNOSTIC_CODES.STOP_CONDITION_INVALID, "stopCondition must be a non-empty trimmed string", String(stopCondition));
-  }
+  checkEnvelope(state, input);
+  checkIdentityFields(state, input);
 
   const bindings = input["bindings"] === undefined ? null : parseBindings(state, input["bindings"]);
   const mustRead = input["mustRead"] === undefined ? null : parseStringList(state, input["mustRead"], "mustRead", { allowEmpty: true, patternOnly: true });
@@ -484,11 +522,11 @@ export function parseWorkOrderContract(input: unknown): WorkOrderParseResult {
   return {
     ok: true,
     value: Object.freeze({
-      schemaVersion: schemaVersion as string,
-      workOrderId: workOrderId as string,
-      repository: repository as string,
-      risk: risk as WorkOrderRiskClass,
-      baseSha: baseSha as string,
+      schemaVersion: input["schemaVersion"] as string,
+      workOrderId: input["workOrderId"] as string,
+      repository: input["repository"] as string,
+      risk: input["risk"] as WorkOrderRiskClass,
+      baseSha: input["baseSha"] as string,
       bindings: Object.freeze({ ...bindings }) as WorkOrderBindings,
       mustRead: Object.freeze(mustRead as readonly string[]),
       readIfTriggered: Object.freeze(readIfTriggered as readonly WorkOrderTriggeredSource[]),
@@ -499,7 +537,7 @@ export function parseWorkOrderContract(input: unknown): WorkOrderParseResult {
       scope: Object.freeze(scope as readonly string[]),
       outOfScope: Object.freeze(outOfScope as readonly string[]),
       dependencies: Object.freeze(dependencies as readonly string[]),
-      stopCondition: stopCondition as string,
+      stopCondition: input["stopCondition"] as string,
     }),
   };
 }
@@ -513,7 +551,7 @@ function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (!isRecord(value)) return value;
   const out: Record<string, unknown> = {};
-  for (const key of Object.keys(value).sort()) {
+  for (const key of Object.keys(value).sort(compareCodePoint)) {
     const child = value[key];
     if (typeof child !== "function" && child !== undefined) out[key] = canonicalize(child);
   }
@@ -529,7 +567,8 @@ export function stableWorkOrderStringify(value: unknown): string {
  * exactly the same execution.
  */
 export function workOrderContractDigest(contract: WorkOrderContract, digest: WorkOrderDigestPort): string {
-  return `${digest.algorithm}:${digest.digest(`GEF:WORK_ORDER_CONTRACT:${WORK_ORDER_CONTRACT_VERSION}\n${stableWorkOrderStringify(contract)}`)}`;
+  const canonicalForm = `GEF:WORK_ORDER_CONTRACT:${WORK_ORDER_CONTRACT_VERSION}\n${stableWorkOrderStringify(contract)}`;
+  return `${digest.algorithm}:${digest.digest(canonicalForm)}`;
 }
 
 export function maxWorkOrderRisk(left: WorkOrderRiskClass, right: WorkOrderRiskClass): WorkOrderRiskClass {

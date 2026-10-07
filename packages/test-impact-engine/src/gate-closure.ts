@@ -73,32 +73,69 @@ export function tierToValidationLevel(tier: string): ValidationLevel {
   return TIER_TO_LEVEL[tier] ?? 'L5';
 }
 
-export function assertGateClosureInput(input: GateClosureInput): Result<true> {
-  const invalid = (message: string, subject?: string): Result<true> =>
-    fail(GATE_CLOSURE_DIAGNOSTIC_CODES.GATE_CLOSURE_INPUT_INVALID, message, subject);
-  if (input === null || typeof input !== 'object') return invalid('Gate closure input must be an object');
-  if (!Array.isArray(input.changedPaths) || input.changedPaths.length === 0) {
-    return invalid('changedPaths must be a non-empty array');
-  }
-  if (input.changedPaths.some((path) => typeof path !== 'string' || path.length === 0)) {
-    return invalid('changedPaths entries must be non-empty strings');
-  }
-  if (input.map === null || typeof input.map !== 'object' || !Array.isArray(input.map.sources)) {
+type ClosureInputCheck = { readonly ok: true } | { readonly ok: false; readonly message: string; readonly subject?: string };
+
+const VALID: ClosureInputCheck = { ok: true };
+
+function invalid(message: string, subject?: string): ClosureInputCheck {
+  return subject === undefined ? { ok: false, message } : { ok: false, message, subject };
+}
+
+function checkChangedPaths(value: unknown): ClosureInputCheck {
+  if (!Array.isArray(value) || value.length === 0) return invalid('changedPaths must be a non-empty array');
+  const malformed = value.some((path) => typeof path !== 'string' || path.length === 0);
+  return malformed ? invalid('changedPaths entries must be non-empty strings') : VALID;
+}
+
+function checkTestMap(value: unknown): ClosureInputCheck {
+  if (value === null || typeof value !== 'object' || !Array.isArray((value as TestMap).sources)) {
     return invalid('map must be a built M28 TestMap');
   }
-  if (input.sourcePathIndex === null || typeof input.sourcePathIndex !== 'object' || Array.isArray(input.sourcePathIndex)) {
+  return VALID;
+}
+
+/**
+ * The index is caller-supplied authority: a non-array or non-string entry would otherwise be
+ * iterated as junk source ids, so it is refused rather than coerced.
+ */
+function checkSourcePathIndex(value: unknown): ClosureInputCheck {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) {
     return invalid('sourcePathIndex must be a plain object');
   }
-  // The index is caller-supplied authority: a non-array or non-string entry would otherwise be
-  // iterated as junk source ids, so it is refused rather than coerced.
-  for (const [path, attributed] of Object.entries(input.sourcePathIndex)) {
-    if (!Array.isArray(attributed) || attributed.some((sourceId) => typeof sourceId !== 'string' || sourceId.length === 0)) {
-      return invalid('sourcePathIndex values must be arrays of non-empty source ids', path);
-    }
+  for (const [path, attributed] of Object.entries(value as Readonly<Record<string, unknown>>)) {
+    const usable = Array.isArray(attributed) && attributed.every((id) => typeof id === 'string' && id.length > 0);
+    if (!usable) return invalid('sourcePathIndex values must be arrays of non-empty source ids', path);
   }
-  if (typeof input.platform !== 'string' || input.platform.length === 0) return invalid('platform must be a non-empty string');
-  if (!LEVELS.includes(input.tierFloor)) return invalid('tierFloor must be a known validation level', input.tierFloor);
-  return ok(true as const);
+  return VALID;
+}
+
+function checkPlatformAndFloor(platform: unknown, tierFloor: unknown): ClosureInputCheck {
+  if (typeof platform !== 'string' || platform.length === 0) return invalid('platform must be a non-empty string');
+  if (typeof tierFloor !== 'string' || !LEVELS.includes(tierFloor as ValidationLevel)) {
+    return invalid('tierFloor must be a known validation level', String(tierFloor));
+  }
+  return VALID;
+}
+
+/**
+ * Fails closed on an input that could not have been honestly produced by the caller.
+ *
+ * Split into independent checks so each rule fails on its own diagnostic and the whole validator
+ * stays readable at a glance.
+ */
+export function assertGateClosureInput(input: GateClosureInput): Result<true> {
+  if (input === null || typeof input !== 'object') {
+    return fail(GATE_CLOSURE_DIAGNOSTIC_CODES.GATE_CLOSURE_INPUT_INVALID, 'Gate closure input must be an object');
+  }
+  const checks = [
+    checkChangedPaths(input.changedPaths),
+    checkTestMap(input.map),
+    checkSourcePathIndex(input.sourcePathIndex),
+    checkPlatformAndFloor(input.platform, input.tierFloor),
+  ];
+  const failed = checks.find((check) => !check.ok);
+  if (failed === undefined || failed.ok) return ok(true as const);
+  return fail(GATE_CLOSURE_DIAGNOSTIC_CODES.GATE_CLOSURE_INPUT_INVALID, failed.message, failed.subject);
 }
 
 /**

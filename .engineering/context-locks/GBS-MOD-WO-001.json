@@ -243,7 +243,7 @@
   "executionStatus": "IMPLEMENTATION_COMPLETE_AWAITING_OWNER_AUDIT",
   "executionRecord": {
     "executionStart": "GBS_MOD_WO_001_CODEX_EXECUTION_AUTHORIZED_ON_PR_407",
-    "implementationHead": "c76c2d8a8459f461bad519729d6b2fe83eed9d3d",
+    "implementationHead": null,
     "implementationBaseVerified": "921493797728a43aadc9f7840c954ce7e3ebc416",
     "lockFreshness": "VERIFIED_28_OF_28_CANONICAL_AND_IMPLEMENTATION_FINGERPRINTS_10_OF_10_WORKFLOW_FINGERPRINTS",
     "architectureOwnership": {
@@ -267,14 +267,22 @@
       },
       "post": {
         "command": "npm run validate",
-        "tests": 1775,
-        "pass": 1775,
+        "tests": 1780,
+        "pass": 1780,
         "fail": 0,
         "skipped": 0
       },
       "npmAuditHigh": "0_VULNERABILITIES",
       "gitDiffCheck": "CLEAN",
-      "exactHeadGitHubChecks": "NOT_VERIFIED_FROM_EXECUTOR_ENVIRONMENT"
+      "exactHeadGitHubChecks": "SEE_exactHeadProviderDisposition",
+      "crossPlatformSimulation": {
+        "method": "working tree converted LF -> CRLF to emulate a Windows checkout with core.autocrlf, then the full suite executed",
+        "platform": "linux-host-emulating-windows-checkout",
+        "tests": 1780,
+        "pass": 1780,
+        "fail": 0,
+        "note": "Real Ubuntu, macOS and Windows runner results are produced by GitHub Actions on the candidate head; this simulation is local corroboration, not a substitute for them."
+      }
     },
     "benchmarkReceipt": ".engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json",
     "evidenceBundle": ".engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md",
@@ -288,6 +296,76 @@
       "ruleset change",
       "version/tag/release/deployment change",
       "dependency addition"
-    ]
+    ],
+    "candidateBinding": {
+      "semantics": "BRANCH_TIP_CARRYING_THIS_RECORD",
+      "branch": "feat/mod/wo-001-agent-native-gate",
+      "resolveWith": "git rev-parse origin/feat/mod/wo-001-agent-native-gate",
+      "rationale": "A commit cannot state its own identity without a fixed point. The candidate is therefore bound to the branch tip that carries this record, with the owner-audited head recorded as its parent so the correction lineage is exact.",
+      "parentAuditedHead": "0f983b8b8b624ffa93fe7ab7a8072dcda1628b88",
+      "parentOwnerAudit": {
+        "review": 5436978682,
+        "verdict": "CORRECTION_REQUIRED",
+        "auditNotIndependent": true
+      },
+      "correctionScope": [
+        "cross-platform pipeline-integrity proof now reads stored Git object IDs instead of working-tree bytes",
+        "all new-code Sonar reliability (BUG) findings removed: 10 x typescript:S2871",
+        "remaining new-code Sonar findings removed: S3358, S3776, S4043, S4624, S6353, S6551, S6582, S7755, S7776, S7781, S8784"
+      ],
+      "suppressedRules": "NONE",
+      "thresholdReductions": "NONE"
+    },
+    "exactHeadProviderDisposition": {
+      "observedOn": "0f983b8b8b624ffa93fe7ab7a8072dcda1628b88",
+      "source": "GitHub check-runs API for PR #407",
+      "totalCheckRuns": 64,
+      "success": 62,
+      "failure": 2,
+      "pending": 0,
+      "requiredRulesetContexts": {
+        "Repository validation": "SUCCESS",
+        "Pipeline integrity": "SUCCESS",
+        "Gitleaks secrets": "SUCCESS",
+        "Trivy filesystem and configuration": "SUCCESS"
+      },
+      "failures": [
+        {
+          "check": "V1.1 release assurance / windows-latest",
+          "cause": "tests/gbs-mod-wo-001-pipeline-integrity.test.mjs hashed checked-out working-tree bytes; a Windows checkout rewrites LF to CRLF, so the hash did not equal the recorded Git blob id",
+          "expectedBlob": "38c801e6009663448194045ab27ef25c7dcbf0f0",
+          "observedWorkingTreeSha1": "78f66e131f563dc45342974c4de93486b931d418",
+          "resolution": "The assertion now reads the stored Git object id via git rev-parse HEAD:<path>, which is identical on Linux, macOS and Windows. The assertion is unchanged: it still demands the exact recorded blob id and fails closed on an absent path or unusable revision.",
+          "crossPlatformProof": "The full suite was executed against a simulated CRLF working tree on Linux; 1780/1780 passed, including the corrected assertion.",
+          "status": "CORRECTED_IN_THIS_CANDIDATE_AWAITING_EXACT_HEAD_RUN"
+        },
+        {
+          "check": "SonarCloud Code Analysis",
+          "cause": "Quality Gate failed on \"D Reliability Rating on New Code (required >= A)\"",
+          "rootCause": "10 new-code BUG findings of rule typescript:S2871 (alphabetical sort without a locale-independent comparator) drive the Reliability rating",
+          "openFindingsAtAuditedHead": 41,
+          "bugsAtAuditedHead": 10,
+          "resolution": "All 10 S2871 findings removed by introducing one canonical, locale-independent code-point comparator per package and replacing every default or inline comparator. localeCompare was deliberately NOT adopted: collation depends on locale and ICU build, so it would make receipt digests platform-dependent, which is the very cross-platform defect being corrected. The remaining 31 code smells were also resolved.",
+          "suppressedRules": "NONE",
+          "thresholdReductions": "NONE",
+          "status": "CORRECTED_IN_THIS_CANDIDATE_AWAITING_EXACT_HEAD_RUN"
+        }
+      ],
+      "otherAdvisory": {
+        "codecov": "codecov/patch SUCCESS at 99.50421% with 10 changed lines uncovered on the audited head; the Codecov workflow itself is green. Additional branch coverage was added for the correction paths in this candidate."
+      },
+      "candidateCheckDisposition": "PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED"
+    },
+    "crossPlatformProof": {
+      "method": "the committed candidate working tree was converted LF -> CRLF to emulate a Windows checkout with core.autocrlf, then the full suite was executed",
+      "repositoryValidationWorkingTreeSha1Crlf": "cec22b62b1c1779e3cc118f0ab93d1c4ee1047d0",
+      "repositoryValidationStoredObjectId": "38c801e6009663448194045ab27ef25c7dcbf0f0",
+      "recordedBlobAtImplementationBase": "38c801e6009663448194045ab27ef25c7dcbf0f0",
+      "tests": 1780,
+      "pass": 1780,
+      "fail": 0,
+      "interpretation": "The working-tree hash differs from the recorded identity while the stored object ID matches it, which is the platform dependence blocker 1 removed.",
+      "scope": "local corroboration on a Linux host; authoritative Ubuntu, macOS and Windows results are the GitHub Actions runs on the candidate head"
+    }
   }
 }

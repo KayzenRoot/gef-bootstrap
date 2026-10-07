@@ -31,16 +31,21 @@ None are proposed. This Work Order deliberately changes no promoted value.
    - changed-path dependency closure in `packages/test-impact-engine`;
    - stable `GEF Gate` decision/receipt in `packages/assurance-pipeline`;
    - root `AGENTS.md` compacted into a trigger router.
-2. **Exact-head validation at the assembly head:** `npm run validate` = 1775 / 1775 pass, 0 fail,
+2. **Exact-head validation at the candidate head:** `npm run validate` = 1780 / 1780 pass, 0 fail,
    0 skipped; `npm audit --audit-level=high` = 0 vulnerabilities; `git diff --check` clean.
-   Baseline before the change was 1659 / 1659 pass.
+   Baseline before the change was 1659 / 1659 pass. A CRLF working tree (Windows-checkout
+   simulation) also passes 1780 / 1780.
 3. **CI fan-out was not reduced.** Narrowing candidates are reported with
    `NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION`; no workflow file, ruleset or branch protection was
    changed. Four required main-branch ruleset contexts are preserved in every measured row.
 4. **No wall-clock claim.** The frozen Test & Benchmark Plan forbids an unsourced percentage, and no
    reproducible timing measurement was produced.
-5. **Owner audit remains `NOT_INDEPENDENT`.** The exact-head GitHub required and security checks at
-   the implementation head are `NOT_VERIFIED` from the executor environment.
+5. **Owner audit remains `NOT_INDEPENDENT`.** Review 5436978682 audited parent `0f983b8` and
+   returned `CORRECTION REQUIRED` with two HIGH blockers: a Windows-only pipeline-integrity failure
+   caused by comparing working-tree bytes to Git blob IDs, and a Sonar Reliability Rating D on new
+   code. Both are corrected in this candidate, with no rule suppressed and no threshold lowered.
+   The audited head's disposition was 62 / 64 check runs SUCCESS; the candidate head's own runs are
+   `PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED`.
 
 ## Explicitly not proposed
 

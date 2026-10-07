@@ -8,9 +8,16 @@
 // The proof here is the Git blob identity recorded in the GBS-MOD-WO-001 implementation Context
 // Lock at the implementation base `9214937`. If any of these files changes, this test fails — which
 // is the equivalence guarantee the Work Order requires before any future narrowing is allowed.
+//
+// Identity is read from the repository's own object database (`git rev-parse <rev>:<path>`), never
+// from the checked-out bytes. A Windows checkout rewrites LF to CRLF unless `.gitattributes` says
+// otherwise, so hashing working-tree bytes compares two different byte strings on different
+// platforms; the stored object ID is the same value everywhere. The assertion itself is unchanged —
+// it still demands the exact recorded blob ID, and it still fails on a missing object.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -78,16 +85,51 @@ const options = {
 
 const sha = (value) => `sha256:${createHash('sha256').update(value).digest('hex')}`;
 
-/** Git blob identity of a file, computed the same way `git hash-object` does. */
-function gitBlobSha1(path) {
-  const bytes = readFileSync(resolve(ROOT, path));
-  return createHash('sha1').update(`blob ${bytes.length}\u0000`).update(bytes).digest('hex');
+const BLOB_ID = /^[0-9a-f]{40}$/;
+
+/**
+ * The Git blob ID of `path` as stored in the repository at `rev` (default `HEAD`).
+ *
+ * Reads the object database rather than the working tree, so the answer is identical on Linux,
+ * macOS and Windows regardless of checkout line-ending conversion. Fails closed: an unusable Git,
+ * a missing revision or an absent path is a test failure, never a skipped assertion.
+ */
+function storedBlobId(path, rev = 'HEAD') {
+  const result = spawnSync('git', ['rev-parse', '--verify', '--quiet', `${rev}:${path}`], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    timeout: 60_000,
+  });
+  const stdout = (result.stdout ?? '').trim();
+  if (result.status !== 0 || !BLOB_ID.test(stdout)) {
+    assert.fail(
+      `unable to read the stored Git object for ${path} at ${rev}` +
+        `${result.error === undefined ? '' : ` (${result.error.message})`}` +
+        `${result.stderr === undefined || result.stderr === '' ? '' : `: ${result.stderr.trim()}`}`,
+    );
+  }
+  return stdout;
 }
 
-test('every workflow bound by the implementation Context Lock is byte-for-byte unchanged', () => {
+test('every workflow bound by the implementation Context Lock has an unchanged stored Git object', () => {
   for (const [path, expected] of Object.entries(BASELINE_WORKFLOW_BLOBS)) {
-    assert.equal(gitBlobSha1(path), expected, `${path} must be identical to the implementation base ${BASELINE_IMPLEMENTATION_BASE}`);
+    assert.equal(storedBlobId(path), expected, `${path} must be identical to the implementation base ${BASELINE_IMPLEMENTATION_BASE}`);
+    assert.equal(storedBlobId(path, BASELINE_IMPLEMENTATION_BASE), expected, `${path} must be identical at the recorded base`);
   }
+});
+
+test('the stored object ID is what a checkout line-ending rewrite would otherwise corrupt', () => {
+  // Guards the reason the assertion is platform-invariant: the same file has one stored identity
+  // and CRLF/LF working-tree bytes have different SHA-1 values.
+  const bytes = readFileSync(resolve(ROOT, '.github/workflows/pipeline-integrity.yml'));
+  const crlf = Buffer.from(bytes.toString('utf8').replaceAll('\n', '\r\n'), 'utf8');
+  assert.notEqual(createHash('sha1').update(crlf).digest('hex'), createHash('sha1').update(bytes).digest('hex'));
+  assert.equal(storedBlobId('.github/workflows/pipeline-integrity.yml'), BASELINE_WORKFLOW_BLOBS['.github/workflows/pipeline-integrity.yml']);
+});
+
+test('an absent path or unusable revision fails closed instead of skipping the assertion', () => {
+  assert.throws(() => storedBlobId('.github/workflows/does-not-exist.yml'), /unable to read the stored Git object/);
+  assert.throws(() => storedBlobId('.github/workflows/pipeline-integrity.yml', 'f'.repeat(40)), /unable to read the stored Git object/);
 });
 
 test('the required-ruleset workflows keep an unconditional pull_request trigger', () => {

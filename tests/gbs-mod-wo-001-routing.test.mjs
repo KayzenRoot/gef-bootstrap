@@ -13,6 +13,7 @@ import { MAIN_RULESET_CONTEXTS, routeCandidate } from './helpers/gbs-mod-wo-001-
 const rank = { LOW: 0, STANDARD: 1, ELEVATED: 2, HIGH_ASSURANCE: 3 };
 
 /** Routes a candidate that is expected to produce a receipt. */
+/** Routes a candidate that is expected to produce a receipt. */
 function receiptFor(changedPaths, over) {
   const routed = routeCandidate(changedPaths, over);
   assert.equal(routed.gate.ok, true, JSON.stringify(routed.gate.ok ? {} : routed.gate.diagnostics));

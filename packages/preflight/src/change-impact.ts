@@ -271,7 +271,7 @@ function diagnose(raw: string): readonly ChangeImpactDiagnosticCode[] {
   if (raw.includes("\\")) findings.push(CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_BACKSLASH);
   if (/%2f|%5c/i.test(raw)) findings.push(CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_ENCODED_SEPARATOR);
   if (raw.startsWith("/") || /^[A-Za-z]:/.test(raw)) findings.push(CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_ABSOLUTE);
-  const segments = raw.replace(/\\/g, "/").split("/");
+  const segments = raw.replaceAll("\\", "/").split("/");
   if (segments.includes("..")) findings.push(CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_TRAVERSAL);
   return findings;
 }
@@ -282,7 +282,7 @@ function diagnose(raw: string): readonly ChangeImpactDiagnosticCode[] {
  */
 function normalizeChangePathText(value: string): string {
   const kept: string[] = [];
-  for (const segment of value.replace(/\\/g, "/").split("/")) {
+  for (const segment of value.replaceAll("\\", "/").split("/")) {
     if (segment === "" || segment === ".") continue;
     kept.push(segment);
   }
@@ -291,15 +291,48 @@ function normalizeChangePathText(value: string): string {
 
 export function normalizeChangePath(raw: string): NormalizedChangePath {
   const findings = diagnose(raw);
-  return {
-    raw,
-    normalized: findings.length === 0 ? normalizeChangePathText(raw) : "",
-    findings,
-  };
+  // A path with any finding is deliberately left unnormalized: repairing it would hide the very
+  // condition the caller has to see.
+  if (findings.length > 0) return { raw, normalized: "", findings };
+  return { raw, normalized: normalizeChangePathText(raw), findings };
 }
 
+/**
+ * Canonical string ordering by UTF-16 code point.
+ *
+ * `localeCompare` is deliberately avoided: collation depends on locale and ICU build, so two
+ * runners could produce different impact digests for the same repository state.
+ */
 function compareCodePoint(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
+}
+
+/** Sorts in canonical order without relying on the default string comparator. */
+function inCodePointOrder<T extends string>(values: Iterable<T>): T[] {
+  return [...values].sort(compareCodePoint);
+}
+
+/** Sorts classifications by their raw path in canonical order. */
+function byPath(classifications: readonly ChangePathClassification[]): ChangePathClassification[] {
+  return [...classifications].sort(compareClassifications);
+}
+
+function compareClassifications(left: ChangePathClassification, right: ChangePathClassification): number {
+  return compareCodePoint(left.path, right.path);
+}
+
+/**
+ * Renders an untrusted value for operator-facing text.
+ *
+ * Objects and arrays are reduced to their shape rather than stringified implicitly, so a malformed
+ * field can never reach a reason or a report as `[object Object]`.
+ */
+function describeValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null) return "null";
+  if (Array.isArray(value)) return `array(${value.length})`;
+  if (typeof value === "object") return "object";
+  return typeof value;
 }
 
 function basename(path: string): string {
@@ -344,7 +377,7 @@ function segmentMatchesLiteral(patternSegment: string, candidateSegment: string)
     if (index === 0 && found !== 0) return false;
     cursor = found + part.length;
   }
-  const last = patternParts[patternParts.length - 1];
+  const last = patternParts.at(-1);
   return last !== undefined && last.length > 0 ? candidateSegment.endsWith(last) : candidateSegment.length >= cursor;
 }
 
@@ -404,28 +437,26 @@ export interface ChangePathClassification {
   readonly findings: readonly ChangeImpactDiagnosticCode[];
 }
 
+function suspicious(path: string, findings: readonly ChangeImpactDiagnosticCode[]): ChangePathClassification {
+  return { path, normalized: "", kind: "UNKNOWN_SUSPICIOUS", domain: "UNKNOWN", unclassified: true, findings };
+}
+
+/**
+ * A path that reached the end of the table but matches a rule only case-insensitively is a case
+ * variant of a real surface. On a case-insensitive filesystem it may be the same file, so neither
+ * spelling can be trusted to classify: report it instead of guessing.
+ */
+function isCaseVariantOfAKnownSurface(target: string): boolean {
+  const lowered = target.toLowerCase();
+  return CLASSIFICATION_RULES.some((rule) => matchesGlob(lowered, rule.pattern.toLowerCase().split("/")));
+}
+
 export function classifyChangePath(path: unknown): ChangePathClassification {
   if (typeof path !== "string") {
-    return {
-      path: String(path),
-      normalized: "",
-      kind: "UNKNOWN_SUSPICIOUS",
-      domain: "UNKNOWN",
-      unclassified: true,
-      findings: [CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_NOT_STRING],
-    };
+    return suspicious(describeValue(path), [CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_NOT_STRING]);
   }
   const normalized = normalizeChangePath(path);
-  if (normalized.findings.length > 0) {
-    return {
-      path,
-      normalized: "",
-      kind: "UNKNOWN_SUSPICIOUS",
-      domain: "UNKNOWN",
-      unclassified: true,
-      findings: normalized.findings,
-    };
-  }
+  if (normalized.findings.length > 0) return suspicious(path, normalized.findings);
   const target = normalized.normalized;
   const governanceDomain = GOVERNANCE_DOC_DOMAIN[basename(target)];
   for (const rule of CLASSIFICATION_RULES) {
@@ -444,21 +475,8 @@ export function classifyChangePath(path: unknown): ChangePathClassification {
     }
     return { path, normalized: target, kind: kindRule.kind, domain, unclassified: false, findings: [] };
   }
-  // A path that reaches here but matches a rule only case-insensitively is a case variant of a
-  // real surface. On a case-insensitive filesystem it may be the same file, so neither spelling
-  // can be trusted to classify: report it instead of guessing.
-  const lowered = target.toLowerCase();
-  for (const rule of CLASSIFICATION_RULES) {
-    if (matchesGlob(lowered, rule.pattern.toLowerCase().split("/"))) {
-      return {
-        path,
-        normalized: "",
-        kind: "UNKNOWN_SUSPICIOUS",
-        domain: "UNKNOWN",
-        unclassified: true,
-        findings: [CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_CASE_VARIANT],
-      };
-    }
+  if (isCaseVariantOfAKnownSurface(target)) {
+    return suspicious(path, [CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_CASE_VARIANT]);
   }
   return { path, normalized: target, kind: "UNKNOWN", domain: "UNKNOWN", unclassified: true, findings: [] };
 }
@@ -516,111 +534,158 @@ const TIER_FOR_RISK: Readonly<Record<ChangeImpactTier, ChangeImpactTier>> = Obje
  * The result is a snapshot, not a verdict: the caller still has to bind it to an exact head and
  * the gate still has to decide. It never throws and never partially classifies.
  */
+/** Reasons a candidate cannot take the governance-only fast path, and why the tier must widen. */
+interface ImpactReasons {
+  readonly escalate: string[];
+  readonly refuse: string[];
+}
+
+/** Reads the escalation and refusal consequences of the declared repository facts. */
+function reasonsFromFacts(facts: ChangeImpactFacts, reasons: ImpactReasons): void {
+  const both = (reason: string): void => {
+    reasons.escalate.push(reason);
+    reasons.refuse.push(reason);
+  };
+  if (factPresent(facts.changedStateUnproven)) both('CHANGED_STATE_UNPROVEN');
+  if (factPresent(facts.authorityConflict)) both('AUTHORITY_CONFLICT');
+  if (factPresent(facts.unresolvedRename)) both('UNRESOLVED_RENAME');
+  if (factPresent(facts.protectedSurfaceTouched)) both('PROTECTED_SURFACE_TOUCHED');
+  // A release-significant candidate is never governance-only, whatever its changed paths say.
+  if (factPresent(facts.releaseLifecycle)) reasons.refuse.push('RELEASE_LIFECYCLE');
+}
+
+/** Reads the consequences of one classified path, including a repeated normalized path. */
+function reasonsFromPath(
+  classification: ChangePathClassification,
+  seenNormalized: Set<string>,
+  reasons: ImpactReasons,
+): void {
+  if (classification.kind === 'UNKNOWN_SUSPICIOUS') {
+    reasons.escalate.push(`SUSPICIOUS_PATH_CONDITION:${classification.findings.join('+')}`);
+    reasons.refuse.push(`SUSPICIOUS_PATH_CONDITION:${classification.path}`);
+    return;
+  }
+  if (classification.unclassified) {
+    reasons.escalate.push(`UNCLASSIFIED_PATH:${classification.path}`);
+    reasons.refuse.push(`UNCLASSIFIED_PATH:${classification.path}`);
+    return;
+  }
+  const rule = RULE_BY_KIND.get(classification.kind);
+  if (rule === undefined || !rule.governanceEligible) {
+    reasons.refuse.push(`NON_GOVERNANCE_CHANGE:${classification.kind}:${classification.path}`);
+  }
+  if (seenNormalized.has(classification.normalized)) {
+    reasons.escalate.push(`${CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_DUPLICATE}:${classification.path}`);
+    return;
+  }
+  seenNormalized.add(classification.normalized);
+}
+
+/** The strongest tier any classified path demands on its own. */
+function tierFloorFromPaths(paths: readonly ChangePathClassification[]): ChangeImpactTier {
+  let tier: ChangeImpactTier = 'LOW';
+  for (const classification of paths) {
+    const rule = RULE_BY_KIND.get(classification.kind);
+    if (rule !== undefined) tier = maxChangeImpactTier(tier, rule.tierFloor);
+  }
+  return tier;
+}
+
+/**
+ * Raises the tier for every escalation reason.
+ *
+ * A suspicious path condition or a protected-surface change is treated as HIGH_ASSURANCE; anything
+ * else widens to at least ELEVATED. No escalation reason lowers a tier.
+ */
+function tierFromEscalations(tier: ChangeImpactTier, reasons: readonly string[]): ChangeImpactTier {
+  let floor = tier;
+  for (const reason of reasons) {
+    const severe = reason.startsWith('SUSPICIOUS_PATH_CONDITION') || reason.startsWith('PROTECTED_SURFACE_TOUCHED');
+    floor = maxChangeImpactTier(floor, severe ? 'HIGH_ASSURANCE' : 'ELEVATED');
+  }
+  return floor;
+}
+
+/**
+ * Resolves the declared risk.
+ *
+ * A declared value this table does not recognise is a broken authority input, not a low risk: it
+ * escalates to the strongest tier and is reported, rather than being read as no declaration.
+ */
+function resolveDeclaredRisk(
+  declaredRisk: ChangeImpactFacts['declaredRisk'],
+  reasons: ImpactReasons,
+): ChangeImpactTier | undefined {
+  if (declaredRisk === undefined) return undefined;
+  const declared = TIER_FOR_RISK[declaredRisk];
+  if (declared !== undefined) return declared;
+  reasons.escalate.push(`UNDECLARED_RISK_CLASS:${describeValue(declaredRisk)}`);
+  reasons.refuse.push(`UNDECLARED_RISK_CLASS:${describeValue(declaredRisk)}`);
+  return 'HIGH_ASSURANCE';
+}
+
+/** Collects the obligations a candidate owes: the always-required floor plus everything its paths add. */
+function obligationsFor(paths: readonly ChangePathClassification[], tier: ChangeImpactTier): Set<ChangeObligation> {
+  const obligations = new Set<ChangeObligation>(ALWAYS_REQUIRED_OBLIGATIONS);
+  for (const classification of paths) {
+    const rule = RULE_BY_KIND.get(classification.kind);
+    if (rule === undefined) continue;
+    for (const obligation of rule.obligations) obligations.add(obligation);
+  }
+  if (tier === 'HIGH_ASSURANCE') {
+    obligations.add('RELEASE_ASSURANCE');
+    obligations.add('SPECIALIST_REVIEW');
+  }
+  if (tier !== 'LOW') obligations.add('CROSS_PLATFORM_REGRESSION');
+  return obligations;
+}
+
+/** True when the candidate is refused before any receipt can be produced from it. */
+function isBlocked(paths: readonly ChangePathClassification[], facts: ChangeImpactFacts): boolean {
+  return (
+    suspiciousPathsOf(paths).length > 0 ||
+    factPresent(facts.authorityConflict) ||
+    factPresent(facts.changedStateUnproven)
+  );
+}
+
+/**
+ * Classifies a changed-path set into a tier, an obligation set and a governance fast-path verdict.
+ *
+ * The result is a snapshot, not a verdict: the caller still has to bind it to an exact head and
+ * the gate still has to decide. It never throws and never partially classifies.
+ */
 export function classifyChangeImpact(input: ChangeImpactInput, digest: RequirementDigestPort): ChangeImpactResult {
   const facts = input.facts ?? {};
-  const paths = [...input.changedPaths.map((path) => classifyChangePath(path))].sort((left, right) =>
-    compareCodePoint(left.path, right.path),
-  );
-  const escalateReasons: string[] = [];
-  const refusalReasons: string[] = [];
+  const paths = byPath(input.changedPaths.map((path) => classifyChangePath(path)));
+  const reasons: ImpactReasons = { escalate: [], refuse: [] };
 
   if (paths.length === 0) {
     // Nothing proven changed means nothing proven narrow. An empty diff is not a licence.
-    escalateReasons.push("EMPTY_CHANGED_STATE_UNPROVEN");
+    reasons.escalate.push('EMPTY_CHANGED_STATE_UNPROVEN');
   }
-
   const seenNormalized = new Set<string>();
-  for (const classification of paths) {
-    if (classification.kind === "UNKNOWN_SUSPICIOUS") {
-      escalateReasons.push(`SUSPICIOUS_PATH_CONDITION:${classification.findings.join("+")}`);
-      refusalReasons.push(`SUSPICIOUS_PATH_CONDITION:${classification.path}`);
-      continue;
-    }
-    if (classification.unclassified) {
-      escalateReasons.push(`UNCLASSIFIED_PATH:${classification.path}`);
-      refusalReasons.push(`UNCLASSIFIED_PATH:${classification.path}`);
-      continue;
-    }
-    const rule = RULE_BY_KIND.get(classification.kind);
-    if (rule === undefined || !rule.governanceEligible) {
-      refusalReasons.push(`NON_GOVERNANCE_CHANGE:${classification.kind}:${classification.path}`);
-    }
-    if (!seenNormalized.has(classification.normalized)) {
-      seenNormalized.add(classification.normalized);
-    } else {
-      escalateReasons.push(`${CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_DUPLICATE}:${classification.path}`);
-    }
-  }
+  for (const classification of paths) reasonsFromPath(classification, seenNormalized, reasons);
+  reasonsFromFacts(facts, reasons);
 
-  if (factPresent(facts.changedStateUnproven)) {
-    escalateReasons.push("CHANGED_STATE_UNPROVEN");
-    refusalReasons.push("CHANGED_STATE_UNPROVEN");
-  }
-  if (factPresent(facts.authorityConflict)) {
-    escalateReasons.push("AUTHORITY_CONFLICT");
-    refusalReasons.push("AUTHORITY_CONFLICT");
-  }
-  if (factPresent(facts.unresolvedRename)) {
-    escalateReasons.push("UNRESOLVED_RENAME");
-    refusalReasons.push("UNRESOLVED_RENAME");
-  }
-  if (factPresent(facts.protectedSurfaceTouched)) {
-    escalateReasons.push("PROTECTED_SURFACE_TOUCHED");
-    refusalReasons.push("PROTECTED_SURFACE_TOUCHED");
-  }
-  // A release-significant candidate is never governance-only, whatever its changed paths say.
-  if (factPresent(facts.releaseLifecycle)) refusalReasons.push("RELEASE_LIFECYCLE");
+  const declaredTier = resolveDeclaredRisk(facts.declaredRisk, reasons);
 
-  let tier: ChangeImpactTier = "LOW";
-  for (const classification of paths) {
-    const rule = RULE_BY_KIND.get(classification.kind);
-    if (rule === undefined) continue;
-    tier = maxChangeImpactTier(tier, rule.tierFloor);
+  let tier = tierFromEscalations(tierFloorFromPaths(paths), reasons.escalate);
+  if (factPresent(facts.releaseLifecycle)) tier = maxChangeImpactTier(tier, 'HIGH_ASSURANCE');
+  if (factPresent(facts.authorityConflict) || factPresent(facts.changedStateUnproven)) {
+    tier = maxChangeImpactTier(tier, 'HIGH_ASSURANCE');
   }
-  for (const reason of escalateReasons) {
-    if (reason.startsWith("SUSPICIOUS_PATH_CONDITION") || reason.startsWith("PROTECTED_SURFACE_TOUCHED")) {
-      tier = maxChangeImpactTier(tier, "HIGH_ASSURANCE");
-      continue;
-    }
-    // Every other escalation reason is at minimum ELEVATED: widening, never narrowing.
-    tier = maxChangeImpactTier(tier, "ELEVATED");
-  }
-  if (factPresent(facts.releaseLifecycle)) tier = maxChangeImpactTier(tier, "HIGH_ASSURANCE");
-  if (factPresent(facts.authorityConflict) || factPresent(facts.changedStateUnproven)) tier = maxChangeImpactTier(tier, "HIGH_ASSURANCE");
-
-  // A declared risk may raise the tier and can never lower it below what the paths proved. A
-  // declared value this table does not recognise is a broken authority input, not a low risk: it
-  // escalates to the strongest tier and is reported.
-  const declaredRisk = facts.declaredRisk;
-  const declaredTierUnchecked = declaredRisk === undefined ? undefined : TIER_FOR_RISK[declaredRisk];
-  const declaredTier: ChangeImpactTier | undefined =
-    declaredRisk === undefined ? undefined : (declaredTierUnchecked ?? "HIGH_ASSURANCE");
-  if (declaredRisk !== undefined && declaredTierUnchecked === undefined) {
-    escalateReasons.push(`UNDECLARED_RISK_CLASS:${String(declaredRisk)}`);
-    refusalReasons.push(`UNDECLARED_RISK_CLASS:${String(declaredRisk)}`);
-    tier = maxChangeImpactTier(tier, "HIGH_ASSURANCE");
-  }
+  // A declared risk may raise the tier and can never lower it below what the paths proved.
   const effectiveTier = declaredTier === undefined ? tier : maxChangeImpactTier(tier, declaredTier);
 
-  const obligationSet = new Set<ChangeObligation>(ALWAYS_REQUIRED_OBLIGATIONS);
-  for (const classification of paths) {
-    const rule = RULE_BY_KIND.get(classification.kind);
-    if (rule === undefined) continue;
-    for (const obligation of rule.obligations) obligationSet.add(obligation);
-  }
-  if (effectiveTier === "HIGH_ASSURANCE") {
-    obligationSet.add("RELEASE_ASSURANCE");
-    obligationSet.add("SPECIALIST_REVIEW");
-  }
-  if (effectiveTier !== "LOW") obligationSet.add("CROSS_PLATFORM_REGRESSION");
+  const obligationSet = obligationsFor(paths, effectiveTier);
 
-  const governanceFastPath: "PERMITTED" | "REFUSED" = refusalReasons.length === 0 && paths.length > 0 ? "PERMITTED" : "REFUSED";
-  const blocked =
-    suspiciousPathsOf(paths).length > 0 || factPresent(facts.authorityConflict) || factPresent(facts.changedStateUnproven);
+  const governanceFastPath: 'PERMITTED' | 'REFUSED' = reasons.refuse.length === 0 && paths.length > 0 ? 'PERMITTED' : 'REFUSED';
+  const blocked = isBlocked(paths, facts);
 
-  const sortedObligations = [...obligationSet].sort();
-  const sortedKinds = [...new Set(paths.map((classification) => classification.kind))].sort();
-  const sortedDomains = [...new Set(paths.map((classification) => classification.domain))].sort();
+  const sortedObligations = inCodePointOrder(obligationSet);
+  const sortedKinds = inCodePointOrder(paths.map((classification) => classification.kind));
+  const sortedDomains = inCodePointOrder(paths.map((classification) => classification.domain));
 
   const body = {
     policyVersion: CHANGE_IMPACT_POLICY_VERSION,
@@ -629,7 +694,7 @@ export function classifyChangeImpact(input: ChangeImpactInput, digest: Requireme
     tierFloor: tier,
     declaredTier: declaredTier ?? null,
     governanceFastPath,
-    governanceFastPathRefusals: [...new Set(refusalReasons)].sort(),
+    governanceFastPathRefusals: inCodePointOrder(reasons.refuse),
     paths: paths.map((classification) => ({
       path: classification.path,
       normalized: classification.normalized,
@@ -641,9 +706,9 @@ export function classifyChangeImpact(input: ChangeImpactInput, digest: Requireme
     kinds: sortedKinds,
     domains: sortedDomains,
     obligations: sortedObligations,
-    escalateReasons: [...new Set(escalateReasons)].sort(),
+    escalateReasons: inCodePointOrder(reasons.escalate),
     facts: {
-      declaredRisk: declaredRisk ?? null,
+      declaredRisk: facts.declaredRisk ?? null,
       protectedSurfaceTouched: facts.protectedSurfaceTouched ?? false,
       releaseLifecycle: facts.releaseLifecycle ?? false,
       changedStateUnproven: facts.changedStateUnproven ?? false,

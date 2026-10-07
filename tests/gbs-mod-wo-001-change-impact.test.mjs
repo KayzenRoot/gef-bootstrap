@@ -105,6 +105,8 @@ test('a declared risk may raise but never lower the derived floor', () => {
   assert.equal(raised.tier, 'HIGH_ASSURANCE');
   assert.equal(raised.declaredTier, 'HIGH_ASSURANCE');
   assert.equal(raised.tierFloor, 'STANDARD', 'the path-derived floor stays visible next to the declared risk');
+  assert.equal(raised.declaredTier, 'HIGH_ASSURANCE');
+  assert.equal(raised.tierFloor, 'STANDARD', 'the path-derived floor stays visible next to the declared risk');
   assert.ok(raised.obligations.includes('SPECIALIST_REVIEW'));
   assert.ok(raised.obligations.includes('RELEASE_ASSURANCE'));
   assert.equal(impact(GOVERNANCE_PATHS, { declaredRisk: 'LOW' }).tier, 'STANDARD');
@@ -223,5 +225,6 @@ test('tier combination is monotonic', () => {
 function changeReason(result, code) {
   return result.escalateReasons.includes(code);
 }
+
 
 const rankOf = (tier) => ['LOW', 'STANDARD', 'ELEVATED', 'HIGH_ASSURANCE'].indexOf(tier);

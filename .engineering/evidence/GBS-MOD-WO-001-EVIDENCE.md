@@ -5,7 +5,7 @@
 **Implementation PR:** [#407](https://github.com/KayzenRoot/gef-bootstrap/pull/407)
 **Branch:** `feat/mod/wo-001-agent-native-gate`
 **Implementation base:** `main@921493797728a43aadc9f7840c954ce7e3ebc416`
-**Implementation head at evidence assembly:** `c76c2d8a8459f461bad519729d6b2fe83eed9d3d` plus the uncommitted implementation delta listed below
+**Candidate identity:** the branch tip of `feat/mod/wo-001-agent-native-gate` that carries this bundle. A commit cannot state its own SHA, so the candidate is bound to the branch plus its owner-audited parent `0f983b8b8b624ffa93fe7ab7a8072dcda1628b88`; resolve with `git rev-parse origin/feat/mod/wo-001-agent-native-gate`.
 **Risk:** `ELEVATED` · **Product credit:** `NONE` · **V1.2 credit:** unchanged at `3 / 10`
 **Stop condition reached:** `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`
 
@@ -34,34 +34,35 @@ workflow the lock bound at the base and fails on any mismatch.
 
 ## 2. Changed paths
 
-Every path is inside `implementationAuthorization.writeAllowed`. No path is in `writeForbidden`.
-Blob identities are stated at evidence assembly; this bundle's own blob is omitted because it cannot
-state its own identity without a fixed point.
+Full delta against the implementation base `921493797728a43aadc9f7840c954ce7e3ebc416`: **26 paths**. Every path is inside
+`implementationAuthorization.writeAllowed`; no path is in `writeForbidden`. Blob identities are
+stated at evidence assembly, and this bundle's own blob is omitted because it cannot state its own
+identity without a fixed point.
 
 | Git blob | Path | Intent |
 | --- | --- | --- |
-| `22fccd620390d0844bb03a2cf7c063d2e3d078ff` | `.engineering/checkpoint-deltas/GBS-MOD-WO-001-PROPOSED.md` | **new** — proposed checkpoint delta |
-| `95cbc693beecef561df2b208b1338538392d9ac9` | `.engineering/context-locks/GBS-MOD-WO-001.json` | factual execution/evidence binding |
-| `7ec3435645c211ffada77c6c3b5b2094b1422846` | `.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json` | **new** — measured benchmark receipt |
-| `139acf1489170abfe858fddce3619fb598020cd1` | `.engineering/work-orders/GBS-MOD-WO-001.md` | machine-readable contract and executed-delta binding |
+| `6418cc0507e41c6a04c36d50fa94cb2ee7b7b949` | `.engineering/checkpoint-deltas/GBS-MOD-WO-001-PROPOSED.md` | **new** — proposed checkpoint delta |
+| `daeb98629b4267e40be74f2fb3bec252ae45cf22` | `.engineering/context-locks/GBS-MOD-WO-001.json` | factual execution/evidence binding, candidate-bound |
+| `45fe6fca3e481b9a04989173882f67d44428ee97` | `.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json` | **new** — measured benchmark receipt |
+| `9ca3d32eb0baf8ee79c93c9baadfd5cef9bf60f5` | `.engineering/work-orders/GBS-MOD-WO-001.md` | machine-readable contract and executed-delta binding |
 | `492f1d4ae66abe8749a082d68decc81a3b4fd702` | `AGENTS.md` | compacted into a trigger router |
-| `030a6766593e52d2e3b3eaa7987d296a889e7e03` | `packages/assurance-pipeline/src/gef-gate.ts` | **new** — GEF Gate decision and receipt |
+| `cf8707dfbf2dbd9596d54ce23cc43524db014612` | `packages/assurance-pipeline/src/gef-gate.ts` | **new** — GEF Gate decision and receipt |
 | `ea77b45f6194888a7337baae7fa494beccb35d47` | `packages/assurance-pipeline/src/public.ts` | export the GEF Gate |
 | `8a18102efcb67b9d7866a010bd6a52db415e11cc` | `packages/contracts/src/index.ts` | re-export the work-order contract |
-| `5e457869f0db0f7bcb36fae0b155b1ad4c12b6e6` | `packages/contracts/src/work-order.ts` | **new** — versioned Work Order contract, parser, glob authority |
-| `c3bf728ad1bc7736f3021f86551169c320b9867b` | `packages/preflight/src/change-impact.ts` | **new** — deterministic path classification, risk tier, obligations |
+| `9a665ae1a4dff817349d48d799dfaa105eb5aff8` | `packages/contracts/src/work-order.ts` | **new** — versioned Work Order contract, parser, glob authority |
+| `78710b58b6e747b17b61c4941172434b23011fcd` | `packages/preflight/src/change-impact.ts` | **new** — deterministic path classification, risk tier, obligations |
 | `5139133c4e3589b5e9b8638bdcdef8d797eb77aa` | `packages/preflight/src/index.ts` | re-export change impact |
 | `c9c99ba0e051e93a6f51beadbad05ef58ab70605` | `packages/task-context-compiler/src/public.ts` | export the tiered Context Lock |
-| `a5b373f6ff3fca16ab21755f36a28ce292344ec0` | `packages/task-context-compiler/src/s07-tiered-context-lock.ts` | **new** — tiered Context Lock compiler |
-| `0d294a140a282d514d5a666d5843099e820ab208` | `packages/test-impact-engine/src/gate-closure.ts` | **new** — changed-path to source closure and validation floor |
+| `94d3bad9933f21451c728936a0593e5faa4644dd` | `packages/task-context-compiler/src/s07-tiered-context-lock.ts` | **new** — tiered Context Lock compiler |
+| `780bd950580067038a47511101f161a0a9021717` | `packages/test-impact-engine/src/gate-closure.ts` | **new** — changed-path to source closure and validation floor |
 | `b46bc5ab5db4cecc9358e1e93d450f2b41822f79` | `packages/test-impact-engine/src/public.ts` | export gate closure |
 | `d60b79836cca354190870115c06c3fd85652d290` | `tests/gbs-mod-wo-001-benchmark.test.mjs` | **new** — focused proof |
-| `963185ad5fd0fa58c6996a9086c162bc92d8dd9c` | `tests/gbs-mod-wo-001-change-impact.test.mjs` | **new** — focused proof |
+| `ec164b3ec20e30e345315652bef30959cea5c6dd` | `tests/gbs-mod-wo-001-change-impact.test.mjs` | **new** — focused proof |
 | `aebe8eb71d06d86e7ab1145cb6131bf1dde1a5e3` | `tests/gbs-mod-wo-001-context-lock.test.mjs` | **new** — focused proof |
-| `28f07d4c02985c51f20dc7b08af47270f30341cf` | `tests/gbs-mod-wo-001-gate-closure.test.mjs` | **new** — focused proof |
-| `1597f351d80908df6b9af32dc7f843abb215310a` | `tests/gbs-mod-wo-001-gef-gate.test.mjs` | **new** — focused proof |
-| `c6c4e8870541aaab3bba78ea353c5c01d89e71e1` | `tests/gbs-mod-wo-001-pipeline-integrity.test.mjs` | **new** — focused proof |
-| `560fb188fc74d183a241e70c30a3f6978502a3fa` | `tests/gbs-mod-wo-001-routing.test.mjs` | **new** — focused proof |
+| `5cc5d3523d29db9a6c9a4e271b11049845ca4723` | `tests/gbs-mod-wo-001-gate-closure.test.mjs` | **new** — focused proof |
+| `ba6a1e89926bab95b991e2df482a2a0c7593d40d` | `tests/gbs-mod-wo-001-gef-gate.test.mjs` | **new** — focused proof |
+| `2e1e18c8e276c5fa1d42a77bb5aa4482def1419c` | `tests/gbs-mod-wo-001-pipeline-integrity.test.mjs` | **new** — routing-surface proof; corrected to read stored Git object IDs |
+| `dab779acf3c0bda1bcec523967c515d8ce5a852a` | `tests/gbs-mod-wo-001-routing.test.mjs` | **new** — focused proof |
 | `9aa998f2d6a1b0860c16af90a9894e9db1613e5e` | `tests/gbs-mod-wo-001-work-order-contract.test.mjs` | **new** — focused proof |
 | `b5473c20156e87a13c7b6f33f7b4531f8184d159` | `tests/helpers/gbs-mod-wo-001-benchmark-receipt.mjs` | **new** — shared routing/receipt helper |
 | `f465e9389588301cc074e7d3a2aea9f3ba3c484f` | `tests/helpers/gbs-mod-wo-001-routing.mjs` | **new** — shared routing/receipt helper |
@@ -163,20 +164,61 @@ restore on the provider side.
 | `npm ci --ignore-scripts` | 33 packages, 0 vulnerabilities |
 | `npm run build` | success, 27 packages |
 | `npm run typecheck` | success, 27 packages |
-| `npm run validate` (typecheck + `node --test tests/*.test.mjs`) | **1775 tests, 1775 pass, 0 fail, 0 skipped** |
+| `npm run validate` (typecheck + `node --test tests/*.test.mjs`) | **1780 tests, 1780 pass, 0 fail, 0 skipped** |
 | `npm audit --audit-level=high` | 0 vulnerabilities |
 | `git diff --check` | clean |
 
 Baseline before this implementation, at head `c76c2d8a8459f461bad519729d6b2fe83eed9d3d`:
-**1659 tests, 1659 pass, 0 fail**. Net new: 116 tests.
+**1659 tests, 1659 pass, 0 fail**. Net new: 121 tests against the implementation base.
 
 The Context Lock's regression list was re-verified through `npm run validate`, which executes every
 `tests/*.test.mjs`, including `tests/m14-*`, `tests/m27-*`, `tests/m28-*`, `tests/m04*`,
 `tests/v12-wo-001-*` and the M27/M28 hardening and policy-drift suites.
 
-The run is executed on Node `v24.19.0`. Exact-head GitHub required and security checks are
-**NOT_VERIFIED** at this head: the evidence bundle was assembled before the push, and CI check-runs
-are not observable from the executor environment.
+The run is executed on Node `v24.19.0`.
+
+### Cross-platform proof
+
+The owner audit found the pipeline-integrity proof failing only on `windows-latest`. The whole
+working tree of the committed candidate was converted LF -> CRLF to emulate a Windows checkout with
+`core.autocrlf`, and the full suite was executed again: **1780 / 1780 pass**. Under that same
+conversion:
+
+| `repository-validation.yml` | value |
+| --- | --- |
+| working-tree SHA-1 (CRLF) | `cec22b62b1c1779e3cc118f0ab93d1c4ee1047d0` |
+| stored Git object ID (`git rev-parse HEAD:<path>`) | `38c801e6009663448194045ab27ef25c7dcbf0f0` |
+| recorded blob at the implementation base | `38c801e6009663448194045ab27ef25c7dcbf0f0` |
+
+The working-tree hash no longer equals the recorded identity — the exact mismatch class the owner
+reported — while the stored object ID does, so the assertion passes on both platforms. This is local
+corroboration on a Linux host; the authoritative Ubuntu, macOS and Windows results are the GitHub
+Actions runs on the candidate head.
+
+### Exact-head GitHub disposition
+
+Observed on the owner-audited parent `0f983b8b8b624ffa93fe7ab7a8072dcda1628b88`, from the GitHub
+check-runs API: **64 check runs, 62 success, 2 failure, 0 pending.** All four required ruleset
+contexts succeeded.
+
+| Check | Result | Disposition |
+| --- | --- | --- |
+| Repository validation | SUCCESS | — |
+| Pipeline integrity | SUCCESS | — |
+| Gitleaks secrets | SUCCESS | — |
+| Trivy filesystem and configuration | SUCCESS | — |
+| Analyze TypeScript (CodeQL) | SUCCESS | — |
+| Dependency Review | SUCCESS | — |
+| Socket Security | SUCCESS | — |
+| V1.1 release assurance / ubuntu-latest | SUCCESS | — |
+| V1.1 release assurance / macos-latest | SUCCESS | — |
+| **V1.1 release assurance / windows-latest** | **FAILURE** | corrected in this candidate |
+| **SonarCloud Code Analysis** | **FAILURE** | corrected in this candidate |
+| codecov/patch | SUCCESS | 99.50421%, 10 changed lines uncovered — advisory, additional branch coverage added |
+
+Both failures were the owner audit's HIGH blockers 1 and 2, and both are addressed above. The
+candidate head's own check runs are `PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED`: this bundle was
+assembled before the correction was pushed, so it records no disposition it cannot see.
 
 ## 8. Adversarial coverage
 
@@ -238,7 +280,9 @@ Work Order contract has no production caller, and path attribution is caller-sup
    Benchmark Plan forbids an unsourced percentage.
 3. **Baseline model scope.** It counts only check runs selected by committed `pull_request` trigger
    definitions, so it excludes provider-side reports with no committed workflow.
-4. **Exact-head CI is unverified.** See section 7.
+4. **Candidate-head CI is not yet observed.** Section 7 records the parent head's exact disposition
+   (62/64, both failures corrected). The candidate head's own runs are
+   `PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED` and must be read before the next audit.
 5. **Baseline risk classifier coverage.** A path that matches no classification rule is `UNKNOWN`
    and widens to `ELEVATED`; it does not block. Blocking on unknown is available through
    `changedStateUnproven`. A root-level `.engineering` document the domain table does not name is
@@ -259,7 +303,40 @@ Work Order contract has no production caller, and path attribution is caller-sup
    `HIGH_ASSURANCE`. This is deliberately fail-closed rather than fail-loud: a caller typo widens
    the gate instead of silently narrowing it.
 
-## 11. Stop condition
+## 11. Owner audit correction (review 5436978682, verdict CORRECTION REQUIRED)
+
+Both HIGH blockers were corrected in this candidate. No rule was suppressed and no threshold was
+lowered.
+
+**Blocker 1 — cross-platform pipeline integrity.** The assertion compared a hash of the
+checked-out working-tree bytes against Git blob IDs recorded at the implementation base. A Windows
+checkout rewrites LF to CRLF unless `.gitattributes` says otherwise, so the two byte strings differ
+per platform. It now reads the stored Git object ID with `git rev-parse --verify --quiet HEAD:<path>`,
+which is the same value on every platform and at the recorded base. The assertion is unchanged in
+strength: it still demands the exact recorded blob ID for all ten workflows, and an unusable Git, a
+missing revision or an absent path is a test failure rather than a skip. Two tests were added: one
+proves that the same file has two different SHA-1 values under CRLF/LF while one stored identity,
+and one proves that a missing path or revision fails closed.
+
+**Blocker 2 — Sonar Reliability Rating D on new code.** The Quality Gate failed on
+"D Reliability Rating on New Code (required >= A)". The rating is driven by BUG findings; the head
+carried 41 open issues, 10 of them BUG, all `typescript:S2871` — alphabetical sorts with no
+comparator or with a `localeCompare`-free one. All ten are removed: each package now exposes one
+canonical code-point comparator used by every sort.
+
+`localeCompare` was deliberately **not** adopted even though the rule text suggests it. Collation
+depends on locale and ICU build, so the same repository state could produce two different receipt
+digests on two runners — reintroducing precisely the platform-dependent-evidence defect blocker 1 is
+about. Code-point ordering is locale-independent. The rule is satisfied by making the ordering
+explicit and canonical, not by accepting a weaker property.
+
+The remaining 31 code smells on the same head were also resolved rather than left behind: nested
+ternaries (S3358), cognitive complexity in all flagged functions (S3776), chained sorts (S4043),
+nested template literals (S4624), verbose digit classes (S6353), implicit stringification of
+untrusted values (S6551), optional-chain preference (S6582), negative indexing (S7755), array
+membership (S7776), `String#replace` over `replaceAll` (S7781) and a module-scope assertion (S8784).
+
+## 12. Stop condition
 
 `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`
 

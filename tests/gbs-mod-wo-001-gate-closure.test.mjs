@@ -4,7 +4,7 @@
 // source must widen the closure and name the offending path, and the tier floor the classifier
 // proved must survive the selection.
 
-import test from 'node:test';
+import test, { before } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 
@@ -34,7 +34,10 @@ const TESTS = [
 ];
 
 const map = buildTestMap(SOURCES, TESTS, options);
-assert.equal(map.ok, true, 'the M28 test map fixture must build');
+
+before(() => {
+  assert.equal(map.ok, true, 'the M28 test map fixture must build');
+});
 
 const ASSURANCE = { requiredLevel: 'L1', policyDigest: sha('policy'), profileDigest: sha('profile') };
 

@@ -204,8 +204,10 @@ a parse diagnostic, never a default.
 
 ## EXECUTED DELTA (binding)
 
-Implementation head at evidence assembly: `c76c2d8a8459f461bad519729d6b2fe83eed9d3d` plus the delta
-in `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md` section 2.
+Candidate identity: the branch tip of `feat/mod/wo-001-agent-native-gate` carrying this record, with
+owner-audited parent `0f983b8b8b624ffa93fe7ab7a8072dcda1628b88`. A commit cannot state its own SHA;
+resolve the candidate with `git rev-parse origin/feat/mod/wo-001-agent-native-gate`. Changed paths are
+enumerated in `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md` section 2.
 
 - Nodes delivered: A `packages/contracts/src/work-order.ts`; B `packages/preflight/src/change-impact.ts`;
   C `packages/task-context-compiler/src/s07-tiered-context-lock.ts`; D `packages/test-impact-engine/src/gate-closure.ts`;
@@ -218,9 +220,27 @@ in `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md` section 2.
   listed under *Important, not auto-included* above, so the stable gate/check contract is delivered
   for a later authorized ruleset update instead. Narrowing candidates are reported with
   `NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION`.
-- Validation: `npm run validate` 1775 / 1775 pass, 0 fail, 0 skipped; `npm audit --audit-level=high`
-  0 vulnerabilities; `git diff --check` clean. Baseline at the implementation head was 1659 / 1659.
-- Exact-head GitHub required and security checks: `NOT_VERIFIED` from the executor environment.
+- Validation: `npm run validate` 1780 / 1780 pass, 0 fail, 0 skipped; `npm audit --audit-level=high`
+  0 vulnerabilities; `git diff --check` clean. Baseline at the implementation base was 1659 / 1659.
+  A CRLF working tree (Windows-checkout simulation) also passes 1780 / 1780.
+- Exact-head GitHub disposition for the owner-audited parent `0f983b8`: 64 check runs, 62 SUCCESS,
+  2 FAILURE (`V1.1 release assurance / windows-latest`, `SonarCloud Code Analysis`), 0 pending, all
+  four required ruleset contexts green. Both failures are the owner audit's HIGH blockers and are
+  corrected in this candidate. The candidate head's own runs are
+  `PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED`.
+
+### Owner audit correction (review 5436978682, verdict CORRECTION REQUIRED)
+
+1. **Cross-platform pipeline integrity.** The workflow-identity assertion hashed working-tree bytes,
+   which a Windows checkout rewrites LF -> CRLF. It now reads the stored Git object ID
+   (`git rev-parse HEAD:<path>`), identical on every platform. Strength is unchanged: the exact
+   recorded blob ID is still required, and a missing path or unusable revision fails closed.
+2. **Sonar Reliability D on new code.** All 10 BUG findings (`typescript:S2871`) removed by adopting
+   one canonical code-point comparator per package; the other 31 code smells were also resolved. No
+   rule was suppressed and no threshold lowered. `localeCompare` was deliberately not adopted,
+   because locale/ICU-dependent collation would make receipt digests platform-dependent.
+3. **Execution/evidence binding.** Rebound to the corrected candidate with the parent's exact-head
+   GitHub disposition recorded above.
 
 Evidence: `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md`,
 `.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json`,
