@@ -28,7 +28,7 @@
   },
   "dependencies": {
     "koffi": "^3.3.0",
-    "undici-types": "^6.21.0"
+    "undici-types": "^8.11.2"
   },
   "repository": {
     "type": "git",
