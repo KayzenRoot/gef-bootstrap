@@ -176,6 +176,36 @@ test('the lock digest binds the exact base, head and source set', () => {
   assert.notEqual(must({ floorTier: 'HIGH_ASSURANCE', declaredTier: 'HIGH_ASSURANCE' }).lockDigest, lock.lockDigest);
 });
 
+test('a malformed readIfTriggered entry is a diagnostic and never a throw', () => {
+  // Owner audit MEDIUM: reading `entry.trigger` before validating the entry threw on a missing field.
+  const malformedValues = [null, {}, 42, 'a.md', [], [{ path: 1, trigger: 'X' }].slice(0, 0)];
+  for (const readIfTriggered of malformedValues.slice(0, 4)) {
+    const result = compile({ readIfTriggered });
+    assert.equal(result.ok, false, `${JSON.stringify(readIfTriggered)} must be refused`);
+    assert.equal(result.diagnostics[0].code, TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_INPUT_INVALID);
+  }
+  const malformed = [
+    [{ path: 1, trigger: 'X' }],
+    [{ path: 'a.md' }],
+    [{ trigger: 'X' }],
+    [{ path: 'a.md', trigger: 7 }],
+    [{ path: '../escape.md', trigger: 'X' }],
+    [{ path: '/abs/a.md', trigger: 'X' }],
+    [{ path: 'a.md', trigger: '' }],
+    [{ path: 'a.md', trigger: 'X' }, { path: 'b.md' }],
+    [null],
+  ];
+  for (const readIfTriggered of malformed) {
+    const result = compile({ readIfTriggered });
+    assert.equal(result.ok, false, `${JSON.stringify(readIfTriggered)} must be refused`);
+    assert.equal(
+      result.diagnostics[0].code,
+      TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_SOURCE_INVALID,
+      `${JSON.stringify(readIfTriggered)} produced ${result.diagnostics[0].code}`,
+    );
+  }
+});
+
 test('tier combination only ever raises assurance', () => {
   assert.equal(maxContextLockTier('LOW', 'HIGH_ASSURANCE'), 'HIGH_ASSURANCE');
   assert.equal(maxContextLockTier('ELEVATED', 'STANDARD'), 'ELEVATED');

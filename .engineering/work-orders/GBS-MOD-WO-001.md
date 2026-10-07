@@ -246,6 +246,31 @@ Evidence: `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md`,
 `.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json`,
 `.engineering/checkpoint-deltas/GBS-MOD-WO-001-PROPOSED.md`.
 
+### Owner audit correction (review 5440904137, verdict CORRECTION REQUIRED)
+
+1. **Executable code under a governance path took the fast path.** The classifier matched the
+   `.engineering/` and `docs/` directory rules before the executable-extension rules, so a first match
+   on the directory shadowed the extension. Extension rules now precede them, and an invariant forces
+   `PRODUCT_CODE` for any executable extension beneath `.engineering/` or `docs/`.
+2. **`HIGH_ASSURANCE` could be narrowed by the gate.** Narrowing is refused whenever the tier is
+   `HIGH_ASSURANCE`, with `HIGH_ASSURANCE_CANDIDATE_MUST_NOT_BE_NARROWED` taking precedence.
+3. **Decision-bearing digests were unvalidated.** `GEF_GATE_DIGEST_BINDING_INVALID` enforces the
+   `sha256:<64 hex>` shape on all five bindings in one rule with one code.
+4. **The benchmark compared non-equivalent units and mis-matched its own globs.** The enforced
+   provider check-run series is now compared against the baseline series and is equal; logical
+   obligations are reported separately and never compared to check runs. In-segment glob matching was
+   implemented, raising the product-code baseline from 38 to 39 runs. No reduction is claimed.
+5. **Inherited object keys resolved a domain, a tier or a fallback.** All such tables and the
+   caller-supplied path index are read through `Object.hasOwn`, failing closed.
+6. **`readIfTriggered` threw on a malformed entry.** Entries are shape-checked before any field read.
+7. **Coverage.** The corrected paths gained adversarial tests; `npm run validate` is 1785 / 1785.
+
+No workflow, ruleset, branch-protection setting, package manifest, threshold or test was relaxed to
+achieve this. Full root-cause analysis and proof are in Evidence section 9.
+
+Evidence: `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md` section 9,
+`.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json`.
+
 ## STOP CONDITIONS
 Admission planning: `GBS_MOD_WO_001_ADMISSION_READY_FOR_OWNER_AUDIT`
 After admission: `GBS_MOD_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`

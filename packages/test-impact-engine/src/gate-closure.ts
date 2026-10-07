@@ -57,12 +57,14 @@ export const GATE_CLOSURE_DIAGNOSTIC_CODES = Object.freeze({
   GATE_CLOSURE_INPUT_INVALID: 'GATE_CLOSURE_INPUT_INVALID',
 } as const);
 
-const TIER_TO_LEVEL: Readonly<Record<string, ValidationLevel>> = Object.freeze({
-  LOW: 'L1',
-  STANDARD: 'L2',
-  ELEVATED: 'L4',
-  HIGH_ASSURANCE: 'L5',
-});
+/**
+ * Change-impact tier to validation-ladder level, on a null prototype and read through an own-key
+ * check so an inherited key such as `toString` cannot resolve a ladder level.
+ */
+const TIER_TO_LEVEL: Readonly<Record<string, ValidationLevel>> = Object.assign(
+  Object.create(null) as Record<string, ValidationLevel>,
+  Object.freeze({ LOW: 'L1', STANDARD: 'L2', ELEVATED: 'L4', HIGH_ASSURANCE: 'L5' }),
+);
 
 /**
  * Maps a change-impact tier onto the M28 validation ladder.
@@ -70,7 +72,7 @@ const TIER_TO_LEVEL: Readonly<Record<string, ValidationLevel>> = Object.freeze({
  * An unrecognized tier maps to `L5`: an unclassified risk must never buy a weaker floor.
  */
 export function tierToValidationLevel(tier: string): ValidationLevel {
-  return TIER_TO_LEVEL[tier] ?? 'L5';
+  return (Object.hasOwn(TIER_TO_LEVEL, tier) ? TIER_TO_LEVEL[tier] : undefined) ?? 'L5';
 }
 
 type ClosureInputCheck = { readonly ok: true } | { readonly ok: false; readonly message: string; readonly subject?: string };
@@ -158,7 +160,7 @@ export function compileGateClosure(input: GateClosureInput, options: OperationOp
   for (const path of unique(input.changedPaths)) {
     const step = guard.step(path);
     if (step.ok !== true) return step;
-    const attributed = input.sourcePathIndex[path];
+    const attributed = Object.hasOwn(input.sourcePathIndex, path) ? input.sourcePathIndex[path] : undefined;
     if (attributed === undefined || attributed.length === 0) {
       unattributedPaths.push(path);
       continue;

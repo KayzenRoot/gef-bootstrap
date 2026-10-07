@@ -174,6 +174,25 @@ test('malformed closure input fails closed instead of throwing or coercing', () 
   }
 });
 
+test('the tier table is read through own-key checks only', () => {
+  // Owner audit MEDIUM: an inherited key must resolve to the conservative fallback, never a level.
+  for (const key of ['toString', 'constructor', 'hasOwnProperty', '__proto__', 'valueOf', 'LOW ']) {
+    assert.equal(tierToValidationLevel(key), 'L5', `${key} must fall back to L5`);
+  }
+  assert.equal(tierToValidationLevel('LOW'), 'L1');
+  assert.equal(tierToValidationLevel('HIGH_ASSURANCE'), 'L5');
+});
+
+test('an inherited key in the path index is read as absent rather than as an entry', () => {
+  // `sourcePathIndex` is caller-supplied authority read from a plain object.
+  const inherited = Object.create({ 'AGENTS.md': ['SRC.GHOST'] });
+  inherited['tests/m28-a.test.mjs'] = ['SRC.GHOST'];
+  const result = must({ sourcePathIndex: inherited, changedPaths: ['AGENTS.md'] });
+  assert.deepEqual(result.unattributedPaths, ['AGENTS.md'], 'an inherited key must not attribute a path');
+  assert.deepEqual(result.changedSourceIds, []);
+  assert.ok(result.obstructions.includes('PATH_NOT_ATTRIBUTED_TO_A_KNOWN_SOURCE'));
+});
+
 test('cancellation is reported rather than producing a partial closure', () => {
   let cancelled = false;
   const result = compileGateClosure(closureInput({}), {

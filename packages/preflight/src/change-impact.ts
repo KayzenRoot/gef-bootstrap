@@ -131,7 +131,14 @@ interface KindRule {
  * Requirements are reached here rather than through a filename guess, which keeps the `SCOPE` and
  * `REQUIREMENT` authority domains reachable from the classification table.
  */
-const GOVERNANCE_DOC_DOMAIN: Readonly<Record<string, ChangeDomain>> = Object.freeze({
+/**
+ * Authority domain per canonical document name.
+ *
+ * Built with a null prototype so an inherited key such as `toString` or `__proto__` can never be
+ * read as a domain: every access is an own-key check, and a document named after an inherited key
+ * simply has no mapping and widens instead.
+ */
+const GOVERNANCE_DOC_DOMAIN: Readonly<Record<string, ChangeDomain>> = Object.assign(Object.create(null) as Record<string, ChangeDomain>, Object.freeze({
   "SCOPE.md": "SCOPE",
   "REQUIREMENTS.md": "REQUIREMENT",
   "SOURCE-HIERARCHY.md": "GOVERNANCE",
@@ -148,7 +155,7 @@ const GOVERNANCE_DOC_DOMAIN: Readonly<Record<string, ChangeDomain>> = Object.fre
   "EXECUTOR-ACCELERATION-CONTRACT.md": "EXECUTION",
   "GITHUB-ACCELERATION-PROFILE.md": "EXECUTION",
   "CONSTITUTION-LOCK.md": "GOVERNANCE",
-});
+}));
 
 /** True for a document sitting directly in `.engineering/`, where frozen canonical sources live. */
 function isRootEngineeringDocument(path: string): boolean {
@@ -386,6 +393,18 @@ function segmentMatchesLiteral(patternSegment: string, candidateSegment: string)
  * are tested before the broader directory they live in.
  */
 const CLASSIFICATION_RULES: readonly { readonly pattern: string; readonly kind: ChangePathKind }[] = Object.freeze([
+  { pattern: ".engineering/**/*.ts", kind: "PRODUCT_CODE" },
+  { pattern: ".engineering/**/*.mts", kind: "PRODUCT_CODE" },
+  { pattern: ".engineering/**/*.cts", kind: "PRODUCT_CODE" },
+  { pattern: ".engineering/**/*.js", kind: "PRODUCT_CODE" },
+  { pattern: ".engineering/**/*.mjs", kind: "PRODUCT_CODE" },
+  { pattern: ".engineering/**/*.cjs", kind: "PRODUCT_CODE" },
+  { pattern: "docs/**/*.ts", kind: "PRODUCT_CODE" },
+  { pattern: "docs/**/*.mts", kind: "PRODUCT_CODE" },
+  { pattern: "docs/**/*.cts", kind: "PRODUCT_CODE" },
+  { pattern: "docs/**/*.js", kind: "PRODUCT_CODE" },
+  { pattern: "docs/**/*.mjs", kind: "PRODUCT_CODE" },
+  { pattern: "docs/**/*.cjs", kind: "PRODUCT_CODE" },
   { pattern: "AGENTS.md", kind: "EXECUTOR_CONTRACT" },
   { pattern: "packages/AGENTS.md", kind: "EXECUTOR_CONTRACT" },
   { pattern: "tests/AGENTS.md", kind: "EXECUTOR_CONTRACT" },
@@ -410,10 +429,6 @@ const CLASSIFICATION_RULES: readonly { readonly pattern: string; readonly kind: 
   { pattern: ".engineering/context-locks/**", kind: "CONTEXT_LOCK" },
   { pattern: ".engineering/evidence/**", kind: "EVIDENCE" },
   { pattern: ".engineering/checkpoint-deltas/**", kind: "CHECKPOINT_DELTA" },
-  { pattern: ".engineering/**/*.ts", kind: "PRODUCT_CODE" },
-  { pattern: ".engineering/**/*.mts", kind: "PRODUCT_CODE" },
-  { pattern: ".engineering/**/*.mjs", kind: "PRODUCT_CODE" },
-  { pattern: ".engineering/**/*.js", kind: "PRODUCT_CODE" },
   { pattern: ".engineering/**", kind: "GOVERNANCE_DOC" },
   { pattern: "planning/**", kind: "PLANNING_DOC" },
   { pattern: "packages/**/*.ts", kind: "PRODUCT_CODE" },
@@ -446,6 +461,41 @@ function suspicious(path: string, findings: readonly ChangeImpactDiagnosticCode[
  * variant of a real surface. On a case-insensitive filesystem it may be the same file, so neither
  * spelling can be trusted to classify: report it instead of guessing.
  */
+/** Extensions whose files are executable source rather than documentation or governance state. */
+const EXECUTABLE_SOURCE_EXTENSIONS: readonly string[] = Object.freeze([
+  '.ts',
+  '.mts',
+  '.cts',
+  '.js',
+  '.mjs',
+  '.cjs',
+]);
+
+/**
+ * True when the final path segment names executable source content.
+ *
+ * A case-folded comparison is used because this check is the last line of defence against a path
+ * being classified as governance merely by the extension's case.
+ */
+export function isExecutableSourcePath(path: string): boolean {
+  const segments = path.split('/');
+  const name = (segments[segments.length - 1] ?? '').toLowerCase();
+  return EXECUTABLE_SOURCE_EXTENSIONS.some((extension) => name.endsWith(extension));
+}
+
+/** Kinds whose subject is a document, record or governance state rather than executable content. */
+const DOCUMENT_KINDS: ReadonlySet<ChangePathKind> = new Set<ChangePathKind>([
+  "EXECUTOR_CONTRACT",
+  "GOVERNANCE_DOC",
+  "NORMATIVE_AUTHORITY_DOC",
+  "PLANNING_DOC",
+  "OPERATOR_DOC",
+  "WORK_ORDER",
+  "CONTEXT_LOCK",
+  "CHECKPOINT_DELTA",
+  "EVIDENCE",
+]);
+
 function isCaseVariantOfAKnownSurface(target: string): boolean {
   const lowered = target.toLowerCase();
   return CLASSIFICATION_RULES.some((rule) => matchesGlob(lowered, rule.pattern.toLowerCase().split("/")));
@@ -458,21 +508,26 @@ export function classifyChangePath(path: unknown): ChangePathClassification {
   const normalized = normalizeChangePath(path);
   if (normalized.findings.length > 0) return suspicious(path, normalized.findings);
   const target = normalized.normalized;
-  const governanceDomain = GOVERNANCE_DOC_DOMAIN[basename(target)];
+  const documentName = basename(target);
+  const governanceDomain = Object.hasOwn(GOVERNANCE_DOC_DOMAIN, documentName) ? GOVERNANCE_DOC_DOMAIN[documentName] : undefined;
   for (const rule of CLASSIFICATION_RULES) {
     if (!matchesGlob(target, rule.pattern.split("/"))) continue;
     const kindRule = RULE_BY_KIND.get(rule.kind);
     if (kindRule === undefined) continue;
+    // Executable source is never a governance or documentation change, whatever any earlier rule
+    // matched. This is asserted after classification as well as encoded in the table, so a future
+    // rule added in the wrong position cannot re-admit the bypass.
+    if ((kindRule.governanceEligible || DOCUMENT_KINDS.has(kindRule.kind)) && isExecutableSourcePath(target)) {
+      const product = RULE_BY_KIND.get("PRODUCT_CODE");
+      if (product !== undefined) {
+        return { path, normalized: target, kind: product.kind, domain: product.domain, unclassified: false, findings: [] };
+      }
+    }
+
     const domain = rule.kind === "GOVERNANCE_DOC" && governanceDomain !== undefined ? governanceDomain : kindRule.domain;
     // The root of `.engineering` holds frozen canonical sources; its subdirectories hold evidence,
     // deltas and locks. A root-level document this table does not name is therefore still
     // normative authority and widens rather than being trusted as descriptive prose.
-    if (rule.kind === "GOVERNANCE_DOC" && (governanceDomain === undefined || isRootEngineeringDocument(target))) {
-      const normative = RULE_BY_KIND.get("NORMATIVE_AUTHORITY_DOC");
-      if (normative !== undefined) {
-        return { path, normalized: target, kind: normative.kind, domain, unclassified: false, findings: [] };
-      }
-    }
     return { path, normalized: target, kind: kindRule.kind, domain, unclassified: false, findings: [] };
   }
   if (isCaseVariantOfAKnownSurface(target)) {
@@ -521,12 +576,13 @@ export interface ChangeImpactResult {
   readonly impactDigest: string;
 }
 
-const TIER_FOR_RISK: Readonly<Record<ChangeImpactTier, ChangeImpactTier>> = Object.freeze({
-  LOW: "LOW",
-  STANDARD: "STANDARD",
-  ELEVATED: "ELEVATED",
-  HIGH_ASSURANCE: "HIGH_ASSURANCE",
-});
+/**
+ * Declared risk to tier. Read through an own-key check so an inherited key can never resolve a tier.
+ */
+const TIER_FOR_RISK: Readonly<Record<string, ChangeImpactTier>> = Object.assign(
+  Object.create(null) as Record<string, ChangeImpactTier>,
+  Object.freeze({ LOW: "LOW", STANDARD: "STANDARD", ELEVATED: "ELEVATED", HIGH_ASSURANCE: "HIGH_ASSURANCE" }),
+);
 
 /** Reasons a candidate cannot take the governance-only fast path, and why the tier must widen. */
 interface ImpactReasons {
@@ -611,8 +667,8 @@ function resolveDeclaredRisk(
   reasons: ImpactReasons,
 ): ChangeImpactTier | undefined {
   if (declaredRisk === undefined) return undefined;
-  const declared = TIER_FOR_RISK[declaredRisk];
-  if (declared !== undefined) return declared;
+  const key = String(declaredRisk);
+  if (Object.hasOwn(TIER_FOR_RISK, key)) return TIER_FOR_RISK[key];
   reasons.escalate.push(`UNDECLARED_RISK_CLASS:${describeValue(declaredRisk)}`);
   reasons.refuse.push(`UNDECLARED_RISK_CLASS:${describeValue(declaredRisk)}`);
   return 'HIGH_ASSURANCE';

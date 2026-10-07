@@ -374,6 +374,23 @@
       "fail": 0,
       "interpretation": "The working-tree hash differs from the recorded identity while the stored object ID matches it, which is the platform dependence blocker 1 removed.",
       "scope": "local corroboration on a Linux host; authoritative Ubuntu, macOS and Windows results are the GitHub Actions runs on the candidate head"
+    },
+    "secondOwnerAuditDisposition": {
+      "review": "5440904137",
+      "verdict": "CORRECTION_REQUIRED",
+      "highFindingsAddressed": 4,
+      "mediumFindingsAddressed": 3,
+      "h1": "Executable-extension rules now precede the governance and documentation directory rules in change-impact.ts, with a post-classification invariant forcing PRODUCT_CODE beneath .engineering/ and docs/.",
+      "h2": "Narrowing is refused for HIGH_ASSURANCE, and HIGH_ASSURANCE_CANDIDATE_MUST_NOT_BE_NARROWED takes precedence over the generic refusal reason.",
+      "h3": "GEF_GATE_DIGEST_BINDING_INVALID enforces ^sha256:[0-9a-f]{64}$ on changeImpactDigest, contextLockDigest, policyDigest, candidateSemanticDigest and a non-null closureDigest in validateBindings.",
+      "h4": "The benchmark reports baselineProviderCheckRuns and postEnforcedProviderCheckRuns as the like-for-like series, equal by construction, and reports logical obligations separately; in-segment glob matching raises the product-code baseline from 38 to 39 runs. No reduction is claimed.",
+      "mediumOwnKey": "GOVERNANCE_DOC_DOMAIN, TIER_FOR_RISK, TIER_TO_LEVEL and the caller-supplied sourcePathIndex are read through Object.hasOwn.",
+      "mediumReadIfTriggered": "isTriggeredSourceEntry shape-checks every readIfTriggered entry before any field is read, inside validateLockInput.",
+      "coverage": "npm run validate 1785/1785 pass; 9 adversarial tests added across the classifier, gate, closure, context-lock and benchmark suites.",
+      "validation": "npm audit --audit-level=high reports 0 vulnerabilities; git diff --check is clean.",
+      "relaxationsApplied": "NONE \u2014 no workflow, ruleset, branch-protection setting, package manifest, threshold or test was relaxed.",
+      "evidence": "Section 9 of .engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md",
+      "exactHeadProviderDispositionNote": "The recorded provider disposition is bound to an earlier candidate head and is superseded by the disposition recorded for this correction head once it completes."
     }
   }
 }

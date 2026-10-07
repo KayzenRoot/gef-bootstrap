@@ -53,6 +53,7 @@ export const GEF_GATE_DIAGNOSTIC_CODES = Object.freeze({
   GATE_RULESET_CONTEXTS_UNPROVEN: 'GEF_GATE_RULESET_CONTEXTS_UNPROVEN',
   GATE_STATE_UNKNOWN: 'GEF_GATE_STATE_UNKNOWN',
   GATE_OBLIGATION_FLOOR_MISSING: 'GEF_GATE_OBLIGATION_FLOOR_MISSING',
+  GATE_DIGEST_BINDING_INVALID: 'GEF_GATE_DIGEST_BINDING_INVALID',
   GATE_RECEIPT_TAMPERED: 'GEF_GATE_RECEIPT_TAMPERED',
 } as const);
 export type GefGateDiagnosticCode = (typeof GEF_GATE_DIAGNOSTIC_CODES)[keyof typeof GEF_GATE_DIAGNOSTIC_CODES];
@@ -225,10 +226,12 @@ function normalizeCandidateChecks(candidates: readonly GefGateCandidateCheck[]):
 
 /** Why a provider candidate was retained rather than proposed as a narrowing candidate. */
 function retentionReasonFor(
+  highAssurance: boolean,
   fastPathHolds: boolean,
   closureProven: boolean,
   governanceFastPath: GefGateInput['governanceFastPath'],
 ): string {
+  if (highAssurance) return 'HIGH_ASSURANCE_CANDIDATE_MUST_NOT_BE_NARROWED';
   if (!fastPathHolds) return `GOVERNANCE_FAST_PATH_REFUSED:${governanceFastPath}`;
   if (!closureProven) return 'NARROWING_REQUIRES_A_PROVEN_DEPENDENCY_CLOSURE';
   return 'INSIDE_CHANGED_DEPENDENCY_OR_RISK_CLOSURE';
@@ -241,6 +244,7 @@ const IMPACT_STATES = ['CLASSIFIED', 'BLOCKED'] as const;
 const CONTEXT_LOCK_STATES = ['COMPILED', 'EXPANDED', 'BLOCKED'] as const;
 
 const SHA40 = /^[0-9a-f]{40}$/;
+const SHA256_DIGEST = /^sha256:[0-9a-f]{64}$/;
 
 function isStringArray(value: unknown): value is readonly string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string' && entry.length > 0);
@@ -254,22 +258,50 @@ function validateUpstreamStates(input: GefGateInput): Result<never> | null {
   if (!CONTEXT_LOCK_STATES.includes(input.contextLockState)) {
     return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_STATE_UNKNOWN, 'contextLockState is not a known state', describe(input.contextLockState));
   }
-  if (input.closureDigest !== null && typeof input.closureDigest !== 'string') {
-    return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID, 'closureDigest must be a digest string or null');
-  }
   if (input.validationFloor !== null && !VALIDATION_FLOORS.includes(input.validationFloor as ValidationFloor)) {
     return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_STATE_UNKNOWN, 'validationFloor is not a known ladder level', describe(input.validationFloor));
   }
   return null;
 }
 
-/** The receipt is meaningless unless it binds a real base, head and changed state. */
+/**
+ * Digest fields that must be well-formed before any receipt can quote them.
+ *
+ * The receipt carries these strings into `bindings` and into every narrowing closure proof, so a
+ * malformed or missing value would let a proof point at nothing. They are validated here rather than
+ * trusted, which is what makes A9's exact-state binding hold for the gate itself.
+ */
+const DIGEST_BINDING_FIELDS = Object.freeze([
+  'changeImpactDigest',
+  'contextLockDigest',
+  'policyDigest',
+  'candidateSemanticDigest',
+] as const);
+
+/** The receipt is meaningless unless it binds a real base, head, changed state and digests. */
 function validateBindings(input: GefGateInput): Result<never> | null {
   if (!SHA40.test(input.baseSha) || !SHA40.test(input.headSha)) {
     return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID, 'base and head must be 40 character commit ids');
   }
   if (!isStringArray(input.changedPaths) || input.changedPaths.length === 0) {
     return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID, 'changedPaths must bind the exact changed state');
+  }
+  for (const field of DIGEST_BINDING_FIELDS) {
+    const value = input[field];
+    if (typeof value !== 'string' || !SHA256_DIGEST.test(value)) {
+      return fail(
+        GEF_GATE_DIAGNOSTIC_CODES.GATE_DIGEST_BINDING_INVALID,
+        `${field} must be a sha256 digest binding`,
+        field,
+      );
+    }
+  }
+  if (input.closureDigest !== null && (typeof input.closureDigest !== 'string' || !SHA256_DIGEST.test(input.closureDigest))) {
+    return fail(
+      GEF_GATE_DIAGNOSTIC_CODES.GATE_DIGEST_BINDING_INVALID,
+      'closureDigest must be a sha256 digest binding or null',
+      'closureDigest',
+    );
   }
   return null;
 }
@@ -394,7 +426,10 @@ export function decideGefGate(input: GefGateInput, options: OperationOptions): R
   // Narrowing only becomes a claim when the fast path actually holds *and* the chain produced a
   // dependency closure. Otherwise every candidate stays retained with the reason it could not be
   // excluded.
-  const fastPathHolds = input.governanceFastPath === 'PERMITTED' && input.escalateReasons.length === 0;
+  // H2: the gate is a safety boundary, so it refuses to narrow a HIGH_ASSURANCE candidate itself
+  // rather than relying on upstream wiring to have produced a consistent validation floor.
+  const highAssurance = riskTier === 'HIGH_ASSURANCE';
+  const fastPathHolds = !highAssurance && input.governanceFastPath === 'PERMITTED' && input.escalateReasons.length === 0;
   // The per-candidate `outsideChangedClosure` flag is a caller claim. It is accepted only alongside
   // a proven closure digest and a known ladder level, and only while that level is below the
   // `HIGH_ASSURANCE` floor — which is what an L5 validation floor means. Note that an L4 floor is
@@ -421,7 +456,7 @@ export function decideGefGate(input: GefGateInput, options: OperationOptions): R
       checkId: entry.checkId,
       ownerWorkflow: entry.ownerWorkflow,
       reason: entry.reason,
-      retentionReason: retentionReasonFor(fastPathHolds, closureProven, input.governanceFastPath),
+      retentionReason: retentionReasonFor(highAssurance, fastPathHolds, closureProven, input.governanceFastPath),
     });
   }
 

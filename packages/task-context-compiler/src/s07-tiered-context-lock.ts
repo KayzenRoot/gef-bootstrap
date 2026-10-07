@@ -147,6 +147,13 @@ function compareByPath(left: { readonly path: string }, right: { readonly path: 
   return compareCodePoint(left.path, right.path);
 }
 
+/** True when the value is a usable `readIfTriggered` entry, checked before any field is read. */
+function isTriggeredSourceEntry(value: unknown): value is { readonly path: string; readonly trigger: string } {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
+  const entry = value as { readonly path?: unknown; readonly trigger?: unknown };
+  return typeof entry.path === 'string' && typeof entry.trigger === 'string';
+}
+
 /** True when every value in `values` is a non-empty trimmed string. */
 function allNonEmptyStrings(values: readonly unknown[]): boolean {
   return values.every((value) => typeof value === 'string' && value.trim().length > 0);
@@ -189,6 +196,15 @@ function validateLockInput(input: TieredContextLockInput): Result<true> {
     return fail(
       TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_INPUT_INVALID,
       'triggeredDomains and obligations entries must be non-empty strings',
+    );
+  }
+  // Every entry is shape-checked before any of its fields is read, so a malformed entry is a
+  // diagnostic rather than a throw from reading `.trigger` off a missing property.
+  const malformedTrigger = input.readIfTriggered.find((entry) => !isTriggeredSourceEntry(entry));
+  if (malformedTrigger !== undefined) {
+    return fail(
+      TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_SOURCE_INVALID,
+      'readIfTriggered entries must be objects with a string path and a string trigger',
     );
   }
   const malformedPath = input.affectedPaths.find((path) => !isCleanRelativePath(path));
@@ -277,7 +293,7 @@ export function compileTieredContextLock(
       return fail(
         TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES.LOCK_SOURCE_INVALID,
         'readIfTriggered entries need a clean relative path and a non-empty trigger',
-        String(entry.path),
+        entry.path,
       );
     }
     if (triggeredDomains.has(entry.trigger)) {

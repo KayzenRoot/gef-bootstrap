@@ -16,6 +16,7 @@ import {
   CHANGE_IMPACT_POLICY_VERSION,
   classifyChangeImpact,
   classifyChangePath,
+  isExecutableSourcePath,
   maxChangeImpactTier,
   normalizeChangePath,
 } from '../packages/preflight/dist/index.js';

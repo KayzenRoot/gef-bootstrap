@@ -196,7 +196,6 @@ test('unknown upstream states and malformed collections are refused rather than 
     { providerCandidateChecks: null },
     { providerCandidateChecks: {} },
     { providerCandidateChecks: [{ checkId: 'c1' }] },
-    { closureDigest: 42 },
   ]) {
     const result = decide(over);
     assert.equal(result.ok, false, `${JSON.stringify(over)} must be refused`);
@@ -205,6 +204,7 @@ test('unknown upstream states and malformed collections are refused rather than 
         GEF_GATE_DIAGNOSTIC_CODES.GATE_INPUT_INVALID,
         GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID,
         GEF_GATE_DIAGNOSTIC_CODES.GATE_STATE_UNKNOWN,
+        GEF_GATE_DIAGNOSTIC_CODES.GATE_DIGEST_BINDING_INVALID,
       ].includes(result.diagnostics[0].code),
       `${JSON.stringify(over)} produced ${result.diagnostics[0].code}`,
     );
@@ -222,6 +222,44 @@ test('a caller claim of an outside-closure check is not believed without a prove
   assert.equal(fullSuiteFloor.decision, 'FULL_ASSURANCE');
   assert.deepEqual(fullSuiteFloor.narrowingCandidates, []);
   assert.ok(fullSuiteFloor.retainedChecks.every((entry) => entry.retentionReason === 'NARROWING_REQUIRES_A_PROVEN_DEPENDENCY_CLOSURE'));
+});
+
+test('the gate itself refuses to narrow a HIGH_ASSURANCE candidate', () => {
+  // Owner audit H2: an inconsistent caller claiming HIGH_ASSURANCE with a permissive fast path and
+  // a sub-L5 floor must still not obtain narrowing candidates.
+  const claimed = must({ riskTier: 'HIGH_ASSURANCE', governanceFastPath: 'PERMITTED', escalateReasons: [], validationFloor: 'L1' });
+  assert.equal(claimed.decision, 'FULL_ASSURANCE');
+  assert.deepEqual(claimed.narrowingCandidates, []);
+  for (const retained of claimed.retainedChecks) {
+    assert.equal(retained.retentionReason, 'HIGH_ASSURANCE_CANDIDATE_MUST_NOT_BE_NARROWED');
+  }
+  assert.ok(claimed.requiredChecks.some((check) => check.kind === 'SPECIALIST_GATE'));
+  // And with an explicit refusal it is still refused for the refusal reason, never narrowed.
+  const refused = must({ riskTier: 'HIGH_ASSURANCE', governanceFastPath: 'REFUSED', escalateReasons: ['RELEASE_LIFECYCLE'] });
+  assert.deepEqual(refused.narrowingCandidates, []);
+  assert.equal(refused.retainedChecks[0].retentionReason, 'HIGH_ASSURANCE_CANDIDATE_MUST_NOT_BE_NARROWED');
+  // A lower tier with the same permissive input still narrows, so the refusal is tier-specific.
+  assert.ok(must({ riskTier: 'ELEVATED' }).narrowingCandidates.length > 0);
+});
+
+test('every decision-bearing digest binding must be a well-formed sha256', () => {
+  // Owner audit H3: these strings reach the receipt body and every narrowing closure proof.
+  const malformed = [undefined, null, '', 'sha256:', 'sha256:zz', 'SHA256:' + 'a'.repeat(64), 'a'.repeat(64), 42, {}, []];
+  for (const field of ['changeImpactDigest', 'contextLockDigest', 'policyDigest', 'candidateSemanticDigest']) {
+    for (const value of malformed) {
+      const result = decide({ [field]: value });
+      assert.equal(result.ok, false, `${field}=${String(value)} must be refused`);
+      assert.equal(result.diagnostics[0].code, GEF_GATE_DIAGNOSTIC_CODES.GATE_DIGEST_BINDING_INVALID);
+      assert.equal(result.diagnostics[0].subject, field);
+    }
+  }
+  for (const value of [undefined, '', 'sha256:zz', 42, {}]) {
+    const result = decide({ closureDigest: value });
+    assert.equal(result.ok, false, `closureDigest=${String(value)} must be refused`);
+    assert.equal(result.diagnostics[0].code, GEF_GATE_DIAGNOSTIC_CODES.GATE_DIGEST_BINDING_INVALID);
+  }
+  assert.equal(decide({ closureDigest: null }).ok, true, 'an absent closure is represented by null, not a malformed value');
+  assert.ok(decide({}).ok, true, 'a well-formed input is still accepted');
 });
 
 test('escalation reasons alone forbid narrowing even if the fast path is claimed', () => {

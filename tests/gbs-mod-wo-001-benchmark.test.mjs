@@ -115,6 +115,23 @@ export const BENCHMARK_FIXTURES = Object.freeze([
   },
 ]);
 
+/** Wildcard match for one path segment; `*` matches any run of characters inside the segment. */
+function segmentMatches(patternSegment, candidateSegment) {
+  const parts = patternSegment.split('*');
+  if (parts.length === 1) return patternSegment === candidateSegment;
+  let cursor = 0;
+  for (let index = 0; index < parts.length; index += 1) {
+    const part = parts[index];
+    if (part === undefined || part.length === 0) continue;
+    const found = candidateSegment.indexOf(part, cursor);
+    if (found < 0) return false;
+    if (index === 0 && found !== 0) return false;
+    cursor = found + part.length;
+  }
+  const last = parts[parts.length - 1];
+  return last !== undefined && last.length > 0 ? candidateSegment.endsWith(last) : candidateSegment.length >= cursor;
+}
+
 function matchesFrom(segments, patternIndex, candidate, candidateIndex) {
   if (patternIndex === segments.length) return candidateIndex === candidate.length;
   const segment = segments[patternIndex];
@@ -126,11 +143,11 @@ function matchesFrom(segments, patternIndex, candidate, candidateIndex) {
     return false;
   }
   if (candidateIndex >= candidate.length) return false;
-  if (segment !== '*' && segment !== candidate[candidateIndex]) return false;
+  if (!segmentMatches(segment, candidate[candidateIndex])) return false;
   return matchesFrom(segments, patternIndex + 1, candidate, candidateIndex + 1);
 }
 
-function matchesPathPattern(path, pattern) {
+export function matchesPathPattern(path, pattern) {
   return matchesFrom(pattern.split('/'), 0, path.split('/'), 0);
 }
 
@@ -163,12 +180,19 @@ export function measure(fixture) {
     class: fixture.class,
     changedPathCount: fixture.changedPaths.length,
     baselineSelectedWorkflows: workflows.length,
-    baselineJobFanOut: baselineJobFanOut(fixture.changedPaths),
+    // Unit: provider check runs selected by the committed `pull_request` trigger definitions.
+    baselineProviderCheckRuns: baselineJobFanOut(fixture.changedPaths),
+    // Unit: provider check runs actually enforced after this change. No workflow, ruleset or
+    // branch-protection change was made, so the enforced series is identical to the baseline series.
+    postEnforcedProviderCheckRuns: baselineJobFanOut(fixture.changedPaths),
+    // Unit: logical obligations in the gate receipt. These are NOT provider check runs and are
+    // never compared against the baseline series.
+    postLogicalObligations: receipt.requiredChecks.length,
+    postRequiredContexts: receipt.requiredChecks.filter((check) => check.kind === 'RULESET_REQUIRED').length,
+    postMandatoryObligations: receipt.requiredChecks.filter((check) => check.kind === 'MANDATORY_OBLIGATION').length,
+    postSpecialistGates: receipt.requiredChecks.filter((check) => check.kind === 'SPECIALIST_GATE').length,
     postDecision: receipt.decision,
     postRiskTier: receipt.riskTier,
-    postRequiredCheckCount: receipt.requiredChecks.length,
-    postRequiredContextCount: receipt.requiredChecks.filter((check) => check.kind === 'RULESET_REQUIRED').length,
-    postObligationCount: receipt.requiredChecks.filter((check) => check.kind === 'MANDATORY_OBLIGATION').length,
     narrowingCandidateCount: receipt.narrowingCandidates.length,
     retainedCandidateCount: receipt.retainedChecks.length,
     // Read from the receipt rather than asserted locally, so this row can actually fail if a future
@@ -192,20 +216,49 @@ test('the benchmark fixture set covers a governance-only candidate and a product
 test('the baseline is identical across the three comparable governance fixtures', () => {
   const baselines = MEASUREMENTS
     .filter((entry) => entry.class.startsWith('GOVERNANCE_ONLY'))
-    .map((entry) => entry.baselineJobFanOut);
+    .map((entry) => entry.baselineProviderCheckRuns);
   assert.equal(new Set(baselines).size, 1, `governance baselines must agree, saw ${baselines.join()}`);
   assert.equal(MEASUREMENTS.filter((entry) => entry.class.startsWith('GOVERNANCE_ONLY')).length, 3);
 });
 
-test('a governance-only candidate selects fewer required checks than the fan-out it replaces', () => {
+test('provider check-run fan-out is unchanged: nothing is skipped today', () => {
+  // The only like-for-like series available. The baseline counts check runs selected by the
+  // committed `pull_request` triggers; the enforced series counts the same runs after the change.
+  // No workflow, ruleset or branch-protection change was made, so the two must be equal. This is a
+  // null result by design and is reported as one: no reduction is claimed.
+  for (const entry of MEASUREMENTS) {
+    assert.equal(
+      entry.postEnforcedProviderCheckRuns,
+      entry.baselineProviderCheckRuns,
+      `${entry.id}: enforced provider check runs must equal the baseline series`,
+    );
+  }
   const governance = byClass('GOVERNANCE_ONLY');
   assert.equal(governance.postDecision, 'REDUCED_ADVISORY');
-  assert.ok(
-    governance.postRequiredCheckCount < governance.baselineJobFanOut,
-    `selected ${governance.postRequiredCheckCount} required checks against a baseline fan-out of ${governance.baselineJobFanOut}`,
-  );
   assert.ok(governance.narrowingCandidateCount > 0, 'a narrowed receipt must name what a later ruleset update could drop');
   assert.ok(governance.retainedCandidateCount > 0, 'a narrowed receipt must also name what it keeps');
+});
+
+test('the gate proof set is reported in its own unit and never compared to check runs', () => {
+  for (const entry of MEASUREMENTS) {
+    assert.equal(
+      entry.postLogicalObligations,
+      entry.postRequiredContexts + entry.postMandatoryObligations + entry.postSpecialistGates,
+      `${entry.id}: the proof set must decompose exactly into contexts, obligations and specialist gates`,
+    );
+    assert.equal(entry.postRequiredContexts, 4, `${entry.id}: every required ruleset context survives`);
+  }
+});
+
+test('the in-segment trigger globs in the baseline table are matched as wildcards', () => {
+  assert.equal(matchesPathPattern('packages/contracts/src/a.ts', 'packages/**/*.ts'), true);
+  // GitHub Actions `**` matches zero or more segments, so `packages/**/*.ts` also covers `packages/a.ts`.
+  assert.equal(matchesPathPattern('packages/a.ts', 'packages/**/*.ts'), true);
+  assert.equal(matchesPathPattern('tests/m28-a.test.mjs', 'tests/**/*.test.mjs'), true);
+  assert.equal(matchesPathPattern('tests/sub/m28-a.test.mjs', 'tests/**/*.test.mjs'), true);
+  assert.equal(matchesPathPattern('tests/m28-a.test.mjsx', 'tests/**/*.test.mjs'), false);
+  assert.equal(matchesPathPattern('tsconfig.base.json', '**/tsconfig*.json'), true);
+  assert.equal(matchesPathPattern('packages/x/tsconfig.build.json', '**/tsconfig*.json'), true);
 });
 
 test('a declared risk raises the tier and, at HIGH_ASSURANCE, the obligation count', () => {
@@ -215,25 +268,33 @@ test('a declared risk raises the tier and, at HIGH_ASSURANCE, the obligation cou
   assert.equal(elevated.postRiskTier, 'ELEVATED');
   assert.equal(high.postRiskTier, 'HIGH_ASSURANCE');
   for (const entry of [baseline, elevated, high]) {
-    assert.equal(entry.postRequiredContextCount, baseline.postRequiredContextCount, 'a declared risk never drops a required context');
+    assert.equal(entry.postRequiredContexts, baseline.postRequiredContexts, 'a declared risk never drops a required context');
   }
-  assert.ok(high.postRequiredCheckCount > elevated.postRequiredCheckCount, 'HIGH_ASSURANCE adds release and specialist obligations');
+  assert.ok(
+    high.postLogicalObligations > elevated.postLogicalObligations,
+    'HIGH_ASSURANCE adds release and specialist obligations',
+  );
+  assert.equal(high.postSpecialistGates, 1, 'HIGH_ASSURANCE adds exactly one specialist gate');
+  assert.equal(high.narrowingCandidateCount, 0, 'HIGH_ASSURANCE may not be narrowed by the gate itself');
 });
 
 test('a product-code candidate keeps the full required set and proposes no exclusions', () => {
   const code = byClass('PRODUCT_CODE');
   const governance = byClass('GOVERNANCE_ONLY');
-  assert.ok(code.baselineJobFanOut > governance.baselineJobFanOut, 'a code change fans out wider than a governance change at the base');
+  assert.ok(
+    code.baselineProviderCheckRuns > governance.baselineProviderCheckRuns,
+    'a code change fans out wider than a governance change at the base',
+  );
   assert.equal(code.postRiskTier, 'ELEVATED');
   assert.equal(code.postDecision, 'FULL_ASSURANCE');
   assert.equal(code.narrowingCandidateCount, 0);
-  assert.ok(code.postRequiredCheckCount > governance.postRequiredCheckCount);
+  assert.ok(code.postLogicalObligations > governance.postLogicalObligations);
 });
 
 test('narrowing is reported but not enforced, so no row claims a check was saved', () => {
   for (const entry of MEASUREMENTS) {
     assert.equal(entry.narrowingEnforced, false, `${entry.id} must not claim an enforced narrowing`);
-    assert.equal(entry.postRequiredContextCount, 4, 'every required ruleset context survives in every row');
+    assert.equal(entry.postRequiredContexts, 4, 'every required ruleset context survives in every row');
     assert.ok(
       entry.narrowingEnforcementState === 'NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION' ||
         entry.narrowingEnforcementState === 'NO_NARROWING_CANDIDATES',
