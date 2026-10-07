@@ -8,3 +8,4 @@ export*from'./s04-uncertainty-handoff.js';
 export*from'./v11-incremental-validation.js';
 
 export*from'./v11-proof-reuse.js';
+export*from'./gate-closure.js';
