@@ -391,3 +391,18 @@ setting, package manifest or threshold was touched.
 | MEDIUM — inherited object keys resolved a domain, a tier or a fallback | `GOVERNANCE_DOC_DOMAIN`, `TIER_FOR_RISK` and `TIER_TO_LEVEL` were plain object literals read with bracket access, so `toString`, `constructor`, `__proto__` and similar keys resolved values. | All three tables are now created with `Object.create(null)` and read with `Object.hasOwn`. `sourcePathIndex` is a caller-supplied authority read from a plain object, so its lookups use `Object.hasOwn` as well. An unknown declared risk resolves to `HIGH_ASSURANCE` and an unknown tier to `L5`. | `tests/gbs-mod-wo-001-change-impact.test.mjs` "fail-closed lookups reject inherited object keys" and `tests/gbs-mod-wo-001-gate-closure.test.mjs` "the tier table is read through own-key checks only" plus "an inherited key in the path index is read as absent rather than as an entry", which asserts an inherited path entry yields `unattributedPaths` and the `PATH_NOT_ATTRIBUTED_TO_A_KNOWN_SOURCE` obstruction. |
 | MEDIUM — `readIfTriggered` threw instead of returning a diagnostic | `readIfTriggered` was only checked to be an array, so the `entry.trigger.trim()` read threw a `TypeError` on an entry missing `trigger`. | `isTriggeredSourceEntry` shape-checks every entry before any of its fields is read, inside `validateLockInput` and ahead of the path and domain loops. | `tests/gbs-mod-wo-001-context-lock.test.mjs` "a malformed readIfTriggered entry is a diagnostic and never a throw" — four invalid whole values and thirteen malformed entries including `[{ path: 'a.md' }]`, `[{ trigger: 'X' }]`, `[null]`, a traversal path and an empty trigger, each refused with `LOCK_SOURCE_INVALID` rather than a throw. |
 | MEDIUM — Codecov coverage corrections needed tests for the corrected paths | The corrected boundaries had no adversarial coverage. | The suites above were extended rather than thresholds adjusted. | `npm run validate` — **1785 / 1785** pass, 0 fail. New coverage: 3 classifier tests, 2 gate tests, 2 closure tests, 1 context-lock test and 1 benchmark test. |
+
+### Exact-head disposition for correction head `81efc38`
+
+| Group | Result |
+| --- | --- |
+| Required ruleset contexts (Repository validation, Pipeline integrity, Gitleaks secrets, Trivy) | 4 / 4 SUCCESS |
+| Release assurance, all three platforms | windows-latest, ubuntu-latest, macos-latest SUCCESS |
+| Security and quality (CodeQL, Dependency Review, Socket, Node coverage LCOV) | SUCCESS |
+| SonarCloud Quality Gate | **OK** — reliability, security and maintainability all rating 1 against `GT 1`; hotspots reviewed 100% against `LT 100`; new duplicated lines density 1.5% against the unchanged 3% ceiling |
+
+Total: **60 / 60** check runs SUCCESS, 0 failure, 0 pending, observed at
+`81efc38bea61a231270f95dcf1ce46522fdacf17`. No rule was suppressed and no threshold lowered.
+
+Stop condition reached: `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`. No merge, no
+checkpoint promotion and no Ruleset change are performed by this record.

@@ -268,6 +268,10 @@ Evidence: `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md`,
 No workflow, ruleset, branch-protection setting, package manifest, threshold or test was relaxed to
 achieve this. Full root-cause analysis and proof are in Evidence section 9.
 
+8. **Exact-head disposition.** 60 / 60 check runs SUCCESS and SonarCloud Quality Gate OK at
+   `81efc38bea61a231270f95dcf1ce46522fdacf17`, with new duplicated lines density 1.5% against the
+   unchanged 3% ceiling. No merge, promotion or Ruleset change was performed.
+
 Evidence: `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md` section 9,
 `.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json`.
 

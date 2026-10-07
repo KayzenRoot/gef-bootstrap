@@ -243,7 +243,7 @@
   "executionStatus": "IMPLEMENTATION_COMPLETE_AWAITING_OWNER_AUDIT",
   "executionRecord": {
     "executionStart": "GBS_MOD_WO_001_CODEX_EXECUTION_AUTHORIZED_ON_PR_407",
-    "implementationHead": null,
+    "implementationHead": "81efc38bea61a231270f95dcf1ce46522fdacf17",
     "implementationBaseVerified": "921493797728a43aadc9f7840c954ce7e3ebc416",
     "lockFreshness": "VERIFIED_28_OF_28_CANONICAL_AND_IMPLEMENTATION_FINGERPRINTS_10_OF_10_WORKFLOW_FINGERPRINTS",
     "architectureOwnership": {
@@ -324,9 +324,9 @@
       "thresholdReductions": "NONE"
     },
     "exactHeadProviderDisposition": {
-      "observedOn": "21db53f",
-      "observedOnResolved": "21db53f",
-      "source": "GitHub check-runs API and SonarCloud quality-gate API for PR #407",
+      "observedOn": "81efc38",
+      "observedOnResolved": "81efc38bea61a231270f95dcf1ce46522fdacf17",
+      "source": "GitHub check-runs API and SonarCloud quality-gate API for PR #407 at the exact correction head",
       "totalCheckRuns": 60,
       "success": 60,
       "failure": 0,
@@ -352,17 +352,38 @@
       "qualityGate": {
         "status": "OK",
         "conditions": {
-          "new_reliability_rating": "OK",
-          "new_security_rating": "OK",
-          "new_maintainability_rating": "OK",
-          "new_duplicated_lines_density": "OK",
-          "new_security_hotspots_reviewed": "OK"
-        },
-        "newDuplicatedLinesDensity": "1.596%",
-        "threshold": "<= 3%"
-      },
-      "candidateCheckDisposition": "OBSERVED_60_OF_60_SUCCESS",
-      "supersedesNote": "Replaces the earlier NOT_VERIFIED_FROM_EXECUTOR_ENVIRONMENT binding, which the owner audit correctly rejected as stale for the parent head."
+          "new_reliability_rating": {
+            "status": "OK",
+            "actual": "1",
+            "comparator": "GT",
+            "error": "1"
+          },
+          "new_security_rating": {
+            "status": "OK",
+            "actual": "1",
+            "comparator": "GT",
+            "error": "1"
+          },
+          "new_maintainability_rating": {
+            "status": "OK",
+            "actual": "1",
+            "comparator": "GT",
+            "error": "1"
+          },
+          "new_duplicated_lines_density": {
+            "status": "OK",
+            "actual": "1.5",
+            "comparator": "GT",
+            "error": "3"
+          },
+          "new_security_hotspots_reviewed": {
+            "status": "OK",
+            "actual": "100.0",
+            "comparator": "LT",
+            "error": "100"
+          }
+        }
+      }
     },
     "crossPlatformProof": {
       "method": "the committed candidate working tree was converted LF -> CRLF to emulate a Windows checkout with core.autocrlf, then the full suite was executed",
@@ -390,7 +411,7 @@
       "validation": "npm audit --audit-level=high reports 0 vulnerabilities; git diff --check is clean.",
       "relaxationsApplied": "NONE \u2014 no workflow, ruleset, branch-protection setting, package manifest, threshold or test was relaxed.",
       "evidence": "Section 9 of .engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md",
-      "exactHeadProviderDispositionNote": "The recorded provider disposition is bound to an earlier candidate head and is superseded by the disposition recorded for this correction head once it completes."
+      "exactHeadProviderDispositionNote": "Bound to correction head 81efc38bea61a231270f95dcf1ce46522fdacf17: 60/60 check runs SUCCESS and SonarCloud Quality Gate OK with new duplicated lines density 1.5% against the unchanged 3% ceiling."
     }
   }
 }
