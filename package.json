@@ -27,7 +27,7 @@
     "test": "tests"
   },
   "dependencies": {
-    "koffi": "^3.3.0",
+    "koffi": "^3.3.2",
     "undici-types": "^6.21.0"
   },
   "repository": {
