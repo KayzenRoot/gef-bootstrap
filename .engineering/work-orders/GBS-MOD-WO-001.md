@@ -173,6 +173,59 @@ A12. Comparable benchmark records baseline check fan-out and post-implementation
 ## REVIEW FORMAT
 Brazilian Portuguese. Exact base/head; changed paths; architecture ownership; gate-classification proof; before/after check fan-out for comparable fixture; tests/security; CRITICAL/HIGH; scope; exactly one verdict APPROVED/CORRECTION REQUIRED/BLOCKED. Owner audit = NOT_INDEPENDENT.
 
+## MACHINE-READABLE CONTRACT (executed)
+
+The prose above is the reviewer form. The executor form this Work Order delivered is
+`parseWorkOrderContract` in `packages/contracts/src/work-order.ts`, verified by
+`tests/gbs-mod-wo-001-work-order-contract.test.mjs`. Its authority fields carry these values for
+this execution:
+
+- `workOrderId` `GBS-MOD-WO-001`; `repository` `KayzenRoot/gef-bootstrap`; `risk` `ELEVATED`;
+  `baseSha` `921493797728a43aadc9f7840c954ce7e3ebc416`;
+  `bindings` `{ branch: feat/mod/wo-001-agent-native-gate, issue: 394, pullRequest: 407 }`;
+  `stopCondition` `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`.
+- `writeAllowed` and `writeForbidden` express the WRITE_ALLOWED / WRITE_FORBIDDEN boundary in the
+  pattern grammar the parser accepts. The parser rejects a contract where the two overlap, and a
+  path that cannot carry authority — traversal, `.` segment, empty, non-string — resolves to
+  `FORBIDDEN` rather than `UNCLASSIFIED`.
+- **Disclosed limit:** GBS-MOD-WO-001's own authority boundary is still recorded as prose in
+  `.engineering/context-locks/GBS-MOD-WO-001.json` (`implementationAuthorization.writeAllowed` /
+  `writeForbidden`), and several of those entries are descriptive phrases rather than globs
+  (`packages/cli/src/** only if thin exposure is proven necessary`). They are therefore *not*
+  machine-parseable today, and no production caller invokes `parseWorkOrderContract` yet. What this
+  Work Order proves is the grammar and the ambiguity rule, not that this Work Order's boundary is
+  enforced by it. Encoding this Work Order's boundary in the machine-readable form is follow-up
+  work for the Work Order that first needs enforcement.
+- `requiredChecks` are the main-branch ruleset contexts from the implementation Context Lock;
+  `evidenceObligations` are the Evidence Bundle and the proposed Checkpoint Delta.
+
+An unknown field, a missing field, an unsupported `schemaVersion` or an ambiguous write boundary is
+a parse diagnostic, never a default.
+
+## EXECUTED DELTA (binding)
+
+Implementation head at evidence assembly: `c76c2d8a8459f461bad519729d6b2fe83eed9d3d` plus the delta
+in `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md` section 2.
+
+- Nodes delivered: A `packages/contracts/src/work-order.ts`; B `packages/preflight/src/change-impact.ts`;
+  C `packages/task-context-compiler/src/s07-tiered-context-lock.ts`; D `packages/test-impact-engine/src/gate-closure.ts`;
+  E `packages/assurance-pipeline/src/gef-gate.ts`; SCOPE 1 `AGENTS.md` compacted into a trigger router.
+- No package manifest, `tsconfig.json`, dependency, version, tag, release, ruleset or branch
+  protection was changed. The stages communicate only through plain data.
+- Workflow routing delta is empty by proof: the four required main-branch ruleset contexts are
+  produced by `repository-validation.yml`, `pipeline-integrity.yml` and `free-security-pilot.yml`, so a
+  `paths:` filter would stop them reporting on a governance-only pull request. The ruleset rewrite is
+  listed under *Important, not auto-included* above, so the stable gate/check contract is delivered
+  for a later authorized ruleset update instead. Narrowing candidates are reported with
+  `NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION`.
+- Validation: `npm run validate` 1775 / 1775 pass, 0 fail, 0 skipped; `npm audit --audit-level=high`
+  0 vulnerabilities; `git diff --check` clean. Baseline at the implementation head was 1659 / 1659.
+- Exact-head GitHub required and security checks: `NOT_VERIFIED` from the executor environment.
+
+Evidence: `.engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md`,
+`.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json`,
+`.engineering/checkpoint-deltas/GBS-MOD-WO-001-PROPOSED.md`.
+
 ## STOP CONDITIONS
 Admission planning: `GBS_MOD_WO_001_ADMISSION_READY_FOR_OWNER_AUDIT`
 After admission: `GBS_MOD_WO_001_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`

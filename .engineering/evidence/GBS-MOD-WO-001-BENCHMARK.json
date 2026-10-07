@@ -1,0 +1,209 @@
+{
+  "schemaVersion": "1.0",
+  "workOrder": "GBS-MOD-WO-001",
+  "issue": 394,
+  "implementationPullRequest": 407,
+  "branch": "feat/mod/wo-001-agent-native-gate",
+  "measurementUnit": "check runs selected by committed pull_request trigger definitions",
+  "generatedBy": "tests/helpers/gbs-mod-wo-001-benchmark-receipt.mjs",
+  "baseline": {
+    "implementationBaseSha": "921493797728a43aadc9f7840c954ce7e3ebc416",
+    "modelScope": "committed pull_request trigger definitions only; provider-side reports without a committed workflow are out of scope",
+    "unconditionalWorkflows": [
+      ".github/workflows/dependency-review.yml",
+      ".github/workflows/free-security-pilot.yml",
+      ".github/workflows/pipeline-integrity.yml",
+      ".github/workflows/repository-validation.yml",
+      ".github/workflows/v11-release-assurance.yml"
+    ],
+    "unconditionalJobFanOut": 15,
+    "pathFilteredWorkflows": [
+      {
+        "workflow": ".github/workflows/m41-m47-integrated.yml",
+        "paths": [
+          ".engineering/**"
+        ],
+        "checks": 2
+      },
+      {
+        "workflow": ".github/workflows/m48-m54-integrated.yml",
+        "paths": [
+          ".engineering/**"
+        ],
+        "checks": 2
+      },
+      {
+        "workflow": ".github/workflows/m55-m61-integrated.yml",
+        "paths": [
+          ".engineering/**"
+        ],
+        "checks": 2
+      },
+      {
+        "workflow": ".github/workflows/m62-m63-final.yml",
+        "paths": [
+          ".engineering/**"
+        ],
+        "checks": 2
+      },
+      {
+        "workflow": ".github/workflows/coverage-codecov.yml",
+        "paths": [
+          "packages/**",
+          "tests/**"
+        ],
+        "checks": 1
+      },
+      {
+        "workflow": ".github/workflows/security-codeql.yml",
+        "paths": [
+          "packages/**/*.ts",
+          "tests/**/*.mjs"
+        ],
+        "checks": 1
+      },
+      {
+        "workflow": ".github/workflows/m01-validation.yml",
+        "paths": [
+          "packages/contracts/**",
+          "tests/*.test.mjs",
+          "package.json"
+        ],
+        "checks": 1
+      },
+      {
+        "workflow": ".github/workflows/m14-platform.yml",
+        "paths": [
+          "packages/task-context-compiler/**",
+          "tests/m14-*.mjs"
+        ],
+        "checks": 4
+      },
+      {
+        "workflow": ".github/workflows/m27-platform.yml",
+        "paths": [
+          "packages/assurance-pipeline/**",
+          "tests/m27-*.mjs"
+        ],
+        "checks": 4
+      },
+      {
+        "workflow": ".github/workflows/m28-platform.yml",
+        "paths": [
+          "packages/test-impact-engine/**",
+          "tests/m28-*.mjs"
+        ],
+        "checks": 4
+      },
+      {
+        "workflow": ".github/workflows/wo-005-execution-capsule.yml",
+        "paths": [
+          "packages/task-context-compiler/**"
+        ],
+        "checks": 3
+      },
+      {
+        "workflow": ".github/workflows/wo-006-incremental-validation.yml",
+        "paths": [
+          "packages/test-impact-engine/**"
+        ],
+        "checks": 3
+      },
+      {
+        "workflow": ".github/workflows/wo-007-proof-reuse.yml",
+        "paths": [
+          "packages/test-impact-engine/**"
+        ],
+        "checks": 3
+      }
+    ],
+    "externalObservation": {
+      "source": ".engineering/context-locks/GBS-MOD-WO-001.json baselineObservation",
+      "pullRequests": [
+        390,
+        395
+      ],
+      "observedCheckRunsPerGovernancePullRequest": 38,
+      "note": "Observed provider-side check runs for real governance-only pull requests. This is an independent observation, not a reproduction by the model above."
+    }
+  },
+  "measurements": [
+    {
+      "id": "GBS-MOD-WO-001-BENCH-GOVERNANCE",
+      "class": "GOVERNANCE_ONLY",
+      "changedPathCount": 2,
+      "baselineSelectedWorkflows": 9,
+      "baselineJobFanOut": 23,
+      "postDecision": "REDUCED_ADVISORY",
+      "postRiskTier": "STANDARD",
+      "postRequiredCheckCount": 9,
+      "postRequiredContextCount": 4,
+      "postObligationCount": 5,
+      "narrowingCandidateCount": 6,
+      "retainedCandidateCount": 1,
+      "narrowingEnforced": false,
+      "narrowingEnforcementState": "NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION",
+      "receiptDigest": "sha256:771ee4883526b03bd0d4ba4c264070a55fb04d1031f44bfcd1cd1ec36f47da56"
+    },
+    {
+      "id": "GBS-MOD-WO-001-BENCH-GOVERNANCE-DECLARED-ELEVATED",
+      "class": "GOVERNANCE_ONLY_DECLARED_ELEVATED",
+      "changedPathCount": 2,
+      "baselineSelectedWorkflows": 9,
+      "baselineJobFanOut": 23,
+      "postDecision": "REDUCED_ADVISORY",
+      "postRiskTier": "ELEVATED",
+      "postRequiredCheckCount": 9,
+      "postRequiredContextCount": 4,
+      "postObligationCount": 5,
+      "narrowingCandidateCount": 6,
+      "retainedCandidateCount": 1,
+      "narrowingEnforced": false,
+      "narrowingEnforcementState": "NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION",
+      "receiptDigest": "sha256:8a83ee1dfc79a3a14a541ded8cc5f68c2c644b9175e2a4ebf00d00ad3893f0da"
+    },
+    {
+      "id": "GBS-MOD-WO-001-BENCH-GOVERNANCE-DECLARED-HIGH-ASSURANCE",
+      "class": "GOVERNANCE_ONLY_DECLARED_HIGH_ASSURANCE",
+      "changedPathCount": 2,
+      "baselineSelectedWorkflows": 9,
+      "baselineJobFanOut": 23,
+      "postDecision": "FULL_ASSURANCE",
+      "postRiskTier": "HIGH_ASSURANCE",
+      "postRequiredCheckCount": 12,
+      "postRequiredContextCount": 4,
+      "postObligationCount": 7,
+      "narrowingCandidateCount": 0,
+      "retainedCandidateCount": 7,
+      "narrowingEnforced": false,
+      "narrowingEnforcementState": "NO_NARROWING_CANDIDATES",
+      "receiptDigest": "sha256:eed428a7bb0e1c83680efb2bde889074082c8f9b6eaa0b4650049627258f3b13"
+    },
+    {
+      "id": "GBS-MOD-WO-001-BENCH-CODE",
+      "class": "PRODUCT_CODE",
+      "changedPathCount": 6,
+      "baselineSelectedWorkflows": 13,
+      "baselineJobFanOut": 38,
+      "postDecision": "FULL_ASSURANCE",
+      "postRiskTier": "ELEVATED",
+      "postRequiredCheckCount": 10,
+      "postRequiredContextCount": 4,
+      "postObligationCount": 6,
+      "narrowingCandidateCount": 0,
+      "retainedCandidateCount": 7,
+      "narrowingEnforced": false,
+      "narrowingEnforcementState": "NO_NARROWING_CANDIDATES",
+      "receiptDigest": "sha256:4abd0cf69864a2c65f5704892cd9234c3bf152a61a2a79d870915c6e35a17a4b"
+    }
+  ],
+  "claims": {
+    "wallClockPercentageClaim": "NOT_CLAIMED",
+    "wallClockReason": "CI duration is not reproducible from a deterministic test; the frozen Test & Benchmark Plan forbids a percentage claim without measured evidence.",
+    "narrowingEnforced": false,
+    "narrowingEnforcementState": "NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION",
+    "rulesetRewriteInScope": false,
+    "requiredRulesetContextsPreservedInEveryRow": true
+  },
+  "stopCondition": "GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT"
+}

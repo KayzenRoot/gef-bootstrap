@@ -239,5 +239,55 @@
   },
   "executionStartCondition": "GBS_MOD_WO_001_CODEX_EXECUTION_AUTHORIZED_ON_PR_407",
   "implementationPrState": "DRAFT",
-  "implementationPrInitialHead": "b74c25745552b3b2e81e0d013a9704b3356c0541"
+  "implementationPrInitialHead": "b74c25745552b3b2e81e0d013a9704b3356c0541",
+  "executionStatus": "IMPLEMENTATION_COMPLETE_AWAITING_OWNER_AUDIT",
+  "executionRecord": {
+    "executionStart": "GBS_MOD_WO_001_CODEX_EXECUTION_AUTHORIZED_ON_PR_407",
+    "implementationHead": "c76c2d8a8459f461bad519729d6b2fe83eed9d3d",
+    "implementationBaseVerified": "921493797728a43aadc9f7840c954ce7e3ebc416",
+    "lockFreshness": "VERIFIED_28_OF_28_CANONICAL_AND_IMPLEMENTATION_FINGERPRINTS_10_OF_10_WORKFLOW_FINGERPRINTS",
+    "architectureOwnership": {
+      "A_machineReadableWorkOrderContract": "packages/contracts/src/work-order.ts",
+      "B_changeImpactAndRiskClassification": "packages/preflight/src/change-impact.ts",
+      "C_tieredContextLock": "packages/task-context-compiler/src/s07-tiered-context-lock.ts",
+      "D_dependencyClosure": "packages/test-impact-engine/src/gate-closure.ts",
+      "E_gefGateReceipt": "packages/assurance-pipeline/src/gef-gate.ts"
+    },
+    "dependencyEdgesAdded": "NONE",
+    "packageManifestsModified": "NONE",
+    "workflowRoutingChanged": "NONE_BY_PROOF",
+    "workflowRoutingRationale": "Required main-branch ruleset contexts are produced by repository-validation, pipeline-integrity and free-security-pilot; adding a paths filter would stop them reporting on governance-only pull requests and leave the branch unmergeable under the existing ruleset. The ruleset rewrite is explicitly not auto-included in this Work Order, so the gate/check contract is delivered instead and narrowing candidates are reported as NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION.",
+    "rollbackPath": "git revert of the implementation commit; the routing delta is empty, so no provider-side state requires restoration.",
+    "validation": {
+      "baseline": {
+        "head": "c76c2d8a8459f461bad519729d6b2fe83eed9d3d",
+        "tests": 1659,
+        "pass": 1659,
+        "fail": 0
+      },
+      "post": {
+        "command": "npm run validate",
+        "tests": 1775,
+        "pass": 1775,
+        "fail": 0,
+        "skipped": 0
+      },
+      "npmAuditHigh": "0_VULNERABILITIES",
+      "gitDiffCheck": "CLEAN",
+      "exactHeadGitHubChecks": "NOT_VERIFIED_FROM_EXECUTOR_ENVIRONMENT"
+    },
+    "benchmarkReceipt": ".engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json",
+    "evidenceBundle": ".engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md",
+    "proposedCheckpointDelta": ".engineering/checkpoint-deltas/GBS-MOD-WO-001-PROPOSED.md",
+    "productCredit": "NONE",
+    "v12Credit": "3/10",
+    "stopConditionReached": "GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT",
+    "notAuthorizedByThisRecord": [
+      "merge",
+      "checkpoint promotion",
+      "ruleset change",
+      "version/tag/release/deployment change",
+      "dependency addition"
+    ]
+  }
 }
