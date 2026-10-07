@@ -44,8 +44,9 @@ None are proposed. This Work Order deliberately changes no promoted value.
    returned `CORRECTION REQUIRED` with two HIGH blockers: a Windows-only pipeline-integrity failure
    caused by comparing working-tree bytes to Git blob IDs, and a Sonar Reliability Rating D on new
    code. Both are corrected in this candidate, with no rule suppressed and no threshold lowered.
-   The audited head's disposition was 62 / 64 check runs SUCCESS; the candidate head's own runs are
-   `PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED`.
+   The audited head's disposition was 62 / 64. The corrected candidate's disposition is
+   **60 / 60 check runs SUCCESS**, all four required ruleset contexts green, all three release
+   assurance platforms green, and the Sonar Quality Gate **OK**.
 
 ## Explicitly not proposed
 

@@ -217,9 +217,22 @@ contexts succeeded.
 | **SonarCloud Code Analysis** | **FAILURE** | corrected in this candidate |
 | codecov/patch | SUCCESS | 99.50421%, 10 changed lines uncovered — advisory, additional branch coverage added |
 
-Both failures were the owner audit's HIGH blockers 1 and 2, and both are addressed above. The
-candidate head's own check runs are `PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED`: this bundle was
-assembled before the correction was pushed, so it records no disposition it cannot see.
+Both failures were the owner audit's HIGH blockers 1 and 2, and both are addressed above.
+
+### Candidate-head disposition, observed
+
+Recorded on the branch tip carrying this bundle: **60 check runs, 60 SUCCESS, 0 failure, 0 pending.**
+
+| Group | Result |
+| --- | --- |
+| Required ruleset contexts (Repository validation, Pipeline integrity, Gitleaks secrets, Trivy) | 4 / 4 SUCCESS |
+| Release assurance, all three platforms | windows-latest, ubuntu-latest, macos-latest SUCCESS |
+| Security and quality (CodeQL, Dependency Review, Socket, Node coverage LCOV) | SUCCESS |
+| SonarCloud Quality Gate | **OK** — reliability, security, maintainability, duplicated-lines and hotspot-review conditions all green; new duplicated lines density 1.596% against the unchanged 3% ceiling |
+
+The Reliability Rating D condition the owner audit raised is resolved, and no rule was suppressed
+and no threshold lowered to achieve it. The duplicated-lines condition that surfaced afterwards was
+resolved by removing duplicated new code, also without touching any threshold.
 
 ## 8. Adversarial coverage
 
@@ -281,9 +294,9 @@ Work Order contract has no production caller, and path attribution is caller-sup
    Benchmark Plan forbids an unsourced percentage.
 3. **Baseline model scope.** It counts only check runs selected by committed `pull_request` trigger
    definitions, so it excludes provider-side reports with no committed workflow.
-4. **Candidate-head CI is not yet observed.** Section 7 records the parent head's exact disposition
-   (62/64, both failures corrected). The candidate head's own runs are
-   `PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED` and must be read before the next audit.
+4. **Candidate-head CI is observed and green.** 60 / 60 check runs SUCCESS with all four required
+   ruleset contexts green and the Sonar Quality Gate OK. Re-running these checks at a *future* head
+   is still required: exact-head evidence is validity-bound, not inherited.
 5. **Baseline risk classifier coverage.** A path that matches no classification rule is `UNKNOWN`
    and widens to `ELEVATED`; it does not block. Blocking on unknown is available through
    `changedStateUnproven`. A root-level `.engineering` document the domain table does not name is

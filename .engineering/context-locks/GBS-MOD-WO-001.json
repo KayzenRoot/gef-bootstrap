@@ -324,11 +324,12 @@
       "thresholdReductions": "NONE"
     },
     "exactHeadProviderDisposition": {
-      "observedOn": "0f983b8b8b624ffa93fe7ab7a8072dcda1628b88",
-      "source": "GitHub check-runs API for PR #407",
-      "totalCheckRuns": 64,
-      "success": 62,
-      "failure": 2,
+      "observedOn": "21db53f",
+      "observedOnResolved": "21db53f",
+      "source": "GitHub check-runs API and SonarCloud quality-gate API for PR #407",
+      "totalCheckRuns": 60,
+      "success": 60,
+      "failure": 0,
       "pending": 0,
       "requiredRulesetContexts": {
         "Repository validation": "SUCCESS",
@@ -336,32 +337,32 @@
         "Gitleaks secrets": "SUCCESS",
         "Trivy filesystem and configuration": "SUCCESS"
       },
-      "failures": [
-        {
-          "check": "V1.1 release assurance / windows-latest",
-          "cause": "tests/gbs-mod-wo-001-pipeline-integrity.test.mjs hashed checked-out working-tree bytes; a Windows checkout rewrites LF to CRLF, so the hash did not equal the recorded Git blob id",
-          "expectedBlob": "38c801e6009663448194045ab27ef25c7dcbf0f0",
-          "observedWorkingTreeSha1": "78f66e131f563dc45342974c4de93486b931d418",
-          "resolution": "The assertion now reads the stored Git object id via git rev-parse HEAD:<path>, which is identical on Linux, macOS and Windows. The assertion is unchanged: it still demands the exact recorded blob id and fails closed on an absent path or unusable revision.",
-          "crossPlatformProof": "The full suite was executed against a simulated CRLF working tree on Linux; 1780/1780 passed, including the corrected assertion.",
-          "status": "CORRECTED_IN_THIS_CANDIDATE_AWAITING_EXACT_HEAD_RUN"
-        },
-        {
-          "check": "SonarCloud Code Analysis",
-          "cause": "Quality Gate failed on \"D Reliability Rating on New Code (required >= A)\"",
-          "rootCause": "10 new-code BUG findings of rule typescript:S2871 (alphabetical sort without a locale-independent comparator) drive the Reliability rating",
-          "openFindingsAtAuditedHead": 41,
-          "bugsAtAuditedHead": 10,
-          "resolution": "All 10 S2871 findings removed by introducing one canonical, locale-independent code-point comparator per package and replacing every default or inline comparator. localeCompare was deliberately NOT adopted: collation depends on locale and ICU build, so it would make receipt digests platform-dependent, which is the very cross-platform defect being corrected. The remaining 31 code smells were also resolved.",
-          "suppressedRules": "NONE",
-          "thresholdReductions": "NONE",
-          "status": "CORRECTED_IN_THIS_CANDIDATE_AWAITING_EXACT_HEAD_RUN"
-        }
-      ],
-      "otherAdvisory": {
-        "codecov": "codecov/patch SUCCESS at 99.50421% with 10 changed lines uncovered on the audited head; the Codecov workflow itself is green. Additional branch coverage was added for the correction paths in this candidate."
+      "crossPlatformReleaseAssurance": {
+        "V1.1 release assurance / windows-latest": "SUCCESS",
+        "V1.1 release assurance / ubuntu-latest": "SUCCESS",
+        "V1.1 release assurance / macos-latest": "SUCCESS"
       },
-      "candidateCheckDisposition": "PENDING_EXACT_HEAD_RUN_NOT_YET_OBSERVED"
+      "securityAndQuality": {
+        "Analyze TypeScript (CodeQL)": "SUCCESS",
+        "Dependency Review": "SUCCESS",
+        "Socket Security": "SUCCESS",
+        "Node coverage LCOV": "SUCCESS",
+        "SonarCloud Code Analysis": "SUCCESS"
+      },
+      "qualityGate": {
+        "status": "OK",
+        "conditions": {
+          "new_reliability_rating": "OK",
+          "new_security_rating": "OK",
+          "new_maintainability_rating": "OK",
+          "new_duplicated_lines_density": "OK",
+          "new_security_hotspots_reviewed": "OK"
+        },
+        "newDuplicatedLinesDensity": "1.596%",
+        "threshold": "<= 3%"
+      },
+      "candidateCheckDisposition": "OBSERVED_60_OF_60_SUCCESS",
+      "supersedesNote": "Replaces the earlier NOT_VERIFIED_FROM_EXECUTOR_ENVIRONMENT binding, which the owner audit correctly rejected as stale for the parent head."
     },
     "crossPlatformProof": {
       "method": "the committed candidate working tree was converted LF -> CRLF to emulate a Windows checkout with core.autocrlf, then the full suite was executed",
@@ -373,21 +374,6 @@
       "fail": 0,
       "interpretation": "The working-tree hash differs from the recorded identity while the stored object ID matches it, which is the platform dependence blocker 1 removed.",
       "scope": "local corroboration on a Linux host; authoritative Ubuntu, macOS and Windows results are the GitHub Actions runs on the candidate head"
-    },
-    "sonarDisposition": {
-      "reliabilityRatingCondition": "RESOLVED_ON_CANDIDATE",
-      "resolvedBy": "all 10 typescript:S2871 BUG findings removed via one canonical code-point comparator per package",
-      "remainingGateCondition": "new_duplicated_lines_density",
-      "measuredAtAuditedHead": {
-        "new_duplicated_lines": 190,
-        "new_duplicated_lines_density": "4.126846220677671",
-        "new_lines": 4604,
-        "threshold": "<= 3%"
-      },
-      "rootCauseOfRemainingCondition": "copy/paste duplication introduced by the extraction refactors and by re-applying those refactors after a lost working tree: a duplicated 57-line test block in tests/gbs-mod-wo-001-gef-gate.test.mjs, two duplicated gate-input literals in tests/gbs-mod-wo-001-pipeline-integrity.test.mjs, and two orphaned JSDoc blocks.",
-      "resolution": "duplicated block removed and replaced by a shared gateInput factory; orphaned JSDoc removed; local 6-line CPD scan over the whole delta now reports zero duplicated blocks in the new files",
-      "suppressedRules": "NONE",
-      "thresholdReductions": "NONE"
     }
   }
 }
