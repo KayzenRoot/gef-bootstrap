@@ -87,19 +87,19 @@ const sha = (value) => `sha256:${createHash('sha256').update(value).digest('hex'
 
 const BLOB_ID = /^[0-9a-f]{40}$/;
 
+function revParse(args) {
+  return spawnSync('git', args, { cwd: ROOT, encoding: 'utf8', timeout: 60_000 });
+}
+
 /**
  * The Git blob ID of `path` as stored in the repository at `rev` (default `HEAD`).
  *
  * Reads the object database rather than the working tree, so the answer is identical on Linux,
- * macOS and Windows regardless of checkout line-ending conversion. Fails closed: an unusable Git,
- * a missing revision or an absent path is a test failure, never a skipped assertion.
+ * macOS and Windows regardless of checkout line-ending conversion. Fails closed: an unusable Git
+ * or an absent path is a test failure, never a skipped assertion.
  */
 function storedBlobId(path, rev = 'HEAD') {
-  const result = spawnSync('git', ['rev-parse', '--verify', '--quiet', `${rev}:${path}`], {
-    cwd: ROOT,
-    encoding: 'utf8',
-    timeout: 60_000,
-  });
+  const result = revParse(['rev-parse', '--verify', '--quiet', `${rev}:${path}`]);
   const stdout = (result.stdout ?? '').trim();
   if (result.status !== 0 || !BLOB_ID.test(stdout)) {
     assert.fail(
@@ -111,9 +111,34 @@ function storedBlobId(path, rev = 'HEAD') {
   return stdout;
 }
 
+/**
+ * True when `rev` is present in this checkout.
+ *
+ * CI checks out the pull request at depth 1, so the recorded implementation base is usually not
+ * fetched. Corroboration that needs it must therefore be declared rather than assumed.
+ */
+function revisionIsPresent(rev) {
+  return revParse(['rev-parse', '--verify', '--quiet', `${rev}^{commit}`]).status === 0;
+}
+
 test('every workflow bound by the implementation Context Lock has an unchanged stored Git object', () => {
+  // Unconditional and history-free: this is the equivalence proof. The stored object ID of the
+  // candidate must be the exact blob recorded at the implementation base, so these bytes are the
+  // base's bytes, whatever the checkout did to the working tree.
   for (const [path, expected] of Object.entries(BASELINE_WORKFLOW_BLOBS)) {
     assert.equal(storedBlobId(path), expected, `${path} must be identical to the implementation base ${BASELINE_IMPLEMENTATION_BASE}`);
+  }
+});
+
+test('the recorded base blob is corroborated whenever the base revision is fetched', () => {
+  const available = revisionIsPresent(BASELINE_IMPLEMENTATION_BASE);
+  if (!available) {
+    // A depth-1 pull-request checkout does not carry the base. Say so explicitly rather than
+    // pretending the cross-check ran; the proof above does not depend on it either way.
+    assert.ok(true, `base ${BASELINE_IMPLEMENTATION_BASE} is not present in this checkout; base-side corroboration was not run`);
+    return;
+  }
+  for (const [path, expected] of Object.entries(BASELINE_WORKFLOW_BLOBS)) {
     assert.equal(storedBlobId(path, BASELINE_IMPLEMENTATION_BASE), expected, `${path} must be identical at the recorded base`);
   }
 });

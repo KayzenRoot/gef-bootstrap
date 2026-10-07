@@ -267,8 +267,8 @@
       },
       "post": {
         "command": "npm run validate",
-        "tests": 1780,
-        "pass": 1780,
+        "tests": 1781,
+        "pass": 1781,
         "fail": 0,
         "skipped": 0
       },
@@ -282,6 +282,13 @@
         "pass": 1780,
         "fail": 0,
         "note": "Real Ubuntu, macOS and Windows runner results are produced by GitHub Actions on the candidate head; this simulation is local corroboration, not a substitute for them."
+      },
+      "depthOneCheckout": {
+        "command": "npm run validate",
+        "tests": 1781,
+        "pass": 1781,
+        "fail": 0,
+        "why": "CI checks out the pull request at depth 1, so the recorded implementation base is not fetched. The equivalence proof reads only the candidate stored object IDs; the base corroboration states its absence when the base is not present."
       }
     },
     "benchmarkReceipt": ".engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json",
@@ -361,8 +368,8 @@
       "repositoryValidationWorkingTreeSha1Crlf": "cec22b62b1c1779e3cc118f0ab93d1c4ee1047d0",
       "repositoryValidationStoredObjectId": "38c801e6009663448194045ab27ef25c7dcbf0f0",
       "recordedBlobAtImplementationBase": "38c801e6009663448194045ab27ef25c7dcbf0f0",
-      "tests": 1780,
-      "pass": 1780,
+      "tests": 1781,
+      "pass": 1781,
       "fail": 0,
       "interpretation": "The working-tree hash differs from the recorded identity while the stored object ID matches it, which is the platform dependence blocker 1 removed.",
       "scope": "local corroboration on a Linux host; authoritative Ubuntu, macOS and Windows results are the GitHub Actions runs on the candidate head"

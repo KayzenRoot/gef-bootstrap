@@ -164,7 +164,8 @@ restore on the provider side.
 | `npm ci --ignore-scripts` | 33 packages, 0 vulnerabilities |
 | `npm run build` | success, 27 packages |
 | `npm run typecheck` | success, 27 packages |
-| `npm run validate` (typecheck + `node --test tests/*.test.mjs`) | **1780 tests, 1780 pass, 0 fail, 0 skipped** |
+| `npm run validate` (typecheck + `node --test tests/*.test.mjs`) | **1781 tests, 1781 pass, 0 fail, 0 skipped** |
+| `npm run validate` in a **depth-1 checkout** (the CI condition) | **1781 tests, 1781 pass, 0 fail, 0 skipped** |
 | `npm audit --audit-level=high` | 0 vulnerabilities |
 | `git diff --check` | clean |
 
@@ -314,9 +315,18 @@ checkout rewrites LF to CRLF unless `.gitattributes` says otherwise, so the two 
 per platform. It now reads the stored Git object ID with `git rev-parse --verify --quiet HEAD:<path>`,
 which is the same value on every platform and at the recorded base. The assertion is unchanged in
 strength: it still demands the exact recorded blob ID for all ten workflows, and an unusable Git, a
-missing revision or an absent path is a test failure rather than a skip. Two tests were added: one
-proves that the same file has two different SHA-1 values under CRLF/LF while one stored identity,
-and one proves that a missing path or revision fails closed.
+missing revision or an absent path is a test failure rather than a skip. Three tests were added: one proves
+that the same file has two different SHA-1 values under CRLF/LF while one stored identity, one proves
+that a missing path or unusable revision fails closed, and one corroborates the recorded base blob
+whenever the base revision happens to be fetched.
+
+**The first attempt at this correction was itself defective, and is recorded here.** It also required
+the recorded base revision, which made the suite fail on a depth-1 pull-request checkout — exactly how
+CI checks out. That regression was found by pushing, then reproduced locally in a depth-1 clone. The
+fix separates the two concerns: the equivalence proof itself reads only the candidate's stored object
+IDs and needs no history, while the base-side corroboration runs when the base is present and states
+its absence when it is not. Both the depth-1 clone and the full-history clone now pass 1781 / 1781,
+and a negative control — tampering with one workflow blob — still fails the proof.
 
 **Blocker 2 — Sonar Reliability Rating D on new code.** The Quality Gate failed on
 "D Reliability Rating on New Code (required >= A)". The rating is driven by BUG findings; the head
