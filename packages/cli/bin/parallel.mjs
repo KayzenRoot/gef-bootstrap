@@ -56,7 +56,7 @@ export function validateManifest(source) {
       reject("invalid_module_id", "Module IDs must be unique, stable uppercase IDs");
     }
     ids.add(m.id);
-    if (typeof m.title !== "string" || !m.title.trim() || m.title.length > 140 || /[\r\n\x00-\x1f]/.test(m.title) ||
+    if (typeof m.title !== "string" || !m.title.trim() || m.title.length > 140 || /[\x00-\x1f]/.test(m.title) ||
         typeof m.workOrder !== "string" || !ID.test(m.workOrder) ||
         typeof m.approved !== "boolean" ||
         !["PLANNED", "ADMITTED", "PROMOTED"].includes(m.state) ||
@@ -252,8 +252,18 @@ export function buildPrompt(input, { slots = MAX_SLOTS, batchNumber = 1, gh = gh
   }
   return { repository: manifest.repository, batch: batch.modules, prompt: lines.join("\n") + "\n" };
 }
+function assignValueOption(result, option, value) {
+  switch (option) {
+    case "--manifest": result.manifest = value; break;
+    case "--repo": result.repository = value; break;
+    case "--slots": result.slots = Number(value); break;
+    case "--batch": result.batch = Number(value); result.batchSupplied = true; break;
+    default: reject("unknown_option", "Unexpected option: " + option);
+  }
+}
 function options(argv) {
-  const result = { action: null, apply: false, json: false, slots: MAX_SLOTS, batch: 1, batchSupplied: false, manifest: ".gef/parallel-modules.json", repository: null, help: false };
+  // The action and repository fields are strings throughout parsing, not null/string unions.
+  const result = { action: "", apply: false, json: false, slots: MAX_SLOTS, batch: 1, batchSupplied: false, manifest: ".gef/parallel-modules.json", repository: "", help: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") { result.help = true; continue; }
@@ -262,13 +272,10 @@ function options(argv) {
     if (["--manifest", "--repo", "--slots", "--batch"].includes(arg)) {
       const value = argv[++i];
       if (!value || value.startsWith("-")) reject("missing_option_value", arg + " requires a value");
-      if (arg === "--manifest") result.manifest = value;
-      else if (arg === "--repo") result.repository = value;
-      else if (arg === "--slots") result.slots = Number(value);
-      else { result.batch = Number(value); result.batchSupplied = true; }
+      assignValueOption(result, arg, value);
       continue;
     }
-    if (!arg.startsWith("-") && result.action === null) { result.action = arg; continue; }
+    if (!arg.startsWith("-") && result.action === "") { result.action = arg; continue; }
     reject("unknown_option", "Unexpected argument: " + arg);
   }
   if (!result.help && !["plan", "issues", "prompt"].includes(result.action)) {
@@ -290,6 +297,19 @@ function loadManifest(path) {
   try { return JSON.parse(readFileSync(absolute, "utf8")); }
   catch { reject("manifest_invalid_json", "Cannot parse manifest JSON"); }
 }
+function executeAction(opt, manifest, gh) {
+  switch (opt.action) {
+    case "plan": return planBatches(manifest, opt.slots);
+    case "issues": return prepareIssues(manifest, { apply: opt.apply, gh });
+    case "prompt": return buildPrompt(manifest, { slots: opt.slots, batchNumber: opt.batch, gh });
+    default: reject("unknown_action", "Expected plan, issues or prompt");
+  }
+}
+function renderSuccess(opt, value, json) {
+  if (json) return JSON.stringify({ ok: true, value }, null, 2) + "\n";
+  if (opt.action === "prompt") return value.prompt;
+  return JSON.stringify(value, null, 2) + "\n";
+}
 export async function runParallel(argv, io = {}) {
   const stdout = io.stdout ?? (s => process.stdout.write(s));
   const stderr = io.stderr ?? (s => process.stderr.write(s));
@@ -303,16 +323,12 @@ export async function runParallel(argv, io = {}) {
       return 0;
     }
     const manifest = loadManifest(opt.manifest);
-    if (opt.repository !== null) {
+    if (opt.repository !== "") {
       if (!REPO.test(opt.repository)) reject("invalid_repository", "Use owner/name for --repo");
       manifest.repository = opt.repository;
     }
-    const value = opt.action === "plan" ? planBatches(manifest, opt.slots) :
-      opt.action === "issues" ? prepareIssues(manifest, { apply: opt.apply, gh }) :
-      buildPrompt(manifest, { slots: opt.slots, batchNumber: opt.batch, gh });
-    stdout(json ? JSON.stringify({ ok: true, value }, null, 2) + "\n" :
-      opt.action === "prompt" ? value.prompt :
-      JSON.stringify(value, null, 2) + "\n");
+    const value = executeAction(opt, manifest, gh);
+    stdout(renderSuccess(opt, value, json));
     return 0;
   } catch (error) {
     const reason = error instanceof ParallelInputError ? error.reason : "unexpected_failure";

@@ -270,29 +270,3 @@ test("CLI prompt and issues report missing auth without executing shell", async 
   }
 });
 
-test("temporary read-only SonarCloud PR reliability issue metadata probe", async () => {
-  // Only the PR's GitHub Repository Validation job queries publicly browsable metadata.
-  // Remove this probe after collecting its evidence; no tokens or provider writes.
-  if (process.env.GITHUB_ACTIONS !== "true" ||
-      process.env.GITHUB_WORKFLOW !== "Repository Validation" ||
-      process.env.GITHUB_HEAD_REF !== "hotfix/1.1.3-parallel-modules") return;
-  const url = new URL("https://sonarcloud.io/api/issues/search");
-  url.searchParams.set("componentKeys", "KayzenRoot_gef-bootstrap");
-  url.searchParams.set("pullRequest", "433");
-  url.searchParams.set("ps", "100");
-  try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
-    if (!response.ok) {
-      console.log("GEF-SONAR-PROBE: public issue API HTTP " + response.status);
-      return;
-    }
-    const data = await response.json();
-    console.log("GEF-SONAR-PROBE: " + JSON.stringify({
-      total: data.total,
-      issues: (data.issues ?? []).map(({ rule, component, line, impacts, type, severity }) =>
-        ({ rule, component, line, impacts, type, severity }))
-    }));
-  } catch (error) {
-    console.log("GEF-SONAR-PROBE: issue metadata inaccessible (" + error?.name + ")");
-  }
-});
