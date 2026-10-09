@@ -57,7 +57,7 @@ test("invalid IDs, duplicate IDs, unknown dependencies and cycles are fail close
   )), checkReason("dependency_cycle"));
 });
 test("unsafe paths, unknown writable surfaces and incomplete promotions fail closed", () => {
-  for (const path of ["../escape", "/absolute", "src/*/file.ts", "C:\\temp\\file.ts", "src/../escape", "src//double"]) {
+  for (const path of ["../escape", "/absolute", "src/*/file.ts", "C:\\temp\\file.ts", "src/../escape", "src//double", "src/", "src/module/.", ".git/config", ".GIT/config", "src/.git/index"]) {
     assert.throws(() => validateManifest(manifest(mod("M1", path))), checkReason("unsafe_path"));
   }
   assert.throws(() => validateManifest(manifest(mod("M1", "src/x", { files: { read: [], write: [] } }))), checkReason("unsafe_admission"));
