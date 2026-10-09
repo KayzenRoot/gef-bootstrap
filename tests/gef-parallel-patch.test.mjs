@@ -115,7 +115,7 @@ test("issue provenance blocks read-access spoofing, deleted authors and bad perm
     body: [
       "<!-- gef-parallel-module:M1 -->", "Work Order: WO-M1", "Dependencies: none",
       "READ: none", "WRITE: src/m1/**"
-    ].join("\\n"),
+    ].join("\n"),
     url: "https://github.com/KayzenRoot/fixture/issues/77",
     author: { login: "read-only-user" }
   };
@@ -146,7 +146,7 @@ test("verified collaborator with write permission may reuse exactly matching iss
   const input = manifest(mod("M1", "src/m1/**"));
   const entry = {
     number: 5, title: "[GEF-MOD:M1] approved",
-    body: "<!-- gef-parallel-module:M1 -->\\nWork Order: WO-M1\\nDependencies: none\\nREAD: none\\nWRITE: src/m1/**",
+    body: "<!-- gef-parallel-module:M1 -->\nWork Order: WO-M1\nDependencies: none\nREAD: none\nWRITE: src/m1/**",
     url: "https://github.com/KayzenRoot/fixture/issues/5",
     author: { login: "repo-writer" }
   };
