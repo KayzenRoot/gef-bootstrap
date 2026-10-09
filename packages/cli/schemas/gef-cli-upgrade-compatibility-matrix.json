@@ -3,18 +3,9 @@
   "$id": "urn:gef:schema:cli-upgrade-compatibility-matrix:1",
   "schemaVersion": 1,
   "product": "gef-bootstrap",
-  "supportedPlatforms": [
-    "win32",
-    "linux",
-    "darwin"
-  ],
+  "supportedPlatforms": ["win32", "linux", "darwin"],
   "minimumNodeMajor": 22,
-  "requiredCapabilities": [
-    "trustedGit",
-    "managedReceipt",
-    "kernelTransaction",
-    "jsonSchema2020-12"
-  ],
+  "requiredCapabilities": ["trustedGit", "managedReceipt", "kernelTransaction", "jsonSchema2020-12"],
   "compatibility": [
     {
       "from": "1.0.0",
@@ -22,15 +13,7 @@
       "stateSchemaMajor": 1,
       "receiptSchemaMajor": 1,
       "migrationId": "GEF-UPGRADE-STATE-V1-1",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
+      "migrationOrder": ["PRECHECK", "CAPTURE_RECOVERY", "STAGE", "VERIFY_STAGE", "PROMOTE", "VERIFY_POST_STATE", "RECEIPT"],
       "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
       "evidenceState": "VERIFIED",
       "evidenceRefs": [
@@ -55,15 +38,7 @@
       "stateSchemaMajor": 1,
       "receiptSchemaMajor": 1,
       "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
+      "migrationOrder": ["PRECHECK", "CAPTURE_RECOVERY", "STAGE", "VERIFY_STAGE", "PROMOTE", "VERIFY_POST_STATE", "RECEIPT"],
       "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
       "evidenceState": "VERIFIED",
       "evidenceRefs": [
@@ -89,15 +64,7 @@
       "stateSchemaMajor": 1,
       "receiptSchemaMajor": 1,
       "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
+      "migrationOrder": ["PRECHECK", "CAPTURE_RECOVERY", "STAGE", "VERIFY_STAGE", "PROMOTE", "VERIFY_POST_STATE", "RECEIPT"],
       "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
       "evidenceState": "VERIFIED",
       "evidenceRefs": [
@@ -123,15 +90,7 @@
       "stateSchemaMajor": 1,
       "receiptSchemaMajor": 1,
       "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
+      "migrationOrder": ["PRECHECK", "CAPTURE_RECOVERY", "STAGE", "VERIFY_STAGE", "PROMOTE", "VERIFY_POST_STATE", "RECEIPT"],
       "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
       "evidenceState": "VERIFIED",
       "evidenceRefs": [
@@ -156,15 +115,7 @@
       "stateSchemaMajor": 1,
       "receiptSchemaMajor": 1,
       "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
+      "migrationOrder": ["PRECHECK", "CAPTURE_RECOVERY", "STAGE", "VERIFY_STAGE", "PROMOTE", "VERIFY_POST_STATE", "RECEIPT"],
       "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
       "evidenceState": "VERIFIED",
       "evidenceRefs": [
@@ -190,15 +141,7 @@
       "stateSchemaMajor": 1,
       "receiptSchemaMajor": 1,
       "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
+      "migrationOrder": ["PRECHECK", "CAPTURE_RECOVERY", "STAGE", "VERIFY_STAGE", "PROMOTE", "VERIFY_POST_STATE", "RECEIPT"],
       "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
       "evidenceState": "VERIFIED",
       "evidenceRefs": [
@@ -216,94 +159,6 @@
         "tests/v11-wo-004-upgrade.test.mjs#COMPAT-05",
         "tests/v11-wo-004-upgrade.test.mjs#COMPAT-06",
         "tests/v11-wo-004-upgrade.test.mjs#WO012-COMPAT-02"
-      ]
-    },
-    {
-      "from": "1.0.0",
-      "to": "1.1.3",
-      "stateSchemaMajor": 1,
-      "receiptSchemaMajor": 1,
-      "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
-      "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
-      "evidenceState": "VERIFIED",
-      "evidenceRefs": [
-        "tests/gef-parallel-patch.test.mjs#V113-COMPAT-ALL",
-        "tests/v11-wo-004-upgrade.test.mjs#WO012-COMPAT-01"
-      ]
-    },
-    {
-      "from": "1.1.0",
-      "to": "1.1.3",
-      "stateSchemaMajor": 1,
-      "receiptSchemaMajor": 1,
-      "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
-      "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
-      "evidenceState": "VERIFIED",
-      "evidenceRefs": [
-        "tests/gef-parallel-patch.test.mjs#V113-COMPAT-ALL",
-        "tests/v11-wo-004-upgrade.test.mjs#WO012-COMPAT-01"
-      ]
-    },
-    {
-      "from": "1.1.1",
-      "to": "1.1.3",
-      "stateSchemaMajor": 1,
-      "receiptSchemaMajor": 1,
-      "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
-      "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
-      "evidenceState": "VERIFIED",
-      "evidenceRefs": [
-        "tests/gef-parallel-patch.test.mjs#V113-COMPAT-ALL",
-        "tests/v11-wo-004-upgrade.test.mjs#WO012-COMPAT-01"
-      ]
-    },
-    {
-      "from": "1.1.2",
-      "to": "1.1.3",
-      "stateSchemaMajor": 1,
-      "receiptSchemaMajor": 1,
-      "migrationId": "GEF-UPGRADE-STATE-V1-1-PATCH",
-      "migrationOrder": [
-        "PRECHECK",
-        "CAPTURE_RECOVERY",
-        "STAGE",
-        "VERIFY_STAGE",
-        "PROMOTE",
-        "VERIFY_POST_STATE",
-        "RECEIPT"
-      ],
-      "recoveryStrategy": "KERNEL_TRANSACTION_ROLLBACK",
-      "evidenceState": "VERIFIED",
-      "evidenceRefs": [
-        "tests/gef-parallel-patch.test.mjs#V113-COMPAT-ALL",
-        "tests/v11-wo-004-upgrade.test.mjs#GBS-V113-112"
       ]
     }
   ]
