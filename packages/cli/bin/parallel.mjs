@@ -68,6 +68,9 @@ export function validateManifest(source) {
     }
     const read = paths(m.files.read, m.id, "read");
     const write = paths(m.files.write, m.id, "write");
+    if (write.some(path => RESERVED.some(protectedPath => intersects(path, protectedPath)))) {
+      reject("reserved_write", m.id + " declares a protected WRITE path; split shared changes into a separate reviewed Work Order");
+    }
     if (m.state === "ADMITTED" && (!m.approved || write.length === 0)) {
       reject("unsafe_admission", m.id + " requires approval and declared write paths");
     }
@@ -151,7 +154,7 @@ export function ghDefault(args, spawn = spawnSync) {
   return out.stdout;
 }
 function inventory(repo, gh) {
-  const text = gh(["issue", "list", "--repo", repo, "--state", "all", "--limit", "1000", "--json", "number,title,body,url"]);
+  const text = gh(["issue", "list", "--repo", repo, "--state", "all", "--limit", "1000", "--json", "number,title,body,url,author"]);
   let entries;
   try { entries = JSON.parse(text); } catch { reject("github_malformed", "gh issue list returned invalid JSON"); }
   if (!Array.isArray(entries) || entries.length >= 1000) reject("github_incomplete", "Issue inventory is incomplete; no creation allowed");
@@ -161,7 +164,30 @@ function inventory(repo, gh) {
   }
   return entries;
 }
-function existingIssue(module, entries) {
+function verifyIssueProvenance(issue, repo, gh, cache) {
+  const login = issue.author?.login;
+  if (typeof login !== "string" || !/^[A-Za-z0-9-]{1,39}$/.test(login)) {
+    reject("issue_untrusted", "Issue #" + issue.number + " lacks a verifiable GitHub author; reconcile before reuse");
+  }
+  const key = login.toLowerCase();
+  if (!cache.has(key)) {
+    let result;
+    try {
+      result = JSON.parse(gh(["api", "repos/" + repo + "/collaborators/" + login + "/permission"]));
+    } catch (error) {
+      if (error instanceof ParallelInputError) throw error;
+      reject("github_malformed", "Cannot verify issue author permission; no issue reuse allowed");
+    }
+    if (!object(result) || typeof result.permission !== "string") {
+      reject("github_malformed", "Missing GitHub collaborator permission; no issue reuse allowed");
+    }
+    cache.set(key, result.permission);
+  }
+  if (!["admin", "maintain", "write"].includes(cache.get(key))) {
+    reject("issue_untrusted", "Issue #" + issue.number + " was authored without verified write permission; reconcile manually");
+  }
+}
+function existingIssue(module, entries, repo, gh, cache) {
   const matching = entries.filter(e => (typeof e.body === "string" && e.body.includes(marker(module.id))) ||
     (typeof e.title === "string" && e.title.includes("[GEF-MOD:" + module.id + "]")));
   // Legacy issue titles containing the stable ID are a collision requiring manual reconciliation.
@@ -179,6 +205,7 @@ function existingIssue(module, entries) {
       "READ: " + (module.files.read.join(", ") || "none"),
       "WRITE: " + (module.files.write.join(", ") || "none")
     ];
+    verifyIssueProvenance(issue, repo, gh, cache);
     if (!required.every(line => bodyLines.includes(line))) {
       reject("issue_stale", module.id + " has a matching issue with stale Work Order or path contract; reconcile before reuse");
     }
@@ -199,16 +226,17 @@ function issueBody(m) {
 export function prepareIssues(input, { apply = false, gh = ghDefault } = {}) {
   const manifest = validateManifest(input);
   const entries = inventory(manifest.repository, gh);
+  const trustedAuthors = new Map();
   const results = [];
   for (const m of manifest.modules) {
     if (!m.approved || m.state === "PROMOTED") continue;
-    let issue = existingIssue(m, entries);
+    let issue = existingIssue(m, entries, manifest.repository, gh, trustedAuthors);
     if (!issue && apply) {
       gh(["issue", "create", "--repo", manifest.repository,
         "--title", "[GEF-MOD:" + m.id + "] " + m.title, "--body", issueBody(m)]);
       // Re-read after each effect: prevents silent duplicates on retries.
       const observed = inventory(manifest.repository, gh);
-      issue = existingIssue(m, observed);
+      issue = existingIssue(m, observed, manifest.repository, gh, trustedAuthors);
       if (!issue) reject("issue_readback_failed", "Created issue for " + m.id + " was not found on read-back");
       entries.splice(0, entries.length, ...observed);
     }
@@ -225,10 +253,11 @@ export function buildPrompt(input, { slots = MAX_SLOTS, batchNumber = 1, gh = gh
   const batch = plan.batches[batchNumber - 1];
   if (!batch) reject("batch_unavailable", "Requested batch " + batchNumber + " is unavailable or has no admitted modules");
   const entries = inventory(manifest.repository, gh);
+  const trustedAuthors = new Map();
   const selected = batch.modules.map(id => {
     const m = manifest.modules.find(x => x.id === id);
     if (!m) reject("invalid_module_id", "Planned module is missing from manifest");
-    const issue = existingIssue(m, entries);
+    const issue = existingIssue(m, entries, manifest.repository, gh, trustedAuthors);
     if (!issue || !Number.isInteger(issue.number)) reject("missing_issue", "Run parallel issues --apply for " + id + " before emitting a prompt");
     return { m, issue };
   });
