@@ -230,6 +230,7 @@ export function buildPrompt(input, { slots = MAX_SLOTS, batchNumber = 1, gh = gh
     "If Context Lock, dependencies, paths, approvals or source fingerprints are unknown/stale, STOP affected module.",
     "Do not modify shared files or another agent's allowed paths. No force-push, autonomous merge, publishing or checkpoint promotion.",
     "Run targeted tests per agent; after integration run the governed regression and exact-head checks. Review final in português brasileiro.",
+    "Use installed Jev MCP/skills for suitable narrow typed decisions when available (https://docs.typesafe.ai/introduction). Prefer deterministic Git, AST, tests and evidence first; Jev never replaces a security or audit gate.",
   ];
   for (const { m, issue } of selected) {
     lines.push(

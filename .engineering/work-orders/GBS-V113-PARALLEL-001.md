@@ -30,6 +30,7 @@ Somente comandos opt-in gef parallel plan/issues/prompt, manifesto versionado, c
 - Paths glob ambíguos, IDs duplicados, ciclos, predecessores desconhecidos ou conflito de acesso bloqueiam.
 - Branch/worktree/PR/evidence por agente; arquivos globais compartilhados em lote isolado. Prompt seleciona lote 1 por padrão ou lote N explicitamente, mantendo Work Order único por branch.
 - Preserve o metadata 1.1.2 no código candidato até governança de release e migração atestada, sem alegar publicação 1.1.3; mudança prematura de metadata gerou regressões de compatibilidade em CI.
+- Incluir nos prompts orientação opcional Jev MCP/skills para decisões tipadas, sem substituir verificações determinísticas.
 - Não mudar checkpoint canônico antes de prova e auditoria. Português brasileiro em docs e review.
 
 ## ACCEPTANCE CRITERIA

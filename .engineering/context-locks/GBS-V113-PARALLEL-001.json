@@ -32,7 +32,8 @@
     ".engineering/decisions/ADR-0011-PARALLEL-PATCH-EXCEPTION.md",
     ".engineering/work-orders/GBS-V113-PARALLEL-001.md",
     ".engineering/context-locks/GBS-V113-PARALLEL-001.json",
-    ".engineering/checkpoint-deltas/GBS-V113-PARALLEL-001-PROPOSED.md"
+    ".engineering/checkpoint-deltas/GBS-V113-PARALLEL-001-PROPOSED.md",
+    ".engineering/evidence/GBS-V113-PARALLEL-001-IMPLEMENTATION-EVIDENCE.md"
   ],
   "forbiddenWrites": [
     ".engineering/CHECKPOINT.md",

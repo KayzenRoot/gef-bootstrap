@@ -84,6 +84,7 @@ test("issue apply deduplicates by stable marker, writes only with apply and veri
   assert.equal(calls.filter(x => x[1] === "create").length, 1);
   assert.match(buildPrompt(input, { gh }).prompt, /AGENT 1 \| M1 \| WO-M1 \| ISSUE #13/);
   assert.match(buildPrompt(input, { gh }).prompt, /isolated/);
+  assert.match(buildPrompt(input, { gh }).prompt, /Jev MCP/);
 });
 test("duplicate existing markers and unmarked legacy issue title block creation", () => {
   const m = mod("M1", "src/m1/**");
