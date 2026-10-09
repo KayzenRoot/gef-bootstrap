@@ -31,7 +31,7 @@ function paths(value, id, field) {
   return value.map(path => {
     if (typeof path !== "string" || path.length > 180 ||
       !/^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9_.@\/-]+(?:\/\*\*)?$/.test(path) ||
-      path.startsWith("./") || path.includes("//") || path.includes("/./") ||
+      path === "." || path.endsWith("/") || path.split("/").some(part => part === "." || part === ".." || part === "") ||
       path.includes("**/") && !path.endsWith("/**")) {
       reject("unsafe_path", id + "." + field + ": unsafe or ambiguous path");
     }
@@ -52,7 +52,7 @@ export function validateManifest(source) {
       reject("invalid_module_id", "Module IDs must be unique, stable uppercase IDs");
     }
     ids.add(m.id);
-    if (typeof m.title !== "string" || !m.title.trim() || m.title.length > 140 ||
+    if (typeof m.title !== "string" || !m.title.trim() || m.title.length > 140 || /[\r\n\x00-\x1f]/.test(m.title) ||
         typeof m.workOrder !== "string" || !ID.test(m.workOrder) ||
         typeof m.approved !== "boolean" ||
         !["PLANNED", "ADMITTED", "PROMOTED"].includes(m.state) ||
@@ -156,7 +156,7 @@ function existingIssue(module, entries) {
   // Legacy issue titles containing the stable ID are a collision requiring manual reconciliation.
   const legacy = entries.filter(e => !matching.includes(e) && typeof e.title === "string" &&
     e.title.toUpperCase().split(/[^A-Z0-9-]+/).includes(module.id));
-  if (matching.length > 1 || (matching.length === 0 && legacy.length)) {
+  if (matching.length > 1 || legacy.length > 0) {
     reject("issue_ambiguous", module.id + " has possible duplicate/legacy issues; reconcile manually");
   }
   return matching[0] || null;
