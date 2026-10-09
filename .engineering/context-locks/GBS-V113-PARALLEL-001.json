@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V113-PARALLEL-001",
+  "status": "PROPOSED_UNAUDITED",
+  "issue": 432,
+  "repository": "KayzenRoot/gef-bootstrap",
+  "baseBranch": "main",
+  "baseSha": "921493797728a43aadc9f7840c954ce7e3ebc416",
+  "targetBranch": "hotfix/1.1.3-parallel-modules",
+  "risk": "ELEVATED",
+  "sources": {
+    "checkpointMd": "ea31e6cab8964aca4b0f74296b2953e6da51d6d7",
+    "checkpointJson": "468dec80ad5a48c044e4282d87481a8267f44866",
+    "decisions": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+    "scope": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
+    "architecture": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+    "requirements": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+    "definitionOfDone": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+    "adr0008": "f3246fc074b450da986ad3dcda76f3d005dc8c6a"
+  },
+  "allowedWrites": [
+    "packages/cli/bin/gef.mjs",
+    "packages/cli/bin/parallel.mjs",
+    "tests/gef-parallel-patch.test.mjs",
+    "package.json",
+    "package-lock.json",
+    "packages/cli/package.json",
+    "packages/cli/src/main.ts",
+    "README.md",
+    "CHANGELOG.md",
+    "docs/INSTALLATION.md",
+    "docs/PARALLEL-MODULES.md",
+    ".engineering/decisions/ADR-0011-PARALLEL-PATCH-EXCEPTION.md",
+    ".engineering/work-orders/GBS-V113-PARALLEL-001.md",
+    ".engineering/context-locks/GBS-V113-PARALLEL-001.json",
+    ".engineering/checkpoint-deltas/GBS-V113-PARALLEL-001-PROPOSED.md",
+    ".engineering/evidence/GBS-V113-PARALLEL-001-IMPLEMENTATION-EVIDENCE.md"
+  ],
+  "forbiddenWrites": [
+    ".engineering/CHECKPOINT.md",
+    ".engineering/CHECKPOINT.json",
+    ".github/workflows/**"
+  ],
+  "stopCondition": "GBS_V113_PARALLEL_001_IMPLEMENTATION_READY_FOR_EXACT_HEAD_AUDIT"
+}
