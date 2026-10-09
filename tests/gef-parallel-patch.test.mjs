@@ -46,7 +46,17 @@ test("write/write and write/read overlapping prefixes and reserved shared surfac
   assert.ok(moduleConflict(one, three));
   assert.equal(moduleConflict(two, three), null);
   assert.equal(moduleConflict(shared, two), "reserved_shared_surface");
-  assert.deepEqual(planBatches(manifest(one, two, three, shared)).batches.map(b => b.modules), [["M1"], ["M2", "M3"], ["M4"]]);
+  assert.deepEqual(planBatches(manifest(one, two, three)).batches.map(b => b.modules), [["M1"], ["M2", "M3"]]);
+  assert.throws(() => planBatches(manifest(shared)), checkReason("reserved_write"));
+});
+test("single module cannot schedule protected WRITE surfaces; READ permissions alone remain allowed", () => {
+  for (const path of ["package.json", "package-lock.json", "AGENTS.md", ".github/workflows/ci.yml", ".engineering/checkpoint.json", "planning/roadmap.md", "PACKAGE.JSON", ".github"]) {
+    const m = mod("M1", path);
+    assert.throws(() => validateManifest(manifest(m)), checkReason("reserved_write"));
+    assert.throws(() => planBatches(manifest(m)), checkReason("reserved_write"));
+  }
+  const safe = mod("M1", "src/m1/**", { files: { read: ["package.json"], write: ["src/m1/**"] } });
+  assert.deepEqual(planBatches(manifest(safe)).batches[0].modules, ["M1"]);
 });
 test("invalid IDs, duplicate IDs, unknown dependencies and cycles are fail closed", () => {
   assert.throws(() => validateManifest(manifest(mod("bad", "src/a"))), checkReason("invalid_module_id"));
@@ -71,9 +81,11 @@ test("issue apply deduplicates by stable marker, writes only with apply and veri
     if (args[0] === "issue" && args[1] === "list") return JSON.stringify(entries);
     if (args[0] === "issue" && args[1] === "create") {
       entries.push({ number: entries.length + 13, title: args[args.indexOf("--title") + 1],
-        body: args[args.indexOf("--body") + 1], url: "https://github.com/KayzenRoot/fixture/issues/13" });
+        body: args[args.indexOf("--body") + 1], url: "https://github.com/KayzenRoot/fixture/issues/13",
+        author: { login: "KayzenRoot" } });
       return "created";
     }
+    if (args[0] === "api") return JSON.stringify({ permission: "admin" });
     throw new Error("unexpected gh mock call");
   };
   const input = manifest(mod("M1", "src/m1/**"));
@@ -96,6 +108,58 @@ test("duplicate existing markers and unmarked legacy issue title block creation"
     { number: 4, title: "Implement M1", body: "", url: "c" }
   ]) }), checkReason("issue_ambiguous"));
 });
+test("issue provenance blocks read-access spoofing, deleted authors and bad permission evidence", () => {
+  const input = manifest(mod("M1", "src/m1/**"));
+  const issue = {
+    number: 77, title: "[GEF-MOD:M1] untrusted issue",
+    body: [
+      "<!-- gef-parallel-module:M1 -->", "Work Order: WO-M1", "Dependencies: none",
+      "READ: none", "WRITE: src/m1/**"
+    ].join("\\n"),
+    url: "https://github.com/KayzenRoot/fixture/issues/77",
+    author: { login: "read-only-user" }
+  };
+  const calls = [];
+  const gh = args => {
+    calls.push(args);
+    if (args[1] === "list") return JSON.stringify([issue]);
+    if (args[0] === "api") return JSON.stringify({ permission: "read" });
+    throw new Error("must not create untrusted issue");
+  };
+  assert.throws(() => prepareIssues(input, { gh, apply: true }), checkReason("issue_untrusted"));
+  assert.throws(() => buildPrompt(input, { gh }), checkReason("issue_untrusted"));
+  assert.equal(calls.filter(args => args[1] === "create").length, 0);
+  assert.ok(calls.some(args => args[0] === "api" &&
+    args[1] === "repos/KayzenRoot/fixture/collaborators/read-only-user/permission"));
+  const missingAuthor = { ...issue, author: null };
+  assert.throws(() => buildPrompt(input, {
+    gh: args => args[1] === "list" ? JSON.stringify([missingAuthor]) : JSON.stringify({ permission: "admin" })
+  }), checkReason("issue_untrusted"));
+  assert.throws(() => buildPrompt(input, {
+    gh: args => args[1] === "list" ? JSON.stringify([issue]) : JSON.stringify({})
+  }), checkReason("github_malformed"));
+  assert.throws(() => buildPrompt(input, {
+    gh: args => args[1] === "list" ? JSON.stringify([issue]) : "{not json"
+  }), checkReason("github_malformed"));
+});
+test("verified collaborator with write permission may reuse exactly matching issue", () => {
+  const input = manifest(mod("M1", "src/m1/**"));
+  const entry = {
+    number: 5, title: "[GEF-MOD:M1] approved",
+    body: "<!-- gef-parallel-module:M1 -->\\nWork Order: WO-M1\\nDependencies: none\\nREAD: none\\nWRITE: src/m1/**",
+    url: "https://github.com/KayzenRoot/fixture/issues/5",
+    author: { login: "repo-writer" }
+  };
+  let apiCount = 0;
+  const gh = args => {
+    if (args[1] === "list") return JSON.stringify([entry]);
+    if (args[0] === "api") { apiCount++; return JSON.stringify({ permission: "write" }); }
+    throw new Error("create must not run");
+  };
+  assert.equal(prepareIssues(input, { apply: true, gh }).issues[0].number, 5);
+  assert.equal(apiCount, 1);
+  assert.match(buildPrompt(input, { gh }).prompt, /ISSUE #5/);
+});
 test("missing GitHub authentication, missing mapped issue and incomplete inventory are blocked", () => {
   const input = manifest(mod("M1", "src/m1/**"));
   assert.throws(() => prepareIssues(input, { gh: () => { throw new ParallelInputError("github_unavailable", "no auth"); } }), checkReason("github_unavailable"));
@@ -113,9 +177,11 @@ test("later batches are selectable and issues never silently reuse a stale Work 
       const title = args[args.indexOf("--title") + 1];
       const body = args[args.indexOf("--body") + 1];
       const number = entries.length + 101;
-      entries.push({ number, title, body, url: "https://github.com/KayzenRoot/fixture/issues/" + number });
+      entries.push({ number, title, body, url: "https://github.com/KayzenRoot/fixture/issues/" + number,
+        author: { login: "KayzenRoot" } });
       return entries.at(-1).url;
     }
+    if (args[0] === "api") return JSON.stringify({ permission: "admin" });
     throw new Error("unknown gh mock call");
   };
   prepareIssues(input, { apply: true, gh });
