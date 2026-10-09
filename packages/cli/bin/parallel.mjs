@@ -160,7 +160,20 @@ function existingIssue(module, entries) {
   if (matching.length > 1 || legacy.length > 0) {
     reject("issue_ambiguous", module.id + " has possible duplicate/legacy issues; reconcile manually");
   }
-  return matching[0] || null;
+  const issue = matching[0] || null;
+  if (issue !== null) {
+    const bodyLines = typeof issue.body === "string" ? issue.body.split(/\r?\n/) : [];
+    const required = [
+      "Work Order: " + module.workOrder,
+      "Dependencies: " + (module.dependencies.join(", ") || "none"),
+      "READ: " + (module.files.read.join(", ") || "none"),
+      "WRITE: " + (module.files.write.join(", ") || "none")
+    ];
+    if (!required.every(line => bodyLines.includes(line))) {
+      reject("issue_stale", module.id + " has a matching issue with stale Work Order or path contract; reconcile before reuse");
+    }
+  }
+  return issue;
 }
 function issueBody(m) {
   return [
@@ -193,11 +206,14 @@ export function prepareIssues(input, { apply = false, gh = ghDefault } = {}) {
   }
   return { repository: manifest.repository, applied: apply, issues: results };
 }
-export function buildPrompt(input, { slots = MAX_SLOTS, gh = ghDefault } = {}) {
+export function buildPrompt(input, { slots = MAX_SLOTS, batchNumber = 1, gh = ghDefault } = {}) {
   const manifest = validateManifest(input);
   const plan = planBatches(manifest, slots);
-  const batch = plan.batches[0];
-  if (!batch) reject("no_ready_modules", "No admitted, dependency-ready modules are available");
+  if (!Number.isInteger(batchNumber) || batchNumber < 1) {
+    reject("invalid_batch", "batch must be an integer >= 1");
+  }
+  const batch = plan.batches[batchNumber - 1];
+  if (!batch) reject("batch_unavailable", "Requested batch " + batchNumber + " is unavailable or has no admitted modules");
   const entries = inventory(manifest.repository, gh);
   const selected = batch.modules.map(id => {
     const m = manifest.modules.find(x => x.id === id);
@@ -207,9 +223,9 @@ export function buildPrompt(input, { slots = MAX_SLOTS, gh = ghDefault } = {}) {
   });
   const lines = [
     "Repository: " + manifest.repository,
-    "Work Order: GBS-V113-PARALLEL-001 (module batch " + batch.number + ")",
+    "Planning contract: GBS-V113-PARALLEL-001 (module batch " + batch.number + ")",
     "Execute ONLY the approved, admitted, dependency-ready modules listed below in parallel.",
-    "Use one independent Codex agent, git worktree, branch, PR and Evidence Bundle per module.",
+    "Use one isolated Codex agent, independent git worktree, branch, PR and Evidence Bundle per module.",
     "Before mutation, inspect exact main HEAD, source hierarchy, checkpoint, ADRs, Scope, Architecture, DoD and each module Work Order.",
     "If Context Lock, dependencies, paths, approvals or source fingerprints are unknown/stale, STOP affected module.",
     "Do not modify shared files or another agent's allowed paths. No force-push, autonomous merge, publishing or checkpoint promotion.",
@@ -218,34 +234,37 @@ export function buildPrompt(input, { slots = MAX_SLOTS, gh = ghDefault } = {}) {
   for (const { m, issue } of selected) {
     lines.push(
       "AGENT " + (selected.findIndex(x => x.m.id === m.id) + 1) + " | " + m.id + " | " + m.workOrder + " | ISSUE #" + issue.number,
-      "BRANCH: feat/" + m.id.toLowerCase() + " | WRITE: " + m.files.write.join(", "),
+      "BRANCH: feat/" + m.id.toLowerCase() + "-" + m.workOrder.toLowerCase() + " | WRITE: " + m.files.write.join(", "),
       "READ: " + (m.files.read.join(", ") || "none") + " | TESTS: " + (m.tests.join(" ; ") || "derive from Work Order")
     );
   }
   return { repository: manifest.repository, batch: batch.modules, prompt: lines.join("\n") + "\n" };
 }
 function options(argv) {
-  const result = { action: null, apply: false, json: false, slots: MAX_SLOTS, manifest: ".gef/parallel-modules.json", repository: null, help: false };
+  const result = { action: null, apply: false, json: false, slots: MAX_SLOTS, batch: 1, batchSupplied: false, manifest: ".gef/parallel-modules.json", repository: null, help: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === "--help" || arg === "-h") { result.help = true; continue; }
     if (arg === "--apply") { result.apply = true; continue; }
     if (arg === "--json") { result.json = true; continue; }
-    if (["--manifest", "--repo", "--slots"].includes(arg)) {
+    if (["--manifest", "--repo", "--slots", "--batch"].includes(arg)) {
       const value = argv[++i];
       if (!value || value.startsWith("-")) reject("missing_option_value", arg + " requires a value");
       if (arg === "--manifest") result.manifest = value;
       else if (arg === "--repo") result.repository = value;
-      else result.slots = Number(value);
+      else if (arg === "--slots") result.slots = Number(value);
+      else { result.batch = Number(value); result.batchSupplied = true; }
       continue;
     }
     if (!arg.startsWith("-") && result.action === null) { result.action = arg; continue; }
     reject("unknown_option", "Unexpected argument: " + arg);
   }
   if (!result.help && !["plan", "issues", "prompt"].includes(result.action)) {
-    reject("unknown_action", "Use: gef parallel plan|issues|prompt [--manifest path] [--slots 1..6] [--repo owner/name] [--json] [--apply only with issues]");
+    reject("unknown_action", "Use: gef parallel plan|issues|prompt [--manifest path] [--slots 1..6] [--repo owner/name] [--batch N (prompt only)] [--json] [--apply only with issues]");
   }
   if (result.apply && result.action !== "issues") reject("unsafe_apply", "--apply is only allowed for parallel issues");
+  if (result.batchSupplied && result.action !== "prompt") reject("invalid_batch", "--batch is only allowed for parallel prompt");
+  if (!Number.isInteger(result.batch) || result.batch < 1) reject("invalid_batch", "--batch must be a positive integer");
   return result;
 }
 function loadManifest(path) {
@@ -268,7 +287,7 @@ export async function runParallel(argv, io = {}) {
     const opt = options(argv);
     json = json || opt.json;
     if (opt.help) {
-      stdout("gef parallel plan|issues|prompt [--manifest path] [--repo owner/name] [--slots 1..6] [--json] [--apply (issues only)]\n");
+      stdout("gef parallel plan|issues|prompt [--manifest path] [--repo owner/name] [--slots 1..6] [--batch N (prompt only)] [--json] [--apply (issues only)]\n");
       return 0;
     }
     const manifest = loadManifest(opt.manifest);
@@ -278,7 +297,7 @@ export async function runParallel(argv, io = {}) {
     }
     const value = opt.action === "plan" ? planBatches(manifest, opt.slots) :
       opt.action === "issues" ? prepareIssues(manifest, { apply: opt.apply, gh }) :
-      buildPrompt(manifest, { slots: opt.slots, gh });
+      buildPrompt(manifest, { slots: opt.slots, batchNumber: opt.batch, gh });
     stdout(json ? JSON.stringify({ ok: true, value }, null, 2) + "\n" :
       opt.action === "prompt" ? value.prompt :
       JSON.stringify(value, null, 2) + "\n");

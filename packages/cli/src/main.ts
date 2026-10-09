@@ -31,7 +31,7 @@ import type { TransactionSummary } from "./schemas.js";
 import { applyGovernedCreate } from "./transaction.js";
 
 /** Used only when the packaged manifest cannot be read (for example a partially broken install). */
-export const FALLBACK_PRODUCT_VERSION = "1.1.3";
+export const FALLBACK_PRODUCT_VERSION = "1.1.2";
 
 const GEF_STATE_DIRECTORY = ".gef";
 const RECEIPTS_DIRECTORY = "receipts";

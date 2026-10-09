@@ -101,6 +101,35 @@ test("missing GitHub authentication, missing mapped issue and incomplete invento
   assert.throws(() => buildPrompt(input, { gh: () => "[]" }), checkReason("missing_issue"));
   assert.throws(() => prepareIssues(input, { gh: () => JSON.stringify(Array.from({ length: 1000 }, () => ({ title: "x" }))) }), checkReason("github_incomplete"));
 });
+
+test("later batches are selectable and issues never silently reuse a stale Work Order or path declaration", () => {
+  const input = manifest(...Array.from({ length: 7 }, (_, n) =>
+    mod("M" + (n + 1), "packages/m" + (n + 1) + "/**")));
+  const entries = [];
+  const gh = args => {
+    if (args[1] === "list") return JSON.stringify(entries);
+    if (args[1] === "create") {
+      const title = args[args.indexOf("--title") + 1];
+      const body = args[args.indexOf("--body") + 1];
+      const number = entries.length + 101;
+      entries.push({ number, title, body, url: "https://github.com/KayzenRoot/fixture/issues/" + number });
+      return entries.at(-1).url;
+    }
+    throw new Error("unknown gh mock call");
+  };
+  prepareIssues(input, { apply: true, gh });
+  const first = buildPrompt(input, { gh });
+  const second = buildPrompt(input, { gh, batchNumber: 2 });
+  assert.deepEqual(first.batch, ["M1", "M2", "M3", "M4", "M5", "M6"]);
+  assert.deepEqual(second.batch, ["M7"]);
+  assert.ok(second.prompt.includes("AGENT 1 | M7 | WO-M7 | ISSUE #107"));
+  assert.ok(second.prompt.includes("feat/m7-wo-m7"));
+  assert.throws(() => buildPrompt(input, { gh, batchNumber: 3 }), checkReason("batch_unavailable"));
+  assert.throws(() => buildPrompt(input, { gh, batchNumber: 0 }), checkReason("invalid_batch"));
+  const altered = manifest(mod("M1", "packages/different/**"));
+  assert.throws(() => prepareIssues(altered, { gh }), checkReason("issue_stale"));
+});
+
 test("real CLI entry offers parallel help even without TypeScript dist and refuses --apply on plan", () => {
   const bin = fileURLToPath(new URL("../packages/cli/bin/gef.mjs", import.meta.url));
   const help = spawnSync(process.execPath, [bin, "parallel", "--help"], { encoding: "utf8" });

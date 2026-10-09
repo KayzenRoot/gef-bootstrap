@@ -87,9 +87,9 @@ For a new project, establish canonical sources and a Work Order before mutation.
 
 ## Release
 
-**Latest stable:** `v1.0.0`
+**Latest stable:** `v1.1.2`
 
-See `CHANGELOG.md` and `docs/releases/v1.0.0.md` for release notes, validated scope, known distribution boundaries and upgrade guidance. GitHub automatically provides source `.zip` and `.tar.gz` archives for the tag/release.
+See `CHANGELOG.md`, `docs/INSTALLATION.md` and historical `docs/releases/v1.0.0.md` for release notes, validated scope, known distribution boundaries and upgrade guidance. GitHub automatically provides source `.zip` and `.tar.gz` archives for the tag/release.
 
 ## Security and assurance
 
