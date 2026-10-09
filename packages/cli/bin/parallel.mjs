@@ -29,7 +29,8 @@ function paths(value, id, field) {
   if (!Array.isArray(value)) reject("invalid_paths", id + "." + field + " must be an array");
   const seen = new Set();
   return value.map(path => {
-    if (typeof path !== "string" || path.length > 180 ||
+    if (typeof path !== "string" || path.length > 180 || path.endsWith("/") ||
+      path.split("/").some(segment => segment === "." || segment.toLowerCase() === ".git") ||
       !/^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9_.@\/-]+(?:\/\*\*)?$/.test(path) ||
       path === "." || path.endsWith("/") || path.split("/").some(part => part === "." || part === ".." || part === "") ||
       path.includes("**/") && !path.endsWith("/**")) {
