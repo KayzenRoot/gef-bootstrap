@@ -137,8 +137,9 @@ export function planBatches(input, slots = MAX_SLOTS) {
     caution: "Paths are declared by the project; agents must enforce worktrees, file boundaries and exact-head review."
   };
 }
-function ghDefault(args) {
-  const out = spawnSync("gh", args, { encoding: "utf8", shell: false, timeout: 30000, maxBuffer: 4 * 1024 * 1024 });
+export function ghDefault(args, spawn = spawnSync) {
+  const out = spawn("gh", args, { encoding: "utf8", shell: false, timeout: 30000, maxBuffer: 64 * 1024 * 1024 });
+  if (out.error?.code === "ENOBUFS") reject("github_incomplete", "GitHub issue output exceeded 64 MiB; inventory incomplete");
   if (out.error || out.status !== 0) {
     reject("github_unavailable", "GitHub CLI/auth/permission unavailable. Install gh, run gh auth login, and check repository permissions.");
   }

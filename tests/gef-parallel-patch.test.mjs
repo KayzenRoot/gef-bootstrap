@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
   validateManifest, planBatches, moduleConflict, prepareIssues, buildPrompt, runParallel,
-  ParallelInputError
+  ParallelInputError, ghDefault
 } from "../packages/cli/bin/parallel.mjs";
 
 const mod = (id, write, extra = {}) => ({
@@ -157,4 +157,112 @@ test("manifest file entry read-only; default invocation never calls gh for plan"
     assert.equal(stderr.length, 0);
     assert.deepEqual(JSON.parse(stdout.join("")).value.batches[0].modules, ["M1"]);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("GH bridge rejects incomplete oversized output before reporting authentication failure", () => {
+  let observed;
+  const invoke = (_exe, _args, options) => { observed = options; return { error: { code: "ENOBUFS" }, status: null }; };
+  assert.throws(() => ghDefault(["issue", "list"], invoke), checkReason("github_incomplete"));
+  assert.equal(observed.shell, false);
+  assert.equal(observed.maxBuffer, 64 * 1024 * 1024);
+  assert.throws(() => ghDefault(["issue", "list"], () => ({ status: 1, error: null })), checkReason("github_unavailable"));
+  assert.equal(ghDefault(["issue", "list"], () => ({ status: 0, stdout: "[]" })), "[]");
+});
+
+test("manifest validation handles incomplete, uncertain and malformed input deterministically", () => {
+  assert.throws(() => validateManifest({}), checkReason("invalid_manifest"));
+  assert.throws(() => validateManifest(manifest()), checkReason("invalid_manifest"));
+  assert.throws(() => validateManifest({ schemaVersion: "2", repository: "a/b", modules: [mod("M1", "src/m1")] }), checkReason("invalid_manifest"));
+  assert.throws(() => validateManifest({ schemaVersion: "1", repository: "not-a-repository", modules: [mod("M1", "src/m1")] }), checkReason("invalid_manifest"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { title: "bad\\nname" }))), checkReason("invalid_module"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { workOrder: "bad" }))), checkReason("invalid_module"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { approved: "yes" }))), checkReason("invalid_module"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { dependencies: ["M1", "M1"] }))), checkReason("invalid_module"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { files: { read: null, write: ["src/m1"] } }))), checkReason("invalid_paths"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { files: { read: [], write: ["src/m1", "src/m1"] } }))), checkReason("duplicate_path"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { tests: ["okay", "bad\\ncmd"] }))), checkReason("invalid_tests"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { state: "PLANNED", approved: false, files: { read: [], write: [] } }))).not.toThrow;
+});
+test("planner excludes unadmitted and unapproved modules and honors one slot", () => {
+  const input = manifest(mod("M1", "src/m1/**"), mod("M2", "src/m2/**"), mod("M3", "src/m3/**",
+    { state: "PLANNED", approved: false, files: { read: [], write: [] } }));
+  const plan = planBatches(input, 1);
+  assert.deepEqual(plan.batches.map(b => b.modules), [["M1"], ["M2"]]);
+  assert.deepEqual(plan.approvedModules, ["M1", "M2"]);
+  assert.throws(() => planBatches(input, 0), checkReason("invalid_slots"));
+});
+test("issue creation refuses missing readback, corrupt inventory and ignores unapproved modules", () => {
+  const ready = manifest(mod("M1", "src/m1/**"));
+  assert.throws(() => prepareIssues(ready, { gh: () => "not-json" }), checkReason("github_malformed"));
+  assert.throws(() => prepareIssues(ready, { apply: true, gh: args =>
+    args[1] === "list" ? "[]" : "https://github.com/example" }), checkReason("issue_readback_failed"));
+  const parked = manifest(mod("M1", "src/m1/**", { state: "PLANNED", approved: false, files: { read: [], write: [] } }));
+  assert.deepEqual(prepareIssues(parked, { apply: true, gh: () => "[]" }).issues, []);
+  assert.throws(() => buildPrompt(parked, { gh: () => "[]" }), checkReason("batch_unavailable"));
+});
+test("CLI command parser and JSON failure boundaries remain fail closed", async () => {
+  for (const [args, reason] of [
+    [["unknown"], "unknown_action"],
+    [["plan", "--bogus"], "unknown_option"],
+    [["plan", "--repo"], "missing_option_value"],
+    [["plan", "--apply"], "unsafe_apply"],
+    [["plan", "--batch", "2"], "invalid_batch"],
+    [["prompt", "--batch", "0"], "invalid_batch"]
+  ]) {
+    const error = [];
+    const code = await runParallel([...args, "--json"], { stderr: text => error.push(text) });
+    assert.equal(code, 10);
+    assert.equal(JSON.parse(error.join("")).reason, reason);
+  }
+  const missing = [];
+  assert.equal(await runParallel(["plan", "--manifest", "/no/such/file", "--json"], { stderr: s => missing.push(s) }), 10);
+  assert.equal(JSON.parse(missing.join("")).reason, "manifest_missing");
+  const help = [];
+  assert.equal(await runParallel(["--help"], { stdout: s => help.push(s) }), 0);
+  assert.match(help.join(""), /parallel/);
+});
+test("CLI manifest I/O rejects oversize, invalid JSON, directory and symlink safely", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "gef-parallel-fail-"));
+  try {
+    const f = join(dir, "manifest.json");
+    const cases = [["not json", "manifest_invalid_json"], [" ".repeat(262145), "manifest_unsafe"]];
+    for (const [payload, reason] of cases) {
+      writeFileSync(f, payload);
+      const err = [];
+      assert.equal(await runParallel(["plan", "--manifest", f, "--json"], { stderr: s => err.push(s) }), 10);
+      assert.equal(JSON.parse(err.join("")).reason, reason);
+    }
+    const errors = [];
+    assert.equal(await runParallel(["plan", "--manifest", dir, "--json"], { stderr: s => errors.push(s) }), 10);
+    assert.equal(JSON.parse(errors.join("")).reason, "manifest_unsafe");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+test("CLI prompt and issues report missing auth without executing shell", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "gef-parallel-gh-"));
+  try {
+    const file = join(dir, "manifest.json");
+    writeFileSync(file, JSON.stringify(manifest(mod("M1", "src/m1/**"))));
+    for (const cmd of ["issues", "prompt"]) {
+      const err = [];
+      const code = await runParallel([cmd, "--manifest", file, "--json"], {
+        stderr: s => err.push(s), gh: () => { throw new ParallelInputError("github_unavailable", "permission denied"); }
+      });
+      assert.equal(code, 40);
+      assert.equal(JSON.parse(err.join("")).reason, "github_unavailable");
+    }
+    const errors = [];
+    assert.equal(await runParallel(["plan", "--manifest", file, "--repo", "invalid", "--json"], {
+      stderr: s => errors.push(s)
+    }), 10);
+    assert.equal(JSON.parse(errors.join("")).reason, "invalid_repository");
+    const ok = [];
+    assert.equal(await runParallel(["plan", "--manifest", file, "--repo", "Owner/Other", "--slots", "1", "--json"], {
+      stdout: s => ok.push(s)
+    }), 0);
+    assert.equal(JSON.parse(ok.join("")).value.repository, "Owner/Other");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

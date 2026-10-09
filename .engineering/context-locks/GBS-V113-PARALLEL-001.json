@@ -27,6 +27,7 @@
     "packages/cli/package.json",
     "packages/cli/src/main.ts",
     "README.md",
+    "CHANGELOG.md",
     "docs/INSTALLATION.md",
     "docs/PARALLEL-MODULES.md",
     ".engineering/decisions/ADR-0011-PARALLEL-PATCH-EXCEPTION.md",
