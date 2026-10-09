@@ -180,6 +180,7 @@ test("manifest validation handles incomplete, uncertain and malformed input dete
   assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { dependencies: ["M1", "M1"] }))), checkReason("invalid_module"));
   assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { files: { read: null, write: ["src/m1"] } }))), checkReason("invalid_paths"));
   assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { files: { read: [], write: ["src/m1", "src/m1"] } }))), checkReason("duplicate_path"));
+  assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { files: { read: [], write: ["src/m1", "SRC/M1"] } }))), checkReason("duplicate_path"));
   assert.throws(() => validateManifest(manifest(mod("M1", "src/m1", { tests: ["okay", "bad\ncmd"] }))), checkReason("invalid_tests"));
   assert.equal(validateManifest(manifest(mod("M1", "src/m1", { state: "PLANNED", approved: false, files: { read: [], write: [] } }))).modules[0].state, "PLANNED");
 });
@@ -194,6 +195,8 @@ test("planner excludes unadmitted and unapproved modules and honors one slot", (
 test("issue creation refuses missing readback, corrupt inventory and ignores unapproved modules", () => {
   const ready = manifest(mod("M1", "src/m1/**"));
   assert.throws(() => prepareIssues(ready, { gh: () => "not-json" }), checkReason("github_malformed"));
+  assert.throws(() => prepareIssues(ready, { gh: () => "[null]" }), checkReason("github_malformed"));
+  assert.throws(() => prepareIssues(ready, { gh: () => "[{}]" }), checkReason("github_malformed"));
   assert.throws(() => prepareIssues(ready, { apply: true, gh: args =>
     args[1] === "list" ? "[]" : "https://github.com/example" }), checkReason("issue_readback_failed"));
   const parked = manifest(mod("M1", "src/m1/**", { state: "PLANNED", approved: false, files: { read: [], write: [] } }));

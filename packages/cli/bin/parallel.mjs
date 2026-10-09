@@ -29,15 +29,18 @@ function paths(value, id, field) {
   if (!Array.isArray(value)) reject("invalid_paths", id + "." + field + " must be an array");
   const seen = new Set();
   return value.map(path => {
-    if (typeof path !== "string" || path.length > 180 || path.endsWith("/") ||
-      path.split("/").some(segment => segment === "." || segment.toLowerCase() === ".git") ||
-      !/^(?!\/)(?!.*(?:^|\/)\.\.(?:\/|$))[A-Za-z0-9_.@\/-]+(?:\/\*\*)?$/.test(path) ||
-      path === "." || path.endsWith("/") || path.split("/").some(part => part === "." || part === ".." || part === "") ||
-      path.includes("**/") && !path.endsWith("/**")) {
+    if (typeof path !== "string" || path.length > 180 ||
+      !/^[A-Za-z0-9_.@/-]+(?:\/\*\*)?$/.test(path)) {
       reject("unsafe_path", id + "." + field + ": unsafe or ambiguous path");
     }
-    if (seen.has(path)) reject("duplicate_path", id + "." + field + ": duplicate path");
-    seen.add(path);
+    const segments = path.split("/");
+    if (path.endsWith("/") || segments.some(part => part === "" || part === "." ||
+      part === ".." || part.toLowerCase() === ".git")) {
+      reject("unsafe_path", id + "." + field + ": unsafe or ambiguous path");
+    }
+    const key = path.toLowerCase();
+    if (seen.has(key)) reject("duplicate_path", id + "." + field + ": duplicate path");
+    seen.add(key);
     return path;
   });
 }
@@ -85,8 +88,10 @@ export function validateManifest(source) {
   function visit(id) {
     if (active.has(id)) reject("dependency_cycle", "Dependency cycle involving " + id);
     if (seen.has(id)) return;
+    const current = byId.get(id);
+    if (!current) reject("invalid_dependency", "Unknown dependency " + id);
     active.add(id);
-    for (const d of byId.get(id).dependencies) visit(d);
+    for (const d of current.dependencies) visit(d);
     active.delete(id); seen.add(id);
   }
   for (const m of modules) visit(m.id);
@@ -119,7 +124,7 @@ export function planBatches(input, slots = MAX_SLOTS) {
   const blocked = [], eligible = [];
   for (const m of manifest.modules) {
     if (m.state !== "ADMITTED") continue;
-    const prerequisites = m.dependencies.filter(id => byId.get(id).state !== "PROMOTED");
+    const prerequisites = m.dependencies.filter(id => byId.get(id)?.state !== "PROMOTED");
     if (prerequisites.length > 0) blocked.push({ id: m.id, reason: "dependencies_not_promoted", dependencies: prerequisites });
     else eligible.push(m);
   }
@@ -150,6 +155,10 @@ function inventory(repo, gh) {
   let entries;
   try { entries = JSON.parse(text); } catch { reject("github_malformed", "gh issue list returned invalid JSON"); }
   if (!Array.isArray(entries) || entries.length >= 1000) reject("github_incomplete", "Issue inventory is incomplete; no creation allowed");
+  if (entries.some(e => !object(e) || !Number.isInteger(e.number) || typeof e.title !== "string" ||
+    typeof e.body !== "string" || typeof e.url !== "string")) {
+    reject("github_malformed", "GitHub issue inventory contained malformed entries; no creation allowed");
+  }
   return entries;
 }
 function existingIssue(module, entries) {
@@ -218,6 +227,7 @@ export function buildPrompt(input, { slots = MAX_SLOTS, batchNumber = 1, gh = gh
   const entries = inventory(manifest.repository, gh);
   const selected = batch.modules.map(id => {
     const m = manifest.modules.find(x => x.id === id);
+    if (!m) reject("invalid_module_id", "Planned module is missing from manifest");
     const issue = existingIssue(m, entries);
     if (!issue || !Number.isInteger(issue.number)) reject("missing_issue", "Run parallel issues --apply for " + id + " before emitting a prompt");
     return { m, issue };
