@@ -2,6 +2,18 @@
 
 All notable release changes are documented here. GEF Bootstrap uses Semantic Versioning.
 
+## [1.1.3] - patch candidate, not published (2026-10-09)
+
+### Added
+- Optional `gef parallel plan|issues|prompt` for issue-per-module tracking, bounded independent-agent batches and Codex launch instructions.
+- Conservative dependency/path conflict checks, readback verification and isolation safeguards. No automatic merge or checkpoint promotion.
+
+### Fixed
+- Installation/README guidance now identifies the published stable release as v1.1.2, while v1.1.3 remains a candidate.
+
+### Release state
+- Issue #432; work order `GBS-V113-PARALLEL-001`; exact-head audit, package smoke and publication verification required before release.
+
 ## [1.1.2] - hotfix in progress (2026-10-01)
 
 ### Fixed
