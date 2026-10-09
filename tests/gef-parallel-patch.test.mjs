@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -156,4 +156,12 @@ test("manifest file entry read-only; default invocation never calls gh for plan"
     assert.equal(stderr.length, 0);
     assert.deepEqual(JSON.parse(stdout.join("")).value.batches[0].modules, ["M1"]);
   } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test("V113-COMPAT-ALL: admitted v1.1.x state families have candidate v1.1.3 migration rows", () => {
+  const asset = new URL("../packages/cli/schemas/gef-cli-upgrade-compatibility-matrix.json", import.meta.url);
+  const matrix = JSON.parse(readFileSync(asset, "utf8"));
+  for (const from of ["1.0.0", "1.1.0", "1.1.1", "1.1.2"]) {
+    assert.equal(matrix.compatibility.filter(row => row.from === from && row.to === "1.1.3" && row.evidenceState === "VERIFIED").length, 1);
+  }
 });

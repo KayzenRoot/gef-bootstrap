@@ -19,25 +19,40 @@
     "adr0008": "f3246fc074b450da986ad3dcda76f3d005dc8c6a"
   },
   "allowedWrites": [
-    "packages/cli/bin/gef.mjs",
-    "packages/cli/bin/parallel.mjs",
-    "tests/gef-parallel-patch.test.mjs",
-    "package.json",
-    "package-lock.json",
-    "packages/cli/package.json",
-    "packages/cli/src/main.ts",
+    ".engineering/checkpoint-deltas/GBS-V113-PARALLEL-001-PROPOSED.md",
+    ".engineering/context-locks/GBS-V113-PARALLEL-001.json",
+    ".engineering/decisions/ADR-0011-PARALLEL-PATCH-EXCEPTION.md",
+    ".engineering/work-orders/GBS-V113-PARALLEL-001.md",
     "README.md",
     "docs/INSTALLATION.md",
     "docs/PARALLEL-MODULES.md",
-    ".engineering/decisions/ADR-0011-PARALLEL-PATCH-EXCEPTION.md",
-    ".engineering/work-orders/GBS-V113-PARALLEL-001.md",
-    ".engineering/context-locks/GBS-V113-PARALLEL-001.json",
-    ".engineering/checkpoint-deltas/GBS-V113-PARALLEL-001-PROPOSED.md"
+    "package-lock.json",
+    "package.json",
+    "packages/cli/README.md",
+    "packages/cli/bin/gef.mjs",
+    "packages/cli/bin/parallel.mjs",
+    "packages/cli/package.json",
+    "packages/cli/schemas/gef-cli-upgrade-compatibility-matrix.json",
+    "packages/cli/src/main.ts",
+    "packages/cli/src/schemas.ts",
+    "tests/gef-parallel-patch.test.mjs",
+    "tests/v11-wo-004-upgrade.test.mjs",
+    "tests/v11-wo-012-release-state.test.mjs"
   ],
   "forbiddenWrites": [
     ".engineering/CHECKPOINT.md",
     ".engineering/CHECKPOINT.json",
     ".github/workflows/**"
   ],
-  "stopCondition": "GBS_V113_PARALLEL_001_IMPLEMENTATION_READY_FOR_EXACT_HEAD_AUDIT"
+  "stopCondition": "GBS_V113_PARALLEL_001_IMPLEMENTATION_READY_FOR_EXACT_HEAD_AUDIT",
+  "correctionDelta": {
+    "cause": "Exact-head CI regression: candidate 1.1.3 missing from installed compatibility matrix and state validator",
+    "pr": 433,
+    "failedWorkflows": [
+      37990605126,
+      37990605242
+    ],
+    "status": "PROPOSED_FOR_AUDIT",
+    "scope": "Add 1.1.3 rows, parser support and focused migrations; preserve 1.1.2 acceptance and rows"
+  }
 }

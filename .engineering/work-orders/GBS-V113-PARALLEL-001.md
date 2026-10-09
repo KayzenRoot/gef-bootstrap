@@ -45,3 +45,7 @@ node --test tests/gef-parallel-patch.test.mjs; npm run build; npm run typecheck;
 Veredito em português brasileiro: APPROVED / CORRECTION REQUIRED / BLOCKED; HEAD e baseline SHAs, CI, regressões, segurança, instalação, evidências e riscos. Auditoria pelo próprio ChatGPT é NOT_INDEPENDENT. Não declarar publicação ou prontidão para produção sem prova real.
 
 STOP CONDITION: GBS_V113_PARALLEL_001_IMPLEMENTATION_READY_FOR_EXACT_HEAD_AUDIT.
+
+## Correction Delta 001: v1.1.3 state compatibility
+
+The first PR #433 CI runs proved the 1.1.3 package bump broke existing `upgrade` and init/adopt drift-state recognition because the version was not represented in the packaged matrix/parser. Only the existing matrix, current-state validator, directly affected version tests, package docs and evidence are admitted for this correction. Historical v1.1.2 matrix rows, release assertions and accepted checkpoint facts remain unchanged. Corrected candidate requires new exact-head validation before audit or merge.

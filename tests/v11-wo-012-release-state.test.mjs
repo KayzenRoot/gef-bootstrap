@@ -55,23 +55,24 @@ test("WO-012 preserves immutable v1.1.1 history and recognizes the exact v1.1.2 
   }
 });
 
-test("WO-012 sets the active workspace, CLI, lockfile and generated runtime identity to 1.1.2", () => {
+test("Patch 1.1.3 candidate updates current identity without rewriting historical release evidence", () => {
   const workspace = json("package.json");
   const cli = json("packages/cli/package.json");
   const lock = json("package-lock.json");
-  assert.equal(workspace.version, "1.1.2");
+  assert.equal(workspace.version, "1.1.3");
   assert.equal(cli.name, "@gef-bootstrap/cli");
-  assert.equal(cli.version, "1.1.2");
+  assert.equal(cli.version, "1.1.3");
   assert.equal(cli.repository.url, "https://github.com/KayzenRoot/gef-bootstrap.git");
-  assert.equal(lock.version, "1.1.2");
-  assert.equal(lock.packages[""].version, "1.1.2");
-  assert.equal(lock.packages["packages/cli"].version, "1.1.2");
-  assert.match(read("packages/cli/src/main.ts"), /FALLBACK_PRODUCT_VERSION = "1\.1\.2"/);
-  assert.match(read("packages/cli/src/schemas.ts"), /\["1\.1\.1", "1\.1\.2"\]\.includes\(state\["productVersion"\]\)/);
+  assert.equal(lock.version, "1.1.3");
+  assert.equal(lock.packages[""].version, "1.1.3");
+  assert.equal(lock.packages["packages/cli"].version, "1.1.3");
+  assert.match(read("packages/cli/src/main.ts"), /FALLBACK_PRODUCT_VERSION = "1\.1\.3"/);
+  assert.match(read("packages/cli/src/schemas.ts"), /\["1\.1\.1", "1\.1\.2", "1\.1\.3"\]\.includes\(state\["productVersion"\]\)/);
 
   const matrix = json("packages/cli/schemas/gef-cli-upgrade-compatibility-matrix.json");
   assert.ok(matrix.compatibility.some((row) => row.from === "1.1.1" && row.to === "1.1.2" && row.evidenceState === "VERIFIED"));
   assert.ok(matrix.compatibility.some((row) => row.from === "1.1.0" && row.to === "1.1.2" && row.evidenceState === "VERIFIED"));
+  assert.ok(matrix.compatibility.some((row) => row.from === "1.1.2" && row.to === "1.1.3" && row.evidenceState === "VERIFIED"));
 });
 
 test("WO-012 operator documentation identifies production-accepted v1.1.2 and preserves earlier release history", () => {
