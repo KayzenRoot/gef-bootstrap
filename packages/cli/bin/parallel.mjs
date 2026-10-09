@@ -93,7 +93,7 @@ export function validateManifest(source) {
 }
 function intersects(a, b) {
   const root = p => p.endsWith("/**") ? p.slice(0, -3) : p;
-  const x = root(a), y = root(b);
+  const x = root(a).toLowerCase(), y = root(b).toLowerCase();
   return x === y || x.startsWith(y + "/") || y.startsWith(x + "/");
 }
 function reserved(m) {
@@ -155,7 +155,7 @@ function existingIssue(module, entries) {
     (typeof e.title === "string" && e.title.includes("[GEF-MOD:" + module.id + "]")));
   // Legacy issue titles containing the stable ID are a collision requiring manual reconciliation.
   const legacy = entries.filter(e => !matching.includes(e) && typeof e.title === "string" &&
-    e.title.split(/[^A-Z0-9-]+/).includes(module.id));
+    e.title.toUpperCase().split(/[^A-Z0-9-]+/).includes(module.id));
   if (matching.length > 1 || (matching.length === 0 && legacy.length)) {
     reject("issue_ambiguous", module.id + " has possible duplicate/legacy issues; reconcile manually");
   }
