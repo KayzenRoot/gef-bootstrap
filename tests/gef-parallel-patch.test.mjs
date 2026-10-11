@@ -72,13 +72,13 @@ function promotionFixture({ checkpoint = JSON.parse(readFileSync(fileURLToPath(n
   return {
     root,
     checkpointPath: join(root, ".engineering", "CHECKPOINT.json"),
-    async run(extraArgs = []) {
+    async run(extraArgs = [], cwd = root) {
       const originalCwd = process.cwd();
       let stdout = "";
       let stderr = "";
       let status;
       try {
-        process.chdir(root);
+        process.chdir(cwd);
         status = await runParallel(["plan", "--manifest", manifestPath, "--json", ...extraArgs], {
           stdout: value => { stdout += value; },
           stderr: value => { stderr += value; }
@@ -112,6 +112,78 @@ test("promoted predecessor requires the exact tracked checkpoint and repository 
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout).value.batches[0].modules, ["U12-02"]);
   } finally { rmSync(fixture.root, { recursive: true, force: true }); }
+});
+test("repository identity accepts canonical SSH origin and rejects malformed remotes", async () => {
+  const fixtures = [
+    ["git@github.com:KayzenRoot/gef-bootstrap.git", 0],
+    ["not a GitHub URL", 10],
+    ["https://github.com/KayzenRoot/gef-bootstrap/extra.git", 10],
+    ["https://example.com/KayzenRoot/gef-bootstrap.git", 10]
+  ];
+  for (const [origin, expectedStatus] of fixtures) {
+    const fixture = promotionFixture({ origin });
+    try {
+      const result = await fixture.run();
+      assert.equal(result.status, expectedStatus, origin + ": " + result.stderr);
+      if (expectedStatus !== 0) {
+        assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch", origin);
+      }
+    } finally { rmSync(fixture.root, { recursive: true, force: true }); }
+  }
+});
+test("promoted dependency must be evaluated from the repository root", async () => {
+  const fixture = promotionFixture();
+  try {
+    const nestedDirectory = join(fixture.root, "nested");
+    mkdirSync(nestedDirectory);
+    const result = await fixture.run([], nestedDirectory);
+    assert.notEqual(result.status, 0);
+    assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
+  } finally { rmSync(fixture.root, { recursive: true, force: true }); }
+});
+test("in-process CLI preserves text output for plan and prompt and rejects unknown actions", async () => {
+  const root = mkdtempSync(join(tmpdir(), "gef-parallel-render-"));
+  const manifestPath = join(root, ".gef", "parallel-modules.json");
+  mkdirSync(join(root, ".gef"), { recursive: true });
+  writeFileSync(manifestPath, JSON.stringify(manifest(mod("M1", "src/m1/**"))));
+  const issue = {
+    number: 13,
+    title: "[GEF-MOD:M1] approved",
+    body: "<!-- gef-parallel-module:M1 -->\nWork Order: WO-M1\nDependencies: none\nREAD: none\nWRITE: src/m1/**",
+    url: "https://github.com/KayzenRoot/fixture/issues/13",
+    author: { login: "repo-writer" }
+  };
+  const gh = args => {
+    if (args[0] === "issue" && args[1] === "list") return JSON.stringify([issue]);
+    if (args[0] === "api") return JSON.stringify({ permission: "write" });
+    throw new Error("unexpected gh mock call");
+  };
+  const originalCwd = process.cwd();
+  const originalIsTTY = Object.getOwnPropertyDescriptor(process.stdout, "isTTY");
+  try {
+    process.chdir(root);
+    Object.defineProperty(process.stdout, "isTTY", { configurable: true, value: true });
+    let planOutput = "";
+    let promptOutput = "";
+    let errorOutput = "";
+    assert.equal(await runParallel(["plan", "--manifest", manifestPath], {
+      stdout: value => { planOutput += value; }, stderr: value => { errorOutput += value; }
+    }), 0, errorOutput);
+    assert.deepEqual(JSON.parse(planOutput).batches[0].modules, ["M1"]);
+    assert.equal(await runParallel(["prompt", "--manifest", manifestPath], {
+      gh, stdout: value => { promptOutput += value; }, stderr: value => { errorOutput += value; }
+    }), 0, errorOutput);
+    assert.match(promptOutput, /AGENT 1 \| M1 \| WO-M1 \| ISSUE #13/);
+    assert.equal(await runParallel(["not-an-action"], {
+      stdout: value => { planOutput += value; }, stderr: value => { errorOutput += value; }
+    }), 10);
+    assert.match(errorOutput, /unknown_action/);
+  } finally {
+    process.chdir(originalCwd);
+    if (originalIsTTY) Object.defineProperty(process.stdout, "isTTY", originalIsTTY);
+    else delete process.stdout.isTTY;
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 test("missing, fake, stale, divergent and conflicting promotion evidence fails closed", async () => {
   const staleSha = "7b185a284004567217b98213d568c70f26077bfd";

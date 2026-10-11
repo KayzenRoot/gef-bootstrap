@@ -92,8 +92,8 @@ function normalizedGitHubRepo(remote) {
 }
 
 async function verifyRepositoryIdentity(manifestRepository, effectiveRepository) {
-  const root = (await gitOutput(["rev-parse", "--show-toplevel"], "repository_identity_mismatch", 4096)).trim();
-  if (!root || resolve(root) !== resolve(process.cwd())) {
+  const prefix = (await gitOutput(["rev-parse", "--show-prefix"], "repository_identity_mismatch", 4096)).trim();
+  if (prefix !== "") {
     reject("repository_identity_mismatch", "Run the parallel command from the Git repository root");
   }
   if (manifestRepository.toLowerCase() !== effectiveRepository.toLowerCase() ||
@@ -138,14 +138,8 @@ function canonicalPromotionMatches(checkpoint, module) {
     module.promotionSha.toLowerCase() === CANONICAL_WO001_PROMOTION_SHA;
 }
 
-async function verifyCanonicalPromotions(manifest, manifestRepository, effectiveRepository) {
-  const promoted = manifest.modules.filter(module => module.state === "PROMOTED");
-  if (promoted.length === 0) return null;
-  await verifyRepositoryIdentity(manifestRepository, effectiveRepository);
-
+function inspectCanonicalCheckpoint(engineeringPath, checkpointPath) {
   let engineeringDir, checkpointStat;
-  const engineeringPath = resolve(".engineering");
-  const checkpointPath = resolve(engineeringPath, "CHECKPOINT.json");
   try {
     engineeringDir = lstatSync(engineeringPath);
     checkpointStat = lstatSync(checkpointPath);
@@ -156,7 +150,10 @@ async function verifyCanonicalPromotions(manifest, manifestRepository, effective
       checkpointStat.isSymbolicLink() || checkpointStat.size > MAX_CHECKPOINT_BYTES) {
     reject("checkpoint_unsafe", "Canonical checkpoint must be a regular non-symlink file under 16 MiB");
   }
+  return { engineeringDir, checkpointStat };
+}
 
+async function verifyCheckpointPromotionHistory() {
   const headBefore = (await gitOutput(["rev-parse", "--verify", "HEAD"], "checkpoint_unverifiable", 4096)).trim();
   if (!SHA.test(headBefore)) reject("checkpoint_unverifiable", "Git HEAD is unavailable for checkpoint verification");
   const ancestry = await gitResult(["merge-base", "--is-ancestor", CANONICAL_WO001_PROMOTION_SHA, headBefore], "checkpoint_unverifiable", 4096);
@@ -172,14 +169,16 @@ async function verifyCanonicalPromotions(manifest, manifestRepository, effective
   if (!indexEntry || indexEntry[1] !== "100644" || indexEntry[2] !== headBlob) {
     reject("checkpoint_dirty", "Checkpoint must be tracked in the index exactly as the current HEAD blob");
   }
+  return { headBefore, headBlob };
+}
 
+function readCanonicalCheckpoint(checkpointPath, checkpointStat) {
   let descriptor;
-  let openedBefore;
   let workingBytes;
   try {
     const noFollow = typeof fsConstants.O_NOFOLLOW === "number" ? fsConstants.O_NOFOLLOW : 0;
     descriptor = openSync(checkpointPath, fsConstants.O_RDONLY | noFollow);
-    openedBefore = fstatSync(descriptor);
+    const openedBefore = fstatSync(descriptor);
     if (!openedBefore.isFile() || openedBefore.size > MAX_CHECKPOINT_BYTES ||
         openedBefore.dev !== checkpointStat.dev || openedBefore.ino !== checkpointStat.ino) {
       reject("checkpoint_unsafe", "Canonical checkpoint changed while its tracked bytes were being verified");
@@ -196,6 +195,11 @@ async function verifyCanonicalPromotions(manifest, manifestRepository, effective
   } finally {
     if (descriptor !== undefined) closeSync(descriptor);
   }
+  return workingBytes;
+}
+
+async function verifyCheckpointWorkingTree(engineeringPath, checkpointPath, checkpointState, history, workingBytes) {
+  const { headBefore, headBlob } = history;
   const filterAttribute = (await gitOutput([
     "check-attr", "filter", "--", ".engineering/CHECKPOINT.json"
   ], "checkpoint_unverifiable", 4096)).trim();
@@ -208,6 +212,7 @@ async function verifyCanonicalPromotions(manifest, manifestRepository, effective
   ], "checkpoint_unverifiable", 4096)).trim();
   const engineeringDirAfter = lstatSync(engineeringPath);
   const checkpointAfter = lstatSync(checkpointPath);
+  const { engineeringDir, checkpointStat } = checkpointState;
   if (!engineeringDirAfter.isDirectory() || engineeringDirAfter.isSymbolicLink() ||
       !checkpointAfter.isFile() || checkpointAfter.isSymbolicLink() ||
       checkpointAfter.size > MAX_CHECKPOINT_BYTES ||
@@ -219,13 +224,30 @@ async function verifyCanonicalPromotions(manifest, manifestRepository, effective
   }
   const headAfter = (await gitOutput(["rev-parse", "--verify", "HEAD"], "checkpoint_unverifiable", 4096)).trim();
   if (headAfter !== headBefore) reject("checkpoint_unverifiable", "Git HEAD changed during checkpoint verification");
+}
 
+function parseCanonicalPromotionCheckpoint(workingBytes, promoted) {
   let checkpoint;
   try { checkpoint = JSON.parse(workingBytes.toString("utf8")); }
   catch { reject("checkpoint_invalid", "Cannot parse canonical .engineering/CHECKPOINT.json"); }
   if (!object(checkpoint) || promoted.some(module => !canonicalPromotionMatches(checkpoint, module))) {
     reject("unproven_promotion", "Promoted dependencies require the exact U12-01/WO-001 tuple and matching canonical merge SHA");
   }
+  return checkpoint;
+}
+
+async function verifyCanonicalPromotions(manifest, manifestRepository, effectiveRepository) {
+  const promoted = manifest.modules.filter(module => module.state === "PROMOTED");
+  if (promoted.length === 0) return null;
+  await verifyRepositoryIdentity(manifestRepository, effectiveRepository);
+
+  const engineeringPath = resolve(".engineering");
+  const checkpointPath = resolve(engineeringPath, "CHECKPOINT.json");
+  const checkpointState = inspectCanonicalCheckpoint(engineeringPath, checkpointPath);
+  const history = await verifyCheckpointPromotionHistory();
+  const workingBytes = readCanonicalCheckpoint(checkpointPath, checkpointState.checkpointStat);
+  await verifyCheckpointWorkingTree(engineeringPath, checkpointPath, checkpointState, history, workingBytes);
+  parseCanonicalPromotionCheckpoint(workingBytes, promoted);
   return VERIFIED_PROMOTION;
 }
 
@@ -496,29 +518,35 @@ function assignValueOption(result, option, value) {
     default: reject("unknown_option", "Unexpected option: " + option);
   }
 }
-function options(argv) {
-  // The action and repository fields are strings throughout parsing, not null/string unions.
-  const result = { action: "", apply: false, json: false, slots: MAX_SLOTS, batch: 1, batchSupplied: false, manifest: ".gef/parallel-modules.json", repository: "", help: false };
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === "--help" || arg === "-h") { result.help = true; continue; }
-    if (arg === "--apply") { result.apply = true; continue; }
-    if (arg === "--json") { result.json = true; continue; }
-    if (["--manifest", "--repo", "--slots", "--batch"].includes(arg)) {
-      const value = argv[++i];
-      if (!value || value.startsWith("-")) reject("missing_option_value", arg + " requires a value");
-      assignValueOption(result, arg, value);
-      continue;
-    }
-    if (!arg.startsWith("-") && result.action === "") { result.action = arg; continue; }
-    reject("unknown_option", "Unexpected argument: " + arg);
+function consumeOption(argv, index, result) {
+  const arg = argv[index];
+  if (arg === "--help" || arg === "-h") { result.help = true; return index + 1; }
+  if (arg === "--apply") { result.apply = true; return index + 1; }
+  if (arg === "--json") { result.json = true; return index + 1; }
+  if (["--manifest", "--repo", "--slots", "--batch"].includes(arg)) {
+    const value = argv[index + 1];
+    if (!value || value.startsWith("-")) reject("missing_option_value", arg + " requires a value");
+    assignValueOption(result, arg, value);
+    return index + 2;
   }
+  if (!arg.startsWith("-") && result.action === "") { result.action = arg; return index + 1; }
+  reject("unknown_option", "Unexpected argument: " + arg);
+}
+
+function validateOptions(result) {
   if (!result.help && !["plan", "issues", "prompt"].includes(result.action)) {
     reject("unknown_action", "Use: gef parallel plan|issues|prompt [--manifest path] [--slots 1..6] [--repo owner/name] [--batch N (prompt only)] [--json] [--apply only with issues]");
   }
   if (result.apply && result.action !== "issues") reject("unsafe_apply", "--apply is only allowed for parallel issues");
   if (result.batchSupplied && result.action !== "prompt") reject("invalid_batch", "--batch is only allowed for parallel prompt");
   if (!Number.isInteger(result.batch) || result.batch < 1) reject("invalid_batch", "--batch must be a positive integer");
+}
+
+function options(argv) {
+  // The action and repository fields are strings throughout parsing, not null/string unions.
+  const result = { action: "", apply: false, json: false, slots: MAX_SLOTS, batch: 1, batchSupplied: false, manifest: ".gef/parallel-modules.json", repository: "", help: false };
+  for (let i = 0; i < argv.length;) i = consumeOption(argv, i, result);
+  validateOptions(result);
   return result;
 }
 function loadManifest(path) {
