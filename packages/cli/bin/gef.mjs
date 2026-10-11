@@ -26,5 +26,10 @@ export async function launchCli({
 }
 
 if (process.argv[1] !== undefined && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) {
-  await launchCli();
+  if (process.argv[2] === "parallel") {
+    const { runParallel } = await import("./parallel.mjs");
+    process.exitCode = await runParallel(process.argv.slice(3));
+  } else {
+    await launchCli();
+  }
 }

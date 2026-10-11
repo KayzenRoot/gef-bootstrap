@@ -1,0 +1,604 @@
+/**
+ * GBS-V113-PARALLEL-001: opt-in, fail-closed module planning for the installed CLI.
+ * No GitHub mutation occurs except through an explicit "issues --apply" invocation.
+ * This module has no dependencies on the internal engine graph.
+ */
+import { spawnSync } from "node:child_process";
+import { closeSync, constants as fsConstants, fstatSync, lstatSync, openSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const MAX_MANIFEST_BYTES = 262144;
+const MAX_CHECKPOINT_BYTES = 16 * 1024 * 1024;
+const MAX_MODULES = 256;
+const MAX_SLOTS = 6;
+const ID = /^[A-Z][A-Z0-9-]{1,63}$/;
+const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+const SHA = /^[0-9a-f]{40}$/i;
+const CANONICAL_PROMOTION_REPOSITORY = "kayzenroot/gef-bootstrap";
+const CANONICAL_WO001_PROMOTION_SHA = "bd6d0e9884386d7ec8828ba3bd15de7777ebe362";
+const VERIFIED_PROMOTION = Symbol("verified canonical promotion");
+const GIT_PROBE_BOUNDS = Object.freeze({ timeoutMs: 5000, maxOutputBytes: MAX_CHECKPOINT_BYTES + 65536 });
+const RESERVED = ["package.json", "package-lock.json", "AGENTS.md", ".github/**", ".engineering/**", "planning/**"];
+const marker = id => "<!-- gef-parallel-module:" + id + " -->";
+
+export class ParallelInputError extends Error {
+  constructor(reason, message) {
+    super(message);
+    this.name = "ParallelInputError";
+    this.reason = reason;
+  }
+}
+function reject(reason, message) { throw new ParallelInputError(reason, message); }
+function object(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
+function paths(value, id, field) {
+  if (!Array.isArray(value)) reject("invalid_paths", id + "." + field + " must be an array");
+  const seen = new Set();
+  return value.map(path => {
+    if (typeof path !== "string" || path.length > 180 ||
+      !/^[A-Za-z0-9_.@/-]+(?:\/\*\*)?$/.test(path)) {
+      reject("unsafe_path", id + "." + field + ": unsafe or ambiguous path");
+    }
+    const segments = path.split("/");
+    if (path.endsWith("/") || segments.some(part => part === "" || part === "." ||
+      part === ".." || part.toLowerCase() === ".git" || part !== part.replace(/[ .]+$/g, ""))) {
+      reject("unsafe_path", id + "." + field + ": unsafe or ambiguous path");
+    }
+    const key = path.toLowerCase();
+    if (seen.has(key)) reject("duplicate_path", id + "." + field + ": duplicate path");
+    seen.add(key);
+    return path;
+  });
+}
+async function gitResult(argv, reason = "checkpoint_unverifiable", maxOutputBytes = GIT_PROBE_BOUNDS.maxOutputBytes) {
+  let runGitProbe;
+  try { ({ runGitProbe } = await import("../dist/registry.js")); }
+  catch { reject("git_unavailable", "Trusted Git probe is unavailable to verify a promoted dependency"); }
+  const outcome = runGitProbe(argv, { timeoutMs: GIT_PROBE_BOUNDS.timeoutMs, maxOutputBytes });
+  if (!outcome?.ok || outcome.result === null || !Number.isInteger(outcome.result.exitCode) ||
+      typeof outcome.result.stdout !== "string" || typeof outcome.identity !== "string") {
+    reject(reason, "Trusted Git could not verify the promoted dependency source state");
+  }
+  return outcome.result;
+}
+async function gitOutput(argv, reason = "checkpoint_unverifiable", maxOutputBytes = GIT_PROBE_BOUNDS.maxOutputBytes) {
+  const result = await gitResult(argv, reason, maxOutputBytes);
+  if (result.exitCode !== 0) reject(reason, "Trusted Git could not verify the promoted dependency source state");
+  return result.stdout;
+}
+
+function normalizedGitHubRepo(remote) {
+  const value = remote.trim();
+  let pathname;
+  if (value.startsWith("git@github.com:")) {
+    pathname = value.slice("git@github.com:".length);
+  } else {
+    let url;
+    try { url = new URL(value); }
+    catch { reject("repository_identity_mismatch", "Git origin is not a supported GitHub repository URL"); }
+    const ssh = url.protocol === "ssh:";
+    if (url.hostname.toLowerCase() !== "github.com" || (url.protocol !== "https:" && !ssh) ||
+        (ssh ? url.username !== "git" : (url.username !== "" || url.password !== "")) ||
+        url.password !== "" || url.port !== "" || url.search !== "" || url.hash !== "") {
+      reject("repository_identity_mismatch", "Git origin is not a supported GitHub repository URL");
+    }
+    pathname = url.pathname.replace(/^\//, "");
+  }
+  if (pathname.endsWith(".git")) pathname = pathname.slice(0, -4);
+  const parts = pathname.split("/");
+  if (parts.length !== 2 || parts.some(part => !/^[A-Za-z0-9_.-]+$/.test(part))) {
+    reject("repository_identity_mismatch", "Git origin is not a supported GitHub owner/repository identity");
+  }
+  return parts.join("/").toLowerCase();
+}
+
+async function verifyRepositoryIdentity(manifestRepository, effectiveRepository) {
+  const prefix = (await gitOutput(["rev-parse", "--show-prefix"], "repository_identity_mismatch", 4096)).trim();
+  if (prefix !== "") {
+    reject("repository_identity_mismatch", "Run the parallel command from the Git repository root");
+  }
+  if (manifestRepository.toLowerCase() !== effectiveRepository.toLowerCase() ||
+      manifestRepository.toLowerCase() !== CANONICAL_PROMOTION_REPOSITORY ||
+      effectiveRepository.toLowerCase() !== CANONICAL_PROMOTION_REPOSITORY) {
+    reject("repository_identity_mismatch", "A promoted dependency cannot change the manifest repository with --repo");
+  }
+  const fetchUrls = (await gitOutput(["remote", "get-url", "--all", "origin"], "repository_identity_mismatch", 4096))
+    .split(/\r?\n/).filter(Boolean);
+  const pushUrls = (await gitOutput(["remote", "get-url", "--push", "--all", "origin"], "repository_identity_mismatch", 4096))
+    .split(/\r?\n/).filter(Boolean);
+  if (fetchUrls.length !== 1 || pushUrls.length !== 1) {
+    reject("repository_identity_mismatch", "Exactly one fetch and push URL are required for origin");
+  }
+  const fetchRepository = normalizedGitHubRepo(fetchUrls[0]);
+  const pushRepository = normalizedGitHubRepo(pushUrls[0]);
+  if (fetchRepository !== pushRepository || fetchRepository !== manifestRepository.toLowerCase() ||
+      fetchRepository !== effectiveRepository.toLowerCase() ||
+      fetchRepository !== CANONICAL_PROMOTION_REPOSITORY) {
+    reject("repository_identity_mismatch", "Git origin, manifest repository and effective --repo must identify the same repository");
+  }
+}
+
+function canonicalPromotionMatches(checkpoint, module) {
+  if (checkpoint.schemaVersion !== 2 || checkpoint.project !== "GEF Bootstrap" ||
+      module.id !== "U12-01" || module.workOrder !== "GBS-V12-WO-001") return false;
+  const record = checkpoint.v12?.wo001Promotion;
+  if (!object(record)) return false;
+  const explicitIdentities = [record.id, record.moduleId, record.stableModuleId]
+    .filter(value => value !== undefined);
+  const explicitWorkOrders = [record.workOrder, record.workOrderId]
+    .filter(value => value !== undefined);
+  if (explicitIdentities.some(value => value !== module.id) ||
+      explicitWorkOrders.some(value => value !== module.workOrder)) return false;
+  if (record.promotionSha !== undefined && record.promotionSha !== record.implementationMergeSha) return false;
+  return record.status === "PROMOTED_AFTER_GOV003_MERGE" &&
+    record.implementationIssue === 372 && record.implementationPullRequest === 377 &&
+    object(record.obligationDisposition) && record.obligationDisposition["U12-01"] === "IMPLEMENTED_PASS" &&
+    record.terminalState === "GBS_V12_WO_001_PROMOTED" &&
+    typeof record.implementationMergeSha === "string" && SHA.test(record.implementationMergeSha) &&
+    record.implementationMergeSha.toLowerCase() === CANONICAL_WO001_PROMOTION_SHA &&
+    module.promotionSha.toLowerCase() === CANONICAL_WO001_PROMOTION_SHA;
+}
+
+function inspectCanonicalCheckpoint(engineeringPath, checkpointPath) {
+  let engineeringDir, checkpointStat;
+  try {
+    engineeringDir = lstatSync(engineeringPath);
+    checkpointStat = lstatSync(checkpointPath);
+  } catch {
+    reject("checkpoint_unavailable", "Canonical .engineering/CHECKPOINT.json is required to verify promoted dependencies");
+  }
+  if (!engineeringDir.isDirectory() || engineeringDir.isSymbolicLink() || !checkpointStat.isFile() ||
+      checkpointStat.isSymbolicLink() || checkpointStat.size > MAX_CHECKPOINT_BYTES) {
+    reject("checkpoint_unsafe", "Canonical checkpoint must be a regular non-symlink file under 16 MiB");
+  }
+  return { engineeringDir, checkpointStat };
+}
+
+async function verifyCheckpointPromotionHistory() {
+  const headBefore = (await gitOutput(["rev-parse", "--verify", "HEAD"], "checkpoint_unverifiable", 4096)).trim();
+  if (!SHA.test(headBefore)) reject("checkpoint_unverifiable", "Git HEAD is unavailable for checkpoint verification");
+  const ancestry = await gitResult(["merge-base", "--is-ancestor", CANONICAL_WO001_PROMOTION_SHA, headBefore], "checkpoint_unverifiable", 4096);
+  if (ancestry.exitCode !== 0) {
+    reject("unproven_promotion", "Canonical WO-001 merge commit is missing or is not an ancestor of the checkpoint repository HEAD");
+  }
+  const headBlob = (await gitOutput(["rev-parse", "--verify", "HEAD:.engineering/CHECKPOINT.json"], "checkpoint_unavailable", 4096)).trim();
+  if (!SHA.test(headBlob)) reject("checkpoint_unavailable", "Checkpoint is not present in the current Git HEAD");
+
+  const indexEntries = (await gitOutput(["ls-files", "--stage", "--", ".engineering/CHECKPOINT.json"], "checkpoint_unavailable", 4096))
+    .split(/\r?\n/).filter(Boolean);
+  const indexEntry = indexEntries.length === 1 && indexEntries[0].match(/^([0-7]{6}) ([0-9a-f]{40}) 0\t\.engineering\/CHECKPOINT\.json$/);
+  if (!indexEntry || indexEntry[1] !== "100644" || indexEntry[2] !== headBlob) {
+    reject("checkpoint_dirty", "Checkpoint must be tracked in the index exactly as the current HEAD blob");
+  }
+  return { headBefore, headBlob };
+}
+
+function readCanonicalCheckpoint(checkpointPath, checkpointStat) {
+  let descriptor;
+  let workingBytes;
+  try {
+    const noFollow = typeof fsConstants.O_NOFOLLOW === "number" ? fsConstants.O_NOFOLLOW : 0;
+    descriptor = openSync(checkpointPath, fsConstants.O_RDONLY | noFollow);
+    const openedBefore = fstatSync(descriptor);
+    if (!openedBefore.isFile() || openedBefore.size > MAX_CHECKPOINT_BYTES ||
+        openedBefore.dev !== checkpointStat.dev || openedBefore.ino !== checkpointStat.ino) {
+      reject("checkpoint_unsafe", "Canonical checkpoint changed while its tracked bytes were being verified");
+    }
+    workingBytes = readFileSync(descriptor);
+    const openedAfter = fstatSync(descriptor);
+    if (openedAfter.size !== openedBefore.size || openedAfter.mtimeMs !== openedBefore.mtimeMs ||
+        openedAfter.ctimeMs !== openedBefore.ctimeMs) {
+      reject("checkpoint_dirty", "Canonical checkpoint changed while its tracked bytes were being read");
+    }
+  } catch (error) {
+    if (error instanceof ParallelInputError) throw error;
+    reject("checkpoint_unavailable", "Cannot read the canonical tracked checkpoint safely");
+  } finally {
+    if (descriptor !== undefined) closeSync(descriptor);
+  }
+  return workingBytes;
+}
+
+async function verifyCheckpointWorkingTree(engineeringPath, checkpointPath, checkpointState, history, workingBytes) {
+  const { headBefore, headBlob } = history;
+  const filterAttribute = (await gitOutput([
+    "check-attr", "filter", "--", ".engineering/CHECKPOINT.json"
+  ], "checkpoint_unverifiable", 4096)).trim();
+  if (filterAttribute !== ".engineering/CHECKPOINT.json: filter: unspecified" &&
+      filterAttribute !== ".engineering/CHECKPOINT.json: filter: unset") {
+    reject("checkpoint_unverifiable", "Custom checkpoint clean filters are unsupported");
+  }
+  const workingBlob = (await gitOutput([
+    "hash-object", "--path=.engineering/CHECKPOINT.json", "--", ".engineering/CHECKPOINT.json"
+  ], "checkpoint_unverifiable", 4096)).trim();
+  const engineeringDirAfter = lstatSync(engineeringPath);
+  const checkpointAfter = lstatSync(checkpointPath);
+  const { engineeringDir, checkpointStat } = checkpointState;
+  if (!engineeringDirAfter.isDirectory() || engineeringDirAfter.isSymbolicLink() ||
+      !checkpointAfter.isFile() || checkpointAfter.isSymbolicLink() ||
+      checkpointAfter.size > MAX_CHECKPOINT_BYTES ||
+      engineeringDirAfter.dev !== engineeringDir.dev || engineeringDirAfter.ino !== engineeringDir.ino ||
+      checkpointAfter.dev !== checkpointStat.dev || checkpointAfter.ino !== checkpointStat.ino ||
+      checkpointAfter.size !== checkpointStat.size || checkpointAfter.mtimeMs !== checkpointStat.mtimeMs ||
+      checkpointAfter.ctimeMs !== checkpointStat.ctimeMs || workingBlob !== headBlob) {
+    reject("checkpoint_dirty", "Working checkpoint must match the current tracked HEAD blob after Git clean filters");
+  }
+  const headAfter = (await gitOutput(["rev-parse", "--verify", "HEAD"], "checkpoint_unverifiable", 4096)).trim();
+  if (headAfter !== headBefore) reject("checkpoint_unverifiable", "Git HEAD changed during checkpoint verification");
+}
+
+function parseCanonicalPromotionCheckpoint(workingBytes, promoted) {
+  let checkpoint;
+  try { checkpoint = JSON.parse(workingBytes.toString("utf8")); }
+  catch { reject("checkpoint_invalid", "Cannot parse canonical .engineering/CHECKPOINT.json"); }
+  if (!object(checkpoint) || promoted.some(module => !canonicalPromotionMatches(checkpoint, module))) {
+    reject("unproven_promotion", "Promoted dependencies require the exact U12-01/WO-001 tuple and matching canonical merge SHA");
+  }
+  return checkpoint;
+}
+
+async function verifyCanonicalPromotions(manifest, manifestRepository, effectiveRepository) {
+  const promoted = manifest.modules.filter(module => module.state === "PROMOTED");
+  if (promoted.length === 0) return null;
+  await verifyRepositoryIdentity(manifestRepository, effectiveRepository);
+
+  const engineeringPath = resolve(".engineering");
+  const checkpointPath = resolve(engineeringPath, "CHECKPOINT.json");
+  const checkpointState = inspectCanonicalCheckpoint(engineeringPath, checkpointPath);
+  const history = await verifyCheckpointPromotionHistory();
+  const workingBytes = readCanonicalCheckpoint(checkpointPath, checkpointState.checkpointStat);
+  await verifyCheckpointWorkingTree(engineeringPath, checkpointPath, checkpointState, history, workingBytes);
+  parseCanonicalPromotionCheckpoint(workingBytes, promoted);
+  return VERIFIED_PROMOTION;
+}
+
+function normalizeManifest(source) {
+  if (!object(source) || source.schemaVersion !== "1" ||
+      !REPO.test(source.repository || "") || !Array.isArray(source.modules) ||
+      source.modules.length === 0 || source.modules.length > MAX_MODULES) {
+    reject("invalid_manifest", "Expected schemaVersion 1, repository owner/name and 1..256 modules");
+  }
+  const ids = new Set();
+  const modules = source.modules.map(m => {
+    if (!object(m) || typeof m.id !== "string" || !ID.test(m.id) || ids.has(m.id)) {
+      reject("invalid_module_id", "Module IDs must be unique, stable uppercase IDs");
+    }
+    ids.add(m.id);
+    if (typeof m.title !== "string" || !m.title.trim() || m.title.length > 140 || /[\x00-\x1f]/.test(m.title) ||
+        typeof m.workOrder !== "string" || !ID.test(m.workOrder) ||
+        typeof m.approved !== "boolean" ||
+        !["PLANNED", "ADMITTED", "PROMOTED"].includes(m.state) ||
+        !Array.isArray(m.dependencies) ||
+        m.dependencies.some(d => typeof d !== "string" || !ID.test(d)) ||
+        new Set(m.dependencies).size !== m.dependencies.length ||
+        !object(m.files)) {
+      reject("invalid_module", "Invalid title, workOrder, approval, state, dependencies or files for " + m.id);
+    }
+    const read = paths(m.files.read, m.id, "read");
+    const write = paths(m.files.write, m.id, "write");
+    if (write.some(path => RESERVED.some(protectedPath => intersects(path, protectedPath)))) {
+      reject("reserved_write", m.id + " declares a protected WRITE path; split shared changes into a separate reviewed Work Order");
+    }
+    if (m.state === "ADMITTED" && (!m.approved || write.length === 0)) {
+      reject("unsafe_admission", m.id + " requires approval and declared write paths");
+    }
+    if (m.state === "PROMOTED" && (m.approved !== true || typeof m.promotionSha !== "string" || !SHA.test(m.promotionSha))) {
+      reject("unproven_promotion", m.id + " needs an explicit promotion SHA; verify it against canonical checkpoint");
+    }
+    if (m.tests !== undefined && (!Array.isArray(m.tests) ||
+        m.tests.some(t => typeof t !== "string" || t.length > 200 || /[\r\n]/.test(t)))) {
+      reject("invalid_tests", m.id + " tests must be bounded strings");
+    }
+    return { ...m, files: { read, write }, tests: m.tests ?? [] };
+  });
+  const byId = new Map(modules.map(m => [m.id, m]));
+  for (const m of modules) for (const d of m.dependencies) {
+    if (!byId.has(d) || d === m.id) reject("invalid_dependency", m.id + " has missing/self dependency " + d);
+  }
+  const seen = new Set(), active = new Set();
+  function visit(id) {
+    if (active.has(id)) reject("dependency_cycle", "Dependency cycle involving " + id);
+    if (seen.has(id)) return;
+    const current = byId.get(id);
+    if (!current) reject("invalid_dependency", "Unknown dependency " + id);
+    active.add(id);
+    for (const d of current.dependencies) visit(d);
+    active.delete(id); seen.add(id);
+  }
+  for (const m of modules) visit(m.id);
+  return { schemaVersion: "1", repository: source.repository, modules };
+}
+function validateManifestInternal(source, proof) {
+  const manifest = normalizeManifest(source);
+  if (manifest.modules.some(module => module.state === "PROMOTED") && proof !== VERIFIED_PROMOTION) {
+    reject("unproven_promotion", "Promoted dependencies must be verified through the tracked project checkpoint and repository identity");
+  }
+  return manifest;
+}
+export function validateManifest(source) {
+  return validateManifestInternal(source, null);
+}
+function intersects(a, b) {
+  const root = p => p.endsWith("/**") ? p.slice(0, -3) : p;
+  const x = root(a).toLowerCase(), y = root(b).toLowerCase();
+  return x === y || x.startsWith(y + "/") || y.startsWith(x + "/");
+}
+function reserved(m) {
+  return m.files.write.some(w => RESERVED.some(r => intersects(w, r)));
+}
+export function moduleConflict(a, b) {
+  if (reserved(a) || reserved(b)) return "reserved_shared_surface";
+  for (const aw of a.files.write) for (const path of [...b.files.write, ...b.files.read]) {
+    if (intersects(aw, path)) return "write_overlap:" + aw + ":" + path;
+  }
+  for (const bw of b.files.write) for (const path of a.files.read) {
+    if (intersects(bw, path)) return "write_read_overlap:" + bw + ":" + path;
+  }
+  return null;
+}
+function planBatchesInternal(input, slots = MAX_SLOTS, proof = null) {
+  const manifest = validateManifestInternal(input, proof);
+  if (!Number.isInteger(slots) || slots < 1 || slots > MAX_SLOTS) {
+    reject("invalid_slots", "slots must be an integer between 1 and 6");
+  }
+  const byId = new Map(manifest.modules.map(m => [m.id, m]));
+  const blocked = [], eligible = [];
+  for (const m of manifest.modules) {
+    if (m.state !== "ADMITTED") continue;
+    const prerequisites = m.dependencies.filter(id => byId.get(id)?.state !== "PROMOTED");
+    if (prerequisites.length > 0) blocked.push({ id: m.id, reason: "dependencies_not_promoted", dependencies: prerequisites });
+    else eligible.push(m);
+  }
+  const batches = [];
+  for (const m of eligible) {
+    let batch = batches.find(b => b.length < slots && b.every(other => moduleConflict(m, other) === null));
+    if (!batch) { batch = []; batches.push(batch); }
+    batch.push(m);
+  }
+  return {
+    schemaVersion: "1", repository: manifest.repository, slots,
+    batches: batches.map((b, i) => ({ number: i + 1, modules: b.map(m => m.id) })),
+    blocked, approvedModules: manifest.modules.filter(m => m.approved).map(m => m.id),
+    // A batch is a proposed independent set, not proof of branch or runtime isolation.
+    caution: "Paths are declared by the project; agents must enforce worktrees, file boundaries and exact-head review."
+  };
+}
+export function planBatches(input, slots = MAX_SLOTS) {
+  return planBatchesInternal(input, slots, null);
+}
+export function ghDefault(args, spawn = spawnSync) {
+  const out = spawn("gh", args, { encoding: "utf8", shell: false, timeout: 30000, maxBuffer: 64 * 1024 * 1024 });
+  if (out.error?.code === "ENOBUFS") reject("github_incomplete", "GitHub issue output exceeded 64 MiB; inventory incomplete");
+  if (out.error || out.status !== 0) {
+    reject("github_unavailable", "GitHub CLI/auth/permission unavailable. Install gh, run gh auth login, and check repository permissions.");
+  }
+  return out.stdout;
+}
+function inventory(repo, gh) {
+  const text = gh(["issue", "list", "--repo", repo, "--state", "all", "--limit", "1000", "--json", "number,title,body,url,author"]);
+  let entries;
+  try { entries = JSON.parse(text); } catch { reject("github_malformed", "gh issue list returned invalid JSON"); }
+  if (!Array.isArray(entries) || entries.length >= 1000) reject("github_incomplete", "Issue inventory is incomplete; no creation allowed");
+  if (entries.some(e => !object(e) || !Number.isInteger(e.number) || typeof e.title !== "string" ||
+    typeof e.body !== "string" || typeof e.url !== "string")) {
+    reject("github_malformed", "GitHub issue inventory contained malformed entries; no creation allowed");
+  }
+  return entries;
+}
+function verifyIssueProvenance(issue, repo, gh, cache) {
+  const login = issue.author?.login;
+  if (typeof login !== "string" || !/^[A-Za-z0-9-]{1,39}$/.test(login)) {
+    reject("issue_untrusted", "Issue #" + issue.number + " lacks a verifiable GitHub author; reconcile before reuse");
+  }
+  const key = login.toLowerCase();
+  if (!cache.has(key)) {
+    let result;
+    try {
+      result = JSON.parse(gh(["api", "repos/" + repo + "/collaborators/" + login + "/permission"]));
+    } catch (error) {
+      if (error instanceof ParallelInputError) throw error;
+      reject("github_malformed", "Cannot verify issue author permission; no issue reuse allowed");
+    }
+    if (!object(result) || typeof result.permission !== "string") {
+      reject("github_malformed", "Missing GitHub collaborator permission; no issue reuse allowed");
+    }
+    cache.set(key, result.permission);
+  }
+  if (!["admin", "maintain", "write"].includes(cache.get(key))) {
+    reject("issue_untrusted", "Issue #" + issue.number + " was authored without verified write permission; reconcile manually");
+  }
+}
+function existingIssue(module, entries, repo, gh, cache) {
+  const matching = entries.filter(e => (typeof e.body === "string" && e.body.includes(marker(module.id))) ||
+    (typeof e.title === "string" && e.title.includes("[GEF-MOD:" + module.id + "]")));
+  // Legacy issue titles containing the stable ID are a collision requiring manual reconciliation.
+  const legacy = entries.filter(e => !matching.includes(e) && typeof e.title === "string" &&
+    e.title.toUpperCase().split(/[^A-Z0-9-]+/).includes(module.id));
+  if (matching.length > 1 || legacy.length > 0) {
+    reject("issue_ambiguous", module.id + " has possible duplicate/legacy issues; reconcile manually");
+  }
+  const issue = matching[0] || null;
+  if (issue !== null) {
+    const bodyLines = typeof issue.body === "string" ? issue.body.split(/\r?\n/) : [];
+    const required = [
+      "Work Order: " + module.workOrder,
+      "Dependencies: " + (module.dependencies.join(", ") || "none"),
+      "READ: " + (module.files.read.join(", ") || "none"),
+      "WRITE: " + (module.files.write.join(", ") || "none")
+    ];
+    verifyIssueProvenance(issue, repo, gh, cache);
+    if (!required.every(line => bodyLines.includes(line))) {
+      reject("issue_stale", module.id + " has a matching issue with stale Work Order or path contract; reconcile before reuse");
+    }
+  }
+  return issue;
+}
+function issueBody(m) {
+  return [
+    marker(m.id), "# " + m.id + " — " + m.title,
+    "Work Order: " + m.workOrder, "Approval: " + (m.approved ? "YES" : "NO"),
+    "State: " + m.state, "Dependencies: " + (m.dependencies.join(", ") || "none"),
+    "READ: " + (m.files.read.join(", ") || "none"),
+    "WRITE: " + (m.files.write.join(", ") || "none"),
+    "Tests: " + (m.tests.join(" | ") || "not declared"),
+    "Rules: one agent, one isolated worktree/branch, one PR, exact-head evidence; no merge or checkpoint promotion before objective audit."
+  ].join("\n") + "\n";
+}
+function prepareIssuesInternal(input, options = {}, proof = null) {
+  const { apply = false, gh = ghDefault } = options;
+  const manifest = validateManifestInternal(input, proof);
+  const entries = inventory(manifest.repository, gh);
+  const trustedAuthors = new Map();
+  const results = [];
+  for (const m of manifest.modules) {
+    if (!m.approved || m.state === "PROMOTED") continue;
+    let issue = existingIssue(m, entries, manifest.repository, gh, trustedAuthors);
+    if (!issue && apply) {
+      gh(["issue", "create", "--repo", manifest.repository,
+        "--title", "[GEF-MOD:" + m.id + "] " + m.title, "--body", issueBody(m)]);
+      // Re-read after each effect: prevents silent duplicates on retries.
+      const observed = inventory(manifest.repository, gh);
+      issue = existingIssue(m, observed, manifest.repository, gh, trustedAuthors);
+      if (!issue) reject("issue_readback_failed", "Created issue for " + m.id + " was not found on read-back");
+      entries.splice(0, entries.length, ...observed);
+    }
+    results.push({ id: m.id, status: issue ? "REUSED_OR_CREATED" : "WOULD_CREATE", number: issue?.number ?? null, url: issue?.url ?? null });
+  }
+  return { repository: manifest.repository, applied: apply, issues: results };
+}
+export function prepareIssues(input, options = {}) {
+  return prepareIssuesInternal(input, options, null);
+}
+function buildPromptInternal(input, options = {}, proof = null) {
+  const { slots = MAX_SLOTS, batchNumber = 1, gh = ghDefault } = options;
+  const manifest = validateManifestInternal(input, proof);
+  const plan = planBatchesInternal(manifest, slots, proof);
+  if (!Number.isInteger(batchNumber) || batchNumber < 1) {
+    reject("invalid_batch", "batch must be an integer >= 1");
+  }
+  const batch = plan.batches[batchNumber - 1];
+  if (!batch) reject("batch_unavailable", "Requested batch " + batchNumber + " is unavailable or has no admitted modules");
+  const entries = inventory(manifest.repository, gh);
+  const trustedAuthors = new Map();
+  const selected = batch.modules.map(id => {
+    const m = manifest.modules.find(x => x.id === id);
+    if (!m) reject("invalid_module_id", "Planned module is missing from manifest");
+    const issue = existingIssue(m, entries, manifest.repository, gh, trustedAuthors);
+    if (!issue || !Number.isInteger(issue.number)) reject("missing_issue", "Run parallel issues --apply for " + id + " before emitting a prompt");
+    return { m, issue };
+  });
+  const lines = [
+    "Repository: " + manifest.repository,
+    "Planning contract: GBS-V113-PARALLEL-001 (module batch " + batch.number + ")",
+    "Execute ONLY the approved, admitted, dependency-ready modules listed below in parallel.",
+    "Use one isolated Codex agent, independent git worktree, branch, PR and Evidence Bundle per module.",
+    "Before mutation, inspect exact main HEAD, source hierarchy, checkpoint, ADRs, Scope, Architecture, DoD and each module Work Order.",
+    "If Context Lock, dependencies, paths, approvals or source fingerprints are unknown/stale, STOP affected module.",
+    "Do not modify shared files or another agent's allowed paths. No force-push, autonomous merge, publishing or checkpoint promotion.",
+    "Run targeted tests per agent; after integration run the governed regression and exact-head checks. Review final in português brasileiro.",
+    "Use installed Jev MCP/skills for suitable narrow typed decisions when available (https://docs.typesafe.ai/introduction). Prefer deterministic Git, AST, tests and evidence first; Jev never replaces a security or audit gate.",
+  ];
+  for (const { m, issue } of selected) {
+    lines.push(
+      "AGENT " + (selected.findIndex(x => x.m.id === m.id) + 1) + " | " + m.id + " | " + m.workOrder + " | ISSUE #" + issue.number,
+      "BRANCH: feat/" + m.id.toLowerCase() + "-" + m.workOrder.toLowerCase() + " | WRITE: " + m.files.write.join(", "),
+      "READ: " + (m.files.read.join(", ") || "none") + " | TESTS: " + (m.tests.join(" ; ") || "derive from Work Order")
+    );
+  }
+  return { repository: manifest.repository, batch: batch.modules, prompt: lines.join("\n") + "\n" };
+}
+export function buildPrompt(input, options = {}) {
+  return buildPromptInternal(input, options, null);
+}
+function assignValueOption(result, option, value) {
+  switch (option) {
+    case "--manifest": result.manifest = value; break;
+    case "--repo": result.repository = value; break;
+    case "--slots": result.slots = Number(value); break;
+    case "--batch": result.batch = Number(value); result.batchSupplied = true; break;
+    default: reject("unknown_option", "Unexpected option: " + option);
+  }
+}
+function consumeOption(argv, index, result) {
+  const arg = argv[index];
+  if (arg === "--help" || arg === "-h") { result.help = true; return index + 1; }
+  if (arg === "--apply") { result.apply = true; return index + 1; }
+  if (arg === "--json") { result.json = true; return index + 1; }
+  if (["--manifest", "--repo", "--slots", "--batch"].includes(arg)) {
+    const value = argv[index + 1];
+    if (!value || value.startsWith("-")) reject("missing_option_value", arg + " requires a value");
+    assignValueOption(result, arg, value);
+    return index + 2;
+  }
+  if (!arg.startsWith("-") && result.action === "") { result.action = arg; return index + 1; }
+  reject("unknown_option", "Unexpected argument: " + arg);
+}
+
+function validateOptions(result) {
+  if (!result.help && !["plan", "issues", "prompt"].includes(result.action)) {
+    reject("unknown_action", "Use: gef parallel plan|issues|prompt [--manifest path] [--slots 1..6] [--repo owner/name] [--batch N (prompt only)] [--json] [--apply only with issues]");
+  }
+  if (result.apply && result.action !== "issues") reject("unsafe_apply", "--apply is only allowed for parallel issues");
+  if (result.batchSupplied && result.action !== "prompt") reject("invalid_batch", "--batch is only allowed for parallel prompt");
+  if (!Number.isInteger(result.batch) || result.batch < 1) reject("invalid_batch", "--batch must be a positive integer");
+}
+
+function options(argv) {
+  // The action and repository fields are strings throughout parsing, not null/string unions.
+  const result = { action: "", apply: false, json: false, slots: MAX_SLOTS, batch: 1, batchSupplied: false, manifest: ".gef/parallel-modules.json", repository: "", help: false };
+  for (let i = 0; i < argv.length;) i = consumeOption(argv, i, result);
+  validateOptions(result);
+  return result;
+}
+function loadManifest(path) {
+  const absolute = resolve(path);
+  let stat;
+  try { stat = lstatSync(absolute); }
+  catch { reject("manifest_missing", "Manifest not found: " + path); }
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.size > MAX_MANIFEST_BYTES) {
+    reject("manifest_unsafe", "Manifest must be a regular non-symlink file under 256 KiB");
+  }
+  try { return JSON.parse(readFileSync(absolute, "utf8")); }
+  catch { reject("manifest_invalid_json", "Cannot parse manifest JSON"); }
+}
+function executeAction(opt, manifest, gh, proof) {
+  switch (opt.action) {
+    case "plan": return planBatchesInternal(manifest, opt.slots, proof);
+    case "issues": return prepareIssuesInternal(manifest, { apply: opt.apply, gh }, proof);
+    case "prompt": return buildPromptInternal(manifest, { slots: opt.slots, batchNumber: opt.batch, gh }, proof);
+    default: reject("unknown_action", "Expected plan, issues or prompt");
+  }
+}
+function renderSuccess(opt, value, json) {
+  if (json) return JSON.stringify({ ok: true, value }, null, 2) + "\n";
+  if (opt.action === "prompt") return value.prompt;
+  return JSON.stringify(value, null, 2) + "\n";
+}
+export async function runParallel(argv, io = {}) {
+  const stdout = io.stdout ?? (s => process.stdout.write(s));
+  const stderr = io.stderr ?? (s => process.stderr.write(s));
+  const gh = io.gh ?? ghDefault;
+  let json = argv.includes("--json") || process.stdout.isTTY !== true;
+  try {
+    const opt = options(argv);
+    json = json || opt.json;
+    if (opt.help) {
+      stdout("gef parallel plan|issues|prompt [--manifest path] [--repo owner/name] [--slots 1..6] [--batch N (prompt only)] [--json] [--apply (issues only)]\n");
+      return 0;
+    }
+    const loaded = loadManifest(opt.manifest);
+    if (opt.repository !== "" && !REPO.test(opt.repository)) {
+      reject("invalid_repository", "Use owner/name for --repo");
+    }
+    const effectiveRepository = opt.repository || loaded.repository;
+    const manifest = normalizeManifest({ ...loaded, repository: effectiveRepository });
+    const proof = await verifyCanonicalPromotions(manifest, loaded.repository, effectiveRepository);
+    const value = executeAction(opt, manifest, gh, proof);
+    stdout(renderSuccess(opt, value, json));
+    return 0;
+  } catch (error) {
+    const reason = error instanceof ParallelInputError ? error.reason : "unexpected_failure";
+    const message = error instanceof ParallelInputError ? error.message : "Parallel command failed closed";
+    stderr(json ? JSON.stringify({ ok: false, reason, message }) + "\n" : "gef parallel: " + message + " (" + reason + ")\n");
+    return reason === "github_unavailable" ? 40 : 10;
+  }
+}

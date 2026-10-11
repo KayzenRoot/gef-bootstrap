@@ -237,3 +237,7 @@ the trusted-publisher workflow.
 
 All rights reserved. See the repository `LICENSE` for the current rights notice. No
 open-source license is granted merely by the package being installable.
+
+## v1.1.3 candidate: opt-in parallel module planning
+
+The candidate introduces `gef parallel plan`, `gef parallel issues [--apply]`, and `gef parallel prompt` without altering the V1.1 CLI parser or project-state migration. This is **not included in the published v1.1.2 package**. Modules are declared in `.gef/parallel-modules.json` as approved, versioned Work Orders and conservative READ/WRITE path ownership. Plan is offline/read-only; `issues --apply` is the only provider mutation and requires the authenticated GitHub CLI; prompt is read-only and references verified issue numbers. Each selected module gets its own Codex agent/worktree/branch/PR and must pass canonical Context Lock and exact-head audit. There is no agent launch, automatic merge, credential capture or checkpoint promotion. See repository documentation `docs/PARALLEL-MODULES.md` and issue #432.

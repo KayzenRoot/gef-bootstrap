@@ -1,7 +1,7 @@
-# Installation · GEF Bootstrap V1.0.0
+# Installation · Stable v1.1.2 and historical V1.0.0
 
 ## Distribution model
-V1.0.0 is distributed as a source workspace. It is not yet a published npm package or standalone global CLI.
+The current stable CLI is published as `@gef-bootstrap/cli@1.1.2`. V1.0.0 remains a historical source-workspace release. Parallel-module planning belongs to the **v1.1.3 candidate**, not to the current stable package.
 
 ## Prerequisites
 - Git
@@ -9,7 +9,7 @@ V1.0.0 is distributed as a source workspace. It is not yet a published npm packa
 - npm
 - Windows, Linux or macOS
 
-## Stable release install
+## Historical V1.0.0 source checkout
 ```bash
 git clone https://github.com/KayzenRoot/gef-bootstrap.git
 cd gef-bootstrap
@@ -26,7 +26,7 @@ npm ci
 npm run validate
 ```
 
-## Windows PowerShell
+## Historical V1.0.0 Windows PowerShell checkout
 ```powershell
 git clone https://github.com/KayzenRoot/gef-bootstrap.git
 Set-Location gef-bootstrap
@@ -45,7 +45,7 @@ npm audit --audit-level=high
 The GitHub Release for `v1.0.0` provides generated source ZIP/TAR archives. After extraction run `npm ci` and `npm run validate` from the repository root.
 
 ## Important boundary
-Do not advertise or rely on `npm install -g gef-bootstrap` for V1.0.0. The workspace and `@gef-bootstrap/cli` package remain private workspace packages and the CLI surface is a library-facing implementation, not a published executable.
+Do not use the unrelated name `gef-bootstrap` for global npm installation. Install the published scoped CLI package as shown below; the root source workspace remains private.
 
 ## Published V1.1 releases
 
@@ -64,3 +64,7 @@ The consumer-safe adoption preflight and v1.1.1 post-publish recovery correction
 ## V1.1 operations and fresh-chat continuity
 
 V1.1.2 is the current production-accepted release; V1.1.0 acceptance and the V1.1.1 post-publish verification incident remain historical evidence. For project-construction, upgrade and recovery procedures, see [V1.1 Operations Runbook](V1.1-OPERATIONS-RUNBOOK.md). Start every new chat from the canonical checkpoint, active Work Order, Context Lock and verified provider head; use M18/M20 to state exactly one next action or an explicit `NONE/UNKNOWN` stop state.
+
+## Candidate parallel module planner
+
+The `gef parallel plan|issues|prompt` commands are proposed for v1.1.3 and **are not available** in the stable v1.1.2 package. After audit, release and package installation validation, follow [parallel modules guide](PARALLEL-MODULES.md). Do not present branch code or a candidate tarball as a published stable release.
