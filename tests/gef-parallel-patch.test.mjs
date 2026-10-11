@@ -19,6 +19,77 @@ const manifest = (...modules) => ({
   schemaVersion: "1", repository: "KayzenRoot/fixture", modules
 });
 const checkReason = reason => error => error instanceof ParallelInputError && error.reason === reason;
+const cliBin = fileURLToPath(new URL("../packages/cli/bin/gef.mjs", import.meta.url));
+const canonicalRepository = "KayzenRoot/gef-bootstrap";
+const canonicalBaseSha = "921493797728a43aadc9f7840c954ce7e3ebc416";
+const canonicalPromotionSha = "bd6d0e9884386d7ec8828ba3bd15de7777ebe362";
+
+function fixtureGit(root, args) {
+  const result = spawnSync("git", ["-C", root, ...args], { encoding: "utf8", shell: false });
+  assert.equal(result.status, 0, result.stderr || "git fixture setup failed");
+  return result.stdout.trim();
+}
+
+function promotionFixture({ checkpoint = JSON.parse(readFileSync(fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url)), "utf8")),
+  repository = canonicalRepository, origin = "https://github.com/KayzenRoot/gef-bootstrap.git",
+  moduleId = "U12-01", workOrder = "GBS-V12-WO-001", promotionSha, includeCheckpoint = true,
+  withCanonicalHistory = true } = {}) {
+  const root = mkdtempSync(join(tmpdir(), "gef-parallel-promotion-"));
+  const recordSha = checkpoint?.v12?.wo001Promotion?.implementationMergeSha ?? "a".repeat(40);
+  const promoted = mod(moduleId, "src/previous/**", {
+    workOrder, state: "PROMOTED", promotionSha: promotionSha ?? recordSha
+  });
+  const dependent = mod("U12-02", "src/next/**", { dependencies: [moduleId] });
+  const input = { schemaVersion: "1", repository, modules: [promoted, dependent] };
+  const manifestPath = join(root, ".gef", "parallel-modules.json");
+
+  if (withCanonicalHistory) {
+    const sourceRepository = fileURLToPath(new URL("../", import.meta.url));
+    const clone = spawnSync("git", ["clone", "--shared", "--quiet", "--no-checkout", sourceRepository, root], {
+      encoding: "utf8", shell: false
+    });
+    assert.equal(clone.status, 0, clone.stderr || "git fixture clone failed");
+    fixtureGit(root, ["update-ref", "refs/heads/main", canonicalBaseSha]);
+    fixtureGit(root, ["symbolic-ref", "HEAD", "refs/heads/main"]);
+    fixtureGit(root, ["read-tree", canonicalBaseSha]);
+  } else {
+    fixtureGit(root, ["init", "--quiet"]);
+    fixtureGit(root, ["checkout", "--quiet", "--orphan", "main"]);
+  }
+  fixtureGit(root, ["config", "user.name", "Parallel Test"]);
+  fixtureGit(root, ["config", "user.email", "parallel-test@example.invalid"]);
+  if (withCanonicalHistory) fixtureGit(root, ["remote", "set-url", "origin", origin]);
+  if (includeCheckpoint) {
+    mkdirSync(join(root, ".engineering"), { recursive: true });
+    writeFileSync(join(root, ".engineering", "CHECKPOINT.json"), JSON.stringify(checkpoint, null, 2) + "\n");
+  } else if (!includeCheckpoint) {
+    rmSync(join(root, ".engineering", "CHECKPOINT.json"), { force: true });
+  }
+  mkdirSync(join(root, ".gef"), { recursive: true });
+  writeFileSync(manifestPath, JSON.stringify(input));
+  if (withCanonicalHistory) {
+    if (includeCheckpoint && JSON.stringify(checkpoint) !== JSON.stringify(JSON.parse(readFileSync(fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url)), "utf8")))) {
+      fixtureGit(root, ["add", "--", ".engineering/CHECKPOINT.json"]);
+      const tree = fixtureGit(root, ["write-tree"]);
+      const commit = fixtureGit(root, ["commit-tree", tree, "-p", canonicalBaseSha, "-m", "fixture changed checkpoint"]);
+      fixtureGit(root, ["update-ref", "refs/heads/main", commit]);
+    }
+  } else {
+    fixtureGit(root, ["add", "."]);
+    fixtureGit(root, ["commit", "--quiet", "-m", "fixture tracked checkpoint and manifest"]);
+    fixtureGit(root, ["remote", "add", "origin", origin]);
+  }
+
+  return {
+    root,
+    checkpointPath: join(root, ".engineering", "CHECKPOINT.json"),
+    run(extraArgs = []) {
+      return spawnSync(process.execPath, [cliBin, "parallel", "plan", "--manifest", manifestPath, "--json", ...extraArgs], {
+        cwd: root, encoding: "utf8", shell: false, maxBuffer: 1024 * 1024
+      });
+    }
+  };
+}
 
 test("six independent admitted modules fill one parallel batch; next module spills to another", () => {
   const input = manifest(...Array.from({ length: 7 }, (_, n) => mod("M" + (n + 1), "packages/m" + n + "/**")));
@@ -33,39 +104,122 @@ test("dependency on unpromoted module is blocked, not scheduled in later batch",
   assert.deepEqual(plan.batches[0].modules, ["M1"]);
   assert.deepEqual(plan.blocked, [{ id: "M2", reason: "dependencies_not_promoted", dependencies: ["M1"] }]);
 });
-test("promoted predecessor is accepted only when exact Work Order and SHA occur in canonical checkpoint", () => {
-  const checkpointPath = fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url));
-  const checkpoint = JSON.parse(readFileSync(checkpointPath, "utf8"));
-  const promotion = checkpoint.v12.wo001Promotion;
+test("promoted predecessor requires the exact tracked checkpoint and repository identity", () => {
+  const fixture = promotionFixture();
+  try {
+    assert.equal(JSON.parse(readFileSync(fixture.checkpointPath, "utf8")).v12.wo001Promotion.implementationMergeSha, canonicalPromotionSha);
+    const result = fixture.run();
+    assert.equal(result.status, 0, result.stderr);
+    assert.deepEqual(JSON.parse(result.stdout).value.batches[0].modules, ["U12-02"]);
+  } finally { rmSync(fixture.root, { recursive: true, force: true }); }
+});
+test("missing, fake, stale, divergent and conflicting promotion evidence fails closed", () => {
+  const staleSha = "7b185a284004567217b98213d568c70f26077bfd";
+  const badCases = [
+    ["missing checkpoint", { includeCheckpoint: false }, "checkpoint_unavailable"],
+    ["fake SHA", { promotionSha: "a".repeat(40) }, "unproven_promotion"],
+    ["stale candidate SHA", { promotionSha: staleSha }, "unproven_promotion"],
+    ["module identity conflict", { moduleId: "U12-03" }, "unproven_promotion"],
+    ["Work Order identity conflict", { workOrder: "GBS-V12-WO-002" }, "unproven_promotion"]
+  ];
+  for (const [label, options, reason] of badCases) {
+    const fixture = promotionFixture(options);
+    try {
+      const result = fixture.run();
+      assert.notEqual(result.status, 0, label);
+      assert.equal(JSON.parse(result.stderr).reason, reason, label);
+    } finally { rmSync(fixture.root, { recursive: true, force: true }); }
+  }
+
+  const divergent = JSON.parse(readFileSync(fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url)), "utf8"));
+  divergent.v12.wo001Promotion.promotionSha = "b".repeat(40);
+  const fixture = promotionFixture({ checkpoint: divergent });
+  try {
+    const result = fixture.run();
+    assert.notEqual(result.status, 0);
+    assert.equal(JSON.parse(result.stderr).reason, "unproven_promotion");
+  } finally { rmSync(fixture.root, { recursive: true, force: true }); }
+
+  for (const [field, value] of [["moduleId", "U12-02"], ["workOrder", "GBS-V12-WO-002"]]) {
+    const conflicting = JSON.parse(readFileSync(fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url)), "utf8"));
+    conflicting.v12.wo001Promotion[field] = value;
+    const badIdentity = promotionFixture({ checkpoint: conflicting });
+    try {
+      const result = badIdentity.run();
+      assert.notEqual(result.status, 0, "checkpoint " + field + " conflict");
+      assert.equal(JSON.parse(result.stderr).reason, "unproven_promotion", "checkpoint " + field + " conflict");
+    } finally { rmSync(badIdentity.root, { recursive: true, force: true }); }
+  }
+});
+test("cross-project origin or --repo override cannot authorize a promoted dependency", () => {
+  const mismatchedOrigin = promotionFixture({ origin: "https://github.com/KayzenRoot/other-project.git" });
+  try {
+    const result = mismatchedOrigin.run();
+    assert.notEqual(result.status, 0);
+    assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
+  } finally { rmSync(mismatchedOrigin.root, { recursive: true, force: true }); }
+
+  const mismatchedTarget = promotionFixture();
+  try {
+    const result = mismatchedTarget.run(["--repo", "KayzenRoot/other-project"]);
+    assert.notEqual(result.status, 0);
+    assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
+  } finally { rmSync(mismatchedTarget.root, { recursive: true, force: true }); }
+
+  const mismatchedManifest = promotionFixture({ repository: "KayzenRoot/other-project" });
+  try {
+    const result = mismatchedManifest.run(["--repo", "KayzenRoot/gef-bootstrap"]);
+    assert.notEqual(result.status, 0);
+    assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
+  } finally { rmSync(mismatchedManifest.root, { recursive: true, force: true }); }
+});
+test("a copied checkpoint cannot authorize another project or a repository without the canonical merge ancestry", () => {
+  const source = promotionFixture();
+  try {
+    const copiedCheckpoint = JSON.parse(readFileSync(source.checkpointPath, "utf8"));
+    const target = promotionFixture({
+      checkpoint: copiedCheckpoint,
+      repository: "KayzenRoot/project-b",
+      origin: "https://github.com/KayzenRoot/project-b.git",
+      withCanonicalHistory: false
+    });
+    try {
+      const result = target.run(["--repo", "KayzenRoot/project-b"]);
+      assert.notEqual(result.status, 0);
+      assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
+    } finally { rmSync(target.root, { recursive: true, force: true }); }
+  } finally { rmSync(source.root, { recursive: true, force: true }); }
+
+  const unrelatedHistory = promotionFixture({ withCanonicalHistory: false });
+  try {
+    const result = unrelatedHistory.run();
+    assert.notEqual(result.status, 0);
+    assert.equal(JSON.parse(result.stderr).reason, "unproven_promotion");
+  } finally { rmSync(unrelatedHistory.root, { recursive: true, force: true }); }
+});
+test("dirty and staged checkpoint copies cannot satisfy a promotion receipt", () => {
+  for (const staged of [false, true]) {
+    const fixture = promotionFixture();
+    try {
+      const changed = JSON.parse(readFileSync(fixture.checkpointPath, "utf8"));
+      changed.project = "Different Project";
+      writeFileSync(fixture.checkpointPath, JSON.stringify(changed, null, 2) + "\n");
+      if (staged) fixtureGit(fixture.root, ["add", ".engineering/CHECKPOINT.json"]);
+      const result = fixture.run();
+      assert.notEqual(result.status, 0);
+      assert.equal(JSON.parse(result.stderr).reason, "checkpoint_dirty");
+    } finally { rmSync(fixture.root, { recursive: true, force: true }); }
+  }
+});
+test("public pure helpers cannot accept an injected or locally claimed promotion proof", () => {
+  const checkpoint = JSON.parse(readFileSync(fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url)), "utf8"));
   const parent = mod("U12-01", "src/m1/**", {
-    workOrder: "GBS-V12-WO-001", state: "PROMOTED", promotionSha: promotion.implementationMergeSha
+    workOrder: "GBS-V12-WO-001", state: "PROMOTED", promotionSha: checkpoint.v12.wo001Promotion.implementationMergeSha
   });
   const input = manifest(parent, mod("U12-02", "src/m2/**", { dependencies: [parent.id] }));
-  assert.deepEqual(planBatches(input).batches[0].modules, ["U12-02"]);
-  assert.deepEqual(planBatches(input, 6, { checkpoint }).batches[0].modules, ["U12-02"]);
-});
-test("missing, fake, stale and divergent promotion proof blocks dependent planning", () => {
-  const parent = mod("M1", "src/m1/**", { state: "PROMOTED", promotionSha: "a".repeat(40) });
-  const dependent = mod("M2", "src/m2/**", { dependencies: [parent.id] });
-  const input = manifest(parent, dependent);
-  assert.throws(() => planBatches(input, 6, { checkpoint: null }), checkReason("checkpoint_unavailable"));
-  assert.throws(() => planBatches(input, 6, { checkpoint: {} }), checkReason("unproven_promotion"));
-  assert.throws(() => planBatches(input, 6, { checkpoint: {
-    unrelatedCommit: { workOrder: "WO-OTHER", status: "PROMOTED", mergeSha: parent.promotionSha }
-  } }), checkReason("unproven_promotion"));
-  assert.throws(() => planBatches(input, 6, { checkpoint: {
-    stale: { workOrder: parent.workOrder, status: "PROMOTED", implementationMergeSha: "b".repeat(40) }
-  } }), checkReason("unproven_promotion"));
-  assert.throws(() => planBatches(input, 6, { checkpoint: { promotions: [
-    { workOrder: parent.workOrder, status: "PROMOTED", implementationMergeSha: parent.promotionSha },
-    { workOrder: parent.workOrder, status: "PROMOTED", implementationMergeSha: "b".repeat(40) }
-  ] } }), checkReason("unproven_promotion"));
-  assert.throws(() => planBatches(input, 6, { checkpoint: {
-    conflictingModule: { moduleId: "M9", workOrder: parent.workOrder, status: "PROMOTED", mergeSha: parent.promotionSha }
-  } }), checkReason("unproven_promotion"));
-  assert.throws(() => planBatches(input, 6, { checkpoint: {
-    conflictingState: { workOrder: parent.workOrder, status: "PROMOTED", terminalState: "PROMOTION_CANDIDATE", mergeSha: parent.promotionSha }
-  } }), checkReason("unproven_promotion"));
+  assert.throws(() => validateManifest(input), checkReason("unproven_promotion"));
+  assert.throws(() => planBatches(input), checkReason("unproven_promotion"));
+  assert.throws(() => planBatches(input, 6, { checkpoint }), checkReason("unproven_promotion"));
 });
 test("write/write and write/read overlapping prefixes and reserved shared surfaces are serialized", () => {
   const one = mod("M1", "src/alpha/**");
@@ -267,7 +421,7 @@ test("manifest file entry read-only; default invocation never calls gh for plan"
     assert.equal(await runParallel(["plan", "--manifest", forgedPath, "--json"], {
       stderr: s => blocked.push(s), gh: () => { throw new Error("plan must remain offline"); }
     }), 10);
-    assert.equal(JSON.parse(blocked.join("")).reason, "unproven_promotion");
+    assert.equal(JSON.parse(blocked.join("")).reason, "repository_identity_mismatch");
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 

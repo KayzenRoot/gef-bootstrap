@@ -4,17 +4,20 @@
  * This module has no dependencies on the internal engine graph.
  */
 import { spawnSync } from "node:child_process";
-import { lstatSync, readFileSync } from "node:fs";
+import { closeSync, constants as fsConstants, fstatSync, lstatSync, openSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const MAX_MANIFEST_BYTES = 262144;
 const MAX_CHECKPOINT_BYTES = 16 * 1024 * 1024;
-const MAX_CHECKPOINT_NODES = 250000;
 const MAX_MODULES = 256;
 const MAX_SLOTS = 6;
 const ID = /^[A-Z][A-Z0-9-]{1,63}$/;
 const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 const SHA = /^[0-9a-f]{40}$/i;
+const CANONICAL_PROMOTION_REPOSITORY = "kayzenroot/gef-bootstrap";
+const CANONICAL_WO001_PROMOTION_SHA = "bd6d0e9884386d7ec8828ba3bd15de7777ebe362";
+const VERIFIED_PROMOTION = Symbol("verified canonical promotion");
+const GIT_PROBE_BOUNDS = Object.freeze({ timeoutMs: 5000, maxOutputBytes: MAX_CHECKPOINT_BYTES + 65536 });
 const RESERVED = ["package.json", "package-lock.json", "AGENTS.md", ".github/**", ".engineering/**", "planning/**"];
 const marker = id => "<!-- gef-parallel-module:" + id + " -->";
 
@@ -46,73 +49,180 @@ function paths(value, id, field) {
     return path;
   });
 }
-function readCanonicalCheckpoint() {
-  const engineeringDir = resolve(".engineering");
-  const checkpointPath = resolve(engineeringDir, "CHECKPOINT.json");
-  let directory, stat;
+async function gitResult(argv, reason = "checkpoint_unverifiable", maxOutputBytes = GIT_PROBE_BOUNDS.maxOutputBytes) {
+  let runGitProbe;
+  try { ({ runGitProbe } = await import("../dist/registry.js")); }
+  catch { reject("git_unavailable", "Trusted Git probe is unavailable to verify a promoted dependency"); }
+  const outcome = runGitProbe(argv, { timeoutMs: GIT_PROBE_BOUNDS.timeoutMs, maxOutputBytes });
+  if (!outcome?.ok || outcome.result === null || !Number.isInteger(outcome.result.exitCode) ||
+      typeof outcome.result.stdout !== "string" || typeof outcome.identity !== "string") {
+    reject(reason, "Trusted Git could not verify the promoted dependency source state");
+  }
+  return outcome.result;
+}
+async function gitOutput(argv, reason = "checkpoint_unverifiable", maxOutputBytes = GIT_PROBE_BOUNDS.maxOutputBytes) {
+  const result = await gitResult(argv, reason, maxOutputBytes);
+  if (result.exitCode !== 0) reject(reason, "Trusted Git could not verify the promoted dependency source state");
+  return result.stdout;
+}
+
+function normalizedGitHubRepo(remote) {
+  const value = remote.trim();
+  let pathname;
+  if (value.startsWith("git@github.com:")) {
+    pathname = value.slice("git@github.com:".length);
+  } else {
+    let url;
+    try { url = new URL(value); }
+    catch { reject("repository_identity_mismatch", "Git origin is not a supported GitHub repository URL"); }
+    const ssh = url.protocol === "ssh:";
+    if (url.hostname.toLowerCase() !== "github.com" || (url.protocol !== "https:" && !ssh) ||
+        (ssh ? url.username !== "git" : (url.username !== "" || url.password !== "")) ||
+        url.password !== "" || url.port !== "" || url.search !== "" || url.hash !== "") {
+      reject("repository_identity_mismatch", "Git origin is not a supported GitHub repository URL");
+    }
+    pathname = url.pathname.replace(/^\//, "");
+  }
+  if (pathname.endsWith(".git")) pathname = pathname.slice(0, -4);
+  const parts = pathname.split("/");
+  if (parts.length !== 2 || parts.some(part => !/^[A-Za-z0-9_.-]+$/.test(part))) {
+    reject("repository_identity_mismatch", "Git origin is not a supported GitHub owner/repository identity");
+  }
+  return parts.join("/").toLowerCase();
+}
+
+async function verifyRepositoryIdentity(manifestRepository, effectiveRepository) {
+  const root = (await gitOutput(["rev-parse", "--show-toplevel"], "repository_identity_mismatch", 4096)).trim();
+  if (!root || resolve(root) !== resolve(process.cwd())) {
+    reject("repository_identity_mismatch", "Run the parallel command from the Git repository root");
+  }
+  if (manifestRepository.toLowerCase() !== effectiveRepository.toLowerCase() ||
+      manifestRepository.toLowerCase() !== CANONICAL_PROMOTION_REPOSITORY ||
+      effectiveRepository.toLowerCase() !== CANONICAL_PROMOTION_REPOSITORY) {
+    reject("repository_identity_mismatch", "A promoted dependency cannot change the manifest repository with --repo");
+  }
+  const fetchUrls = (await gitOutput(["remote", "get-url", "--all", "origin"], "repository_identity_mismatch", 4096))
+    .split(/\r?\n/).filter(Boolean);
+  const pushUrls = (await gitOutput(["remote", "get-url", "--push", "--all", "origin"], "repository_identity_mismatch", 4096))
+    .split(/\r?\n/).filter(Boolean);
+  if (fetchUrls.length !== 1 || pushUrls.length !== 1) {
+    reject("repository_identity_mismatch", "Exactly one fetch and push URL are required for origin");
+  }
+  const fetchRepository = normalizedGitHubRepo(fetchUrls[0]);
+  const pushRepository = normalizedGitHubRepo(pushUrls[0]);
+  if (fetchRepository !== pushRepository || fetchRepository !== manifestRepository.toLowerCase() ||
+      fetchRepository !== effectiveRepository.toLowerCase() ||
+      fetchRepository !== CANONICAL_PROMOTION_REPOSITORY) {
+    reject("repository_identity_mismatch", "Git origin, manifest repository and effective --repo must identify the same repository");
+  }
+}
+
+function canonicalPromotionMatches(checkpoint, module) {
+  if (checkpoint.schemaVersion !== 2 || checkpoint.project !== "GEF Bootstrap" ||
+      module.id !== "U12-01" || module.workOrder !== "GBS-V12-WO-001") return false;
+  const record = checkpoint.v12?.wo001Promotion;
+  if (!object(record)) return false;
+  const explicitIdentities = [record.id, record.moduleId, record.stableModuleId]
+    .filter(value => value !== undefined);
+  const explicitWorkOrders = [record.workOrder, record.workOrderId]
+    .filter(value => value !== undefined);
+  if (explicitIdentities.some(value => value !== module.id) ||
+      explicitWorkOrders.some(value => value !== module.workOrder)) return false;
+  if (record.promotionSha !== undefined && record.promotionSha !== record.implementationMergeSha) return false;
+  return record.status === "PROMOTED_AFTER_GOV003_MERGE" &&
+    record.implementationIssue === 372 && record.implementationPullRequest === 377 &&
+    object(record.obligationDisposition) && record.obligationDisposition["U12-01"] === "IMPLEMENTED_PASS" &&
+    record.terminalState === "GBS_V12_WO_001_PROMOTED" &&
+    typeof record.implementationMergeSha === "string" && SHA.test(record.implementationMergeSha) &&
+    record.implementationMergeSha.toLowerCase() === CANONICAL_WO001_PROMOTION_SHA &&
+    module.promotionSha.toLowerCase() === CANONICAL_WO001_PROMOTION_SHA;
+}
+
+async function verifyCanonicalPromotions(manifest, manifestRepository, effectiveRepository) {
+  const promoted = manifest.modules.filter(module => module.state === "PROMOTED");
+  if (promoted.length === 0) return null;
+  await verifyRepositoryIdentity(manifestRepository, effectiveRepository);
+
+  let engineeringDir, checkpointStat;
+  const engineeringPath = resolve(".engineering");
+  const checkpointPath = resolve(engineeringPath, "CHECKPOINT.json");
   try {
-    directory = lstatSync(engineeringDir);
-    stat = lstatSync(checkpointPath);
+    engineeringDir = lstatSync(engineeringPath);
+    checkpointStat = lstatSync(checkpointPath);
   } catch {
     reject("checkpoint_unavailable", "Canonical .engineering/CHECKPOINT.json is required to verify promoted dependencies");
   }
-  if (!directory.isDirectory() || directory.isSymbolicLink() || !stat.isFile() ||
-      stat.isSymbolicLink() || stat.size > MAX_CHECKPOINT_BYTES) {
+  if (!engineeringDir.isDirectory() || engineeringDir.isSymbolicLink() || !checkpointStat.isFile() ||
+      checkpointStat.isSymbolicLink() || checkpointStat.size > MAX_CHECKPOINT_BYTES) {
     reject("checkpoint_unsafe", "Canonical checkpoint must be a regular non-symlink file under 16 MiB");
   }
+
+  const headBefore = (await gitOutput(["rev-parse", "--verify", "HEAD"], "checkpoint_unverifiable", 4096)).trim();
+  if (!SHA.test(headBefore)) reject("checkpoint_unverifiable", "Git HEAD is unavailable for checkpoint verification");
+  const ancestry = await gitResult(["merge-base", "--is-ancestor", CANONICAL_WO001_PROMOTION_SHA, headBefore], "checkpoint_unverifiable", 4096);
+  if (ancestry.exitCode !== 0) {
+    reject("unproven_promotion", "Canonical WO-001 merge commit is missing or is not an ancestor of the checkpoint repository HEAD");
+  }
+  const headBlob = (await gitOutput(["rev-parse", "--verify", "HEAD:.engineering/CHECKPOINT.json"], "checkpoint_unavailable", 4096)).trim();
+  if (!SHA.test(headBlob)) reject("checkpoint_unavailable", "Checkpoint is not present in the current Git HEAD");
+
+  const indexEntries = (await gitOutput(["ls-files", "--stage", "--", ".engineering/CHECKPOINT.json"], "checkpoint_unavailable", 4096))
+    .split(/\r?\n/).filter(Boolean);
+  const indexEntry = indexEntries.length === 1 && indexEntries[0].match(/^([0-7]{6}) ([0-9a-f]{40}) 0\t\.engineering\/CHECKPOINT\.json$/);
+  if (!indexEntry || indexEntry[1] !== "100644" || indexEntry[2] !== headBlob) {
+    reject("checkpoint_dirty", "Checkpoint must be tracked in the index exactly as the current HEAD blob");
+  }
+
+  let descriptor;
+  let openedBefore;
+  let workingBytes;
   try {
-    const checkpoint = JSON.parse(readFileSync(checkpointPath, "utf8"));
-    if (!object(checkpoint)) reject("checkpoint_invalid", "Canonical checkpoint root must be a JSON object");
-    return checkpoint;
+    const noFollow = typeof fsConstants.O_NOFOLLOW === "number" ? fsConstants.O_NOFOLLOW : 0;
+    descriptor = openSync(checkpointPath, fsConstants.O_RDONLY | noFollow);
+    openedBefore = fstatSync(descriptor);
+    if (!openedBefore.isFile() || openedBefore.size > MAX_CHECKPOINT_BYTES ||
+        openedBefore.dev !== checkpointStat.dev || openedBefore.ino !== checkpointStat.ino) {
+      reject("checkpoint_unsafe", "Canonical checkpoint changed while its tracked bytes were being verified");
+    }
+    workingBytes = readFileSync(descriptor);
+    const openedAfter = fstatSync(descriptor);
+    if (openedAfter.size !== openedBefore.size || openedAfter.mtimeMs !== openedBefore.mtimeMs ||
+        openedAfter.ctimeMs !== openedBefore.ctimeMs) {
+      reject("checkpoint_dirty", "Canonical checkpoint changed while its tracked bytes were being read");
+    }
   } catch (error) {
     if (error instanceof ParallelInputError) throw error;
-    reject("checkpoint_invalid", "Cannot parse canonical .engineering/CHECKPOINT.json");
+    reject("checkpoint_unavailable", "Cannot read the canonical tracked checkpoint safely");
+  } finally {
+    if (descriptor !== undefined) closeSync(descriptor);
   }
+  const workingBlob = (await gitOutput([
+    "hash-object", "--path=.engineering/CHECKPOINT.json", "--", ".engineering/CHECKPOINT.json"
+  ], "checkpoint_unverifiable", 4096)).trim();
+  const engineeringDirAfter = lstatSync(engineeringPath);
+  const checkpointAfter = lstatSync(checkpointPath);
+  if (!engineeringDirAfter.isDirectory() || engineeringDirAfter.isSymbolicLink() ||
+      !checkpointAfter.isFile() || checkpointAfter.isSymbolicLink() ||
+      checkpointAfter.size > MAX_CHECKPOINT_BYTES ||
+      engineeringDirAfter.dev !== engineeringDir.dev || engineeringDirAfter.ino !== engineeringDir.ino ||
+      checkpointAfter.dev !== checkpointStat.dev || checkpointAfter.ino !== checkpointStat.ino ||
+      checkpointAfter.size !== checkpointStat.size || checkpointAfter.mtimeMs !== checkpointStat.mtimeMs ||
+      checkpointAfter.ctimeMs !== checkpointStat.ctimeMs || workingBlob !== headBlob) {
+    reject("checkpoint_dirty", "Working checkpoint must match the current tracked HEAD blob after Git clean filters");
+  }
+  const headAfter = (await gitOutput(["rev-parse", "--verify", "HEAD"], "checkpoint_unverifiable", 4096)).trim();
+  if (headAfter !== headBefore) reject("checkpoint_unverifiable", "Git HEAD changed during checkpoint verification");
+
+  let checkpoint;
+  try { checkpoint = JSON.parse(workingBytes.toString("utf8")); }
+  catch { reject("checkpoint_invalid", "Cannot parse canonical .engineering/CHECKPOINT.json"); }
+  if (!object(checkpoint) || promoted.some(module => !canonicalPromotionMatches(checkpoint, module))) {
+    reject("unproven_promotion", "Promoted dependencies require the exact U12-01/WO-001 tuple and matching canonical merge SHA");
+  }
+  return VERIFIED_PROMOTION;
 }
 
-function hasCanonicalPromotion(checkpoint, module) {
-  const identityFields = ["id", "moduleId", "stableModuleId", "workOrder", "workOrderId"];
-  const shaFields = ["promotionSha", "implementationMergeSha", "implementationMerge", "mergeSha", "mergeCommitSha"];
-  const stateFields = ["status", "state", "terminalState", "promotionState"];
-  const stack = [checkpoint];
-  const claimedShas = new Set();
-  let visited = 0;
-  while (stack.length > 0) {
-    const value = stack.pop();
-    if (!object(value) && !Array.isArray(value)) continue;
-    if (++visited > MAX_CHECKPOINT_NODES) {
-      reject("checkpoint_unbounded", "Canonical checkpoint exceeds the bounded promotion-proof scan");
-    }
-    if (object(value)) {
-      const disposition = object(value.obligationDisposition) ? value.obligationDisposition[module.id] : undefined;
-      const conflictingModuleId = ["moduleId", "stableModuleId"].some(field =>
-        typeof value[field] === "string" && value[field] !== module.id);
-      const identityMatches = !conflictingModuleId && identityFields.some(field =>
-        (field === "workOrder" || field === "workOrderId")
-          ? value[field] === module.workOrder
-          : value[field] === module.id) ||
-        (!conflictingModuleId && typeof disposition === "string" && /^(?:IMPLEMENTED_PASS|MODULE_DONE|PRODUCTION_ACCEPTED)$/.test(disposition));
-      const states = stateFields.map(field => value[field]).filter(state => typeof state === "string");
-      const negativeState = states.some(state => /NOT[_ -]?(?:PROMOTED|ACCEPTED)|CANDIDATE|PENDING|STALE|IN[_ -]?PROGRESS/i.test(state));
-      const positiveState = states.some(state => {
-        const normalized = state.toUpperCase();
-        return /(?:^|_)(?:PROMOTED|MODULE_DONE|PRODUCTION_ACCEPTED)(?:_|$)/.test(normalized);
-      });
-      if (identityMatches && positiveState && !negativeState) {
-        for (const field of shaFields) {
-          const sha = value[field];
-          if (typeof sha === "string" && SHA.test(sha)) claimedShas.add(sha.toLowerCase());
-        }
-      }
-      for (const child of Object.values(value)) stack.push(child);
-    } else {
-      for (const child of value) stack.push(child);
-    }
-  }
-  return claimedShas.size === 1 && claimedShas.has(module.promotionSha.toLowerCase());
-}
-
-export function validateManifest(source, options = {}) {
+function normalizeManifest(source) {
   if (!object(source) || source.schemaVersion !== "1" ||
       !REPO.test(source.repository || "") || !Array.isArray(source.modules) ||
       source.modules.length === 0 || source.modules.length > MAX_MODULES) {
@@ -155,16 +265,6 @@ export function validateManifest(source, options = {}) {
   for (const m of modules) for (const d of m.dependencies) {
     if (!byId.has(d) || d === m.id) reject("invalid_dependency", m.id + " has missing/self dependency " + d);
   }
-  const promoted = modules.filter(m => m.state === "PROMOTED");
-  if (promoted.length > 0) {
-    const checkpoint = Object.hasOwn(options, "checkpoint") ? options.checkpoint : readCanonicalCheckpoint();
-    if (!object(checkpoint)) reject("checkpoint_unavailable", "Canonical checkpoint is unavailable for promotion verification");
-    for (const module of promoted) {
-      if (!hasCanonicalPromotion(checkpoint, module)) {
-        reject("unproven_promotion", module.id + " promotion SHA must match one promoted record bound to its module or Work Order in the canonical checkpoint");
-      }
-    }
-  }
   const seen = new Set(), active = new Set();
   function visit(id) {
     if (active.has(id)) reject("dependency_cycle", "Dependency cycle involving " + id);
@@ -177,6 +277,16 @@ export function validateManifest(source, options = {}) {
   }
   for (const m of modules) visit(m.id);
   return { schemaVersion: "1", repository: source.repository, modules };
+}
+function validateManifestInternal(source, proof) {
+  const manifest = normalizeManifest(source);
+  if (manifest.modules.some(module => module.state === "PROMOTED") && proof !== VERIFIED_PROMOTION) {
+    reject("unproven_promotion", "Promoted dependencies must be verified through the tracked project checkpoint and repository identity");
+  }
+  return manifest;
+}
+export function validateManifest(source) {
+  return validateManifestInternal(source, null);
 }
 function intersects(a, b) {
   const root = p => p.endsWith("/**") ? p.slice(0, -3) : p;
@@ -196,8 +306,8 @@ export function moduleConflict(a, b) {
   }
   return null;
 }
-export function planBatches(input, slots = MAX_SLOTS, options = {}) {
-  const manifest = validateManifest(input, options);
+function planBatchesInternal(input, slots = MAX_SLOTS, proof = null) {
+  const manifest = validateManifestInternal(input, proof);
   if (!Number.isInteger(slots) || slots < 1 || slots > MAX_SLOTS) {
     reject("invalid_slots", "slots must be an integer between 1 and 6");
   }
@@ -222,6 +332,9 @@ export function planBatches(input, slots = MAX_SLOTS, options = {}) {
     // A batch is a proposed independent set, not proof of branch or runtime isolation.
     caution: "Paths are declared by the project; agents must enforce worktrees, file boundaries and exact-head review."
   };
+}
+export function planBatches(input, slots = MAX_SLOTS) {
+  return planBatchesInternal(input, slots, null);
 }
 export function ghDefault(args, spawn = spawnSync) {
   const out = spawn("gh", args, { encoding: "utf8", shell: false, timeout: 30000, maxBuffer: 64 * 1024 * 1024 });
@@ -301,10 +414,9 @@ function issueBody(m) {
     "Rules: one agent, one isolated worktree/branch, one PR, exact-head evidence; no merge or checkpoint promotion before objective audit."
   ].join("\n") + "\n";
 }
-export function prepareIssues(input, options = {}) {
-  const { apply = false, gh = ghDefault, checkpoint } = options;
-  const validation = Object.hasOwn(options, "checkpoint") ? { checkpoint } : {};
-  const manifest = validateManifest(input, validation);
+function prepareIssuesInternal(input, options = {}, proof = null) {
+  const { apply = false, gh = ghDefault } = options;
+  const manifest = validateManifestInternal(input, proof);
   const entries = inventory(manifest.repository, gh);
   const trustedAuthors = new Map();
   const results = [];
@@ -324,11 +436,13 @@ export function prepareIssues(input, options = {}) {
   }
   return { repository: manifest.repository, applied: apply, issues: results };
 }
-export function buildPrompt(input, options = {}) {
-  const { slots = MAX_SLOTS, batchNumber = 1, gh = ghDefault, checkpoint } = options;
-  const validation = Object.hasOwn(options, "checkpoint") ? { checkpoint } : {};
-  const manifest = validateManifest(input, validation);
-  const plan = planBatches(manifest, slots, validation);
+export function prepareIssues(input, options = {}) {
+  return prepareIssuesInternal(input, options, null);
+}
+function buildPromptInternal(input, options = {}, proof = null) {
+  const { slots = MAX_SLOTS, batchNumber = 1, gh = ghDefault } = options;
+  const manifest = validateManifestInternal(input, proof);
+  const plan = planBatchesInternal(manifest, slots, proof);
   if (!Number.isInteger(batchNumber) || batchNumber < 1) {
     reject("invalid_batch", "batch must be an integer >= 1");
   }
@@ -362,6 +476,9 @@ export function buildPrompt(input, options = {}) {
     );
   }
   return { repository: manifest.repository, batch: batch.modules, prompt: lines.join("\n") + "\n" };
+}
+export function buildPrompt(input, options = {}) {
+  return buildPromptInternal(input, options, null);
 }
 function assignValueOption(result, option, value) {
   switch (option) {
@@ -408,11 +525,11 @@ function loadManifest(path) {
   try { return JSON.parse(readFileSync(absolute, "utf8")); }
   catch { reject("manifest_invalid_json", "Cannot parse manifest JSON"); }
 }
-function executeAction(opt, manifest, gh) {
+function executeAction(opt, manifest, gh, proof) {
   switch (opt.action) {
-    case "plan": return planBatches(manifest, opt.slots);
-    case "issues": return prepareIssues(manifest, { apply: opt.apply, gh });
-    case "prompt": return buildPrompt(manifest, { slots: opt.slots, batchNumber: opt.batch, gh });
+    case "plan": return planBatchesInternal(manifest, opt.slots, proof);
+    case "issues": return prepareIssuesInternal(manifest, { apply: opt.apply, gh }, proof);
+    case "prompt": return buildPromptInternal(manifest, { slots: opt.slots, batchNumber: opt.batch, gh }, proof);
     default: reject("unknown_action", "Expected plan, issues or prompt");
   }
 }
@@ -433,12 +550,14 @@ export async function runParallel(argv, io = {}) {
       stdout("gef parallel plan|issues|prompt [--manifest path] [--repo owner/name] [--slots 1..6] [--batch N (prompt only)] [--json] [--apply (issues only)]\n");
       return 0;
     }
-    const manifest = loadManifest(opt.manifest);
-    if (opt.repository !== "") {
-      if (!REPO.test(opt.repository)) reject("invalid_repository", "Use owner/name for --repo");
-      manifest.repository = opt.repository;
+    const loaded = loadManifest(opt.manifest);
+    if (opt.repository !== "" && !REPO.test(opt.repository)) {
+      reject("invalid_repository", "Use owner/name for --repo");
     }
-    const value = executeAction(opt, manifest, gh);
+    const effectiveRepository = opt.repository || loaded.repository;
+    const manifest = normalizeManifest({ ...loaded, repository: effectiveRepository });
+    const proof = await verifyCanonicalPromotions(manifest, loaded.repository, effectiveRepository);
+    const value = executeAction(opt, manifest, gh, proof);
     stdout(renderSuccess(opt, value, json));
     return 0;
   } catch (error) {
