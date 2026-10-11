@@ -72,10 +72,21 @@ function promotionFixture({ checkpoint = JSON.parse(readFileSync(fileURLToPath(n
   return {
     root,
     checkpointPath: join(root, ".engineering", "CHECKPOINT.json"),
-    run(extraArgs = []) {
-      return spawnSync(process.execPath, [cliBin, "parallel", "plan", "--manifest", manifestPath, "--json", ...extraArgs], {
-        cwd: root, encoding: "utf8", shell: false, maxBuffer: 1024 * 1024
-      });
+    async run(extraArgs = []) {
+      const originalCwd = process.cwd();
+      let stdout = "";
+      let stderr = "";
+      let status;
+      try {
+        process.chdir(root);
+        status = await runParallel(["plan", "--manifest", manifestPath, "--json", ...extraArgs], {
+          stdout: value => { stdout += value; },
+          stderr: value => { stderr += value; }
+        });
+      } finally {
+        process.chdir(originalCwd);
+      }
+      return { status, stdout, stderr };
     }
   };
 }
@@ -93,16 +104,16 @@ test("dependency on unpromoted module is blocked, not scheduled in later batch",
   assert.deepEqual(plan.batches[0].modules, ["M1"]);
   assert.deepEqual(plan.blocked, [{ id: "M2", reason: "dependencies_not_promoted", dependencies: ["M1"] }]);
 });
-test("promoted predecessor requires the exact tracked checkpoint and repository identity", () => {
+test("promoted predecessor requires the exact tracked checkpoint and repository identity", async () => {
   const fixture = promotionFixture();
   try {
     assert.equal(JSON.parse(readFileSync(fixture.checkpointPath, "utf8")).v12.wo001Promotion.implementationMergeSha, canonicalPromotionSha);
-    const result = fixture.run();
+    const result = await fixture.run();
     assert.equal(result.status, 0, result.stderr);
     assert.deepEqual(JSON.parse(result.stdout).value.batches[0].modules, ["U12-02"]);
   } finally { rmSync(fixture.root, { recursive: true, force: true }); }
 });
-test("missing, fake, stale, divergent and conflicting promotion evidence fails closed", () => {
+test("missing, fake, stale, divergent and conflicting promotion evidence fails closed", async () => {
   const staleSha = "7b185a284004567217b98213d568c70f26077bfd";
   const badCases = [
     ["missing checkpoint", { includeCheckpoint: false }, "checkpoint_unavailable"],
@@ -114,7 +125,7 @@ test("missing, fake, stale, divergent and conflicting promotion evidence fails c
   for (const [label, options, reason] of badCases) {
     const fixture = promotionFixture(options);
     try {
-      const result = fixture.run();
+      const result = await fixture.run();
       assert.notEqual(result.status, 0, label);
       assert.equal(JSON.parse(result.stderr).reason, reason, label);
     } finally { rmSync(fixture.root, { recursive: true, force: true }); }
@@ -124,7 +135,7 @@ test("missing, fake, stale, divergent and conflicting promotion evidence fails c
   divergent.v12.wo001Promotion.promotionSha = "b".repeat(40);
   const fixture = promotionFixture({ checkpoint: divergent });
   try {
-    const result = fixture.run();
+    const result = await fixture.run();
     assert.notEqual(result.status, 0);
     assert.equal(JSON.parse(result.stderr).reason, "unproven_promotion");
   } finally { rmSync(fixture.root, { recursive: true, force: true }); }
@@ -134,35 +145,35 @@ test("missing, fake, stale, divergent and conflicting promotion evidence fails c
     conflicting.v12.wo001Promotion[field] = value;
     const badIdentity = promotionFixture({ checkpoint: conflicting });
     try {
-      const result = badIdentity.run();
+      const result = await badIdentity.run();
       assert.notEqual(result.status, 0, "checkpoint " + field + " conflict");
       assert.equal(JSON.parse(result.stderr).reason, "unproven_promotion", "checkpoint " + field + " conflict");
     } finally { rmSync(badIdentity.root, { recursive: true, force: true }); }
   }
 });
-test("cross-project origin or --repo override cannot authorize a promoted dependency", () => {
+test("cross-project origin or --repo override cannot authorize a promoted dependency", async () => {
   const mismatchedOrigin = promotionFixture({ origin: "https://github.com/KayzenRoot/other-project.git" });
   try {
-    const result = mismatchedOrigin.run();
+    const result = await mismatchedOrigin.run();
     assert.notEqual(result.status, 0);
     assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
   } finally { rmSync(mismatchedOrigin.root, { recursive: true, force: true }); }
 
   const mismatchedTarget = promotionFixture();
   try {
-    const result = mismatchedTarget.run(["--repo", "KayzenRoot/other-project"]);
+    const result = await mismatchedTarget.run(["--repo", "KayzenRoot/other-project"]);
     assert.notEqual(result.status, 0);
     assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
   } finally { rmSync(mismatchedTarget.root, { recursive: true, force: true }); }
 
   const mismatchedManifest = promotionFixture({ repository: "KayzenRoot/other-project" });
   try {
-    const result = mismatchedManifest.run(["--repo", "KayzenRoot/gef-bootstrap"]);
+    const result = await mismatchedManifest.run(["--repo", "KayzenRoot/gef-bootstrap"]);
     assert.notEqual(result.status, 0);
     assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
   } finally { rmSync(mismatchedManifest.root, { recursive: true, force: true }); }
 });
-test("a copied checkpoint cannot authorize another project", () => {
+test("a copied checkpoint cannot authorize another project", async () => {
   const source = promotionFixture();
   try {
     const copiedCheckpoint = JSON.parse(readFileSync(source.checkpointPath, "utf8"));
@@ -172,30 +183,30 @@ test("a copied checkpoint cannot authorize another project", () => {
       origin: "https://github.com/KayzenRoot/project-b.git"
     });
     try {
-      const result = target.run(["--repo", "KayzenRoot/project-b"]);
+      const result = await target.run(["--repo", "KayzenRoot/project-b"]);
       assert.notEqual(result.status, 0);
       assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
     } finally { rmSync(target.root, { recursive: true, force: true }); }
   } finally { rmSync(source.root, { recursive: true, force: true }); }
 });
-test("promotion without the canonical merge in local history fails closed", () => {
+test("promotion without the canonical merge in local history fails closed", async () => {
   const fixture = promotionFixture({ withCanonicalAncestry: false });
   try {
-    const result = fixture.run();
+    const result = await fixture.run();
     assert.notEqual(result.status, 0);
     assert.equal(JSON.parse(result.stderr).reason, "unproven_promotion");
   } finally { rmSync(fixture.root, { recursive: true, force: true }); }
 });
-test("checkpoint verification rejects a custom Git clean filter before hashing worktree content", () => {
+test("checkpoint verification rejects a custom Git clean filter before hashing worktree content", async () => {
   const fixture = promotionFixture();
   try {
     writeFileSync(join(fixture.root, ".gitattributes"), ".engineering/CHECKPOINT.json filter=external\n");
-    const result = fixture.run();
+    const result = await fixture.run();
     assert.notEqual(result.status, 0);
     assert.equal(JSON.parse(result.stderr).reason, "checkpoint_unverifiable");
   } finally { rmSync(fixture.root, { recursive: true, force: true }); }
 });
-test("dirty and staged checkpoint copies cannot satisfy a promotion receipt", () => {
+test("dirty and staged checkpoint copies cannot satisfy a promotion receipt", async () => {
   for (const staged of [false, true]) {
     const fixture = promotionFixture();
     try {
@@ -203,7 +214,7 @@ test("dirty and staged checkpoint copies cannot satisfy a promotion receipt", ()
       changed.project = "Different Project";
       writeFileSync(fixture.checkpointPath, JSON.stringify(changed, null, 2) + "\n");
       if (staged) fixtureGit(fixture.root, ["add", ".engineering/CHECKPOINT.json"]);
-      const result = fixture.run();
+      const result = await fixture.run();
       assert.notEqual(result.status, 0);
       assert.equal(JSON.parse(result.stderr).reason, "checkpoint_dirty");
     } finally { rmSync(fixture.root, { recursive: true, force: true }); }
