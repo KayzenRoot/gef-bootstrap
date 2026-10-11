@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -33,9 +33,39 @@ test("dependency on unpromoted module is blocked, not scheduled in later batch",
   assert.deepEqual(plan.batches[0].modules, ["M1"]);
   assert.deepEqual(plan.blocked, [{ id: "M2", reason: "dependencies_not_promoted", dependencies: ["M1"] }]);
 });
-test("promoted predecessor explicitly recorded with a commit permits successor", () => {
+test("promoted predecessor is accepted only when exact Work Order and SHA occur in canonical checkpoint", () => {
+  const checkpointPath = fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url));
+  const checkpoint = JSON.parse(readFileSync(checkpointPath, "utf8"));
+  const promotion = checkpoint.v12.wo001Promotion;
+  const parent = mod("U12-01", "src/m1/**", {
+    workOrder: "GBS-V12-WO-001", state: "PROMOTED", promotionSha: promotion.implementationMergeSha
+  });
+  const input = manifest(parent, mod("U12-02", "src/m2/**", { dependencies: [parent.id] }));
+  assert.deepEqual(planBatches(input).batches[0].modules, ["U12-02"]);
+  assert.deepEqual(planBatches(input, 6, { checkpoint }).batches[0].modules, ["U12-02"]);
+});
+test("missing, fake, stale and divergent promotion proof blocks dependent planning", () => {
   const parent = mod("M1", "src/m1/**", { state: "PROMOTED", promotionSha: "a".repeat(40) });
-  assert.deepEqual(planBatches(manifest(parent, mod("M2", "src/m2/**", { dependencies: ["M1"] }))).batches[0].modules, ["M2"]);
+  const dependent = mod("M2", "src/m2/**", { dependencies: [parent.id] });
+  const input = manifest(parent, dependent);
+  assert.throws(() => planBatches(input, 6, { checkpoint: null }), checkReason("checkpoint_unavailable"));
+  assert.throws(() => planBatches(input, 6, { checkpoint: {} }), checkReason("unproven_promotion"));
+  assert.throws(() => planBatches(input, 6, { checkpoint: {
+    unrelatedCommit: { workOrder: "WO-OTHER", status: "PROMOTED", mergeSha: parent.promotionSha }
+  } }), checkReason("unproven_promotion"));
+  assert.throws(() => planBatches(input, 6, { checkpoint: {
+    stale: { workOrder: parent.workOrder, status: "PROMOTED", implementationMergeSha: "b".repeat(40) }
+  } }), checkReason("unproven_promotion"));
+  assert.throws(() => planBatches(input, 6, { checkpoint: { promotions: [
+    { workOrder: parent.workOrder, status: "PROMOTED", implementationMergeSha: parent.promotionSha },
+    { workOrder: parent.workOrder, status: "PROMOTED", implementationMergeSha: "b".repeat(40) }
+  ] } }), checkReason("unproven_promotion"));
+  assert.throws(() => planBatches(input, 6, { checkpoint: {
+    conflictingModule: { moduleId: "M9", workOrder: parent.workOrder, status: "PROMOTED", mergeSha: parent.promotionSha }
+  } }), checkReason("unproven_promotion"));
+  assert.throws(() => planBatches(input, 6, { checkpoint: {
+    conflictingState: { workOrder: parent.workOrder, status: "PROMOTED", terminalState: "PROMOTION_CANDIDATE", mergeSha: parent.promotionSha }
+  } }), checkReason("unproven_promotion"));
 });
 test("write/write and write/read overlapping prefixes and reserved shared surfaces are serialized", () => {
   const one = mod("M1", "src/alpha/**");
@@ -72,6 +102,13 @@ test("unsafe paths, unknown writable surfaces and incomplete promotions fail clo
   }
   assert.throws(() => validateManifest(manifest(mod("M1", "src/x", { files: { read: [], write: [] } }))), checkReason("unsafe_admission"));
   assert.throws(() => validateManifest(manifest(mod("M1", "src/x", { state: "PROMOTED" }))), checkReason("unproven_promotion"));
+});
+test("Windows trailing-dot path aliases fail closed before write conflict batching", () => {
+  const canonical = mod("M1", "src/config");
+  const alias = mod("M2", "src/config.");
+  assert.throws(() => validateManifest(manifest(canonical, alias)), checkReason("unsafe_path"));
+  assert.throws(() => planBatches(manifest(canonical, alias)), checkReason("unsafe_path"));
+  assert.throws(() => validateManifest(manifest(mod("M1", ".engineering."))), checkReason("unsafe_path"));
 });
 test("issue apply deduplicates by stable marker, writes only with apply and verifies readback", () => {
   let entries = [];
@@ -222,6 +259,15 @@ test("manifest file entry read-only; default invocation never calls gh for plan"
     assert.equal(code, 0);
     assert.equal(stderr.length, 0);
     assert.deepEqual(JSON.parse(stdout.join("")).value.batches[0].modules, ["M1"]);
+    const forgedPath = join(dir, ".gef", "forged-parallel-modules.json");
+    writeFileSync(forgedPath, JSON.stringify(manifest(mod("M1", "src/m1/**", {
+      state: "PROMOTED", promotionSha: "a".repeat(40)
+    }))));
+    const blocked = [];
+    assert.equal(await runParallel(["plan", "--manifest", forgedPath, "--json"], {
+      stderr: s => blocked.push(s), gh: () => { throw new Error("plan must remain offline"); }
+    }), 10);
+    assert.equal(JSON.parse(blocked.join("")).reason, "unproven_promotion");
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
@@ -335,4 +381,3 @@ test("CLI prompt and issues report missing auth without executing shell", async 
     rmSync(dir, { recursive: true, force: true });
   }
 });
-

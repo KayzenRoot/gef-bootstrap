@@ -8,6 +8,8 @@ import { lstatSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const MAX_MANIFEST_BYTES = 262144;
+const MAX_CHECKPOINT_BYTES = 16 * 1024 * 1024;
+const MAX_CHECKPOINT_NODES = 250000;
 const MAX_MODULES = 256;
 const MAX_SLOTS = 6;
 const ID = /^[A-Z][A-Z0-9-]{1,63}$/;
@@ -35,7 +37,7 @@ function paths(value, id, field) {
     }
     const segments = path.split("/");
     if (path.endsWith("/") || segments.some(part => part === "" || part === "." ||
-      part === ".." || part.toLowerCase() === ".git")) {
+      part === ".." || part.toLowerCase() === ".git" || part !== part.replace(/[ .]+$/g, ""))) {
       reject("unsafe_path", id + "." + field + ": unsafe or ambiguous path");
     }
     const key = path.toLowerCase();
@@ -44,7 +46,73 @@ function paths(value, id, field) {
     return path;
   });
 }
-export function validateManifest(source) {
+function readCanonicalCheckpoint() {
+  const engineeringDir = resolve(".engineering");
+  const checkpointPath = resolve(engineeringDir, "CHECKPOINT.json");
+  let directory, stat;
+  try {
+    directory = lstatSync(engineeringDir);
+    stat = lstatSync(checkpointPath);
+  } catch {
+    reject("checkpoint_unavailable", "Canonical .engineering/CHECKPOINT.json is required to verify promoted dependencies");
+  }
+  if (!directory.isDirectory() || directory.isSymbolicLink() || !stat.isFile() ||
+      stat.isSymbolicLink() || stat.size > MAX_CHECKPOINT_BYTES) {
+    reject("checkpoint_unsafe", "Canonical checkpoint must be a regular non-symlink file under 16 MiB");
+  }
+  try {
+    const checkpoint = JSON.parse(readFileSync(checkpointPath, "utf8"));
+    if (!object(checkpoint)) reject("checkpoint_invalid", "Canonical checkpoint root must be a JSON object");
+    return checkpoint;
+  } catch (error) {
+    if (error instanceof ParallelInputError) throw error;
+    reject("checkpoint_invalid", "Cannot parse canonical .engineering/CHECKPOINT.json");
+  }
+}
+
+function hasCanonicalPromotion(checkpoint, module) {
+  const identityFields = ["id", "moduleId", "stableModuleId", "workOrder", "workOrderId"];
+  const shaFields = ["promotionSha", "implementationMergeSha", "implementationMerge", "mergeSha", "mergeCommitSha"];
+  const stateFields = ["status", "state", "terminalState", "promotionState"];
+  const stack = [checkpoint];
+  const claimedShas = new Set();
+  let visited = 0;
+  while (stack.length > 0) {
+    const value = stack.pop();
+    if (!object(value) && !Array.isArray(value)) continue;
+    if (++visited > MAX_CHECKPOINT_NODES) {
+      reject("checkpoint_unbounded", "Canonical checkpoint exceeds the bounded promotion-proof scan");
+    }
+    if (object(value)) {
+      const disposition = object(value.obligationDisposition) ? value.obligationDisposition[module.id] : undefined;
+      const conflictingModuleId = ["moduleId", "stableModuleId"].some(field =>
+        typeof value[field] === "string" && value[field] !== module.id);
+      const identityMatches = !conflictingModuleId && identityFields.some(field =>
+        (field === "workOrder" || field === "workOrderId")
+          ? value[field] === module.workOrder
+          : value[field] === module.id) ||
+        (!conflictingModuleId && typeof disposition === "string" && /^(?:IMPLEMENTED_PASS|MODULE_DONE|PRODUCTION_ACCEPTED)$/.test(disposition));
+      const states = stateFields.map(field => value[field]).filter(state => typeof state === "string");
+      const negativeState = states.some(state => /NOT[_ -]?(?:PROMOTED|ACCEPTED)|CANDIDATE|PENDING|STALE|IN[_ -]?PROGRESS/i.test(state));
+      const positiveState = states.some(state => {
+        const normalized = state.toUpperCase();
+        return /(?:^|_)(?:PROMOTED|MODULE_DONE|PRODUCTION_ACCEPTED)(?:_|$)/.test(normalized);
+      });
+      if (identityMatches && positiveState && !negativeState) {
+        for (const field of shaFields) {
+          const sha = value[field];
+          if (typeof sha === "string" && SHA.test(sha)) claimedShas.add(sha.toLowerCase());
+        }
+      }
+      for (const child of Object.values(value)) stack.push(child);
+    } else {
+      for (const child of value) stack.push(child);
+    }
+  }
+  return claimedShas.size === 1 && claimedShas.has(module.promotionSha.toLowerCase());
+}
+
+export function validateManifest(source, options = {}) {
   if (!object(source) || source.schemaVersion !== "1" ||
       !REPO.test(source.repository || "") || !Array.isArray(source.modules) ||
       source.modules.length === 0 || source.modules.length > MAX_MODULES) {
@@ -87,6 +155,16 @@ export function validateManifest(source) {
   for (const m of modules) for (const d of m.dependencies) {
     if (!byId.has(d) || d === m.id) reject("invalid_dependency", m.id + " has missing/self dependency " + d);
   }
+  const promoted = modules.filter(m => m.state === "PROMOTED");
+  if (promoted.length > 0) {
+    const checkpoint = Object.hasOwn(options, "checkpoint") ? options.checkpoint : readCanonicalCheckpoint();
+    if (!object(checkpoint)) reject("checkpoint_unavailable", "Canonical checkpoint is unavailable for promotion verification");
+    for (const module of promoted) {
+      if (!hasCanonicalPromotion(checkpoint, module)) {
+        reject("unproven_promotion", module.id + " promotion SHA must match one promoted record bound to its module or Work Order in the canonical checkpoint");
+      }
+    }
+  }
   const seen = new Set(), active = new Set();
   function visit(id) {
     if (active.has(id)) reject("dependency_cycle", "Dependency cycle involving " + id);
@@ -118,8 +196,8 @@ export function moduleConflict(a, b) {
   }
   return null;
 }
-export function planBatches(input, slots = MAX_SLOTS) {
-  const manifest = validateManifest(input);
+export function planBatches(input, slots = MAX_SLOTS, options = {}) {
+  const manifest = validateManifest(input, options);
   if (!Number.isInteger(slots) || slots < 1 || slots > MAX_SLOTS) {
     reject("invalid_slots", "slots must be an integer between 1 and 6");
   }
@@ -223,8 +301,10 @@ function issueBody(m) {
     "Rules: one agent, one isolated worktree/branch, one PR, exact-head evidence; no merge or checkpoint promotion before objective audit."
   ].join("\n") + "\n";
 }
-export function prepareIssues(input, { apply = false, gh = ghDefault } = {}) {
-  const manifest = validateManifest(input);
+export function prepareIssues(input, options = {}) {
+  const { apply = false, gh = ghDefault, checkpoint } = options;
+  const validation = Object.hasOwn(options, "checkpoint") ? { checkpoint } : {};
+  const manifest = validateManifest(input, validation);
   const entries = inventory(manifest.repository, gh);
   const trustedAuthors = new Map();
   const results = [];
@@ -244,9 +324,11 @@ export function prepareIssues(input, { apply = false, gh = ghDefault } = {}) {
   }
   return { repository: manifest.repository, applied: apply, issues: results };
 }
-export function buildPrompt(input, { slots = MAX_SLOTS, batchNumber = 1, gh = ghDefault } = {}) {
-  const manifest = validateManifest(input);
-  const plan = planBatches(manifest, slots);
+export function buildPrompt(input, options = {}) {
+  const { slots = MAX_SLOTS, batchNumber = 1, gh = ghDefault, checkpoint } = options;
+  const validation = Object.hasOwn(options, "checkpoint") ? { checkpoint } : {};
+  const manifest = validateManifest(input, validation);
+  const plan = planBatches(manifest, slots, validation);
   if (!Number.isInteger(batchNumber) || batchNumber < 1) {
     reject("invalid_batch", "batch must be an integer >= 1");
   }
