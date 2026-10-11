@@ -196,6 +196,13 @@ async function verifyCanonicalPromotions(manifest, manifestRepository, effective
   } finally {
     if (descriptor !== undefined) closeSync(descriptor);
   }
+  const filterAttribute = (await gitOutput([
+    "check-attr", "filter", "--", ".engineering/CHECKPOINT.json"
+  ], "checkpoint_unverifiable", 4096)).trim();
+  if (filterAttribute !== ".engineering/CHECKPOINT.json: filter: unspecified" &&
+      filterAttribute !== ".engineering/CHECKPOINT.json: filter: unset") {
+    reject("checkpoint_unverifiable", "Custom checkpoint clean filters are unsupported");
+  }
   const workingBlob = (await gitOutput([
     "hash-object", "--path=.engineering/CHECKPOINT.json", "--", ".engineering/CHECKPOINT.json"
   ], "checkpoint_unverifiable", 4096)).trim();

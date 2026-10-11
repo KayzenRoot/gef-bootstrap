@@ -21,11 +21,13 @@ const manifest = (...modules) => ({
 const checkReason = reason => error => error instanceof ParallelInputError && error.reason === reason;
 const cliBin = fileURLToPath(new URL("../packages/cli/bin/gef.mjs", import.meta.url));
 const canonicalRepository = "KayzenRoot/gef-bootstrap";
-const canonicalBaseSha = "921493797728a43aadc9f7840c954ce7e3ebc416";
 const canonicalPromotionSha = "bd6d0e9884386d7ec8828ba3bd15de7777ebe362";
+const canonicalPromotionCommitObject = Buffer.from("dHJlZSA1NmE1NWEzYzJlMjI0OWNiNjFkZWYxN2E5NmQzZjUzY2EyYzQxODU1CnBhcmVudCA4ZTYzYWU1YTI3MzMxMzkwODAwNjNlYWI5NDM0NjM5Yzc3MmEwNGVjCmF1dGhvciBDbGF5dG9uIG51bmVzIDwxMTQ2MzM3MDIrS2F5emVuUm9vdEB1c2Vycy5ub3JlcGx5LmdpdGh1Yi5jb20+IDE3OTA5NzkxMjAgLTAzMDAKY29tbWl0dGVyIEdpdEh1YiA8bm9yZXBseUBnaXRodWIuY29tPiAxNzkwOTc5MTIwIC0wMzAwCmdwZ3NpZyAtLS0tLUJFR0lOIFBHUCBTSUdOQVRVUkUtLS0tLQogCiB3c0ZjQkFBQkNBQVFCUUpxd0N3d0NSQzFhUTd1dTVVaGxBQUFWMVVRQURva1JkWTl5UzBUekNtMWZzSHQ5a0NhCiB6cHpFRmtXU3loVFFTUGs4Vk90TWRjUFBhTkN5dXFETjJlbjBqaGVjS2hGQ1BuNXNybTFPUkZQUTZzRURhYmJZCiBtdjFjd0JEUEhSdS9KN2ZocEVaTVRQWjBCQWN1aDZWeTBKU3ZSdnR2THFMRXdDRWdtcTRTUGVjQXlLNFhFVWdlCiB0MFd0Q3FlNjN5QmJJa1RaQ2VYU3d3Y05FTlhJV2EvcnE1eWdVSnBGbjYrZ1lqQTMvNnpKRWdSZVV3c3hrdWgzCiB2dENPSXdTSG4wb3NsR1EvM2V5VDNuVkJUTjR1ZG44L1N1bE5jcmpsNnFoTFF0ampqUm0rbkhuN3hiNHNFMzQ0CiBzKzkremhHdlhaeGFDelE0M2txblN5V1N2V0tRanE0N0VqZnA1RmJyL1hrdTNoU0IzYzQ3eFhsT3AxRVprT2ErCiBMYVhIZVhrNXFnblZEZlZZSE5FWDEzSTlsaWZGOTVBRis1dG5FSDkrRkZ6Smp4VUZEQi9MNmNhSVJwTWNZQ2JECiBqTlc5ZkVNeDhLa3NZeG5SSSsxak50QVRTL25BeGFVQ2hTczltaXFFSnU5SDFxV2w0T0xTZzhFb1pub05rdXV1CiBqTUtQVkdsOWRrdW9tcTNiYmlCR3dzVGUzeU0vMEx2RktSK2xBUVhXcFBWSjMzL1F5OGM3aEFxNUdLZmo4VDV6CiBlaDZIMktmODQ2bUY3QTNwUlU2MW5aSC9qVjAydlBMeHdzQ0ZXdzlMRllNWkJHenRmSHdxOWdpbEQ5YmVBV2lOCiBDZXpsOHoyRUNnLzRlakpxRStYRHFTMC9wM3ZXZGlXczlKOVJOQUxsaEQ2QnBzSmJ3bGJ1TklHeVlLVXpVeXdOCiBBNkJLc2NXQXZWUDh4UjRIaStUZQogPW5XU0QKIC0tLS0tRU5EIFBHUCBTSUdOQVRVUkUtLS0tLQogCgpmZWF0KHYxLjIpOiBpbXBsZW1lbnQgV08tMDAxIGd1aWRlZCBkaXNjb3ZlcnkgYW5kIHBsYW5uaW5nIGltcGFjdAoKR0JTLVYxMi1XTy0wMDE6IGltcGxlbWVudHMgVTEyLTAxIGFuZCBVMTItMDI7IFUxMi0wMyByZW1haW5zIE5PVF9JTVBMRU1FTlRFRC4gRmluYWwgb3duZXIgZXhhY3QtaGVhZCBhdWRpdCAjNTM5NzM0MjI3MTogQVBQUk9WRUQgLyBOT1RfSU5ERVBFTkRFTlQsIENSSVRJQ0FMIDAsIEhJR0ggMC4gQ2Fub25pY2FsIGNoZWNrcG9pbnQgcHJvbW90aW9uIGZvbGxvd3Mgc2VwYXJhdGVseS4=", "base64");
 
-function fixtureGit(root, args) {
-  const result = spawnSync("git", ["-C", root, ...args], { encoding: "utf8", shell: false });
+function fixtureGit(root, args, input) {
+  const result = spawnSync("git", ["-C", root, ...args], {
+    encoding: "utf8", shell: false, ...(input === undefined ? {} : { input })
+  });
   assert.equal(result.status, 0, result.stderr || "git fixture setup failed");
   return result.stdout.trim();
 }
@@ -33,7 +35,7 @@ function fixtureGit(root, args) {
 function promotionFixture({ checkpoint = JSON.parse(readFileSync(fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url)), "utf8")),
   repository = canonicalRepository, origin = "https://github.com/KayzenRoot/gef-bootstrap.git",
   moduleId = "U12-01", workOrder = "GBS-V12-WO-001", promotionSha, includeCheckpoint = true,
-  withCanonicalHistory = true } = {}) {
+  withCanonicalAncestry = true } = {}) {
   const root = mkdtempSync(join(tmpdir(), "gef-parallel-promotion-"));
   const recordSha = checkpoint?.v12?.wo001Promotion?.implementationMergeSha ?? "a".repeat(40);
   const promoted = mod(moduleId, "src/previous/**", {
@@ -43,42 +45,29 @@ function promotionFixture({ checkpoint = JSON.parse(readFileSync(fileURLToPath(n
   const input = { schemaVersion: "1", repository, modules: [promoted, dependent] };
   const manifestPath = join(root, ".gef", "parallel-modules.json");
 
-  if (withCanonicalHistory) {
-    const sourceRepository = fileURLToPath(new URL("../", import.meta.url));
-    const clone = spawnSync("git", ["clone", "--shared", "--quiet", "--no-checkout", sourceRepository, root], {
-      encoding: "utf8", shell: false
-    });
-    assert.equal(clone.status, 0, clone.stderr || "git fixture clone failed");
-    fixtureGit(root, ["update-ref", "refs/heads/main", canonicalBaseSha]);
-    fixtureGit(root, ["symbolic-ref", "HEAD", "refs/heads/main"]);
-    fixtureGit(root, ["read-tree", canonicalBaseSha]);
-  } else {
-    fixtureGit(root, ["init", "--quiet"]);
-    fixtureGit(root, ["checkout", "--quiet", "--orphan", "main"]);
-  }
+  fixtureGit(root, ["init", "--quiet"]);
+  fixtureGit(root, ["checkout", "--quiet", "--orphan", "main"]);
   fixtureGit(root, ["config", "user.name", "Parallel Test"]);
   fixtureGit(root, ["config", "user.email", "parallel-test@example.invalid"]);
-  if (withCanonicalHistory) fixtureGit(root, ["remote", "set-url", "origin", origin]);
+  mkdirSync(join(root, ".engineering"), { recursive: true });
   if (includeCheckpoint) {
-    mkdirSync(join(root, ".engineering"), { recursive: true });
     writeFileSync(join(root, ".engineering", "CHECKPOINT.json"), JSON.stringify(checkpoint, null, 2) + "\n");
   } else if (!includeCheckpoint) {
     rmSync(join(root, ".engineering", "CHECKPOINT.json"), { force: true });
   }
   mkdirSync(join(root, ".gef"), { recursive: true });
   writeFileSync(manifestPath, JSON.stringify(input));
-  if (withCanonicalHistory) {
-    if (includeCheckpoint && JSON.stringify(checkpoint) !== JSON.stringify(JSON.parse(readFileSync(fileURLToPath(new URL("../.engineering/CHECKPOINT.json", import.meta.url)), "utf8")))) {
-      fixtureGit(root, ["add", "--", ".engineering/CHECKPOINT.json"]);
-      const tree = fixtureGit(root, ["write-tree"]);
-      const commit = fixtureGit(root, ["commit-tree", tree, "-p", canonicalBaseSha, "-m", "fixture changed checkpoint"]);
-      fixtureGit(root, ["update-ref", "refs/heads/main", commit]);
-    }
-  } else {
-    fixtureGit(root, ["add", "."]);
-    fixtureGit(root, ["commit", "--quiet", "-m", "fixture tracked checkpoint and manifest"]);
-    fixtureGit(root, ["remote", "add", "origin", origin]);
-  }
+  fixtureGit(root, ["add", "."]);
+  const tree = fixtureGit(root, ["write-tree"]);
+  const recordedCommit = fixtureGit(root, ["hash-object", "-w", "-t", "commit", "--stdin"], canonicalPromotionCommitObject);
+  assert.equal(recordedCommit, canonicalPromotionSha, "embedded signed promotion receipt commit must match the pinned SHA");
+  const headCommit = fixtureGit(root, withCanonicalAncestry
+    ? ["commit-tree", tree, "-p", canonicalPromotionSha, "-m", "fixture descendant of canonical promotion"]
+    : ["commit-tree", tree, "-m", "fixture without canonical promotion"]);
+  fixtureGit(root, ["update-ref", "refs/heads/main", headCommit]);
+  // Match hosted actions/checkout depth-one repositories without omitting the pinned commit object.
+  writeFileSync(join(root, ".git", "shallow"), canonicalPromotionSha + "\n");
+  fixtureGit(root, ["remote", "add", "origin", origin]);
 
   return {
     root,
@@ -173,15 +162,14 @@ test("cross-project origin or --repo override cannot authorize a promoted depend
     assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
   } finally { rmSync(mismatchedManifest.root, { recursive: true, force: true }); }
 });
-test("a copied checkpoint cannot authorize another project or a repository without the canonical merge ancestry", () => {
+test("a copied checkpoint cannot authorize another project", () => {
   const source = promotionFixture();
   try {
     const copiedCheckpoint = JSON.parse(readFileSync(source.checkpointPath, "utf8"));
     const target = promotionFixture({
       checkpoint: copiedCheckpoint,
       repository: "KayzenRoot/project-b",
-      origin: "https://github.com/KayzenRoot/project-b.git",
-      withCanonicalHistory: false
+      origin: "https://github.com/KayzenRoot/project-b.git"
     });
     try {
       const result = target.run(["--repo", "KayzenRoot/project-b"]);
@@ -189,13 +177,23 @@ test("a copied checkpoint cannot authorize another project or a repository witho
       assert.equal(JSON.parse(result.stderr).reason, "repository_identity_mismatch");
     } finally { rmSync(target.root, { recursive: true, force: true }); }
   } finally { rmSync(source.root, { recursive: true, force: true }); }
-
-  const unrelatedHistory = promotionFixture({ withCanonicalHistory: false });
+});
+test("promotion without the canonical merge in local history fails closed", () => {
+  const fixture = promotionFixture({ withCanonicalAncestry: false });
   try {
-    const result = unrelatedHistory.run();
+    const result = fixture.run();
     assert.notEqual(result.status, 0);
     assert.equal(JSON.parse(result.stderr).reason, "unproven_promotion");
-  } finally { rmSync(unrelatedHistory.root, { recursive: true, force: true }); }
+  } finally { rmSync(fixture.root, { recursive: true, force: true }); }
+});
+test("checkpoint verification rejects a custom Git clean filter before hashing worktree content", () => {
+  const fixture = promotionFixture();
+  try {
+    writeFileSync(join(fixture.root, ".gitattributes"), ".engineering/CHECKPOINT.json filter=external\n");
+    const result = fixture.run();
+    assert.notEqual(result.status, 0);
+    assert.equal(JSON.parse(result.stderr).reason, "checkpoint_unverifiable");
+  } finally { rmSync(fixture.root, { recursive: true, force: true }); }
 });
 test("dirty and staged checkpoint copies cannot satisfy a promotion receipt", () => {
   for (const staged of [false, true]) {
