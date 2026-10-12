@@ -519,3 +519,32 @@ Local product tests were not run. Automatic exact-head checks are to be observed
 candidate evidence commit is pushed; this document does not claim they have passed.
 
 Stop condition requested: `GBS_MOD_WO_001_FRESH_ACTIVE_LOCK_CANDIDATE_READY_FOR_AUDIT`.
+
+## 15. Owner-audited active execution binding for the correction pass (2026-10-12)
+
+**Status at evidence authoring:** activation is prepared in the Context Lock but is not effective
+until the exact commit carrying this lock blob is the remote PR #407 branch tip. The accepted
+owner review is #5494896574 on candidate `e2e2cfc88d5d45e42e02613f2bd3bf4b02391f2c`; its verdict
+is `APPROVED_REBIND_ONLY_NOT_INDEPENDENT`. The binding semantics are exact-head based: resolve
+`origin/feat/mod/wo-001-agent-native-gate`, verify that commit carries lock blob
+`8ef79b5e3113fdf95d9ee19c3d8eeb467852622f`, verify its first correction parent is the reviewed
+candidate, and verify `origin/main` still equals `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`.
+Any later branch-tip change requires a fresh exact-head observation before the lock is effective.
+
+The owner authorization is Issue #394 comment #6130689064, dispatched by Issue #437 comment
+#6130696451. The Context Lock activation preserves the append-only rebind proposal history and
+captures the prior execution binding and its full validation record as
+`HISTORICAL_ONLY_STALE_AFTER_MAIN_ADVANCE`. The fresh active base is exactly
+`main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`; pre-edit fingerprint verification matched 28/28
+canonical and implementation sources and 10/10 workflow sources. The active main ruleset remains
+ID `23566111`, requiring Repository validation, Pipeline integrity, Gitleaks secrets, and Trivy
+filesystem and configuration.
+
+The 61/61 successful check runs observed on predecessor `e2e2cfc88d5d45e42e02613f2bd3bf4b02391f2c`
+are recorded as historical and `reusedAsCorrectionAcceptance=false`. At lock activation, correction
+tests, build, typecheck, full validation, npm audit, and final exact-head hosted checks are all
+`NOT_RUN`. The binding authorizes only H1 (case-insensitive protected-path shadowing), M1 (absent
+base must report non-execution), M2 (exact-head run/count reconciliation), and the three recorded
+open review threads #4202551990, #4205797960, and #4206749335. No product/test correction has been
+made in this activation step; no merge, checkpoint promotion, tag, release, npm publication,
+security-policy change, force-push, or history rewrite is authorized.
