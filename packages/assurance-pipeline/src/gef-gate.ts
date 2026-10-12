@@ -250,6 +250,21 @@ function isStringArray(value: unknown): value is readonly string[] {
   return Array.isArray(value) && value.every((entry) => typeof entry === 'string' && entry.length > 0);
 }
 
+function isRepositoryIdentifier(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  const segments = value.split('/');
+  return segments.length === 2 && segments.every((segment) => /^[A-Za-z0-9._-]+$/.test(segment) && segment !== '.' && segment !== '..');
+}
+
+function isBaseRef(value: unknown): value is string {
+  if (typeof value !== 'string' || value.length === 0 || value.length > 255 || !/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(value)) {
+    return false;
+  }
+  return value.split('/').every((segment) =>
+    segment.length > 0 && segment !== '.' && segment !== '..' && !segment.startsWith('.') && !segment.endsWith('.lock'),
+  );
+}
+
 /** The upstream states the gate consumes must be states this contract defines. */
 function validateUpstreamStates(input: GefGateInput): Result<never> | null {
   if (!IMPACT_STATES.includes(input.impactState)) {
@@ -280,6 +295,15 @@ const DIGEST_BINDING_FIELDS = Object.freeze([
 
 /** The receipt is meaningless unless it binds a real base, head, changed state and digests. */
 function validateBindings(input: GefGateInput): Result<never> | null {
+  if (!isRepositoryIdentifier(input.repository)) {
+    return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID, 'repository must bind one owner and one repository name', 'repository');
+  }
+  if (typeof input.workOrderId !== 'string' || !validId(input.workOrderId)) {
+    return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID, 'workOrderId must be a valid stable identifier', 'workOrderId');
+  }
+  if (!isBaseRef(input.baseRef)) {
+    return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID, 'baseRef must be a valid non-empty ref name', 'baseRef');
+  }
   if (!SHA40.test(input.baseSha) || !SHA40.test(input.headSha)) {
     return fail(GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID, 'base and head must be 40 character commit ids');
   }

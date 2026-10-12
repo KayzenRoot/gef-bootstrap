@@ -169,6 +169,17 @@ test('case variants of a real surface are suspicious while legitimately cased na
   assert.equal(classifyChangePath('.engineering/CHECKPOINT.md').kind, 'CANONICAL_CHECKPOINT');
 });
 
+test('case variants cannot be absorbed by a broader governance rule', () => {
+  const classification = classifyChangePath('docs/x/agents.md');
+  assert.equal(classification.kind, 'UNKNOWN_SUSPICIOUS');
+  assert.deepEqual(classification.findings, [CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_CASE_VARIANT]);
+
+  const result = impact(['docs/x/agents.md'], { declaredRisk: 'LOW' });
+  assert.equal(result.state, 'BLOCKED');
+  assert.equal(result.tier, 'HIGH_ASSURANCE');
+  assert.equal(result.governanceFastPath, 'REFUSED');
+});
+
 test('a non-string path is suspicious rather than a coercion', () => {
   for (const value of [null, undefined, 42, {}, [], Symbol.iterator]) {
     const classification = classifyChangePath(value);

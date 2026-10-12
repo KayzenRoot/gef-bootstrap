@@ -262,6 +262,29 @@ test('every decision-bearing digest binding must be a well-formed sha256', () =>
   assert.ok(decide({}).ok, true, 'a well-formed input is still accepted');
 });
 
+test('repository, Work Order and base-ref bindings are present and structurally valid', () => {
+  const invalid = [undefined, null, '', 42, {}];
+  for (const field of ['repository', 'workOrderId', 'baseRef']) {
+    for (const value of invalid) {
+      const result = decide({ [field]: value });
+      assert.equal(result.ok, false, `${field}=${String(value)} must be refused`);
+      assert.equal(result.diagnostics[0].code, GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID);
+      assert.equal(result.diagnostics[0].subject, field);
+    }
+  }
+  for (const [field, value] of [
+    ['repository', 'repository-without-owner'],
+    ['workOrderId', 'not a stable id'],
+    ['baseRef', 'invalid ref name'],
+  ]) {
+    const result = decide({ [field]: value });
+    assert.equal(result.ok, false, `${field}=${value} must be refused`);
+    assert.equal(result.diagnostics[0].code, GEF_GATE_DIAGNOSTIC_CODES.GATE_BINDING_INVALID);
+    assert.equal(result.diagnostics[0].subject, field);
+  }
+  assert.ok(decide({ repository: 'Owner/repository-name', workOrderId: 'GBS-MOD-WO-001', baseRef: 'feature/branch-v1.2' }).ok);
+});
+
 test('escalation reasons alone forbid narrowing even if the fast path is claimed', () => {
   const receipt = must({ governanceFastPath: 'PERMITTED', escalateReasons: ['AUTHORITY_CONFLICT'] });
   assert.equal(receipt.decision, 'FULL_ASSURANCE');

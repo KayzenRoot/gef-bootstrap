@@ -164,12 +164,12 @@ test('every workflow bound by the implementation Context Lock has an unchanged s
   }
 });
 
-test('the recorded base blob is corroborated whenever the base revision is fetched', () => {
+test('the recorded base blob is corroborated whenever the base revision is fetched', (t) => {
   const available = revisionIsPresent(BASELINE_IMPLEMENTATION_BASE);
   if (!available) {
     // A depth-1 pull-request checkout does not carry the base. Say so explicitly rather than
     // pretending the cross-check ran; the proof above does not depend on it either way.
-    assert.ok(true, `base ${BASELINE_IMPLEMENTATION_BASE} is not present in this checkout; base-side corroboration was not run`);
+    t.diagnostic(`base ${BASELINE_IMPLEMENTATION_BASE} is not present in this checkout; base-side corroboration was not run`);
     return;
   }
   for (const [path, expected] of Object.entries(BASELINE_WORKFLOW_BLOBS)) {

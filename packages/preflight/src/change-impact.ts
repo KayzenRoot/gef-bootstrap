@@ -457,9 +457,8 @@ function suspicious(path: string, findings: readonly ChangeImpactDiagnosticCode[
 }
 
 /**
- * A path that reached the end of the table but matches a rule only case-insensitively is a case
- * variant of a real surface. On a case-insensitive filesystem it may be the same file, so neither
- * spelling can be trusted to classify: report it instead of guessing.
+ * Case-folded first-match classification must agree with the exact-case first match. Check this
+ * before a broad directory rule can hide a narrower protected surface on a case-insensitive disk.
  */
 /** Extensions whose files are executable source rather than documentation or governance state. */
 const EXECUTABLE_SOURCE_EXTENSIONS: readonly string[] = Object.freeze([
@@ -496,9 +495,18 @@ const DOCUMENT_KINDS: ReadonlySet<ChangePathKind> = new Set<ChangePathKind>([
   "EVIDENCE",
 ]);
 
+function firstMatchingRuleKind(target: string, caseInsensitive: boolean): ChangePathKind | undefined {
+  const candidate = caseInsensitive ? target.toLowerCase() : target;
+  const rule = CLASSIFICATION_RULES.find((entry) =>
+    matchesGlob(candidate, (caseInsensitive ? entry.pattern.toLowerCase() : entry.pattern).split("/")),
+  );
+  return rule?.kind;
+}
+
 function isCaseVariantOfAKnownSurface(target: string): boolean {
-  const lowered = target.toLowerCase();
-  return CLASSIFICATION_RULES.some((rule) => matchesGlob(lowered, rule.pattern.toLowerCase().split("/")));
+  const exactKind = firstMatchingRuleKind(target, false);
+  const caseInsensitiveKind = firstMatchingRuleKind(target, true);
+  return caseInsensitiveKind !== undefined && caseInsensitiveKind !== exactKind;
 }
 
 export function classifyChangePath(path: unknown): ChangePathClassification {
@@ -508,6 +516,9 @@ export function classifyChangePath(path: unknown): ChangePathClassification {
   const normalized = normalizeChangePath(path);
   if (normalized.findings.length > 0) return suspicious(path, normalized.findings);
   const target = normalized.normalized;
+  if (isCaseVariantOfAKnownSurface(target)) {
+    return suspicious(path, [CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_CASE_VARIANT]);
+  }
   const documentName = basename(target);
   const governanceDomain = Object.hasOwn(GOVERNANCE_DOC_DOMAIN, documentName) ? GOVERNANCE_DOC_DOMAIN[documentName] : undefined;
   for (const rule of CLASSIFICATION_RULES) {
@@ -529,9 +540,6 @@ export function classifyChangePath(path: unknown): ChangePathClassification {
     // deltas and locks. A root-level document this table does not name is therefore still
     // normative authority and widens rather than being trusted as descriptive prose.
     return { path, normalized: target, kind: kindRule.kind, domain, unclassified: false, findings: [] };
-  }
-  if (isCaseVariantOfAKnownSurface(target)) {
-    return suspicious(path, [CHANGE_IMPACT_DIAGNOSTIC_CODES.CHANGED_PATH_CASE_VARIANT]);
   }
   return { path, normalized: target, kind: "UNKNOWN", domain: "UNKNOWN", unclassified: true, findings: [] };
 }
