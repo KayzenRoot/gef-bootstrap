@@ -406,3 +406,46 @@ Total: **60 / 60** check runs SUCCESS, 0 failure, 0 pending, observed at
 
 Stop condition reached: `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`. No merge, no
 checkpoint promotion and no Ruleset change are performed by this record.
+
+## 13. Append-only rebind proposal for the stale implementation lock
+
+**Proposal status:** `PROPOSED_PENDING_OWNER_LOCK_AUDIT`; authorized by Issue #394 comment
+[#6128880027](https://github.com/KayzenRoot/gef-bootstrap/issues/394#issuecomment-6128880027),
+under mission [#437 comment #6128927054](https://github.com/KayzenRoot/gef-bootstrap/issues/437#issuecomment-6128927054).
+This section does not mutate or supersede the historical admission/implementation records above.
+
+The active implementation binding remains `main@921493797728a43aadc9f7840c954ce7e3ebc416` and
+is stale for new execution because `origin/main` is now
+`bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`. PR #407 remains open/draft on
+`feat/mod/wo-001-agent-native-gate` at `c6020ea52d159b60b78abf12e1373e66c0e367d3`; its merge
+base with the proposed current main is still the historical base `9214937…`. No rebase, normal
+integration merge, source execution or implementation edit was performed in this proposal.
+
+The main advance is the merge commit for PR #433, with 13 paths changed since the old implementation
+base. PR #407 changes 26 paths. A literal and case-insensitive comparison finds zero path overlap;
+this is recorded only as path evidence, not as semantic proof. The canonical checkpoint files did not
+change in the main advance. The existing lock's source fingerprints still match 28/28 canonical and
+implementation files and 10/10 workflow files; their historical maps and counts remain unchanged.
+
+The semantic closure review follows the runtime edge added by #433. `packages/cli/bin/gef.mjs`
+branches to the new `packages/cli/bin/parallel.mjs` only for the literal `parallel` command and
+otherwise retains the existing launch path. `parallel.mjs` dynamically imports
+`../dist/registry.js` for `runGitProbe`; `packages/cli/tsconfig.json` emits that module from the
+unchanged `packages/cli/src/registry.ts`. The registry runtime-imports the explicit
+`@gef-bootstrap/preflight/toolchain` subpath and `@gef-bootstrap/kernel`; its root imports from
+`@gef-bootstrap/preflight` and `@gef-bootstrap/contracts` are type-only. The preflight package maps
+`./toolchain` to `dist/toolchain.js`, whose source uses local canonical/types modules. Thus the
+`#407` additions to the preflight root barrel (`index.ts` and `change-impact.ts`) are not reached by
+the new CLI path through the declared `./toolchain` subpath. The bounded import review found no
+direct CLI registry/parallel import into the new assurance-pipeline GEF Gate, task-context-compiler
+or test-impact-engine modules. The parallel module verifies canonical checkpoint metadata; WO-001
+binds checkpoint identity through its context/gate records. The canonical checkpoint blobs are
+unchanged by the #433 merge. Relevant main/candidate blobs are fingerprinted in the new
+`rebindProposals` record in the Context Lock.
+
+This static closure narrows the semantic review but does not activate the lock or prove future
+integration behavior. The candidate at `c6020ea…` does not contain the new main commit. Owner must
+audit and approve this exact proposal before a fresh active Context Lock is established; only then
+may current main be integrated through the normal governed path and the affected tests/required
+checks be rerun on the resulting exact head. Until then, the old binding remains historical and
+unusable for mutation; no implementation, checkpoint promotion, policy change or merge is authorized.

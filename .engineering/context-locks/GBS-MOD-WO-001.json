@@ -413,5 +413,90 @@
       "evidence": "Section 9 of .engineering/evidence/GBS-MOD-WO-001-EVIDENCE.md",
       "exactHeadProviderDispositionNote": "Bound to correction head 81efc38bea61a231270f95dcf1ce46522fdacf17: 60/60 check runs SUCCESS and SonarCloud Quality Gate OK with new duplicated lines density 1.5% against the unchanged 3% ceiling."
     }
-  }
+  },
+  "rebindProposals": [
+    {
+      "proposalId": "GBS-MOD-WO-001-REBIND-PROPOSAL-2026-10-12",
+      "status": "PROPOSED_PENDING_OWNER_LOCK_AUDIT",
+      "authorization": {
+        "issue": 394,
+        "comment": 6128880027,
+        "missionIssue": 437,
+        "missionComment": 6128927054
+      },
+      "proposalOnly": true,
+      "activeBindingMutation": "NONE",
+      "historicalBinding": {
+        "admissionBaseSha": "d81759c534da0bc0ac0df7a3f5372ed8d1e0089e",
+        "implementationBaseSha": "921493797728a43aadc9f7840c954ce7e3ebc416",
+        "pr": 407,
+        "branch": "feat/mod/wo-001-agent-native-gate",
+        "observedHead": "c6020ea52d159b60b78abf12e1373e66c0e367d3",
+        "currentUse": "STALE_UNUSABLE_FOR_NEW_EXECUTION_UNTIL_OWNER_AUDITS_REBIND"
+      },
+      "proposedBinding": {
+        "implementationBase": {
+          "ref": "main",
+          "sha": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+          "v12Credit": "3/10",
+          "v12Stop": "GBS_V12_WO_002_PROMOTED"
+        },
+        "implementationPr": 407,
+        "implementationBranch": "feat/mod/wo-001-agent-native-gate",
+        "candidateHeadBeforeProposal": "c6020ea52d159b60b78abf12e1373e66c0e367d3",
+        "mergeBaseWithProposedMain": "921493797728a43aadc9f7840c954ce7e3ebc416",
+        "candidateAlreadyContainsProposedMain": false,
+        "normalIntegrationRequiredAfterOwnerApproval": true,
+        "historyRewriteOrForcePush": "NOT_AUTHORIZED"
+      },
+      "mainAdvance": {
+        "head": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+        "commitSubject": "feat(v1.1.3): opt-in dependency-safe parallel Codex module planning (#433)",
+        "pullRequest": 433,
+        "changedPathsFromHistoricalImplementationBase": 13,
+        "historicalImplementationPaths": 26,
+        "exactPathOverlap": 0,
+        "caseInsensitivePathOverlap": 0,
+        "pathDisjointnessIsSemanticProof": false,
+        "canonicalCheckpointPathsChangedByMainAdvance": 0
+      },
+      "preservedFingerprintComparison": {
+        "canonicalAndImplementationSources": "28/28 unchanged versus the historical lock fingerprints",
+        "workflowSources": "10/10 unchanged versus the historical lock fingerprints",
+        "existingFingerprintMapsMutated": false
+      },
+      "semanticDependencyClosure": {
+        "mainBlobFingerprints": {
+          "packages/cli/bin/gef.mjs": "3b7048c44884fb7a4aa53aa73131ef0ab518a0b3",
+          "packages/cli/bin/parallel.mjs": "3b11417904f867f83fd7c02f3ee6a885589aa160",
+          "packages/cli/src/registry.ts": "4b42f60f4a05a8b9fe4819afa0c18f117d086a97",
+          "packages/cli/tsconfig.json": "3d8f6157ece09e5f82b97475f38266f9c77a3660",
+          "packages/cli/package.json": "b42d83307dd553ade91e96bda2eea63a3eb0fccc",
+          "packages/preflight/package.json": "c6b83a39fb1d67336cf381bbc0b1fb9184db6d14",
+          "packages/preflight/src/toolchain.ts": "5c83b6a86c5ec240030e21f44fd061d69bb3bd61",
+          "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+        },
+        "candidateBlobFingerprints": {
+          "packages/cli/src/registry.ts": "4b42f60f4a05a8b9fe4819afa0c18f117d086a97",
+          "packages/preflight/package.json": "c6b83a39fb1d67336cf381bbc0b1fb9184db6d14",
+          "packages/preflight/src/toolchain.ts": "5c83b6a86c5ec240030e21f44fd061d69bb3bd61",
+          "packages/preflight/src/index.ts": "5139133c4e3589b5e9b8638bdcdef8d797eb77aa",
+          "packages/preflight/src/change-impact.ts": "057a5bbb998d57a93d92499c84e14151eff1b7b2",
+          "packages/contracts/src/index.ts": "8a18102efcb67b9d7866a010bd6a52db415e11cc",
+          "packages/kernel/src/index.ts": "6684aba40713019b0a594c069e0f996feabbc792"
+        },
+        "observations": [
+          "The #433 CLI shim adds a dispatch only when argv[2] is exactly parallel; other invocations continue to launch the existing CLI entry.",
+          "The new parallel module uses node built-ins and dynamically imports ../dist/registry.js to call runGitProbe.",
+          "The CLI tsconfig emits packages/cli/src/**/*.ts into packages/cli/dist; the generated registry module is derived from packages/cli/src/registry.ts, which is unchanged across the proposed base and current PR head.",
+          "The registry runtime-imports @gef-bootstrap/preflight/toolchain and @gef-bootstrap/kernel. Its root @gef-bootstrap/preflight and @gef-bootstrap/contracts references are type-only imports and are erased by the TypeScript build.",
+          "The preflight export map resolves the ./toolchain subpath directly to dist/toolchain.js; the toolchain source imports its local canonical and types modules. The #407 changes to the preflight root index and change-impact export are not reached through that subpath.",
+          "The bounded import review found no direct import from the parallel module or CLI registry into the new assurance-pipeline GEF Gate, task-context-compiler, or test-impact-engine modules. The parallel module verifies canonical checkpoint metadata; WO-001 binds checkpoint identity through its context/gate records. The canonical checkpoint blobs are unchanged by the #433 main advance."
+        ],
+        "scopeLimit": "Static source/import and Git object review only; no implementation code was executed."
+      },
+      "nextGate": "Owner exact-head audit of this append-only proposal; after approval, establish a fresh active Context Lock and integrate current main through the normal governed path before any further implementation validation.",
+      "noImplementationOrPromotion": true
+    }
+  ]
 }
