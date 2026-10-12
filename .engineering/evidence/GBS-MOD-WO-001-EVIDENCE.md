@@ -1,0 +1,661 @@
+# GBS-MOD-WO-001 — Evidence Bundle
+
+**Work Order:** `GBS-MOD-WO-001` — context, contract and assurance router
+**Issue:** [#394](https://github.com/KayzenRoot/gef-bootstrap/issues/394) · **Program:** #393
+**Implementation PR:** [#407](https://github.com/KayzenRoot/gef-bootstrap/pull/407)
+**Branch:** `feat/mod/wo-001-agent-native-gate`
+**Implementation base (active rebound base):** `main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1` · **original implementation base (historical):** `main@921493797728a43aadc9f7840c954ce7e3ebc416`
+**Substantive candidate head before evidence-only closeout:** `3b430b8405fd205c6dc8c1cc2ab611479b413309` (parent `f882dc1ef069c0fafcb8c139921091810f98f862`). The final evidence-bearing head is the branch tip after the evidence-only commit; resolve it with `git rev-parse origin/feat/mod/wo-001-agent-native-gate`. No source or test implementation changes follow the substantive head.
+**Risk:** `ELEVATED` · **Product credit:** `NONE` · **V1.2 credit:** unchanged at `3 / 10`
+**Stop condition target:** `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT` — the evidence-only
+closeout head still requires fresh exact-head provider checks after its commit.
+
+This bundle records what was actually executed and observed. Owner audit is **NOT_INDEPENDENT**
+(ADR-0006 / ADR-0007 owner-operated authority). No checkpoint was promoted, no merge was performed,
+no version, tag, release, dependency or ruleset was changed.
+
+---
+
+## 1. Context Lock freshness, verified before the first mutation
+
+The implementation Context Lock `.engineering/context-locks/GBS-MOD-WO-001.json` declares
+`staleIf` conditions. All were checked against the live repository before any write.
+
+| Condition | Required | Observed | Verdict |
+| --- | --- | --- | --- |
+| `main` equals `implementationBase.sha` before first mutation | `921493797728a43aadc9f7840c954ce7e3ebc416` | identical | NOT STALE |
+| Implementation branch descends from `implementationBase.sha` | ancestor | ancestor | NOT STALE |
+| Canonical + implementation source fingerprints unchanged | 28 blobs | 28 / 28 match | NOT STALE |
+| Workflow fingerprints unchanged | 10 blobs | 10 / 10 match | NOT STALE |
+| Branch descends from the implementation base | yes | yes | NOT STALE |
+
+Verification is repeatable with the committed guard
+`tests/gbs-mod-wo-001-pipeline-integrity.test.mjs`, which recomputes Git blob identities of every
+workflow the lock bound at the base and fails on any mismatch.
+
+## 2. Initial implementation changed paths (historical record)
+
+Full delta against the implementation base `921493797728a43aadc9f7840c954ce7e3ebc416`: **26 paths**. Every path is inside
+`implementationAuthorization.writeAllowed`; no path is in `writeForbidden`. Blob identities are
+stated at evidence assembly, and this bundle's own blob is omitted because it cannot state its own
+identity without a fixed point.
+
+| Git blob | Path | Intent |
+| --- | --- | --- |
+| `6418cc0507e41c6a04c36d50fa94cb2ee7b7b949` | `.engineering/checkpoint-deltas/GBS-MOD-WO-001-PROPOSED.md` | **new** — proposed checkpoint delta |
+| `daeb98629b4267e40be74f2fb3bec252ae45cf22` | `.engineering/context-locks/GBS-MOD-WO-001.json` | factual execution/evidence binding, candidate-bound |
+| `45fe6fca3e481b9a04989173882f67d44428ee97` | `.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json` | **new** — measured benchmark receipt |
+| `9ca3d32eb0baf8ee79c93c9baadfd5cef9bf60f5` | `.engineering/work-orders/GBS-MOD-WO-001.md` | machine-readable contract and executed-delta binding |
+| `492f1d4ae66abe8749a082d68decc81a3b4fd702` | `AGENTS.md` | compacted into a trigger router |
+| `cf8707dfbf2dbd9596d54ce23cc43524db014612` | `packages/assurance-pipeline/src/gef-gate.ts` | **new** — GEF Gate decision and receipt |
+| `ea77b45f6194888a7337baae7fa494beccb35d47` | `packages/assurance-pipeline/src/public.ts` | export the GEF Gate |
+| `8a18102efcb67b9d7866a010bd6a52db415e11cc` | `packages/contracts/src/index.ts` | re-export the work-order contract |
+| `9a665ae1a4dff817349d48d799dfaa105eb5aff8` | `packages/contracts/src/work-order.ts` | **new** — versioned Work Order contract, parser, glob authority |
+| `78710b58b6e747b17b61c4941172434b23011fcd` | `packages/preflight/src/change-impact.ts` | **new** — deterministic path classification, risk tier, obligations |
+| `5139133c4e3589b5e9b8638bdcdef8d797eb77aa` | `packages/preflight/src/index.ts` | re-export change impact |
+| `c9c99ba0e051e93a6f51beadbad05ef58ab70605` | `packages/task-context-compiler/src/public.ts` | export the tiered Context Lock |
+| `94d3bad9933f21451c728936a0593e5faa4644dd` | `packages/task-context-compiler/src/s07-tiered-context-lock.ts` | **new** — tiered Context Lock compiler |
+| `780bd950580067038a47511101f161a0a9021717` | `packages/test-impact-engine/src/gate-closure.ts` | **new** — changed-path to source closure and validation floor |
+| `b46bc5ab5db4cecc9358e1e93d450f2b41822f79` | `packages/test-impact-engine/src/public.ts` | export gate closure |
+| `d60b79836cca354190870115c06c3fd85652d290` | `tests/gbs-mod-wo-001-benchmark.test.mjs` | **new** — focused proof |
+| `ec164b3ec20e30e345315652bef30959cea5c6dd` | `tests/gbs-mod-wo-001-change-impact.test.mjs` | **new** — focused proof |
+| `aebe8eb71d06d86e7ab1145cb6131bf1dde1a5e3` | `tests/gbs-mod-wo-001-context-lock.test.mjs` | **new** — focused proof |
+| `5cc5d3523d29db9a6c9a4e271b11049845ca4723` | `tests/gbs-mod-wo-001-gate-closure.test.mjs` | **new** — focused proof |
+| `ba6a1e89926bab95b991e2df482a2a0c7593d40d` | `tests/gbs-mod-wo-001-gef-gate.test.mjs` | **new** — focused proof |
+| `2e1e18c8e276c5fa1d42a77bb5aa4482def1419c` | `tests/gbs-mod-wo-001-pipeline-integrity.test.mjs` | **new** — routing-surface proof; corrected to read stored Git object IDs |
+| `dab779acf3c0bda1bcec523967c515d8ce5a852a` | `tests/gbs-mod-wo-001-routing.test.mjs` | **new** — focused proof |
+| `9aa998f2d6a1b0860c16af90a9894e9db1613e5e` | `tests/gbs-mod-wo-001-work-order-contract.test.mjs` | **new** — focused proof |
+| `b5473c20156e87a13c7b6f33f7b4531f8184d159` | `tests/helpers/gbs-mod-wo-001-benchmark-receipt.mjs` | **new** — shared routing/receipt helper |
+| `f465e9389588301cc074e7d3a2aea9f3ba3c484f` | `tests/helpers/gbs-mod-wo-001-routing.mjs` | **new** — shared routing/receipt helper |
+
+`.engineering/work-orders/GBS-MOD-WO-001.md` and `.engineering/context-locks/GBS-MOD-WO-001.json`
+carry factual execution/evidence binding only, which the lock's `writeAllowed` explicitly permits.
+
+## 3. Architecture ownership
+
+Every mechanism landed in the package that already owns the concern. No parallel policy engine was
+introduced and the frozen dependency graph was not modified.
+
+| Node | Owner package | Extends |
+| --- | --- | --- |
+| A machine-readable Work Order contract | `packages/contracts` | existing contract layer; new `work-order.ts` |
+| B change-impact + risk classification | `packages/preflight` | existing preflight package; new `change-impact.ts` |
+| C tiered Context Lock | `packages/task-context-compiler` | existing M14 compiler; new `s07` stage |
+| D dependency/test closure | `packages/test-impact-engine` | reuses `selectImpactedTests`, `progressiveValidationLevel`, `buildTestMap` |
+| E GEF Gate receipt | `packages/assurance-pipeline` | new `gef-gate.ts`; mechanisms `GGD01/GGC02/GGV03/GGX04` registered separately from the frozen M27 registry |
+
+No `package.json` or `tsconfig.json` was edited, so no dependency edge, project reference or
+external dependency was added. The stages communicate only through plain data, which is the
+existing M27/M28 convention: no stage imports another stage's implementation.
+
+`packages/AGENTS.md` forbids silent filesystem, Git or provider work inside compiler and domain
+packages. Classification is therefore a pure function of the changed-path set plus declared
+repository facts; the Git reading stays with the caller.
+
+## 4. What each acceptance criterion is proven by
+
+| Criterion | Proof |
+| --- | --- |
+| A1 contract parses, rejects missing/ambiguous authority | `tests/gbs-mod-wo-001-work-order-contract.test.mjs` |
+| A2 narrow task loads only required canonical sources, expands on triggered domains | `tests/gbs-mod-wo-001-context-lock.test.mjs` |
+| A3 LOW/STANDARD/ELEVATED/HIGH_ASSURANCE reproducible from the same input | digest equality and permutation-invariance assertions in the change-impact, context-lock, closure, gate and routing suites |
+| A4 governance-only selects a smaller proof set with an explicit receipt | `tests/gbs-mod-wo-001-benchmark.test.mjs` + `tests/gbs-mod-wo-001-routing.test.mjs` |
+| A5 mixed/workflow/dependency/security/migration/release cannot use the fast path | `tests/gbs-mod-wo-001-routing.test.mjs`, `tests/gbs-mod-wo-001-change-impact.test.mjs` |
+| A6 unknown/unclassified widens or blocks | empty set, unknown file, non-string path, incomplete attribution |
+| A7 renames/moves/deletions and traversal/case variants cannot evade | adversarial routing suite; suspicious paths reach `BLOCKED` + `HIGH_ASSURANCE` |
+| A8 checkpoint parity always enforced when either checkpoint file changes | explicit assertions for `.engineering/CHECKPOINT.md` and `CHECKPOINT.json` |
+| A9 GEF Gate binds base/head and required checks | receipt binding assertions plus tamper detection on seven decision-bearing fields |
+| A10 existing high-risk and release proof obligations intact | ruleset contexts retained at every tier; `RELEASE_ASSURANCE` + `SPECIALIST_REVIEW` added at HIGH_ASSURANCE; pipeline-integrity suite pins the workflow blobs |
+| A11 no self-approval or checkpoint promotion path | `maySelectRequiredChecks`, `mayRelaxRulesetContexts`, `mayPromoteCheckpoint`, `mayRelease`, `manufacturesProductionCredit` are literal `false` |
+| A12 comparable baseline and post measurement for one governance and one code fixture | `.engineering/evidence/GBS-MOD-WO-001-BENCHMARK.json`, regenerated and compared by the benchmark suite |
+
+## 5. Measured benchmark
+
+Measurement unit: **check runs selected by committed `pull_request` trigger definitions**. The
+baseline is recorded from the implementation base `9214937`; no wall-clock claim is made. The
+receipt is generated, never transcribed:
+
+    node tests/helpers/gbs-mod-wo-001-benchmark-receipt.mjs
+
+| Fixture | Baseline check runs | Tier | Decision | Required checks | Narrowing candidates |
+| --- | --- | --- | --- | --- | --- |
+| governance-only, declared LOW | 23 | `STANDARD` | `REDUCED_ADVISORY` | 9 | 6 |
+| governance-only, declared ELEVATED | 23 | `ELEVATED` | `REDUCED_ADVISORY` | 9 | 6 |
+| governance-only, declared HIGH_ASSURANCE | 23 | `HIGH_ASSURANCE` | `FULL_ASSURANCE` | 12 | 0 |
+| product code, declared STANDARD | 38 | `ELEVATED` | `FULL_ASSURANCE` | 10 | 0 |
+
+The `HIGH_ASSURANCE` row proposes no exclusions at all: when the dependency closure already demands
+the whole suite (`L5`), the gate refuses to accept a caller's `outsideChangedClosure` claim and
+retains every candidate as `NARROWING_REQUIRES_A_PROVEN_DEPENDENCY_CLOSURE`.
+
+Every row keeps all four required main-branch ruleset contexts. The Context Lock's independent
+observation of 38 check runs on real governance-only pull requests (#390, #395) is recorded beside
+the model and is **not** claimed as reproduced by it: provider-side reports with no committed
+workflow (SonarCloud, Socket, CodeRabbit) are outside the model by construction.
+
+**Narrowing is reported, not enforced.** Every candidate carries
+`enforcement: NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION`.
+
+## 6. Workflow routing: why no workflow changed
+
+Scope item 6 and deliverable "workflow routing changes only after equivalence tests" were resolved
+as *no workflow change*, for a stated reason rather than by omission:
+
+- The four required main-branch ruleset contexts are produced by
+  `repository-validation.yml`, `pipeline-integrity.yml` and `free-security-pilot.yml`. If a
+  `paths:` filter were added to any of them, the required check would stop reporting on a
+  governance-only pull request and the branch would become unmergeable under the existing ruleset.
+- Narrowing CI is therefore only expressible once the ruleset can express it, and the ruleset
+  rewrite is explicitly listed under *Important, not auto-included* in the Work Order.
+- WRITE_FORBIDDEN additionally bars broad workflow deletion or threshold reduction.
+
+What this Work Order delivers instead is the stable gate/check contract that a later authorized
+ruleset update needs: the required context set, the per-check closure proofs, and the retention
+reasons. `tests/gbs-mod-wo-001-pipeline-integrity.test.mjs` proves the current routing surface is
+byte-for-byte unchanged and refuses to decide while the ruleset context set is unknown.
+
+**Rollback path:** this Work Order's routing delta is empty. Reverting it is `git revert` of the
+implementation commit; no workflow, ruleset or branch protection was touched, so there is nothing to
+restore on the provider side.
+
+## 7. Earlier validation evidence (historical candidate records)
+
+| Command | Result |
+| --- | --- |
+| `npm ci --ignore-scripts` | 33 packages, 0 vulnerabilities |
+| `npm run build` | success, 27 packages |
+| `npm run typecheck` | success, 27 packages |
+| `npm run validate` (typecheck + `node --test tests/*.test.mjs`) | **1778 tests, 1778 pass, 0 fail, 0 skipped** |
+| `npm run validate` in a **depth-1 checkout** (the CI condition) | **1781 tests, 1781 pass, 0 fail, 0 skipped** (before the deduplication below) |
+| `npm audit --audit-level=high` | 0 vulnerabilities |
+| `git diff --check` | clean |
+
+Baseline before this implementation, at head `c76c2d8a8459f461bad519729d6b2fe83eed9d3d`:
+**1659 tests, 1659 pass, 0 fail**. Net new: 121 tests against the implementation base.
+
+The Context Lock's regression list was re-verified through `npm run validate`, which executes every
+`tests/*.test.mjs`, including `tests/m14-*`, `tests/m27-*`, `tests/m28-*`, `tests/m04*`,
+`tests/v12-wo-001-*` and the M27/M28 hardening and policy-drift suites.
+
+The run is executed on Node `v24.19.0`.
+
+### Cross-platform proof
+
+The owner audit found the pipeline-integrity proof failing only on `windows-latest`. The whole
+working tree of the committed candidate was converted LF -> CRLF to emulate a Windows checkout with
+`core.autocrlf`, and the full suite was executed again: **1780 / 1780 pass**. Under that same
+conversion:
+
+| `repository-validation.yml` | value |
+| --- | --- |
+| working-tree SHA-1 (CRLF) | `cec22b62b1c1779e3cc118f0ab93d1c4ee1047d0` |
+| stored Git object ID (`git rev-parse HEAD:<path>`) | `38c801e6009663448194045ab27ef25c7dcbf0f0` |
+| recorded blob at the implementation base | `38c801e6009663448194045ab27ef25c7dcbf0f0` |
+
+The working-tree hash no longer equals the recorded identity — the exact mismatch class the owner
+reported — while the stored object ID does, so the assertion passes on both platforms. This is local
+corroboration on a Linux host; the authoritative Ubuntu, macOS and Windows results are the GitHub
+Actions runs on the candidate head.
+
+### Exact-head GitHub disposition
+
+Observed on the owner-audited parent `0f983b8b8b624ffa93fe7ab7a8072dcda1628b88`, from the GitHub
+check-runs API: **64 check runs, 62 success, 2 failure, 0 pending.** All four required ruleset
+contexts succeeded.
+
+| Check | Result | Disposition |
+| --- | --- | --- |
+| Repository validation | SUCCESS | — |
+| Pipeline integrity | SUCCESS | — |
+| Gitleaks secrets | SUCCESS | — |
+| Trivy filesystem and configuration | SUCCESS | — |
+| Analyze TypeScript (CodeQL) | SUCCESS | — |
+| Dependency Review | SUCCESS | — |
+| Socket Security | SUCCESS | — |
+| V1.1 release assurance / ubuntu-latest | SUCCESS | — |
+| V1.1 release assurance / macos-latest | SUCCESS | — |
+| **V1.1 release assurance / windows-latest** | **FAILURE** | corrected in this candidate |
+| **SonarCloud Code Analysis** | **FAILURE** | corrected in this candidate |
+| codecov/patch | SUCCESS | 99.50421%, 10 changed lines uncovered — advisory, additional branch coverage added |
+
+Both failures were the owner audit's HIGH blockers 1 and 2, and both are addressed above.
+
+### Candidate-head disposition, observed
+
+Recorded on the branch tip carrying this bundle: **60 check runs, 60 SUCCESS, 0 failure, 0 pending.**
+
+| Group | Result |
+| --- | --- |
+| Required ruleset contexts (Repository validation, Pipeline integrity, Gitleaks secrets, Trivy) | 4 / 4 SUCCESS |
+| Release assurance, all three platforms | windows-latest, ubuntu-latest, macos-latest SUCCESS |
+| Security and quality (CodeQL, Dependency Review, Socket, Node coverage LCOV) | SUCCESS |
+| SonarCloud Quality Gate | **OK** — reliability, security, maintainability, duplicated-lines and hotspot-review conditions all green; new duplicated lines density 1.596% against the unchanged 3% ceiling |
+
+The Reliability Rating D condition the owner audit raised is resolved, and no rule was suppressed
+and no threshold lowered to achieve it. The duplicated-lines condition that surfaced afterwards was
+resolved by removing duplicated new code, also without touching any threshold.
+
+## 8. Adversarial coverage
+
+`tests/gbs-mod-wo-001-routing.test.mjs` drives the whole chain — classifier, Context Lock, closure,
+gate — for each fixture, so a bypass at any stage is visible:
+
+- traversal (`../`, `..\\`, embedded `..`), absolute paths, Windows drive prefixes, encoded
+  separators and control characters → `BLOCKED`, `HIGH_ASSURANCE`, no receipt;
+- case variants of `Packages/contracts/src/Index.ts`, `packages/CONTRACTS/src/A.TS` and
+  `.ENGINEERING/SECURITY.md` → `UNKNOWN_SUSPICIOUS`; legitimately cased names such as `AGENTS.md`
+  and `.engineering/CHECKPOINT.md` still classify;
+- non-string path entries → suspicious rather than coerced;
+- mixed documentation + code, workflow, dependency, build-config, schema and decision changes → fast
+  path refused, `FULL_ASSURANCE`;
+- renames/moves carrying both sides, and deletions outside the attribution index → closure widens;
+- empty changed set, authority conflict, unproven changed state → no receipt at all;
+- declared risk escalation to `HIGH_ASSURANCE` → specialist gate added, required contexts intact,
+  and **no** exclusions proposed, because an `L5` closure floor refuses the caller's claim;
+- frozen Scope, Requirements, Constitution and module gates → normative authority, fast path refused;
+- executable files committed under `.engineering/` → product code;
+- an unrecognised declared risk and truthy non-boolean fact flags → escalation, not silent pass;
+- mandatory obligation floor, unproven ruleset set, unknown upstream states, duplicate candidate
+  ordering and malformed collections all refused at the gate;
+- traversal, case variants, encoded separators and non-string paths refused as write authority.
+
+## 9. Self-review findings and their resolution
+
+An adversarial review of the delta was run before the evidence was assembled. It found no bypass of
+`classifyChangePath`, the traversal/case-variant handling, the closure attribution floor or the
+gate's ruleset/SHA guards, and confirmed digest determinism across randomised input orderings. It did
+find the following defects, all of which were fixed in this head and are now covered by tests:
+
+| Finding | Resolution |
+| --- | --- |
+| Root-level `.engineering` documents (Scope, Requirements, Constitution, module gates, Technology Ledger) classified as descriptive `GOVERNANCE_DOC` at `LOW` with the fast path permitted | New `NORMATIVE_AUTHORITY_DOC` kind at `ELEVATED`, fast path refused; `SCOPE` and `REQUIREMENT` authority domains are now reachable |
+| Executable content committed under `.engineering/` classified as a document | `.engineering/**/*.{ts,mts,js,mjs}` now classifies as `PRODUCT_CODE` before the document catch-all |
+| An unrecognised `declaredRisk` was silently discarded | Escalates to `HIGH_ASSURANCE` with an `UNDECLARED_RISK_CLASS` reason |
+| Fact flags compared with `=== true`, so a truthy non-boolean silently dropped an escalation | `factPresent` reads anything other than `undefined`/`false` as an escalation signal |
+| `resolveWriteAuthority` returned `ALLOWED` for traversal paths that resolved outside the allowed subtree | `isAuthorizableWorkOrderPath` rejects traversal/`.`/empty/non-string paths and resolves them to `FORBIDDEN` |
+| `dir/**` admitted the bare directory, authorising a directory rename the pattern never named | A trailing `**` now covers only the subtree below the directory it names |
+| `**` was accepted as a pattern and admitted the entire repository | Rejected as the widest legal-looking spelling |
+| `matchesWorkOrderPattern` threw on a non-string candidate | Returns `false`; a malformed candidate is a refusal, not a throw |
+| `decideGefGate` order-dependence: duplicate check ids resolved by caller array order | Candidates normalized to one entry per id with the strictest reading winning |
+| `decideGefGate` accepted unknown `impactState`, `contextLockState` and `validationFloor`, and threw on malformed collections | Validated up front with `GATE_STATE_UNKNOWN` / `GATE_INPUT_INVALID` / `GATE_BINDING_INVALID` |
+| `decideGefGate` let a caller waive the mandatory obligation floor | `mandatoryObligationFloor` is enforced; a receipt missing any floor obligation is refused |
+| `compileGateClosure` discarded an unrecognised `tierFloor` and iterated junk attribution values | Both validated up front; malformed input is refused rather than coerced |
+| `compileTieredContextLock` threw on malformed collections and never loaded Requirements or Scope | Collections validated up front; `REQUIREMENTS.md` and `SCOPE.md` added at `ELEVATED` |
+| A comment claimed the gate refuses when "the ladder demands the whole suite" while only excluding `L5` | Comment corrected to state what `L5` actually means, and why `L4` does not block narrowing |
+| Tautological and self-comparing benchmark assertions | `narrowingEnforced` is now read from the receipt; the table is recomputed rather than compared with itself |
+
+The review also flagged two disclosures that are recorded in section 10 rather than "fixed": the
+Work Order contract has no production caller, and path attribution is caller-supplied.
+
+## 10. Residual risk and disclosed limitations
+
+1. **Narrowing is advisory only.** The gate names what a later authorized ruleset update could drop,
+   but nothing is skipped today. Any expectation of a CI wall-time reduction is not yet supported.
+2. **No wall-clock measurement.** Not reproducible from a deterministic test; the frozen Test &
+   Benchmark Plan forbids an unsourced percentage.
+3. **Baseline model scope.** It counts only check runs selected by committed `pull_request` trigger
+   definitions, so it excludes provider-side reports with no committed workflow.
+4. **Candidate-head CI is observed and green.** 60 / 60 check runs SUCCESS with all four required
+   ruleset contexts green and the Sonar Quality Gate OK. Re-running these checks at a *future* head
+   is still required: exact-head evidence is validity-bound, not inherited.
+5. **Baseline risk classifier coverage.** A path that matches no classification rule is `UNKNOWN`
+   and widens to `ELEVATED`; it does not block. Blocking on unknown is available through
+   `changedStateUnproven`. A root-level `.engineering` document the domain table does not name is
+   treated as normative authority (`NORMATIVE_AUTHORITY_DOC`, `ELEVATED`, fast path refused) rather
+   than descriptive prose.
+6. **The Work Order contract has no production caller.** `parseWorkOrderContract` proves the
+   machine-readable grammar and the ambiguity rule, but GBS-MOD-WO-001's own write boundary is still
+   prose in the Context Lock, and several entries there are descriptive phrases rather than globs
+   (`packages/cli/src/** only if thin exposure is proven necessary`). Encoding this Work Order's
+   boundary in the machine-readable form is follow-up work for the Work Order that first needs
+   enforcement.
+7. **Path attribution remains caller-supplied.** `compileGateClosure` widens to `L4` when
+   attribution is incomplete and refuses malformed index values, but a caller that asserts
+   completeness it cannot prove is still trusted; the gate cannot detect that from inside the
+   contract.
+8. **A malformed caller fact is read as an escalation, not as an error.** Fact flags accept any
+   value other than `undefined`/`false` as present, and an unrecognised `declaredRisk` escalates to
+   `HIGH_ASSURANCE`. This is deliberately fail-closed rather than fail-loud: a caller typo widens
+   the gate instead of silently narrowing it.
+
+## 11. Owner audit correction (review 5436978682, verdict CORRECTION REQUIRED)
+
+Both HIGH blockers were corrected in this candidate. No rule was suppressed and no threshold was
+lowered.
+
+**Blocker 1 — cross-platform pipeline integrity.** The assertion compared a hash of the
+checked-out working-tree bytes against Git blob IDs recorded at the implementation base. A Windows
+checkout rewrites LF to CRLF unless `.gitattributes` says otherwise, so the two byte strings differ
+per platform. It now reads the stored Git object ID with `git rev-parse --verify --quiet HEAD:<path>`,
+which is the same value on every platform and at the recorded base. The assertion is unchanged in
+strength: it still demands the exact recorded blob ID for all ten workflows, and an unusable Git, a
+missing revision or an absent path is a test failure rather than a skip. Three tests were added: one proves
+that the same file has two different SHA-1 values under CRLF/LF while one stored identity, one proves
+that a missing path or unusable revision fails closed, and one corroborates the recorded base blob
+whenever the base revision happens to be fetched.
+
+After the Reliability condition went green, the Quality Gate moved to its next failing condition,
+`new_duplicated_lines_density` (4.127% against a 3% ceiling: 190 duplicated lines of 4604 new
+lines). That duplication was self-inflicted: re-applying the extraction refactors after the lost
+working tree left a 57-line copy of three gate tests, two copies of a twelve-field gate-input
+literal, and two orphaned JSDoc blocks. All four were removed and the literal was replaced with one
+shared `gateInput` factory, after which a local six-line CPD scan over the entire delta reports zero
+duplicated blocks in the new files. No rule was suppressed and no threshold was lowered; the ceiling
+is unchanged.
+
+**The first attempt at this correction was itself defective, and is recorded here.** It also required
+the recorded base revision, which made the suite fail on a depth-1 pull-request checkout — exactly how
+CI checks out. That regression was found by pushing, then reproduced locally in a depth-1 clone. The
+fix separates the two concerns: the equivalence proof itself reads only the candidate's stored object
+IDs and needs no history, while the base-side corroboration runs when the base is present and states
+its absence when it is not. Both the depth-1 clone and the full-history clone now pass 1781 / 1781,
+and a negative control — tampering with one workflow blob — still fails the proof.
+
+**Blocker 2 — Sonar Reliability Rating D on new code.** The Quality Gate failed on
+"D Reliability Rating on New Code (required >= A)". The rating is driven by BUG findings; the head
+carried 41 open issues, 10 of them BUG, all `typescript:S2871` — alphabetical sorts with no
+comparator or with a `localeCompare`-free one. All ten are removed: each package now exposes one
+canonical code-point comparator used by every sort.
+
+`localeCompare` was deliberately **not** adopted even though the rule text suggests it. Collation
+depends on locale and ICU build, so the same repository state could produce two different receipt
+digests on two runners — reintroducing precisely the platform-dependent-evidence defect blocker 1 is
+about. Code-point ordering is locale-independent. The rule is satisfied by making the ordering
+explicit and canonical, not by accepting a weaker property.
+
+The remaining 31 code smells on the same head were also resolved rather than left behind: nested
+ternaries (S3358), cognitive complexity in all flagged functions (S3776), chained sorts (S4043),
+nested template literals (S4624), verbose digit classes (S6353), implicit stringification of
+untrusted values (S6551), optional-chain preference (S6582), negative indexing (S7755), array
+membership (S7776), `String#replace` over `replaceAll` (S7781) and a module-scope assertion (S8784).
+
+## 12. Stop condition
+
+`GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`
+
+Next legal action: owner exact-head semantic audit of PR #407 in Brazilian Portuguese, followed by
+audit of `.engineering/checkpoint-deltas/GBS-MOD-WO-001-PROPOSED.md`. No merge, no checkpoint
+promotion and no ruleset change is authorized by this bundle.
+
+## 9. Second owner audit response (`5440904137`)
+
+The audit raised four HIGH and three MEDIUM findings. Each was corrected at the cause, not by
+suppressing a rule, lowering a threshold or relaxing a test. No workflow, ruleset, branch-protection
+setting, package manifest or threshold was touched.
+
+| Finding | Root cause | Correction | Proof |
+| --- | --- | --- | --- |
+| H1 — executable code under a governance or documentation directory took the governance fast path | `change-impact.ts` classified by a first-match rule table, and the `.engineering/**`/`docs/**` directory rules preceded the executable-extension rules. A first match on the directory shadowed the later extension match, so `.engineering/evidence/x.mjs` was admitted as evidence. | The executable-extension rules are now evaluated before the governance and documentation rules, and a post-classification invariant forces `PRODUCT_CODE` for any executable extension whose path begins with `.engineering/` or `docs/`. `.ts`, `.mts`, `.cts`, `.js`, `.mjs`, `.cjs` and their upper-case forms are covered. | `tests/gbs-mod-wo-001-change-impact.test.mjs` "executable code under a governance or documentation directory can never take the fast path" — 13 paths across `.engineering/evidence`, `work-orders`, `context-locks`, `checkpoint-deltas`, `benchmarks`, `docs/guide` and `docs/a/b`, each asserted as `PRODUCT_CODE`, `governanceFastPath: REFUSED`, at least `ELEVATED`, and carrying static analysis and cross-platform regression. |
+| H2 — a `HIGH_ASSURANCE` candidate could be narrowed by the gate itself | The narrowing branch tested the fast path and the caller's validation floor only, so a caller claiming `HIGH_ASSURANCE` with a permissive fast path and an `L1` floor still received narrowing candidates. | Narrowing is refused whenever the tier is `HIGH_ASSURANCE`. The retention reason `HIGH_ASSURANCE_CANDIDATE_MUST_NOT_BE_NARROWED` is emitted first, so it also wins over the generic refusal reason. | `tests/gbs-mod-wo-001-gef-gate.test.mjs` "the gate itself refuses to narrow a HIGH_ASSURANCE candidate" — the inconsistent caller yields `FULL_ASSURANCE`, zero narrowing candidates and the HIGH_ASSURANCE retention reason, while the same input at `ELEVATED` still narrows, proving the refusal is tier-specific. |
+| H3 — decision-bearing digest bindings were not validated | Four digests reached the receipt body and every narrowing closure proof as unchecked caller strings. | `GEF_GATE_DIGEST_BINDING_INVALID` was added and `validateBindings` now enforces `^sha256:[0-9a-f]{64}$` on `changeImpactDigest`, `contextLockDigest`, `policyDigest`, `candidateSemanticDigest` and a non-null `closureDigest`. Digest shape validation was moved out of `validateUpstreamStates` so one rule owns one code. An absent closure stays `null`, which is "not proven", not malformed. | `tests/gbs-mod-wo-001-gef-gate.test.mjs` "every decision-bearing digest binding must be a well-formed sha256" — ten malformed values across five fields, each refused with the digest-specific code and the offending field as subject. |
+| H4 — the benchmark compared non-equivalent units and could not match its own trigger globs | `postRequiredCheckCount < baselineJobFanOut` compared a logical-obligation count against a provider check-run count. Separately, `matchesFrom` treated a segment as either the literal `*` or an exact name, so `packages/**/*.ts` and `tests/**/*.test.mjs` never matched. | The only like-for-like series is now reported explicitly: `baselineProviderCheckRuns` and `postEnforcedProviderCheckRuns`, which are equal because no workflow or protection change was made. Logical obligations are reported separately as `postLogicalObligations`, decomposed into contexts, mandatory obligations and specialist gates, and never compared to check runs. The matcher gained in-segment wildcard support with GitHub Actions `**` semantics. | `tests/gbs-mod-wo-001-benchmark.test.mjs` "provider check-run fan-out is unchanged: nothing is skipped today" asserts the enforced series equals the baseline series for every row — a null result reported as one, with no percentage or absolute reduction claimed — and "the gate proof set is reported in its own unit" asserts the decomposition. The corrected matcher raises the product-code baseline from 38 to 39 runs, which is the mis-match the audit predicted. |
+| MEDIUM — inherited object keys resolved a domain, a tier or a fallback | `GOVERNANCE_DOC_DOMAIN`, `TIER_FOR_RISK` and `TIER_TO_LEVEL` were plain object literals read with bracket access, so `toString`, `constructor`, `__proto__` and similar keys resolved values. | All three tables are now created with `Object.create(null)` and read with `Object.hasOwn`. `sourcePathIndex` is a caller-supplied authority read from a plain object, so its lookups use `Object.hasOwn` as well. An unknown declared risk resolves to `HIGH_ASSURANCE` and an unknown tier to `L5`. | `tests/gbs-mod-wo-001-change-impact.test.mjs` "fail-closed lookups reject inherited object keys" and `tests/gbs-mod-wo-001-gate-closure.test.mjs` "the tier table is read through own-key checks only" plus "an inherited key in the path index is read as absent rather than as an entry", which asserts an inherited path entry yields `unattributedPaths` and the `PATH_NOT_ATTRIBUTED_TO_A_KNOWN_SOURCE` obstruction. |
+| MEDIUM — `readIfTriggered` threw instead of returning a diagnostic | `readIfTriggered` was only checked to be an array, so the `entry.trigger.trim()` read threw a `TypeError` on an entry missing `trigger`. | `isTriggeredSourceEntry` shape-checks every entry before any of its fields is read, inside `validateLockInput` and ahead of the path and domain loops. | `tests/gbs-mod-wo-001-context-lock.test.mjs` "a malformed readIfTriggered entry is a diagnostic and never a throw" — four invalid whole values and thirteen malformed entries including `[{ path: 'a.md' }]`, `[{ trigger: 'X' }]`, `[null]`, a traversal path and an empty trigger, each refused with `LOCK_SOURCE_INVALID` rather than a throw. |
+| MEDIUM — Codecov coverage corrections needed tests for the corrected paths | The corrected boundaries had no adversarial coverage. | The suites above were extended rather than thresholds adjusted. | `npm run validate` — **1785 / 1785** pass, 0 fail. New coverage: 3 classifier tests, 2 gate tests, 2 closure tests, 1 context-lock test and 1 benchmark test. |
+
+### Exact-head disposition for correction head `81efc38`
+
+| Group | Result |
+| --- | --- |
+| Required ruleset contexts (Repository validation, Pipeline integrity, Gitleaks secrets, Trivy) | 4 / 4 SUCCESS |
+| Release assurance, all three platforms | windows-latest, ubuntu-latest, macos-latest SUCCESS |
+| Security and quality (CodeQL, Dependency Review, Socket, Node coverage LCOV) | SUCCESS |
+| SonarCloud Quality Gate | **OK** — reliability, security and maintainability all rating 1 against `GT 1`; hotspots reviewed 100% against `LT 100`; new duplicated lines density 1.5% against the unchanged 3% ceiling |
+
+Total: **60 / 60** check runs SUCCESS, 0 failure, 0 pending, observed at
+`81efc38bea61a231270f95dcf1ce46522fdacf17`. No rule was suppressed and no threshold lowered.
+
+Stop condition reached: `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`. No merge, no
+checkpoint promotion and no Ruleset change are performed by this record.
+
+## 13. Append-only rebind proposal for the stale implementation lock
+
+**Proposal status:** `PROPOSED_PENDING_OWNER_LOCK_AUDIT`; authorized by Issue #394 comment
+[#6128880027](https://github.com/KayzenRoot/gef-bootstrap/issues/394#issuecomment-6128880027),
+under mission [#437 comment #6128927054](https://github.com/KayzenRoot/gef-bootstrap/issues/437#issuecomment-6128927054).
+This section does not mutate or supersede the historical admission/implementation records above.
+
+The active implementation binding remains `main@921493797728a43aadc9f7840c954ce7e3ebc416` and
+is stale for new execution because `origin/main` is now
+`bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`. PR #407 remains open/draft on
+`feat/mod/wo-001-agent-native-gate` at `c6020ea52d159b60b78abf12e1373e66c0e367d3`; its merge
+base with the proposed current main is still the historical base `9214937…`. No rebase, normal
+integration merge, source execution or implementation edit was performed in this proposal.
+
+The main advance is the merge commit for PR #433, with 13 paths changed since the old implementation
+base. PR #407 changes 26 paths. A literal and case-insensitive comparison finds zero path overlap;
+this is recorded only as path evidence, not as semantic proof. The canonical checkpoint files did not
+change in the main advance. The existing lock's source fingerprints still match 28/28 canonical and
+implementation files and 10/10 workflow files; their historical maps and counts remain unchanged.
+
+The semantic closure review follows the runtime edge added by #433. `packages/cli/bin/gef.mjs`
+branches to the new `packages/cli/bin/parallel.mjs` only for the literal `parallel` command and
+otherwise retains the existing launch path. `parallel.mjs` dynamically imports
+`../dist/registry.js` for `runGitProbe`; `packages/cli/tsconfig.json` emits that module from the
+unchanged `packages/cli/src/registry.ts`. The registry runtime-imports the explicit
+`@gef-bootstrap/preflight/toolchain` subpath and `@gef-bootstrap/kernel`; its root imports from
+`@gef-bootstrap/preflight` and `@gef-bootstrap/contracts` are type-only. The preflight package maps
+`./toolchain` to `dist/toolchain.js`, whose source uses local canonical/types modules. Thus the
+`#407` additions to the preflight root barrel (`index.ts` and `change-impact.ts`) are not reached by
+the new CLI path through the declared `./toolchain` subpath. The bounded import review found no
+direct CLI registry/parallel import into the new assurance-pipeline GEF Gate, task-context-compiler
+or test-impact-engine modules. The parallel module verifies canonical checkpoint metadata; WO-001
+binds checkpoint identity through its context/gate records. The canonical checkpoint blobs are
+unchanged by the #433 merge. Relevant main/candidate blobs are fingerprinted in the new
+`rebindProposals` record in the Context Lock.
+
+This static closure narrows the semantic review but does not activate the lock or prove future
+integration behavior. The candidate at `c6020ea…` does not contain the new main commit. Owner must
+audit and approve this exact proposal before a fresh active Context Lock is established; only then
+may current main be integrated through the normal governed path and the affected tests/required
+checks be rerun on the resulting exact head. Until then, the old binding remains historical and
+unusable for mutation; no implementation, checkpoint promotion, policy change or merge is authorized.
+
+## 14. Post-integration rebind candidate — exact current main (2026-10-12)
+
+**Status:** `PROPOSED_PENDING_OWNER_LOCK_AUDIT` / `NOT_YET_ACTIVE`. This is an append-only
+candidate authorized for preparation by [Issue #394 comment #6130033905](https://github.com/KayzenRoot/gef-bootstrap/issues/394#issuecomment-6130033905),
+dispatched by [Issue #437 comment #6130050613](https://github.com/KayzenRoot/gef-bootstrap/issues/437#issuecomment-6130050613).
+The owner disposition is `APPROVED_FOR_REBIND_PREPARATION` and `NOT_INDEPENDENT`; it does not
+activate the Context Lock or approve implementation corrections. All older base/head bindings,
+execution counts, findings and provider results remain historical and unchanged.
+
+### Revalidated repository state
+
+| Fact | Observed value |
+| --- | --- |
+| Remote `main` before integration | `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1` |
+| Remote PR branch before integration | `feat/mod/wo-001-agent-native-gate@68690bac8a612b00a9fb5d5e8795ad9aed82b7eb` |
+| PR #407 | OPEN / DRAFT; target branch `main` |
+| Historical implementation base | `921493797728a43aadc9f7840c954ce7e3ebc416` |
+| Merge base before integration | `921493797728a43aadc9f7840c954ce7e3ebc416` |
+| Main advance / PR changed paths | 13 / 26 |
+| Exact and case-insensitive path overlap | 0 |
+| Context Lock fingerprints at current main | 28 / 28 canonical and implementation sources matched |
+| Workflow fingerprints at current main | 10 / 10 matched |
+| Canonical checkpoint files changed by main advance | 0 |
+| Active main ruleset | `Main Branch Protection`, active; required contexts: Repository validation, Pipeline integrity, Gitleaks secrets, Trivy filesystem and configuration |
+
+The path comparison is evidence of non-overlap only. The bounded runtime/import review followed
+the #433 CLI dispatch and confirmed that the exact `parallel` subcommand is the only new dispatch;
+other CLI invocations keep the existing launch path. `parallel.mjs` dynamically imports the
+unchanged `packages/cli/src/registry.ts` output for `runGitProbe`. That registry uses the existing
+`@gef-bootstrap/preflight/toolchain` subpath and kernel at runtime; its root preflight/contracts
+imports are type-only. The package export maps `./toolchain` directly to `dist/toolchain.js`, so
+the #407 preflight root-barrel/change-impact additions are not reached by this path. No direct
+import into the new GEF Gate, tiered context compiler or test-impact closure was found. This is a
+bounded static dependency review, not a universal semantic proof.
+
+### Normal integration into the same PR worktree
+
+The deterministic merge-tree preflight was clean (result tree
+`8544ad3b0c46f3773b182e48e411f7d5b8815550`). After verifying the remote branch still pointed to
+`68690bac8a612b00a9fb5d5e8795ad9aed82b7eb` and remote main still pointed to
+`bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`, current main was integrated into the detached PR
+worktree with a normal ORT merge and no conflicts:
+
+- Integration commit: `5ab082eed6e03f5e99dd7f7bc75309dacf1e998b`
+- First parent: `68690bac8a612b00a9fb5d5e8795ad9aed82b7eb`
+- Second parent: `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`
+- Result tree: `8544ad3b0c46f3773b182e48e411f7d5b8815550`
+- Resulting merge base with current main: `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`
+
+No force-push, rebase, history rewrite, checkpoint edit, product-code correction, policy change,
+merge to main, tag, release or npm publication occurred. The prior exact-head checks were not
+reused as acceptance. New exact-head hosted checks must be observed on the pushed candidate.
+
+### Proposed rebind — not active
+
+The append-only proposal `GBS-MOD-WO-001-REBIND-CANDIDATE-POST-MAIN-INTEGRATION-2026-10-12`
+is recorded in `.engineering/context-locks/GBS-MOD-WO-001.json`. It proposes
+`implementationBase=main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1` and records the actual
+post-integration head `5ab082eed6e03f5e99dd7f7bc75309dacf1e998b`. The historical active binding and
+all old fingerprint maps remain untouched. The candidate explicitly remains `NOT_YET_ACTIVE`
+pending exact-head owner audit and coherent validation. Do not begin H1/M1/M2 corrections until a
+fresh active lock is accepted and effective.
+
+Validation in this preparation step was limited to Git ancestry/merge-tree, exact ref and blob
+fingerprints, path comparison, source/import review, active-ruleset read and `git diff --check`.
+Local product tests were not run. Automatic exact-head checks are to be observed after the
+candidate evidence commit is pushed; this document does not claim they have passed.
+
+Stop condition requested: `GBS_MOD_WO_001_FRESH_ACTIVE_LOCK_CANDIDATE_READY_FOR_AUDIT`.
+
+## 15. Owner-audited active execution binding for the correction pass (2026-10-12)
+
+**Status recorded at activation commit `3e603c7f5e98a47f761f11166fa655164d08a15a`:** the exact
+commit carrying lock blob `8ef79b5e3113fdf95d9ee19c3d8eeb467852622f` was pushed and verified on the
+PR #407 branch before source edits. The accepted owner review is #5494896574 on candidate
+`e2e2cfc88d5d45e42e02613f2bd3bf4b02391f2c`; its verdict
+is `APPROVED_REBIND_ONLY_NOT_INDEPENDENT`. The binding semantics are exact-head based: resolve
+`origin/feat/mod/wo-001-agent-native-gate`, verify that commit carries lock blob
+`8ef79b5e3113fdf95d9ee19c3d8eeb467852622f`, verify its first correction parent is the reviewed
+candidate, and verify `origin/main` still equals `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`.
+Any later branch-tip change requires a fresh exact-head observation before the lock is effective.
+
+The owner authorization is Issue #394 comment #6130689064, dispatched by Issue #437 comment
+#6130696451. The Context Lock activation preserves the append-only rebind proposal history and
+captures the prior execution binding and its full validation record as
+`HISTORICAL_ONLY_STALE_AFTER_MAIN_ADVANCE`. The fresh active base is exactly
+`main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`; pre-edit fingerprint verification matched 28/28
+canonical and implementation sources and 10/10 workflow sources. The active main ruleset remains
+ID `23566111`, requiring Repository validation, Pipeline integrity, Gitleaks secrets, and Trivy
+filesystem and configuration.
+
+The 61/61 successful check runs observed on predecessor `e2e2cfc88d5d45e42e02613f2bd3bf4b02391f2c`
+are recorded as historical and `reusedAsCorrectionAcceptance=false`. At lock activation, correction
+tests, build, typecheck, full validation, npm audit, and final exact-head hosted checks are all
+`NOT_RUN`. The binding authorizes only H1 (case-insensitive protected-path shadowing), M1 (absent
+base must report non-execution), M2 (exact-head run/count reconciliation), and the three recorded
+open review threads #4202551990, #4205797960, and #4206749335. No product/test correction has been
+made in this activation step; no merge, checkpoint promotion, tag, release, npm publication,
+security-policy change, force-push, or history rewrite is authorized.
+
+## 16. Owner-audited rebind corrections — exact substantive head `3b430b8`
+
+This section records the authorized correction pass after active-lock commit
+`3e603c7f5e98a47f761f11166fa655164d08a15a`. The substantive source/test head is
+`3b430b8405fd205c6dc8c1cc2ab611479b413309`, parented by the previously validated correction head
+`f882dc1ef069c0fafcb8c139921091810f98f862`, under `main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`.
+The fresh active Context Lock and its exact source/workflow fingerprints were verified before the
+first source edit. Owner review #5494896574 approved the rebind only; it is not an independent
+implementation audit. The corrections remain limited to H1, M1 and M2 plus the three authorized
+review threads #4202551990, #4205797960 and #4206749335.
+
+### Corrections and adversarial proofs
+
+| Finding | Cause and correction | Evidence |
+| --- | --- | --- |
+| H1 — protected-path case-insensitive shadowing | Case-variant detection now compares the first exact-case and case-insensitive matching rule before the broader classification rules can absorb a protected path. | A case-variant such as `docs/x/agents.md` fails closed as `UNKNOWN_SUSPICIOUS`, blocks the governance fast path and requires `HIGH_ASSURANCE`. The adversarial classifier test asserts the refusal. |
+| M1 — silent absent-base pass | The pipeline-integrity test emits `t.diagnostic` when the recorded base commit is not present; it returns without claiming base-side corroboration and does not count the test as skipped. | At exact head `3b430b8405fd205c6dc8c1cc2ab611479b413309`, a fresh depth-1 clone confirmed that the base is absent. The focused pipeline-integrity suite passed 12/12 and printed: `base 921493797728a43aadc9f7840c954ce7e3ebc416 is not present in this checkout; base-side corroboration was not run`. These are focused-test counts, not the full-suite count. |
+| Review #4202551990 — receipt bindings | The gate validates repository identity, stable Work Order ID and base ref before it emits a receipt, in addition to all required digest bindings. Base-ref validation remains deterministic and does not invoke Git at runtime. | The focused GEF Gate test covers missing/malformed bindings. Additional cases now reject `refs/heads/a..b` and `refs/heads/main.`; `git check-ref-format` returns 1 for both. The valid nested ref `feature/branch-v1.2` returns 0 and remains accepted. |
+| M2 — run/count and head association | This section separates results by exact tested head and checkout shape. The active Context Lock records the same bindings and counts. | See the exact-head validation matrix below; earlier counts remain historical and are not attributed to this head. |
+
+### Exact local validation on the substantive head
+
+All following source/test validation is bound to
+`3b430b8405fd205c6dc8c1cc2ab611479b413309` in a fresh, normal Windows clone with full history,
+Node `v24.19.0`, PowerShell and `core.autocrlf=true`:
+
+| Validation | Result |
+| --- | --- |
+| `npm ci` | PASS; 33 packages installed, 0 vulnerabilities reported |
+| Focused correction suite (`change-impact`, `gef-gate`, `pipeline-integrity`, `context-lock`, `gate-closure`) | PASS; 80 / 80, 0 failed, 0 skipped |
+| `npm run build` | PASS |
+| `npm run typecheck` | PASS |
+| `npm run validate` | PASS; 1820 / 1820, 0 failed, 0 skipped |
+| `npm audit --audit-level=high` | PASS; 0 vulnerabilities |
+| `git diff --check` | PASS; clean |
+
+After assembling the three evidence-only documents, the uncommitted working tree remained at Git
+HEAD `3b430b8405fd205c6dc8c1cc2ab611479b413309`. The Context Lock JSON parsed successfully, and the
+Context Lock plus Pipeline Integrity focused tests passed 25/25 with those evidence documents in
+the working tree; `git diff --check` was clean. This is pre-commit validation for the documentary
+closeout, not a claim that hosted checks have run on the final evidence-only commit.
+
+The same exact substantive head was fetched with depth 1 into a separate shallow clone. That checkout
+confirmed `git rev-parse --is-shallow-repository=true` and the implementation base absent. The
+12/12 focused pipeline-integrity result and its explicit diagnostic are recorded above; this was
+not a full-suite run and is not used as one.
+
+The full `npm run validate` run was performed in the native Windows clone with `core.autocrlf=true`.
+On that exact head, `.github/workflows/pipeline-integrity.yml` had 8191 working-tree bytes and 184
+of 184 line feeds were CRLF; its stored Git object and index object both resolved to
+`8a7f58eefe47240b42b890c18f4f5f30c3e84eec`. This is evidence from the actual Windows checkout. A
+separate whole-tree LF-to-CRLF conversion simulation was **not run** at this head; the earlier
+1780-test conversion result remains historical at its recorded candidate only.
+
+An earlier full-validation attempt in the linked worktree had two V11 repository-observation
+failures because a linked worktree stores `.git` as a pointer file: one test expected `OBSERVED`
+but got `UNKNOWN`, and another attempted `.git/index` and received `ENOENT`. Those V11 tests are
+outside this correction's write scope and were not changed. In a normal clone, both tests passed;
+the full suite then passed at 1820/1820 on this substantive head.
+
+### Exact-head hosted disposition
+
+GitHub PR #407 was observed on the exact substantive head above: **61 / 61 checks SUCCESS, 0
+failure, 0 pending**. The four required ruleset contexts all succeeded. Security/quality checks,
+including Gitleaks, Trivy, CodeQL, Dependency Review, Socket, SonarCloud and Codecov patch, succeeded.
+Release assurance and the same exact package tarball passed on Ubuntu, Windows and macOS. CodeRabbit
+reported a successful status with the automated review skipped because automatic reviews are
+disabled; that status is not represented as a code review.
+
+| Check group | Exact-head result |
+| --- | --- |
+| Required contexts: Repository validation, Pipeline integrity, Gitleaks secrets, Trivy filesystem and configuration | 4 / 4 SUCCESS |
+| V1.1 release assurance | Ubuntu, Windows, macOS SUCCESS |
+| Same exact V1.1 tarball assurance | Ubuntu, Windows, macOS SUCCESS |
+| SonarCloud Code Analysis, CodeQL, Dependency Review, Socket Security, Node coverage LCOV, codecov/patch | SUCCESS |
+| All check runs | 61 / 61 SUCCESS, 0 failed, 0 pending |
+
+Evidence URLs: [PR #407](https://github.com/KayzenRoot/gef-bootstrap/pull/407), [Repository
+validation](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772922/job/114976256768),
+[Pipeline integrity](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772839/job/114976256062),
+[Gitleaks](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772751/job/114976256647),
+[Trivy](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772751/job/114976256563),
+[V1.1 release assurance matrix](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772894),
+[CodeQL](https://github.com/KayzenRoot/gef-bootstrap/runs/114976739979),
+[SonarCloud](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=407), and
+[Codecov patch](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/407).
+
+The evidence-only commit carrying this section is separate from the substantive head. Its exact
+branch-tip SHA and its own fresh provider disposition are recorded in the PR body and Issue #394
+after that commit's checks complete; no source/test change is made by that evidence-only commit.
+
+### Review thread state and remaining gate
+
+After posting the replies below, a GitHub GraphQL query against PR #407 confirmed all three
+authorized review threads `isResolved: true` while the PR head was still substantive head
+`3b430b8405fd205c6dc8c1cc2ab611479b413309`:
+
+| Root comment | Thread ID | Reply | GraphQL state |
+| --- | --- | --- | --- |
+| #4202551990 | `PRRT_kwDOUYMQCc6pvJyn` | [Reply](https://github.com/KayzenRoot/gef-bootstrap/pull/407#discussion_r4251750233) | `isResolved: true` |
+| #4205797960 | `PRRT_kwDOUYMQCc6p3GR1` | [Reply](https://github.com/KayzenRoot/gef-bootstrap/pull/407#discussion_r4251751160) | `isResolved: true` |
+| #4206749335 | `PRRT_kwDOUYMQCc6p5bsY` | [Reply](https://github.com/KayzenRoot/gef-bootstrap/pull/407#discussion_r4251752096) | `isResolved: true` |
+
+The source/test implementation is ready for the owner’s exact-head semantic audit under
+`GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT` at substantive head
+`3b430b8405fd205c6dc8c1cc2ab611479b413309`. The evidence-only closeout commit and its fresh
+exact-head provider checks remain to be completed and reported in the PR body and Issue #394. No
+merge, checkpoint promotion, ruleset change, tag, release or npm publication occurred.

@@ -1,61 +1,82 @@
-# GEF Executor Contract
+# GEF Executor Router
 
-This repository is governed by GEF Bootstrap. This file is an executor-facing acceleration layer, not a replacement for canonical project authority.
+This repository is governed by GEF Bootstrap. This file is a **router**, not a project
+encyclopedia: it preserves the actor, authority and safety essentials and sends you to the
+canonical source that owns the fact you need. It never overrides `.engineering/SOURCE-HIERARCHY.md`,
+a frozen canonical source, an admitted Work Order or its Context Lock.
 
-## Owner-approved actor and GitHub-first handoff (ADR-0008 / D-0063)
+## Start here, in this order
 
-ADR-0008 / D-0063 makes Codex the sole code, test, CI and migration author for this repository and new GEF-governed projects, effective on `main` at PR #332 merge `419b9cd713d4817c05582287ec10793fc7fdc130` and on `release/1.1` at PR #347 merge `9f6f069c977868ade34a19cddb346f7bea9a95fe`. D-0062 remains branch-qualified: main ADR-0007 records Hive retirement, and release ADR-0006 governs owner audit and merge authority. ChatGPT prepares approved governance documents and issue-backed Work Orders, coordinates GitHub and performs objective review. A planning document or unadmitted issue never authorizes implementation. See .engineering/GITHUB-FIRST-CODEX-WORKFLOW.md.
+1. `.engineering/CHECKPOINT.md` + `.engineering/CHECKPOINT.json` — current promoted state.
+2. `.engineering/SOURCE-HIERARCHY.md` — which source owns which fact, and conflict behaviour.
+3. The admitted Work Order and its Context Lock — the only execution contract you may act on.
+4. `.engineering/DEFINITION-OF-DONE.md` — what "done" means before you claim it.
+
+## Route by trigger
+
+| Trigger | Read |
+| --- | --- |
+| Implementing any admitted increment | `.engineering/work-orders/<ID>.md`, `.engineering/context-locks/<ID>.json`, `packages/contracts` work-order contract |
+| Changing architecture, contracts or package boundaries | `.engineering/ARCHITECTURE.md` |
+| Changing security, secrets, permissions, supply chain or release gates | `.engineering/SECURITY.md` |
+| Changing completion, credit or promotion claims | `.engineering/DEFINITION-OF-DONE.md`, `.engineering/BACKLOG.md` |
+| Choosing validation, proof or benchmark scope | `.engineering/TEST-BENCHMARK-PLAN.md` |
+| Changing a decision, ADR or supersession | `.engineering/DECISIONS-LEDGER.md`, `.engineering/DECISIONS-SUPERSESSION-MAP.md` |
+| CI, workflows, rulesets or release mechanics | `.engineering/GITHUB-FIRST-CODEX-WORKFLOW.md`, `.engineering/DEPLOYMENT.md` |
+| Work beneath `packages/` | `packages/AGENTS.md` |
+| Tests beneath `tests/` | `tests/AGENTS.md` |
 
 ## Authority
-1. Resolve facts through `.engineering/SOURCE-HIERARCHY.md`.
-2. Read `.engineering/CHECKPOINT.md` and `.engineering/CHECKPOINT.json` for current promoted state.
-3. For implementation, obey the admitted Work Order and its exact execution-base/head bindings.
-4. Frozen Scope, Requirements, Architecture, Security, Test Plan and DoD outrank convenience, model confidence and this file.
-5. If authority is missing, stale or conflicted, fail closed. Never invent a requirement to keep moving.
 
-## Productive long-run execution
-Optimize for useful project advancement, not short responses or tiny increments.
-- Compile the minimum sufficient authoritative context before coding.
-- Build a dependency-ordered work DAG and identify the semantic critical path.
-- Batch independent reads and safe non-overlapping work.
-- Reuse passing evidence when its exact dependencies remain valid. Do not rerun unrelated validated work merely because another node failed.
-- Validate progressively: cheap/static checks first, focused tests for changed surfaces second, broader regression at governed integration boundaries.
-- On failure, repair the smallest invalidated node and its dependents. Do not restart the whole plan unless dependency invalidation proves that necessary.
-- Keep a negative-search ledger so failed searches are not repeated without a changed reason/input.
-- Prefer read-once indexes, receipts, fingerprints and exact references over repeatedly rereading large documents.
-- Long execution is acceptable when it advances many admitted nodes safely. Runtime length is not a reason to shrink scope artificially.
+- Authority is domain-specific. Newer text does not override a frozen source in another domain.
+- Frozen Scope, Requirements, Architecture, Security, Test Plan and DoD outrank convenience, model
+  confidence and this file.
+- If authority is missing, stale or conflicted, fail closed. Never invent a requirement to keep
+  moving, and never convert UNKNOWN or ambiguity into ALLOW or DONE.
+- Derived receipts, indexes and capsules accelerate retrieval; they never supersede canonical truth.
 
-## Executor cognition budget
-The executor should execute, not rediscover product intent.
-- Treat the Work Order/Execution Pack as the task contract.
-- Do not redesign architecture or broaden scope unless the contract explicitly delegates that decision.
-- Escalate genuine ambiguity instead of spending large token budgets exploring speculative alternatives.
-- Preserve successful intermediate outputs and evidence.
-- Never loop blindly on the same failing command. Diagnose first, change the causal input, then rerun the narrowest proof.
+## Actors and GitHub-first handoff (ADR-0008 / D-0063)
 
-## Mutation and safety
-- No force push, history rewrite or destructive cleanup without the specific governed S4 authorization path.
-- Do not expose secrets in code, logs, fixtures, prompts or receipts.
-- Keep GitHub/provider automation as an acceleration and evidence layer. Runtime product correctness must not depend on GitHub unless the product scope explicitly requires it.
-- The completed product must remain operable when the repository is private and GitHub automation is disabled, except for repository hosting/version-control functions explicitly chosen by the operator.
+Codex is the sole author of implementation, tests, CI and migrations. ChatGPT prepares approved
+governance documents and issue-backed Work Orders, coordinates GitHub and performs objective
+review. A planning document or an unadmitted issue never authorizes implementation. All GitHub
+writes in this repository use the owner account `KayzenRoot`; never request or wait for collaborator
+review and never switch connected accounts. The owner records the exact-head semantic audit and
+must not label it independent.
 
-## Owner-operated review and merge
+## Execution discipline
 
-For this repository, all GitHub writes use the owner account `KayzenRoot`. Never request or wait for collaborator review and never switch to another connected account. The owner performs and records the exact-head semantic audit; do not label it independent. The owner may merge only after all Work Order-required checks pass on the exact head, CRITICAL/HIGH blockers are zero and the target branch is authorized. Preserve branch protections and required checks; do not bypass a failing or pending check.
+- Compile the minimum sufficient authoritative context, then build a dependency-ordered work DAG
+  and follow the semantic critical path.
+- Validate progressively: cheap and static checks first, focused tests for changed surfaces
+  second, broad regression only at governed integration boundaries.
+- Reuse passing evidence while its exact dependencies hold. On failure, repair the smallest
+  invalidated node and its dependents; do not restart a valid plan.
+- Keep a negative-search ledger. Diagnose before rerunning; never loop on an unchanged command.
+- Never weaken tests, TypeScript strictness, security controls, exact-state bindings or
+  fail-closed behaviour to make a check green, and never claim completion from model confidence.
 
-## Completion
-A green test is evidence, not completion. A merged PR is not MODULE_DONE by itself. Follow the project DoD, owner exact-head audit, evidence bundle and checkpoint promotion rules.
+## Safety
+
+- No force push, history rewrite or destructive cleanup without the specific governed S4 path.
+- No secrets in code, logs, fixtures, prompts or receipts.
+- GitHub and provider automation are acceleration and evidence layers; runtime product correctness
+  must not depend on GitHub. The product must stay operable when the repository is private and
+  automation is disabled.
+- Preserve branch protection and required checks. Never bypass a failing or pending check, never
+  self-approve, and never promote a canonical checkpoint without the governed promotion path.
 
 ## Fresh-context construction routing
 
-During every governed application build, use canonical project/provider state to select work and direct the next stage. Chat history and conversational summaries are informational; they do not establish progress, approvals, branch state or authority.
+Chat history and conversational summaries are informational; they never establish progress,
+approvals, branch state or authority. After a new chat or a major handoff: verify repository,
+account, branch and exact HEAD; read the checkpoint pair, the active Work Order and Context Lock,
+source hierarchy, current evidence and required checks; reconcile with the M18 resume rules, where
+stale bindings, conflicts, orphan work or unresolved blockers stop execution; report through the
+M20 response contract; then state one canonical next necessary action, or `NONE`/`UNKNOWN` with the
+blocking evidence. Never select a successor from chat history or skip an admitted Work Order.
 
-Before continuing after a new chat or a major handoff:
+## Completion
 
-1. Verify the repository, provider account, branch and exact HEAD.
-2. Read `.engineering/CHECKPOINT.json` and `.engineering/CHECKPOINT.md`, the active Work Order and Context Lock, source hierarchy, current evidence and required checks.
-3. Reconcile the checkpoint and observed provider state with the M18 resume rules. Stale bindings, conflicts, orphan work or unresolved blockers stop execution.
-4. Use the M20 response contract to report the verified project/phase, active module/Work Order/stage, exact checkpoint/head, blockers and prerequisites.
-5. State one canonical next necessary action. If none is safe or known, state `NONE` or `UNKNOWN` with the blocking evidence needed. Never select a successor from chat history or skip an admitted Work Order.
-
-For application construction, route the handoff through discovery, requirements/scope, admitted Work Order and Context Lock, preflight, implementation, tests/evidence, exact-head owner audit, checkpoint promotion and the next admitted Work Order. Each handoff ends with the single next legal action or an explicit stop state.
+A green test is evidence, not completion, and a merged PR is not `MODULE_DONE`. Completion needs the
+project DoD, an exact-head owner audit, an evidence bundle and governed checkpoint promotion.

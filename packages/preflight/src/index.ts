@@ -5,3 +5,4 @@ export * from "./git.js";
 export * from "./provider.js";
 export * from "./toolchain.js";
 export * from "./project-state.js";
+export * from "./change-impact.js";

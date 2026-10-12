@@ -80,3 +80,6 @@ export type {
   BuildGuidedDiscoveryPlanInput,
   GuidedDiscoveryPlan,
 } from './s06-guided-discovery.js';
+
+export { compileTieredContextLock, maxContextLockTier, TIERED_CONTEXT_LOCK_VERSION, contextLockTiers, contextLockTierOrder, TIERED_CONTEXT_LOCK_DIAGNOSTIC_CODES } from './s07-tiered-context-lock.js';
+export type { ContextLockTier, TieredContextLock, TieredContextLockInput, ContextSourceInclusion, ContextSourceExclusion, TieredContextLockDiagnosticCode } from './s07-tiered-context-lock.js';
