@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-FAST-DELIVERY-001",
+  "issue": 437,
+  "risk": "ELEVATED",
+  "state": "PLANNING_ONLY_NOT_IMPLEMENTATION_ADMISSION",
+  "ownerDirectiveDate": "2026-10-12",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "planningBranch": "planning/GBS-FAST-DELIVERY-001-mission",
+  "base": {
+    "ref": "main",
+    "commit": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1"
+  },
+  "planningFirstCommit": "6cae06b956cbb3397df8ed3374302f0fb6427f8e",
+  "sourceBlobFingerprints": {
+    "AGENTS.md": "03a768f9d276d001d02871828fef7b7a12eefca9",
+    ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    ".engineering/CHECKPOINT.md": "ea31e6cab8964aca4b0f74296b2953e6da51d6d7",
+    ".engineering/CHECKPOINT.json": "468dec80ad5a48c044e4282d87481a8267f44866",
+    ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+    ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
+    ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md": "b734c110d48311e339295fdd834ebff91a8cc461",
+    ".engineering/SCOPE.md": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
+    ".engineering/REQUIREMENTS.md": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+    ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+    ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+    ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+    ".engineering/DEPLOYMENT.md": "5f4a263fcd51b9cdc2d4f85ad1c2569d041b8754",
+    ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+    "docs/PARALLEL-MODULES.md": "120b71f6dfce314dab16f2eaaf4f9fde63dff869"
+  },
+  "observedProjectState": {
+    "npmStable": "@gef-bootstrap/cli@1.1.2",
+    "v12Count": {
+      "implemented": 3,
+      "total": 10
+    },
+    "patch113ImplementationMerge": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+    "patch113Published": false
+  },
+  "existingChildIssues": [
+    393,
+    394,
+    396,
+    397,
+    398,
+    399,
+    400,
+    401,
+    402,
+    404,
+    405,
+    406,
+    409,
+    410,
+    411,
+    412,
+    413,
+    434,
+    435
+  ],
+  "knownActivePRs": {
+    "gefGate": 407,
+    "patch113GovernancePlanning": 436
+  },
+  "missionWriteAllowed": [
+    ".engineering/work-orders/GBS-FAST-DELIVERY-001.md",
+    ".engineering/context-locks/GBS-FAST-DELIVERY-001-PLANNING.json"
+  ],
+  "implementationWriteAllowed": [],
+  "codeAuthoredBy": "CODEX_ONLY_PER_ADR_0008",
+  "mergeAuthority": "OWNER_EXACT_HEAD_REQUIRED",
+  "sourceReadingNote": "Fingerprints are direct GitHub fetch_file blob SHAs of main at observed snapshot; sources were inspected selectively. This is planning, NOT a complete implementation audit. Child agents must independently read applicable full source and revalidate Git state/fingerprints.",
+  "staleIf": [
+    "main source SHA/blob for any decision/Scope/DoD/Architecture/Security source used changes materially",
+    "current Checkpoint md/json disagree or their authority-state changes",
+    "PR #407/#436 or #434/#435 progresses requiring updated dependency routing",
+    "owner modifies scope or child Work Order",
+    "planning base ancestry or relevant source fingerprints are incompatible"
+  ],
+  "stopCondition": "GBS_FAST_DELIVERY_001_PLANNING_READY_FOR_OWNER_AUDIT"
+}
