@@ -4,10 +4,11 @@
 **Issue:** [#394](https://github.com/KayzenRoot/gef-bootstrap/issues/394) · **Program:** #393
 **Implementation PR:** [#407](https://github.com/KayzenRoot/gef-bootstrap/pull/407)
 **Branch:** `feat/mod/wo-001-agent-native-gate`
-**Implementation base:** `main@921493797728a43aadc9f7840c954ce7e3ebc416`
-**Candidate identity:** the branch tip of `feat/mod/wo-001-agent-native-gate` that carries this bundle. A commit cannot state its own SHA, so the candidate is bound to the branch plus its owner-audited parent `0f983b8b8b624ffa93fe7ab7a8072dcda1628b88`; resolve with `git rev-parse origin/feat/mod/wo-001-agent-native-gate`.
+**Implementation base (active rebound base):** `main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1` · **original implementation base (historical):** `main@921493797728a43aadc9f7840c954ce7e3ebc416`
+**Substantive candidate head before evidence-only closeout:** `3b430b8405fd205c6dc8c1cc2ab611479b413309` (parent `f882dc1ef069c0fafcb8c139921091810f98f862`). The final evidence-bearing head is the branch tip after the evidence-only commit; resolve it with `git rev-parse origin/feat/mod/wo-001-agent-native-gate`. No source or test implementation changes follow the substantive head.
 **Risk:** `ELEVATED` · **Product credit:** `NONE` · **V1.2 credit:** unchanged at `3 / 10`
-**Stop condition reached:** `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT`
+**Stop condition target:** `GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT` — the evidence-only
+closeout head still requires fresh exact-head provider checks after its commit.
 
 This bundle records what was actually executed and observed. Owner audit is **NOT_INDEPENDENT**
 (ADR-0006 / ADR-0007 owner-operated authority). No checkpoint was promoted, no merge was performed,
@@ -32,7 +33,7 @@ Verification is repeatable with the committed guard
 `tests/gbs-mod-wo-001-pipeline-integrity.test.mjs`, which recomputes Git blob identities of every
 workflow the lock bound at the base and fails on any mismatch.
 
-## 2. Changed paths
+## 2. Initial implementation changed paths (historical record)
 
 Full delta against the implementation base `921493797728a43aadc9f7840c954ce7e3ebc416`: **26 paths**. Every path is inside
 `implementationAuthorization.writeAllowed`; no path is in `writeForbidden`. Blob identities are
@@ -157,7 +158,7 @@ byte-for-byte unchanged and refuses to decide while the ruleset context set is u
 implementation commit; no workflow, ruleset or branch protection was touched, so there is nothing to
 restore on the provider side.
 
-## 7. Validation evidence
+## 7. Earlier validation evidence (historical candidate records)
 
 | Command | Result |
 | --- | --- |
@@ -522,9 +523,10 @@ Stop condition requested: `GBS_MOD_WO_001_FRESH_ACTIVE_LOCK_CANDIDATE_READY_FOR_
 
 ## 15. Owner-audited active execution binding for the correction pass (2026-10-12)
 
-**Status at evidence authoring:** activation is prepared in the Context Lock but is not effective
-until the exact commit carrying this lock blob is the remote PR #407 branch tip. The accepted
-owner review is #5494896574 on candidate `e2e2cfc88d5d45e42e02613f2bd3bf4b02391f2c`; its verdict
+**Status recorded at activation commit `3e603c7f5e98a47f761f11166fa655164d08a15a`:** the exact
+commit carrying lock blob `8ef79b5e3113fdf95d9ee19c3d8eeb467852622f` was pushed and verified on the
+PR #407 branch before source edits. The accepted owner review is #5494896574 on candidate
+`e2e2cfc88d5d45e42e02613f2bd3bf4b02391f2c`; its verdict
 is `APPROVED_REBIND_ONLY_NOT_INDEPENDENT`. The binding semantics are exact-head based: resolve
 `origin/feat/mod/wo-001-agent-native-gate`, verify that commit carries lock blob
 `8ef79b5e3113fdf95d9ee19c3d8eeb467852622f`, verify its first correction parent is the reviewed
@@ -548,3 +550,112 @@ base must report non-execution), M2 (exact-head run/count reconciliation), and t
 open review threads #4202551990, #4205797960, and #4206749335. No product/test correction has been
 made in this activation step; no merge, checkpoint promotion, tag, release, npm publication,
 security-policy change, force-push, or history rewrite is authorized.
+
+## 16. Owner-audited rebind corrections — exact substantive head `3b430b8`
+
+This section records the authorized correction pass after active-lock commit
+`3e603c7f5e98a47f761f11166fa655164d08a15a`. The substantive source/test head is
+`3b430b8405fd205c6dc8c1cc2ab611479b413309`, parented by the previously validated correction head
+`f882dc1ef069c0fafcb8c139921091810f98f862`, under `main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`.
+The fresh active Context Lock and its exact source/workflow fingerprints were verified before the
+first source edit. Owner review #5494896574 approved the rebind only; it is not an independent
+implementation audit. The corrections remain limited to H1, M1 and M2 plus the three authorized
+review threads #4202551990, #4205797960 and #4206749335.
+
+### Corrections and adversarial proofs
+
+| Finding | Cause and correction | Evidence |
+| --- | --- | --- |
+| H1 — protected-path case-insensitive shadowing | Case-variant detection now compares the first exact-case and case-insensitive matching rule before the broader classification rules can absorb a protected path. | A case-variant such as `docs/x/agents.md` fails closed as `UNKNOWN_SUSPICIOUS`, blocks the governance fast path and requires `HIGH_ASSURANCE`. The adversarial classifier test asserts the refusal. |
+| M1 — silent absent-base pass | The pipeline-integrity test emits `t.diagnostic` when the recorded base commit is not present; it returns without claiming base-side corroboration and does not count the test as skipped. | At exact head `3b430b8405fd205c6dc8c1cc2ab611479b413309`, a fresh depth-1 clone confirmed that the base is absent. The focused pipeline-integrity suite passed 12/12 and printed: `base 921493797728a43aadc9f7840c954ce7e3ebc416 is not present in this checkout; base-side corroboration was not run`. These are focused-test counts, not the full-suite count. |
+| Review #4202551990 — receipt bindings | The gate validates repository identity, stable Work Order ID and base ref before it emits a receipt, in addition to all required digest bindings. Base-ref validation remains deterministic and does not invoke Git at runtime. | The focused GEF Gate test covers missing/malformed bindings. Additional cases now reject `refs/heads/a..b` and `refs/heads/main.`; `git check-ref-format` returns 1 for both. The valid nested ref `feature/branch-v1.2` returns 0 and remains accepted. |
+| M2 — run/count and head association | This section separates results by exact tested head and checkout shape. The active Context Lock records the same bindings and counts. | See the exact-head validation matrix below; earlier counts remain historical and are not attributed to this head. |
+
+### Exact local validation on the substantive head
+
+All following source/test validation is bound to
+`3b430b8405fd205c6dc8c1cc2ab611479b413309` in a fresh, normal Windows clone with full history,
+Node `v24.19.0`, PowerShell and `core.autocrlf=true`:
+
+| Validation | Result |
+| --- | --- |
+| `npm ci` | PASS; 33 packages installed, 0 vulnerabilities reported |
+| Focused correction suite (`change-impact`, `gef-gate`, `pipeline-integrity`, `context-lock`, `gate-closure`) | PASS; 80 / 80, 0 failed, 0 skipped |
+| `npm run build` | PASS |
+| `npm run typecheck` | PASS |
+| `npm run validate` | PASS; 1820 / 1820, 0 failed, 0 skipped |
+| `npm audit --audit-level=high` | PASS; 0 vulnerabilities |
+| `git diff --check` | PASS; clean |
+
+After assembling the three evidence-only documents, the uncommitted working tree remained at Git
+HEAD `3b430b8405fd205c6dc8c1cc2ab611479b413309`. The Context Lock JSON parsed successfully, and the
+Context Lock plus Pipeline Integrity focused tests passed 25/25 with those evidence documents in
+the working tree; `git diff --check` was clean. This is pre-commit validation for the documentary
+closeout, not a claim that hosted checks have run on the final evidence-only commit.
+
+The same exact substantive head was fetched with depth 1 into a separate shallow clone. That checkout
+confirmed `git rev-parse --is-shallow-repository=true` and the implementation base absent. The
+12/12 focused pipeline-integrity result and its explicit diagnostic are recorded above; this was
+not a full-suite run and is not used as one.
+
+The full `npm run validate` run was performed in the native Windows clone with `core.autocrlf=true`.
+On that exact head, `.github/workflows/pipeline-integrity.yml` had 8191 working-tree bytes and 184
+of 184 line feeds were CRLF; its stored Git object and index object both resolved to
+`8a7f58eefe47240b42b890c18f4f5f30c3e84eec`. This is evidence from the actual Windows checkout. A
+separate whole-tree LF-to-CRLF conversion simulation was **not run** at this head; the earlier
+1780-test conversion result remains historical at its recorded candidate only.
+
+An earlier full-validation attempt in the linked worktree had two V11 repository-observation
+failures because a linked worktree stores `.git` as a pointer file: one test expected `OBSERVED`
+but got `UNKNOWN`, and another attempted `.git/index` and received `ENOENT`. Those V11 tests are
+outside this correction's write scope and were not changed. In a normal clone, both tests passed;
+the full suite then passed at 1820/1820 on this substantive head.
+
+### Exact-head hosted disposition
+
+GitHub PR #407 was observed on the exact substantive head above: **61 / 61 checks SUCCESS, 0
+failure, 0 pending**. The four required ruleset contexts all succeeded. Security/quality checks,
+including Gitleaks, Trivy, CodeQL, Dependency Review, Socket, SonarCloud and Codecov patch, succeeded.
+Release assurance and the same exact package tarball passed on Ubuntu, Windows and macOS. CodeRabbit
+reported a successful status with the automated review skipped because automatic reviews are
+disabled; that status is not represented as a code review.
+
+| Check group | Exact-head result |
+| --- | --- |
+| Required contexts: Repository validation, Pipeline integrity, Gitleaks secrets, Trivy filesystem and configuration | 4 / 4 SUCCESS |
+| V1.1 release assurance | Ubuntu, Windows, macOS SUCCESS |
+| Same exact V1.1 tarball assurance | Ubuntu, Windows, macOS SUCCESS |
+| SonarCloud Code Analysis, CodeQL, Dependency Review, Socket Security, Node coverage LCOV, codecov/patch | SUCCESS |
+| All check runs | 61 / 61 SUCCESS, 0 failed, 0 pending |
+
+Evidence URLs: [PR #407](https://github.com/KayzenRoot/gef-bootstrap/pull/407), [Repository
+validation](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772922/job/114976256768),
+[Pipeline integrity](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772839/job/114976256062),
+[Gitleaks](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772751/job/114976256647),
+[Trivy](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772751/job/114976256563),
+[V1.1 release assurance matrix](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38298772894),
+[CodeQL](https://github.com/KayzenRoot/gef-bootstrap/runs/114976739979),
+[SonarCloud](https://sonarcloud.io/dashboard?id=KayzenRoot_gef-bootstrap&pullRequest=407), and
+[Codecov patch](https://app.codecov.io/gh/KayzenRoot/gef-bootstrap/pull/407).
+
+The evidence-only commit carrying this section is separate from the substantive head. Its exact
+branch-tip SHA and its own fresh provider disposition are recorded in the PR body and Issue #394
+after that commit's checks complete; no source/test change is made by that evidence-only commit.
+
+### Review thread state and remaining gate
+
+After posting the replies below, a GitHub GraphQL query against PR #407 confirmed all three
+authorized review threads `isResolved: true` while the PR head was still substantive head
+`3b430b8405fd205c6dc8c1cc2ab611479b413309`:
+
+| Root comment | Thread ID | Reply | GraphQL state |
+| --- | --- | --- | --- |
+| #4202551990 | `PRRT_kwDOUYMQCc6pvJyn` | [Reply](https://github.com/KayzenRoot/gef-bootstrap/pull/407#discussion_r4251750233) | `isResolved: true` |
+| #4205797960 | `PRRT_kwDOUYMQCc6p3GR1` | [Reply](https://github.com/KayzenRoot/gef-bootstrap/pull/407#discussion_r4251751160) | `isResolved: true` |
+| #4206749335 | `PRRT_kwDOUYMQCc6p5bsY` | [Reply](https://github.com/KayzenRoot/gef-bootstrap/pull/407#discussion_r4251752096) | `isResolved: true` |
+
+The source/test implementation is ready for the owner’s exact-head semantic audit under
+`GBS_MOD_WO_001_IMPLEMENTATION_READY_FOR_OWNER_AUDIT` at substantive head
+`3b430b8405fd205c6dc8c1cc2ab611479b413309`. The evidence-only closeout commit and its fresh
+exact-head provider checks remain to be completed and reported in the PR body and Issue #394. No
+merge, checkpoint promotion, ruleset change, tag, release or npm publication occurred.
