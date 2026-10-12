@@ -1,6 +1,6 @@
 # GEF Bootstrap
 
-**Governed Engineering Framework Bootstrap · V1.0.0**
+**Governed Engineering Framework Bootstrap · stable v1.1.2 · patch candidate v1.1.3 not released**
 
 A production-accepted, evidence-first engineering bootstrap for starting **new projects** and adopting **existing/brownfield projects** with deterministic planning, Work Orders, context locks, policy guardrails, checkpoints, evidence, exact-head assurance, Git/GitHub governance, recovery, diagnostics, documentation and performance-aware execution.
 
@@ -27,9 +27,18 @@ Core capabilities include project discovery and identity, planning/source packs,
 
 GitHub CLI is optional. GitHub capability/authentication is treated separately from local GEF operation.
 
-## Install from source
+## Install stable CLI
 
-GEF Bootstrap V1 is currently distributed as a **source workspace**, not as a published npm package or standalone executable. This distinction is intentional: do not use `npm install -g gef-bootstrap` unless a future release explicitly publishes a CLI package.
+The current production-accepted npm release is `@gef-bootstrap/cli@1.1.2`. The 1.1.3 parallel-module feature is **not yet published**; use the candidate branch only for governed development and validation. Do not use the unrelated package name `gef-bootstrap`.
+
+```bash
+npm install --global @gef-bootstrap/cli@1.1.2
+gef --version
+```
+
+## Historical V1.0.0 source installation
+
+The original V1.0.0 remains available as a source workspace for historical reproducibility.
 
 ```bash
 git clone https://github.com/KayzenRoot/gef-bootstrap.git
@@ -78,9 +87,9 @@ For a new project, establish canonical sources and a Work Order before mutation.
 
 ## Release
 
-**Latest stable:** `v1.0.0`
+**Latest stable:** `v1.1.2`
 
-See `CHANGELOG.md` and `docs/releases/v1.0.0.md` for release notes, validated scope, known distribution boundaries and upgrade guidance. GitHub automatically provides source `.zip` and `.tar.gz` archives for the tag/release.
+See `CHANGELOG.md`, `docs/INSTALLATION.md` and historical `docs/releases/v1.0.0.md` for release notes, validated scope, known distribution boundaries and upgrade guidance. GitHub automatically provides source `.zip` and `.tar.gz` archives for the tag/release.
 
 ## Security and assurance
 
