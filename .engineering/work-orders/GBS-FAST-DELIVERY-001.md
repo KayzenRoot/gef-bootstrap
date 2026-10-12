@@ -44,7 +44,7 @@ Continue the existing canonical V1.2 work-order dependency sequence for U12-03 a
 ## CLASSIFICATION
 - NECESSARY for *first measured fast-delivery pilot*: F1-F4 + a small bounded F5 pilot where predecessor gates pass. This is a planning priority, **not** blanket admission.
 - IMPORTANT: F6 capabilities according to actual proven deficits and dependency ordering, never indiscriminately installed.
-- FUTURE: wholesale Symphony/GSD/Gas Town import, complex Hive convergence and omnipresent background services.
+- FUTURE: wholesale Symphony/GSD/Gas Town import, complex cross-platform convergence and omnipresent background services.
 - OUT OF SCOPE: unbounded swarms, self-approved merge/checkpoint, bypassing rulesets, disabling checks, any unnecessary paid/cloud service, speculative V1.2 credit, publication without OIDC/artifact verification.
 
 ## FILES / SOURCES TO READ
