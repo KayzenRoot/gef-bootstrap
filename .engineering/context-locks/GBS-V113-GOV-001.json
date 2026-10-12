@@ -36,8 +36,33 @@
     "package.json",
     "package-lock.json"
   ],
-  "postMergeCi": "NOT_VERIFIED",
+  "postMergeCi": "PUSH_CHECKS_PASS_RECORDED__SCHEDULED_GITLEAKS_FAILURE_UNRESOLVED",
   "checkpointPromotion": "NOT_AUTHORIZED",
   "release": "NOT_ADMITTED",
-  "stopCondition": "GBS_V113_GOV_001_POST_MERGE_EVIDENCE_REQUIRED_BEFORE_CHECKPOINT_PROMOTION"
+  "stopCondition": "GBS_V113_GOV_001_POST_MERGE_EVIDENCE_REQUIRED_BEFORE_CHECKPOINT_PROMOTION",
+  "postMergeCiInitialPlanningSnapshot": "NOT_VERIFIED",
+  "postMergeEvidence20261012": {
+    "recordSource": "https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128164546",
+    "observedCommit": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+    "pushChecks": "PASS_REPORTED_FROM_AUTHENTICATED_GH_API",
+    "pushCheckRunIds": "SEE_ISSUE_434_RECIPT_AND_DIRECT_GH_API",
+    "scheduledScannerRunId": 38253721487,
+    "scheduledScannerJobs": {
+      "gitleaks": {
+        "id": 114826269082,
+        "conclusion": "FAILURE"
+      },
+      "trivy": {
+        "id": 114826268794,
+        "conclusion": "SUCCESS"
+      }
+    },
+    "redactedFindingsSource": "https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128530795",
+    "findingCountReported": 21,
+    "findingDisposition": "STATIC_TRIAGE_ONLY_NOT_SECURITY_ACCEPTANCE",
+    "securityGate": "BLOCKED_PENDING_OWNER_SECURITY_VERDICT_AND_REQUIRED_REVALIDATION",
+    "checkpointPromotion": "NOT_AUTHORIZED",
+    "release": "NOT_ADMITTED",
+    "note": "Original NOT_VERIFIED snapshot retained as historical observation; push pass does not negate later scheduled all-refs scanner failure."
+  }
 }
