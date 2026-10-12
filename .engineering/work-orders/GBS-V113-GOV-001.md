@@ -1,11 +1,11 @@
 # GBS-V113-GOV-001 — Post-merge canonical checkpoint promotion planning
 
-**State:** PLANNING_ONLY / PROPOSED_NOT_ADMITTED / POST_MERGE_CI_NOT_VERIFIED
+**State:** PLANNING_ONLY / PROPOSED_NOT_ADMITTED / PUSH_CHECKS_RECORDED / SCHEDULED_GITLEAKS_FAILURE_BLOCKS_PROMOTION
 **Risk:** ELEVATED (PROJECT_STATE + one-time ADR-0011 exception)
 **Issue:** #434; predecessor implementation Issue #432 / PR #433
 **Exact planning base:** `main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`
 **Planning branch:** `docs/v113-gov001-postmerge-plan`
-**Target promotion branch:** not assigned until fresh Context Lock and exact post-merge evidence are approved
+**Target promotion branch:** not assigned until fresh Context Lock, exact post-merge proof and Owner/Security disposition of the scheduled Gitleaks failure are approved
 **Executor:** ChatGPT governance planning / owner audit; Codex retains code/test/CI authorship under ADR-0008 for future Work Orders.
 
 ## OBJECTIVE
@@ -19,7 +19,14 @@ Create the bounded, auditable plan to promote only the proven result of GBS-V113
 - Exact PR-head assurance: 17/17 workflow runs SUCCESS, CodeRabbit 8/8 resolved, 33/33 targeted tests, 1692/1692 validate in normal clone; these are **pre-merge PR** proofs, not post-merge proofs.
 - `main` checkpoint as fetched at planning base: `.engineering/CHECKPOINT.md` blob `ea31e6cab8964aca4b0f74296b2953e6da51d6d7`; `.engineering/CHECKPOINT.json` blob `468dec80ad5a48c044e4282d87481a8267f44866`; v1.1.2 PRODUCTION_ACCEPTED and V1.2 3/10.
 - `AGENTS.md`, SOURCE-HIERARCHY, CHECKPOINT md/json, Decisions Ledger, ADR-0008, ADR-0011 (proposed), original WO/Context Lock/Evidence, Scope, Requirements, Architecture, Security, Test & Benchmark Plan, DoD, Deployment and GITHUB-FIRST-CODEX-WORKFLOW are required before admission.
-- GitHub connector returns pull-request-triggered runs for commit checks and **cannot certify main push check-runs** for the squash commit. Initial combined legacy statuses returned empty. Therefore post-merge outcome remains **UNKNOWN / NOT_VERIFIED**, not PASS.
+- The initial GitHub connector read could not certify push-triggered checks (historical snapshot). A later authenticated `gh api` check-run audit recorded their PASS on the exact squash SHA in Issue #434; a separate scheduled all-refs Gitleaks scan on the same SHA FAILED. See dated reconciliation below. Neither evidence channel can be silently substituted for the other.
+
+## Current gate reconciliation — 2026-10-12
+- [Post-merge push check receipt](https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128164546): Repository Validation, CodeQL, Codecov Coverage Pilot, Free Security Pilot and Pipeline Integrity were reported SUCCESS at `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f`, pending inclusion of per-check IDs in the promotion execution packet.
+- Scheduled all-refs Free Security Pilot run [38253721487](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38253721487): Gitleaks job `114826269082` **FAILURE**; Trivy job `114826268794` **SUCCESS**. Scanner failure remains an active gate and is not masked by passing PR/push checks.
+- [Redacted triage](https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128530795): 21 `generic-api-key` findings were cataloged as historical coordinates and categorized through static contextual inspection, not through secret verification or an Owner/Security risk disposition. No credential values should be copied into the repository evidence.
+- Before a promotion Work Order can be admitted: independently validate the triage disposition under Security policy, remediate any real/unknown credential, run the appropriate scanner without weakening its coverage, confirm exact post-merge diff/blob parity, then compile a fresh promotion Context Lock. No policy change, allowlist or release is implied by the planning documents.
+- Source-of-truth progress remains v1.1.2 published and V1.2 3/10. All new statuses here are **planning observations**; no checkpoint or release credit.
 
 ## SCOPE
 Phase A, allowed now (this draft PR): the present planning Work Order, planning Context Lock, proposed checkpoint delta and preflight evidence note. No product or canonical checkpoint edits.
