@@ -449,3 +449,73 @@ audit and approve this exact proposal before a fresh active Context Lock is esta
 may current main be integrated through the normal governed path and the affected tests/required
 checks be rerun on the resulting exact head. Until then, the old binding remains historical and
 unusable for mutation; no implementation, checkpoint promotion, policy change or merge is authorized.
+
+## 14. Post-integration rebind candidate — exact current main (2026-10-12)
+
+**Status:** `PROPOSED_PENDING_OWNER_LOCK_AUDIT` / `NOT_YET_ACTIVE`. This is an append-only
+candidate authorized for preparation by [Issue #394 comment #6130033905](https://github.com/KayzenRoot/gef-bootstrap/issues/394#issuecomment-6130033905),
+dispatched by [Issue #437 comment #6130050613](https://github.com/KayzenRoot/gef-bootstrap/issues/437#issuecomment-6130050613).
+The owner disposition is `APPROVED_FOR_REBIND_PREPARATION` and `NOT_INDEPENDENT`; it does not
+activate the Context Lock or approve implementation corrections. All older base/head bindings,
+execution counts, findings and provider results remain historical and unchanged.
+
+### Revalidated repository state
+
+| Fact | Observed value |
+| --- | --- |
+| Remote `main` before integration | `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1` |
+| Remote PR branch before integration | `feat/mod/wo-001-agent-native-gate@68690bac8a612b00a9fb5d5e8795ad9aed82b7eb` |
+| PR #407 | OPEN / DRAFT; target branch `main` |
+| Historical implementation base | `921493797728a43aadc9f7840c954ce7e3ebc416` |
+| Merge base before integration | `921493797728a43aadc9f7840c954ce7e3ebc416` |
+| Main advance / PR changed paths | 13 / 26 |
+| Exact and case-insensitive path overlap | 0 |
+| Context Lock fingerprints at current main | 28 / 28 canonical and implementation sources matched |
+| Workflow fingerprints at current main | 10 / 10 matched |
+| Canonical checkpoint files changed by main advance | 0 |
+| Active main ruleset | `Main Branch Protection`, active; required contexts: Repository validation, Pipeline integrity, Gitleaks secrets, Trivy filesystem and configuration |
+
+The path comparison is evidence of non-overlap only. The bounded runtime/import review followed
+the #433 CLI dispatch and confirmed that the exact `parallel` subcommand is the only new dispatch;
+other CLI invocations keep the existing launch path. `parallel.mjs` dynamically imports the
+unchanged `packages/cli/src/registry.ts` output for `runGitProbe`. That registry uses the existing
+`@gef-bootstrap/preflight/toolchain` subpath and kernel at runtime; its root preflight/contracts
+imports are type-only. The package export maps `./toolchain` directly to `dist/toolchain.js`, so
+the #407 preflight root-barrel/change-impact additions are not reached by this path. No direct
+import into the new GEF Gate, tiered context compiler or test-impact closure was found. This is a
+bounded static dependency review, not a universal semantic proof.
+
+### Normal integration into the same PR worktree
+
+The deterministic merge-tree preflight was clean (result tree
+`8544ad3b0c46f3773b182e48e411f7d5b8815550`). After verifying the remote branch still pointed to
+`68690bac8a612b00a9fb5d5e8795ad9aed82b7eb` and remote main still pointed to
+`bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`, current main was integrated into the detached PR
+worktree with a normal ORT merge and no conflicts:
+
+- Integration commit: `5ab082eed6e03f5e99dd7f7bc75309dacf1e998b`
+- First parent: `68690bac8a612b00a9fb5d5e8795ad9aed82b7eb`
+- Second parent: `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`
+- Result tree: `8544ad3b0c46f3773b182e48e411f7d5b8815550`
+- Resulting merge base with current main: `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1`
+
+No force-push, rebase, history rewrite, checkpoint edit, product-code correction, policy change,
+merge to main, tag, release or npm publication occurred. The prior exact-head checks were not
+reused as acceptance. New exact-head hosted checks must be observed on the pushed candidate.
+
+### Proposed rebind — not active
+
+The append-only proposal `GBS-MOD-WO-001-REBIND-CANDIDATE-POST-MAIN-INTEGRATION-2026-10-12`
+is recorded in `.engineering/context-locks/GBS-MOD-WO-001.json`. It proposes
+`implementationBase=main@bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1` and records the actual
+post-integration head `5ab082eed6e03f5e99dd7f7bc75309dacf1e998b`. The historical active binding and
+all old fingerprint maps remain untouched. The candidate explicitly remains `NOT_YET_ACTIVE`
+pending exact-head owner audit and coherent validation. Do not begin H1/M1/M2 corrections until a
+fresh active lock is accepted and effective.
+
+Validation in this preparation step was limited to Git ancestry/merge-tree, exact ref and blob
+fingerprints, path comparison, source/import review, active-ruleset read and `git diff --check`.
+Local product tests were not run. Automatic exact-head checks are to be observed after the
+candidate evidence commit is pushed; this document does not claim they have passed.
+
+Stop condition requested: `GBS_MOD_WO_001_FRESH_ACTIVE_LOCK_CANDIDATE_READY_FOR_AUDIT`.

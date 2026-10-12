@@ -497,6 +497,94 @@
       },
       "nextGate": "Owner exact-head audit of this append-only proposal; after approval, establish a fresh active Context Lock and integrate current main through the normal governed path before any further implementation validation.",
       "noImplementationOrPromotion": true
+    },
+    {
+      "proposalId": "GBS-MOD-WO-001-REBIND-CANDIDATE-POST-MAIN-INTEGRATION-2026-10-12",
+      "supersedesProposalId": "GBS-MOD-WO-001-REBIND-PROPOSAL-2026-10-12",
+      "status": "PROPOSED_PENDING_OWNER_LOCK_AUDIT",
+      "authorization": {
+        "issue": 394,
+        "comment": 6130033905,
+        "missionIssue": 437,
+        "missionComment": 6130050613,
+        "ownerDisposition": "APPROVED_FOR_REBIND_PREPARATION_NOT_INDEPENDENT"
+      },
+      "proposalOnly": true,
+      "activeBindingMutation": "NONE",
+      "historicalBinding": {
+        "admissionBaseSha": "d81759c534da0bc0ac0df7a3f5372ed8d1e0089e",
+        "implementationBaseSha": "921493797728a43aadc9f7840c954ce7e3ebc416",
+        "pullRequest": 407,
+        "branch": "feat/mod/wo-001-agent-native-gate",
+        "preIntegrationHead": "68690bac8a612b00a9fb5d5e8795ad9aed82b7eb",
+        "historicalRecordsPreserved": true
+      },
+      "proposedBinding": {
+        "implementationBase": {
+          "ref": "main",
+          "sha": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+          "v12Credit": "3/10",
+          "v12Stop": "GBS_V12_WO_002_PROMOTED"
+        },
+        "implementationPullRequest": 407,
+        "implementationBranch": "feat/mod/wo-001-agent-native-gate",
+        "integrationCommitSha": "5ab082eed6e03f5e99dd7f7bc75309dacf1e998b",
+        "candidateHeadBeforeEvidenceOnlyCommit": "5ab082eed6e03f5e99dd7f7bc75309dacf1e998b",
+        "integrationTree": "8544ad3b0c46f3773b182e48e411f7d5b8815550",
+        "integrationParents": [
+          "68690bac8a612b00a9fb5d5e8795ad9aed82b7eb",
+          "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1"
+        ],
+        "mergeBaseWithProposedMain": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+        "candidateContainsProposedMain": true,
+        "activeStatus": "NOT_YET_ACTIVE",
+        "historyRewriteOrForcePush": "NOT_PERFORMED"
+      },
+      "integrationPreflight": {
+        "remoteMainBeforeIntegration": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+        "remotePullRequestHeadBeforeIntegration": "68690bac8a612b00a9fb5d5e8795ad9aed82b7eb",
+        "pullRequestState": "OPEN_DRAFT",
+        "mainChangedPathsFromHistoricalBase": 13,
+        "candidateChangedPathsFromHistoricalBase": 26,
+        "caseInsensitivePathOverlap": 0,
+        "mergeTreePreflight": "CLEAN",
+        "actualMergeStrategy": "ORT_NO_CONFLICTS",
+        "actualMergeTreeMatchesPreflight": true,
+        "checkpointFilesChangedByMainAdvance": 0,
+        "canonicalAndImplementationFingerprints": {
+          "matched": 28,
+          "total": 28,
+          "mismatches": 0
+        },
+        "workflowFingerprints": {
+          "matched": 10,
+          "total": 10,
+          "mismatches": 0
+        },
+        "requiredMainRulesetContexts": [
+          "Repository validation",
+          "Pipeline integrity",
+          "Gitleaks secrets",
+          "Trivy filesystem and configuration"
+        ],
+        "semanticDependencyClosure": {
+          "dispatch": "The CLI shim selects parallel.mjs only for the exact parallel subcommand; all other invocations retain the prior CLI launch path.",
+          "parallelRuntimeImport": "parallel.mjs dynamically imports the unchanged CLI registry only for runGitProbe; its other imports are Node built-ins.",
+          "registryRuntimeDependencies": "The registry runtime-imports the existing preflight toolchain subpath and kernel; root contract/preflight imports are type-only.",
+          "preflightExport": "The toolchain subpath maps directly to dist/toolchain.js; the PR's preflight root barrel and change-impact addition are not on this import path.",
+          "gateEngineReferences": "No direct CLI registry/parallel import into the new GEF Gate, tiered context compiler, or test-impact closure modules was found.",
+          "checkpoint": "Canonical checkpoint files are unchanged by the main advance."
+        },
+        "scopeLimit": "Static import/object and Git merge review; no product-code correction or validation campaign was performed."
+      },
+      "validationAfterIntegration": {
+        "localProductTests": "NOT_RUN",
+        "historicalHeadChecksReusedAsAcceptance": false,
+        "newExactHeadHostedChecks": "TRIGGER_AFTER_PUSH; PENDING_OBSERVATION"
+      },
+      "nextGate": "Owner exact-head audit of this rebind candidate; the fresh lock remains inactive until accepted, and H1/M1/M2 corrections remain unauthorized until the active lock is effective.",
+      "implementationCorrectionsPerformed": "NONE",
+      "checkpointPromotion": "NOT_AUTHORIZED_NOT_PERFORMED"
     }
   ]
 }
