@@ -276,6 +276,8 @@ test('repository, Work Order and base-ref bindings are present and structurally 
     ['repository', 'repository-without-owner'],
     ['workOrderId', 'not a stable id'],
     ['baseRef', 'invalid ref name'],
+    ['baseRef', 'refs/heads/a..b'],
+    ['baseRef', 'refs/heads/main.'],
   ]) {
     const result = decide({ [field]: value });
     assert.equal(result.ok, false, `${field}=${value} must be refused`);

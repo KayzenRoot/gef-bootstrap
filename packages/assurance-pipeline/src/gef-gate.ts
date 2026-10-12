@@ -257,11 +257,17 @@ function isRepositoryIdentifier(value: unknown): value is string {
 }
 
 function isBaseRef(value: unknown): value is string {
-  if (typeof value !== 'string' || value.length === 0 || value.length > 255 || !/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(value)) {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value.length > 255 ||
+    value.includes('..') ||
+    !/^[A-Za-z0-9][A-Za-z0-9._/-]*$/.test(value)
+  ) {
     return false;
   }
   return value.split('/').every((segment) =>
-    segment.length > 0 && segment !== '.' && segment !== '..' && !segment.startsWith('.') && !segment.endsWith('.lock'),
+    segment.length > 0 && segment !== '.' && segment !== '..' && !segment.startsWith('.') && !segment.endsWith('.') && !segment.endsWith('.lock'),
   );
 }
 
