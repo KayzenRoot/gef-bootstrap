@@ -411,3 +411,28 @@ governance-only and does not grant any V1.2 product credit or release authorizat
 **Historical pre-merge STOP (satisfied for PR #442):** `GBS_MOD_WO_001_CANONICAL_OVERLAY_READY_FOR_EXACT_HEAD_OWNER_AUDIT`.
 **Effective after owner-authorized squash on `main@be286dbd0174156c6965482cdbdf1b16c9237534`:**
 `GBS_MOD_WO_001_PROMOTED` (governance milestone only; no V1.2 credit or npm 1.1.3 release).
+
+## GBS-MOD-WO-002 — canonical admission effectivity sync (PROPOSED; NOT YET EFFECTIVE)
+
+**State proposed:** `WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`. This entry is an **unmerged admission candidate** and becomes effective **only if this exact-head governance PR is independently revalidated, owner-authorized for protected merge, and integrated into `main`**. No assertion of promotion, admission effectivity or active implementation is made before that event. **STOP BEFORE MERGE.**
+
+- Program [#393](https://github.com/KayzenRoot/gef-bootstrap/issues/393); existing Work Order `GBS-MOD-WO-002` [Issue #396](https://github.com/KayzenRoot/gef-bootstrap/issues/396). This is **agent-native Evidence Bundle + Audit Packet governance**, not V1.2 product implementation or the historical `GBS-V12-WO-002`.
+- Baseline/source authority: `main@a2cab3cef86ee84fe131923142d42d5a31d498d8` after protected [PR #448](https://github.com/KayzenRoot/gef-bootstrap/pull/448) squash. Audit of this exact main: **7/7 CheckRuns SUCCESS, 4/4 push workflows SUCCESS at first attempt, 5/5 jobs SUCCESS**, and **4/4 active ruleset #23566111 required contexts SUCCESS**. See [owner evidence and authorization receipt](https://github.com/KayzenRoot/gef-bootstrap/issues/396#issuecomment-6144520913). Proven source #448 head `914b21c3d18ba3b02f15c7cee82b630db1f22462`; 2/2 changed Git blobs identical to protected squash main.
+- Dependency: predecessor `GBS-MOD-WO-001` [#394](https://github.com/KayzenRoot/gef-bootstrap/issues/394) remains `GBS_MOD_WO_001_PROMOTED` under `constructionGovernance.gefGate`; no gate-routing narrowing was implemented.
+- **Owner-governed admission risk:** `ELEVATED` (not a secret/security policy amendment), selected explicitly in [Issue #396 decision #6144520913](https://github.com/KayzenRoot/gef-bootstrap/issues/396#issuecomment-6144520913). Escalate if actual work touches HIGH_ASSURANCE, credentials/secrets, provider writes, rulesets/scanner settings, release permissions, or any other higher-risk authority. The independent specialist gate remains mandatory wherever canonical Security requires it; Owner/ChatGPT review is `NOT_INDEPENDENT`.
+- **Exactly authorized future implementation WRITE_ALLOWED**, **not effective while this PR is open**:
+  1. `packages/evidence-engine/src/**`
+  2. `packages/assurance-pipeline/src/**`
+  3. `packages/contracts/src/**`
+  4. `tests/gbs-mod-wo-002-*.test.mjs`
+  5. `.engineering/evidence/GBS-MOD-WO-002-*`
+  6. `.engineering/checkpoint-deltas/GBS-MOD-WO-002-*`
+- `WRITE_FORBIDDEN`: `packages/proof-graph/src/**` and broader `tests/**` without separate correction, both canonical CHECKPOINT files during implementation, `.github/workflows/**`, scanner/Security/rulesets, `packages/cli/**`, dependency lock/manifests, releases/tags/npm/deployment, unrelated product/profile paths, and mutating external provider calls. Existing scope and frozen adversarial A1–A8 in Issue #396 are unchanged. `Checkpoint Delta` output is proposal-only.
+- **After a future separately authorized protected squash of this governance sync**: project governance admission may be marked `WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`; compilation and independent exact-new-main validation of the **fresh implementation Context Lock** are still REQUIRED, and **Codex implementation is NOT_AUTHORIZED / NOT_STARTED**. The old `GBS-MOD-WO-002-POST446-ADMISSION-CANDIDATE.json` was bound to earlier main and is not an active lock. This PR does not create or activate a new execution lock.
+- Production and release boundaries are unchanged: V1 **1088/1088 PRODUCTION_ACCEPTED**, stable `@gef-bootstrap/cli@1.1.2`, universal V1.2 **3/10 (30%)** with `7/10` remaining, no new credit, and active **product/implementation** Work Order remains `NONE`. The `GBS-MOD-WO-002` governance admission does not silently change V1 or V1.2 execution ownership.
+- Historical [Issue #439](https://github.com/KayzenRoot/gef-bootstrap/issues/439): scheduled all-ref Gitleaks FAILURE, 21 UNKNOWN dispositions, no proven qualified independent SEC-10 reviewer; npm 1.1.3 release remains **BLOCKED / NOT_PUBLISHED**. Passing scoped CI never waives this.
+- This proposal changes only the paired canonical `.engineering/CHECKPOINT.md` and `.engineering/CHECKPOINT.json`. Merge/promotion requires **new, exact-HEAD, separate Owner authorization after checks**. No lock activation, Codex start, other merge, or release permission is implied.
+
+**Pre-merge STOP:** `GBS_MOD_WO_002_CANONICAL_ADMISSION_SYNC_READY_FOR_EXACT_HEAD_OWNER_AUDIT`.
+**Proposed post-merge stage (not yet reached):** `WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`.
+
