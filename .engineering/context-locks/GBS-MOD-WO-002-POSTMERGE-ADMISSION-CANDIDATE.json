@@ -80,10 +80,77 @@
       "Trivy filesystem and configuration"
     ],
     "reportedRulesetIdAtPriorMain": 23566111,
-    "currentMainRulesetRevalidation": "REQUIRED_BEFORE_ADMISSION",
-    "currentMainPostSquashPushCheckRuns": "NOT_VERIFIED",
-    "currentMainPostSquashPushWorkflowRuns": "NOT_VERIFIED",
-    "candidateFilesAndEffectiveLockShaRevalidation": "REQUIRED_AFTER_ANY_NEW_PR_HEAD_OR_MAIN_SHA"
+    "currentMainRulesetRevalidation": "ACTIVE_RULESET_23566111_EXACT_REQUIRED_CONTEXTS_VERIFIED",
+    "currentMainPostSquashPushCheckRuns": "7/7_COMPLETED_SUCCESS_EXACT_SHA",
+    "currentMainPostSquashPushWorkflowRuns": "4/4_COMPLETED_SUCCESS_ATTEMPT_1_EXACT_SHA",
+    "candidateFilesAndEffectiveLockShaRevalidation": "REQUIRED_AFTER_ANY_NEW_PR_HEAD_OR_MAIN_SHA",
+    "currentMainPostSquashPushJobs": "5/5_COMPLETED_SUCCESS_EXACT_SHA",
+    "currentMainRequiredContexts": "4/4_COMPLETED_SUCCESS_EXACT_SHA",
+    "provenance": {
+      "sourceSha": "04cc0c31ee72baf1e7b57245134905fe77954686",
+      "authMode": "CONNECTED_GITHUB_REST_READ_ONLY",
+      "ruleset": {
+        "id": 23566111,
+        "name": "Main Branch Protection",
+        "enforcement": "active",
+        "requiredContexts": [
+          "Repository validation",
+          "Pipeline integrity",
+          "Gitleaks secrets",
+          "Trivy filesystem and configuration"
+        ]
+      },
+      "pushWorkflowRuns": [
+        {
+          "name": "Repository Validation",
+          "id": 38371052541,
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Security CodeQL",
+          "id": 38371052511,
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Pipeline Integrity",
+          "id": 38371052475,
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Free Security Pilot",
+          "id": 38371052472,
+          "attempt": 1,
+          "conclusion": "success"
+        }
+      ],
+      "requiredCheckRuns": [
+        {
+          "name": "Repository validation",
+          "id": 115207846861
+        },
+        {
+          "name": "Pipeline integrity",
+          "id": 115207847174
+        },
+        {
+          "name": "Gitleaks secrets",
+          "id": 115207847093
+        },
+        {
+          "name": "Trivy filesystem and configuration",
+          "id": 115207846980
+        }
+      ],
+      "otherPassedCheckRuns": [
+        "Analyze TypeScript",
+        "Socket Security: Project Report",
+        "SonarCloud Code Analysis"
+      ],
+      "readBack": "7_CHECK_RUNS_ALL_COMPLETED_SUCCESS_4_PUSH_RUNS_SUCCESS_5_JOBS_SUCCESS"
+    }
   },
   "risk": {
     "issueOriginal": "STANDARD_PROVISIONAL",
@@ -177,8 +244,8 @@
     "sourceMainBoundToSquash": true,
     "exactSourceBlobLineageVerified": true,
     "originalPrHeadCi": "15/15_SUCCESS",
-    "squashMainPushCiVerified": false,
-    "currentRulesetContextsVerified": false,
+    "squashMainPushCiVerified": true,
+    "currentRulesetContextsVerified": true,
     "ownerSeparateRiskScopeWriteAdmission": false,
     "actualImplementationBranchAuthorized": false,
     "actualImplementationWorkAuthorized": false,
@@ -194,6 +261,7 @@
     "This is a new postmerge SHA-bound CANDIDATE, not a replacement or silent activation of historical planning records.",
     "Source base stays pinned to current main at creation but subsequent main moves require fresh lock rebind.",
     "GitHub connector returned zero postmerge push runs/statuses on this SHA; absence is NOT_VERIFIED, not a pass or failure.",
-    "Approval of PR #444 merge is not approval of WO-002 admission, package implementation, release or security risk."
+    "Approval of PR #444 merge is not approval of WO-002 admission, package implementation, release or security risk.",
+    "Authenticated connected GitHub REST current-main SHA check-runs and push workflow evidence was verified after initial NOT_VERIFIED poll; no implication of WO-002 admission."
   ]
 }
