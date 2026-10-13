@@ -1,0 +1,177 @@
+{
+  "schema": "GEF_PLANNING_CONTEXT_LOCK_V1",
+  "kind": "GBS_MOD_WO_004_ARCHITECTURE_DRIFT_PLANNING_ONLY",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "workOrderId": "GBS-MOD-WO-004",
+  "issue": 398,
+  "programIssue": 393,
+  "status": "PLANNING_ONLY_NOT_ADMITTED",
+  "proposedRisk": "STANDARD_SUBJECT_TO_ACTUAL_IMPACT_ESCALATION",
+  "actor": "CHATGPT_GITHUB_DOCUMENTATION_ONLY",
+  "codeActorCurrent": "CODEX_ONLY_BY_EFFECTIVE_ADR_0008",
+  "implementationAuthorized": false,
+  "canWriteCode": false,
+  "doNotExecute": true,
+  "doNotLaunchCodex": true,
+  "canUpdateCI": false,
+  "canUpdateSecurity": false,
+  "canPromoteCheckpoint": false,
+  "canMerge": false,
+  "canRelease": false,
+  "ownerAuditIndependent": false,
+  "base": {
+    "branch": "main",
+    "sha": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "requiresRebindOnDrift": true
+  },
+  "planningArtifacts": [
+    {
+      "path": ".engineering/work-orders/GBS-MOD-WO-004.md",
+      "gitBlobSha": "119a2cf93a76d771d018ae6a9c26656684d4f1f6"
+    },
+    {
+      "path": ".engineering/planning/GBS-MOD-WO-004-DRIFT-RULES.md",
+      "gitBlobSha": "0a7066d391999db28455c4115fb2773c6beb72ac"
+    }
+  ],
+  "sourceFingerprints": [
+    {
+      "path": "AGENTS.md",
+      "gitBlobSha": "492f1d4ae66abe8749a082d68decc81a3b4fd702"
+    },
+    {
+      "path": ".engineering/SOURCE-HIERARCHY.md",
+      "gitBlobSha": "bedc10c97d28154efe59ff43fc1d175add37f568"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.md",
+      "gitBlobSha": "866d0fcef2253560a45a8dbca147d9cd451d0960"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "gitBlobSha": "af21419f47fc9f106abb49203b5b52c135a66ee1"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "gitBlobSha": "5c2b44db3805dbd5329dc99a8a9b774360c4136a"
+    },
+    {
+      "path": ".engineering/SECURITY.md",
+      "gitBlobSha": "799206278e9f5bc02aec07c8e6d4489c530bb320"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+      "gitBlobSha": "f3246fc074b450da986ad3dcda76f3d005dc8c6a"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "gitBlobSha": "569479a700f1956bdb2d97be30a27aaccf592b7e"
+    },
+    {
+      "path": ".engineering/TEST-BENCHMARK-PLAN.md",
+      "gitBlobSha": "88768b891280e9b1e7ad752fec23f158e856c5ea"
+    },
+    {
+      "path": "packages/source-pack/src/public.ts",
+      "gitBlobSha": "e4ae465e2445f4728192e4adc6940a4452a861b9"
+    },
+    {
+      "path": "packages/preflight/src/change-impact.ts",
+      "gitBlobSha": "5aff784c3f68e295a9b6a98ef4086d324a69fb54"
+    },
+    {
+      "path": "packages/contracts/src/work-order.ts",
+      "gitBlobSha": "9a665ae1a4dff817349d48d799dfaa105eb5aff8"
+    },
+    {
+      "path": "packages/task-context-compiler/src/s07-tiered-context-lock.ts",
+      "gitBlobSha": "2e03843a8bf24582e50f1a58add82598e69f8ab0"
+    },
+    {
+      "path": "packages/assurance-pipeline/src/gef-gate.ts",
+      "gitBlobSha": "aaafa732305f20c4738429a8b6e29879d2156819"
+    }
+  ],
+  "blockers": [
+    {
+      "kind": "PROJECT_STATE_CONFLICT",
+      "pr": 451,
+      "description": "WO-002 temporal CHECKPOINT.md versus JSON conflict after #449",
+      "correctionMergeAuthorized": false
+    },
+    {
+      "kind": "WO004_RULE_OWNERSHIP_UNADMITTED",
+      "issue": 398,
+      "description": "No current real package-edge rule set, implementation paths or effective Context Lock"
+    },
+    {
+      "kind": "SCHEMA_REGISTRY_NOT_EFFECTIVE",
+      "issue": 427
+    },
+    {
+      "kind": "APP_CONTRACT_SAFETY_NOT_EFFECTIVE",
+      "issue": 429
+    },
+    {
+      "kind": "SECURITY_HISTORY_21_UNKNOWN",
+      "issue": 439,
+      "description": "Historical all-ref Gitleaks unresolved, npm 1.1.3 BLOCKED"
+    },
+    {
+      "kind": "ACTOR_POLICY_NOT_EFFECTIVE",
+      "issue": 452,
+      "description": "Actor allocation #453 planning only"
+    }
+  ],
+  "planningWriteAllowed": [
+    ".engineering/work-orders/GBS-MOD-WO-004.md",
+    ".engineering/planning/GBS-MOD-WO-004-DRIFT-RULES.md",
+    ".engineering/context-locks/GBS-MOD-WO-004-PLANNING.json"
+  ],
+  "implementationWriteAllowed": [],
+  "prohibitedScope": [
+    "packages/**",
+    "tests/**",
+    ".github/**",
+    "AGENTS.md",
+    ".engineering/CHECKPOINT.md",
+    ".engineering/CHECKPOINT.json",
+    ".engineering/ARCHITECTURE.md",
+    ".engineering/SECURITY.md",
+    ".engineering/decisions/**",
+    "package.json",
+    "package-lock.json",
+    "npm publish",
+    "release",
+    "provider writes",
+    "ruleset changes"
+  ],
+  "originalAcceptanceCriteria": [
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7"
+  ],
+  "proposedRuleIDsNotYetEffective": [
+    "ARD-C01",
+    "ARD-C02",
+    "ARD-C03",
+    "ARD-C04",
+    "ARD-C05",
+    "ARD-B06"
+  ],
+  "planningReadbackChecks": [
+    "Actual main exact SHA matches base",
+    "Only 3 new planning documents in branch diff",
+    "Work Order and Design Git blob SHAs equal lock fingerprints",
+    "All source SHA identities match actual repo main; mismatch marks this planning lock STALE",
+    "JSON parses; all implementation, CI, Security, merge, release, Codex permissions deny",
+    "Original Issue #398 A1-A7 unchanged",
+    "Hosted checks fetched for exact PR HEAD, not inferred as green",
+    "Owner exact-head review NOT_INDEPENDENT"
+  ],
+  "stopCondition": "GBS_MOD_WO_004_ARCHITECTURE_DRIFT_PLANNING_READY_FOR_EXACT_HEAD_AUDIT_NOT_ADMITTED"
+}
