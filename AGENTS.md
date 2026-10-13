@@ -76,6 +76,10 @@ stale bindings, conflicts, orphan work or unresolved blockers stop execution; re
 M20 response contract; then state one canonical next necessary action, or `NONE`/`UNKNOWN` with the
 blocking evidence. Never select a successor from chat history or skip an admitted Work Order.
 
+## Optional task skills (advisory only)
+
+When matching `mattpocock-skills`, `Jev` or other task skills are actually installed and available, they may assist with discovery or document triage but never confer GitHub write/actor/implementation authority. Do not assume a skill, command or plugin is installed; do not install one, incur charges or send secrets merely to satisfy this router. Prefer deterministic Git, targeted text/AST search, hashes and required hosted tests before optional model-assisted retrieval. Read `docs/agents/issue-tracker.md` for exhaustive issue/dependency wayfinding and owner verification, `docs/agents/domain.md` for the real GEF ADR/Source Pack paths, and `docs/agents/triage-labels.md` for optional non-authoritative label roles. A missing **optional** glossary is not a canonical-source failure; missing **required** authority is fail-closed under Source Hierarchy. All existing Codex-only authorship, Source Pack, STOP, Security and review gates remain effective.
+
 ## Completion
 
 A green test is evidence, not completion, and a merged PR is not `MODULE_DONE`. Completion needs the
