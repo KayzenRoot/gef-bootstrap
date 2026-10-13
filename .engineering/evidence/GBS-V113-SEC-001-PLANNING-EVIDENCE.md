@@ -57,3 +57,32 @@ FINDING_REGISTER_JSON_END
 ## Planning checks and status
 
 Preflight observed: clean isolated planning branch at the exact base SHA; Issue #439 is OPEN and PLANNED_NOT_ADMITTED; no existing Issue #439 PR/remote planning branch was found before drafting. Documentation, JSON syntax, register cardinality/uniqueness/dispositions, source hashes and diff whitespace are to be validated at candidate HEAD. Any hosted check not observed to completion must be labeled PENDING. This bundle reports planning only and makes no claim that an implementation or security gate passed.
+
+
+## 2026-10-13 — Supplemental current-main structural proof (non-authoritative)
+
+**Scope:** The original `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1` planning base and all historical run/source identifiers above remain unchanged. Current observed `main@e0356f1de5dae2351d8701a76c736a22832929c2` (confirmed exact live main before this additive note). **This is an evidence supplement, NOT a rebinding of the executable or planning Context Lock**. The existing JSON lock pins older `AGENTS.md`/CHECKPOINT blobs and is STALE for any present-day canonical admission, implementation or promotion. Paired canonical checkpoints remain `STATE_CONFLICT`; [corrective PR #451](https://github.com/KayzenRoot/gef-bootstrap/pull/451) is only PREPARE/REVIEW authorized, no merge.
+
+**Direct actual repository-file check:** Starting from immutable redacted register [#434 comment 6128530795](https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128530795), fetched all **21/21 historical `commit:path` Git file objects** through authenticated GitHub and verified each indicated 1-based line exists. Only value-blind line syntax / nearby structural tokens were inspected and *no source or matched token content was copied to this evidence*. The 21 tuples represent **11 unique `blob SHA + target line`** targets, which limits duplicated structural review but **NOT** the required 21/21 independent per-fingerprint Security decisions. Confirmed categories are **13 JavaScript declarations, 3 JavaScript environment references, 3 Markdown prose lines, 1 Markdown table row and 1 valid JSON key/property**. This is NOT an AST semantic finding or assertion that the scanner match is harmless.
+
+| Distinct Git blob prefix + 1-based line | Original finding ordinals, preserving all 21 |
+| --- | --- |
+| `9e27a9328114:40` | 01 |
+| `c6f5eac9c3c1:154` | 02 |
+| `c4c8fd924eea:6` | 03, 09, 10 |
+| `d3b7afa3c4e5:139` | 04, 20, 21 |
+| `b58b7214abfe:7` | 05, 16, 17 |
+| `1775a754a055:6` | 06, 18, 19 |
+| `fad03d03deff:7` | 07 |
+| `b7a86c7918:5` | 08, 11, 12 |
+| `2adc0fd4c008:7` | 13 |
+| `2f17b84f0ff3:7` | 14 |
+| `6a7b23bfd9ef:7` | 15 |
+
+**Canonical evidence receipt:** [#439 comment 6157229527](https://github.com/KayzenRoot/gef-bootstrap/issues/439#issuecomment-6157229527), checked and saved with complete 21-to-11 correspondence; [#434 current-state note](https://github.com/KayzenRoot/gef-bootstrap/issues/434). Original scheduled full-history [run 38253721487](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38253721487): Gitleaks job **FAILURE** at scan step, Trivy **SUCCESS**. PR-head Free Security Pilot success is NOT proof the scheduled `--all --diff-merges=separate` mode passes. The scheduled failure remains evidence.
+
+**Safety status:** All **21/21 current dispositions UNKNOWN**; reviewer SEC-10 qualification/independence not verified, no owner Security action approving any exception. No raw Match, secret, credentials, scanner log, history rewrite, suppression, test, workflow, required-check or config change by this supplement. Redacted structural evidence does not prove credential nonexistence. No `BENIGN_PROVEN` claim; every UNKNOWN still blocks Security gate, #434 promotion and #435 npm 1.1.3. Published CLI **1.1.2** stable, historical V1 **1088/1088**, V1.2 **3/10** remain. Owner/ChatGPT audit **NOT_INDEPENDENT**.
+
+**Next allowable gate:** obtain a qualified independent Security reviewer through an explicitly authorized review path; establish verified source/matcher/lineage dispositions for all 21 findings without exposing values; request separately authorized source-current narrow remediation and after-proof, with adversarial new-secret controls, full all-ref history scan, independent security review and distinct protected integration gates. The historical `baseSha` and old Source Pack locks are **NOT** accepted as a current-source admission simply because this supplemental paragraph observes a newer main.
+
+**STOP:** `GBS_V113_SEC_001_SOURCE_STRUCTURE_EVIDENCE_SUPPLEMENT_PREPARED_21_UNKNOWN_CURRENT_LOCK_STALE`.
