@@ -393,9 +393,11 @@ The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED`
 
 ## Agent-native GEF Gate governance overlay — GBS-MOD-WO-001
 
-**Effectivity:** This is a **PROPOSED CANONICAL PROMOTION in an unmerged PR**. The following
-`GBS_MOD_WO_001_PROMOTED` status becomes effective ONLY after exact-HEAD owner audit and a
-subsequent separately authorized protected merge. Preparing these files is NOT promotion.
+**Effectivity:** `GBS_MOD_WO_001_PROMOTED` became effective on `main` only after the
+explicitly owner-authorized protected squash of [PR #442](https://github.com/KayzenRoot/gef-bootstrap/pull/442),
+merge commit `be286dbd0174156c6965482cdbdf1b16c9237534`. The source-bound owner
+pre-merge audit was `5496575132` (`APPROVED / NOT_INDEPENDENT`). This effective milestone is
+governance-only and does not grant any V1.2 product credit or release authorization.
 
 - Work Order `GBS-MOD-WO-001`; tracking Issue [#394](https://github.com/KayzenRoot/gef-bootstrap/issues/394); implementation PR [#407](https://github.com/KayzenRoot/gef-bootstrap/pull/407).
 - Audited implementation HEAD `13bb9bc875c52ec3ed9dc470a3b08c86965c9024`; owner review `5495759117` `APPROVED / NOT_INDEPENDENT`.
@@ -406,5 +408,6 @@ subsequent separately authorized protected merge. Preparing these files is NOT p
 - The nested JSON `constructionGovernance.gefGate` does not replace existing `constructionGovernance` authority, release, product or V1.2 fields.
 - Historical scheduled all-ref Gitleaks [FAILURE #38253721487](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38253721487) and 21/21 UNKNOWN items under [Issue #439](https://github.com/KayzenRoot/gef-bootstrap/issues/439) remain unresolved. No waiver, suppressions, npm 1.1.3 publication or release authority.
 
-**Pre-merge STOP:** `GBS_MOD_WO_001_CANONICAL_OVERLAY_READY_FOR_EXACT_HEAD_OWNER_AUDIT`.
-**Post-separate-owner-authorized promotion merge (not reached):** `GBS_MOD_WO_001_PROMOTED`.
+**Historical pre-merge STOP (satisfied for PR #442):** `GBS_MOD_WO_001_CANONICAL_OVERLAY_READY_FOR_EXACT_HEAD_OWNER_AUDIT`.
+**Effective after owner-authorized squash on `main@be286dbd0174156c6965482cdbdf1b16c9237534`:**
+`GBS_MOD_WO_001_PROMOTED` (governance milestone only; no V1.2 credit or npm 1.1.3 release).
