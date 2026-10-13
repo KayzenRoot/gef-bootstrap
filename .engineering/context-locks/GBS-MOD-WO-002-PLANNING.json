@@ -16,7 +16,9 @@
       "POLICY_OR_RULESET_CHANGE",
       "UNKNOWN_REQUIRED_EVIDENCE",
       "HIGH_ASSURANCE_REQUIREMENT"
-    ]
+    ],
+    "proposedAdmissionTier": "ELEVATED",
+    "rationale": "Evidence provenance/attestation and hosted-provider trust boundary affect owner audit truth; Security T10. Owner must approve tier and revalidate at admission."
   },
   "repository": "KayzenRoot/gef-bootstrap",
   "ownerAccount": "KayzenRoot",
@@ -73,7 +75,7 @@
   },
   "planningWorkOrder": {
     "path": ".engineering/work-orders/GBS-MOD-WO-002.md",
-    "blobSha": "7183010a0e039c7a136d1a38ebaea1b1963fc1ff"
+    "blobSha": "b55b51614ef3161cb0383420905951c0ce54287c"
   },
   "proposedNavigation": {
     "writeAllowedAfterAdmittedOnly": [
@@ -135,6 +137,7 @@
     "Historical check success is evidence about two named SHAs, not current/future WO-002 checks",
     "This file is not an admitted Work Order or implementation Context Lock",
     "All implementation authority requires separate governed Owner admission and fresh-current-main effective Context Lock",
-    "Do not claim release v1.1.3, independent Security pass, or measured CI savings"
+    "Do not claim release v1.1.3, independent Security pass, or measured CI savings",
+    "Proposed admission tier ELEVATED is not effective, historical Issue #396 STANDARD planning risk is superseded only after explicit governed owner decision."
   ]
 }
