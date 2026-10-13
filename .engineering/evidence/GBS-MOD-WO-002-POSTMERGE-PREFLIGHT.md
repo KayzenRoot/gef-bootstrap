@@ -16,23 +16,29 @@
   - `.engineering/evidence/GBS-MOD-WO-002-ADMISSION-PREFLIGHT.md`: `4ee2d351f437a9e441d164eec6817d960cb1b65b`
 - The canonical `.engineering/CHECKPOINT.md` and `.engineering/CHECKPOINT.json` remain unchanged; `GBS_MOD_WO_001_PROMOTED`, V1 1088/1088, V1.2 3/10 and stable CLI `@gef-bootstrap/cli@1.1.2` are unchanged.
 
-## Exact postmerge main CI
+## Exact postmerge main CI — authenticated PASS on exact SHA
 
-**`NOT_VERIFIED`**, not PASS or FAIL. Linked GitHub workflow lookup for squash `04cc0c31ee72baf1e7b57245134905fe77954686` returned zero records, and combined legacy GitHub commit statuses returned zero. Additional unauthenticated public REST fetch could not access the relevant API results. These surfaces are not sufficient to assert GitHub check-run conclusions for this push SHA.
+**7/7 check-runs COMPLETED/SUCCESS**, **4/4 push workflow runs COMPLETED/SUCCESS (each run_attempt=1)**, **5/5 workflow jobs COMPLETED/SUCCESS**, and **4/4 active ruleset-required status contexts COMPLETED/SUCCESS** at `main@04cc0c31ee72baf1e7b57245134905fe77954686`. This is **new authenticated, direct GitHub REST evidence**, separate from the PR-head 15/15 hosted results.
 
-**Next read-only exact-SHA commands for Codex Desktop (no mutations):**
+The first connector's summarized workflow lookup returned 0 and legacy combined commit statuses also returned 0; those did not prove pass or failure. A later **authenticated GitHub REST query** successfully returned check-runs and push workflows for the exact squash SHA and resolved the limitation. Data is from source-linked GitHub resources, not executor prose.
 
-```bash
-gh api --paginate repos/KayzenRoot/gef-bootstrap/commits/04cc0c31ee72baf1e7b57245134905fe77954686/check-runs
-gh api 'repos/KayzenRoot/gef-bootstrap/actions/runs?head_sha=04cc0c31ee72baf1e7b57245134905fe77954686&event=push&per_page=100'
-```
+**Exact source-bound push workflow evidence (attempt 1):**
 
-Record redacted `head_sha`, check-run ID, context, status/conclusion, workflow/job/attempt IDs, required ruleset contexts and their latest first-attempt/rerun disposition. No raw token values. Attach proof in existing Issue #396. **Do not infer PASS from prior PR-head checks.**
+| Workflow | Run ID | Jobs | Conclusion |
+|---|---:|---:|---|
+| Repository Validation | [38371052541](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38371052541) | 1/1 | SUCCESS |
+| Security CodeQL | [38371052511](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38371052511) | 1/1 | SUCCESS |
+| Pipeline Integrity | [38371052475](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38371052475) | 1/1 | SUCCESS |
+| Free Security Pilot | [38371052472](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38371052472) | 2/2 (Gitleaks/Trivy) | SUCCESS |
+
+**Active repository ruleset [23566111](https://github.com/KayzenRoot/gef-bootstrap/rules/23566111)** named `Main Branch Protection` was fetched authenticated and is `enforcement=active`. Its exact four required contexts are `Repository validation` (CheckRun 115207846861), `Pipeline integrity` (115207847174), `Gitleaks secrets` (115207847093), `Trivy filesystem and configuration` (115207846980). All four were completed SUCCESS for `04cc0c31ee72baf1e7b57245134905fe77954686`. Additional check-runs `Analyze TypeScript`, `Socket Security: Project Report`, `SonarCloud Code Analysis` also completed SUCCESS. No rerun substitution or SHA mismatch was observed.
+
+**Scope caveat:** these results prove the GEF Bootstrap *post-merge push* technical gates for this SHA. They do NOT approve the WO-002 risk/scope/write set, admit WO-002, activate a lock, resolve historical scheduled all-refs Gitleaks Issue #439 or publish release v1.1.3.
 
 ## Postmerge candidate lock (NOT EFFECTIVE)
 
 - Exact source main for prospective admission: `04cc0c31ee72baf1e7b57245134905fe77954686` (verified at preparation).
-- New immutable candidate file: `.engineering/context-locks/GBS-MOD-WO-002-POSTMERGE-ADMISSION-CANDIDATE.json`, Git blob `d0c773b92f794f60fe5b1c41eb8836977c8c881c`.
+- New immutable candidate file: `.engineering/context-locks/GBS-MOD-WO-002-POSTMERGE-ADMISSION-CANDIDATE.json`, Git blob `18899d048855fdceccd2c346eb63810db8dc9a5e`.
 - Preserves 24 source fingerprints from the prior snapshot; **24/24 directly re-fetched at new main** and all matched. Also binds four newly merged WO-002 planning files and their exact Git blobs.
 - Candidate risk floor `ELEVATED` is only **recommended**, from hosted provider evidence forgery/tampering trust risk. Owner-approved tier remains NULL; any stronger Security/credential/provider-write trigger requires higher-risk assessment.
 - Candidate future WRITE_ALLOWED ceiling remains bounded to M24 Evidence, M27 Assurance, Contracts, focused WO-002 tests and evidence/proposed delta paths; broader Proof Graph/tests remain conditional on separate consent. No canonical checkpoint, workflow/ruleset, scanner, CLI/dependency, release or npm writes.
@@ -41,7 +47,7 @@ Record redacted `head_sha`, check-run ID, context, status/conclusion, workflow/j
 
 ## Pending Owner gates
 
-1. Authenticated exact-squash push check-runs and required-context results on `04cc0c31ee72baf1e7b57245134905fe77954686`, objectively verified and linked.
+1. **SATISFIED:** authenticated exact-squash push check-runs, workflow jobs/attempts and all four required active ruleset contexts on `04cc0c31ee72baf1e7b57245134905fe77954686`, verified and source-linked above.
 2. Owner exact-head review of this new **postmerge candidate PR** and branch CI.
 3. Separate explicit governed decision on WO-002 admission, risk tier (recommended ELEVATED), write ceiling and S4 integration. Implementation must not begin before real effective Context Lock authority on the then-current main.
 4. Frozen A1–A8 remain future **implementation** acceptance, not a pass claim on this evidence-only branch.
