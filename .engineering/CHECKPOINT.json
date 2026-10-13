@@ -207,6 +207,72 @@
       "routingNarrowing": "NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION",
       "productionCredit": "NONE",
       "v12Credit": "UNCHANGED_3_OF_10"
+    },
+    "agentNativeEvidenceWo002": {
+      "workOrder": "GBS-MOD-WO-002",
+      "issue": 396,
+      "programIssue": 393,
+      "status": "WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+      "effectivity": "ONLY_AFTER_SEPARATELY_OWNER_AUTHORIZED_PROTECTED_CANONICAL_SYNC_MERGE_TO_MAIN",
+      "admissionDecision": "CONDITIONAL_OWNER_AUTHORIZED_PENDING_CANONICAL_PROMOTION",
+      "ownerAuthorizationIssueComment": 6144520913,
+      "predecessorWorkOrder": "GBS-MOD-WO-001",
+      "predecessorStatus": "GBS_MOD_WO_001_PROMOTED",
+      "sourceMainBeforeSync": "a2cab3cef86ee84fe131923142d42d5a31d498d8",
+      "planningPr": 448,
+      "planningPrMergeSha": "a2cab3cef86ee84fe131923142d42d5a31d498d8",
+      "planningPrExactSourceHead": "914b21c3d18ba3b02f15c7cee82b630db1f22462",
+      "planningPrPostMergeChecks": "7/7_SUCCESS",
+      "planningPrPostMergePushWorkflows": "4/4_SUCCESS_FIRST_ATTEMPT",
+      "planningPrPostMergePushJobs": "5/5_SUCCESS",
+      "planningPrRequiredContexts": "4/4_SUCCESS_RULESET_23566111",
+      "risk": "ELEVATED",
+      "writeAllowed": [
+        "packages/evidence-engine/src/**",
+        "packages/assurance-pipeline/src/**",
+        "packages/contracts/src/**",
+        "tests/gbs-mod-wo-002-*.test.mjs",
+        ".engineering/evidence/GBS-MOD-WO-002-*",
+        ".engineering/checkpoint-deltas/GBS-MOD-WO-002-*"
+      ],
+      "writeConditionalProhibited": [
+        "packages/proof-graph/src/**",
+        "tests/** beyond tests/gbs-mod-wo-002-*.test.mjs"
+      ],
+      "writeForbidden": [
+        ".engineering/CHECKPOINT.md",
+        ".engineering/CHECKPOINT.json",
+        ".github/workflows/**",
+        "packages/cli/**",
+        "package.json",
+        "package-lock.json",
+        "security/scanner settings",
+        "rulesets/branch protection",
+        "provider writes",
+        "release/tag/deploy/npm",
+        "unrelated product/profile files"
+      ],
+      "acceptanceCriteria": [
+        "A1",
+        "A2",
+        "A3",
+        "A4",
+        "A5",
+        "A6",
+        "A7",
+        "A8"
+      ],
+      "independentSecurityReview": "NOT_CLAIMED",
+      "ownerAuditIndependence": "NOT_INDEPENDENT",
+      "implementationCredit": "NONE",
+      "v12Credit": "UNCHANGED_3_OF_10",
+      "activeImplementationWorkOrder": "NONE",
+      "implementationAuthorized": false,
+      "implementationStarted": false,
+      "actualEffectiveImplementationContextLock": null,
+      "implementationLock": "REQUIRED_FRESH_POST_SYNC_MAIN",
+      "stopState": "GBS_MOD_WO_002_ADMISSION_EFFECTIVE_ONLY_AFTER_OWNER_APPROVED_SYNC_MERGE",
+      "securityIssue439": "HISTORICAL_ALL_REFS_21_UNKNOWN_RELEASE_1_1_3_BLOCKED"
     }
   },
   "v11": {
