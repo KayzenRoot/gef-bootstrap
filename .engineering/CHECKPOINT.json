@@ -192,7 +192,22 @@
     "historyV1AcceptedWeightPreserved": 1088,
     "pendingRelease11ForwardPort": true,
     "forwardPortConstraint": "RECONCILE_CONFLICTING_D-0062_BRANCH_LINEAGE",
-    "stopState": "GBS_GOV_CODEX_ONLY_GITHUB_FIRST_PROMOTED_MAIN"
+    "stopState": "GBS_GOV_CODEX_ONLY_GITHUB_FIRST_PROMOTED_MAIN",
+    "gefGate": {
+      "status": "GBS_MOD_WO_001_PROMOTED",
+      "workOrder": "GBS-MOD-WO-001",
+      "issue": 394,
+      "implementationPr": 407,
+      "auditedHead": "13bb9bc875c52ec3ed9dc470a3b08c86965c9024",
+      "ownerAuditReview": 5495759117,
+      "auditIndependence": "NOT_INDEPENDENT",
+      "squashMergeSha": "ea6e5fb0e2ce0374ca81fb759f62558818a7c184",
+      "postMergeCheckRuns": "8/8_SUCCESS_RECORDED",
+      "postMergePushWorkflows": "5/5_SUCCESS_RECORDED",
+      "routingNarrowing": "NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION",
+      "productionCredit": "NONE",
+      "v12Credit": "UNCHANGED_3_OF_10"
+    }
   },
   "v11": {
     "releaseLine": "1.1.x",

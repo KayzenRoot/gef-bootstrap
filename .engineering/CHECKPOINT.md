@@ -390,3 +390,21 @@ The accepted V1 production ledger (`1088/1088`) and V1.1.2 `PRODUCTION_ACCEPTED`
 **Pre-merge stop:** `GBS_V12_GOV_005_WO002_PROMOTION_READY_FOR_OWNER_AUDIT`.
 
 **Post-merge terminal state:** `GBS_V12_WO_002_PROMOTED`.
+
+## Agent-native GEF Gate governance overlay — GBS-MOD-WO-001
+
+**Effectivity:** This is a **PROPOSED CANONICAL PROMOTION in an unmerged PR**. The following
+`GBS_MOD_WO_001_PROMOTED` status becomes effective ONLY after exact-HEAD owner audit and a
+subsequent separately authorized protected merge. Preparing these files is NOT promotion.
+
+- Work Order `GBS-MOD-WO-001`; tracking Issue [#394](https://github.com/KayzenRoot/gef-bootstrap/issues/394); implementation PR [#407](https://github.com/KayzenRoot/gef-bootstrap/pull/407).
+- Audited implementation HEAD `13bb9bc875c52ec3ed9dc470a3b08c86965c9024`; owner review `5495759117` `APPROVED / NOT_INDEPENDENT`.
+- Squash of PR #407 into prior main `ea6e5fb0e2ce0374ca81fb759f62558818a7c184`. Audited source identity: 26/26 changed Git blobs matched original reviewed implementation.
+- Exact-squash post-merge check-runs `8/8_SUCCESS_RECORDED`; push workflows `5/5_SUCCESS_RECORDED` (Repository Validation, Pipeline Integrity, Free Security Pilot, Security CodeQL, Codecov Coverage Pilot), as supported by [authenticated receipt](https://github.com/KayzenRoot/gef-bootstrap/issues/394#issuecomment-6132786846).
+- Gate routing narrowing `NOT_ENFORCED_PENDING_RULESET_AUTHORIZATION`. No CI fan-out reduction or elapsed-time/token saving is claimed; no workflow, required check or ruleset is changed.
+- Governance overlay only: production credit `NONE`; accepted V1 **1088/1088**, stable V1.1.2 `PRODUCTION_ACCEPTED`, universal V1.2 **3/10** and remaining seven unaccepted obligations are unchanged. Active module and active product Work Order remain `NONE`.
+- The nested JSON `constructionGovernance.gefGate` does not replace existing `constructionGovernance` authority, release, product or V1.2 fields.
+- Historical scheduled all-ref Gitleaks [FAILURE #38253721487](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38253721487) and 21/21 UNKNOWN items under [Issue #439](https://github.com/KayzenRoot/gef-bootstrap/issues/439) remain unresolved. No waiver, suppressions, npm 1.1.3 publication or release authority.
+
+**Pre-merge STOP:** `GBS_MOD_WO_001_CANONICAL_OVERLAY_READY_FOR_EXACT_HEAD_OWNER_AUDIT`.
+**Post-separate-owner-authorized promotion merge (not reached):** `GBS_MOD_WO_001_PROMOTED`.
