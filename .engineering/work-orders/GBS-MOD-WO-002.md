@@ -4,7 +4,7 @@
 **State:** `PLANNING_CANDIDATE_NOT_ADMITTED`. No implementation authority.  
 **Exact planning baseline:** `main@7ebd39fdce8906d963c9d4605ae16bce5e3b6d46`; preceding squash `be286dbd0174156c6965482cdbdf1b16c9237534`.  
 **Admission:** separately explicit governed Owner decision PENDING; subsequent freshly compiled effective implementation Context Lock PENDING.  
-**Risk:** `STANDARD` per Issue #396, provisional. Raise to ELEVATED/HIGH_ASSURANCE if actual source, security, provider trust, side-effect or review obligations so require. Never downgrade.  
+**Risk:** Issue #396 initially planned `STANDARD`. **Conservative admission recommendation: `ELEVATED` (PROPOSED, NOT EFFECTIVE)** because this contract consumes untrusted hosted-provider evidence and will influence owner audit/acceptance decisions (Security T10: evidence/attestation forgery). This is not itself an authorized security or release change. On a future source-bound gate, escalate further to `HIGH_ASSURANCE` for secret/security-policy, provider mutation, independent specialist review or other higher-assurance impact; never downgrade on convenience. A separate Owner risk decision must admit the final tier.  
 **Product credit:** NONE; V1 1088/1088, V1.1.2 stable, V1.2 3/10 unchanged.
 
 ## OBJECTIVE
