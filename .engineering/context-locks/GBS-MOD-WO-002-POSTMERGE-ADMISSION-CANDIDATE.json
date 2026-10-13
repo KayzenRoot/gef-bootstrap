@@ -1,0 +1,267 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "WO_002_POSTMERGE_ADMISSION_CONTEXT_LOCK_CANDIDATE_NON_EFFECTIVE",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "programIssue": 393,
+  "workOrder": "GBS-MOD-WO-002",
+  "issue": 396,
+  "state": "POST_MERGE_CANDIDATE_NOT_EFFECTIVE",
+  "admissionStatus": "PLANNED_NOT_ADMITTED",
+  "effectiveImplementationAuthority": false,
+  "doNotExecute": true,
+  "sourceMain": {
+    "ref": "refs/heads/main",
+    "sha": "04cc0c31ee72baf1e7b57245134905fe77954686",
+    "atPreparation": "CURRENT",
+    "postMergeOfPlanningPr": 444
+  },
+  "predecessor": {
+    "workOrder": "GBS-MOD-WO-001",
+    "state": "GBS_MOD_WO_001_PROMOTED",
+    "checkpointMdBlob": "ceb506e4ae5ef9d6b82f0556070eaf36f3170a27",
+    "checkpointJsonBlob": "2b2b9b3b8c4e9b5f6684d784d06eb014a9a29c1c"
+  },
+  "mergedPlanningProvenance": {
+    "pr": 444,
+    "ownerAuthorizedSquashSourceHead": "edf40dd28a52b8c41c7b4f33a9dce910c1da85cd",
+    "priorMain": "7ebd39fdce8906d963c9d4605ae16bce5e3b6d46",
+    "squashMainSha": "04cc0c31ee72baf1e7b57245134905fe77954686",
+    "ownerAuditReviewId": 5500841901,
+    "ownerAuditIndependence": "NOT_INDEPENDENT",
+    "prHeadWorkflowExecutions": "15/15_SUCCESS",
+    "changedPaths": [
+      ".engineering/work-orders/GBS-MOD-WO-002.md",
+      ".engineering/context-locks/GBS-MOD-WO-002-PLANNING.json",
+      ".engineering/context-locks/GBS-MOD-WO-002-ADMISSION-CANDIDATE.json",
+      ".engineering/evidence/GBS-MOD-WO-002-ADMISSION-PREFLIGHT.md"
+    ],
+    "changedPathBlobIdentity": "4/4_MATCHED"
+  },
+  "sourceBindings": {
+    "historicalPremergeSourceFingerprints": {
+      "AGENTS.md": "492f1d4ae66abe8749a082d68decc81a3b4fd702",
+      "packages/AGENTS.md": "fa14a7eb190d722382507402f12d82a72a934237",
+      "tests/AGENTS.md": "b08e069681f685c2cd8a567cc0cb5a837583bb78",
+      ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+      ".engineering/CHECKPOINT.md": "ceb506e4ae5ef9d6b82f0556070eaf36f3170a27",
+      ".engineering/CHECKPOINT.json": "2b2b9b3b8c4e9b5f6684d784d06eb014a9a29c1c",
+      ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+      ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+      ".engineering/REQUIREMENTS.md": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+      ".engineering/SCOPE.md": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
+      ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+      ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+      ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+      ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
+      ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
+      ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md": "b734c110d48311e339295fdd834ebff91a8cc461",
+      "packages/evidence-engine/src/public.ts": "af2ab94b97108f2f2acb640acaeac0b8eeae689e",
+      "packages/assurance-pipeline/src/public.ts": "ea77b45f6194888a7337baae7fa494beccb35d47",
+      "packages/assurance-pipeline/src/gef-gate.ts": "aaafa732305f20c4738429a8b6e29879d2156819",
+      "packages/proof-graph/src/public.ts": "d92ec11631aba2e5a1a9586653bd3668a2941fb2",
+      "packages/contracts/src/work-order.ts": "9a665ae1a4dff817349d48d799dfaa105eb5aff8",
+      "packages/preflight/src/change-impact.ts": "5aff784c3f68e295a9b6a98ef4086d324a69fb54",
+      "packages/task-context-compiler/src/s07-tiered-context-lock.ts": "2e03843a8bf24582e50f1a58add82598e69f8ab0",
+      "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+    },
+    "historicalFingerprintVerificationAtNewMain": "24/24_MATCHED_DIRECT_PROVIDER_FETCH",
+    "mergedPlanningFiles": {
+      ".engineering/work-orders/GBS-MOD-WO-002.md": "b55b51614ef3161cb0383420905951c0ce54287c",
+      ".engineering/context-locks/GBS-MOD-WO-002-PLANNING.json": "5304a7a63d8b293eff1f34330d69bfbd48b98648",
+      ".engineering/context-locks/GBS-MOD-WO-002-ADMISSION-CANDIDATE.json": "0095229e5032310b16563bd7756566e3e317a0bb",
+      ".engineering/evidence/GBS-MOD-WO-002-ADMISSION-PREFLIGHT.md": "4ee2d351f437a9e441d164eec6817d960cb1b65b"
+    },
+    "sourceFingerprintCount": 24,
+    "mergedPlanningFileCount": 4,
+    "requiredContextsReportedAtPriorMain": [
+      "Repository validation",
+      "Pipeline integrity",
+      "Gitleaks secrets",
+      "Trivy filesystem and configuration"
+    ],
+    "reportedRulesetIdAtPriorMain": 23566111,
+    "currentMainRulesetRevalidation": "ACTIVE_RULESET_23566111_EXACT_REQUIRED_CONTEXTS_VERIFIED",
+    "currentMainPostSquashPushCheckRuns": "7/7_COMPLETED_SUCCESS_EXACT_SHA",
+    "currentMainPostSquashPushWorkflowRuns": "4/4_COMPLETED_SUCCESS_ATTEMPT_1_EXACT_SHA",
+    "candidateFilesAndEffectiveLockShaRevalidation": "REQUIRED_AFTER_ANY_NEW_PR_HEAD_OR_MAIN_SHA",
+    "currentMainPostSquashPushJobs": "5/5_COMPLETED_SUCCESS_EXACT_SHA",
+    "currentMainRequiredContexts": "4/4_COMPLETED_SUCCESS_EXACT_SHA",
+    "provenance": {
+      "sourceSha": "04cc0c31ee72baf1e7b57245134905fe77954686",
+      "authMode": "CONNECTED_GITHUB_REST_READ_ONLY",
+      "ruleset": {
+        "id": 23566111,
+        "name": "Main Branch Protection",
+        "enforcement": "active",
+        "requiredContexts": [
+          "Repository validation",
+          "Pipeline integrity",
+          "Gitleaks secrets",
+          "Trivy filesystem and configuration"
+        ]
+      },
+      "pushWorkflowRuns": [
+        {
+          "name": "Repository Validation",
+          "id": 38371052541,
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Security CodeQL",
+          "id": 38371052511,
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Pipeline Integrity",
+          "id": 38371052475,
+          "attempt": 1,
+          "conclusion": "success"
+        },
+        {
+          "name": "Free Security Pilot",
+          "id": 38371052472,
+          "attempt": 1,
+          "conclusion": "success"
+        }
+      ],
+      "requiredCheckRuns": [
+        {
+          "name": "Repository validation",
+          "id": 115207846861
+        },
+        {
+          "name": "Pipeline integrity",
+          "id": 115207847174
+        },
+        {
+          "name": "Gitleaks secrets",
+          "id": 115207847093
+        },
+        {
+          "name": "Trivy filesystem and configuration",
+          "id": 115207846980
+        }
+      ],
+      "otherPassedCheckRuns": [
+        "Analyze TypeScript",
+        "Socket Security: Project Report",
+        "SonarCloud Code Analysis"
+      ],
+      "readBack": "7_CHECK_RUNS_ALL_COMPLETED_SUCCESS_4_PUSH_RUNS_SUCCESS_5_JOBS_SUCCESS"
+    }
+  },
+  "risk": {
+    "issueOriginal": "STANDARD_PROVISIONAL",
+    "recommendedFloor": "ELEVATED",
+    "ownerApprovedTier": null,
+    "reason": "Provider attestation and check-run evidence are untrusted inputs influencing acceptance decisions; fail closed on falsified/stale identities, SEC T10.",
+    "highAssuranceTriggers": [
+      "SECURITY_SCANNER_OR_RULESET_MODIFICATION",
+      "SECRET_OR_CREDENTIAL_TOUCH",
+      "RELEASE_AUTHORITY",
+      "INDEPENDENT_SECURITY_REVIEW_SURFACE",
+      "PROVIDER_WRITE",
+      "UNCERTAIN_RULESET_OR_SOURCE_BOUNDS"
+    ],
+    "independentSecurityReview": "NOT_CLAIMED",
+    "securityIssue439": "21_UNKNOWN_ALL_REFS_HISTORICAL_GITLEAKS_FAILED_REVIEWER_UNAVAILABLE",
+    "releaseV113": "BLOCKED_NOT_PUBLISHED"
+  },
+  "scope": {
+    "objective": "Deterministic exact-HEAD GitHub-native Evidence Bundle and acceptance-to-proof audit packet, source-bound and fail-closed; no executor self-approval.",
+    "mustRead": [
+      "AGENTS.md",
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".engineering/SOURCE-HIERARCHY.md",
+      ".engineering/SECURITY.md",
+      ".engineering/ARCHITECTURE.md",
+      ".engineering/REQUIREMENTS.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/TEST-BENCHMARK-PLAN.md",
+      ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md",
+      ".engineering/work-orders/GBS-MOD-WO-002.md",
+      "packages/AGENTS.md",
+      "tests/AGENTS.md",
+      "packages/evidence-engine/src/public.ts",
+      "packages/assurance-pipeline/src/public.ts",
+      "packages/assurance-pipeline/src/gef-gate.ts",
+      "packages/contracts/src/work-order.ts",
+      "packages/proof-graph/src/public.ts"
+    ],
+    "candidateWriteAllowedNotEffective": [
+      "packages/evidence-engine/src/**",
+      "packages/assurance-pipeline/src/**",
+      "packages/contracts/src/**",
+      "tests/gbs-mod-wo-002-*.test.mjs",
+      ".engineering/evidence/GBS-MOD-WO-002-*",
+      ".engineering/checkpoint-deltas/GBS-MOD-WO-002-*"
+    ],
+    "conditionalAdditionalWritesRequireSeparateApproval": [
+      "packages/proof-graph/src/**",
+      "other tests/** paths",
+      ".engineering/work-orders/GBS-MOD-WO-002.md and effective Context Lock for factual state binding only"
+    ],
+    "writeForbidden": [
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".github/workflows/**",
+      "packages/cli/**",
+      "package.json",
+      "package-lock.json",
+      "security/scanner configurations",
+      "rulesets and branch protection",
+      "tags/releases/npm/deployment",
+      "unrelated V1.2 product/profile implementation"
+    ],
+    "outOfScope": [
+      "SELF_APPROVAL",
+      "MERGE",
+      "CHECKPOINT_PROMOTION",
+      "GITLEAKS_FINDING_DISPOSITION",
+      "SECURITY_POLICY_CHANGE",
+      "PROVIDER_MUTATION",
+      "NPM_PUBLISH",
+      "WO_003_DAG_ORCHESTRATION",
+      "PAID_REVIEW_DEPENDENCY"
+    ],
+    "executionAllowed": false,
+    "writeBoundaryEffectivity": "NONE_UNTIL_SEPARATE_GOVERNED_OWNER_ADMISSION_AND_CURRENT_MAIN_LOCK_PROMOTION"
+  },
+  "acceptanceFrozen": [
+    "A1_STALE_BASE_HEAD",
+    "A2_MISSING_PENDING_CHECK",
+    "A3_DUPLICATE_PROVIDER_CHECK_IDENTITY",
+    "A4_STALE_SHA_RERUN",
+    "A5_EXECUTOR_PROSE_NOT_AUTHORITY",
+    "A6_HEAD_INVALIDATES_PACKET",
+    "A7_PROVIDER_UNAVAILABLE_FAIL_CLOSED",
+    "A8_CRITERION_WITHOUT_PROOF_UNPROVEN"
+  ],
+  "admissionGates": {
+    "sourceMainBoundToSquash": true,
+    "exactSourceBlobLineageVerified": true,
+    "originalPrHeadCi": "15/15_SUCCESS",
+    "squashMainPushCiVerified": true,
+    "currentRulesetContextsVerified": true,
+    "ownerSeparateRiskScopeWriteAdmission": false,
+    "actualImplementationBranchAuthorized": false,
+    "actualImplementationWorkAuthorized": false,
+    "actualImplementationContextLockEffective": false,
+    "activeContextLockPath": null,
+    "actualImplementationBaseSha": null,
+    "currentMainShaMustRevalidate": true,
+    "separatelyGovernedPromotionRequired": true
+  },
+  "stopCondition": "GBS_MOD_WO_002_POSTMERGE_ADMISSION_LOCK_CANDIDATE_READY_FOR_OWNER_REVIEW",
+  "executionStop": "DO_NOT_EXECUTE_OR_PROMOTE_WITHOUT_EXPLICIT_OWNER_ADMISSION_AND_FRESH_LOCK_EFFECTIVITY",
+  "notes": [
+    "This is a new postmerge SHA-bound CANDIDATE, not a replacement or silent activation of historical planning records.",
+    "Source base stays pinned to current main at creation but subsequent main moves require fresh lock rebind.",
+    "GitHub connector returned zero postmerge push runs/statuses on this SHA; absence is NOT_VERIFIED, not a pass or failure.",
+    "Approval of PR #444 merge is not approval of WO-002 admission, package implementation, release or security risk.",
+    "Authenticated connected GitHub REST current-main SHA check-runs and push workflow evidence was verified after initial NOT_VERIFIED poll; no implication of WO-002 admission."
+  ]
+}
