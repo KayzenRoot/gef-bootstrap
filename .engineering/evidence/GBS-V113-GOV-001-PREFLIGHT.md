@@ -37,3 +37,16 @@ Plan may be reviewed, corrected and documented. Canonical promotion cannot proce
 - `GBS-V113-GOV-001` stays `PLANNING_ONLY / PROPOSED_NOT_ADMITTED`; checkpoint/ADR decision promotion and release issue #435 remain `NOT_AUTHORIZED`/`NOT_ADMITTED`. This reconciliation is a documentation correction **only**, not acceptance or implementation credit.
 
 **STOP:** `GBS_V113_GOV_001_POST_MERGE_EVIDENCE_REQUIRED_BEFORE_CHECKPOINT_PROMOTION`
+
+
+## 2026-10-13 — Reconciliation against present main and Security intake (planning only)
+
+**Historical evidence remains immutable:** The preceding PR #433 product implementation and post-squash base `bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1` are genuine old-source proof, **not** claims of current-main admission. Authenticated readback now observes `main@e0356f1de5dae2351d8701a76c736a22832929c2`. This PR's initial `.engineering/context-locks/GBS-V113-GOV-001.json` still binds old CHECKPOINT.md/json Git blob SHAs `ea31e6cab8964aca4b0f74296b2953e6da51d6d7` and `468dec80ad5a48c044e4282d87481a8267f44866`; current main contains `866d0fcef2253560a45a8dbca147d9cd451d0960` and `af21419f47fc9f106abb49203b5b52c135a66ee1`, respectively. **Context Lock STALE; no effective promotion/implementation or cross-main transitive CI PASS.**
+
+**New Security metadata only:** [Issue #439 comment 6157229527](https://github.com/KayzenRoot/gef-bootstrap/issues/439#issuecomment-6157229527) directly read all 21 historical `commit:path:line` redacted Gitleaks coordinates and mapped them to **11 unique Git blob+target-line** structures. All 21 original fingerprints remain, **21 UNKNOWN**, 0 `BENIGN_PROVEN`. The original scheduled [run #38253721487](https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38253721487) Gitleaks scan FAILED, Trivy succeeded. No independent, qualified SEC-10 Security reviewer has been verified. All steps before scanner in its failed job passed; that does not make the scan succeed, and PR-head success cannot replace `--all --diff-merges=separate` coverage.
+
+**Blocking authority:** Actual main paired canonical `CHECKPOINT.md` and `CHECKPOINT.json` currently have WO-002 temporal `STATE_CONFLICT`, after #449. Proposed narrow correction [PR #451](https://github.com/KayzenRoot/gef-bootstrap/pull/451) HEAD `3e8554ff940f2e9254119cdf8c489ee8946cbbfb` is OPEN/DRAFT and prior exact Owner instruction only permits PREPARE/REVIEW; protected merge **NOT AUTHORIZED**. It must not be merged under this governance planning PR. The long-lived #440 Security packet has its own DRAFT and historical lock; its newer redacted supplement is not a Security gate disposition. Separate current-main source rebinding and *fresh* owner authorization for #434 post-security checkpoint promotion, plus independent Security, are still required.
+
+**No mutation implied:** This section only appends temporal/evidence tracking. It does not change any effective Source Hierarchy, source code, checkpoint, ADR, security policy, scanner, CI, release, branch protection, tags, npm publication or immutable historic evidence. V1 1088/1088, V1.2 3/10; stable published CLI 1.1.2; 1.1.3 remains NOT PUBLISHED. Owner/ChatGPT planning audit is NOT_INDEPENDENT.
+
+**STOP:** `GBS_V113_GOV_001_EVIDENCE_SUPPLEMENT_CURRENT_MAIN_STALE_SECURITY_BLOCKED_NO_PROMOTION`.
