@@ -1,3 +1,13 @@
+## 2026-10-14 post-PR451 architecture-rule source addendum
+
+**Real current main:** `e71120266c40235089444c9c0122280c5da4e5bd`; protected [PR #451](https://github.com/KayzenRoot/gef-bootstrap/pull/451) merged, and the two canonical CHECKPOINT blobs are now `686a2e3f7da1b541f9a4ee10a4d9432358105e0a` and `4a653772c31dffee869a9bac17345241cfc6db03`. Original `main@e0356f1de5dae2351d8701a76c736a22832929c2`, old Work Order blob `119a2cf93a76d771d018ae6a9c26656684d4f1f6` and `STATE_CONFLICT` creation-time sentences below are preserved for historical audit **but superseded** by this current source addendum. Current Work Order blob is `653793d4b139b9a408f1b944427f6d88baf4ccc9`. Canonical WO-002 has governance effectivity but no implementation lock or Codex; that predecessor's Evidence Bundle is NOT implemented or promoted.
+
+**Actual effectivity remains zero:** ARD-C01–ARD-C05 and ARD-B06 are *candidate* rules only, no production checker registered or tests executed, no change to `.engineering/ARCHITECTURE.md`, `.github/**`, packages, tests, frozen SECURITY, approvals, provider settings, release, or main checkpoint. Continue blocking when current source conflicts or when requested check/rule exceeds separately Owner-admitted permissions. Issue #398 A1–A7 preserved but **NOT EXECUTED**. #427/#429 integrations only if separately admitted and actual consumers verified; ADR-0008 code actor unchanged. Historical #439 21 UNKNOWN remain release blocker. The former "don't launch until #451 merges" condition is historically satisfied; all *other* independent scope/lock/actor/specialist gates still apply.
+
+**STOP:** `WO004_ARCHITECTURE_RULE_CATALOG_CURRENT_SOURCE_ONLY_NO_RUNTIME`.
+
+---
+
 # GBS-MOD-WO-004 — Structural Rule Catalog, Proof and Negative Matrix
 
 **STATUS: PROPOSED / INFORMATIONAL / NOT_EFFECTIVE.** Work Order #398, program #393.
