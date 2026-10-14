@@ -13,6 +13,7 @@ export type ProviderCheckConclusion =
   | 'NEUTRAL'
   | 'SKIPPED'
   | null;
+export type ProviderTestExecutionOutcome = 'PASSED' | 'FAILED' | 'SKIPPED' | 'NOT_EXECUTED';
 
 export interface ProviderRepositoryIdentity {
   readonly owner: string;
@@ -60,6 +61,21 @@ export interface ProviderCheckRun {
   readonly sourceUri: string;
 }
 
+/** Provider-collected case-level result tied to one exact test check attempt and report. */
+export interface ProviderTestExecutionReceipt {
+  readonly receiptId: string;
+  readonly checkRunRecordId: string;
+  readonly runId: string;
+  readonly attempt: number;
+  readonly headSha: string;
+  /** Exact source test selector: tests/gbs-mod-wo-002-*.test.mjs#test title. */
+  readonly testRef: string;
+  readonly outcome: ProviderTestExecutionOutcome;
+  readonly reportUri: string;
+  /** SHA-256 of the provider test report artifact linked by reportUri. */
+  readonly reportDigest: string;
+}
+
 export interface ProviderWorkflowJob {
   readonly jobId: string;
   readonly name: string;
@@ -94,6 +110,8 @@ export interface ProviderEvidenceInput {
   readonly changedPaths: readonly string[];
   readonly requiredContexts: readonly ProviderRequiredContext[];
   readonly checkRuns: readonly ProviderCheckRun[];
+  /** Optional for older provider collections; absence can never prove an acceptance test. */
+  readonly testExecutionReceipts?: readonly ProviderTestExecutionReceipt[];
   readonly workflowRuns: readonly ProviderWorkflowRun[];
 }
 
@@ -113,10 +131,13 @@ export type ProviderEvidenceParseResult =
 const TOP_LEVEL_FIELDS = [
   'schemaVersion', 'collectionId', 'providerId', 'collectionState', 'sourceUri', 'repository',
   'pullRequest', 'sourceTrees', 'fileBlobs', 'ruleset', 'workOrderId', 'contextLockDigest', 'changedPaths', 'requiredContexts', 'checkRuns',
-  'workflowRuns',
+  'testExecutionReceipts', 'workflowRuns',
 ] as const;
 const CHECK_FIELDS = [
   'recordId', 'runId', 'attempt', 'contextId', 'displayName', 'checkKind', 'headSha', 'status', 'conclusion', 'sourceUri',
+] as const;
+const TEST_RECEIPT_FIELDS = [
+  'receiptId', 'checkRunRecordId', 'runId', 'attempt', 'headSha', 'testRef', 'outcome', 'reportUri', 'reportDigest',
 ] as const;
 const WORKFLOW_FIELDS = ['runId', 'attempt', 'headSha', 'status', 'conclusion', 'sourceUri', 'jobs'] as const;
 const JOB_FIELDS = ['jobId', 'name', 'status', 'conclusion', 'sourceUri'] as const;
@@ -135,6 +156,7 @@ const MAX_DIAGNOSTICS = 64;
 const MAX_CHANGED_PATHS = 1024;
 const MAX_REQUIRED_CONTEXTS = 256;
 const MAX_CHECK_RUNS = 4096;
+const MAX_TEST_EXECUTION_RECEIPTS = 8192;
 const MAX_WORKFLOW_RUNS = 1024;
 const MAX_JOBS_PER_WORKFLOW = 1024;
 
@@ -171,6 +193,16 @@ function safePath(value: unknown): value is string {
   if (!safeText(value, 1024) || value.startsWith('/') || value.includes('\\')) return false;
   const segments = value.split('/');
   return segments.every((segment) => segment.length > 0 && segment !== '.' && segment !== '..');
+}
+
+function validTestRef(value: unknown): value is string {
+  if (!safeText(value, 1024)) return false;
+  const separator = value.indexOf('#');
+  if (separator <= 0 || separator !== value.lastIndexOf('#')) return false;
+  const path = value.slice(0, separator);
+  const title = value.slice(separator + 1);
+  return safePath(path) && path.startsWith('tests/gbs-mod-wo-002-') && path.endsWith('.test.mjs')
+    && safeText(title, 512);
 }
 
 function deepFreeze<T>(value: T): T {
@@ -448,6 +480,81 @@ function parseProviderEvidenceInputUnchecked(input: unknown): ProviderEvidencePa
       || compare(left.contextId, right.contextId) || compare(left.headSha, right.headSha));
   }
 
+  const testExecutionReceiptsInput = input['testExecutionReceipts'] === undefined ? [] : input['testExecutionReceipts'];
+  const testExecutionReceipts: ProviderTestExecutionReceipt[] = [];
+  const receiptIds = new Set<string>();
+  if (!Array.isArray(testExecutionReceiptsInput) || testExecutionReceiptsInput.length > MAX_TEST_EXECUTION_RECEIPTS) {
+    report('GHE01_TEST_RECEIPTS_INVALID', `testExecutionReceipts must be an array of at most ${MAX_TEST_EXECUTION_RECEIPTS} records.`, 'testExecutionReceipts');
+  } else {
+    testExecutionReceiptsInput.forEach((entry, index) => {
+      const prefix = `testExecutionReceipts.${index}`;
+      if (!isRecord(entry)) {
+        report('GHE01_TEST_RECEIPT_INVALID', 'Test execution receipt must be an object.', prefix);
+        return;
+      }
+      checkFields(entry, TEST_RECEIPT_FIELDS, prefix);
+      const receiptId = requireText(entry, 'receiptId', 192, prefix);
+      if (receiptId !== null && receiptIds.has(receiptId)) {
+        report('GHE01_TEST_RECEIPT_ID_DUPLICATE', 'Test execution receipt identity is duplicated.', `${prefix}.receiptId`);
+      }
+      if (receiptId !== null) receiptIds.add(receiptId);
+      const checkRunRecordId = requireText(entry, 'checkRunRecordId', 192, prefix);
+      const runId = requireText(entry, 'runId', 192, prefix);
+      const attempt = parseAttempt(entry, prefix);
+      const headSha = entry['headSha'];
+      if (typeof headSha !== 'string' || !SHA40.test(headSha)) {
+        report('GHE01_TEST_RECEIPT_SHA_INVALID', 'Test receipt headSha must be a full lowercase commit SHA.', `${prefix}.headSha`);
+      }
+      const testRef = entry['testRef'];
+      if (!validTestRef(testRef)) {
+        report('GHE01_TEST_RECEIPT_REF_INVALID', 'testRef must identify a bounded WO-002 test case.', `${prefix}.testRef`);
+      }
+      const outcome = entry['outcome'];
+      if (typeof outcome !== 'string' || !['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(outcome)) {
+        report('GHE01_TEST_RECEIPT_OUTCOME_INVALID', 'Test receipt outcome is not supported.', `${prefix}.outcome`);
+      }
+      const reportUri = parseUri(entry, 'reportUri', prefix);
+      const reportDigest = requireText(entry, 'reportDigest', 71, prefix);
+      if (reportDigest !== null && !SHA256.test(reportDigest)) {
+        report('GHE01_TEST_REPORT_DIGEST_INVALID', 'reportDigest must be a SHA-256 digest.', `${prefix}.reportDigest`);
+      }
+      if (receiptId !== null && !IDENTIFIER.test(receiptId)) report('GHE01_TEST_RECEIPT_ID_INVALID', 'receiptId is invalid.', `${prefix}.receiptId`);
+      if (checkRunRecordId !== null && !IDENTIFIER.test(checkRunRecordId)) report('GHE01_TEST_RECEIPT_CHECK_ID_INVALID', 'checkRunRecordId is invalid.', `${prefix}.checkRunRecordId`);
+      if (runId !== null && !IDENTIFIER.test(runId)) report('GHE01_TEST_RECEIPT_RUN_ID_INVALID', 'runId is invalid.', `${prefix}.runId`);
+      const checkRun = checkRuns.find((run) => run.recordId === checkRunRecordId);
+      if (checkRunRecordId !== null && checkRun === undefined) {
+        report('GHE01_TEST_RECEIPT_CHECK_RUN_MISSING', 'Test receipt does not identify a collected check run.', `${prefix}.checkRunRecordId`);
+      } else if (checkRun !== undefined) {
+        if (checkRun.checkKind !== 'TEST') report('GHE01_TEST_RECEIPT_CHECK_KIND_INVALID', 'Test receipt must bind to a TEST check run.', `${prefix}.checkRunRecordId`);
+        if (checkRun.runId !== runId || checkRun.attempt !== attempt) {
+          report('GHE01_TEST_RECEIPT_RUN_MISMATCH', 'Test receipt run and attempt must match its check run.', prefix);
+        }
+        if (reportUri !== null && new URL(reportUri).origin !== new URL(checkRun.sourceUri).origin) {
+          report('GHE01_TEST_REPORT_SOURCE_MISMATCH', 'Test report must come from the check run provider origin.', `${prefix}.reportUri`);
+        }
+      }
+      if (receiptId !== null && IDENTIFIER.test(receiptId) && checkRunRecordId !== null && IDENTIFIER.test(checkRunRecordId)
+        && runId !== null && IDENTIFIER.test(runId) && attempt !== null && typeof headSha === 'string' && SHA40.test(headSha)
+        && validTestRef(testRef) && typeof outcome === 'string' && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(outcome)
+        && reportUri !== null && reportDigest !== null && SHA256.test(reportDigest) && checkRun !== undefined
+        && checkRun.checkKind === 'TEST' && checkRun.runId === runId && checkRun.attempt === attempt
+        && new URL(reportUri).origin === new URL(checkRun.sourceUri).origin) {
+        testExecutionReceipts.push({
+          receiptId,
+          checkRunRecordId,
+          runId,
+          attempt,
+          headSha,
+          testRef,
+          outcome: outcome as ProviderTestExecutionOutcome,
+          reportUri,
+          reportDigest,
+        });
+      }
+    });
+    testExecutionReceipts.sort((left, right) => compare(left.receiptId, right.receiptId));
+  }
+
   const workflowRunsInput = input['workflowRuns'];
   const workflowRuns: ProviderWorkflowRun[] = [];
   if (!Array.isArray(workflowRunsInput) || workflowRunsInput.length > MAX_WORKFLOW_RUNS) {
@@ -505,7 +612,7 @@ function parseProviderEvidenceInputUnchecked(input: unknown): ProviderEvidencePa
 
   if (diagnostics.length > 0 || collectionId === null || providerId === null || sourceUri === null || repository === null
     || pullRequest === null || sourceTrees === null || ruleset === null || workOrderId === null || contextLockDigest === null || !Array.isArray(changedPathsInput)
-    || !Array.isArray(fileBlobsInput)
+    || !Array.isArray(fileBlobsInput) || !Array.isArray(testExecutionReceiptsInput)
     || !Array.isArray(requiredContextsInput) || !Array.isArray(checkRunsInput) || !Array.isArray(workflowRunsInput)
     || typeof collectionState !== 'string' || !COLLECTION_STATES.includes(collectionState)) {
     return { ok: false, diagnostics };
@@ -529,6 +636,7 @@ function parseProviderEvidenceInputUnchecked(input: unknown): ProviderEvidencePa
       changedPaths,
       requiredContexts,
       checkRuns,
+      testExecutionReceipts,
       workflowRuns,
     }),
   };

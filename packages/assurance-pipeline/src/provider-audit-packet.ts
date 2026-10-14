@@ -1,6 +1,6 @@
-import type { ProviderEvidenceBundle, ProviderEvidenceVerdict } from '@gef-bootstrap/evidence-engine';
+import type { NormalizedProviderTestExecutionReceipt, ProviderEvidenceBundle, ProviderEvidenceVerdict } from '@gef-bootstrap/evidence-engine';
 import { verifyProviderEvidenceBundle } from '@gef-bootstrap/evidence-engine';
-import type { ProviderCheckKind, ProviderEvidenceBinding } from '@gef-bootstrap/contracts';
+import type { ProviderCheckKind, ProviderEvidenceBinding, ProviderTestExecutionOutcome } from '@gef-bootstrap/contracts';
 import type { OperationOptions, Result } from './types.js';
 import { deepFreeze, digestValue, fail, ok, sortedUnique } from './utils.js';
 
@@ -43,6 +43,7 @@ export interface AcceptanceProofResult {
   readonly testRefs: readonly string[];
   readonly checkRunRefs: readonly string[];
   readonly providerEvidence: readonly ProviderCheckProofRecord[];
+  readonly testEvidence: readonly ProviderTestProofRecord[];
   readonly verdict: AuditPacketVerdict;
   readonly reasonCodes: readonly string[];
 }
@@ -56,6 +57,20 @@ export interface ProviderCheckProofRecord {
   readonly headSha: string;
   readonly conclusion: string | null;
   readonly verdict: AuditPacketVerdict;
+}
+export interface ProviderTestProofRecord {
+  readonly evidenceRef: string;
+  readonly checkRunRef: string;
+  readonly testRef: string;
+  readonly runId: string;
+  readonly attempt: number;
+  readonly contextId: string;
+  readonly headSha: string;
+  readonly outcome: ProviderTestExecutionOutcome;
+  readonly reportUri: string;
+  readonly reportDigest: string;
+  readonly verdict: AuditPacketVerdict;
+  readonly reasonCodes: readonly string[];
 }
 export interface ProviderAuditPacket {
   readonly schemaVersion: '1.0';
@@ -114,6 +129,15 @@ function safeText(value: unknown, max = 512): value is string {
 function safePath(path: unknown): path is string {
   return safeText(path, 1024) && !path.startsWith('/') && !path.includes('\\')
     && path.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..');
+}
+function safeTestRef(value: unknown): value is string {
+  if (!safeText(value, 1024)) return false;
+  const separator = value.indexOf('#');
+  if (separator <= 0 || separator !== value.lastIndexOf('#')) return false;
+  const path = value.slice(0, separator);
+  const title = value.slice(separator + 1);
+  return safePath(path) && path.startsWith('tests/gbs-mod-wo-002-') && path.endsWith('.test.mjs')
+    && safeText(title, 512);
 }
 function safePublicUri(value: unknown): value is string {
   if (!safeText(value, 2048)) return false;
@@ -234,6 +258,23 @@ function validEvidenceBundle(bundle: unknown): bundle is ProviderEvidenceBundle 
       && typeof run['headSha'] === 'string' && SHA40.test(run['headSha'])
       && typeof run['selected'] === 'boolean'
       && ['PASS', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'STALE'].includes(String(run['verdict'])))
+    && Array.isArray(bundle['testExecutionReceipts']) && bundle['testExecutionReceipts'].every((receipt) => {
+      if (!isRecord(receipt) || !Array.isArray(bundle['checkRuns'])) return false;
+      const checkRun = bundle['checkRuns'].find((run) => isRecord(run) && run['evidenceRef'] === receipt['checkRunRef']);
+      return safeText(receipt['receiptId'], 192) && safeText(receipt['checkRunRecordId'], 192)
+        && safeText(receipt['evidenceRef'], 512) && safeText(receipt['checkRunRef'], 512)
+        && safeText(receipt['runId'], 192) && Number.isSafeInteger(receipt['attempt']) && (receipt['attempt'] as number) > 0
+        && safeText(receipt['contextId'], 192) && typeof receipt['headSha'] === 'string' && SHA40.test(receipt['headSha'])
+        && safeTestRef(receipt['testRef']) && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(receipt['outcome']))
+        && safePublicUri(receipt['reportUri']) && typeof receipt['reportDigest'] === 'string' && SHA256.test(receipt['reportDigest'])
+        && typeof receipt['selected'] === 'boolean'
+        && ['PASS', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'STALE'].includes(String(receipt['verdict']))
+        && Array.isArray(receipt['reasonCodes']) && receipt['reasonCodes'].every((reason) => safeText(reason, 192))
+        && isRecord(checkRun) && checkRun['checkKind'] === 'TEST' && checkRun['recordId'] === receipt['checkRunRecordId']
+        && checkRun['runId'] === receipt['runId'] && checkRun['attempt'] === receipt['attempt']
+        && checkRun['contextId'] === receipt['contextId'] && checkRun['selected'] === receipt['selected']
+        && new URL(receipt['reportUri'] as string).origin === new URL(checkRun['sourceUri'] as string).origin;
+    })
     && Array.isArray(bundle['requiredContextResults']) && bundle['requiredContextResults'].every((context) => isRecord(context)
       && safeText(context['contextId'], 192)
       && ['PASS', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'STALE'].includes(String(context['verdict'])));
@@ -249,9 +290,58 @@ function normalizeMapping(value: unknown): AcceptanceProofMapping | null {
   const testRefs = value['testRefs'];
   const checkRunRefs = value['checkRunRefs'];
   if (typeof criterionId !== 'string' || !CRITERIA.includes(criterionId as typeof CRITERIA[number])
-    || !Array.isArray(testRefs) || testRefs.length > 32 || !testRefs.every((ref) => safeText(ref, 512) && ref.startsWith('tests/gbs-mod-wo-002-') && ref.includes('#'))
+    || !Array.isArray(testRefs) || testRefs.length > 32 || !testRefs.every(safeTestRef)
     || !Array.isArray(checkRunRefs) || checkRunRefs.length > 64 || !checkRunRefs.every((ref) => safeText(ref, 512))) return null;
   return { criterionId, testRefs: sortedUnique(testRefs as string[]), checkRunRefs: sortedUnique(checkRunRefs as string[]) };
+}
+
+function testProofRecord(
+  receipt: NormalizedProviderTestExecutionReceipt,
+  verdict: AuditPacketVerdict,
+  reasonCodes: readonly string[],
+): ProviderTestProofRecord {
+  return {
+    evidenceRef: receipt.evidenceRef,
+    checkRunRef: receipt.checkRunRef,
+    testRef: receipt.testRef,
+    runId: receipt.runId,
+    attempt: receipt.attempt,
+    contextId: receipt.contextId,
+    headSha: receipt.headSha,
+    outcome: receipt.outcome,
+    reportUri: receipt.reportUri,
+    reportDigest: receipt.reportDigest,
+    verdict,
+    reasonCodes,
+  };
+}
+
+function testReceiptDecision(
+  receipt: NormalizedProviderTestExecutionReceipt,
+  checkRun: ProviderEvidenceBundle['checkRuns'][number],
+  expectedHeadSha: string,
+): { readonly verdict: AuditPacketVerdict; readonly reasonCodes: readonly string[] } {
+  if (receipt.headSha !== expectedHeadSha || receipt.headSha !== checkRun.headSha) {
+    return { verdict: 'STALE', reasonCodes: ['TEST_RECEIPT_HEAD_MISMATCH'] };
+  }
+  if (!receipt.selected || !checkRun.selected) {
+    return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_RECEIPT_CHECK_NOT_SELECTED'] };
+  }
+  if (checkRun.verdict !== 'PASS') {
+    return { verdict: checkRun.verdict, reasonCodes: sortedUnique(['TEST_RECEIPT_CHECK_NOT_PASS', ...checkRun.reasonCodes]) };
+  }
+  if (receipt.outcome === 'PASSED') return { verdict: 'PASS', reasonCodes: [] };
+  if (receipt.outcome === 'FAILED') return { verdict: 'FAILED', reasonCodes: ['TEST_EXECUTION_FAILED'] };
+  if (receipt.outcome === 'NOT_EXECUTED') return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_EXECUTION_NOT_RUN'] };
+  return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_EXECUTION_SKIPPED'] };
+}
+
+function receiptDecisionMatches(
+  receipt: NormalizedProviderTestExecutionReceipt,
+  decision: { readonly verdict: AuditPacketVerdict; readonly reasonCodes: readonly string[] },
+): boolean {
+  return receipt.verdict === decision.verdict
+    && JSON.stringify(receipt.reasonCodes) === JSON.stringify(decision.reasonCodes);
 }
 
 function proofResult(
@@ -266,20 +356,21 @@ function proofResult(
       testRefs: mapping?.testRefs ?? [],
       checkRunRefs: mapping?.checkRunRefs ?? [],
       providerEvidence: [],
+      testEvidence: [],
       verdict: 'UNPROVEN' as const,
       reasonCodes: ['ACCEPTANCE_PROOF_MAPPING_MISSING'],
     });
   }
   const unknownTestRefs = mapping.testRefs.filter((ref) => {
-    const [path, testId] = ref.split('#');
-    return path === undefined || testId === undefined || testId.length === 0 || !changedPaths.includes(path);
+    const path = ref.slice(0, ref.indexOf('#'));
+    return !safeTestRef(ref) || !changedPaths.includes(path);
   });
   if (unknownTestRefs.length > 0) {
-    return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence: [], verdict: 'UNPROVEN' as const, reasonCodes: ['ACCEPTANCE_TEST_REF_UNBOUND'] });
+    return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence: [], testEvidence: [], verdict: 'UNPROVEN' as const, reasonCodes: ['ACCEPTANCE_TEST_REF_UNBOUND'] });
   }
   const rows = mapping.checkRunRefs.map((ref) => bundle.checkRuns.find((run) => run.evidenceRef === ref));
   if (rows.some((run) => run === undefined)) {
-    return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence: [], verdict: 'UNPROVEN' as const, reasonCodes: ['ACCEPTANCE_CHECK_REF_UNBOUND'] });
+    return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence: [], testEvidence: [], verdict: 'UNPROVEN' as const, reasonCodes: ['ACCEPTANCE_CHECK_REF_UNBOUND'] });
   }
   const resolved = rows.filter((run) => run !== undefined);
   const requiredContextIds = new Set((bundle.expectedBinding.requiredContexts as readonly { contextId: string }[]).map(({ contextId }) => contextId));
@@ -290,11 +381,61 @@ function proofResult(
     const result = bundle.requiredContextResults.find((context) => context.contextId === run.contextId);
     return result?.verdict === 'PASS' ? run.verdict : (result?.verdict ?? 'NOT_VERIFIED');
   });
+  const testVerdicts: AuditPacketVerdict[] = [];
+  const testEvidence: ProviderTestProofRecord[] = [];
+  const testReasonCodes: string[] = [];
+  for (const testRef of mapping.testRefs) {
+    const receipts = bundle.testExecutionReceipts.filter((receipt) => receipt.testRef === testRef
+      && mapping.checkRunRefs.includes(receipt.checkRunRef));
+    if (receipts.length === 0) {
+      testVerdicts.push('UNPROVEN');
+      testReasonCodes.push('ACCEPTANCE_TEST_RECEIPT_MISSING');
+      continue;
+    }
+    const resolvedReceipts = receipts.flatMap((receipt) => {
+      const checkRun = bundle.checkRuns.find((run) => run.evidenceRef === receipt.checkRunRef);
+      if (checkRun === undefined) return [];
+      const decision = testReceiptDecision(receipt, checkRun, bundle.expectedBinding.pullRequest.headSha);
+      return [{ receipt, decision, matches: receiptDecisionMatches(receipt, decision) }];
+    });
+    testEvidence.push(...resolvedReceipts.map(({ receipt, decision, matches }) => testProofRecord(
+      receipt,
+      matches ? decision.verdict : 'NOT_VERIFIED',
+      matches ? decision.reasonCodes : ['TEST_RECEIPT_INTEGRITY_MISMATCH'],
+    )));
+    const selectedReceipts = resolvedReceipts.filter(({ receipt, decision }) => receipt.selected
+      && bundle.checkRuns.some((run) => run.evidenceRef === receipt.checkRunRef && run.selected)
+      && decision.verdict !== 'STALE');
+    if (selectedReceipts.length > 1) {
+      testVerdicts.push('NOT_VERIFIED');
+      testReasonCodes.push('ACCEPTANCE_TEST_RECEIPT_AMBIGUOUS');
+      continue;
+    }
+    if (selectedReceipts.length === 1) {
+      const [selected] = selectedReceipts;
+      if (selected !== undefined) {
+        if (!selected.matches) {
+          testVerdicts.push('NOT_VERIFIED');
+          testReasonCodes.push('TEST_RECEIPT_INTEGRITY_MISMATCH');
+        } else {
+          testVerdicts.push(selected.decision.verdict);
+          testReasonCodes.push(...selected.decision.reasonCodes);
+        }
+      }
+      continue;
+    }
+    const stale = resolvedReceipts.some(({ decision }) => decision.verdict === 'STALE');
+    testVerdicts.push(stale ? 'STALE' : 'NOT_VERIFIED');
+    testReasonCodes.push(...resolvedReceipts.flatMap(({ decision, matches }) => matches
+      ? decision.reasonCodes : ['TEST_RECEIPT_INTEGRITY_MISMATCH']));
+  }
   if (!bundle.bindingMatches) verdicts.push('STALE');
   if (bundle.source.collectionState !== 'COMPLETE') verdicts.push('NOT_VERIFIED');
+  verdicts.push(...testVerdicts);
   const verdict = combineVerdicts(verdicts);
   const reasonCodes = sortedUnique([
     ...resolved.flatMap((run) => run.reasonCodes),
+    ...testReasonCodes,
     ...resolved.flatMap((run) => !run.selected ? ['CHECK_RUN_NOT_SELECTED'] : []),
     ...resolved.flatMap((run) => !requiredContextIds.has(run.contextId) ? ['CHECK_RUN_CONTEXT_NOT_REQUIRED'] : []),
     ...resolved.flatMap((run) => run.headSha !== bundle.expectedBinding.pullRequest.headSha ? ['CHECK_RUN_HEAD_MISMATCH'] : []),
@@ -312,7 +453,7 @@ function proofResult(
     conclusion: run.conclusion,
     verdict: run.verdict,
   }));
-  return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence, verdict, reasonCodes });
+  return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence, testEvidence, verdict, reasonCodes });
 }
 
 function validateInput(input: ProviderAuditPacketInput): Result<{

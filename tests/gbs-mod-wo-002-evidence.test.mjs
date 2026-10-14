@@ -12,6 +12,18 @@ const createProviderAuditPacket = assurance.createProviderAuditPacket;
 const revalidateProviderAuditPacket = assurance.revalidateProviderAuditPacket;
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const gitSha = (value) => createHash('sha1').update(value).digest('hex');
+const stableStringify = (value) => {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableStringify(value[key])}`).join(',')}}`;
+};
+const resealProviderBundle = (bundle) => {
+  const { bundleDigest: _bundleDigest, ...body } = bundle;
+  return {
+    ...body,
+    bundleDigest: `sha256:${sha(`WOB2:PROVIDER_EVIDENCE_BUNDLE\n${stableStringify(body)}`)}`,
+  };
+};
 const BASE_SHA = '58ace6c66c292faf5a61e431bbaccadcbc404287';
 const HEAD_SHA = 'a'.repeat(40);
 const LOCK_DIGEST = `sha256:${sha('effective-wo002-lock')}`;
@@ -42,7 +54,36 @@ function checkRunFixtures(headSha = HEAD_SHA) {
   }));
 }
 
+const acceptanceTestRefs = {
+  A1: 'tests/gbs-mod-wo-002-evidence.test.mjs#A1 base binding mismatch is STALE and cannot become PASS',
+  A2: 'tests/gbs-mod-wo-002-evidence.test.mjs#A2 missing and pending required checks remain NOT_VERIFIED and PENDING',
+  A3: 'tests/gbs-mod-wo-002-evidence.test.mjs#A3 duplicate display names do not satisfy a different required context identity',
+  A4: 'tests/gbs-mod-wo-002-evidence.test.mjs#A4 a newer attempt on an earlier SHA supersedes an older passing attempt and is STALE',
+  A5: 'tests/gbs-mod-wo-002-evidence.test.mjs#A5 executor PASS prose cannot override a failed raw provider check',
+  A6: 'tests/gbs-mod-wo-002-evidence.test.mjs#A6 changed head, lock, ruleset, tree, or blob identity makes a prior packet STALE',
+  A7: 'tests/gbs-mod-wo-002-evidence.test.mjs#A7 denied, unavailable, or partial provider collection is NOT_VERIFIED even when check-shaped claims pass',
+  A8: 'tests/gbs-mod-wo-002-evidence.test.mjs#A8 acceptance criterion without a proof mapping remains UNPROVEN',
+};
+
+function testExecutionReceipts(checkRun, overrides = {}) {
+  return Object.entries(acceptanceTestRefs).map(([criterionId, testRef], index) => {
+    const receipt = {
+      receiptId: `test-receipt-${criterionId.toLowerCase()}`,
+      checkRunRecordId: checkRun.recordId,
+      runId: checkRun.runId,
+      attempt: checkRun.attempt,
+      headSha: checkRun.headSha,
+      testRef,
+      outcome: 'PASSED',
+      reportUri: `${sourceUri}/artifacts/${index + 1}`,
+      reportDigest: `sha256:${sha(JSON.stringify({ criterionId, testRef, outcome: 'PASSED', headSha: checkRun.headSha }))}`,
+    };
+    return { ...receipt, ...(overrides[criterionId] ?? {}) };
+  });
+}
+
 function providerInput(overrides = {}) {
+  const checkRuns = checkRunFixtures();
   return {
     schemaVersion: '1.0',
     collectionId: 'collection-1',
@@ -78,7 +119,8 @@ function providerInput(overrides = {}) {
     ].map((path) => ({ path, blobSha: gitSha(path) })),
     ruleset: { rulesetId: '23566111', digest: RULESET_DIGEST },
     requiredContexts: requiredContextFixtures.map(({ contextId: id, displayName }) => ({ contextId: id, displayName })),
-    checkRuns: checkRunFixtures(),
+    checkRuns,
+    testExecutionReceipts: testExecutionReceipts(checkRuns[0]),
     workflowRuns: [
       {
         runId: 'workflow-run-1',
@@ -199,6 +241,34 @@ if (typeof parseProviderEvidenceInput !== 'function') {
     assert.equal(duplicateJobId.ok, false);
     assert.ok(duplicateCheckId.diagnostics.some(({ code }) => code === 'GHE01_CHECK_ID_DUPLICATE'));
     assert.ok(duplicateJobId.diagnostics.some(({ code }) => code === 'GHE01_JOB_ID_DUPLICATE'));
+  });
+
+  test('test execution receipts must bind to the TEST check attempt and provider report origin', () => {
+    const original = providerInput();
+    const receipt = original.testExecutionReceipts[0];
+    const wrongCheckKind = parseProviderEvidenceInput({
+      ...original,
+      testExecutionReceipts: [{
+        ...receipt,
+        checkRunRecordId: original.checkRuns[1].recordId,
+        runId: original.checkRuns[1].runId,
+        attempt: original.checkRuns[1].attempt,
+      }],
+    });
+    const wrongRun = parseProviderEvidenceInput({
+      ...original,
+      testExecutionReceipts: [{ ...receipt, runId: 'different-check-run' }],
+    });
+    const wrongOrigin = parseProviderEvidenceInput({
+      ...original,
+      testExecutionReceipts: [{ ...receipt, reportUri: 'https://example.com/test-report' }],
+    });
+    assert.equal(wrongCheckKind.ok, false);
+    assert.equal(wrongRun.ok, false);
+    assert.equal(wrongOrigin.ok, false);
+    assert.ok(wrongCheckKind.diagnostics.some(({ code }) => code === 'GHE01_TEST_RECEIPT_CHECK_KIND_INVALID'));
+    assert.ok(wrongRun.diagnostics.some(({ code }) => code === 'GHE01_TEST_RECEIPT_RUN_MISMATCH'));
+    assert.ok(wrongOrigin.diagnostics.some(({ code }) => code === 'GHE01_TEST_REPORT_SOURCE_MISMATCH'));
   });
 
   test('provider object inspection exceptions become bounded diagnostics', () => {
@@ -329,19 +399,9 @@ function auditBinding(provider = expectedBinding(), ruleset = { rulesetId: '2356
 }
 
 function auditMappings(bundle, criterionIds = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8']) {
-  const testNames = {
-    A1: 'base-binding-stale',
-    A2: 'missing-and-pending',
-    A3: 'duplicate-context-identity',
-    A4: 'newer-attempt-old-sha',
-    A5: 'executor-claim-does-not-override-provider',
-    A6: 'packet-revalidation-after-head-change',
-    A7: 'provider-denied-and-partial',
-    A8: 'missing-criterion-proof-is-unproven',
-  };
   return criterionIds.map((criterionId) => ({
     criterionId,
-    testRefs: [`tests/gbs-mod-wo-002-evidence.test.mjs#${testNames[criterionId]}`],
+    testRefs: [acceptanceTestRefs[criterionId]],
     checkRunRefs: [bundle.checkRuns[0].evidenceRef],
   }));
 }
@@ -366,6 +426,20 @@ function auditInput(overrides = {}, sourceInput = providerInput()) {
   };
 }
 
+function createPacketForSource(sourceInput, criterionId = 'A1', inputOverrides = {}) {
+  const normalized = collect(sourceInput);
+  assert.equal(normalized.ok, true, JSON.stringify(normalized));
+  const binding = auditBinding(normalized.value.expectedBinding);
+  return createProviderAuditPacket(auditInput({
+    evidenceBundle: normalized.value,
+    candidateBinding: binding,
+    currentBinding: binding,
+    actualChangedPaths: [...normalized.value.expectedBinding.changedPaths],
+    acceptanceMappings: auditMappings(normalized.value, [criterionId]),
+    ...inputOverrides,
+  }, sourceInput), operationOptions);
+}
+
 if (typeof createProviderAuditPacket !== 'function' || typeof revalidateProviderAuditPacket !== 'function') {
   test('M27 exact-source audit packet API is exported', () => {
     assert.equal(typeof createProviderAuditPacket, 'function');
@@ -386,6 +460,110 @@ if (typeof createProviderAuditPacket !== 'function' || typeof revalidateProvider
     assert.equal(result.value.mayMerge, false);
     assert.equal(result.value.mayPromoteCheckpoint, false);
     assert.equal(JSON.stringify(result.value).includes('executorClaims'), false);
+  });
+
+  test('a changed test file and a fabricated test name cannot prove an acceptance criterion', () => {
+    const input = auditInput();
+    input.acceptanceMappings[0].testRefs = [
+      'tests/gbs-mod-wo-002-evidence.test.mjs#this test name was never executed',
+    ];
+    const result = createProviderAuditPacket(input, operationOptions);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.value.acceptanceProofs[0].verdict, 'UNPROVEN');
+    assert.ok(result.value.acceptanceProofs[0].reasonCodes.includes('ACCEPTANCE_TEST_RECEIPT_MISSING'));
+  });
+
+  test('a provider check without any case-level test receipt leaves the criterion UNPROVEN', () => {
+    const result = createPacketForSource(providerInput({ testExecutionReceipts: [] }));
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.value.acceptanceProofs[0].verdict, 'UNPROVEN');
+    assert.ok(result.value.acceptanceProofs[0].reasonCodes.includes('ACCEPTANCE_TEST_RECEIPT_MISSING'));
+  });
+
+  test('an exact-head test execution receipt is emitted with its provider run and report identity', () => {
+    const result = createPacketForSource(providerInput());
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.value.acceptanceProofs[0].verdict, 'PASS');
+    assert.deepEqual(result.value.acceptanceProofs[0].testEvidence.map((receipt) => ({
+      testRef: receipt.testRef,
+      runId: receipt.runId,
+      attempt: receipt.attempt,
+      headSha: receipt.headSha,
+      outcome: receipt.outcome,
+      reportUri: receipt.reportUri,
+      reportDigest: receipt.reportDigest,
+      verdict: receipt.verdict,
+    })), [{
+      testRef: acceptanceTestRefs.A1,
+      runId: 'check-run-1',
+      attempt: 1,
+      headSha: HEAD_SHA,
+      outcome: 'PASSED',
+      reportUri: `${sourceUri}/artifacts/1`,
+      reportDigest: providerInput().testExecutionReceipts[0].reportDigest,
+      verdict: 'PASS',
+    }]);
+  });
+
+  test('a receipt marked not executed cannot prove its acceptance test', () => {
+    const input = providerInput();
+    input.testExecutionReceipts[0] = {
+      ...input.testExecutionReceipts[0],
+      outcome: 'NOT_EXECUTED',
+    };
+    const result = createPacketForSource(input);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.value.acceptanceProofs[0].verdict, 'NOT_VERIFIED');
+    assert.ok(result.value.acceptanceProofs[0].reasonCodes.includes('TEST_EXECUTION_NOT_RUN'));
+  });
+
+  test('a failed test receipt fails its acceptance proof despite a successful enclosing check', () => {
+    const input = providerInput();
+    input.testExecutionReceipts[0] = {
+      ...input.testExecutionReceipts[0],
+      outcome: 'FAILED',
+    };
+    const result = createPacketForSource(input);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.value.acceptanceProofs[0].verdict, 'FAILED');
+    assert.ok(result.value.acceptanceProofs[0].reasonCodes.includes('TEST_EXECUTION_FAILED'));
+  });
+
+  test('a passing receipt for an earlier SHA is STALE and cannot prove its acceptance test', () => {
+    const input = providerInput();
+    input.testExecutionReceipts[0] = {
+      ...input.testExecutionReceipts[0],
+      headSha: 'b'.repeat(40),
+    };
+    const result = createPacketForSource(input);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.value.acceptanceProofs[0].verdict, 'STALE');
+    assert.ok(result.value.acceptanceProofs[0].reasonCodes.includes('TEST_RECEIPT_HEAD_MISMATCH'));
+  });
+
+  test('an altered test receipt invalidates the Evidence Bundle digest', () => {
+    const input = providerInput();
+    const normalized = collect(input);
+    assert.equal(normalized.ok, true, JSON.stringify(normalized));
+    const alteredBundle = structuredClone(normalized.value);
+    alteredBundle.testExecutionReceipts[0].reportDigest = `sha256:${sha('altered-report')}`;
+    const result = createProviderAuditPacket(auditInput({ evidenceBundle: alteredBundle }, input), operationOptions);
+    assert.equal(result.ok, false);
+    assert.ok(result.diagnostics.some(({ code }) => code === 'M27_AUDIT_EVIDENCE_DIGEST_INVALID'));
+  });
+
+  test('an altered execution outcome cannot become PASS by recomputing the bundle digest', () => {
+    const normalized = collect(providerInput());
+    assert.equal(normalized.ok, true, JSON.stringify(normalized));
+    const alteredBundle = structuredClone(normalized.value);
+    alteredBundle.testExecutionReceipts[0].outcome = 'NOT_EXECUTED';
+    const resealedBundle = resealProviderBundle(alteredBundle);
+    assert.equal(verifyProviderEvidenceBundle(resealedBundle, operationOptions).value, true);
+    const result = createProviderAuditPacket(auditInput({ evidenceBundle: resealedBundle }), operationOptions);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.value.acceptanceProofs[0].verdict, 'NOT_VERIFIED');
+    assert.ok(result.value.acceptanceProofs[0].reasonCodes.includes('TEST_RECEIPT_INTEGRITY_MISMATCH'));
+    assert.ok(result.value.acceptanceProofs[0].testEvidence[0].reportDigest.startsWith('sha256:'));
   });
 
   test('A5 executor PASS prose cannot override a failed raw provider check', () => {

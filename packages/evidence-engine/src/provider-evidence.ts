@@ -6,6 +6,7 @@ import type {
   ProviderEvidenceInput,
   ProviderEvidenceParseResult,
   ProviderRequiredContext,
+  ProviderTestExecutionReceipt,
   ProviderWorkflowJob,
   ProviderWorkflowRun,
 } from '@gef-bootstrap/contracts';
@@ -17,6 +18,15 @@ export type ProviderEvidenceVerdict = 'PASS' | 'FAILED' | 'BLOCKED' | 'PENDING' 
 export type ProviderEvidenceCollectionState = 'COMPLETE' | 'PARTIAL' | 'UNAVAILABLE' | 'DENIED';
 
 export interface NormalizedProviderCheckRun extends ProviderCheckRun {
+  readonly selected: boolean;
+  readonly verdict: ProviderEvidenceVerdict;
+  readonly reasonCodes: readonly string[];
+  readonly evidenceRef: string;
+}
+
+export interface NormalizedProviderTestExecutionReceipt extends ProviderTestExecutionReceipt {
+  readonly contextId: string;
+  readonly checkRunRef: string;
   readonly selected: boolean;
   readonly verdict: ProviderEvidenceVerdict;
   readonly reasonCodes: readonly string[];
@@ -54,6 +64,7 @@ export interface ProviderEvidenceBundle {
   readonly expectedBinding: ContractProviderEvidenceBinding;
   readonly bindingMatches: boolean;
   readonly checkRuns: readonly NormalizedProviderCheckRun[];
+  readonly testExecutionReceipts: readonly NormalizedProviderTestExecutionReceipt[];
   readonly workflowRuns: readonly NormalizedProviderWorkflowRun[];
   readonly requiredContextResults: readonly ProviderRequiredContextResult[];
   readonly completeness: EvidenceCompletenessGate;
@@ -73,13 +84,17 @@ const CHECK_CONCLUSIONS: readonly (string | null)[] = [
 ];
 const INPUT_FIELDS = [
   'schemaVersion', 'collectionId', 'providerId', 'collectionState', 'sourceUri', 'repository', 'pullRequest',
-  'sourceTrees', 'fileBlobs', 'ruleset', 'workOrderId', 'contextLockDigest', 'changedPaths', 'requiredContexts', 'checkRuns', 'workflowRuns',
+  'sourceTrees', 'fileBlobs', 'ruleset', 'workOrderId', 'contextLockDigest', 'changedPaths', 'requiredContexts', 'checkRuns',
+  'testExecutionReceipts', 'workflowRuns',
 ];
 const BINDING_FIELDS = [
   'providerId', 'repository', 'pullRequest', 'sourceTrees', 'fileBlobs', 'ruleset', 'workOrderId', 'contextLockDigest', 'changedPaths', 'requiredContexts',
 ];
 const CHECK_FIELDS = [
   'recordId', 'runId', 'attempt', 'contextId', 'displayName', 'checkKind', 'headSha', 'status', 'conclusion', 'sourceUri',
+];
+const TEST_RECEIPT_FIELDS = [
+  'receiptId', 'checkRunRecordId', 'runId', 'attempt', 'headSha', 'testRef', 'outcome', 'reportUri', 'reportDigest',
 ];
 const WORKFLOW_FIELDS = ['runId', 'attempt', 'headSha', 'status', 'conclusion', 'sourceUri', 'jobs'];
 const JOB_FIELDS = ['jobId', 'name', 'status', 'conclusion', 'sourceUri'];
@@ -146,6 +161,29 @@ function validCheckRecord(value: unknown): value is ProviderCheckRun {
     && validStatus(value['status']) && validConclusion(value['conclusion'])
     && (value['status'] === 'COMPLETED' || value['conclusion'] === null)
     && safeUri(value['sourceUri']);
+}
+
+function validTestRef(value: unknown): value is string {
+  if (!safeText(value, 1024)) return false;
+  const separator = value.indexOf('#');
+  if (separator <= 0 || separator !== value.lastIndexOf('#')) return false;
+  const path = value.slice(0, separator);
+  const title = value.slice(separator + 1);
+  return safePath(path) && path.startsWith('tests/gbs-mod-wo-002-') && path.endsWith('.test.mjs')
+    && safeText(title, 512);
+}
+
+function validTestExecutionReceipt(value: unknown): value is ProviderTestExecutionReceipt {
+  return isRecord(value) && hasOnlyKeys(value, TEST_RECEIPT_FIELDS)
+    && safeText(value['receiptId'], 192) && IDENTIFIER.test(value['receiptId'])
+    && safeText(value['checkRunRecordId'], 192) && IDENTIFIER.test(value['checkRunRecordId'])
+    && safeText(value['runId'], 192) && IDENTIFIER.test(value['runId'])
+    && Number.isSafeInteger(value['attempt']) && (value['attempt'] as number) > 0 && (value['attempt'] as number) <= 1000
+    && typeof value['headSha'] === 'string' && SHA40.test(value['headSha'])
+    && validTestRef(value['testRef'])
+    && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(value['outcome']))
+    && safeUri(value['reportUri'])
+    && typeof value['reportDigest'] === 'string' && SHA256.test(value['reportDigest']);
 }
 
 function validWorkflowJob(value: unknown): value is ProviderWorkflowJob {
@@ -256,9 +294,19 @@ function validateParsedInput(parsed: ProviderEvidenceParseResult | unknown): Res
     || !safeText(input['providerId'], 64) || !/^[a-z0-9][a-z0-9._-]{0,63}$/i.test(input['providerId'])
     || typeof input['collectionState'] !== 'string' || !COLLECTION_STATES.includes(input['collectionState'])
     || !safeUri(input['sourceUri']) || !Array.isArray(input['checkRuns']) || input['checkRuns'].length > 4096
-    || !input['checkRuns'].every(validCheckRecord) || !Array.isArray(input['workflowRuns'])
+    || !input['checkRuns'].every(validCheckRecord) || !Array.isArray(input['testExecutionReceipts'])
+    || input['testExecutionReceipts'].length > 8192 || !input['testExecutionReceipts'].every(validTestExecutionReceipt)
+    || !Array.isArray(input['workflowRuns'])
     || input['workflowRuns'].length > 1024 || !input['workflowRuns'].every(validWorkflowRun)) {
     return fail('GHE24_INPUT_NOT_VALIDATED', 'Provider input failed M24 defensive validation.');
+  }
+  const inputCheckRuns = input['checkRuns'] as readonly ProviderCheckRun[];
+  for (const receipt of input['testExecutionReceipts'] as readonly ProviderTestExecutionReceipt[]) {
+    const checkRun = inputCheckRuns.find(({ recordId }) => recordId === receipt.checkRunRecordId);
+    if (checkRun === undefined || checkRun.checkKind !== 'TEST' || checkRun.runId !== receipt.runId || checkRun.attempt !== receipt.attempt
+      || new URL(checkRun.sourceUri).origin !== new URL(receipt.reportUri).origin) {
+      return fail('GHE24_TEST_RECEIPT_UNBOUND', 'Test receipt must bind to an exact TEST check run from the same provider origin.');
+    }
   }
   const binding = normalizeBinding({
     providerId: input['providerId'],
@@ -392,6 +440,58 @@ function normalizeCheckRuns(
   return ok({ rows, conflictedContexts: sortedUnique([...conflictedContexts]) });
 }
 
+function normalizeTestExecutionReceipts(
+  receipts: readonly ProviderTestExecutionReceipt[],
+  checkRuns: readonly NormalizedProviderCheckRun[],
+  expectedHead: string,
+  guard: Guard,
+): Result<readonly NormalizedProviderTestExecutionReceipt[]> {
+  const byRecordId = new Map(checkRuns.map((run) => [run.recordId, run]));
+  const normalized: NormalizedProviderTestExecutionReceipt[] = [];
+  for (const receipt of receipts) {
+    const stepped = guard.step('provider-test-execution-receipt');
+    if (!stepped.ok) return stepped;
+    const checkRun = byRecordId.get(receipt.checkRunRecordId);
+    if (checkRun === undefined || checkRun.checkKind !== 'TEST' || checkRun.runId !== receipt.runId || checkRun.attempt !== receipt.attempt) {
+      return fail('GHE24_TEST_RECEIPT_UNBOUND', 'Test receipt must identify one normalized TEST check attempt.');
+    }
+    let verdict: ProviderEvidenceVerdict;
+    let reasonCodes: readonly string[];
+    if (receipt.headSha !== expectedHead || receipt.headSha !== checkRun.headSha) {
+      verdict = 'STALE';
+      reasonCodes = ['TEST_RECEIPT_HEAD_MISMATCH'];
+    } else if (!checkRun.selected) {
+      verdict = 'NOT_VERIFIED';
+      reasonCodes = ['TEST_RECEIPT_CHECK_NOT_SELECTED'];
+    } else if (checkRun.verdict !== 'PASS') {
+      verdict = checkRun.verdict;
+      reasonCodes = sortedUnique(['TEST_RECEIPT_CHECK_NOT_PASS', ...checkRun.reasonCodes]);
+    } else if (receipt.outcome === 'PASSED') {
+      verdict = 'PASS';
+      reasonCodes = [];
+    } else if (receipt.outcome === 'FAILED') {
+      verdict = 'FAILED';
+      reasonCodes = ['TEST_EXECUTION_FAILED'];
+    } else if (receipt.outcome === 'NOT_EXECUTED') {
+      verdict = 'NOT_VERIFIED';
+      reasonCodes = ['TEST_EXECUTION_NOT_RUN'];
+    } else {
+      verdict = 'NOT_VERIFIED';
+      reasonCodes = ['TEST_EXECUTION_SKIPPED'];
+    }
+    normalized.push(deepFreezeCopy({
+      ...receipt,
+      contextId: checkRun.contextId,
+      checkRunRef: checkRun.evidenceRef,
+      selected: checkRun.selected,
+      verdict,
+      reasonCodes,
+      evidenceRef: `test:${receipt.receiptId}:${checkRun.evidenceRef}`,
+    }));
+  }
+  return ok(deepFreezeCopy(normalized));
+}
+
 function normalizeWorkflows(
   runs: readonly ProviderWorkflowRun[],
   expectedHead: string,
@@ -515,6 +615,13 @@ export function createProviderEvidenceBundle(
   const guard = new Guard(options);
   const checkResult = normalizeCheckRuns(input.checkRuns, expectedBinding.pullRequest.headSha, input.collectionState, guard);
   if (!checkResult.ok) return checkResult;
+  const testReceiptResult = normalizeTestExecutionReceipts(
+    input.testExecutionReceipts ?? [],
+    checkResult.value.rows,
+    expectedBinding.pullRequest.headSha,
+    guard,
+  );
+  if (!testReceiptResult.ok) return testReceiptResult;
   const workflowResult = normalizeWorkflows(input.workflowRuns, expectedBinding.pullRequest.headSha, input.collectionState, guard);
   if (!workflowResult.ok) return workflowResult;
   const requiredContextResults = contextResults(
@@ -549,6 +656,7 @@ export function createProviderEvidenceBundle(
     expectedBinding,
     bindingMatches: bindingReasons.length === 0,
     checkRuns: checkResult.value.rows,
+    testExecutionReceipts: testReceiptResult.value,
     workflowRuns: workflowResult.value.rows,
     requiredContextResults,
     completeness: completeness.value,
