@@ -23,17 +23,18 @@
   "ownerAuditIndependent": false,
   "parentBase": {
     "branch": "main",
-    "sha": "e0356f1de5dae2351d8701a76c736a22832929c2",
-    "requiresExactMatchForPlanningReview": true
+    "sha": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "requiresExactMatchForPlanningReview": true,
+    "actualMainVerifiedAtPlanning": true
   },
   "planningArtifacts": [
     {
       "path": ".engineering/work-orders/GBS-MOD-WO-003.md",
-      "gitBlobSha": "1d468631157ae3c0a38baf9fb678c44021fa0a61"
+      "gitBlobSha": "1f3214a3bdf8de644fd91709e586feadd757be9d"
     },
     {
       "path": ".engineering/planning/GBS-MOD-WO-003-SCHEDULER-DESIGN.md",
-      "gitBlobSha": "63cbdcbaf5f92931a2d1e85b7f9ba6720936084b"
+      "gitBlobSha": "a2c08f1611561015b4fc4cf4217eff976620388f"
     }
   ],
   "sourceFingerprints": [
@@ -47,11 +48,11 @@
     },
     {
       "path": ".engineering/CHECKPOINT.md",
-      "gitBlobSha": "866d0fcef2253560a45a8dbca147d9cd451d0960"
+      "gitBlobSha": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a"
     },
     {
       "path": ".engineering/CHECKPOINT.json",
-      "gitBlobSha": "af21419f47fc9f106abb49203b5b52c135a66ee1"
+      "gitBlobSha": "4a653772c31dffee869a9bac17345241cfc6db03"
     },
     {
       "path": ".engineering/SECURITY.md",
@@ -104,16 +105,9 @@
   ],
   "currentKnownBlockers": [
     {
-      "kind": "STATE_CONFLICT",
-      "description": "After #449, CHECKPOINT.md vs JSON WO-002 admission temporal effectivity conflict; corrective #451 still DRAFT/unmerged.",
-      "pr": 451,
-      "head": "3e8554ff940f2e9254119cdf8c489ee8946cbbfb",
-      "mergeAuthorized": false
-    },
-    {
       "kind": "WO002_INTERFACE_NOT_PROMOTED",
       "issue": 396,
-      "description": "WO-002 evidence/audit packet still not implemented/promoted; interface reuse conditional."
+      "description": "After Owner-approved PR451 current checkpoint agrees, but WO-002 #396 implementation not started, no effective lock, no promoted interface. PR #450 remains inactive DRAFT."
     },
     {
       "kind": "WO008_WORKSPACE_FACTORY_NOT_ADMITTED",
@@ -165,14 +159,71 @@
     "A10"
   ],
   "planEvidence": [
-    "Live main equals pinned e0356f1de5dae2351d8701a76c736a22832929c2 at preparation",
-    "Verify exactly three planning files added, zero other paths",
-    "Verify two planning artifact Git blob SHAs match this lock",
-    "Verify JSON parses and all doNot flags false for authority, true for doNotExecute/doNotDispatch",
-    "Verify exact original issue #397 acceptance A1-A10 preserved without changed criteria",
-    "Read actual GitHub hosted required tests for exact future PR head, do not infer from old CI",
-    "Mark owner audit NOT_INDEPENDENT and DO NOT MERGE",
-    "No #451 protected merge, no #450 activation, no Codex dispatch"
+    "Current main exact SHA equals e71120266c40235089444c9c0122280c5da4e5bd after separately authorized PR451 protected squash",
+    "16/16 current source Git blob fingerprints matched: 14 unchanged + 2 reconciled checkpoints",
+    "Original WO and scheduler design docs prepended explicit current source state, historical passages preserved",
+    "Two planning docs Git blob SHAs match refreshed references in this lock",
+    "Verify exactly three planning files in PR diff and no product/code/CI/checkpoint writes",
+    "JSON parses and doNotExecute/doNotDispatch=true, all executive/safety authority remains denied",
+    "Original Issue #397 acceptance A1-A10 maintained, none considered executed",
+    "Hosted CI at exact refreshed PR HEAD must be rechecked after final sync; old CI cannot transfer",
+    "Owner audit NOT_INDEPENDENT and NO MERGE unless separately targeted",
+    "No Codex, no provider dispatch, no WO002 lock activation; PR451 already merged"
   ],
-  "stopCondition": "GBS_MOD_WO_003_PLANNING_PACKET_EXACT_HEAD_AUDIT_READY_NOT_ADMITTED"
+  "stopCondition": "GBS_MOD_WO_003_PLANNING_PACKET_EXACT_HEAD_AUDIT_READY_NOT_ADMITTED",
+  "post451SourceReconciliation": {
+    "status": "PREVIOUS_CHECKPOINT_TEMPORAL_CONFLICT_RESOLVED_ON_CURRENT_MAIN_BUT_NO_WO003_AUTHORITY",
+    "pr": 451,
+    "mergeCommit": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "checkpointMdBlob": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a",
+    "checkpointJsonBlob": "4a653772c31dffee869a9bac17345241cfc6db03",
+    "sourceFingerprintsVerifiedCount": 16,
+    "sourceFingerprintsChangedSinceOriginal": 2,
+    "originalMainPreservedInHistory": true,
+    "predecessorWo002ImplementationStarted": false,
+    "ownerImplementationAuthorized": false,
+    "doNotExecute": true
+  },
+  "historicalPlanningStatePre451": {
+    "oldPlanningMainSha": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "oldCheckpointFingerprints": [
+      {
+        "path": ".engineering/CHECKPOINT.md",
+        "gitBlobSha": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a"
+      },
+      {
+        "path": ".engineering/CHECKPOINT.json",
+        "gitBlobSha": "4a653772c31dffee869a9bac17345241cfc6db03"
+      }
+    ],
+    "oldPlanningArtifacts": [
+      {
+        "path": ".engineering/work-orders/GBS-MOD-WO-003.md",
+        "gitBlobSha": "1d468631157ae3c0a38baf9fb678c44021fa0a61"
+      },
+      {
+        "path": ".engineering/planning/GBS-MOD-WO-003-SCHEDULER-DESIGN.md",
+        "gitBlobSha": "63cbdcbaf5f92931a2d1e85b7f9ba6720936084b"
+      }
+    ],
+    "formerStateConflict": {
+      "kind": "STATE_CONFLICT",
+      "description": "After #449, CHECKPOINT.md vs JSON WO-002 admission temporal effectivity conflict; corrective #451 still DRAFT/unmerged.",
+      "pr": 451,
+      "head": "3e8554ff940f2e9254119cdf8c489ee8946cbbfb",
+      "mergeAuthorized": false
+    },
+    "oldEvidence": [
+      "Live main equals pinned e0356f1de5dae2351d8701a76c736a22832929c2 at preparation",
+      "Verify exactly three planning files added, zero other paths",
+      "Verify two planning artifact Git blob SHAs match this lock",
+      "Verify JSON parses and all doNot flags false for authority, true for doNotExecute/doNotDispatch",
+      "Verify exact original issue #397 acceptance A1-A10 preserved without changed criteria",
+      "Read actual GitHub hosted required tests for exact future PR head, do not infer from old CI",
+      "Mark owner audit NOT_INDEPENDENT and DO NOT MERGE",
+      "No #451 protected merge, no #450 activation, no Codex dispatch"
+    ],
+    "originalJsonGitBlob": "b5db24760e6aec1d1037db74e12d309bb16ecb3a",
+    "originalPrHead": "4dd27dadcc914131532387f16071e37d5e5eb287"
+  }
 }
