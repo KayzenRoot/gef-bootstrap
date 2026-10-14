@@ -205,3 +205,4 @@ export interface HandlerFailure {
 export type HandlerOutcome<T> = HandlerSuccess<T> | HandlerFailure;
 
 export * from "./work-order.js";
+export * from "./provider-evidence.js";
