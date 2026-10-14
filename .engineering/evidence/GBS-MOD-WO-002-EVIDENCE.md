@@ -1,6 +1,6 @@
 # GBS-MOD-WO-002 — Implementation Evidence Bundle
 
-**State:** `CORRECTION_IMPLEMENTED; SONAR_RECHECK_PENDING; HOSTED_TEST_REPORT_UNAVAILABLE`; Owner audit has not started.
+**State:** `CORRECTION_IMPLEMENTED; OWNER_AUDIT_PENDING; HOSTED_TEST_REPORT_RETRIEVAL_MUST_BE_RECORDED_AT_FINAL_HEAD`; Owner audit has not started.
 **Work Order:** [GBS-MOD-WO-002](../work-orders/GBS-MOD-WO-002.md), admitted scope A1–A8.
 **Issue:** [#396](https://github.com/KayzenRoot/gef-bootstrap/issues/396).
 **Activation authorization:** [PR #460 Owner authorization](https://github.com/KayzenRoot/gef-bootstrap/pull/460#issuecomment-6168359370).
@@ -89,9 +89,15 @@ git diff --check                               PASS
 
 The focused cases include the fabricated test-name/receipt controls; missing, failed, and skipped cases; a passing report from an earlier SHA; an altered receipt; an altered outcome after bundle re-sealing; mismatched run/attempt/check/job/suite; invalid report digest; denied or unavailable log access; and corrupt report bytes. The final full-suite run reported 1,855 passed, 0 failed, 4 skipped of 1,859 total. `npm audit --audit-level=high` reported 0 vulnerabilities. The regular clone was based on exact source/test commit `fdc9db2...`; the Evidence Bundle update is a separate documentation commit. The final PR description binds the pushed PR HEAD, exact base/tree, all changed-file blob SHAs and hosted check/run/job IDs. There is no `lint` script.
 
+### R3 follow-up validation
+
+The R3 continuation adds an adversarial report case marked `CANCELLED`, verifies it normalizes to `NOT_EXECUTED`, and asserts its A1 proof remains `NOT_VERIFIED` with `TEST_EXECUTION_NOT_RUN`. On the updated source/test tree, `npm run build`, `npm run typecheck`, the focused WO-002 suite (40 passed, 0 failed, 0 skipped), and `npm audit --audit-level=high` (0 vulnerabilities) passed. The complete `npm run validate` result and exact final HEAD receipts are recorded in the PR's final Evidence Bundle.
+
 ## Hosted provider validation
 
 At PR HEAD `2d0561c3ea5caaded7348d1cc8b6f0b77fab4711`, `Repository validation` run `38612106429`, attempt `1`, job/Check Run `116017807297`, passed. `Pipeline Integrity` run `38612106713`, job/Check Run `116017809043`, passed. Gitleaks and Trivy passed in run `38612106875`, with Check Runs `116017809335` and `116017809690`. These checks are stale for source commit `268a630...` and are not evidence for its hosted validation.
+
+On the later PR HEAD `ec6db9e29afb2356ab765ba9d1cc182dac52469f`, all 47/47 check runs and 14/14 Actions workflow runs (attempt 1) completed successfully. This included SonarCloud Code Analysis Check Run `116040827947`, Repository Validation run `38618736267` / job `116040438641`, Pipeline Integrity run `38618737541` / job `116040445283`, and Free Security Pilot run `38618736006` with Gitleaks `116040447560` and Trivy `116040448011`. The R3 continuation changes the adversarial test file, so these pre-follow-up receipts are not assigned to its new HEAD; the final Evidence Bundle lists the new exact-head receipts.
 
 SonarCloud Code Analysis Check Run `116018201358` failed on PR HEAD `2d0561c3...`: its Reliability Rating was D while the required gate was A. Its five Cognitive Complexity findings were `extractTextFiles` (51), `parseSpecReport` (24), and `collectGitHubTestExecutionReport` (36) in `packages/evidence-engine/src/provider-test-report.ts`; `normalizeWorkflows` (21) in `packages/evidence-engine/src/provider-evidence.ts`; and `parseFileBlobs` (18) in `packages/contracts/src/provider-evidence.ts`, each above 15. Commit `268a630...` refactored those functions. SonarCloud Code Analysis Check Run `116025369608` failed on PR HEAD `a87ead6ef17971b31584a7e3d1fe3061eac08c90` with the required Reliability Rating D; its blocker was `normalizeTestReportCollections` (complexity 53, limit 15). Commit `bfea35e...` split that function into bounded stages and helpers. SonarCloud Check Run `116031977280` on PR HEAD `3ffdfb2fe1330a032caa0e385b3cce7ed1e9abd2` still failed the D Reliability gate; annotations included unsafe string coercion in untrusted enum validation and other static findings. Commit `4539ebc...` removes those coercions and simplifies the annotated validation code. SonarCloud Check Run `116037645390` on the next PR HEAD `17a9484c8eccecb41b3de111a8afa57280a88868` still failed D because the private stable snapshot used a default sort comparator; annotations also identified three over-complex credential patterns. Commit `fdc9db2...` now uses explicit locale comparison and split credential patterns. Its hosted recheck is pending after push and must pass before owner audit readiness.
 

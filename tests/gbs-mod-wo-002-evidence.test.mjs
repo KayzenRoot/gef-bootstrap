@@ -135,10 +135,10 @@ function specReport(outcomes = {}, { omitted = [], duplicates = [], todo = false
   const cases = Object.values(acceptanceTestRefs).flatMap((testRef) => {
     if (omittedRefs.has(testRef)) return [];
     const outcome = outcomes[testRef] ?? 'PASSED';
-    if (outcome === 'NOT_EXECUTED') return [];
     const title = testRef.slice(testRef.indexOf('#') + 1);
-    const symbol = outcome === 'PASSED' ? '✔' : outcome === 'FAILED' ? '✖' : '﹣';
-    return [{ testRef, line: `${symbol} ${title} (1.0ms)`, outcome }];
+    const symbol = outcome === 'PASSED' || outcome === 'NOT_EXECUTED' ? '✔' : outcome === 'FAILED' ? '✖' : '﹣';
+    const annotation = outcome === 'NOT_EXECUTED' ? ' # CANCELLED by signal' : '';
+    return [{ testRef, line: `${symbol} ${title} (1.0ms)${annotation}`, outcome }];
   });
   if (todo) cases.push({ testRef: null, line: '✔ unrelated todo (1.0ms) # TODO', outcome: 'TODO' });
   for (const testRef of duplicates) {
@@ -148,6 +148,7 @@ function specReport(outcomes = {}, { omitted = [], duplicates = [], todo = false
   const passed = cases.filter(({ outcome }) => outcome === 'PASSED').length;
   const failed = cases.filter(({ outcome }) => outcome === 'FAILED').length;
   const skipped = cases.filter(({ outcome }) => outcome === 'SKIPPED').length;
+  const cancelled = cases.filter(({ outcome }) => outcome === 'NOT_EXECUTED').length;
   const todoCount = cases.filter(({ outcome }) => outcome === 'TODO').length;
   const report = [
     ...cases.map(({ line }) => line),
@@ -155,7 +156,7 @@ function specReport(outcomes = {}, { omitted = [], duplicates = [], todo = false
     'ℹ suites 0',
     `ℹ pass ${passed}`,
     `ℹ fail ${failed}`,
-    'ℹ cancelled 0',
+    `ℹ cancelled ${cancelled}`,
     `ℹ skipped ${skipped}`,
     `ℹ todo ${todoCount}`,
     'ℹ duration_ms 10.0',
@@ -772,6 +773,16 @@ if (typeof createProviderAuditPacket !== 'function' || typeof revalidateProvider
     assert.equal(result.ok, true, JSON.stringify(result));
     assert.equal(result.value.acceptanceProofs[0].verdict, 'FAILED');
     assert.ok(result.value.acceptanceProofs[0].reasonCodes.includes('TEST_EXECUTION_FAILED'));
+  });
+
+  test('an unexecuted case in the verified report remains NOT_VERIFIED', async () => {
+    const unexecuted = (await collectVerifiedReport({ outcomes: { [acceptanceTestRefs.A1]: 'NOT_EXECUTED' } })).collection;
+    assert.equal(unexecuted.state, 'VERIFIED');
+    assert.equal(unexecuted.cases.find(({ testRef }) => testRef === acceptanceTestRefs.A1).outcome, 'NOT_EXECUTED');
+    const result = createPacketForSource(providerInput(), 'A1', {}, [unexecuted]);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.value.acceptanceProofs[0].verdict, 'NOT_VERIFIED');
+    assert.ok(result.value.acceptanceProofs[0].reasonCodes.includes('TEST_EXECUTION_NOT_RUN'));
   });
 
   test('a skipped case in the verified report remains NOT_VERIFIED', async () => {
