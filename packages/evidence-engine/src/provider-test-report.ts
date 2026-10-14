@@ -41,33 +41,19 @@ interface PrivateCollectionRecord {
   readonly reportDigest: string | null;
 }
 
-interface ReportFile {
-  readonly name: string;
-  readonly bytes: Uint8Array;
-}
-
-interface ZipEntryDescriptor {
-  readonly name: string;
-  readonly nameLength: number;
-  readonly flags: number;
-  readonly method: number;
-  readonly expectedCrc: number;
-  readonly compressedSize: number;
-  readonly uncompressedSize: number;
-  readonly localOffset: number;
-  readonly nextOffset: number;
-}
-
-interface ZipDirectoryRange {
-  readonly entryCount: number;
-  readonly centralOffset: number;
-  readonly centralEnd: number;
-}
-
 interface ParsedReport {
   readonly cases: readonly ProviderTestReportCase[];
   readonly bytes: Uint8Array;
   readonly invalidReason?: string;
+}
+
+type TapSummaryName = 'tests' | 'pass' | 'fail' | 'cancelled' | 'skipped' | 'todo';
+
+interface ParsedTapResult {
+  readonly counter: number;
+  readonly title: string;
+  readonly outcome: ProviderTestExecutionOutcome;
+  readonly summaryName: Exclude<TapSummaryName, 'tests'>;
 }
 
 interface ProviderResponse<T> {
@@ -84,23 +70,13 @@ type StageResult<T> =
 const API_ROOT = 'https://api.github.com';
 const MAX_TOKEN_LENGTH = 4096;
 const MAX_API_BODY = 2 * 1024 * 1024;
-const MAX_ARCHIVE_BYTES = 64 * 1024 * 1024;
 const MAX_REPORT_BYTES = 24 * 1024 * 1024;
-const MAX_ZIP_ENTRIES = 512;
+const MAX_WORKFLOW_JOBS = 512;
 const MAX_TEST_CASES = 8192;
 const SHA40 = /^[0-9a-f]{40}$/;
 const DECIMAL_ID = /^\d{1,20}$/;
 const REPOSITORY = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}\/[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$/;
 const COLLECTION_RECORDS = new WeakMap<object, PrivateCollectionRecord>();
-const CRC32_TABLE = (() => {
-  const table = new Uint32Array(256);
-  for (let index = 0; index < table.length; index += 1) {
-    let value = index;
-    for (let bit = 0; bit < 8; bit += 1) value = (value >>> 1) ^ ((value & 1) === 1 ? 0xedb88320 : 0);
-    table[index] = value >>> 0;
-  }
-  return table;
-})();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -302,215 +278,12 @@ async function getJson<T>(url: string, token: string): Promise<ProviderResponse<
   }
 }
 
-function crc32(bytes: Uint8Array): number {
-  let crc = 0xffffffff;
-  for (const byte of bytes) crc = (CRC32_TABLE[(crc ^ byte) & 0xff] ?? 0) ^ (crc >>> 8);
-  return (crc ^ 0xffffffff) >>> 0;
-}
-
-function zipPathIsSafe(path: string): boolean {
-  const normalized = path.endsWith('/') ? path.slice(0, -1) : path;
-  if (normalized.length === 0 || normalized.startsWith('/') || normalized.includes('\\') || /^[A-Za-z]:/.test(normalized)) return false;
-  return normalized.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..');
-}
-
-function findEndRecord(bytes: Uint8Array): number {
-  const earliest = Math.max(0, bytes.length - 65557);
-  for (let offset = bytes.length - 22; offset >= earliest; offset -= 1) {
-    if (readUInt32(bytes, offset) === 0x06054b50) return offset;
-  }
-  return -1;
-}
-
-function readUInt16(bytes: Uint8Array, offset: number): number {
-  if (offset < 0 || offset + 2 > bytes.length) throw new Error('ZIP_BOUNDS');
-  return bytes[offset]! | (bytes[offset + 1]! << 8);
-}
-
-function readUInt32(bytes: Uint8Array, offset: number): number {
-  if (offset < 0 || offset + 4 > bytes.length) return -1;
-  return (bytes[offset]! | (bytes[offset + 1]! << 8) | (bytes[offset + 2]! << 16) | (bytes[offset + 3]! << 24)) >>> 0;
-}
-
-async function inflateRaw(bytes: Uint8Array): Promise<Uint8Array | null> {
-  if (typeof DecompressionStream !== 'function') return null;
-  try {
-    const copy = new Uint8Array(bytes.length);
-    copy.set(bytes);
-    const body = new Blob([copy.buffer]).stream();
-    const reader = body.pipeThrough(new DecompressionStream('deflate-raw' as CompressionFormat)).getReader();
-    const chunks: Uint8Array[] = [];
-    let length = 0;
-    while (true) {
-      const item = await reader.read();
-      if (item.done) break;
-      length += item.value.length;
-      if (length > MAX_REPORT_BYTES) {
-        await reader.cancel();
-        return null;
-      }
-      chunks.push(item.value);
-    }
-    const output = new Uint8Array(length);
-    let offset = 0;
-    for (const chunk of chunks) {
-      output.set(chunk, offset);
-      offset += chunk.length;
-    }
-    return output;
-  } catch {
-    return null;
-  }
-}
-
-function readZipDirectoryRange(archive: Uint8Array): ZipDirectoryRange | null {
-  if (archive.length < 22 || archive.length > MAX_ARCHIVE_BYTES) return null;
-  const endOffset = findEndRecord(archive);
-  if (endOffset < 0) return null;
-  const diskNumber = readUInt16(archive, endOffset + 4);
-  const centralDiskNumber = readUInt16(archive, endOffset + 6);
-  const entriesOnDisk = readUInt16(archive, endOffset + 8);
-  const entryCount = readUInt16(archive, endOffset + 10);
-  const centralSize = readUInt32(archive, endOffset + 12);
-  const centralOffset = readUInt32(archive, endOffset + 16);
-  const commentLength = readUInt16(archive, endOffset + 20);
-  if (diskNumber !== 0 || centralDiskNumber !== 0 || entriesOnDisk !== entryCount
-    || entryCount < 1 || entryCount > MAX_ZIP_ENTRIES || centralSize === 0xffffffff || centralOffset === 0xffffffff
-    || endOffset + 22 + commentLength !== archive.length || centralOffset + centralSize > endOffset) return null;
-  return { entryCount, centralOffset, centralEnd: centralOffset + centralSize };
-}
-
-function readZipEntryDescriptor(archive: Uint8Array, offset: number, centralOffset: number, centralEnd: number): ZipEntryDescriptor | null {
-  if (readUInt32(archive, offset) !== 0x02014b50) return null;
-  const flags = readUInt16(archive, offset + 8);
-  const method = readUInt16(archive, offset + 10);
-  const expectedCrc = readUInt32(archive, offset + 16);
-  const compressedSize = readUInt32(archive, offset + 20);
-  const uncompressedSize = readUInt32(archive, offset + 24);
-  const nameLength = readUInt16(archive, offset + 28);
-  const extraLength = readUInt16(archive, offset + 30);
-  const commentSize = readUInt16(archive, offset + 32);
-  const localOffset = readUInt32(archive, offset + 42);
-  const nameStart = offset + 46;
-  const nextOffset = nameStart + nameLength + extraLength + commentSize;
-  if (nextOffset > centralEnd || localOffset >= centralOffset || compressedSize === 0xffffffff
-    || uncompressedSize === 0xffffffff || (flags & 1) !== 0 || (flags & 0x40) !== 0) return null;
-  let name: string;
-  try {
-    name = new TextDecoder('utf-8', { fatal: true }).decode(archive.subarray(nameStart, nameStart + nameLength));
-  } catch {
-    return null;
-  }
-  if (!zipPathIsSafe(name)) return null;
-  return { name, nameLength, flags, method, expectedCrc, compressedSize, uncompressedSize, localOffset, nextOffset };
-}
-
-async function extractZipEntryText(
-  archive: Uint8Array,
-  entry: ZipEntryDescriptor,
-  centralOffset: number,
-  totalReportBytes: number,
-): Promise<{ readonly valid: boolean; readonly report: ReportFile | null }> {
-  if (entry.name.endsWith('/')) return { valid: true, report: null };
-  if (readUInt32(archive, entry.localOffset) !== 0x04034b50) return { valid: false, report: null };
-  const localCrc = readUInt32(archive, entry.localOffset + 14);
-  const localCompressedSize = readUInt32(archive, entry.localOffset + 18);
-  const localUncompressedSize = readUInt32(archive, entry.localOffset + 22);
-  const localFlags = readUInt16(archive, entry.localOffset + 6);
-  const localMethod = readUInt16(archive, entry.localOffset + 8);
-  const localNameLength = readUInt16(archive, entry.localOffset + 26);
-  const localExtraLength = readUInt16(archive, entry.localOffset + 28);
-  const localNameStart = entry.localOffset + 30;
-  const dataStart = localNameStart + localNameLength + localExtraLength;
-  const dataEnd = dataStart + entry.compressedSize;
-  let localName: string;
-  try {
-    localName = new TextDecoder('utf-8', { fatal: true }).decode(archive.subarray(localNameStart, localNameStart + localNameLength));
-  } catch {
-    return { valid: false, report: null };
-  }
-  const descriptorFlagSet = (entry.flags & 0x08) !== 0;
-  if (dataEnd > centralOffset || localFlags !== entry.flags || localMethod !== entry.method
-    || localNameLength !== entry.nameLength || localName !== entry.name
-    || (!descriptorFlagSet && (localCrc !== entry.expectedCrc || localCompressedSize !== entry.compressedSize
-      || localUncompressedSize !== entry.uncompressedSize))) return { valid: false, report: null };
-  if (!entry.name.toLowerCase().endsWith('.txt') || entry.uncompressedSize > MAX_REPORT_BYTES) {
-    return { valid: true, report: null };
-  }
-  if (totalReportBytes + entry.uncompressedSize > MAX_ARCHIVE_BYTES) return { valid: false, report: null };
-  const compressed = archive.subarray(dataStart, dataEnd);
-  let bytes: Uint8Array | null;
-  if (entry.method === 0) bytes = new Uint8Array(compressed);
-  else if (entry.method === 8) bytes = await inflateRaw(compressed);
-  else return { valid: false, report: null };
-  if (bytes?.length !== entry.uncompressedSize) return { valid: false, report: null };
-  if (bytes === null || crc32(bytes) !== entry.expectedCrc) return { valid: false, report: null };
-  return { valid: true, report: { name: entry.name, bytes } };
-}
-
-async function extractTextFiles(archive: Uint8Array): Promise<readonly ReportFile[] | null> {
-  const directory = readZipDirectoryRange(archive);
-  if (directory === null) return null;
-
-  const reports: ReportFile[] = [];
-  let totalReportBytes = 0;
-  let offset = directory.centralOffset;
-  for (let index = 0; index < directory.entryCount; index += 1) {
-    const entry = readZipEntryDescriptor(archive, offset, directory.centralOffset, directory.centralEnd);
-    if (entry === null) return null;
-    const extracted = await extractZipEntryText(archive, entry, directory.centralOffset, totalReportBytes);
-    if (!extracted.valid) return null;
-    if (extracted.report !== null) {
-      reports.push(extracted.report);
-      totalReportBytes += extracted.report.bytes.length;
-    }
-    offset = entry.nextOffset;
-  }
-  return offset === directory.centralEnd ? reports : null;
-}
-
 function reportCaseFromTitle(title: string, outcome: ProviderTestExecutionOutcome): ProviderTestReportCase | null {
   const separator = title.indexOf(' :: ');
   if (separator <= 0) return null;
   const path = title.slice(0, separator);
   const testRef = `${path}#${title}`;
   return isProviderTestRef(testRef) ? { testRef, outcome } : null;
-}
-
-const SPEC_SUMMARY_NAMES = ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo'] as const;
-type SpecSummaryName = typeof SPEC_SUMMARY_NAMES[number];
-type SpecResultCounter = Exclude<SpecSummaryName, 'tests'>;
-
-interface ParsedSpecLine {
-  readonly kind: 'summary' | 'case';
-  readonly name?: SpecSummaryName;
-  readonly count?: number;
-  readonly title?: string;
-  readonly outcome?: ProviderTestExecutionOutcome;
-  readonly counter?: SpecResultCounter;
-}
-
-function parseSpecLine(line: string): ParsedSpecLine | null {
-  const summary = /^ℹ (tests|pass|fail|cancelled|skipped|todo) (\d+)$/.exec(line);
-  if (summary !== null) return { kind: 'summary', name: summary[1] as SpecSummaryName, count: Number(summary[2]) };
-  const record = /^\s*[✔✖﹣○] (.+) \((\d+(?:\.\d+)?ms)\)(?: #(.+))?$/.exec(line);
-  if (record === null) return null;
-  const symbol = line.trimStart()[0]!;
-  const annotation = (record[3] ?? '').trim();
-  const title = record[1]!;
-  if (symbol === '✖') return { kind: 'case', title, outcome: 'FAILED', counter: 'fail' };
-  if (annotation === 'TODO') return { kind: 'case', title, outcome: 'SKIPPED', counter: 'todo' };
-  if (annotation.startsWith('CANCELLED')) return { kind: 'case', title, outcome: 'NOT_EXECUTED', counter: 'cancelled' };
-  if (symbol === '﹣' || symbol === '○') return { kind: 'case', title, outcome: 'SKIPPED', counter: 'skipped' };
-  return { kind: 'case', title, outcome: 'PASSED', counter: 'pass' };
-}
-
-function specSummaryMatches(
-  counts: Partial<Record<SpecSummaryName, number>>,
-  observed: Record<SpecSummaryName, number>,
-): boolean {
-  return SPEC_SUMMARY_NAMES.every((name) => counts[name] !== undefined)
-    && SPEC_SUMMARY_NAMES.every((name) => counts[name] === observed[name]);
 }
 
 function hasDuplicateReportCases(cases: readonly ProviderTestReportCase[]): boolean {
@@ -522,45 +295,169 @@ function hasDuplicateReportCases(cases: readonly ProviderTestReportCase[]): bool
   return false;
 }
 
-function parseSpecReport(bytes: Uint8Array): ParsedReport | null {
-  let text: string;
+const TAP_SUMMARY_NAMES: readonly TapSummaryName[] = ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo'];
+const ANSI_CSI = /\u001b\[[0-?]*[ -/]*[@-~]/g;
+const ANSI_OSC = /\u001b\][^\u0007\u001b]*(?:\u0007|\u001b\\)/g;
+
+interface ParsedTapStream {
+  readonly counts: Partial<Record<TapSummaryName, number>>;
+  readonly plan: number | null;
+  readonly subtests: readonly string[];
+  readonly results: readonly ParsedTapResult[];
+}
+
+function validGitHubTimestamp(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?Z$/.exec(value);
+  if (match === null) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6]);
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return year > 0 && month >= 1 && month <= 12 && day >= 1 && day <= (daysInMonth[month - 1] ?? 0)
+    && hour <= 23 && minute <= 59 && second <= 59;
+}
+
+function normalizeGitHubLogLine(value: string): string | null {
+  const withoutAnsi = value.replace(ANSI_OSC, '').replace(ANSI_CSI, '');
+  const timestamp = /^(\d{4}-\d{2}-\d{2}T[^ ]+) (.*)$/.exec(withoutAnsi);
+  if (timestamp !== null) return validGitHubTimestamp(timestamp[1]!) ? timestamp[2]! : null;
+  if (/^\d{4}-\d{2}-\d{2}T/.test(withoutAnsi)) return null;
+  return withoutAnsi;
+}
+
+function decodeGitHubLog(bytes: Uint8Array): readonly string[] | null {
   try {
-    text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    const lines = text.split(/\r?\n/).map(normalizeGitHubLogLine);
+    return lines.some((line) => line === null) ? null : lines as string[];
   } catch {
     return null;
   }
-  const clean = text.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, '');
-  const counts: Partial<Record<SpecSummaryName, number>> = {};
-  const cases: ProviderTestReportCase[] = [];
-  const observed: Record<SpecSummaryName, number> = { tests: 0, pass: 0, fail: 0, cancelled: 0, skipped: 0, todo: 0 };
-  for (const rawLine of clean.split(/\r?\n/)) {
-    const parsed = parseSpecLine(rawLine.trimEnd());
-    if (parsed === null) continue;
-    if (parsed.kind === 'summary') {
-      const name = parsed.name!;
-      if (counts[name] !== undefined) return null;
-      counts[name] = parsed.count!;
+}
+
+function parseTapSummaryLine(line: string): { readonly name: TapSummaryName; readonly count: number } | null {
+  const match = /^# (tests|pass|fail|cancelled|skipped|todo) (0|[1-9]\d*)$/.exec(line);
+  if (match === null) return null;
+  const count = Number(match[2]);
+  return Number.isSafeInteger(count) ? { name: match[1] as TapSummaryName, count } : null;
+}
+
+function parseTapPlanLine(line: string): number | null {
+  const match = /^1\.\.(0|[1-9]\d*)$/.exec(line);
+  if (match === null) return null;
+  const count = Number(match[1]);
+  return Number.isSafeInteger(count) ? count : null;
+}
+
+function parseTapResultLine(line: string): ParsedTapResult | null {
+  const match = /^(ok|not ok) ([1-9]\d*) - (.+?)(?: # (SKIP|TODO|CANCELLED|NOT EXECUTED)(?:\s+.*)?)?$/.exec(line);
+  if (match === null || match[3]!.trim() !== match[3]) return null;
+  const status = match[1];
+  const counter = Number(match[2]);
+  const annotation = match[4] ?? '';
+  if (!Number.isSafeInteger(counter)) return null;
+  if (annotation === 'SKIP') return { counter, title: match[3]!, outcome: 'SKIPPED', summaryName: 'skipped' };
+  if (annotation === 'TODO') return { counter, title: match[3]!, outcome: 'SKIPPED', summaryName: 'todo' };
+  if (annotation === 'CANCELLED' || annotation === 'NOT EXECUTED') {
+    return { counter, title: match[3]!, outcome: 'NOT_EXECUTED', summaryName: 'cancelled' };
+  }
+  if (status === 'not ok') return { counter, title: match[3]!, outcome: 'FAILED', summaryName: 'fail' };
+  return { counter, title: match[3]!, outcome: 'PASSED', summaryName: 'pass' };
+}
+
+function isTapRecordPrefix(line: string): boolean {
+  return /^(?:not )?ok(?:\s|$)/.test(line) || /^# (?:tests|pass|fail|cancelled|skipped|todo)\b/.test(line)
+    || /^1\.\./.test(line);
+}
+
+function collectTapStream(lines: readonly string[], startIndex: number): ParsedTapStream | null {
+  const counts: Partial<Record<TapSummaryName, number>> = {};
+  const subtests: string[] = [];
+  const results: ParsedTapResult[] = [];
+  let plan: number | null = null;
+  let pendingSubtest: string | null = null;
+  let summaryStarted = false;
+  for (const rawLine of lines.slice(startIndex + 1)) {
+    const line = rawLine.trim();
+    if (line.length === 0) continue;
+    const summary = parseTapSummaryLine(line);
+    if (summary !== null) {
+      if (counts[summary.name] !== undefined || pendingSubtest !== null) return null;
+      summaryStarted = true;
+      counts[summary.name] = summary.count;
       continue;
     }
-    observed.tests += 1;
-    observed[parsed.counter!] += 1;
-    if (observed.tests > MAX_TEST_CASES) return null;
-    const reportCase = reportCaseFromTitle(parsed.title!, parsed.outcome!);
-    if (reportCase !== null) cases.push(reportCase);
+    if (summaryStarted) {
+      if (line.startsWith('# Subtest:') || isTapRecordPrefix(line)) return null;
+      continue;
+    }
+    if (line.startsWith('# Subtest:')) {
+      const title = line.slice('# Subtest:'.length).trim();
+      if (title.length === 0 || pendingSubtest !== null) return null;
+      pendingSubtest = title;
+      subtests.push(title);
+      continue;
+    }
+    if (line.startsWith('1..')) {
+      const parsedPlan = parseTapPlanLine(line);
+      if (parsedPlan === null || plan !== null || pendingSubtest !== null) return null;
+      plan = parsedPlan;
+      continue;
+    }
+    const result = parseTapResultLine(line);
+    if (result !== null) {
+      if (pendingSubtest !== result.title) return null;
+      pendingSubtest = null;
+      results.push(result);
+      if (results.length > MAX_TEST_CASES) return null;
+      continue;
+    }
+    if (isTapRecordPrefix(line)) return null;
   }
-  if (!specSummaryMatches(counts, observed)) return null;
+  if (pendingSubtest !== null) return null;
+  return { counts, plan, subtests, results };
+}
+
+function tapNamesAndCountersMatch(stream: ParsedTapStream): boolean {
+  for (const [index, result] of stream.results.entries()) {
+    if (result.counter !== index + 1 || stream.subtests[index] !== result.title) return false;
+  }
+  return stream.subtests.length === stream.results.length;
+}
+
+function tapSummaryMatches(stream: ParsedTapStream): boolean {
+  if (stream.plan === null || stream.plan !== stream.results.length) return false;
+  const observed: Record<TapSummaryName, number> = { tests: stream.results.length, pass: 0, fail: 0, cancelled: 0, skipped: 0, todo: 0 };
+  for (const result of stream.results) observed[result.summaryName] += 1;
+  return TAP_SUMMARY_NAMES.every((name) => stream.counts[name] !== undefined && stream.counts[name] === observed[name]);
+}
+
+function parseTapReport(bytes: Uint8Array): ParsedReport | null {
+  const lines = decodeGitHubLog(bytes);
+  if (lines === null) return null;
+  const starts = lines.flatMap((line, index) => line.trim() === 'TAP version 13' ? [index] : []);
+  if (starts.length !== 1) return null;
+  const stream = collectTapStream(lines, starts[0]!);
+  if (stream === null || stream.results.length === 0 || !tapNamesAndCountersMatch(stream) || !tapSummaryMatches(stream)) return null;
+  const cases = stream.results.flatMap((result) => {
+    const reportCase = reportCaseFromTitle(result.title, result.outcome);
+    return reportCase === null ? [] : [reportCase];
+  });
   if (hasDuplicateReportCases(cases)) return { cases: [], bytes, invalidReason: 'GITHUB_TEST_REPORT_CASE_DUPLICATE' };
-  const sortedCases = [...cases].sort((left, right) => left.testRef.localeCompare(right.testRef));
-  return { cases: sortedCases, bytes };
+  return { cases: cases.sort((left, right) => left.testRef.localeCompare(right.testRef)), bytes };
 }
 
 function trustedDownloadHost(url: URL): boolean {
-  return url.protocol === 'https:' && url.username.length === 0 && url.password.length === 0
+  return url.protocol === 'https:' && url.port.length === 0 && url.username.length === 0 && url.password.length === 0
     && ['.actions.githubusercontent.com', '.blob.core.windows.net', '.amazonaws.com']
       .some((suffix) => url.hostname.endsWith(suffix));
 }
 
-async function downloadJobLog(repository: string, jobId: string, token: string): Promise<{ readonly status: number; readonly archive: Uint8Array | null }> {
+async function downloadJobLog(repository: string, jobId: string, token: string): Promise<{ readonly status: number; readonly bytes: Uint8Array | null }> {
   const endpoint = `${API_ROOT}/repos/${repository}/actions/jobs/${jobId}/logs`;
   let redirect: Response;
   try {
@@ -575,30 +472,30 @@ async function downloadJobLog(repository: string, jobId: string, token: string):
       signal: AbortSignal.timeout(20000),
     });
   } catch {
-    return { status: 0, archive: null };
+    return { status: 0, bytes: null };
   }
-  if (![301, 302, 303].includes(redirect.status)) return { status: redirect.status, archive: null };
+  if (![301, 302, 303].includes(redirect.status)) return { status: redirect.status, bytes: null };
   const location = redirect.headers.get('location');
-  if (location === null) return { status: 502, archive: null };
+  if (location === null) return { status: 502, bytes: null };
   let downloadUrl: URL;
   try {
     downloadUrl = new URL(location, API_ROOT);
   } catch {
-    return { status: 502, archive: null };
+    return { status: 502, bytes: null };
   }
-  if (!trustedDownloadHost(downloadUrl)) return { status: 502, archive: null };
+  if (!trustedDownloadHost(downloadUrl)) return { status: 502, bytes: null };
   try {
     const response = await globalThis.fetch(downloadUrl, {
       method: 'GET',
-      headers: { Accept: 'application/zip' },
+      headers: { Accept: 'text/plain' },
       redirect: 'error',
       signal: AbortSignal.timeout(30000),
     });
-    if (response.status !== 200) return { status: response.status, archive: null };
-    const archive = await readBounded(response, MAX_ARCHIVE_BYTES);
-    return archive === null ? { status: 413, archive: null } : { status: 200, archive };
+    if (response.status !== 200) return { status: response.status, bytes: null };
+    const bytes = await readBounded(response, MAX_REPORT_BYTES);
+    return bytes === null ? { status: 413, bytes: null } : { status: 200, bytes };
   } catch {
-    return { status: 0, archive: null };
+    return { status: 0, bytes: null };
   }
 }
 
@@ -691,7 +588,7 @@ async function readWorkflowJob(
     const failed = responseFailure(response.status);
     return { ok: false, state: failed.state, reason: failed.reason };
   }
-  if (!isRecord(response.value) || !Array.isArray(response.value['jobs']) || response.value['jobs'].length > MAX_ZIP_ENTRIES) {
+  if (!isRecord(response.value) || !Array.isArray(response.value['jobs']) || response.value['jobs'].length > MAX_WORKFLOW_JOBS) {
     return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_JOB_LIST_INVALID' };
   }
   const matchingJobs = response.value['jobs'].filter((job) => jobReferencesCheckRun(job, request.repository, request.checkRunId));
@@ -757,29 +654,15 @@ async function readTestReport(
   token: string,
 ): Promise<StageResult<ParsedReport>> {
   const logResponse = await downloadJobLog(request.repository, jobId, token);
-  if (logResponse.archive === null) {
+  if (logResponse.bytes === null) {
     const failed = responseFailure(logResponse.status);
     const reason = reportLogFailureReason(logResponse.status);
     return { ok: false, state: failed.state, reason };
   }
-  let textFiles: readonly ReportFile[] | null;
-  try {
-    textFiles = await extractTextFiles(logResponse.archive);
-  } catch {
-    textFiles = null;
-  }
-  if (textFiles === null) return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_ARCHIVE_INVALID' };
-  const parsedReports = textFiles.flatMap((file) => {
-    const parsed = parseSpecReport(file.bytes);
-    return parsed === null ? [] : [parsed];
-  });
-  const invalidReport = parsedReports.find(({ invalidReason }) => invalidReason !== undefined);
-  if (invalidReport !== undefined) return { ok: false, state: 'INVALID', reason: invalidReport.invalidReason! };
-  const validReports = parsedReports.filter(({ invalidReason }) => invalidReason === undefined);
-  if (validReports.length !== 1) {
-    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_AMBIGUOUS_OR_MISSING' };
-  }
-  return { ok: true, value: validReports[0]! };
+  const parsed = parseTapReport(logResponse.bytes);
+  if (parsed === null) return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_TAP_INVALID' };
+  if (parsed.invalidReason !== undefined) return { ok: false, state: 'INVALID', reason: parsed.invalidReason };
+  return { ok: true, value: parsed };
 }
 
 /** Collects only by authenticated GitHub REST reads and exact job-log bytes; it performs no provider writes. */

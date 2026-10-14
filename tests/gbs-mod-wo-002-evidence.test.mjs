@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { deflateRawSync } from 'node:zlib';
 import * as contracts from '../packages/contracts/dist/index.js';
 import * as evidence from '../packages/evidence-engine/dist/public.js';
 import * as assurance from '../packages/assurance-pipeline/dist/public.js';
@@ -14,49 +13,6 @@ const revalidateProviderAuditPacket = assurance.revalidateProviderAuditPacket;
 const collectGitHubTestExecutionReport = evidence.collectGitHubTestExecutionReport;
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const gitSha = (value) => createHash('sha1').update(value).digest('hex');
-const crc32 = (bytes) => {
-  let crc = 0xffffffff;
-  for (const byte of bytes) {
-    crc ^= byte;
-    for (let bit = 0; bit < 8; bit += 1) crc = (crc >>> 1) ^ ((crc & 1) === 1 ? 0xedb88320 : 0);
-  }
-  return (crc ^ 0xffffffff) >>> 0;
-};
-function zipReport(path, text) {
-  const name = Buffer.from(path);
-  const raw = Buffer.from(text);
-  const compressed = deflateRawSync(raw);
-  const checksum = crc32(raw);
-  const local = Buffer.alloc(30 + name.length);
-  local.writeUInt32LE(0x04034b50, 0);
-  local.writeUInt16LE(20, 4);
-  local.writeUInt16LE(0x0800, 6);
-  local.writeUInt16LE(8, 8);
-  local.writeUInt32LE(checksum, 14);
-  local.writeUInt32LE(compressed.length, 18);
-  local.writeUInt32LE(raw.length, 22);
-  local.writeUInt16LE(name.length, 26);
-  name.copy(local, 30);
-  const central = Buffer.alloc(46 + name.length);
-  central.writeUInt32LE(0x02014b50, 0);
-  central.writeUInt16LE(20, 4);
-  central.writeUInt16LE(20, 6);
-  central.writeUInt16LE(0x0800, 8);
-  central.writeUInt16LE(8, 10);
-  central.writeUInt32LE(checksum, 16);
-  central.writeUInt32LE(compressed.length, 20);
-  central.writeUInt32LE(raw.length, 24);
-  central.writeUInt16LE(name.length, 28);
-  central.writeUInt32LE(0, 42);
-  name.copy(central, 46);
-  const end = Buffer.alloc(22);
-  end.writeUInt32LE(0x06054b50, 0);
-  end.writeUInt16LE(1, 8);
-  end.writeUInt16LE(1, 10);
-  end.writeUInt32LE(central.length, 12);
-  end.writeUInt32LE(local.length + compressed.length, 16);
-  return Buffer.concat([local, compressed, central, end]);
-}
 const stableStringify = (value) => {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
@@ -164,14 +120,75 @@ function specReport(outcomes = {}, { omitted = [], duplicates = [], todo = false
   return { report, cases };
 }
 
+function tapReport(outcomes = {}, options = {}) {
+  const omitted = new Set(options.omitted ?? []);
+  const cases = Object.values(acceptanceTestRefs)
+    .filter((testRef) => !omitted.has(testRef))
+    .map((testRef) => ({
+      testRef,
+      title: testRef.slice(testRef.indexOf('#') + 1),
+      outcome: outcomes[testRef] ?? 'PASSED',
+    }));
+  for (const testRef of options.duplicates ?? []) {
+    cases.push({
+      testRef,
+      title: testRef.slice(testRef.indexOf('#') + 1),
+      outcome: outcomes[testRef] ?? 'PASSED',
+    });
+  }
+  const records = [
+    ...cases,
+    ...(options.extraResults ?? []).map(({ title, outcome = 'PASSED' }) => ({ testRef: null, title, outcome, unpaired: true })),
+  ];
+  const counts = { tests: records.length, pass: 0, fail: 0, cancelled: 0, skipped: 0, todo: 0 };
+  const lines = ['TAP version 13'];
+  for (const [index, item] of records.entries()) {
+    const subtestTitle = options.subtestTitleOverrides?.[item.testRef] ?? item.title;
+    const resultTitle = options.resultTitleOverrides?.[item.testRef] ?? item.title;
+    const counter = options.swapFirstCounters && index < 2 ? (index === 0 ? 2 : 1) : index + 1;
+    if (item.unpaired !== true && !options.missingSubtests?.includes(item.testRef)) {
+      lines.push(`# Subtest: ${subtestTitle}`);
+    }
+    let resultLine;
+    if (item.outcome === 'FAILED') {
+      resultLine = `not ok ${counter} - ${resultTitle}`;
+      counts.fail += 1;
+    } else if (item.outcome === 'SKIPPED') {
+      resultLine = `ok ${counter} - ${resultTitle} # SKIP not supported`;
+      counts.skipped += 1;
+    } else if (item.outcome === 'NOT_EXECUTED') {
+      const annotation = options.notExecutedAnnotation === true ? 'NOT EXECUTED' : 'CANCELLED';
+      resultLine = `not ok ${counter} - ${resultTitle} # ${annotation} by signal`;
+      counts.cancelled += 1;
+    } else if (item.outcome === 'TODO') {
+      resultLine = `not ok ${counter} - ${resultTitle} # TODO pending`;
+      counts.todo += 1;
+    } else {
+      resultLine = `ok ${counter} - ${resultTitle}`;
+      counts.pass += 1;
+    }
+    if (options.ansi === true) resultLine = `\u001b[32m${resultLine}\u001b[0m`;
+    if (options.malformedAnsi === true && index === 0) resultLine = `\u001b[31${resultLine}`;
+    lines.push(resultLine);
+  }
+  if (options.noPlan !== true) lines.push(`1..${options.planOverride ?? records.length}`);
+  const summary = Object.entries(counts).map(([name, count]) =>
+    `# ${name} ${options.summaryOverrides?.[name] ?? count}`);
+  if (options.noSummary !== true && options.truncated !== true) lines.push(...summary);
+  if (options.duplicateSummary === true) lines.push(...summary);
+  lines.push('# duration_ms 10.0');
+  let report = lines.map((line, index) =>
+    `2026-10-14T19:18:${String(37 + (index % 20)).padStart(2, '0')}.3626716Z ${line}`).join('\n');
+  if (options.invalidTimestamp === true) report = report.replace(/^2026-10-14T[^ ]+/gm, '2026-99-99T19:18:37.3626716Z');
+  if (options.secondReport === true) report += `\n${tapReport(outcomes).report}`;
+  return { report, cases: records };
+}
+
 function fakeGitHubReportApi(options = {}) {
   const attempt = options.attempt ?? 1;
-  const report = options.report ?? specReport(options.outcomes, options).report;
-  const reportBytes = Buffer.from(report);
-  const archiveBytes = zipReport('job/test-output.txt', report);
-  if (options.corruptArchive === true) archiveBytes[50] ^= 0xff;
-  if (options.multiDiskArchive === true) archiveBytes.writeUInt16LE(1, archiveBytes.length - 22 + 4);
-  const downloadUrl = 'https://results-receiver.actions.githubusercontent.com/job-report.zip';
+  const report = options.report ?? tapReport(options.outcomes, options).report;
+  const reportBytes = options.rawBytes === undefined ? Buffer.from(report) : Buffer.from(options.rawBytes);
+  const downloadUrl = options.redirectUrl ?? 'https://results.blob.core.windows.net/job-report.txt?sig=fixture-signature';
   const runHeadSha = options.runHeadSha ?? HEAD_SHA;
   const runAttempt = options.runAttempt ?? attempt;
   const runRepository = options.runRepository ?? 'KayzenRoot/gef-bootstrap';
@@ -191,6 +208,7 @@ function fakeGitHubReportApi(options = {}) {
         assert.equal(headers.get('x-github-api-version'), '2022-11-28');
       } else {
         assert.equal(headers.has('authorization'), false, 'signed download requests must not receive the GitHub token');
+        assert.equal(headers.get('accept'), 'text/plain');
       }
       if (requestUrl.pathname === `/repos/KayzenRoot/gef-bootstrap/actions/runs/${TEST_RUN_ID}/attempts/${attempt}`) {
         return Response.json({
@@ -219,9 +237,12 @@ function fakeGitHubReportApi(options = {}) {
         if (logsStatus !== 302) return new Response(null, { status: logsStatus });
         return new Response(null, { status: 302, headers: { location: downloadUrl } });
       }
-      if (String(input) === downloadUrl) return new Response(archiveBytes, {
+      if (String(input) === downloadUrl) return new Response(reportBytes, {
         status: 200,
-        headers: options.archiveContentLength === undefined ? {} : { 'content-length': options.archiveContentLength },
+        headers: {
+          'content-type': 'text/plain; charset=utf-8',
+          'content-length': options.reportContentLength ?? String(reportBytes.length),
+        },
       });
       throw new Error('Unexpected provider request');
     },
@@ -352,6 +373,107 @@ if (typeof parseProviderEvidenceInput !== 'function') {
     });
   });
 
+  test('authenticated Actions plain-text TAP report binds all A1-A8 subtests to the exact job and HEAD', async () => {
+    const { collection, reportBytes } = await collectVerifiedReport();
+    assert.equal(collection.state, 'VERIFIED');
+    assert.equal(collection.repository, 'KayzenRoot/gef-bootstrap');
+    assert.equal(collection.runId, TEST_RUN_ID);
+    assert.equal(collection.attempt, 1);
+    assert.equal(collection.headSha, HEAD_SHA);
+    assert.equal(collection.checkRunId, TEST_CHECK_ID);
+    assert.equal(collection.reportDigest, `sha256:${sha(reportBytes)}`);
+    const normalizedBytes = Buffer.from(reportBytes.toString('utf8').replace(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?Z /gm, ''));
+    assert.notEqual(collection.reportDigest, `sha256:${sha(normalizedBytes)}`);
+    assert.deepEqual(
+      collection.cases.map(({ testRef }) => testRef),
+      Object.values(acceptanceTestRefs).sort(),
+    );
+    assert.ok(collection.cases.every(({ outcome }) => outcome === 'PASSED'));
+  });
+
+  test('TAP failure, skip, TODO, and cancellation outcomes never become PASS', async () => {
+    const outcomes = {
+      [acceptanceTestRefs.A1]: 'FAILED',
+      [acceptanceTestRefs.A2]: 'SKIPPED',
+      [acceptanceTestRefs.A3]: 'NOT_EXECUTED',
+      [acceptanceTestRefs.A4]: 'TODO',
+    };
+    const { collection } = await collectVerifiedReport({ outcomes, ansi: true });
+    assert.equal(collection.state, 'VERIFIED');
+    assert.equal(collection.cases.find(({ testRef }) => testRef === acceptanceTestRefs.A1)?.outcome, 'FAILED');
+    assert.equal(collection.cases.find(({ testRef }) => testRef === acceptanceTestRefs.A2)?.outcome, 'SKIPPED');
+    assert.equal(collection.cases.find(({ testRef }) => testRef === acceptanceTestRefs.A3)?.outcome, 'NOT_EXECUTED');
+    assert.equal(collection.cases.find(({ testRef }) => testRef === acceptanceTestRefs.A4)?.outcome, 'SKIPPED');
+    const notExecuted = await collectVerifiedReport({
+      outcomes: { [acceptanceTestRefs.A3]: 'NOT_EXECUTED' },
+      notExecutedAnnotation: true,
+    });
+    assert.equal(notExecuted.collection.state, 'VERIFIED');
+    assert.equal(notExecuted.collection.cases.find(({ testRef }) => testRef === acceptanceTestRefs.A3)?.outcome, 'NOT_EXECUTED');
+  });
+
+  test('TAP parser rejects truncation, missing or inconsistent summaries, unpaired results, swapped titles or counters, duplicates, false timestamps, and fallback formats', async () => {
+    const malformedReports = [
+      ['truncated log', tapReport({}, { truncated: true }).report],
+      ['missing summary', tapReport({}, { noSummary: true }).report],
+      ['inconsistent summary', tapReport({}, { summaryOverrides: { pass: 7 } }).report],
+      ['unpaired injected ok', tapReport({}, { extraResults: [{ title: 'tests/gbs-mod-wo-002-evidence.test.mjs :: A1 injected' }] }).report],
+      ['missing Subtest counterpart', tapReport({}, { missingSubtests: [acceptanceTestRefs.A1] }).report],
+      ['swapped Subtest titles', tapReport({}, { subtestTitleOverrides: {
+        [acceptanceTestRefs.A1]: acceptanceTestRefs.A2.slice(acceptanceTestRefs.A2.indexOf('#') + 1),
+        [acceptanceTestRefs.A2]: acceptanceTestRefs.A1.slice(acceptanceTestRefs.A1.indexOf('#') + 1),
+      } }).report],
+      ['changed title', tapReport({}, { resultTitleOverrides: { [acceptanceTestRefs.A1]: `${acceptanceTestRefs.A1} changed` } }).report],
+      ['swapped counter', tapReport({}, { swapFirstCounters: true }).report],
+      ['missing TAP plan', tapReport({}, { noPlan: true }).report],
+      ['inconsistent TAP plan', tapReport({}, { planOverride: 7 }).report],
+      ['duplicate summary', tapReport({}, { duplicateSummary: true }).report],
+      ['invalid ISO timestamp', tapReport({}, { invalidTimestamp: true }).report],
+      ['ambiguous second report', tapReport({}, { secondReport: true }).report],
+      ['malformed ANSI sequence', tapReport({}, { malformedAnsi: true }).report],
+      ['Spec report without TAP envelope', specReport().report],
+    ];
+    for (const [label, report] of malformedReports) {
+      const { collection } = await collectVerifiedReport({ report });
+      assert.equal(collection.state, 'INVALID', label);
+      assert.ok(collection.reasonCodes.includes('GITHUB_TEST_REPORT_TAP_INVALID'), label);
+    }
+    const duplicate = await collectVerifiedReport({ duplicates: [acceptanceTestRefs.A1] });
+    assert.equal(duplicate.collection.state, 'INVALID');
+    assert.ok(duplicate.collection.reasonCodes.includes('GITHUB_TEST_REPORT_CASE_DUPLICATE'));
+  });
+
+  test('absent real A1 case is not synthesized into a passing audit proof', async () => {
+    const { collection } = await collectVerifiedReport({ omitted: [acceptanceTestRefs.A1] });
+    assert.equal(collection.state, 'VERIFIED');
+    assert.equal(collection.cases.some(({ testRef }) => testRef === acceptanceTestRefs.A1), false);
+    const packet = createPacketForSource(providerInput(), 'A1', {}, [collection]);
+    assert.equal(packet.ok, true, JSON.stringify(packet));
+    assert.notEqual(packet.value.acceptanceProofs[0].verdict, 'PASS');
+    assert.equal(packet.value.acceptanceProofs[0].verdict, 'UNPROVEN');
+  });
+
+  test('plain-text log collection rejects untrusted redirects, invalid UTF-8, and over-limit bodies', async () => {
+    const invalidRedirects = await Promise.all([
+      'https://untrusted.example/report.txt',
+      'http://results.blob.core.windows.net/report.txt',
+      'https://user@results.blob.core.windows.net/report.txt',
+      'https://results.blob.core.windows.net:8443/report.txt',
+    ].map((redirectUrl) => collectVerifiedReport({ redirectUrl })));
+    const invalidUtf8 = await collectVerifiedReport({
+      rawBytes: Buffer.concat([Buffer.from(tapReport().report), Buffer.from([0xff])]),
+    });
+    const overLimit = await collectVerifiedReport({ reportContentLength: String(24 * 1024 * 1024 + 1) });
+    for (const invalidRedirect of invalidRedirects) {
+      assert.equal(invalidRedirect.collection.state, 'UNAVAILABLE');
+      assert.ok(invalidRedirect.collection.reasonCodes.includes('GITHUB_TEST_REPORT_LOGS_UNAVAILABLE'));
+    }
+    assert.equal(invalidUtf8.collection.state, 'INVALID');
+    assert.ok(invalidUtf8.collection.reasonCodes.includes('GITHUB_TEST_REPORT_TAP_INVALID'));
+    assert.equal(overLimit.collection.state, 'UNAVAILABLE');
+    assert.ok(overLimit.collection.reasonCodes.includes('GITHUB_TEST_REPORT_LOGS_UNAVAILABLE'));
+  });
+
   test('missing or denied report access remains unavailable with its exact reason', async () => {
     const missingToken = await collectVerifiedReport({ noToken: true });
     const emptyToken = await collectVerifiedReport({ token: '' });
@@ -397,20 +519,23 @@ if (typeof parseProviderEvidenceInput !== 'function') {
   });
 
   test('Node test TODO results are not confused with passed tests or rejected as malformed output', async () => {
-    const { collection } = await collectVerifiedReport({ todo: true });
+    const { collection } = await collectVerifiedReport({ outcomes: { [acceptanceTestRefs.A1]: 'TODO' } });
     assert.equal(collection.state, 'VERIFIED');
     assert.equal(collection.cases.length, 8);
+    assert.equal(collection.cases.find(({ testRef }) => testRef === acceptanceTestRefs.A1)?.outcome, 'SKIPPED');
   });
 
-  test('corrupt report bytes and a failed authenticated job are rejected with exact reasons', async () => {
-    const corrupt = await collectVerifiedReport({ corruptArchive: true });
-    const multiDisk = await collectVerifiedReport({ multiDiskArchive: true });
-    const invalidLength = await collectVerifiedReport({ archiveContentLength: 'not-a-length' });
+  test('invalid UTF-8 and truncated TAP logs fail closed; an authenticated failed job remains FAILED', async () => {
+    const corrupt = await collectVerifiedReport({
+      rawBytes: Buffer.concat([Buffer.from(tapReport().report), Buffer.from([0xff])]),
+    });
+    const truncated = await collectVerifiedReport({ truncated: true });
+    const invalidLength = await collectVerifiedReport({ reportContentLength: 'not-a-length' });
     const failedJob = await collectVerifiedReport({ jobConclusion: 'failure' });
     assert.equal(corrupt.collection.state, 'INVALID');
-    assert.ok(corrupt.collection.reasonCodes.includes('GITHUB_TEST_REPORT_ARCHIVE_INVALID'));
-    assert.equal(multiDisk.collection.state, 'INVALID');
-    assert.ok(multiDisk.collection.reasonCodes.includes('GITHUB_TEST_REPORT_ARCHIVE_INVALID'));
+    assert.ok(corrupt.collection.reasonCodes.includes('GITHUB_TEST_REPORT_TAP_INVALID'));
+    assert.equal(truncated.collection.state, 'INVALID');
+    assert.ok(truncated.collection.reasonCodes.includes('GITHUB_TEST_REPORT_TAP_INVALID'));
     assert.notEqual(invalidLength.collection.state, 'VERIFIED');
     assert.equal(failedJob.collection.state, 'FAILED');
     assert.ok(failedJob.collection.reasonCodes.includes('GITHUB_TEST_REPORT_JOB_FAILED'));
