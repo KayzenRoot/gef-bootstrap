@@ -21,17 +21,17 @@
   "ownerAuditIndependent": false,
   "base": {
     "branch": "main",
-    "sha": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "sha": "e71120266c40235089444c9c0122280c5da4e5bd",
     "requiresRebindOnDrift": true
   },
   "planningArtifacts": [
     {
       "path": ".engineering/work-orders/GBS-MOD-WO-004.md",
-      "gitBlobSha": "119a2cf93a76d771d018ae6a9c26656684d4f1f6"
+      "gitBlobSha": "653793d4b139b9a408f1b944427f6d88baf4ccc9"
     },
     {
       "path": ".engineering/planning/GBS-MOD-WO-004-DRIFT-RULES.md",
-      "gitBlobSha": "0a7066d391999db28455c4115fb2773c6beb72ac"
+      "gitBlobSha": "6fb3bf3286484495bbf277056e3b3ab60a590fca"
     }
   ],
   "sourceFingerprints": [
@@ -45,11 +45,11 @@
     },
     {
       "path": ".engineering/CHECKPOINT.md",
-      "gitBlobSha": "866d0fcef2253560a45a8dbca147d9cd451d0960"
+      "gitBlobSha": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a"
     },
     {
       "path": ".engineering/CHECKPOINT.json",
-      "gitBlobSha": "af21419f47fc9f106abb49203b5b52c135a66ee1"
+      "gitBlobSha": "4a653772c31dffee869a9bac17345241cfc6db03"
     },
     {
       "path": ".engineering/ARCHITECTURE.md",
@@ -93,12 +93,6 @@
     }
   ],
   "blockers": [
-    {
-      "kind": "PROJECT_STATE_CONFLICT",
-      "pr": 451,
-      "description": "WO-002 temporal CHECKPOINT.md versus JSON conflict after #449",
-      "correctionMergeAuthorized": false
-    },
     {
       "kind": "WO004_RULE_OWNERSHIP_UNADMITTED",
       "issue": 398,
@@ -164,14 +158,68 @@
     "ARD-B06"
   ],
   "planningReadbackChecks": [
-    "Actual main exact SHA matches base",
-    "Only 3 new planning documents in branch diff",
-    "Work Order and Design Git blob SHAs equal lock fingerprints",
-    "All source SHA identities match actual repo main; mismatch marks this planning lock STALE",
-    "JSON parses; all implementation, CI, Security, merge, release, Codex permissions deny",
-    "Original Issue #398 A1-A7 unchanged",
-    "Hosted checks fetched for exact PR HEAD, not inferred as green",
-    "Owner exact-head review NOT_INDEPENDENT"
+    "Actual main exact SHA matches source base after PR451 protected squash",
+    "14/14 current main source fingerprints confirmed: 12 unchanged, 2 corrected checkpoints",
+    "Exactly three added planning files in new HEAD diff; original source facts retained as history",
+    "Two updated planning artifact Git blobs match this lock",
+    "JSON parses, all runtime/code/CI/security/merge/release permissions still denied",
+    "Original Issue #398 A1-A7 unchanged and not executed",
+    "Fetch CI on exact new HEAD after PR branch sync; previous CI cannot transfer",
+    "Owner audit NOT_INDEPENDENT; no effective implementation, Codex or policy promotion"
   ],
-  "stopCondition": "GBS_MOD_WO_004_ARCHITECTURE_DRIFT_PLANNING_READY_FOR_EXACT_HEAD_AUDIT_NOT_ADMITTED"
+  "stopCondition": "GBS_MOD_WO_004_ARCHITECTURE_DRIFT_PLANNING_READY_FOR_EXACT_HEAD_AUDIT_NOT_ADMITTED",
+  "historicalPlanningStatePre451": {
+    "originalBase": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "originalLockBlob": "807e072daf88285fd81c9981f4467b769d79fdc6",
+    "originalPrHead": "43f0116aea22859886dee951f6ef778c09fd99ee",
+    "oldCheckpointBindings": [
+      {
+        "path": ".engineering/CHECKPOINT.md",
+        "gitBlobSha": "866d0fcef2253560a45a8dbca147d9cd451d0960"
+      },
+      {
+        "path": ".engineering/CHECKPOINT.json",
+        "gitBlobSha": "af21419f47fc9f106abb49203b5b52c135a66ee1"
+      }
+    ],
+    "originalBlocker": {
+      "kind": "PROJECT_STATE_CONFLICT",
+      "pr": 451,
+      "description": "WO-002 temporal CHECKPOINT.md versus JSON conflict after #449",
+      "correctionMergeAuthorized": false
+    },
+    "oldArtifactBlobs": [
+      {
+        "path": ".engineering/work-orders/GBS-MOD-WO-004.md",
+        "gitBlobSha": "119a2cf93a76d771d018ae6a9c26656684d4f1f6"
+      },
+      {
+        "path": ".engineering/planning/GBS-MOD-WO-004-DRIFT-RULES.md",
+        "gitBlobSha": "0a7066d391999db28455c4115fb2773c6beb72ac"
+      }
+    ],
+    "oldPlanningReadbackChecks": [
+      "Actual main exact SHA matches base",
+      "Only 3 new planning documents in branch diff",
+      "Work Order and Design Git blob SHAs equal lock fingerprints",
+      "All source SHA identities match actual repo main; mismatch marks this planning lock STALE",
+      "JSON parses; all implementation, CI, Security, merge, release, Codex permissions deny",
+      "Original Issue #398 A1-A7 unchanged",
+      "Hosted checks fetched for exact PR HEAD, not inferred as green",
+      "Owner exact-head review NOT_INDEPENDENT"
+    ]
+  },
+  "post451SourceReconciliation": {
+    "mergedPR": 451,
+    "mergedMain": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "correctedCheckpointMdBlob": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a",
+    "correctedCheckpointJsonBlob": "4a653772c31dffee869a9bac17345241cfc6db03",
+    "formerTemporalStateConflictResolved": true,
+    "wo002State": "WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+    "wo002EffectiveImplementationLock": null,
+    "current14SourceBlobsVerified": true,
+    "unchanged12Updated2": true,
+    "implementationAuthorized": false,
+    "doNotExecute": true
+  }
 }
