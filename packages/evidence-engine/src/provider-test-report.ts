@@ -296,14 +296,25 @@ function hasDuplicateReportCases(cases: readonly ProviderTestReportCase[]): bool
 }
 
 const TAP_SUMMARY_NAMES: readonly TapSummaryName[] = ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo'];
-const ANSI_CSI = /\u001b\[[0-?]*[ -/]*[@-~]/g;
-const ANSI_OSC = /\u001b\][^\u0007\u001b]*(?:\u0007|\u001b\\)/g;
+const ANSI_ESCAPE = String.fromCharCode(27);
+const ANSI_BELL = String.fromCharCode(7);
+const ANSI_CSI = new RegExp(`${ANSI_ESCAPE}\\[[0-?]*[ -/]*[@-~]`, 'g');
+const ANSI_OSC = new RegExp(`${ANSI_ESCAPE}\\][^${ANSI_BELL}${ANSI_ESCAPE}]*(?:${ANSI_BELL}|${ANSI_ESCAPE}\\\\)`, 'g');
 
 interface ParsedTapStream {
   readonly counts: Partial<Record<TapSummaryName, number>>;
   readonly plan: number | null;
   readonly subtests: readonly string[];
   readonly results: readonly ParsedTapResult[];
+}
+
+interface TapParserState {
+  readonly counts: Partial<Record<TapSummaryName, number>>;
+  readonly subtests: string[];
+  readonly results: ParsedTapResult[];
+  plan: number | null;
+  pendingSubtest: string | null;
+  summaryStarted: boolean;
 }
 
 function validGitHubTimestamp(value: string): boolean {
@@ -333,7 +344,7 @@ function decodeGitHubLog(bytes: Uint8Array): readonly string[] | null {
   try {
     const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
     const lines = text.split(/\r?\n/).map(normalizeGitHubLogLine);
-    return lines.some((line) => line === null) ? null : lines as string[];
+    return lines.includes(null) ? null : lines as string[];
   } catch {
     return null;
   }
@@ -354,72 +365,96 @@ function parseTapPlanLine(line: string): number | null {
 }
 
 function parseTapResultLine(line: string): ParsedTapResult | null {
-  const match = /^(ok|not ok) ([1-9]\d*) - (.+?)(?: # (SKIP|TODO|CANCELLED|NOT EXECUTED)(?:\s+.*)?)?$/.exec(line);
-  if (match === null || match[3]!.trim() !== match[3]) return null;
-  const status = match[1];
-  const counter = Number(match[2]);
-  const annotation = match[4] ?? '';
+  const status = line.startsWith('not ok ') ? 'not ok' : line.startsWith('ok ') ? 'ok' : null;
+  if (status === null) return null;
+  const separator = line.indexOf(' - ', status.length + 1);
+  if (separator < 0) return null;
+  const counterText = line.slice(status.length + 1, separator);
+  if (!/^[1-9]\d*$/.test(counterText)) return null;
+  const counter = Number(counterText);
+  const parsed = takeTapAnnotation(line.slice(separator + 3));
+  const title = parsed.title;
+  const annotation = parsed.kind;
+  if (title.trim() !== title || title.length === 0) return null;
   if (!Number.isSafeInteger(counter)) return null;
-  if (annotation === 'SKIP') return { counter, title: match[3]!, outcome: 'SKIPPED', summaryName: 'skipped' };
-  if (annotation === 'TODO') return { counter, title: match[3]!, outcome: 'SKIPPED', summaryName: 'todo' };
+  if (annotation === 'SKIP') return { counter, title, outcome: 'SKIPPED', summaryName: 'skipped' };
+  if (annotation === 'TODO') return { counter, title, outcome: 'SKIPPED', summaryName: 'todo' };
   if (annotation === 'CANCELLED' || annotation === 'NOT EXECUTED') {
-    return { counter, title: match[3]!, outcome: 'NOT_EXECUTED', summaryName: 'cancelled' };
+    return { counter, title, outcome: 'NOT_EXECUTED', summaryName: 'cancelled' };
   }
-  if (status === 'not ok') return { counter, title: match[3]!, outcome: 'FAILED', summaryName: 'fail' };
-  return { counter, title: match[3]!, outcome: 'PASSED', summaryName: 'pass' };
+  if (status === 'not ok') return { counter, title, outcome: 'FAILED', summaryName: 'fail' };
+  return { counter, title, outcome: 'PASSED', summaryName: 'pass' };
+}
+
+function takeTapAnnotation(value: string): { readonly title: string; readonly kind: string } {
+  const annotations = ['NOT EXECUTED', 'CANCELLED', 'SKIP', 'TODO'] as const;
+  for (const annotation of annotations) {
+    const marker = ` # ${annotation}`;
+    const index = value.lastIndexOf(marker);
+    if (index < 0) continue;
+    const suffix = value.slice(index + marker.length);
+    if (suffix.length === 0 || suffix.startsWith(' ')) {
+      return { title: value.slice(0, index), kind: annotation };
+    }
+  }
+  return { title: value, kind: '' };
 }
 
 function isTapRecordPrefix(line: string): boolean {
   return /^(?:not )?ok(?:\s|$)/.test(line) || /^# (?:tests|pass|fail|cancelled|skipped|todo)\b/.test(line)
-    || /^1\.\./.test(line);
+    || line.startsWith('1..');
+}
+
+function acceptTapSummary(state: TapParserState, name: TapSummaryName, count: number): boolean {
+  if (state.counts[name] !== undefined || state.pendingSubtest !== null) return false;
+  state.summaryStarted = true;
+  state.counts[name] = count;
+  return true;
+}
+
+function acceptTapSubtest(state: TapParserState, line: string): boolean {
+  const title = line.slice('# Subtest:'.length).trim();
+  if (title.length === 0 || state.pendingSubtest !== null) return false;
+  state.pendingSubtest = title;
+  state.subtests.push(title);
+  return true;
+}
+
+function acceptTapPlan(state: TapParserState, line: string): boolean {
+  const plan = parseTapPlanLine(line);
+  if (plan === null || state.plan !== null || state.pendingSubtest !== null) return false;
+  state.plan = plan;
+  return true;
+}
+
+function acceptTapResult(state: TapParserState, result: ParsedTapResult): boolean {
+  if (state.pendingSubtest !== result.title) return false;
+  state.pendingSubtest = null;
+  state.results.push(result);
+  return state.results.length <= MAX_TEST_CASES;
+}
+
+function consumeTapLine(state: TapParserState, line: string): boolean {
+  const summary = parseTapSummaryLine(line);
+  if (summary !== null) return acceptTapSummary(state, summary.name, summary.count);
+  if (state.summaryStarted) return !line.startsWith('# Subtest:') && !isTapRecordPrefix(line);
+  if (line.startsWith('# Subtest:')) return acceptTapSubtest(state, line);
+  if (line.startsWith('1..')) return acceptTapPlan(state, line);
+  const result = parseTapResultLine(line);
+  if (result !== null) return acceptTapResult(state, result);
+  return !isTapRecordPrefix(line);
 }
 
 function collectTapStream(lines: readonly string[], startIndex: number): ParsedTapStream | null {
-  const counts: Partial<Record<TapSummaryName, number>> = {};
-  const subtests: string[] = [];
-  const results: ParsedTapResult[] = [];
-  let plan: number | null = null;
-  let pendingSubtest: string | null = null;
-  let summaryStarted = false;
+  const state: TapParserState = {
+    counts: {}, plan: null, subtests: [], results: [], pendingSubtest: null, summaryStarted: false,
+  };
   for (const rawLine of lines.slice(startIndex + 1)) {
     const line = rawLine.trim();
-    if (line.length === 0) continue;
-    const summary = parseTapSummaryLine(line);
-    if (summary !== null) {
-      if (counts[summary.name] !== undefined || pendingSubtest !== null) return null;
-      summaryStarted = true;
-      counts[summary.name] = summary.count;
-      continue;
-    }
-    if (summaryStarted) {
-      if (line.startsWith('# Subtest:') || isTapRecordPrefix(line)) return null;
-      continue;
-    }
-    if (line.startsWith('# Subtest:')) {
-      const title = line.slice('# Subtest:'.length).trim();
-      if (title.length === 0 || pendingSubtest !== null) return null;
-      pendingSubtest = title;
-      subtests.push(title);
-      continue;
-    }
-    if (line.startsWith('1..')) {
-      const parsedPlan = parseTapPlanLine(line);
-      if (parsedPlan === null || plan !== null || pendingSubtest !== null) return null;
-      plan = parsedPlan;
-      continue;
-    }
-    const result = parseTapResultLine(line);
-    if (result !== null) {
-      if (pendingSubtest !== result.title) return null;
-      pendingSubtest = null;
-      results.push(result);
-      if (results.length > MAX_TEST_CASES) return null;
-      continue;
-    }
-    if (isTapRecordPrefix(line)) return null;
+    if (line.length > 0 && !consumeTapLine(state, line)) return null;
   }
-  if (pendingSubtest !== null) return null;
-  return { counts, plan, subtests, results };
+  if (state.pendingSubtest !== null) return null;
+  return state;
 }
 
 function tapNamesAndCountersMatch(stream: ParsedTapStream): boolean {
@@ -448,7 +483,8 @@ function parseTapReport(bytes: Uint8Array): ParsedReport | null {
     return reportCase === null ? [] : [reportCase];
   });
   if (hasDuplicateReportCases(cases)) return { cases: [], bytes, invalidReason: 'GITHUB_TEST_REPORT_CASE_DUPLICATE' };
-  return { cases: cases.sort((left, right) => left.testRef.localeCompare(right.testRef)), bytes };
+  cases.sort((left, right) => left.testRef.localeCompare(right.testRef));
+  return { cases, bytes };
 }
 
 function trustedDownloadHost(url: URL): boolean {
