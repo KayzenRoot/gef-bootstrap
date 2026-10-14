@@ -1,12 +1,12 @@
 # GBS-MOD-WO-002 — Implementation Evidence Bundle
 
-**State:** `CORRECTION_IMPLEMENTED; HOSTED_TEST_REPORT_UNAVAILABLE`; Owner audit has not started.
+**State:** `CORRECTION_IMPLEMENTED; SONAR_RECHECK_PENDING; HOSTED_TEST_REPORT_UNAVAILABLE`; Owner audit has not started.
 **Work Order:** [GBS-MOD-WO-002](../work-orders/GBS-MOD-WO-002.md), admitted scope A1–A8.
 **Issue:** [#396](https://github.com/KayzenRoot/gef-bootstrap/issues/396).
 **Activation authorization:** [PR #460 Owner authorization](https://github.com/KayzenRoot/gef-bootstrap/pull/460#issuecomment-6168359370).
 **Post-merge activation evidence:** [Issue #396 post-merge evidence](https://github.com/KayzenRoot/gef-bootstrap/issues/396#issuecomment-6168464573).
 **Implementation base:** `main@58ace6c66c292faf5a61e431bbaccadcbc404287`.
-**R3 correction source commit:** `df34d935fd7de63f40ad15850be95b29df747664` (tree `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`).
+**R3 correction source commits:** initial authenticated-report correction `df34d935fd7de63f40ad15850be95b29df747664` (tree `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`); Sonar complexity refactor `268a630164c881b10e9e2de4c241a72dfbd6b0bd` (tree `bda4c6f353bc258977ea95e719dd59ea19b7790e`).
 **Final PR #461 HEAD:** recorded in the PR's Exact-head Evidence Bundle after the final push; the evidence document commit itself is included in that HEAD.
 **Execution risk:** `ELEVATED`; specialist review remains mandatory only if a HIGH_ASSURANCE trigger occurs.
 **Checkpoint Delta:** `.engineering/checkpoint-deltas/GBS-MOD-WO-002-IMPLEMENTATION-PROPOSED.md` (`PROPOSED_ONLY`).
@@ -15,7 +15,7 @@
 
 The activation predicate was evaluated before implementation writes. PR #460 is the exact protected squash activation PR; its merge commit is `58ace6c66c292faf5a61e431bbaccadcbc404287`, which was verified as current `main`. Its required post-merge contexts and push workflows were green, the canonical checkpoint pair reconciles the product-level `activeWorkOrder=NONE` with the scoped conditional implementation authorization, and all 24 source fingerprints in the effective implementation Context Lock match `main`. The distinct Owner Codex authorization receipt is the PR #460 comment linked above. No canonical source conflict was found.
 
-The implementation does not change product credit or release state: V1 remains `1088/1088`, stable CLI remains `1.1.2`, V1.2 remains `3/10`, and product-level `activeWorkOrder` remains `NONE`.
+The implementation does not change product credit or release state: V1 remains `1088/1088`, stable CLI remains `1.1.2`, V1.2 remains `3/10`, and product-level `activeWorkOrder` remains `NONE`. The R3 receipt path binds each passing case to authenticated GitHub Actions report bytes, their recomputed SHA-256, the exact repository/run/attempt/job/check/HEAD, and a case name and outcome present in the parsed report. Caller-provided receipts are rejected. Missing, skipped, failed, stale-HEAD, or digest-altered cases cannot become `PASS`; absent trustworthy report bytes remain `UNPROVEN`/`NOT_VERIFIED`.
 
 ## Candidate source and exact diff
 
@@ -58,41 +58,46 @@ No CLI, proof-graph, workflow, dependency manifest/lockfile, scanner, ruleset, o
 
 Adversarial cases cover a nonexistent test with a complete fabricated receipt, an absent or skipped case, a failed case, a digest changed from the raw report, stale HEAD, wrong attempt/check/run/suite, mismatched check details, duplicate cases, corrupt and multi-disk ZIPs, missing/empty token, denied/unavailable log access, an altered collection and an altered outcome with the bundle digest recomputed. The positive fixture verifies the SHA-256 of the exact report bytes and binds the passing case to the correct run/job/check/HEAD. Existing coverage also checks unknown fields, token-shaped values, bulk logs, malformed SHAs, unsafe links and paths, duplicate check/job/context identities, hostile object inspection, workflow reruns, out-of-scope paths, and missing required specialist review. Fixture-backed success is parser evidence only; it is not presented as a hosted run receipt.
 
-## Correction commit identities
+## Source correction commits and blob identities
 
-The R3 source/test correction is commit `df34d935fd7de63f40ad15850be95b29df747664`, based on `58ace6c66c292faf5a61e431bbaccadcbc404287`; its tree is `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`. Its changed blob identities are:
+The original R3 source/test correction is commit `df34d935fd7de63f40ad15850be95b29df747664`, based on `58ace6c66c292faf5a61e431bbaccadcbc404287`; its tree is `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`. SonarCloud later rejected PR HEAD `2d0561c3ea5caaded7348d1cc8b6f0b77fab4711` for five Cognitive Complexity findings, so commit `268a630164c881b10e9e2de4c241a72dfbd6b0bd` refactors the affected parsers and report-validation stages; its tree is `bda4c6f353bc258977ea95e719dd59ea19b7790e`. The latest source/test blob identities at that commit are:
 
 | Path | Blob SHA |
 | --- | --- |
 | `packages/assurance-pipeline/src/provider-audit-packet.ts` | `f14cfb7bb8ad4184b726b65b4a630b303b54bb16` |
-| `packages/contracts/src/provider-evidence.ts` | `6bc4bb5d1f67c1f083725cf637e241b2703187e2` |
-| `packages/evidence-engine/src/provider-evidence.ts` | `df95749a06c08ef03959087700feee4c2c6b7524` |
-| `packages/evidence-engine/src/provider-test-report.ts` | `e43b90beced71abc1e15ebd018c98ca629a5ecc2` |
+| `packages/contracts/src/provider-evidence.ts` | `903a9d73be95feb3965942d459b50d7b4358f5c5` |
+| `packages/evidence-engine/src/provider-evidence.ts` | `97bff8307e9f6fdc89195a9b97d03aedb92c1efc` |
+| `packages/evidence-engine/src/provider-test-report.ts` | `affbb04d9798ee837b42391bf8ee458f66791bfc` |
 | `packages/evidence-engine/src/public.ts` | `55554c1741b5f0e92c6fb1da96c8b8b554540036` |
 | `tests/gbs-mod-wo-002-evidence.test.mjs` | `47cece49fdedc098f767a53580d5da2ab2f84267` |
 
 ## Local validation
 
-The R3 source and test code was validated at commit `df34d935fd7de63f40ad15850be95b29df747664`, tree `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`. A regular clone based on the implementation branch ran the full suite with the exact correction source/test tree. Local results:
+The latest source/test tree at `268a630164c881b10e9e2de4c241a72dfbd6b0bd` (`bda4c6f353bc258977ea95e719dd59ea19b7790e`) was validated in a regular clone with locally installed dependencies. Results:
 
 ```text
-npm run build
-npm run typecheck
+npm run build                                  PASS
+npm run typecheck                              PASS
 node --test tests/gbs-mod-wo-002-evidence.test.mjs
 39 passed, 0 failed, 0 skipped
 npm_config_cache=/tmp/gef-bootstrap-npm-cache npm run validate
 1855 passed, 0 failed, 4 skipped (1859 total)
 npm_config_cache=/tmp/gef-bootstrap-npm-cache npm audit --audit-level=high
 0 vulnerabilities
+git diff --check                               PASS
 ```
 
-`npm run build`, `npm run typecheck`, the focused suite and the full `npm run validate` completed successfully; the full suite reported 1,855 passed, 0 failed and 4 skipped. `npm audit --audit-level=high` reported 0 vulnerabilities. `git diff --check` passed. The repository has no `lint` script. The final PR description binds the pushed PR HEAD, exact base/tree, changed-file blobs, and hosted check/run/job IDs. The code/test blobs remain those listed above; the PR body records the final evidence-document commit and exact PR HEAD.
+The focused cases include the fabricated test-name/receipt controls; missing, failed, and skipped cases; a passing report from an earlier SHA; an altered receipt; an altered outcome after bundle re-sealing; mismatched run/attempt/check/job/suite; invalid report digest; denied or unavailable log access; and corrupt report bytes. In the complete suite, `npm run validate` also ran the repository typecheck. The clean validation clone was based on the exact source/test commit above; the Evidence Bundle update is a separate documentation commit. The final PR description binds the pushed PR HEAD, exact base/tree, all changed-file blob SHAs and hosted check/run/job IDs. There is no `lint` script.
 
 ## Hosted provider validation
 
-The previously successful `Repository validation` check is run `38595933302`, attempt `1`, job/Check Run `115962534976`, and it belongs to the old HEAD `7d2fcc7d0d87914287005f5ed5697b3cb9dad503`; it is not evidence for the correction commit. Authenticated API metadata was readable, but the signed job-log download was not available to this environment. The collector returned `UNAVAILABLE` with `GITHUB_TEST_REPORT_LOGS_UNAVAILABLE`, no digest and no cases. Therefore the old check cannot supply a test-case receipt, and no A1–A8 test case is claimed as hosted `PASS` from that run.
+At PR HEAD `2d0561c3ea5caaded7348d1cc8b6f0b77fab4711`, `Repository validation` run `38612106429`, attempt `1`, job/Check Run `116017807297`, passed. `Pipeline Integrity` run `38612106713`, job/Check Run `116017809043`, passed. Gitleaks and Trivy passed in run `38612106875`, with Check Runs `116017809335` and `116017809690`. These checks are stale for source commit `268a630...` and are not evidence for its hosted validation.
 
-After the final push, the PR description's **Exact-head Evidence Bundle** records the exact PR HEAD/base/tree, every changed-file blob SHA, required-context conclusions, check-run IDs, workflow run/attempt/job IDs, provider links, and final dispositions. These receipts are per-HEAD and apply only to the exact PR HEAD in that section. If hosted report logs remain unavailable, A1–A8 test-case proofs remain `NOT_VERIFIED`/`UNPROVEN` with the collector reason above; this limitation blocks the ready stop condition.
+SonarCloud Code Analysis Check Run `116018201358` failed on that earlier HEAD: its Reliability Rating was D while the required gate was A. Its five Cognitive Complexity findings were `extractTextFiles` (51), `parseSpecReport` (24), and `collectGitHubTestExecutionReport` (36) in `packages/evidence-engine/src/provider-test-report.ts`; `normalizeWorkflows` (21) in `packages/evidence-engine/src/provider-evidence.ts`; and `parseFileBlobs` (18) in `packages/contracts/src/provider-evidence.ts`, each above 15. Commit `268a630...` refactors those functions into bounded parsing/validation helpers. The hosted Sonar recheck is pending for that new commit and must pass before owner audit readiness.
+
+The authenticated collector was also run against the `Repository validation` report for the old PR HEAD, run `38612106429`, job/check `116017807297`. GitHub API metadata was available, but the signed Actions log download returned `UNAVAILABLE` with reason `GITHUB_TEST_REPORT_LOGS_UNAVAILABLE`, zero cases and no digest. The log redirect points to a storage host inaccessible from this environment's egress; no signed URL is persisted or shown. That check therefore provides no case-level test receipt. After the next push, the collector must be retried against the exact new HEAD. Unless the raw report bytes can be retrieved and verified there, no A1–A8 test case is claimed as hosted `PASS`, and the requested ready stop condition remains blocked.
+
+After the final push, the existing PR #461 description's **Exact-head Evidence Bundle** records the exact PR HEAD/base/tree, every changed-file blob SHA, required-context conclusions, check-run IDs, workflow run/attempt/job IDs, provider links and final dispositions. These receipts apply only to the exact PR HEAD listed there. The Checkpoint Delta remains `PROPOSED_ONLY`; this work performs no merge or checkpoint promotion.
 
 ## Review boundary
 
