@@ -57,15 +57,20 @@ Adversarial cases cover a fabricated test title and missing case receipt, nonexe
 
 ## Local validation
 
-The implementation-time targeted run passed **29/29** tests:
+The source and test code was validated at commit `7039454687a8f6a2c830abdc44814d4863882e1f`, tree `7ca75107c5c3ade316d73a0e24847e7196b241ee`. The following local checks ran against that exact source/test tree:
 
 ```text
 npm run build
+npm run typecheck
 node --test tests/gbs-mod-wo-002-evidence.test.mjs
-29 passed, 0 failed
+29 passed, 0 failed, 0 skipped
+npm_config_cache=/tmp/gef-bootstrap-npm-cache npm run validate
+1845 passed, 0 failed, 4 skipped (1849 total)
+npm_config_cache=/tmp/gef-bootstrap-npm-cache npm audit --audit-level=high
+0 vulnerabilities
 ```
 
-`npm run build` succeeded at implementation commit `5a0416971040783fcb02881a7aaca739ea6118af`. At that exact source commit, `npm run validate` exited 0: typecheck passed and the complete suite reported **1,845 passed, 0 failed, 4 skipped** (1,849 total). `npm audit --audit-level=high` exited 0 with **0 vulnerabilities**. The targeted evidence suite passed **29/29**. The repository has no `lint` script. Validation ran from a regular checkout with `npm_config_cache=/tmp/gef-bootstrap-npm-cache`. The exact pushed HEAD and hosted runs are bound in the PR description after checks complete.
+`npm run build`, `npm run typecheck`, and the full `npm run validate` completed successfully. The complete suite took 476 seconds. The targeted suite includes adversarial proof cases for a nonexistent test name with no receipt, missing and unexecuted receipts, a failed result, an earlier-HEAD result, a digest-tampered receipt, and a changed outcome with the bundle digest recomputed. The repository has no `lint` script. Validation ran from a regular checkout with `npm_config_cache=/tmp/gef-bootstrap-npm-cache`. The implementation PR description binds the final pushed HEAD, changed-file blob SHAs, and hosted run/job evidence; its source and test files match the validated tree above.
 
 ## Hosted provider validation
 
