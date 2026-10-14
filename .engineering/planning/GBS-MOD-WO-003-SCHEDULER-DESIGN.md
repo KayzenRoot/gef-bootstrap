@@ -1,3 +1,13 @@
+## 2026-10-14 source addendum, current scheduler boundary
+
+**Current reference:** `main@e71120266c40235089444c9c0122280c5da4e5bd`, after protected [PR #451](https://github.com/KayzenRoot/gef-bootstrap/pull/451). The older source `main@e0356f1de5dae2351d8701a76c736a22832929c2`, former Work Order blob `1d468631157ae3c0a38baf9fb678c44021fa0a61`, and checkpoint `STATE_CONFLICT` sentences below are **historical creation-time facts**, not active blockers; see current Work Order blob `1f3214a3bdf8de644fd91709e586feadd757be9d`. Canonical checkpoint pair now agrees at Markdown `686a2e3f7da1b541f9a4ee10a4d9432358105e0a` / JSON `4a653772c31dffee869a9bac17345241cfc6db03`, but **WO-002 remains implementation-not-started and without effective lock**. The scheduler must still *fail closed* on any **future** checkpoint disagreement, stale lock, missing predecessor, actor mismatch, unsafe shared resource, S4 or Security gap. Do not remove the `STATE_CONFLICT → BLOCKED` rule from the design.
+
+**Current effectivity:** WO-003 remains planning-only `doNotExecute=true`, `doNotDispatch=true`; no worktrees, Codex, reservations, implementation writes, release, merge or checkpoint promotion. Current source correction is only a documentation update; tests/fixtures/CI for WO-003 have not been created, and original 10 acceptance criteria remain **NOT_RUN**. Current ADR-0008 makes Codex the sole code/test author **if separately admitted**. Dependency WO-002 #396, workspace factory #402 and dispatch #408 remain unimplemented/unadmitted as applicable. Historical security #439 has 21 UNKNOWN and release 1.1.3 blocked.
+
+**STOP:** `GBS_MOD_WO003_SCHEDULER_DESIGN_CURRENT_SOURCE_PLANNING_ONLY`.
+
+---
+
 # GBS-MOD-WO-003 — Deterministic Scheduler Design / Test Specification
 
 **STATUS: INFORMATIONAL PROPOSAL, NOT AN ADMITTED ENGINEERING DECISION.**
