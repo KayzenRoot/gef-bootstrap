@@ -6,7 +6,7 @@
 **Activation authorization:** [PR #460 Owner authorization](https://github.com/KayzenRoot/gef-bootstrap/pull/460#issuecomment-6168359370).
 **Post-merge activation evidence:** [Issue #396 post-merge evidence](https://github.com/KayzenRoot/gef-bootstrap/issues/396#issuecomment-6168464573).
 **Implementation base:** `main@58ace6c66c292faf5a61e431bbaccadcbc404287`.
-**R3 correction source commits:** initial authenticated-report correction `df34d935fd7de63f40ad15850be95b29df747664` (tree `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`); Sonar complexity refactor `268a630164c881b10e9e2de4c241a72dfbd6b0bd` (tree `bda4c6f353bc258977ea95e719dd59ea19b7790e`).
+**R3 correction source commits:** initial authenticated-report correction `df34d935fd7de63f40ad15850be95b29df747664` (tree `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`); first Sonar complexity refactor `268a630164c881b10e9e2de4c241a72dfbd6b0bd` (tree `bda4c6f353bc258977ea95e719dd59ea19b7790e`); second refactor `bfea35e7c9d59efb95ddee853773ae34037b9f0e` (tree `8cba52156b121790a5d6fc3b464a6ad69d276caa`).
 **Final PR #461 HEAD:** recorded in the PR's Exact-head Evidence Bundle after the final push; the evidence document commit itself is included in that HEAD.
 **Execution risk:** `ELEVATED`; specialist review remains mandatory only if a HIGH_ASSURANCE trigger occurs.
 **Checkpoint Delta:** `.engineering/checkpoint-deltas/GBS-MOD-WO-002-IMPLEMENTATION-PROPOSED.md` (`PROPOSED_ONLY`).
@@ -60,20 +60,20 @@ Adversarial cases cover a nonexistent test with a complete fabricated receipt, a
 
 ## Source correction commits and blob identities
 
-The original R3 source/test correction is commit `df34d935fd7de63f40ad15850be95b29df747664`, based on `58ace6c66c292faf5a61e431bbaccadcbc404287`; its tree is `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`. SonarCloud later rejected PR HEAD `2d0561c3ea5caaded7348d1cc8b6f0b77fab4711` for five Cognitive Complexity findings, so commit `268a630164c881b10e9e2de4c241a72dfbd6b0bd` refactors the affected parsers and report-validation stages; its tree is `bda4c6f353bc258977ea95e719dd59ea19b7790e`. The latest source/test blob identities at that commit are:
+The original R3 source/test correction is commit `df34d935fd7de63f40ad15850be95b29df747664`, based on `58ace6c66c292faf5a61e431bbaccadcbc404287`; its tree is `9e0a5ceac00f30c35596616ff9a8d2e9bc3ec6f1`. SonarCloud rejected PR HEAD `2d0561c3ea5caaded7348d1cc8b6f0b77fab4711` for five Cognitive Complexity findings; commit `268a630164c881b10e9e2de4c241a72dfbd6b0bd` refactored those stages. On the next HEAD `a87ead6ef17971b31584a7e3d1fe3061eac08c90`, Sonar check `116025369608` failed on `normalizeTestReportCollections` (complexity 53; limit 15). Commit `bfea35e7c9d59efb95ddee853773ae34037b9f0e` splits collection identity checks, exact-state validation, normalized output construction and receipt creation into small helpers. Its tree is `8cba52156b121790a5d6fc3b464a6ad69d276caa`; the hosted recheck remains pending after that commit is pushed. The latest source/test blob identities at `bfea35e...` are:
 
 | Path | Blob SHA |
 | --- | --- |
 | `packages/assurance-pipeline/src/provider-audit-packet.ts` | `f14cfb7bb8ad4184b726b65b4a630b303b54bb16` |
 | `packages/contracts/src/provider-evidence.ts` | `903a9d73be95feb3965942d459b50d7b4358f5c5` |
-| `packages/evidence-engine/src/provider-evidence.ts` | `97bff8307e9f6fdc89195a9b97d03aedb92c1efc` |
+| `packages/evidence-engine/src/provider-evidence.ts` | `2e606c44ccc37eddc507703c4394e00f1627d9cf` |
 | `packages/evidence-engine/src/provider-test-report.ts` | `affbb04d9798ee837b42391bf8ee458f66791bfc` |
 | `packages/evidence-engine/src/public.ts` | `55554c1741b5f0e92c6fb1da96c8b8b554540036` |
 | `tests/gbs-mod-wo-002-evidence.test.mjs` | `47cece49fdedc098f767a53580d5da2ab2f84267` |
 
 ## Local validation
 
-The latest source/test tree at `268a630164c881b10e9e2de4c241a72dfbd6b0bd` (`bda4c6f353bc258977ea95e719dd59ea19b7790e`) was validated in a regular clone with locally installed dependencies. Results:
+The latest source/test tree at `bfea35e7c9d59efb95ddee853773ae34037b9f0e` (`8cba52156b121790a5d6fc3b464a6ad69d276caa`) was validated in a regular clone with locally installed dependencies. Results:
 
 ```text
 npm run build                                  PASS
@@ -87,15 +87,15 @@ npm_config_cache=/tmp/gef-bootstrap-npm-cache npm audit --audit-level=high
 git diff --check                               PASS
 ```
 
-The focused cases include the fabricated test-name/receipt controls; missing, failed, and skipped cases; a passing report from an earlier SHA; an altered receipt; an altered outcome after bundle re-sealing; mismatched run/attempt/check/job/suite; invalid report digest; denied or unavailable log access; and corrupt report bytes. In the complete suite, `npm run validate` also ran the repository typecheck. The clean validation clone was based on the exact source/test commit above; the Evidence Bundle update is a separate documentation commit. The final PR description binds the pushed PR HEAD, exact base/tree, all changed-file blob SHAs and hosted check/run/job IDs. There is no `lint` script.
+The focused cases include the fabricated test-name/receipt controls; missing, failed, and skipped cases; a passing report from an earlier SHA; an altered receipt; an altered outcome after bundle re-sealing; mismatched run/attempt/check/job/suite; invalid report digest; denied or unavailable log access; and corrupt report bytes. The final full-suite run reported 1,855 passed, 0 failed, 4 skipped of 1,859 total. `npm audit --audit-level=high` reported 0 vulnerabilities. The regular clone was based on exact source/test commit `bfea35e...`; the Evidence Bundle update is a separate documentation commit. The final PR description binds the pushed PR HEAD, exact base/tree, all changed-file blob SHAs and hosted check/run/job IDs. There is no `lint` script.
 
 ## Hosted provider validation
 
 At PR HEAD `2d0561c3ea5caaded7348d1cc8b6f0b77fab4711`, `Repository validation` run `38612106429`, attempt `1`, job/Check Run `116017807297`, passed. `Pipeline Integrity` run `38612106713`, job/Check Run `116017809043`, passed. Gitleaks and Trivy passed in run `38612106875`, with Check Runs `116017809335` and `116017809690`. These checks are stale for source commit `268a630...` and are not evidence for its hosted validation.
 
-SonarCloud Code Analysis Check Run `116018201358` failed on that earlier HEAD: its Reliability Rating was D while the required gate was A. Its five Cognitive Complexity findings were `extractTextFiles` (51), `parseSpecReport` (24), and `collectGitHubTestExecutionReport` (36) in `packages/evidence-engine/src/provider-test-report.ts`; `normalizeWorkflows` (21) in `packages/evidence-engine/src/provider-evidence.ts`; and `parseFileBlobs` (18) in `packages/contracts/src/provider-evidence.ts`, each above 15. Commit `268a630...` refactors those functions into bounded parsing/validation helpers. The hosted Sonar recheck is pending for that new commit and must pass before owner audit readiness.
+SonarCloud Code Analysis Check Run `116018201358` failed on PR HEAD `2d0561c3...`: its Reliability Rating was D while the required gate was A. Its five Cognitive Complexity findings were `extractTextFiles` (51), `parseSpecReport` (24), and `collectGitHubTestExecutionReport` (36) in `packages/evidence-engine/src/provider-test-report.ts`; `normalizeWorkflows` (21) in `packages/evidence-engine/src/provider-evidence.ts`; and `parseFileBlobs` (18) in `packages/contracts/src/provider-evidence.ts`, each above 15. Commit `268a630...` refactored those functions. SonarCloud Code Analysis Check Run `116025369608` failed on PR HEAD `a87ead6ef17971b31584a7e3d1fe3061eac08c90` with the same required Reliability Rating D; its blocker was `normalizeTestReportCollections` (complexity 53, limit 15). Commit `bfea35e...` splits that function into bounded stages and helpers; the exact-head hosted recheck is pending after push and must pass before owner audit readiness.
 
-The authenticated collector was also run against the `Repository validation` report for the old PR HEAD, run `38612106429`, job/check `116017807297`. GitHub API metadata was available, but the signed Actions log download returned `UNAVAILABLE` with reason `GITHUB_TEST_REPORT_LOGS_UNAVAILABLE`, zero cases and no digest. The log redirect points to a storage host inaccessible from this environment's egress; no signed URL is persisted or shown. That check therefore provides no case-level test receipt. After the next push, the collector must be retried against the exact new HEAD. Unless the raw report bytes can be retrieved and verified there, no A1–A8 test case is claimed as hosted `PASS`, and the requested ready stop condition remains blocked.
+The authenticated collector was run against `Repository validation` on the old PR HEAD `2d0561c3...`, run `38612106429`, attempt `1`, job/check `116017807297`, and returned `UNAVAILABLE` with reason `GITHUB_TEST_REPORT_LOGS_UNAVAILABLE`, zero cases and no digest. It was retried on later PR HEAD `a87ead6ef17971b31584a7e3d1fe3061eac08c90`, run `38614195889`, attempt `1`, Check Run `116024942488`; the hosted check passed but the collector again returned `UNAVAILABLE`, the same reason, zero cases and no digest. GitHub API metadata was available, but the signed Actions log download redirects to a storage host inaccessible from this environment's egress; no signed URL is persisted or shown. Neither check supplies a case-level test receipt. After the next push, the collector must be retried against the exact final HEAD. Unless the raw report bytes can be retrieved and verified there, no A1–A8 test case is claimed as hosted `PASS`, and the requested ready stop condition remains blocked.
 
 After the final push, the existing PR #461 description's **Exact-head Evidence Bundle** records the exact PR HEAD/base/tree, every changed-file blob SHA, required-context conclusions, check-run IDs, workflow run/attempt/job IDs, provider links and final dispositions. These receipts apply only to the exact PR HEAD listed there. The Checkpoint Delta remains `PROPOSED_ONLY`; this work performs no merge or checkpoint promotion.
 
