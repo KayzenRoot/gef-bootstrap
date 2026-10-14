@@ -13,7 +13,7 @@ import type {
 import { isProviderTestExecutionReceipt } from '@gef-bootstrap/contracts';
 import type { EvidenceCompletenessGate, OperationOptions, Result } from './types.js';
 import { createEvidenceCompletenessGate } from './s04-validation.js';
-import { compareCodePoint, deepFreeze, digestValue, fail, Guard, ok, sortedUnique } from './utils.js';
+import { compareCodePoint, digestValue, fail, Guard, ok, sortedUnique } from './utils.js';
 import { inspectProviderTestReportCollection } from './provider-test-report.js';
 import type { ProviderTestReportCollection, ProviderTestReportCollectionState } from './provider-test-report.js';
 
@@ -492,131 +492,186 @@ function normalizeTestExecutionReceipts(
   return ok(deepFreezeCopy(normalized));
 }
 
+interface NormalizedTestReportCollectionResult {
+  readonly collection: NormalizedProviderTestReportCollection;
+  readonly receipts: readonly ProviderTestExecutionReceipt[];
+}
+
+function reportCollectionCandidates(candidates: unknown): Result<readonly ProviderTestReportCollection[]> {
+  if (candidates === undefined) return ok([]);
+  if (!Array.isArray(candidates) || candidates.length > 1024) {
+    return fail('GHE24_TEST_REPORT_COLLECTION_INVALID', 'At most 1024 authenticated test report collections may be supplied.');
+  }
+  return ok(candidates as readonly ProviderTestReportCollection[]);
+}
+
+function locateReportCheckRun(
+  collection: ProviderTestReportCollection,
+  expectedRepository: string,
+  byRecordId: ReadonlyMap<string, NormalizedProviderCheckRun>,
+): { readonly checkRun: NormalizedProviderCheckRun } | { readonly reasonCode: string } {
+  if (collection.repository.toLowerCase() !== expectedRepository.toLowerCase()) {
+    return { reasonCode: 'GITHUB_TEST_REPORT_REPOSITORY_MISMATCH' };
+  }
+  const checkRun = byRecordId.get(collection.checkRunId);
+  if (checkRun === undefined || checkRun.checkKind !== 'TEST') {
+    return { reasonCode: 'GITHUB_TEST_REPORT_CHECK_UNBOUND' };
+  }
+  if (checkRun.runId !== collection.runId || checkRun.attempt !== collection.attempt) {
+    return { reasonCode: 'GITHUB_TEST_REPORT_RUN_MISMATCH' };
+  }
+  return { checkRun };
+}
+
+function verifiedReportReason(
+  collection: ProviderTestReportCollection,
+  checkRun: NormalizedProviderCheckRun,
+  expectedHead: string,
+): string | null {
+  if (collection.headSha !== expectedHead || collection.headSha !== checkRun.headSha) {
+    return 'GITHUB_TEST_REPORT_HEAD_MISMATCH';
+  }
+  if (!checkRun.selected) return 'GITHUB_TEST_REPORT_SUPERSEDED_CHECK';
+  if (checkRun.displayName !== collection.checkName || checkRun.status !== collection.checkStatus
+    || checkRun.conclusion !== collection.checkConclusion || checkRun.status !== 'COMPLETED'
+    || checkRun.conclusion !== 'SUCCESS') {
+    return 'GITHUB_TEST_REPORT_CHECK_RESULT_MISMATCH';
+  }
+  if (collection.reportUri === null || collection.reportDigest === null || collection.jobId === null) {
+    return 'GITHUB_TEST_REPORT_IDENTITY_INCOMPLETE';
+  }
+  return new URL(collection.reportUri).origin === new URL(checkRun.sourceUri).origin
+    ? null
+    : 'GITHUB_TEST_REPORT_SOURCE_MISMATCH';
+}
+
+function reportFailureState(reasonCode: string): 'INVALID' | 'STALE' {
+  return reasonCode === 'GITHUB_TEST_REPORT_HEAD_MISMATCH' || reasonCode === 'GITHUB_TEST_REPORT_SUPERSEDED_CHECK'
+    ? 'STALE'
+    : 'INVALID';
+}
+
+function normalizedReportCollection(
+  collection: ProviderTestReportCollection,
+  state: ProviderTestReportCollectionState,
+  reasonCodes: readonly string[],
+  checkRunRef: string | null,
+  cases: ProviderTestReportCollection['cases'],
+): NormalizedProviderTestReportCollection {
+  return deepFreezeCopy({
+    state,
+    repository: collection.repository,
+    runId: collection.runId,
+    attempt: collection.attempt,
+    headSha: collection.headSha,
+    checkRunId: collection.checkRunId,
+    checkName: collection.checkName,
+    checkStatus: collection.checkStatus,
+    checkConclusion: collection.checkConclusion,
+    jobId: collection.jobId,
+    checkRunRef,
+    reportUri: state === 'VERIFIED' ? collection.reportUri : null,
+    reportDigest: state === 'VERIFIED' ? collection.reportDigest : null,
+    cases: state === 'VERIFIED' ? cases : [],
+    reasonCodes: sortedUnique(reasonCodes),
+  });
+}
+
+function reportCaseReceipts(
+  collection: ProviderTestReportCollection,
+): readonly ProviderTestExecutionReceipt[] | null {
+  const reportUri = collection.reportUri!;
+  const reportDigest = collection.reportDigest!;
+  const receipts: ProviderTestExecutionReceipt[] = [];
+  for (const [index, testCase] of collection.cases.entries()) {
+    const receipt: ProviderTestExecutionReceipt = {
+      receiptId: `test-report:${collection.checkRunId}:${index + 1}`,
+      checkRunRecordId: collection.checkRunId,
+      runId: collection.runId,
+      attempt: collection.attempt,
+      headSha: collection.headSha,
+      testRef: testCase.testRef,
+      outcome: testCase.outcome,
+      reportUri,
+      reportDigest,
+    };
+    if (!isProviderTestExecutionReceipt(receipt)) return null;
+    receipts.push(receipt);
+  }
+  return receipts;
+}
+
+function normalizeVerifiedReportCollection(
+  collection: ProviderTestReportCollection,
+  checkRun: NormalizedProviderCheckRun,
+  expectedHead: string,
+): NormalizedTestReportCollectionResult {
+  const reasonCode = verifiedReportReason(collection, checkRun, expectedHead);
+  if (reasonCode !== null) {
+    return {
+      collection: normalizedReportCollection(collection, reportFailureState(reasonCode), [reasonCode], checkRun.evidenceRef, []),
+      receipts: [],
+    };
+  }
+  const receipts = reportCaseReceipts(collection);
+  if (receipts === null) {
+    const invalidReason = 'GITHUB_TEST_REPORT_CASE_INVALID';
+    return {
+      collection: normalizedReportCollection(collection, 'INVALID', [invalidReason], checkRun.evidenceRef, []),
+      receipts: [],
+    };
+  }
+  return {
+    collection: normalizedReportCollection(collection, 'VERIFIED', collection.reasonCodes, checkRun.evidenceRef, collection.cases),
+    receipts,
+  };
+}
+
+function normalizeReportCollection(
+  candidate: ProviderTestReportCollection,
+  expectedRepository: string,
+  expectedHead: string,
+  byRecordId: ReadonlyMap<string, NormalizedProviderCheckRun>,
+): Result<NormalizedTestReportCollectionResult> {
+  const collection = inspectProviderTestReportCollection(candidate);
+  if (collection === null) {
+    return fail('GHE24_TEST_REPORT_COLLECTION_UNVERIFIED', 'Test report collection must be an unmodified result of the authenticated GitHub collector.');
+  }
+  const located = locateReportCheckRun(collection, expectedRepository, byRecordId);
+  if ('reasonCode' in located) {
+    return ok({
+      collection: normalizedReportCollection(collection, 'INVALID', [located.reasonCode], null, []),
+      receipts: [],
+    });
+  }
+  if (collection.state !== 'VERIFIED') {
+    return ok({
+      collection: normalizedReportCollection(collection, collection.state, collection.reasonCodes, located.checkRun.evidenceRef, []),
+      receipts: [],
+    });
+  }
+  return ok(normalizeVerifiedReportCollection(collection, located.checkRun, expectedHead));
+}
+
 function normalizeTestReportCollections(
   candidates: unknown,
   checkRuns: readonly NormalizedProviderCheckRun[],
   expected: ContractProviderEvidenceBinding,
   guard: Guard,
 ): Result<{ readonly collections: readonly NormalizedProviderTestReportCollection[]; readonly receipts: readonly ProviderTestExecutionReceipt[] }> {
-  if (candidates === undefined) return ok({ collections: [], receipts: [] });
-  if (!Array.isArray(candidates) || candidates.length > 1024) {
-    return fail('GHE24_TEST_REPORT_COLLECTION_INVALID', 'At most 1024 authenticated test report collections may be supplied.');
-  }
-  if (candidates.length === 0) return ok({ collections: [], receipts: [] });
+  const parsedCandidates = reportCollectionCandidates(candidates);
+  if (!parsedCandidates.ok) return parsedCandidates;
   const expectedRepository = `${expected.repository.owner}/${expected.repository.name}`;
   const byRecordId = new Map(checkRuns.map((run) => [run.recordId, run]));
   const collections: NormalizedProviderTestReportCollection[] = [];
   const receipts: ProviderTestExecutionReceipt[] = [];
-  for (const candidate of candidates as readonly ProviderTestReportCollection[]) {
+  for (const candidate of parsedCandidates.value) {
     const stepped = guard.step('provider-test-report-collection');
     if (!stepped.ok) return stepped;
-    const collection = inspectProviderTestReportCollection(candidate);
-    if (collection === null) {
-      return fail('GHE24_TEST_REPORT_COLLECTION_UNVERIFIED', 'Test report collection must be an unmodified result of the authenticated GitHub collector.');
-    }
-    let state = collection.state;
-    let reasonCodes = [...collection.reasonCodes];
-    let cases = collection.cases;
-    let checkRunRef: string | null = null;
-    const checkRun = byRecordId.get(collection.checkRunId);
-    if (collection.repository.toLowerCase() !== expectedRepository.toLowerCase()) {
-      state = 'INVALID';
-      reasonCodes = ['GITHUB_TEST_REPORT_REPOSITORY_MISMATCH'];
-      cases = [];
-    } else if (checkRun === undefined || checkRun.checkKind !== 'TEST') {
-      state = 'INVALID';
-      reasonCodes = ['GITHUB_TEST_REPORT_CHECK_UNBOUND'];
-      cases = [];
-    } else {
-      checkRunRef = checkRun.evidenceRef;
-      if (checkRun.runId !== collection.runId || checkRun.attempt !== collection.attempt) {
-        state = 'INVALID';
-        reasonCodes = ['GITHUB_TEST_REPORT_RUN_MISMATCH'];
-        cases = [];
-      } else if (collection.state === 'VERIFIED'
-        && (collection.headSha !== expected.pullRequest.headSha || collection.headSha !== checkRun.headSha)) {
-        state = 'STALE';
-        reasonCodes = ['GITHUB_TEST_REPORT_HEAD_MISMATCH'];
-        cases = [];
-      } else if (collection.state === 'VERIFIED' && !checkRun.selected) {
-        state = 'STALE';
-        reasonCodes = ['GITHUB_TEST_REPORT_SUPERSEDED_CHECK'];
-        cases = [];
-      } else if (collection.state === 'VERIFIED'
-        && (checkRun.displayName !== collection.checkName || checkRun.status !== collection.checkStatus
-          || checkRun.conclusion !== collection.checkConclusion)) {
-        state = 'INVALID';
-        reasonCodes = ['GITHUB_TEST_REPORT_CHECK_RESULT_MISMATCH'];
-        cases = [];
-      } else if (collection.state === 'VERIFIED' && (checkRun.status !== 'COMPLETED' || checkRun.conclusion !== 'SUCCESS')) {
-        state = 'INVALID';
-        reasonCodes = ['GITHUB_TEST_REPORT_CHECK_RESULT_MISMATCH'];
-        cases = [];
-      } else if (collection.state === 'VERIFIED'
-        && (collection.reportUri === null || collection.reportDigest === null || collection.jobId === null)) {
-        state = 'INVALID';
-        reasonCodes = ['GITHUB_TEST_REPORT_IDENTITY_INCOMPLETE'];
-        cases = [];
-      } else if (collection.state === 'VERIFIED') {
-        const reportUri = collection.reportUri;
-        const reportDigest = collection.reportDigest;
-        const checkUri = checkRun.sourceUri;
-        if (reportUri === null || reportDigest === null || new URL(reportUri).origin !== new URL(checkUri).origin) {
-          state = 'INVALID';
-          reasonCodes = ['GITHUB_TEST_REPORT_SOURCE_MISMATCH'];
-          cases = [];
-        } else {
-          const collectionReceipts: ProviderTestExecutionReceipt[] = [];
-          for (const [index, testCase] of cases.entries()) {
-            if (!isProviderTestExecutionReceipt({
-              receiptId: `test-report:${collection.checkRunId}:${index + 1}`,
-              checkRunRecordId: collection.checkRunId,
-              runId: collection.runId,
-              attempt: collection.attempt,
-              headSha: collection.headSha,
-              testRef: testCase.testRef,
-              outcome: testCase.outcome,
-              reportUri,
-              reportDigest,
-            })) {
-              state = 'INVALID';
-              reasonCodes = ['GITHUB_TEST_REPORT_CASE_INVALID'];
-              cases = [];
-              break;
-            }
-            collectionReceipts.push({
-              receiptId: `test-report:${collection.checkRunId}:${index + 1}`,
-              checkRunRecordId: collection.checkRunId,
-              runId: collection.runId,
-              attempt: collection.attempt,
-              headSha: collection.headSha,
-              testRef: testCase.testRef,
-              outcome: testCase.outcome,
-              reportUri,
-              reportDigest,
-            });
-          }
-          if (state === 'VERIFIED') receipts.push(...collectionReceipts);
-        }
-      }
-    }
-    collections.push(deepFreezeCopy({
-      state,
-      repository: collection.repository,
-      runId: collection.runId,
-      attempt: collection.attempt,
-      headSha: collection.headSha,
-      checkRunId: collection.checkRunId,
-      checkName: collection.checkName,
-      checkStatus: collection.checkStatus,
-      checkConclusion: collection.checkConclusion,
-      jobId: collection.jobId,
-      checkRunRef,
-      reportUri: state === 'VERIFIED' ? collection.reportUri : null,
-      reportDigest: state === 'VERIFIED' ? collection.reportDigest : null,
-      cases: state === 'VERIFIED' ? cases : [],
-      reasonCodes: sortedUnique(reasonCodes),
-    }));
+    const normalized = normalizeReportCollection(candidate, expectedRepository, expected.pullRequest.headSha, byRecordId);
+    if (!normalized.ok) return normalized;
+    collections.push(normalized.value.collection);
+    receipts.push(...normalized.value.receipts);
   }
   return ok({ collections: deepFreezeCopy(collections), receipts: deepFreezeCopy(receipts) });
 }
