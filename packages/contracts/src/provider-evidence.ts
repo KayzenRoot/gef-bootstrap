@@ -443,6 +443,24 @@ class ProviderEvidenceInputParser {
     return changedPaths.sort(compare);
   }
 
+  private parseFileBlobEntry(entry: unknown, index: number, seen: Set<string>): ProviderFileBlobIdentity | null {
+    const prefix = `fileBlobs.${index}`;
+    if (!isRecord(entry)) {
+      this.report('GHE01_BLOB_INVALID', 'File blob identity must be an object.', prefix);
+      return null;
+    }
+    this.checkFields(entry, ['path', 'blobSha'], prefix);
+    const path = entry['path'];
+    const blobSha = entry['blobSha'];
+    const validPath = safePath(path);
+    const validSha = typeof blobSha === 'string' && SHA40.test(blobSha);
+    if (!validPath) this.report('GHE01_BLOB_PATH_INVALID', 'fileBlobs path must be a safe repository-relative path.', `${prefix}.path`);
+    if (!validSha) this.report('GHE01_BLOB_SHA_INVALID', 'fileBlobs blobSha must be a full lowercase Git blob SHA.', `${prefix}.blobSha`);
+    if (typeof path === 'string' && seen.has(path)) this.report('GHE01_BLOB_PATH_DUPLICATE', 'fileBlobs must contain one identity per changed path.', `${prefix}.path`);
+    if (typeof path === 'string') seen.add(path);
+    return validPath && validSha ? { path, blobSha } : null;
+  }
+
   private parseFileBlobs(value: unknown, changedPathsInput: unknown, changedPaths: readonly string[]): ProviderFileBlobIdentity[] {
     if (!Array.isArray(value) || value.length > MAX_CHANGED_PATHS) {
       this.report('GHE01_BLOBS_INVALID', `fileBlobs must be an array of at most ${MAX_CHANGED_PATHS} exact path/blob identities.`, 'fileBlobs');
@@ -451,19 +469,8 @@ class ProviderEvidenceInputParser {
     const fileBlobs: ProviderFileBlobIdentity[] = [];
     const seen = new Set<string>();
     for (const [index, entry] of value.entries()) {
-      const prefix = `fileBlobs.${index}`;
-      if (!isRecord(entry)) {
-        this.report('GHE01_BLOB_INVALID', 'File blob identity must be an object.', prefix);
-        continue;
-      }
-      this.checkFields(entry, ['path', 'blobSha'], prefix);
-      const path = entry['path'];
-      const blobSha = entry['blobSha'];
-      if (!safePath(path)) this.report('GHE01_BLOB_PATH_INVALID', 'fileBlobs path must be a safe repository-relative path.', `${prefix}.path`);
-      if (typeof blobSha !== 'string' || !SHA40.test(blobSha)) this.report('GHE01_BLOB_SHA_INVALID', 'fileBlobs blobSha must be a full lowercase Git blob SHA.', `${prefix}.blobSha`);
-      if (typeof path === 'string' && seen.has(path)) this.report('GHE01_BLOB_PATH_DUPLICATE', 'fileBlobs must contain one identity per changed path.', `${prefix}.path`);
-      if (typeof path === 'string') seen.add(path);
-      if (safePath(path) && typeof blobSha === 'string' && SHA40.test(blobSha)) fileBlobs.push({ path, blobSha });
+      const parsed = this.parseFileBlobEntry(entry, index, seen);
+      if (parsed !== null) fileBlobs.push(parsed);
     }
     fileBlobs.sort((left, right) => compare(left.path, right.path));
     if (Array.isArray(changedPathsInput) && JSON.stringify(fileBlobs.map(({ path }) => path)) !== JSON.stringify([...changedPaths].sort(compare))) {

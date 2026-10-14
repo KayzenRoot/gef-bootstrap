@@ -627,6 +627,29 @@ function normalizeWorkflows(
   collectionState: ProviderEvidenceCollectionState,
   guard: Guard,
 ): Result<{ readonly rows: readonly NormalizedProviderWorkflowRun[]; readonly hasConflict: boolean }> {
+  const selection = selectWorkflowAttempts(runs, guard);
+  if (!selection.ok) return selection;
+  const rows = runs.map((run) => {
+    const decision = workflowAttemptDecision(run, selection.value.selected, selection.value.conflicted, expectedHead, collectionState);
+    const jobs = run.jobs.map((job) => deepFreezeCopy({
+      ...job,
+      verdict: workflowJobVerdict(job, decision.verdict, collectionState),
+    }));
+    return deepFreezeCopy({
+      ...run,
+      selected: selection.value.selected.has(run),
+      verdict: decision.verdict,
+      reasonCodes: decision.reasons,
+      jobs,
+    });
+  });
+  return ok({ rows, hasConflict: selection.value.conflicted.size > 0 });
+}
+
+function selectWorkflowAttempts(
+  runs: readonly ProviderWorkflowRun[],
+  guard: Guard,
+): Result<{ readonly selected: ReadonlySet<ProviderWorkflowRun>; readonly conflicted: ReadonlySet<ProviderWorkflowRun> }> {
   const groups = new Map<string, ProviderWorkflowRun[]>();
   for (const run of runs) {
     const stepped = guard.step('provider-workflow-run');
@@ -654,26 +677,33 @@ function normalizeWorkflows(
     const chosen = latest[0];
     if (chosen !== undefined) selected.add(chosen);
   }
-  const rows = runs.map((run) => {
-    const isSelected = selected.has(run);
-    const conflict = conflicted.has(run);
-    const result = conflict
-      ? { verdict: 'NOT_VERIFIED' as const, reasons: ['WORKFLOW_ATTEMPT_CONFLICT'] }
-      : !isSelected
-        ? { verdict: 'NOT_VERIFIED' as const, reasons: ['SUPERSEDED_WORKFLOW_ATTEMPT'] }
-        : workflowVerdict(run, expectedHead, collectionState);
-    const jobs = run.jobs.map((job) => {
-      const jobVerdict = collectionState !== 'COMPLETE' ? 'NOT_VERIFIED'
-        : result.verdict === 'STALE' || result.verdict === 'NOT_VERIFIED' ? result.verdict
-          : job.status !== 'COMPLETED' ? 'PENDING'
-            : job.conclusion === 'SUCCESS' ? 'PASS'
-              : job.conclusion === 'FAILURE' || job.conclusion === 'TIMED_OUT' ? 'FAILED'
-                : job.conclusion === null ? 'NOT_VERIFIED' : 'BLOCKED';
-      return deepFreezeCopy({ ...job, verdict: jobVerdict as ProviderEvidenceVerdict });
-    });
-    return deepFreezeCopy({ ...run, selected: isSelected, verdict: result.verdict, reasonCodes: result.reasons, jobs });
-  });
-  return ok({ rows, hasConflict: conflicted.size > 0 });
+  return ok({ selected, conflicted });
+}
+
+function workflowAttemptDecision(
+  run: ProviderWorkflowRun,
+  selected: ReadonlySet<ProviderWorkflowRun>,
+  conflicted: ReadonlySet<ProviderWorkflowRun>,
+  expectedHead: string,
+  collectionState: ProviderEvidenceCollectionState,
+): { readonly verdict: ProviderEvidenceVerdict; readonly reasons: readonly string[] } {
+  if (conflicted.has(run)) return { verdict: 'NOT_VERIFIED', reasons: ['WORKFLOW_ATTEMPT_CONFLICT'] };
+  if (!selected.has(run)) return { verdict: 'NOT_VERIFIED', reasons: ['SUPERSEDED_WORKFLOW_ATTEMPT'] };
+  return workflowVerdict(run, expectedHead, collectionState);
+}
+
+function workflowJobVerdict(
+  job: ProviderWorkflowJob,
+  workflowVerdictValue: ProviderEvidenceVerdict,
+  collectionState: ProviderEvidenceCollectionState,
+): ProviderEvidenceVerdict {
+  if (collectionState !== 'COMPLETE') return 'NOT_VERIFIED';
+  if (workflowVerdictValue === 'STALE' || workflowVerdictValue === 'NOT_VERIFIED') return workflowVerdictValue;
+  if (job.status !== 'COMPLETED') return 'PENDING';
+  if (job.conclusion === 'SUCCESS') return 'PASS';
+  if (job.conclusion === 'FAILURE' || job.conclusion === 'TIMED_OUT') return 'FAILED';
+  if (job.conclusion === null) return 'NOT_VERIFIED';
+  return 'BLOCKED';
 }
 
 function contextResults(

@@ -46,6 +46,24 @@ interface ReportFile {
   readonly bytes: Uint8Array;
 }
 
+interface ZipEntryDescriptor {
+  readonly name: string;
+  readonly nameLength: number;
+  readonly flags: number;
+  readonly method: number;
+  readonly expectedCrc: number;
+  readonly compressedSize: number;
+  readonly uncompressedSize: number;
+  readonly localOffset: number;
+  readonly nextOffset: number;
+}
+
+interface ZipDirectoryRange {
+  readonly entryCount: number;
+  readonly centralOffset: number;
+  readonly centralEnd: number;
+}
+
 interface ParsedReport {
   readonly cases: readonly ProviderTestReportCase[];
   readonly bytes: Uint8Array;
@@ -56,6 +74,12 @@ interface ProviderResponse<T> {
   readonly status: number;
   readonly value: T | null;
 }
+
+type ProviderTestReportFailureState = Exclude<ProviderTestReportCollectionState, 'VERIFIED'>;
+
+type StageResult<T> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly state: ProviderTestReportFailureState; readonly reason: string };
 
 const API_ROOT = 'https://api.github.com';
 const MAX_TOKEN_LENGTH = 4096;
@@ -283,8 +307,9 @@ function crc32(bytes: Uint8Array): number {
 }
 
 function zipPathIsSafe(path: string): boolean {
-  if (path.length === 0 || path.startsWith('/') || path.includes('\\') || /^[A-Za-z]:/.test(path)) return false;
-  return path.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..');
+  const normalized = path.endsWith('/') ? path.slice(0, -1) : path;
+  if (normalized.length === 0 || normalized.startsWith('/') || normalized.includes('\\') || /^[A-Za-z]:/.test(normalized)) return false;
+  return normalized.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..');
 }
 
 function findEndRecord(bytes: Uint8Array): number {
@@ -336,7 +361,7 @@ async function inflateRaw(bytes: Uint8Array): Promise<Uint8Array | null> {
   }
 }
 
-async function extractTextFiles(archive: Uint8Array): Promise<readonly ReportFile[] | null> {
+function readZipDirectoryRange(archive: Uint8Array): ZipDirectoryRange | null {
   if (archive.length < 22 || archive.length > MAX_ARCHIVE_BYTES) return null;
   const endOffset = findEndRecord(archive);
   if (endOffset < 0) return null;
@@ -350,58 +375,97 @@ async function extractTextFiles(archive: Uint8Array): Promise<readonly ReportFil
   if (diskNumber !== 0 || centralDiskNumber !== 0 || entriesOnDisk !== entryCount
     || entryCount < 1 || entryCount > MAX_ZIP_ENTRIES || centralSize === 0xffffffff || centralOffset === 0xffffffff
     || endOffset + 22 + commentLength !== archive.length || centralOffset + centralSize > endOffset) return null;
+  return { entryCount, centralOffset, centralEnd: centralOffset + centralSize };
+}
+
+function readZipEntryDescriptor(archive: Uint8Array, offset: number, centralOffset: number, centralEnd: number): ZipEntryDescriptor | null {
+  if (readUInt32(archive, offset) !== 0x02014b50) return null;
+  const flags = readUInt16(archive, offset + 8);
+  const method = readUInt16(archive, offset + 10);
+  const expectedCrc = readUInt32(archive, offset + 16);
+  const compressedSize = readUInt32(archive, offset + 20);
+  const uncompressedSize = readUInt32(archive, offset + 24);
+  const nameLength = readUInt16(archive, offset + 28);
+  const extraLength = readUInt16(archive, offset + 30);
+  const commentSize = readUInt16(archive, offset + 32);
+  const localOffset = readUInt32(archive, offset + 42);
+  const nameStart = offset + 46;
+  const nextOffset = nameStart + nameLength + extraLength + commentSize;
+  if (nextOffset > centralEnd || localOffset >= centralOffset || compressedSize === 0xffffffff
+    || uncompressedSize === 0xffffffff || (flags & 1) !== 0 || (flags & 0x40) !== 0) return null;
+  let name: string;
+  try {
+    name = new TextDecoder('utf-8', { fatal: true }).decode(archive.subarray(nameStart, nameStart + nameLength));
+  } catch {
+    return null;
+  }
+  if (!zipPathIsSafe(name)) return null;
+  return { name, nameLength, flags, method, expectedCrc, compressedSize, uncompressedSize, localOffset, nextOffset };
+}
+
+async function extractZipEntryText(
+  archive: Uint8Array,
+  entry: ZipEntryDescriptor,
+  centralOffset: number,
+  totalReportBytes: number,
+): Promise<{ readonly valid: boolean; readonly report: ReportFile | null }> {
+  if (entry.name.endsWith('/')) return { valid: true, report: null };
+  if (readUInt32(archive, entry.localOffset) !== 0x04034b50) return { valid: false, report: null };
+  const localCrc = readUInt32(archive, entry.localOffset + 14);
+  const localCompressedSize = readUInt32(archive, entry.localOffset + 18);
+  const localUncompressedSize = readUInt32(archive, entry.localOffset + 22);
+  const localFlags = readUInt16(archive, entry.localOffset + 6);
+  const localMethod = readUInt16(archive, entry.localOffset + 8);
+  const localNameLength = readUInt16(archive, entry.localOffset + 26);
+  const localExtraLength = readUInt16(archive, entry.localOffset + 28);
+  const localNameStart = entry.localOffset + 30;
+  const dataStart = localNameStart + localNameLength + localExtraLength;
+  const dataEnd = dataStart + entry.compressedSize;
+  let localName: string;
+  try {
+    localName = new TextDecoder('utf-8', { fatal: true }).decode(archive.subarray(localNameStart, localNameStart + localNameLength));
+  } catch {
+    return { valid: false, report: null };
+  }
+  const descriptorFlagSet = (entry.flags & 0x08) !== 0;
+  if (dataEnd > centralOffset || localFlags !== entry.flags || localMethod !== entry.method
+    || localNameLength !== entry.nameLength || localName !== entry.name
+    || (!descriptorFlagSet && (localCrc !== entry.expectedCrc || localCompressedSize !== entry.compressedSize
+      || localUncompressedSize !== entry.uncompressedSize))) return { valid: false, report: null };
+  if (!entry.name.toLowerCase().endsWith('.txt') || entry.uncompressedSize > MAX_REPORT_BYTES) {
+    return { valid: true, report: null };
+  }
+  if (totalReportBytes + entry.uncompressedSize > MAX_ARCHIVE_BYTES) return { valid: false, report: null };
+  const compressed = archive.subarray(dataStart, dataEnd);
+  let bytes: Uint8Array | null;
+  if (entry.method === 0) bytes = new Uint8Array(compressed);
+  else if (entry.method === 8) bytes = await inflateRaw(compressed);
+  else return { valid: false, report: null };
+  if (bytes === null || bytes.length !== entry.uncompressedSize || crc32(bytes) !== entry.expectedCrc) {
+    return { valid: false, report: null };
+  }
+  return { valid: true, report: { name: entry.name, bytes } };
+}
+
+async function extractTextFiles(archive: Uint8Array): Promise<readonly ReportFile[] | null> {
+  const directory = readZipDirectoryRange(archive);
+  if (directory === null) return null;
 
   const reports: ReportFile[] = [];
   let totalReportBytes = 0;
-  let offset = centralOffset;
-  for (let index = 0; index < entryCount; index += 1) {
-    if (readUInt32(archive, offset) !== 0x02014b50) return null;
-    const flags = readUInt16(archive, offset + 8);
-    const method = readUInt16(archive, offset + 10);
-    const expectedCrc = readUInt32(archive, offset + 16);
-    const compressedSize = readUInt32(archive, offset + 20);
-    const uncompressedSize = readUInt32(archive, offset + 24);
-    const nameLength = readUInt16(archive, offset + 28);
-    const extraLength = readUInt16(archive, offset + 30);
-    const commentSize = readUInt16(archive, offset + 32);
-    const localOffset = readUInt32(archive, offset + 42);
-    const nameStart = offset + 46;
-    const nextOffset = nameStart + nameLength + extraLength + commentSize;
-    if (nextOffset > centralOffset + centralSize || localOffset >= centralOffset || compressedSize === 0xffffffff
-      || uncompressedSize === 0xffffffff || (flags & 1) !== 0 || (flags & 0x40) !== 0) return null;
-    let name: string;
-    try {
-      name = new TextDecoder('utf-8', { fatal: true }).decode(archive.subarray(nameStart, nameStart + nameLength));
-    } catch {
-      return null;
+  let offset = directory.centralOffset;
+  for (let index = 0; index < directory.entryCount; index += 1) {
+    const entry = readZipEntryDescriptor(archive, offset, directory.centralOffset, directory.centralEnd);
+    if (entry === null) return null;
+    const extracted = await extractZipEntryText(archive, entry, directory.centralOffset, totalReportBytes);
+    if (!extracted.valid) return null;
+    if (extracted.report !== null) {
+      reports.push(extracted.report);
+      totalReportBytes += extracted.report.bytes.length;
     }
-    if (!zipPathIsSafe(name)) return null;
-    if (!name.endsWith('/')) {
-      if (readUInt32(archive, localOffset) !== 0x04034b50) return null;
-      const localFlags = readUInt16(archive, localOffset + 6);
-      const localMethod = readUInt16(archive, localOffset + 8);
-      const localNameLength = readUInt16(archive, localOffset + 26);
-      const localExtraLength = readUInt16(archive, localOffset + 28);
-      const localNameStart = localOffset + 30;
-      const dataStart = localNameStart + localNameLength + localExtraLength;
-      const dataEnd = dataStart + compressedSize;
-      if (dataEnd > centralOffset || localFlags !== flags || localMethod !== method || localNameLength !== nameLength
-        || new TextDecoder('utf-8', { fatal: true }).decode(archive.subarray(localNameStart, localNameStart + localNameLength)) !== name) return null;
-      if (name.toLowerCase().endsWith('.txt') && uncompressedSize <= MAX_REPORT_BYTES) {
-        if (totalReportBytes + uncompressedSize > MAX_ARCHIVE_BYTES) return null;
-        const compressed = archive.subarray(dataStart, dataEnd);
-        const bytes = method === 0 ? new Uint8Array(compressed)
-          : method === 8 ? await inflateRaw(compressed) : null;
-        if (bytes === null) return null;
-        if ((method !== 0 && method !== 8) || bytes.length !== uncompressedSize || crc32(bytes) !== expectedCrc) return null;
-        totalReportBytes += bytes.length;
-        if (totalReportBytes > MAX_ARCHIVE_BYTES) return null;
-        reports.push({ name, bytes });
-      }
-    }
-    offset = nextOffset;
+    offset = entry.nextOffset;
   }
-  return offset === centralOffset + centralSize ? reports : null;
+  return offset === directory.centralEnd ? reports : null;
 }
 
 function reportCaseFromTitle(title: string, outcome: ProviderTestExecutionOutcome): ProviderTestReportCase | null {
@@ -412,6 +476,50 @@ function reportCaseFromTitle(title: string, outcome: ProviderTestExecutionOutcom
   return isProviderTestRef(testRef) ? { testRef, outcome } : null;
 }
 
+const SPEC_SUMMARY_NAMES = ['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo'] as const;
+type SpecSummaryName = typeof SPEC_SUMMARY_NAMES[number];
+type SpecResultCounter = Exclude<SpecSummaryName, 'tests'>;
+
+interface ParsedSpecLine {
+  readonly kind: 'summary' | 'case';
+  readonly name?: SpecSummaryName;
+  readonly count?: number;
+  readonly title?: string;
+  readonly outcome?: ProviderTestExecutionOutcome;
+  readonly counter?: SpecResultCounter;
+}
+
+function parseSpecLine(line: string): ParsedSpecLine | null {
+  const summary = /^ℹ (tests|pass|fail|cancelled|skipped|todo) (\d+)$/.exec(line);
+  if (summary !== null) return { kind: 'summary', name: summary[1] as SpecSummaryName, count: Number(summary[2]) };
+  const record = /^\s*(✔|✖|﹣|○) (.+) \((\d+(?:\.\d+)?ms)\)(?: #(.+))?$/.exec(line);
+  if (record === null) return null;
+  const symbol = record[1]!;
+  const annotation = (record[4] ?? '').trim();
+  if (symbol === '✖') return { kind: 'case', title: record[2]!, outcome: 'FAILED', counter: 'fail' };
+  if (annotation === 'TODO') return { kind: 'case', title: record[2]!, outcome: 'SKIPPED', counter: 'todo' };
+  if (annotation.startsWith('CANCELLED')) return { kind: 'case', title: record[2]!, outcome: 'NOT_EXECUTED', counter: 'cancelled' };
+  if (symbol === '﹣' || symbol === '○') return { kind: 'case', title: record[2]!, outcome: 'SKIPPED', counter: 'skipped' };
+  return { kind: 'case', title: record[2]!, outcome: 'PASSED', counter: 'pass' };
+}
+
+function specSummaryMatches(
+  counts: Partial<Record<SpecSummaryName, number>>,
+  observed: Record<SpecSummaryName, number>,
+): boolean {
+  return SPEC_SUMMARY_NAMES.every((name) => counts[name] !== undefined)
+    && SPEC_SUMMARY_NAMES.every((name) => counts[name] === observed[name]);
+}
+
+function hasDuplicateReportCases(cases: readonly ProviderTestReportCase[]): boolean {
+  const seen = new Set<string>();
+  for (const entry of cases) {
+    if (seen.has(entry.testRef)) return true;
+    seen.add(entry.testRef);
+  }
+  return false;
+}
+
 function parseSpecReport(bytes: Uint8Array): ParsedReport | null {
   let text: string;
   try {
@@ -420,54 +528,26 @@ function parseSpecReport(bytes: Uint8Array): ParsedReport | null {
     return null;
   }
   const clean = text.replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, '');
-  const counts: Record<string, number> = {};
-  const summaryNames = new Set(['tests', 'pass', 'fail', 'cancelled', 'skipped', 'todo']);
+  const counts: Partial<Record<SpecSummaryName, number>> = {};
   const cases: ProviderTestReportCase[] = [];
-  const observed = { tests: 0, pass: 0, fail: 0, cancelled: 0, skipped: 0, todo: 0 };
+  const observed: Record<SpecSummaryName, number> = { tests: 0, pass: 0, fail: 0, cancelled: 0, skipped: 0, todo: 0 };
   for (const rawLine of clean.split(/\r?\n/)) {
-    const line = rawLine.trimEnd();
-    const summary = /^ℹ (tests|pass|fail|cancelled|skipped|todo) (\d+)$/.exec(line);
-    if (summary !== null) {
-      const name = summary[1]!;
-      if (!summaryNames.has(name) || counts[name] !== undefined) return null;
-      counts[name] = Number(summary[2]);
+    const parsed = parseSpecLine(rawLine.trimEnd());
+    if (parsed === null) continue;
+    if (parsed.kind === 'summary') {
+      const name = parsed.name!;
+      if (counts[name] !== undefined) return null;
+      counts[name] = parsed.count!;
       continue;
     }
-    const record = /^\s*(✔|✖|﹣|○) (.+) \((\d+(?:\.\d+)?ms)\)(?: #(.+))?$/.exec(line);
-    if (record === null) continue;
-    const symbol = record[1]!;
-    const title = record[2]!;
-    const annotation = (record[4] ?? '').trim();
     observed.tests += 1;
-    let outcome: ProviderTestExecutionOutcome;
-    if (symbol === '✖') {
-      observed.fail += 1;
-      outcome = 'FAILED';
-    } else if (annotation === 'TODO') {
-      observed.todo += 1;
-      outcome = 'SKIPPED';
-    } else if (annotation.startsWith('CANCELLED')) {
-      observed.cancelled += 1;
-      outcome = 'NOT_EXECUTED';
-    } else if (symbol === '﹣' || symbol === '○') {
-      observed.skipped += 1;
-      outcome = 'SKIPPED';
-    } else {
-      observed.pass += 1;
-      outcome = 'PASSED';
-    }
-    const reportCase = reportCaseFromTitle(title, outcome);
+    observed[parsed.counter!] += 1;
+    if (observed.tests > MAX_TEST_CASES) return null;
+    const reportCase = reportCaseFromTitle(parsed.title!, parsed.outcome!);
     if (reportCase !== null) cases.push(reportCase);
-    if (cases.length > MAX_TEST_CASES) return null;
   }
-  if ([...summaryNames].some((name) => counts[name] === undefined)) return null;
-  if (observed.tests !== counts['tests'] || observed.pass !== counts['pass'] || observed.fail !== counts['fail']
-    || observed.cancelled !== counts['cancelled'] || observed.skipped !== counts['skipped'] || observed.todo !== counts['todo']) return null;
-  const seen = new Set<string>();
-  for (const entry of cases) {
-    if (seen.has(entry.testRef)) return { cases: [], bytes, invalidReason: 'GITHUB_TEST_REPORT_CASE_DUPLICATE' };
-    seen.add(entry.testRef);
-  }
+  if (!specSummaryMatches(counts, observed)) return null;
+  if (hasDuplicateReportCases(cases)) return { cases: [], bytes, invalidReason: 'GITHUB_TEST_REPORT_CASE_DUPLICATE' };
   return { cases: cases.sort((left, right) => left.testRef.localeCompare(right.testRef)), bytes };
 }
 
@@ -519,113 +599,160 @@ async function downloadJobLog(repository: string, jobId: string, token: string):
   }
 }
 
-/** Collects only by authenticated GitHub REST reads and exact job-log bytes; it performs no provider writes. */
-export async function collectGitHubTestExecutionReport(
+interface WorkflowRunEvidence {
+  readonly runUrl: string;
+  readonly checkSuiteId: string;
+}
+
+interface WorkflowJobEvidence {
+  readonly jobId: string;
+  readonly jobName: string;
+}
+
+function validateWorkflowRun(request: GitHubTestReportRequest, value: unknown): StageResult<Record<string, unknown>> {
+  if (!isRecord(value) || parseProviderId(value['id']) !== request.runId
+    || typeof value['head_sha'] !== 'string' || !SHA40.test(value['head_sha'])
+    || parseProviderId(value['check_suite_id']) === null
+    || !isRecord(value['repository']) || typeof value['repository']['full_name'] !== 'string') {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_RUN_METADATA_INVALID' };
+  }
+  if (value['repository']['full_name'].toLowerCase() !== request.repository.toLowerCase()) {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_REPOSITORY_MISMATCH' };
+  }
+  if (value['run_attempt'] !== request.attempt) {
+    return { ok: false, state: 'STALE', reason: 'GITHUB_TEST_REPORT_ATTEMPT_MISMATCH' };
+  }
+  if (value['head_sha'] !== request.headSha) {
+    return { ok: false, state: 'STALE', reason: 'GITHUB_TEST_REPORT_HEAD_MISMATCH' };
+  }
+  if (value['status'] !== 'completed') return { ok: false, state: 'PENDING', reason: 'GITHUB_TEST_RUN_PENDING' };
+  return { ok: true, value };
+}
+
+async function readWorkflowRun(
   request: GitHubTestReportRequest,
-): Promise<ProviderTestReportCollection> {
-  if (!requestIsValid(request)) {
-    return invalidRequestCollection();
-  }
-  if (request.token === undefined || request.token.length === 0) {
-    return failedCollection(request, 'UNAVAILABLE', 'GITHUB_TOKEN_MISSING');
-  }
-  if (typeof globalThis.fetch !== 'function') return failedCollection(request, 'UNAVAILABLE', 'GITHUB_FETCH_UNAVAILABLE');
-
+  token: string,
+): Promise<StageResult<WorkflowRunEvidence>> {
   const runUrl = `${API_ROOT}/repos/${request.repository}/actions/runs/${request.runId}/attempts/${request.attempt}`;
-  const runResponse = await getJson<unknown>(runUrl, request.token);
-  if (runResponse.value === null) {
-    const failed = responseFailure(runResponse.status);
-    return failedCollection(request, failed.state, failed.reason);
+  const response = await getJson<unknown>(runUrl, token);
+  if (response.value === null) {
+    const failed = responseFailure(response.status);
+    return { ok: false, state: failed.state, reason: failed.reason };
   }
-  const run = runResponse.value;
-  if (!isRecord(run) || parseProviderId(run['id']) !== request.runId
-    || typeof run['head_sha'] !== 'string' || !SHA40.test(run['head_sha'])
-    || parseProviderId(run['check_suite_id']) === null
-    || !isRecord(run['repository']) || typeof run['repository']['full_name'] !== 'string') {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_RUN_METADATA_INVALID');
-  }
-  if (run['repository']['full_name'].toLowerCase() !== request.repository.toLowerCase()) {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_REPOSITORY_MISMATCH');
-  }
-  if (run['run_attempt'] !== request.attempt) {
-    return failedCollection(request, 'STALE', 'GITHUB_TEST_REPORT_ATTEMPT_MISMATCH');
-  }
-  if (run['head_sha'] !== request.headSha) {
-    return failedCollection(request, 'STALE', 'GITHUB_TEST_REPORT_HEAD_MISMATCH');
-  }
-  if (run['status'] !== 'completed') return failedCollection(request, 'PENDING', 'GITHUB_TEST_RUN_PENDING');
+  const validated = validateWorkflowRun(request, response.value);
+  if (!validated.ok) return validated;
+  return {
+    ok: true,
+    value: { runUrl, checkSuiteId: parseProviderId(validated.value['check_suite_id'])! },
+  };
+}
 
-  const jobsUrl = `${runUrl}/jobs?filter=latest&per_page=100`;
-  const jobsResponse = await getJson<unknown>(jobsUrl, request.token);
-  if (jobsResponse.value === null) {
-    const failed = responseFailure(jobsResponse.status);
-    return failedCollection(request, failed.state, failed.reason);
+function jobReferencesCheckRun(value: unknown, repository: string, checkRunId: string): boolean {
+  if (!isRecord(value) || typeof value['check_run_url'] !== 'string') return false;
+  try {
+    const checkRunUrl = new URL(value['check_run_url']);
+    return checkRunUrl.origin === API_ROOT && checkRunUrl.pathname === `/repos/${repository}/check-runs/${checkRunId}`
+      && checkRunUrl.search.length === 0 && checkRunUrl.hash.length === 0;
+  } catch {
+    return false;
   }
-  if (!isRecord(jobsResponse.value) || !Array.isArray(jobsResponse.value['jobs']) || jobsResponse.value['jobs'].length > MAX_ZIP_ENTRIES) {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_JOB_LIST_INVALID');
-  }
-  const matchingJobs = jobsResponse.value['jobs'].filter((entry) => {
-    if (!isRecord(entry) || typeof entry['check_run_url'] !== 'string') return false;
-    try {
-      const checkRunUrl = new URL(entry['check_run_url']);
-      return checkRunUrl.origin === API_ROOT && checkRunUrl.pathname === `/repos/${request.repository}/check-runs/${request.checkRunId}`
-        && checkRunUrl.search.length === 0 && checkRunUrl.hash.length === 0;
-    } catch {
-      return false;
-    }
-  });
-  if (matchingJobs.length !== 1) return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_CHECK_UNBOUND');
-  const job = matchingJobs[0];
-  if (!isRecord(job)) return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_JOB_INVALID');
-  const jobId = parseProviderId(job['id']);
-  if (jobId === null || parseProviderId(job['run_id']) !== request.runId || job['run_attempt'] !== request.attempt) {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_RUN_MISMATCH');
-  }
-  if (job['head_sha'] !== request.headSha) return failedCollection(request, 'STALE', 'GITHUB_TEST_REPORT_HEAD_MISMATCH');
-  if (job['status'] !== 'completed') return failedCollection(request, 'PENDING', 'GITHUB_TEST_REPORT_JOB_PENDING');
-  if (job['conclusion'] === 'failure' || job['conclusion'] === 'timed_out') {
-    return failedCollection(request, 'FAILED', 'GITHUB_TEST_REPORT_JOB_FAILED');
-  }
-  if (job['conclusion'] !== 'success') {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_JOB_NOT_SUCCESSFUL');
-  }
+}
 
-  const checkUrl = `${API_ROOT}/repos/${request.repository}/check-runs/${request.checkRunId}`;
-  const checkResponse = await getJson<unknown>(checkUrl, request.token);
-  if (checkResponse.value === null) {
-    const failed = responseFailure(checkResponse.status);
-    return failedCollection(request, failed.state, failed.reason);
+function validateWorkflowJob(request: GitHubTestReportRequest, value: unknown): StageResult<WorkflowJobEvidence> {
+  if (!isRecord(value)) return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_JOB_INVALID' };
+  const jobId = parseProviderId(value['id']);
+  if (jobId === null || parseProviderId(value['run_id']) !== request.runId || value['run_attempt'] !== request.attempt) {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_RUN_MISMATCH' };
   }
-  const check = checkResponse.value;
-  const reportUri = `https://github.com/${request.repository}/actions/runs/${request.runId}/job/${jobId}`;
-  if (!isRecord(check) || parseProviderId(check['id']) !== request.checkRunId
-    || typeof check['name'] !== 'string' || check['name'].length === 0 || check['name'].length > 512
-    || typeof check['head_sha'] !== 'string' || !SHA40.test(check['head_sha'])
-    || !isRecord(check['check_suite']) || parseProviderId(check['check_suite']['id']) === null
-    || typeof check['details_url'] !== 'string') {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_CHECK_METADATA_INVALID');
+  if (value['head_sha'] !== request.headSha) return { ok: false, state: 'STALE', reason: 'GITHUB_TEST_REPORT_HEAD_MISMATCH' };
+  if (value['status'] !== 'completed') return { ok: false, state: 'PENDING', reason: 'GITHUB_TEST_REPORT_JOB_PENDING' };
+  if (value['conclusion'] === 'failure' || value['conclusion'] === 'timed_out') {
+    return { ok: false, state: 'FAILED', reason: 'GITHUB_TEST_REPORT_JOB_FAILED' };
   }
-  if (check['head_sha'] !== request.headSha) return failedCollection(request, 'STALE', 'GITHUB_TEST_REPORT_HEAD_MISMATCH');
-  if (parseProviderId(check['check_suite']['id']) !== parseProviderId(run['check_suite_id'])) {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_CHECK_SUITE_MISMATCH');
+  if (value['conclusion'] !== 'success') {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_JOB_NOT_SUCCESSFUL' };
   }
-  if (check['details_url'] !== reportUri || check['name'] !== job['name']) {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_CHECK_JOB_MISMATCH');
+  if (typeof value['name'] !== 'string' || value['name'].length === 0 || value['name'].length > 512) {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_JOB_INVALID' };
   }
-  if (check['status'] !== 'completed') return failedCollection(request, 'PENDING', 'GITHUB_TEST_REPORT_CHECK_PENDING');
-  if (check['conclusion'] === 'failure' || check['conclusion'] === 'timed_out') {
-    return failedCollection(request, 'FAILED', 'GITHUB_TEST_REPORT_CHECK_FAILED');
-  }
-  if (check['conclusion'] !== 'success') {
-    return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_CHECK_NOT_SUCCESSFUL');
-  }
+  return { ok: true, value: { jobId, jobName: value['name'] } };
+}
 
-  const logResponse = await downloadJobLog(request.repository, jobId, request.token);
+async function readWorkflowJob(
+  request: GitHubTestReportRequest,
+  runUrl: string,
+  token: string,
+): Promise<StageResult<WorkflowJobEvidence>> {
+  const response = await getJson<unknown>(`${runUrl}/jobs?filter=latest&per_page=100`, token);
+  if (response.value === null) {
+    const failed = responseFailure(response.status);
+    return { ok: false, state: failed.state, reason: failed.reason };
+  }
+  if (!isRecord(response.value) || !Array.isArray(response.value['jobs']) || response.value['jobs'].length > MAX_ZIP_ENTRIES) {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_JOB_LIST_INVALID' };
+  }
+  const matchingJobs = response.value['jobs'].filter((job) => jobReferencesCheckRun(job, request.repository, request.checkRunId));
+  if (matchingJobs.length !== 1) return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_CHECK_UNBOUND' };
+  return validateWorkflowJob(request, matchingJobs[0]);
+}
+
+function validateCheckRun(
+  request: GitHubTestReportRequest,
+  value: unknown,
+  job: WorkflowJobEvidence,
+  checkSuiteId: string,
+): StageResult<string> {
+  const reportUri = `https://github.com/${request.repository}/actions/runs/${request.runId}/job/${job.jobId}`;
+  if (!isRecord(value) || parseProviderId(value['id']) !== request.checkRunId
+    || typeof value['name'] !== 'string' || value['name'].length === 0 || value['name'].length > 512
+    || typeof value['head_sha'] !== 'string' || !SHA40.test(value['head_sha'])
+    || !isRecord(value['check_suite']) || parseProviderId(value['check_suite']['id']) === null
+    || typeof value['details_url'] !== 'string') {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_CHECK_METADATA_INVALID' };
+  }
+  if (value['head_sha'] !== request.headSha) return { ok: false, state: 'STALE', reason: 'GITHUB_TEST_REPORT_HEAD_MISMATCH' };
+  if (parseProviderId(value['check_suite']['id']) !== checkSuiteId) {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_CHECK_SUITE_MISMATCH' };
+  }
+  if (value['details_url'] !== reportUri || value['name'] !== job.jobName) {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_CHECK_JOB_MISMATCH' };
+  }
+  if (value['status'] !== 'completed') return { ok: false, state: 'PENDING', reason: 'GITHUB_TEST_REPORT_CHECK_PENDING' };
+  if (value['conclusion'] === 'failure' || value['conclusion'] === 'timed_out') {
+    return { ok: false, state: 'FAILED', reason: 'GITHUB_TEST_REPORT_CHECK_FAILED' };
+  }
+  if (value['conclusion'] !== 'success') {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_CHECK_NOT_SUCCESSFUL' };
+  }
+  return { ok: true, value: value['name'] };
+}
+
+async function readCheckRun(
+  request: GitHubTestReportRequest,
+  job: WorkflowJobEvidence,
+  checkSuiteId: string,
+  token: string,
+): Promise<StageResult<string>> {
+  const url = `${API_ROOT}/repos/${request.repository}/check-runs/${request.checkRunId}`;
+  const response = await getJson<unknown>(url, token);
+  if (response.value === null) {
+    const failed = responseFailure(response.status);
+    return { ok: false, state: failed.state, reason: failed.reason };
+  }
+  return validateCheckRun(request, response.value, job, checkSuiteId);
+}
+
+async function readTestReport(
+  request: GitHubTestReportRequest,
+  jobId: string,
+  token: string,
+): Promise<StageResult<ParsedReport>> {
+  const logResponse = await downloadJobLog(request.repository, jobId, token);
   if (logResponse.archive === null) {
     const failed = responseFailure(logResponse.status);
     const reason = logResponse.status === 403 || logResponse.status === 401 ? 'GITHUB_TEST_REPORT_LOGS_DENIED'
       : logResponse.status === 404 ? 'GITHUB_TEST_REPORT_LOGS_NOT_FOUND' : 'GITHUB_TEST_REPORT_LOGS_UNAVAILABLE';
-    return failedCollection(request, failed.state, reason);
+    return { ok: false, state: failed.state, reason };
   }
   let textFiles: readonly ReportFile[] | null;
   try {
@@ -633,16 +760,40 @@ export async function collectGitHubTestExecutionReport(
   } catch {
     textFiles = null;
   }
-  if (textFiles === null) return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_ARCHIVE_INVALID');
+  if (textFiles === null) return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_ARCHIVE_INVALID' };
   const parsedReports = textFiles.flatMap((file) => {
     const parsed = parseSpecReport(file.bytes);
-    return parsed === null ? [] : [{ file, parsed }];
+    return parsed === null ? [] : [parsed];
   });
-  const invalidReport = parsedReports.find(({ parsed }) => parsed.invalidReason !== undefined);
-  if (invalidReport !== undefined) return failedCollection(request, 'INVALID', invalidReport.parsed.invalidReason!);
-  const validReports = parsedReports.filter(({ parsed }) => parsed.invalidReason === undefined);
-  if (validReports.length !== 1) return failedCollection(request, 'INVALID', 'GITHUB_TEST_REPORT_AMBIGUOUS_OR_MISSING');
-  const report = validReports[0]!.parsed;
+  const invalidReport = parsedReports.find(({ invalidReason }) => invalidReason !== undefined);
+  if (invalidReport !== undefined) return { ok: false, state: 'INVALID', reason: invalidReport.invalidReason! };
+  const validReports = parsedReports.filter(({ invalidReason }) => invalidReason === undefined);
+  if (validReports.length !== 1) {
+    return { ok: false, state: 'INVALID', reason: 'GITHUB_TEST_REPORT_AMBIGUOUS_OR_MISSING' };
+  }
+  return { ok: true, value: validReports[0]! };
+}
+
+/** Collects only by authenticated GitHub REST reads and exact job-log bytes; it performs no provider writes. */
+export async function collectGitHubTestExecutionReport(
+  request: GitHubTestReportRequest,
+): Promise<ProviderTestReportCollection> {
+  if (!requestIsValid(request)) return invalidRequestCollection();
+  if (request.token === undefined || request.token.length === 0) {
+    return failedCollection(request, 'UNAVAILABLE', 'GITHUB_TOKEN_MISSING');
+  }
+  if (typeof globalThis.fetch !== 'function') return failedCollection(request, 'UNAVAILABLE', 'GITHUB_FETCH_UNAVAILABLE');
+  const runResult = await readWorkflowRun(request, request.token);
+  if (!runResult.ok) return failedCollection(request, runResult.state, runResult.reason);
+  const jobResult = await readWorkflowJob(request, runResult.value.runUrl, request.token);
+  if (!jobResult.ok) return failedCollection(request, jobResult.state, jobResult.reason);
+  const checkResult = await readCheckRun(request, jobResult.value, runResult.value.checkSuiteId, request.token);
+  if (!checkResult.ok) return failedCollection(request, checkResult.state, checkResult.reason);
+  const reportResult = await readTestReport(request, jobResult.value.jobId, request.token);
+  if (!reportResult.ok) return failedCollection(request, reportResult.state, reportResult.reason);
+
+  const jobId = jobResult.value.jobId;
+  const reportUri = `https://github.com/${request.repository}/actions/runs/${request.runId}/job/${jobId}`;
   return createCollection({
     state: 'VERIFIED',
     repository: request.repository,
@@ -650,13 +801,13 @@ export async function collectGitHubTestExecutionReport(
     attempt: request.attempt,
     headSha: request.headSha,
     checkRunId: request.checkRunId,
-    checkName: check['name'],
+    checkName: checkResult.value,
     checkStatus: 'COMPLETED',
     checkConclusion: 'SUCCESS',
     jobId,
     reportUri,
-    reportDigest: await sha256(report.bytes),
-    cases: report.cases,
+    reportDigest: await sha256(reportResult.value.bytes),
+    cases: reportResult.value.cases,
     reasonCodes: [],
-  }, report.bytes);
+  }, reportResult.value.bytes);
 }
