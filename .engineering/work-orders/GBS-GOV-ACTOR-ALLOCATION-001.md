@@ -1,3 +1,15 @@
+## 2026-10-14 Current-source authority reconciliation
+
+**Current authoritative source:** `main@e71120266c40235089444c9c0122280c5da4e5bd`. [PR #451](https://github.com/KayzenRoot/gef-bootstrap/pull/451) was subsequently specifically authorized by the Owner, protected squash **MERGED**, and validated at the new main HEAD. The original observations below of old `main@e0356f1de5dae2351d8701a76c736a22832929c2`, checkpoint blobs `866d0fcef2253560a45a8dbca147d9cd451d0960`/`af21419f47fc9f106abb49203b5b52c135a66ee1`, and unmerged PR #451 are **historical**. Current checkpoint blobs are Markdown `686a2e3f7da1b541f9a4ee10a4d9432358105e0a` and JSON `4a653772c31dffee869a9bac17345241cfc6db03`; former WO-002 temporal `STATE_CONFLICT` resolved. Current canonical WO-002 has `implementationAuthorized=false`, implementation not started, effective lock null; PR #450 remains inactive DRAFT.
+
+**Governance proposal NOT effective:** Effective ADR-0008-D1/D6, AGENTS.md, SECURITY, Scope, Source Hierarchy, Decisions Ledger and Supersession Map are unchanged; ChatGPT remains **documentation/governance only**, code/tests/CI author Codex-only. Original proposal concerns a future **narrow reversible LOW/STANDARD per-WO actor exception**, not blanket GitHub writes, Security bypass, release permissions, HIGH_ASSURANCE/ELEVATED downgrade or permission to revise ADR-0008 today. Exact Owner **S4 authorization for a future privileged actor-law amendment** has NOT been granted by the Owner approval of PR #451. Risk remains `ELEVATED_GOVERNANCE`, no product code, tests, CI, framework, checkpoint or active ADR modified. This Work Order is a PLANNING proposal with future separate protected revision/merge and independent assurance where policy requires.
+
+**Preserve:** original A1–A10 acceptance definitions (not executed), allowed planning documents only, immutable history of old source fingerprints, all deny flags. #439 remains 21 historical Gitleaks UNKNOWN and CLI 1.1.3 BLOCKED; CLI stable 1.1.2, V1.2 3/10.
+
+**STOP:** `GBS_GOV_ACTOR_001_POST451_CURRENT_SOURCE_PLANNING_ONLY_ACTOR_ADR_UNCHANGED`.
+
+---
+
 # GBS-GOV-ACTOR-ALLOCATION-001 — GitHub-first actor allocation (planning Work Order)
 
 Status: `PLANNING_ONLY_NOT_ADMITTED`; implementation authority: **NONE**; effective decision change: **NONE**.
