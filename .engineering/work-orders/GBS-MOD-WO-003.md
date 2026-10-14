@@ -1,3 +1,13 @@
+## 2026-10-14 source-identity addendum after #451
+
+**CURRENT, governing navigation; original pre-#451 planning and historical hashes below remain preserved for audit.** The separately Owner-authorized [PR #451](https://github.com/KayzenRoot/gef-bootstrap/pull/451) protected squash has **MERGED** at real `main@e71120266c40235089444c9c0122280c5da4e5bd`. Canonical `.engineering/CHECKPOINT.md` has Git blob `686a2e3f7da1b541f9a4ee10a4d9432358105e0a`, `.engineering/CHECKPOINT.json` has blob `4a653772c31dffee869a9bac17345241cfc6db03`; their earlier WO-002 temporal `STATE_CONFLICT` was resolved in that exact main, with new-main required CI verified. The source and conflict claims in the original 2026-10-13 planning section below are **historical, no longer current**. Canonical WO-002 is `WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`, `implementationAuthorized=false`, `implementationStarted=false`, effective implementation lock null. The current [PR #450](https://github.com/KayzenRoot/gef-bootstrap/pull/450) remains a non-executable synchronized DRAFT, **not** an implemented M24 interface, and its planning CI green confers no execution right.
+
+**Still-current blockers:** WO-003 itself remains `PLANNING_CANDIDATE_NOT_ADMITTED`, not part of active scheduler runtime. Evidence WO-002 #396 not implemented or promoted; workspace factory #402 and Codex dispatch bridge #408 not admitted; current ADR-0008 reserves code/tests/CI to Codex; no new Owner permission to implement WO-003 or activate any execution lock. Historical all-ref Gitleaks #439 remains 21 UNKNOWN, and npm 1.1.3 release blocked. Risk remains proposed ELEVATED, future allocation only after exact-current main lock, code/actor permission and review gates. Original A1–A10, risk floors, no-implementation flags, three-file planning allowlist and STOP remain unchanged.
+
+**STOP:** `GBS_MOD_WO003_POST451_SOURCE_RECTIFIED_PLANNING_ONLY_DO_NOT_EXECUTE`.
+
+---
+
 # GBS-MOD-WO-003 — Dependency DAG + Parallel-Safe Codex Agent Pool
 
 **STATE:** `PLANNING_CANDIDATE_NOT_ADMITTED`. **DO NOT EXECUTE.**
