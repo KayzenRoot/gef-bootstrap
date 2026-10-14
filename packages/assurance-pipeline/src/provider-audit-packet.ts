@@ -110,12 +110,30 @@ const SIMPLE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$/;
 const OWNER_REPOSITORY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
 const AUTHORIZATION_RECEIPT_URI = 'https://github.com/KayzenRoot/gef-bootstrap/pull/460#issuecomment-6168359370';
 const CRITERIA = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8'] as const;
-const BINDING_KEYS = ['providerId', 'repository', 'pullRequest', 'sourceTrees', 'fileBlobs', 'ruleset', 'workOrderId', 'contextLockDigest', 'changedPaths', 'requiredContexts'];
+const BINDING_KEYS: ReadonlySet<string> = new Set(['providerId', 'repository', 'pullRequest', 'sourceTrees', 'fileBlobs', 'ruleset', 'workOrderId', 'contextLockDigest', 'changedPaths', 'requiredContexts']);
 const VERDICT_PRECEDENCE: readonly AuditPacketVerdict[] = ['STALE', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'PASS'];
-const PACKET_INPUT_FIELDS = [
+const PACKET_INPUT_FIELDS: ReadonlySet<string> = new Set([
   'evidenceBundle', 'candidateBinding', 'currentBinding', 'actualChangedPaths', 'authorizationReceiptUri', 'acceptanceMappings', 'unresolvedRiskIds',
   'optionalReviewTools', 'specialistReviewRequired', 'specialistReviewState', 'checkpointDeltaStatus', 'executorClaims',
-];
+]);
+const EVIDENCE_COLLECTION_STATES: ReadonlySet<string> = new Set(['COMPLETE', 'PARTIAL', 'UNAVAILABLE', 'DENIED']);
+const CHECK_KINDS: ReadonlySet<string> = new Set(['STATUS', 'TEST', 'SECURITY', 'COVERAGE', 'OTHER']);
+const PACKET_VERDICTS: ReadonlySet<string> = new Set(['PASS', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'STALE']);
+const TEST_OUTCOMES: ReadonlySet<string> = new Set(['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED']);
+const CHECK_STATUSES: ReadonlySet<string> = new Set(['QUEUED', 'IN_PROGRESS', 'COMPLETED']);
+const CHECK_CONCLUSIONS: ReadonlySet<string> = new Set(['SUCCESS', 'FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'NEUTRAL', 'SKIPPED']);
+const TEST_REPORT_STATES: ReadonlySet<string> = new Set(['VERIFIED', 'FAILED', 'PENDING', 'UNAVAILABLE', 'DENIED', 'STALE', 'INVALID']);
+const REVIEW_TOOL_STATES: ReadonlySet<string> = new Set(['AVAILABLE', 'UNAVAILABLE', 'NOT_RUN']);
+
+function hasStringValue(value: unknown, allowed: ReadonlySet<string>): boolean {
+  return typeof value === 'string' && allowed.has(value);
+}
+
+function compareText(left: string, right: string): number {
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -125,7 +143,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function safeText(value: unknown, max = 512): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= max && value.trim() === value
     && !/[\u0000-\u001f\u007f]/.test(value)
-    && !/\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i.test(value);
+    && !/\b(?:gh[pousr]_\w{20,}|github_pat_\w{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i.test(value);
 }
 function safePath(path: unknown): path is string {
   return safeText(path, 1024) && !path.startsWith('/') && !path.includes('\\')
@@ -150,15 +168,14 @@ function compareBinding(left: ProviderEvidenceBinding, right: ProviderEvidenceBi
   if (left.pullRequest.headSha !== right.pullRequest.headSha) reasons.push('HEAD_SHA_MISMATCH');
   if (left.sourceTrees.baseTreeSha !== right.sourceTrees.baseTreeSha) reasons.push('BASE_TREE_SHA_MISMATCH');
   if (left.sourceTrees.headTreeSha !== right.sourceTrees.headTreeSha) reasons.push('HEAD_TREE_SHA_MISMATCH');
-  if (JSON.stringify([...left.fileBlobs].sort((a, b) => a.path < b.path ? -1 : 1))
-    !== JSON.stringify([...right.fileBlobs].sort((a, b) => a.path < b.path ? -1 : 1))) reasons.push('FILE_BLOB_IDENTITIES_MISMATCH');
+  if (JSON.stringify([...left.fileBlobs].sort((a, b) => compareText(a.path, b.path)))
+    !== JSON.stringify([...right.fileBlobs].sort((a, b) => compareText(a.path, b.path)))) reasons.push('FILE_BLOB_IDENTITIES_MISMATCH');
   if (left.ruleset.rulesetId !== right.ruleset.rulesetId) reasons.push('RULESET_ID_MISMATCH');
   if (left.ruleset.digest !== right.ruleset.digest) reasons.push('RULESET_DIGEST_MISMATCH');
   if (left.workOrderId !== right.workOrderId) reasons.push('WORK_ORDER_ID_MISMATCH');
   if (left.contextLockDigest !== right.contextLockDigest) reasons.push('CONTEXT_LOCK_DIGEST_MISMATCH');
-  const comparePaths = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
-  if (JSON.stringify([...left.changedPaths].sort(comparePaths))
-    !== JSON.stringify([...right.changedPaths].sort(comparePaths))) reasons.push('CHANGED_PATHS_MISMATCH');
+  if (JSON.stringify([...left.changedPaths].sort(compareText))
+    !== JSON.stringify([...right.changedPaths].sort(compareText))) reasons.push('CHANGED_PATHS_MISMATCH');
   if (JSON.stringify(left.requiredContexts.map(({ contextId }) => contextId).sort())
     !== JSON.stringify(right.requiredContexts.map(({ contextId }) => contextId).sort())) reasons.push('REQUIRED_CONTEXTS_MISMATCH');
   return sortedUnique(reasons);
@@ -203,10 +220,10 @@ function validBinding(value: unknown): value is ProviderAuditBinding {
   const paths = provider['changedPaths'];
   const ruleset = value['ruleset'];
   return Object.keys(value).every((key) => key === 'provider' || key === 'ruleset')
-    && Object.keys(provider).every((key) => BINDING_KEYS.includes(key))
+    && Object.keys(provider).every((key) => BINDING_KEYS.has(key))
     && Object.keys(ruleset).every((key) => key === 'rulesetId' || key === 'digest')
     && safeText(provider['providerId'], 64)
-    && /^[a-z0-9][a-z0-9._-]{0,63}$/i.test(String(provider['providerId']))
+    && /^[a-z0-9][a-z0-9._-]{0,63}$/i.test(provider['providerId'])
     && isRecord(repository) && safeText(repository['owner'], 100) && OWNER_REPOSITORY.test(repository['owner'])
     && safeText(repository['name'], 100) && OWNER_REPOSITORY.test(repository['name'])
     && isRecord(pullRequest) && Number.isSafeInteger(pullRequest['number']) && (pullRequest['number'] as number) > 0
@@ -243,15 +260,15 @@ function validEvidenceBundle(bundle: unknown): bundle is ProviderEvidenceBundle 
     && SHA40.test(bundle['expectedBinding']['pullRequest']['headSha'])
     && Array.isArray(bundle['expectedBinding']['requiredContexts'])
     && isRecord(bundle['source'])
-    && ['COMPLETE', 'PARTIAL', 'UNAVAILABLE', 'DENIED'].includes(String(bundle['source']['collectionState']))
+    && hasStringValue(bundle['source']['collectionState'], EVIDENCE_COLLECTION_STATES)
     && Array.isArray(bundle['checkRuns']) && bundle['checkRuns'].every((run) => isRecord(run)
       && safeText(run['evidenceRef'], 512) && safeText(run['contextId'], 192)
       && safePublicUri(run['sourceUri']) && safeText(run['runId'], 192)
       && Number.isSafeInteger(run['attempt']) && (run['attempt'] as number) > 0
-      && ['STATUS', 'TEST', 'SECURITY', 'COVERAGE', 'OTHER'].includes(String(run['checkKind']))
+      && hasStringValue(run['checkKind'], CHECK_KINDS)
       && typeof run['headSha'] === 'string' && SHA40.test(run['headSha'])
       && typeof run['selected'] === 'boolean'
-      && ['PASS', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'STALE'].includes(String(run['verdict'])))
+      && hasStringValue(run['verdict'], PACKET_VERDICTS))
     && Array.isArray(bundle['testExecutionReceipts']) && bundle['testExecutionReceipts'].every((receipt) => {
       if (!isRecord(receipt) || !Array.isArray(bundle['checkRuns'])) return false;
       const checkRun = bundle['checkRuns'].find((run) => isRecord(run) && run['evidenceRef'] === receipt['checkRunRef']);
@@ -259,10 +276,10 @@ function validEvidenceBundle(bundle: unknown): bundle is ProviderEvidenceBundle 
         && safeText(receipt['evidenceRef'], 512) && safeText(receipt['checkRunRef'], 512)
         && safeText(receipt['runId'], 192) && Number.isSafeInteger(receipt['attempt']) && (receipt['attempt'] as number) > 0
         && safeText(receipt['contextId'], 192) && typeof receipt['headSha'] === 'string' && SHA40.test(receipt['headSha'])
-        && isProviderTestRef(receipt['testRef']) && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(receipt['outcome']))
+        && isProviderTestRef(receipt['testRef']) && hasStringValue(receipt['outcome'], TEST_OUTCOMES)
         && safePublicUri(receipt['reportUri']) && typeof receipt['reportDigest'] === 'string' && SHA256.test(receipt['reportDigest'])
         && typeof receipt['selected'] === 'boolean'
-        && ['PASS', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'STALE'].includes(String(receipt['verdict']))
+        && hasStringValue(receipt['verdict'], PACKET_VERDICTS)
         && Array.isArray(receipt['reasonCodes']) && receipt['reasonCodes'].every((reason) => safeText(reason, 192))
         && isRecord(checkRun) && checkRun['checkKind'] === 'TEST' && checkRun['recordId'] === receipt['checkRunRecordId']
         && checkRun['runId'] === receipt['runId'] && checkRun['attempt'] === receipt['attempt']
@@ -274,10 +291,9 @@ function validEvidenceBundle(bundle: unknown): bundle is ProviderEvidenceBundle 
       const nullableText = (value: unknown, maxLength: number) => value === null || safeText(value, maxLength);
       const nullableSha = (value: unknown) => value === null || (typeof value === 'string' && SHA40.test(value));
       const nullableDigest = (value: unknown) => value === null || (typeof value === 'string' && SHA256.test(value));
-      const nullableStatus = (value: unknown) => value === null || ['QUEUED', 'IN_PROGRESS', 'COMPLETED'].includes(String(value));
-      const nullableConclusion = (value: unknown) => value === null
-        || ['SUCCESS', 'FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'NEUTRAL', 'SKIPPED'].includes(String(value));
-      return ['VERIFIED', 'FAILED', 'PENDING', 'UNAVAILABLE', 'DENIED', 'STALE', 'INVALID'].includes(String(collection['state']))
+      const nullableStatus = (value: unknown) => value === null || hasStringValue(value, CHECK_STATUSES);
+      const nullableConclusion = (value: unknown) => value === null || hasStringValue(value, CHECK_CONCLUSIONS);
+      return hasStringValue(collection['state'], TEST_REPORT_STATES)
         && safeText(collection['repository'], 256) && safeText(collection['runId'], 192)
         && Number.isSafeInteger(collection['attempt']) && (collection['attempt'] as number) > 0
         && nullableSha(collection['headSha']) && safeText(collection['checkRunId'], 192)
@@ -287,12 +303,12 @@ function validEvidenceBundle(bundle: unknown): bundle is ProviderEvidenceBundle 
         && (collection['reportUri'] === null || safePublicUri(collection['reportUri']))
         && nullableDigest(collection['reportDigest'])
         && collection['cases'].every((entry) => isRecord(entry) && Object.keys(entry).every((key) => key === 'testRef' || key === 'outcome')
-          && isProviderTestRef(entry['testRef']) && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(entry['outcome'])))
+          && isProviderTestRef(entry['testRef']) && hasStringValue(entry['outcome'], TEST_OUTCOMES))
         && collection['reasonCodes'].every((reason) => safeText(reason, 192));
     })
     && Array.isArray(bundle['requiredContextResults']) && bundle['requiredContextResults'].every((context) => isRecord(context)
       && safeText(context['contextId'], 192)
-      && ['PASS', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'STALE'].includes(String(context['verdict'])));
+      && hasStringValue(context['verdict'], PACKET_VERDICTS));
 }
 function combineVerdicts(verdicts: readonly AuditPacketVerdict[]): AuditPacketVerdict {
   for (const verdict of VERDICT_PRECEDENCE) if (verdicts.includes(verdict)) return verdict;
@@ -452,7 +468,8 @@ function providerCheckVerdict(
   if (!run.selected) return 'NOT_VERIFIED';
   if (run.headSha !== bundle.expectedBinding.pullRequest.headSha) return 'STALE';
   const result = bundle.requiredContextResults.find((context) => context.contextId === run.contextId);
-  return result?.verdict === 'PASS' ? run.verdict : (result?.verdict ?? 'NOT_VERIFIED');
+  if (result?.verdict === 'PASS') return run.verdict;
+  return result?.verdict ?? 'NOT_VERIFIED';
 }
 
 function validMappedTestRefs(testRefs: readonly string[], changedPaths: readonly string[]): boolean {
@@ -529,7 +546,7 @@ function validateInput(input: ProviderAuditPacketInput): Result<{
   readonly unresolvedRiskIds: readonly string[];
   readonly optionalReviewTools: readonly OptionalReviewTool[];
 }> {
-  if (!isRecord(input) || Object.keys(input).some((key) => !PACKET_INPUT_FIELDS.includes(key))
+  if (!isRecord(input) || Object.keys(input).some((key) => !PACKET_INPUT_FIELDS.has(key))
     || (input['executorClaims'] !== undefined && (!Array.isArray(input['executorClaims']) || input['executorClaims'].length > 64))
     || !validEvidenceBundle(input['evidenceBundle'])
     || !validBinding(input['candidateBinding']) || !validBinding(input['currentBinding'])
@@ -541,7 +558,7 @@ function validateInput(input: ProviderAuditPacketInput): Result<{
     || !input['unresolvedRiskIds'].every((id) => safeText(id, 192))
     || !Array.isArray(input['optionalReviewTools']) || input['optionalReviewTools'].length > 64
     || !input['optionalReviewTools'].every((tool) => isRecord(tool) && Object.keys(tool).every((key) => ['toolId', 'state'].includes(key))
-      && safeText(tool['toolId'], 192) && ['AVAILABLE', 'UNAVAILABLE', 'NOT_RUN'].includes(String(tool['state'])))
+      && safeText(tool['toolId'], 192) && hasStringValue(tool['state'], REVIEW_TOOL_STATES))
     || typeof input['specialistReviewRequired'] !== 'boolean'
     || !['NOT_REQUIRED', 'UNAVAILABLE', 'NOT_VERIFIED'].includes(input['specialistReviewState'])
     || input['checkpointDeltaStatus'] !== 'PROPOSED_ONLY') {
@@ -576,7 +593,7 @@ function validateInput(input: ProviderAuditPacketInput): Result<{
     unresolvedRiskIds: sortedUnique(input['unresolvedRiskIds'] as string[]),
     optionalReviewTools: [...input['optionalReviewTools'] as OptionalReviewTool[]]
       .map((tool) => ({ toolId: tool.toolId, state: tool.state }))
-      .sort((a, b) => a.toolId < b.toolId ? -1 : a.toolId > b.toolId ? 1 : 0),
+      .sort((a, b) => compareText(a.toolId, b.toolId)),
   });
 }
 

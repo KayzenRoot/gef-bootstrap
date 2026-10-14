@@ -99,11 +99,12 @@ const SHA40 = /^[0-9a-f]{40}$/;
 const SHA256 = /^sha256:[0-9a-f]{64}$/;
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$/;
 const OWNER_OR_REPOSITORY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
-const COLLECTION_STATES: readonly string[] = ['COMPLETE', 'PARTIAL', 'UNAVAILABLE', 'DENIED'];
-const CHECK_STATUSES: readonly string[] = ['QUEUED', 'IN_PROGRESS', 'COMPLETED'];
-const CHECK_CONCLUSIONS: readonly (string | null)[] = [
+const COLLECTION_STATES: ReadonlySet<string> = new Set(['COMPLETE', 'PARTIAL', 'UNAVAILABLE', 'DENIED']);
+const CHECK_STATUSES: ReadonlySet<string> = new Set(['QUEUED', 'IN_PROGRESS', 'COMPLETED']);
+const CHECK_CONCLUSIONS: ReadonlySet<string | null> = new Set([
   'SUCCESS', 'FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'NEUTRAL', 'SKIPPED', null,
-];
+]);
+const CHECK_KINDS: ReadonlySet<string> = new Set(['STATUS', 'TEST', 'SECURITY', 'COVERAGE', 'OTHER']);
 const INPUT_FIELDS = [
   'schemaVersion', 'collectionId', 'providerId', 'collectionState', 'sourceUri', 'repository', 'pullRequest',
   'sourceTrees', 'fileBlobs', 'ruleset', 'workOrderId', 'contextLockDigest', 'changedPaths', 'requiredContexts', 'checkRuns',
@@ -135,7 +136,7 @@ function safeText(value: unknown, maxLength = 512): value is string {
     && value.length <= maxLength
     && value.trim() === value
     && !/[\u0000-\u001f\u007f]/.test(value)
-    && !/\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i.test(value);
+    && !/\b(?:gh[pousr]_\w{20,}|github_pat_\w{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i.test(value);
 }
 
 function safeUri(value: unknown): value is string {
@@ -163,11 +164,11 @@ function deepFreezeCopy<T>(value: T): T {
 }
 
 function validStatus(value: unknown): value is ProviderCheckStatus {
-  return typeof value === 'string' && CHECK_STATUSES.includes(value);
+  return typeof value === 'string' && CHECK_STATUSES.has(value);
 }
 
 function validConclusion(value: unknown): value is ProviderCheckConclusion {
-  return CHECK_CONCLUSIONS.includes(value as string | null);
+  return CHECK_CONCLUSIONS.has(value as string | null);
 }
 
 function validCheckRecord(value: unknown): value is ProviderCheckRun {
@@ -176,7 +177,7 @@ function validCheckRecord(value: unknown): value is ProviderCheckRun {
     && safeText(value['runId'], 192) && IDENTIFIER.test(value['runId'])
     && Number.isSafeInteger(value['attempt']) && (value['attempt'] as number) > 0 && (value['attempt'] as number) <= 1000
     && safeText(value['contextId'], 192) && IDENTIFIER.test(value['contextId'])
-    && safeText(value['displayName']) && ['STATUS', 'TEST', 'SECURITY', 'COVERAGE', 'OTHER'].includes(String(value['checkKind']))
+    && safeText(value['displayName']) && typeof value['checkKind'] === 'string' && CHECK_KINDS.has(value['checkKind'])
     && typeof value['headSha'] === 'string' && SHA40.test(value['headSha'])
     && validStatus(value['status']) && validConclusion(value['conclusion'])
     && (value['status'] === 'COMPLETED' || value['conclusion'] === null)
@@ -247,6 +248,7 @@ function normalizeBinding(value: unknown): Result<ContractProviderEvidenceBindin
     seenContexts.add(context['contextId']);
     contexts.push({ contextId: context['contextId'], displayName: context['displayName'] });
   }
+  const sortedContexts = [...contexts].sort((left, right) => compareCodePoint(left.contextId, right.contextId));
   const blobs = new Map<string, string>();
   for (const blob of fileBlobs) {
     if (!isRecord(blob) || !hasOnlyKeys(blob, ['path', 'blobSha']) || !safePath(blob['path'])
@@ -272,12 +274,12 @@ function normalizeBinding(value: unknown): Result<ContractProviderEvidenceBindin
     workOrderId,
     contextLockDigest,
     changedPaths: sortedUnique(changedPaths as string[]),
-    requiredContexts: contexts.sort((left, right) => compareCodePoint(left.contextId, right.contextId)),
+    requiredContexts: sortedContexts,
   };
   return ok(deepFreezeCopy(binding));
 }
 
-function validateParsedInput(parsed: ProviderEvidenceParseResult | unknown): Result<ProviderEvidenceInput> {
+function validateParsedInput(parsed: unknown): Result<ProviderEvidenceInput> {
   if (!isRecord(parsed) || parsed['ok'] !== true || !isRecord(parsed['value'])) {
     if (isRecord(parsed) && parsed['ok'] === false && Array.isArray(parsed['diagnostics'])) {
       return { ok: false, diagnostics: parsed['diagnostics'] as ProviderEvidenceParseResult extends { ok: false; diagnostics: infer D } ? D & readonly { code: string; message: string; subject?: string }[] : never };
@@ -292,7 +294,7 @@ function validateParsedInput(parsed: ProviderEvidenceParseResult | unknown): Res
     || input['schemaVersion'] !== '1.0'
     || !safeText(input['collectionId'], 192) || !IDENTIFIER.test(input['collectionId'])
     || !safeText(input['providerId'], 64) || !/^[a-z0-9][a-z0-9._-]{0,63}$/i.test(input['providerId'])
-    || typeof input['collectionState'] !== 'string' || !COLLECTION_STATES.includes(input['collectionState'])
+    || typeof input['collectionState'] !== 'string' || !COLLECTION_STATES.has(input['collectionState'])
     || !safeUri(input['sourceUri']) || !Array.isArray(input['checkRuns']) || input['checkRuns'].length > 4096
     || !input['checkRuns'].every(validCheckRecord) || !Array.isArray(input['testExecutionReceipts'])
     || input['testExecutionReceipts'].length > 8192 || !input['testExecutionReceipts'].every(isProviderTestExecutionReceipt)
@@ -351,11 +353,23 @@ function duplicateSignature(run: ProviderCheckRun): string {
   return JSON.stringify([run.contextId, run.displayName, run.headSha, run.status, run.conclusion, run.sourceUri]);
 }
 
+function unavailableCollectionReason(state: ProviderEvidenceCollectionState): string {
+  if (state === 'DENIED') return 'PROVIDER_DENIED';
+  if (state === 'UNAVAILABLE') return 'PROVIDER_UNAVAILABLE';
+  return 'PROVIDER_COLLECTION_PARTIAL';
+}
+
+function collectionStateReasons(state: ProviderEvidenceCollectionState): readonly string[] {
+  if (state === 'DENIED') return ['PROVIDER_DENIED'];
+  if (state === 'UNAVAILABLE') return ['PROVIDER_UNAVAILABLE'];
+  if (state === 'PARTIAL') return ['PROVIDER_COLLECTION_PARTIAL'];
+  return [];
+}
+
 function rowVerdict(run: ProviderCheckRun, expectedHead: string, collectionState: ProviderEvidenceCollectionState): { verdict: ProviderEvidenceVerdict; reasons: readonly string[] } {
   if (run.headSha !== expectedHead) return { verdict: 'STALE', reasons: ['CHECK_RUN_HEAD_MISMATCH'] };
   if (collectionState !== 'COMPLETE') {
-    const code = collectionState === 'DENIED' ? 'PROVIDER_DENIED'
-      : collectionState === 'UNAVAILABLE' ? 'PROVIDER_UNAVAILABLE' : 'PROVIDER_COLLECTION_PARTIAL';
+    const code = unavailableCollectionReason(collectionState);
     return { verdict: 'NOT_VERIFIED', reasons: [code] };
   }
   if (run.status !== 'COMPLETED') return { verdict: 'PENDING', reasons: ['CHECK_RUN_PENDING'] };
@@ -370,8 +384,7 @@ function rowVerdict(run: ProviderCheckRun, expectedHead: string, collectionState
 function workflowVerdict(run: ProviderWorkflowRun, expectedHead: string, collectionState: ProviderEvidenceCollectionState): { verdict: ProviderEvidenceVerdict; reasons: readonly string[] } {
   if (run.headSha !== expectedHead) return { verdict: 'STALE', reasons: ['WORKFLOW_HEAD_MISMATCH'] };
   if (collectionState !== 'COMPLETE') {
-    const code = collectionState === 'DENIED' ? 'PROVIDER_DENIED'
-      : collectionState === 'UNAVAILABLE' ? 'PROVIDER_UNAVAILABLE' : 'PROVIDER_COLLECTION_PARTIAL';
+    const code = unavailableCollectionReason(collectionState);
     return { verdict: 'NOT_VERIFIED', reasons: [code] };
   }
   if (run.status !== 'COMPLETED') return { verdict: 'PENDING', reasons: ['WORKFLOW_PENDING'] };
@@ -475,7 +488,7 @@ function normalizeTestExecutionReceipts(
     const stepped = guard.step('provider-test-execution-receipt');
     if (!stepped.ok) return stepped;
     const checkRun = byRecordId.get(receipt.checkRunRecordId);
-    if (checkRun === undefined || checkRun.checkKind !== 'TEST' || checkRun.runId !== receipt.runId || checkRun.attempt !== receipt.attempt) {
+    if (checkRun?.checkKind !== 'TEST' || checkRun.runId !== receipt.runId || checkRun.attempt !== receipt.attempt) {
       return fail('GHE24_TEST_RECEIPT_UNBOUND', 'Test receipt must identify one normalized TEST check attempt.');
     }
     const decision = deriveProviderTestExecutionDecision(receipt, checkRun, expectedHead);
@@ -514,7 +527,7 @@ function locateReportCheckRun(
     return { reasonCode: 'GITHUB_TEST_REPORT_REPOSITORY_MISMATCH' };
   }
   const checkRun = byRecordId.get(collection.checkRunId);
-  if (checkRun === undefined || checkRun.checkKind !== 'TEST') {
+  if (checkRun?.checkKind !== 'TEST') {
     return { reasonCode: 'GITHUB_TEST_REPORT_CHECK_UNBOUND' };
   }
   if (checkRun.runId !== collection.runId || checkRun.attempt !== collection.attempt) {
@@ -814,7 +827,7 @@ function bindingFromInput(input: ProviderEvidenceInput): ContractProviderEvidenc
 
 /** Normalizes sanitized provider facts against an independently compiled current binding. */
 export function createProviderEvidenceBundle(
-  parsedInput: ProviderEvidenceParseResult | unknown,
+  parsedInput: unknown,
   expectedBindingInput: ContractProviderEvidenceBinding,
   options: OperationOptions,
   testReportCollections?: readonly ProviderTestReportCollection[],
@@ -866,9 +879,7 @@ export function createProviderEvidenceBundle(
   if (!completeness.ok) return completeness;
   const contextVerdicts = requiredContextResults.map(({ verdict }) => verdict);
   const verdict = aggregateVerdict(contextVerdicts, bindingReasons.length > 0, input.collectionState);
-  const stateReason = input.collectionState === 'DENIED' ? ['PROVIDER_DENIED']
-    : input.collectionState === 'UNAVAILABLE' ? ['PROVIDER_UNAVAILABLE']
-      : input.collectionState === 'PARTIAL' ? ['PROVIDER_COLLECTION_PARTIAL'] : [];
+  const stateReason = collectionStateReasons(input.collectionState);
   const workflowConflictReasons = workflowResult.value.hasConflict ? ['WORKFLOW_ATTEMPT_CONFLICT'] : [];
   const body = deepFreezeCopy({
     schemaVersion: '1.1' as const,

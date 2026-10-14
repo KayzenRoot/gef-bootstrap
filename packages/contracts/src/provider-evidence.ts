@@ -146,13 +146,14 @@ const SHA40 = /^[0-9a-f]{40}$/;
 const SHA256 = /^sha256:[0-9a-f]{64}$/;
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$/;
 const OWNER_OR_REPOSITORY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
-const CREDENTIAL_SHAPE = /\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i;
+const CREDENTIAL_SHAPE = /\b(?:gh[pousr]_\w{20,}|github_pat_\w{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i;
 const COLLECTION_STATES: ReadonlySet<string> = new Set(['COMPLETE', 'PARTIAL', 'UNAVAILABLE', 'DENIED']);
 const CHECK_STATUSES: ReadonlySet<string> = new Set(['QUEUED', 'IN_PROGRESS', 'COMPLETED']);
 const CHECK_KINDS: ReadonlySet<string> = new Set(['STATUS', 'TEST', 'SECURITY', 'COVERAGE', 'OTHER']);
 const CHECK_CONCLUSIONS: ReadonlySet<string | null> = new Set([
   'SUCCESS', 'FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'NEUTRAL', 'SKIPPED', null,
 ]);
+const TEST_EXECUTION_OUTCOMES: ReadonlySet<string> = new Set(['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED']);
 const MAX_DIAGNOSTICS = 64;
 const MAX_CHANGED_PATHS = 1024;
 const MAX_REQUIRED_CONTEXTS = 256;
@@ -214,7 +215,7 @@ export function isProviderTestExecutionReceipt(value: unknown): value is Provide
     && Number.isSafeInteger(value['attempt']) && (value['attempt'] as number) > 0 && (value['attempt'] as number) <= 1000
     && typeof value['headSha'] === 'string' && SHA40.test(value['headSha'])
     && isProviderTestRef(value['testRef'])
-    && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(value['outcome']))
+    && typeof value['outcome'] === 'string' && TEST_EXECUTION_OUTCOMES.has(value['outcome'])
     && safePublicUri(value['reportUri'])
     && typeof value['reportDigest'] === 'string' && SHA256.test(value['reportDigest']);
 }
@@ -228,7 +229,9 @@ function deepFreeze<T>(value: T): T {
 }
 
 function compare(left: string, right: string): number {
-  return left < right ? -1 : left > right ? 1 : 0;
+  if (left < right) return -1;
+  if (left > right) return 1;
+  return 0;
 }
 
 interface ParsedProviderHeader {
@@ -616,8 +619,8 @@ class ProviderEvidenceInputParser {
     }
     this.reportReceiptCheckBinding(checkRun, runId, attempt, reportUri, prefix);
     const receipt = { receiptId, checkRunRecordId, runId, attempt, headSha, testRef, outcome, reportUri, reportDigest };
-    if (!isProviderTestExecutionReceipt(receipt) || checkRun === undefined || checkRun.checkKind !== 'TEST'
-      || checkRun.runId !== receipt.runId || checkRun.attempt !== receipt.attempt
+    if (!isProviderTestExecutionReceipt(receipt) || checkRun?.checkKind !== 'TEST') return null;
+    if (checkRun.runId !== receipt.runId || checkRun.attempt !== receipt.attempt
       || new URL(receipt.reportUri).origin !== new URL(checkRun.sourceUri).origin) return null;
     return receipt;
   }

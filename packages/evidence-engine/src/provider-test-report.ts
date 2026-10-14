@@ -113,7 +113,8 @@ function stableSnapshot(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableSnapshot).join(',')}]`;
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableSnapshot(record[key])}`).join(',')}}`;
+    const entries = Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableSnapshot(record[key])}`).join(',');
+    return `{${entries}}`;
   }
   throw new Error('UNSUPPORTED_COLLECTION_VALUE');
 }
@@ -441,9 +442,8 @@ async function extractZipEntryText(
   if (entry.method === 0) bytes = new Uint8Array(compressed);
   else if (entry.method === 8) bytes = await inflateRaw(compressed);
   else return { valid: false, report: null };
-  if (bytes === null || bytes.length !== entry.uncompressedSize || crc32(bytes) !== entry.expectedCrc) {
-    return { valid: false, report: null };
-  }
+  if (bytes?.length !== entry.uncompressedSize) return { valid: false, report: null };
+  if (bytes === null || crc32(bytes) !== entry.expectedCrc) return { valid: false, report: null };
   return { valid: true, report: { name: entry.name, bytes } };
 }
 
@@ -492,15 +492,16 @@ interface ParsedSpecLine {
 function parseSpecLine(line: string): ParsedSpecLine | null {
   const summary = /^ℹ (tests|pass|fail|cancelled|skipped|todo) (\d+)$/.exec(line);
   if (summary !== null) return { kind: 'summary', name: summary[1] as SpecSummaryName, count: Number(summary[2]) };
-  const record = /^\s*(✔|✖|﹣|○) (.+) \((\d+(?:\.\d+)?ms)\)(?: #(.+))?$/.exec(line);
+  const record = /^\s*[✔✖﹣○] (.+) \((\d+(?:\.\d+)?ms)\)(?: #(.+))?$/.exec(line);
   if (record === null) return null;
-  const symbol = record[1]!;
-  const annotation = (record[4] ?? '').trim();
-  if (symbol === '✖') return { kind: 'case', title: record[2]!, outcome: 'FAILED', counter: 'fail' };
-  if (annotation === 'TODO') return { kind: 'case', title: record[2]!, outcome: 'SKIPPED', counter: 'todo' };
-  if (annotation.startsWith('CANCELLED')) return { kind: 'case', title: record[2]!, outcome: 'NOT_EXECUTED', counter: 'cancelled' };
-  if (symbol === '﹣' || symbol === '○') return { kind: 'case', title: record[2]!, outcome: 'SKIPPED', counter: 'skipped' };
-  return { kind: 'case', title: record[2]!, outcome: 'PASSED', counter: 'pass' };
+  const symbol = line.trimStart()[0]!;
+  const annotation = (record[3] ?? '').trim();
+  const title = record[1]!;
+  if (symbol === '✖') return { kind: 'case', title, outcome: 'FAILED', counter: 'fail' };
+  if (annotation === 'TODO') return { kind: 'case', title, outcome: 'SKIPPED', counter: 'todo' };
+  if (annotation.startsWith('CANCELLED')) return { kind: 'case', title, outcome: 'NOT_EXECUTED', counter: 'cancelled' };
+  if (symbol === '﹣' || symbol === '○') return { kind: 'case', title, outcome: 'SKIPPED', counter: 'skipped' };
+  return { kind: 'case', title, outcome: 'PASSED', counter: 'pass' };
 }
 
 function specSummaryMatches(
@@ -742,6 +743,12 @@ async function readCheckRun(
   return validateCheckRun(request, response.value, job, checkSuiteId);
 }
 
+function reportLogFailureReason(status: number): string {
+  if (status === 401 || status === 403) return 'GITHUB_TEST_REPORT_LOGS_DENIED';
+  if (status === 404) return 'GITHUB_TEST_REPORT_LOGS_NOT_FOUND';
+  return 'GITHUB_TEST_REPORT_LOGS_UNAVAILABLE';
+}
+
 async function readTestReport(
   request: GitHubTestReportRequest,
   jobId: string,
@@ -750,8 +757,7 @@ async function readTestReport(
   const logResponse = await downloadJobLog(request.repository, jobId, token);
   if (logResponse.archive === null) {
     const failed = responseFailure(logResponse.status);
-    const reason = logResponse.status === 403 || logResponse.status === 401 ? 'GITHUB_TEST_REPORT_LOGS_DENIED'
-      : logResponse.status === 404 ? 'GITHUB_TEST_REPORT_LOGS_NOT_FOUND' : 'GITHUB_TEST_REPORT_LOGS_UNAVAILABLE';
+    const reason = reportLogFailureReason(logResponse.status);
     return { ok: false, state: failed.state, reason };
   }
   let textFiles: readonly ReportFile[] | null;
