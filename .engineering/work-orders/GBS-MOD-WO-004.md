@@ -1,3 +1,13 @@
+## 2026-10-14 current source reconciliation after checkpoint correction
+
+**Current source supersedes creation-time facts below:** `main@e71120266c40235089444c9c0122280c5da4e5bd` after specifically Owner-approved [PR #451](https://github.com/KayzenRoot/gef-bootstrap/pull/451) protected squash. The previous `main@e0356f1de5dae2351d8701a76c736a22832929c2`, pinned CHECKPOINT blobs `866d0fcef2253560a45a8dbca147d9cd451d0960`/`af21419f47fc9f106abb49203b5b52c135a66ee1`, and assertions that PR #451 remains unmerged describe the **original proposal at that earlier source state**. The current checkpoint pair is Markdown blob `686a2e3f7da1b541f9a4ee10a4d9432358105e0a` and JSON blob `4a653772c31dffee869a9bac17345241cfc6db03`. The historic WO-002 temporal STATE_CONFLICT is **resolved**, not an ongoing execution blocker. WO-002 is `WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`, with implementation permission false, started false, active lock null; its planning PR #450 remains DRAFT/unmerged/non-executable.
+
+**Still-current barriers:** WO-004 itself is **PLANNING_ONLY_NOT_ADMITTED**; no registered architecture drift rules, implementation code, fixtures, build/CI modification, effective implementation Context Lock, or Codex authorization exist. Rule candidates ARD-C01–C05/B06 are not effective. The internal schema registry #427 and application contract safety #429 remain proposals; ADR-0008 Codex-only remains effective; historical all-ref Gitleaks #439 has 21 UNKNOWN and blocks npm 1.1.3 release. The requirement to deny on a **future** checkpoint disagreement stays valid; this addendum does not weaken the fail-closed design, grant writes, merge or release authority. Retain Issue #398 A1–A7 without any claimed test pass.
+
+**STOP:** `WO004_SOURCE_REBOUND_POST451_RULES_PROPOSED_ONLY_NOT_EFFECTIVE`.
+
+---
+
 # GBS-MOD-WO-004 — Structural Architecture and Documentation Drift Enforcement
 
 **STATUS:** `PLANNING_CANDIDATE_NOT_ADMITTED`; **do not execute, implement or promote**.
