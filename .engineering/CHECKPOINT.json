@@ -272,7 +272,44 @@
       "actualEffectiveImplementationContextLock": null,
       "implementationLock": "REQUIRED_FRESH_POST_SYNC_MAIN",
       "stopState": "GBS_MOD_WO_002_AWAITING_FRESH_EFFECTIVE_IMPLEMENTATION_CONTEXT_LOCK_NO_CODEX_EXECUTION",
-      "securityIssue439": "HISTORICAL_ALL_REFS_21_UNKNOWN_RELEASE_1_1_3_BLOCKED"
+      "securityIssue439": "HISTORICAL_ALL_REFS_21_UNKNOWN_RELEASE_1_1_3_BLOCKED",
+      "implementationActivationRequest": {
+        "status": "PREPARED_PENDING_EXACT_HEAD_AUDIT_AND_SEPARATE_PROTECTED_MERGE_AUTHORIZATION",
+        "sourceMainSha": "e71120266c40235089444c9c0122280c5da4e5bd",
+        "preparationAuthorizationReceipt": "https://github.com/KayzenRoot/gef-bootstrap/issues/396#issuecomment-6167659777",
+        "planningDraftPr": 450,
+        "planningDraftBlob": "a1057b89774a4393eb8f0eceb84a768048b0e7c4",
+        "proposedLockPath": ".engineering/context-locks/GBS-MOD-WO-002-IMPLEMENTATION-ACTIVATION-PROPOSAL.json",
+        "implementationActor": "CODEX_LOCAL_AFTER_EFFECTIVE_LOCK_ONLY",
+        "scopeRisk": "ELEVATED",
+        "requiredOwnerDecision": "SEPARATE_EXACT_TARGET_S4_FOR_PROTECTED_MERGE_AND_SUBSEQUENT_EFFECTIVE_LOCK",
+        "sourceStateAtPreparation": "IMPLEMENTATION_AUTHORIZED_FALSE_EFFECTIVE_LOCK_NULL",
+        "protectedOperationsNotAuthorized": [
+          "MERGE",
+          "CODEX_EXECUTION",
+          "CANONICAL_CHECKPOINT_PROMOTION",
+          "SECURITY_OR_CI_EDIT",
+          "RELEASE"
+        ],
+        "blocker439": "RELEASE_ONLY_UNLESS_ACTUAL_HIGH_ASSURANCE_OR_SECURITY_TRIGGER",
+        "acceptanceCriteria": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8"
+        ],
+        "requiredContexts": [
+          "Repository validation",
+          "Pipeline integrity",
+          "Gitleaks secrets",
+          "Trivy filesystem and configuration"
+        ],
+        "postMergeRequirement": "REVALIDATE_MAIN_EXACT_SHA_AND_SOURCE_FINGERPRINTS_THEN_COMPILE_FRESH_EFFECTIVE_LOCK_AND_SEEK_SEPARATE_OWNER_CODEX_AUTHORITY"
+      }
     }
   },
   "v11": {

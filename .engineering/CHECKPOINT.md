@@ -437,3 +437,14 @@ governance-only and does not grant any V1.2 product credit or release authorizat
 **Post-PR #449 governance milestone (merged; subject to this separately governed parity correction):** `WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`.
 **Correction-stage pre-merge STOP (applicable only until separately authorized integration of this correction):** `WO002_CANONICAL_TEMPORAL_PARITY_CORRECTION_REQUIRES_OWNER_AUTHORIZED_MERGE`; implementation remains blocked until a fresh effective Context Lock and separate CodeX authorization.
 
+## GBS-MOD-WO-002 — implementation activation proposal (PREPARATION ONLY, 2026-10-14)
+
+The owner specifically authorized **preparing and submitting for approval** an activation package for [Issue #396](https://github.com/KayzenRoot/gef-bootstrap/issues/396), recorded in [the preparation receipt](https://github.com/KayzenRoot/gef-bootstrap/issues/396#issuecomment-6167659777). Source-bound baseline is `main@e71120266c40235089444c9c0122280c5da4e5bd`; the predecessor GEF Gate is promoted, canonical WO-002 admission is effective, and PR #451 checkpoint parity correction is already integrated.
+
+**Proposal scope:** ELEVATED risk, exactly the six existing approved WRITE_ALLOWED paths in `CHECKPOINT.json > constructionGovernance.agentNativeEvidenceWo002`, read-only GitHub/provider access, A1–A8, Codex as sole code/test/CI author. The [PR #450](https://github.com/KayzenRoot/gef-bootstrap/pull/450) planning draft remains non-executable and may not be flipped to bypass admission. The separate proposal artifact is `.engineering/context-locks/GBS-MOD-WO-002-IMPLEMENTATION-ACTIVATION-PROPOSAL.json`.
+
+**Current factual effectivity is unchanged:** `WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK`, `implementationAuthorized=false`, `implementationStarted=false`, `actualEffectiveImplementationContextLock=null`, active implementation WO `NONE`. Neither this candidate branch nor its eventual proposal merge automatically creates an effective implementation lock, authorizes Codex execution, promotes a canonical execution checkpoint, or bypasses frozen SECURITY/DoD/required CI. A subsequent distinct, exact-main lock and target-specific owner authorization/activation remain necessary. This section records preparation, **not** a claimed completed activation.
+
+Release/SEC-10 historical issue #439 remains separately BLOCKED (21 UNKNOWN); it does not automatically impose an independent reviewer on ELEVATED read-only development absent an actual HIGH_ASSURANCE trigger. Stable CLI 1.1.2, V1 historical 1088/1088, universal V1.2 3/10 unchanged. No paid service, workflow/ruleset change, forced push, publication or merge is authorized by the preparation instruction.
+
+**STOP:** `WO002_ACTIVATION_PROPOSAL_REQUIRES_EXACT_HEAD_AUDIT_AND_SEPARATE_OWNER_AUTHORIZATION`.
