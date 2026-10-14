@@ -113,7 +113,8 @@ function stableSnapshot(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableSnapshot).join(',')}]`;
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    const entries = Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${stableSnapshot(record[key])}`).join(',');
+    const entries = Object.keys(record).sort((left, right) => left.localeCompare(right, 'en'))
+      .map((key) => `${JSON.stringify(key)}:${stableSnapshot(record[key])}`).join(',');
     return `{${entries}}`;
   }
   throw new Error('UNSUPPORTED_COLLECTION_VALUE');
@@ -549,7 +550,8 @@ function parseSpecReport(bytes: Uint8Array): ParsedReport | null {
   }
   if (!specSummaryMatches(counts, observed)) return null;
   if (hasDuplicateReportCases(cases)) return { cases: [], bytes, invalidReason: 'GITHUB_TEST_REPORT_CASE_DUPLICATE' };
-  return { cases: cases.sort((left, right) => left.testRef.localeCompare(right.testRef)), bytes };
+  const sortedCases = [...cases].sort((left, right) => left.testRef.localeCompare(right.testRef));
+  return { cases: sortedCases, bytes };
 }
 
 function trustedDownloadHost(url: URL): boolean {

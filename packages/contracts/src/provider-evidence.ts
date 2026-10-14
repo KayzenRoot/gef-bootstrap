@@ -146,7 +146,16 @@ const SHA40 = /^[0-9a-f]{40}$/;
 const SHA256 = /^sha256:[0-9a-f]{64}$/;
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$/;
 const OWNER_OR_REPOSITORY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
-const CREDENTIAL_SHAPE = /\b(?:gh[pousr]_\w{20,}|github_pat_\w{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i;
+const CREDENTIAL_PATTERNS: readonly RegExp[] = [
+  /\bgh[pousr]_\w{20,}/i,
+  /\bgithub_pat_\w{20,}/i,
+  /\bBearer\s+\S+/i,
+  /\b(?:token|secret|password|authorization)\s*[:=]\s*\S+/i,
+];
+
+function containsCredentialShape(value: string): boolean {
+  return CREDENTIAL_PATTERNS.some((pattern) => pattern.test(value));
+}
 const COLLECTION_STATES: ReadonlySet<string> = new Set(['COMPLETE', 'PARTIAL', 'UNAVAILABLE', 'DENIED']);
 const CHECK_STATUSES: ReadonlySet<string> = new Set(['QUEUED', 'IN_PROGRESS', 'COMPLETED']);
 const CHECK_KINDS: ReadonlySet<string> = new Set(['STATUS', 'TEST', 'SECURITY', 'COVERAGE', 'OTHER']);
@@ -174,7 +183,7 @@ function safeText(value: unknown, maxLength: number): value is string {
     && value.length <= maxLength
     && value.trim() === value
     && !/[\u0000-\u001f\u007f]/.test(value)
-    && !CREDENTIAL_SHAPE.test(value);
+    && !containsCredentialShape(value);
 }
 
 function safePublicUri(value: unknown): value is string {

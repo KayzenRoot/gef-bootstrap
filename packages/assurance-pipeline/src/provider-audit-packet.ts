@@ -104,6 +104,17 @@ export interface ProviderAuditPacketValidation {
   readonly expectedPacketDigest: string | null;
 }
 
+const CREDENTIAL_PATTERNS: readonly RegExp[] = [
+  /\bgh[pousr]_\w{20,}/i,
+  /\bgithub_pat_\w{20,}/i,
+  /\bBearer\s+\S+/i,
+  /\b(?:token|secret|password|authorization)\s*[:=]\s*\S+/i,
+];
+
+function containsCredentialShape(value: string): boolean {
+  return CREDENTIAL_PATTERNS.some((pattern) => pattern.test(value));
+}
+
 const SHA40 = /^[0-9a-f]{40}$/;
 const SHA256 = /^sha256:[0-9a-f]{64}$/;
 const SIMPLE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$/;
@@ -143,7 +154,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function safeText(value: unknown, max = 512): value is string {
   return typeof value === 'string' && value.length > 0 && value.length <= max && value.trim() === value
     && !/[\u0000-\u001f\u007f]/.test(value)
-    && !/\b(?:gh[pousr]_\w{20,}|github_pat_\w{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i.test(value);
+    && !containsCredentialShape(value);
 }
 function safePath(path: unknown): path is string {
   return safeText(path, 1024) && !path.startsWith('/') && !path.includes('\\')
@@ -617,9 +628,9 @@ function createProviderAuditPacketUnchecked(input: ProviderAuditPacketInput, opt
     value.evidenceBundle,
     value.actualChangedPaths,
   ));
-  const specialistReasons = input.specialistReviewRequired
-    ? ['REQUIRED_SPECIALIST_REVIEW_NOT_VERIFIED']
-    : input.specialistReviewState === 'NOT_REQUIRED' ? [] : ['SPECIALIST_REVIEW_STATE_CONFLICT'];
+  let specialistReasons: string[] = [];
+  if (input.specialistReviewRequired) specialistReasons = ['REQUIRED_SPECIALIST_REVIEW_NOT_VERIFIED'];
+  else if (input.specialistReviewState !== 'NOT_REQUIRED') specialistReasons = ['SPECIALIST_REVIEW_STATE_CONFLICT'];
   const reasonCodes = sortedUnique([
     ...bindingReasons,
     ...bundleReasons,

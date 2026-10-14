@@ -95,6 +95,17 @@ export interface ProviderEvidenceBundle {
   readonly bundleDigest: string;
 }
 
+const CREDENTIAL_PATTERNS: readonly RegExp[] = [
+  /\bgh[pousr]_\w{20,}/i,
+  /\bgithub_pat_\w{20,}/i,
+  /\bBearer\s+\S+/i,
+  /\b(?:token|secret|password|authorization)\s*[:=]\s*\S+/i,
+];
+
+function containsCredentialShape(value: string): boolean {
+  return CREDENTIAL_PATTERNS.some((pattern) => pattern.test(value));
+}
+
 const SHA40 = /^[0-9a-f]{40}$/;
 const SHA256 = /^sha256:[0-9a-f]{64}$/;
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$/;
@@ -136,7 +147,7 @@ function safeText(value: unknown, maxLength = 512): value is string {
     && value.length <= maxLength
     && value.trim() === value
     && !/[\u0000-\u001f\u007f]/.test(value)
-    && !/\b(?:gh[pousr]_\w{20,}|github_pat_\w{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i.test(value);
+    && !containsCredentialShape(value);
 }
 
 function safeUri(value: unknown): value is string {
@@ -783,8 +794,7 @@ function contextResults(
   return required.map((context) => {
     const candidates = checks.filter((check) => check.contextId === context.contextId && check.selected);
     if (sourceState !== 'COMPLETE') {
-      const reason = sourceState === 'DENIED' ? 'PROVIDER_DENIED'
-        : sourceState === 'UNAVAILABLE' ? 'PROVIDER_UNAVAILABLE' : 'PROVIDER_COLLECTION_PARTIAL';
+      const reason = unavailableCollectionReason(sourceState);
       return deepFreezeCopy({ contextId: context.contextId, displayName: context.displayName, verdict: 'NOT_VERIFIED' as const, checkRunRefs: [], reasonCodes: [reason] });
     }
     if (conflictContexts.includes(context.contextId)) {
