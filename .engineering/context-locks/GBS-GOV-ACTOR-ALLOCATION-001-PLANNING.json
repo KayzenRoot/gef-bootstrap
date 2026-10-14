@@ -19,17 +19,17 @@
   "ownerAuditIndependence": "NOT_INDEPENDENT",
   "base": {
     "branch": "main",
-    "commitSha": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "commitSha": "e71120266c40235089444c9c0122280c5da4e5bd",
     "currentHeadMustEqualBaseBeforeAdmission": true
   },
   "fingerprints": {
     "workOrder": {
       "path": ".engineering/work-orders/GBS-GOV-ACTOR-ALLOCATION-001.md",
-      "gitBlobSha": "2054aae91c8ae2cf5097a172aa36a48fdff48e0f"
+      "gitBlobSha": "f0e4b529f14fd7a13804974007d2b9e18c5d1c35"
     },
     "proposal": {
       "path": ".engineering/planning/GBS-GOV-ACTOR-ALLOCATION-001-DECISION-PROPOSAL.md",
-      "gitBlobSha": "4bb3bd7c6d6702d75a9c6f2c599509c229d7980a"
+      "gitBlobSha": "a532c81428fb81d8ee167f5bd02cedfb5a32c350"
     },
     "authorities": [
       {
@@ -42,11 +42,11 @@
       },
       {
         "path": ".engineering/CHECKPOINT.md",
-        "gitBlobSha": "866d0fcef2253560a45a8dbca147d9cd451d0960"
+        "gitBlobSha": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a"
       },
       {
         "path": ".engineering/CHECKPOINT.json",
-        "gitBlobSha": "af21419f47fc9f106abb49203b5b52c135a66ee1"
+        "gitBlobSha": "4a653772c31dffee869a9bac17345241cfc6db03"
       },
       {
         "path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
@@ -92,14 +92,6 @@
   },
   "canonicalBlockers": [
     {
-      "kind": "PROJECT_STATE_CONFLICT",
-      "description": "CHECKPOINT.md contains premerge WO-002 admission phrases while CHECKPOINT.json contains postmerge admission status",
-      "correctivePr": 451,
-      "correctiveHeadSha": "3e8554ff940f2e9254119cdf8c489ee8946cbbfb",
-      "authorizedMerge": false,
-      "resolution": "EXPLICIT_OWNER_PROTECTED_SQUASH_THEN_POSTMERGE_PUSH_CI_AND_SOURCE_REBIND"
-    },
-    {
       "kind": "SECURITY_HISTORY",
       "description": "Issue #439 redacted all-ref Gitleaks 21 UNKNOWN findings; npm 1.1.3 BLOCKED",
       "issue": 439
@@ -107,6 +99,11 @@
     {
       "kind": "ACTOR_DECISION",
       "description": "ADR-0008-D1/D6 remain effective; Issue #452 and this proposal cannot override by recency",
+      "issue": 452
+    },
+    {
+      "kind": "ACTOR_LAW_EFFECTIVITY_NOT_AUTHORIZED",
+      "description": "PR451 checkpoint parity completed under its own exact-target Owner authorization; no S4 authorization exists to amend effective ADR-0008 actor allocation, which remains Codex-only for code/tests/CI",
       "issue": 452
     }
   ],
@@ -129,14 +126,15 @@
     "package-lock.json"
   ],
   "preflight": [
-    "Verify exact repository KayzenRoot/gef-bootstrap and authenticated owner account KayzenRoot before GitHub S3 writes",
-    "Verify base main commit SHA and all authority Git blob SHA identities; drift invalidates planning lock for admission",
-    "Verify exact work-order AND decision-proposal Git blob SHA match this lock; missing/mismatch = STALE/BLOCKED",
-    "Verify planning branch diff changes exactly the three allowlisted paths and all documents are explicitly NOT_EFFECTIVE",
-    "Validate this JSON parses and doNotExecute=true and implementationAuthorized=false and mergeAuthorized=false",
-    "Observe checkpoint pair STATE_CONFLICT; preserve PR #451 OPEN/DRAFT/NO MERGE and #450 INACTIVE",
-    "Review current effective ADR-0008 and SEC-02 S4 independent authorization requirements",
-    "Review hosted exact-head CI; do not claim green before runs complete"
+    "Verify exact repository/account/branch; current main e71120266c40235089444c9c0122280c5da4e5bd",
+    "Verify all 14 source authority blobs current: 12 unchanged, 2 corrected checkpoint fingerprints",
+    "Verify the Work Order and decision proposal current blobs match lock references",
+    "Verify exact three allowed planning paths and historical provenance, no effective ADR, AGENTS, code, tests, CI, or CHECKPOINT mutation",
+    "Validate JSON and doNotExecute=true, implementationAuthorized=false, mergeAuthorized=false, no CODEX run",
+    "Verify checkpoint parity is resolved by protected #451; do not reinterpret it as Actor Law S4 authorization",
+    "Verify ADR-0008-D1/D6 still current and this document still PROPOSAL_ONLY_NOT_EFFECTIVE",
+    "Check hosted CI on current exact PR head after sync, not old head",
+    "Review owner audit NOT_INDEPENDENT; STOP until separate exact-target protected actor law authorization"
   ],
   "testsRequiredForPlanning": [
     "json-parse",
@@ -146,6 +144,54 @@
     "non-effectivity-safety-text-review",
     "github-hosted-repository-validation-and-security-checks-if-triggered"
   ],
-  "nextLegalAction": "EXACT_HEAD_AUDIT_OF_PLANNING_DRAFT_ONLY; THEN STOP_FOR_PARITY_AND_SEPARATE_OWNER_S4",
-  "stopCondition": "GBS_GOV_ACTOR_ALLOCATION_001_PLANNING_PR_AUDITED_NOT_ADMITTED"
+  "nextLegalAction": "FINAL_EXACT_HEAD_PREPARATION_AUDIT_ONLY; STOP_UNTIL_SEPARATE_OWNER_S4_ACTOR_LAW_AMENDMENT_AUTHORIZATION",
+  "stopCondition": "GBS_GOV_ACTOR_ALLOCATION_001_PLANNING_PR_AUDITED_NOT_ADMITTED",
+  "historicalPlanningBefore451": {
+    "oldBase": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "lockGitBlob": "58ea0f0cb48ee69e36f226a5898b111f2af02667",
+    "priorPrHead": "7d58bf25da7028aae4e4f929691ee8cdffc41a6d",
+    "originalDecisionDocumentGitBlob": "4bb3bd7c6d6702d75a9c6f2c599509c229d7980a",
+    "originalWorkOrderGitBlob": "2054aae91c8ae2cf5097a172aa36a48fdff48e0f",
+    "originalCheckpointFingerprints": [
+      {
+        "path": ".engineering/CHECKPOINT.md",
+        "gitBlobSha": "866d0fcef2253560a45a8dbca147d9cd451d0960"
+      },
+      {
+        "path": ".engineering/CHECKPOINT.json",
+        "gitBlobSha": "af21419f47fc9f106abb49203b5b52c135a66ee1"
+      }
+    ],
+    "formerConflict": {
+      "kind": "PROJECT_STATE_CONFLICT",
+      "description": "CHECKPOINT.md contains premerge WO-002 admission phrases while CHECKPOINT.json contains postmerge admission status",
+      "correctivePr": 451,
+      "correctiveHeadSha": "3e8554ff940f2e9254119cdf8c489ee8946cbbfb",
+      "authorizedMerge": false,
+      "resolution": "EXPLICIT_OWNER_PROTECTED_SQUASH_THEN_POSTMERGE_PUSH_CI_AND_SOURCE_REBIND"
+    },
+    "oldPreflight": [
+      "Verify exact repository KayzenRoot/gef-bootstrap and authenticated owner account KayzenRoot before GitHub S3 writes",
+      "Verify base main commit SHA and all authority Git blob SHA identities; drift invalidates planning lock for admission",
+      "Verify exact work-order AND decision-proposal Git blob SHA match this lock; missing/mismatch = STALE/BLOCKED",
+      "Verify planning branch diff changes exactly the three allowlisted paths and all documents are explicitly NOT_EFFECTIVE",
+      "Validate this JSON parses and doNotExecute=true and implementationAuthorized=false and mergeAuthorized=false",
+      "Observe checkpoint pair STATE_CONFLICT; preserve PR #451 OPEN/DRAFT/NO MERGE and #450 INACTIVE",
+      "Review current effective ADR-0008 and SEC-02 S4 independent authorization requirements",
+      "Review hosted exact-head CI; do not claim green before runs complete"
+    ]
+  },
+  "post451Reconciliation": {
+    "actualCurrentMain": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "protectedCorrectionPR": 451,
+    "formerCheckpointConflictResolved": true,
+    "wo002State": "WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+    "currentCheckpointMdBlob": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a",
+    "currentCheckpointJsonBlob": "4a653772c31dffee869a9bac17345241cfc6db03",
+    "mainAuthorityFingerprintCount": 14,
+    "mainAuthorityUnchangedCount": 12,
+    "mainAuthorityUpdatedCount": 2,
+    "proposedChangeEffective": false,
+    "privilegedActorLawS4OwnerAuthorization": false
+  }
 }
