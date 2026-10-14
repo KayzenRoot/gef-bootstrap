@@ -1,4 +1,4 @@
-import type { NormalizedProviderTestExecutionReceipt, ProviderEvidenceBundle, ProviderEvidenceVerdict } from '@gef-bootstrap/evidence-engine';
+import type { NormalizedProviderTestExecutionReceipt, NormalizedProviderTestReportCollection, ProviderEvidenceBundle, ProviderEvidenceVerdict } from '@gef-bootstrap/evidence-engine';
 import { deriveProviderTestExecutionDecision, verifyProviderEvidenceBundle } from '@gef-bootstrap/evidence-engine';
 import type { ProviderCheckKind, ProviderEvidenceBinding, ProviderTestExecutionOutcome } from '@gef-bootstrap/contracts';
 import { isProviderTestRef } from '@gef-bootstrap/contracts';
@@ -237,7 +237,7 @@ function validBinding(value: unknown): value is ProviderAuditBinding {
     && providerRuleset['rulesetId'] === ruleset['rulesetId'] && providerRuleset['digest'] === ruleset['digest'];
 }
 function validEvidenceBundle(bundle: unknown): bundle is ProviderEvidenceBundle {
-  return isRecord(bundle) && bundle['schemaVersion'] === '1.0' && typeof bundle['bundleDigest'] === 'string'
+  return isRecord(bundle) && bundle['schemaVersion'] === '1.1' && typeof bundle['bundleDigest'] === 'string'
     && SHA256.test(bundle['bundleDigest']) && isRecord(bundle['expectedBinding'])
     && isRecord(bundle['expectedBinding']['pullRequest']) && typeof bundle['expectedBinding']['pullRequest']['headSha'] === 'string'
     && SHA40.test(bundle['expectedBinding']['pullRequest']['headSha'])
@@ -268,6 +268,27 @@ function validEvidenceBundle(bundle: unknown): bundle is ProviderEvidenceBundle 
         && checkRun['runId'] === receipt['runId'] && checkRun['attempt'] === receipt['attempt']
         && checkRun['contextId'] === receipt['contextId'] && checkRun['selected'] === receipt['selected']
         && new URL(receipt['reportUri'] as string).origin === new URL(checkRun['sourceUri'] as string).origin;
+    })
+    && Array.isArray(bundle['testReportCollections']) && bundle['testReportCollections'].every((collection) => {
+      if (!isRecord(collection) || !Array.isArray(collection['cases']) || !Array.isArray(collection['reasonCodes'])) return false;
+      const nullableText = (value: unknown, maxLength: number) => value === null || safeText(value, maxLength);
+      const nullableSha = (value: unknown) => value === null || (typeof value === 'string' && SHA40.test(value));
+      const nullableDigest = (value: unknown) => value === null || (typeof value === 'string' && SHA256.test(value));
+      const nullableStatus = (value: unknown) => value === null || ['QUEUED', 'IN_PROGRESS', 'COMPLETED'].includes(String(value));
+      const nullableConclusion = (value: unknown) => value === null
+        || ['SUCCESS', 'FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'NEUTRAL', 'SKIPPED'].includes(String(value));
+      return ['VERIFIED', 'FAILED', 'PENDING', 'UNAVAILABLE', 'DENIED', 'STALE', 'INVALID'].includes(String(collection['state']))
+        && safeText(collection['repository'], 256) && safeText(collection['runId'], 192)
+        && Number.isSafeInteger(collection['attempt']) && (collection['attempt'] as number) > 0
+        && nullableSha(collection['headSha']) && safeText(collection['checkRunId'], 192)
+        && nullableText(collection['checkName'], 512) && nullableStatus(collection['checkStatus'])
+        && nullableConclusion(collection['checkConclusion'])
+        && nullableText(collection['jobId'], 192) && nullableText(collection['checkRunRef'], 512)
+        && (collection['reportUri'] === null || safePublicUri(collection['reportUri']))
+        && nullableDigest(collection['reportDigest'])
+        && collection['cases'].every((entry) => isRecord(entry) && Object.keys(entry).every((key) => key === 'testRef' || key === 'outcome')
+          && isProviderTestRef(entry['testRef']) && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(entry['outcome'])))
+        && collection['reasonCodes'].every((reason) => safeText(reason, 192));
     })
     && Array.isArray(bundle['requiredContextResults']) && bundle['requiredContextResults'].every((context) => isRecord(context)
       && safeText(context['contextId'], 192)
@@ -324,6 +345,40 @@ interface TestProofResolution {
   readonly reasonCodes: readonly string[];
 }
 
+function missingReportProof(
+  testRef: string,
+  checkRunRefs: readonly string[],
+  bundle: ProviderEvidenceBundle,
+): TestProofResolution {
+  if (bundle.testReportCollections.length === 0) {
+    return { verdict: 'UNPROVEN', testEvidence: [], reasonCodes: ['TEST_REPORT_COLLECTION_NOT_PROVIDED'] };
+  }
+  const mappedChecks = bundle.checkRuns.filter((run) => checkRunRefs.includes(run.evidenceRef));
+  const relevant = bundle.testReportCollections.filter((collection: NormalizedProviderTestReportCollection) =>
+    (collection.checkRunRef !== null && checkRunRefs.includes(collection.checkRunRef))
+      || mappedChecks.some((run) => run.runId === collection.runId && run.attempt === collection.attempt));
+  if (relevant.length === 0) {
+    return { verdict: 'NOT_VERIFIED', testEvidence: [], reasonCodes: ['TEST_REPORT_CHECK_UNBOUND'] };
+  }
+  const reasons = sortedUnique(relevant.flatMap(({ reasonCodes }) => reasonCodes));
+  if (relevant.some(({ state }) => state === 'STALE')) {
+    return { verdict: 'STALE', testEvidence: [], reasonCodes: reasons.length > 0 ? reasons : ['TEST_REPORT_STALE'] };
+  }
+  if (relevant.some(({ state }) => state === 'FAILED')) {
+    return { verdict: 'FAILED', testEvidence: [], reasonCodes: reasons.length > 0 ? reasons : ['TEST_REPORT_JOB_FAILED'] };
+  }
+  if (relevant.some(({ state }) => state === 'PENDING')) {
+    return { verdict: 'PENDING', testEvidence: [], reasonCodes: reasons.length > 0 ? reasons : ['TEST_REPORT_PENDING'] };
+  }
+  if (relevant.some(({ state }) => state !== 'VERIFIED')) {
+    return { verdict: 'NOT_VERIFIED', testEvidence: [], reasonCodes: reasons.length > 0 ? reasons : ['TEST_REPORT_NOT_VERIFIED'] };
+  }
+  if (relevant.some(({ state, cases }) => state === 'VERIFIED' && cases.some(({ testRef: reported }) => reported === testRef))) {
+    return { verdict: 'NOT_VERIFIED', testEvidence: [], reasonCodes: ['TEST_REPORT_RECEIPT_MISSING'] };
+  }
+  return { verdict: 'UNPROVEN', testEvidence: [], reasonCodes: ['TEST_CASE_NOT_FOUND_IN_VERIFIED_REPORT'] };
+}
+
 function resolveTestProofForRef(
   testRef: string,
   checkRunRefs: readonly string[],
@@ -332,7 +387,7 @@ function resolveTestProofForRef(
   const receipts = bundle.testExecutionReceipts.filter((receipt) => receipt.testRef === testRef
     && checkRunRefs.includes(receipt.checkRunRef));
   if (receipts.length === 0) {
-    return { verdict: 'UNPROVEN', testEvidence: [], reasonCodes: ['ACCEPTANCE_TEST_RECEIPT_MISSING'] };
+    return missingReportProof(testRef, checkRunRefs, bundle);
   }
   const checkRunsByRef = new Map(bundle.checkRuns.map((run) => [run.evidenceRef, run]));
   const resolved = receipts.flatMap((receipt) => {

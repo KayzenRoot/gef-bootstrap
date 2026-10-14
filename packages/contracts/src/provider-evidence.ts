@@ -72,7 +72,7 @@ export interface ProviderTestExecutionReceipt {
   readonly testRef: string;
   readonly outcome: ProviderTestExecutionOutcome;
   readonly reportUri: string;
-  /** SHA-256 of the provider test report artifact linked by reportUri. */
+  /** SHA-256 of raw case-result bytes collected from the authenticated Actions job log at reportUri. */
   readonly reportDigest: string;
 }
 
@@ -110,7 +110,7 @@ export interface ProviderEvidenceInput {
   readonly changedPaths: readonly string[];
   readonly requiredContexts: readonly ProviderRequiredContext[];
   readonly checkRuns: readonly ProviderCheckRun[];
-  /** Optional for older provider collections; absence can never prove an acceptance test. */
+  /** Legacy untrusted assertion field. The parser rejects every non-empty caller-supplied value. */
   readonly testExecutionReceipts?: readonly ProviderTestExecutionReceipt[];
   readonly workflowRuns: readonly ProviderWorkflowRun[];
 }
@@ -572,6 +572,10 @@ class ProviderEvidenceInputParser {
       const receipt = this.parseTestReceipt(entry, index, checkRuns, seen);
       if (receipt !== null) receipts.push(receipt);
     });
+    if (receipts.length > 0) {
+      this.report('GHE01_TEST_RECEIPTS_UNAUTHENTICATED', 'Caller-supplied test receipts are not provider report evidence; collect the raw Actions job report through the authenticated read-only collector.', 'testExecutionReceipts');
+      return [];
+    }
     return receipts.sort((left, right) => compare(left.receiptId, right.receiptId));
   }
 

@@ -14,6 +14,8 @@ import { isProviderTestExecutionReceipt } from '@gef-bootstrap/contracts';
 import type { EvidenceCompletenessGate, OperationOptions, Result } from './types.js';
 import { createEvidenceCompletenessGate } from './s04-validation.js';
 import { compareCodePoint, deepFreeze, digestValue, fail, Guard, ok, sortedUnique } from './utils.js';
+import { inspectProviderTestReportCollection } from './provider-test-report.js';
+import type { ProviderTestReportCollection, ProviderTestReportCollectionState } from './provider-test-report.js';
 
 export type ProviderEvidenceVerdict = 'PASS' | 'FAILED' | 'BLOCKED' | 'PENDING' | 'NOT_VERIFIED' | 'UNPROVEN' | 'STALE';
 export type ProviderEvidenceCollectionState = 'COMPLETE' | 'PARTIAL' | 'UNAVAILABLE' | 'DENIED';
@@ -53,8 +55,26 @@ export interface ProviderRequiredContextResult {
   readonly reasonCodes: readonly string[];
 }
 
+export interface NormalizedProviderTestReportCollection {
+  readonly state: ProviderTestReportCollectionState;
+  readonly repository: string;
+  readonly runId: string;
+  readonly attempt: number;
+  readonly headSha: string;
+  readonly checkRunId: string;
+  readonly checkName: string | null;
+  readonly checkStatus: ProviderCheckStatus | null;
+  readonly checkConclusion: ProviderCheckConclusion;
+  readonly jobId: string | null;
+  readonly checkRunRef: string | null;
+  readonly reportUri: string | null;
+  readonly reportDigest: string | null;
+  readonly cases: ProviderTestReportCollection['cases'];
+  readonly reasonCodes: readonly string[];
+}
+
 export interface ProviderEvidenceBundle {
-  readonly schemaVersion: '1.0';
+  readonly schemaVersion: '1.1';
   readonly collectionId: string;
   readonly source: {
     readonly providerId: string;
@@ -66,6 +86,7 @@ export interface ProviderEvidenceBundle {
   readonly bindingMatches: boolean;
   readonly checkRuns: readonly NormalizedProviderCheckRun[];
   readonly testExecutionReceipts: readonly NormalizedProviderTestExecutionReceipt[];
+  readonly testReportCollections: readonly NormalizedProviderTestReportCollection[];
   readonly workflowRuns: readonly NormalizedProviderWorkflowRun[];
   readonly requiredContextResults: readonly ProviderRequiredContextResult[];
   readonly completeness: EvidenceCompletenessGate;
@@ -96,6 +117,7 @@ const CHECK_FIELDS = [
 ];
 const WORKFLOW_FIELDS = ['runId', 'attempt', 'headSha', 'status', 'conclusion', 'sourceUri', 'jobs'];
 const JOB_FIELDS = ['jobId', 'name', 'status', 'conclusion', 'sourceUri'];
+const VERIFIED_PROVIDER_BUNDLES = new WeakSet<object>();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -263,6 +285,9 @@ function validateParsedInput(parsed: ProviderEvidenceParseResult | unknown): Res
     return fail('GHE24_INPUT_NOT_VALIDATED', 'Provider input must come from the strict versioned contract parser.');
   }
   const input = parsed['value'];
+  if (Array.isArray(input['testExecutionReceipts']) && input['testExecutionReceipts'].length > 0) {
+    return fail('GHE24_TEST_RECEIPTS_UNAUTHENTICATED', 'Untrusted provider input cannot supply test execution receipts.');
+  }
   if (!Object.isFrozen(input) || !hasOnlyKeys(input, INPUT_FIELDS)
     || input['schemaVersion'] !== '1.0'
     || !safeText(input['collectionId'], 192) || !IDENTIFIER.test(input['collectionId'])
@@ -467,6 +492,135 @@ function normalizeTestExecutionReceipts(
   return ok(deepFreezeCopy(normalized));
 }
 
+function normalizeTestReportCollections(
+  candidates: unknown,
+  checkRuns: readonly NormalizedProviderCheckRun[],
+  expected: ContractProviderEvidenceBinding,
+  guard: Guard,
+): Result<{ readonly collections: readonly NormalizedProviderTestReportCollection[]; readonly receipts: readonly ProviderTestExecutionReceipt[] }> {
+  if (candidates === undefined) return ok({ collections: [], receipts: [] });
+  if (!Array.isArray(candidates) || candidates.length > 1024) {
+    return fail('GHE24_TEST_REPORT_COLLECTION_INVALID', 'At most 1024 authenticated test report collections may be supplied.');
+  }
+  if (candidates.length === 0) return ok({ collections: [], receipts: [] });
+  const expectedRepository = `${expected.repository.owner}/${expected.repository.name}`;
+  const byRecordId = new Map(checkRuns.map((run) => [run.recordId, run]));
+  const collections: NormalizedProviderTestReportCollection[] = [];
+  const receipts: ProviderTestExecutionReceipt[] = [];
+  for (const candidate of candidates as readonly ProviderTestReportCollection[]) {
+    const stepped = guard.step('provider-test-report-collection');
+    if (!stepped.ok) return stepped;
+    const collection = inspectProviderTestReportCollection(candidate);
+    if (collection === null) {
+      return fail('GHE24_TEST_REPORT_COLLECTION_UNVERIFIED', 'Test report collection must be an unmodified result of the authenticated GitHub collector.');
+    }
+    let state = collection.state;
+    let reasonCodes = [...collection.reasonCodes];
+    let cases = collection.cases;
+    let checkRunRef: string | null = null;
+    const checkRun = byRecordId.get(collection.checkRunId);
+    if (collection.repository.toLowerCase() !== expectedRepository.toLowerCase()) {
+      state = 'INVALID';
+      reasonCodes = ['GITHUB_TEST_REPORT_REPOSITORY_MISMATCH'];
+      cases = [];
+    } else if (checkRun === undefined || checkRun.checkKind !== 'TEST') {
+      state = 'INVALID';
+      reasonCodes = ['GITHUB_TEST_REPORT_CHECK_UNBOUND'];
+      cases = [];
+    } else {
+      checkRunRef = checkRun.evidenceRef;
+      if (checkRun.runId !== collection.runId || checkRun.attempt !== collection.attempt) {
+        state = 'INVALID';
+        reasonCodes = ['GITHUB_TEST_REPORT_RUN_MISMATCH'];
+        cases = [];
+      } else if (collection.state === 'VERIFIED'
+        && (collection.headSha !== expected.pullRequest.headSha || collection.headSha !== checkRun.headSha)) {
+        state = 'STALE';
+        reasonCodes = ['GITHUB_TEST_REPORT_HEAD_MISMATCH'];
+        cases = [];
+      } else if (collection.state === 'VERIFIED' && !checkRun.selected) {
+        state = 'STALE';
+        reasonCodes = ['GITHUB_TEST_REPORT_SUPERSEDED_CHECK'];
+        cases = [];
+      } else if (collection.state === 'VERIFIED'
+        && (checkRun.displayName !== collection.checkName || checkRun.status !== collection.checkStatus
+          || checkRun.conclusion !== collection.checkConclusion)) {
+        state = 'INVALID';
+        reasonCodes = ['GITHUB_TEST_REPORT_CHECK_RESULT_MISMATCH'];
+        cases = [];
+      } else if (collection.state === 'VERIFIED' && (checkRun.status !== 'COMPLETED' || checkRun.conclusion !== 'SUCCESS')) {
+        state = 'INVALID';
+        reasonCodes = ['GITHUB_TEST_REPORT_CHECK_RESULT_MISMATCH'];
+        cases = [];
+      } else if (collection.state === 'VERIFIED'
+        && (collection.reportUri === null || collection.reportDigest === null || collection.jobId === null)) {
+        state = 'INVALID';
+        reasonCodes = ['GITHUB_TEST_REPORT_IDENTITY_INCOMPLETE'];
+        cases = [];
+      } else if (collection.state === 'VERIFIED') {
+        const reportUri = collection.reportUri;
+        const reportDigest = collection.reportDigest;
+        const checkUri = checkRun.sourceUri;
+        if (reportUri === null || reportDigest === null || new URL(reportUri).origin !== new URL(checkUri).origin) {
+          state = 'INVALID';
+          reasonCodes = ['GITHUB_TEST_REPORT_SOURCE_MISMATCH'];
+          cases = [];
+        } else {
+          const collectionReceipts: ProviderTestExecutionReceipt[] = [];
+          for (const [index, testCase] of cases.entries()) {
+            if (!isProviderTestExecutionReceipt({
+              receiptId: `test-report:${collection.checkRunId}:${index + 1}`,
+              checkRunRecordId: collection.checkRunId,
+              runId: collection.runId,
+              attempt: collection.attempt,
+              headSha: collection.headSha,
+              testRef: testCase.testRef,
+              outcome: testCase.outcome,
+              reportUri,
+              reportDigest,
+            })) {
+              state = 'INVALID';
+              reasonCodes = ['GITHUB_TEST_REPORT_CASE_INVALID'];
+              cases = [];
+              break;
+            }
+            collectionReceipts.push({
+              receiptId: `test-report:${collection.checkRunId}:${index + 1}`,
+              checkRunRecordId: collection.checkRunId,
+              runId: collection.runId,
+              attempt: collection.attempt,
+              headSha: collection.headSha,
+              testRef: testCase.testRef,
+              outcome: testCase.outcome,
+              reportUri,
+              reportDigest,
+            });
+          }
+          if (state === 'VERIFIED') receipts.push(...collectionReceipts);
+        }
+      }
+    }
+    collections.push(deepFreezeCopy({
+      state,
+      repository: collection.repository,
+      runId: collection.runId,
+      attempt: collection.attempt,
+      headSha: collection.headSha,
+      checkRunId: collection.checkRunId,
+      checkName: collection.checkName,
+      checkStatus: collection.checkStatus,
+      checkConclusion: collection.checkConclusion,
+      jobId: collection.jobId,
+      checkRunRef,
+      reportUri: state === 'VERIFIED' ? collection.reportUri : null,
+      reportDigest: state === 'VERIFIED' ? collection.reportDigest : null,
+      cases: state === 'VERIFIED' ? cases : [],
+      reasonCodes: sortedUnique(reasonCodes),
+    }));
+  }
+  return ok({ collections: deepFreezeCopy(collections), receipts: deepFreezeCopy(receipts) });
+}
+
 function normalizeWorkflows(
   runs: readonly ProviderWorkflowRun[],
   expectedHead: string,
@@ -578,6 +732,7 @@ export function createProviderEvidenceBundle(
   parsedInput: ProviderEvidenceParseResult | unknown,
   expectedBindingInput: ContractProviderEvidenceBinding,
   options: OperationOptions,
+  testReportCollections?: readonly ProviderTestReportCollection[],
 ): Result<ProviderEvidenceBundle> {
   const parsed = validateParsedInput(parsedInput);
   if (!parsed.ok) return parsed;
@@ -590,8 +745,15 @@ export function createProviderEvidenceBundle(
   const guard = new Guard(options);
   const checkResult = normalizeCheckRuns(input.checkRuns, expectedBinding.pullRequest.headSha, input.collectionState, guard);
   if (!checkResult.ok) return checkResult;
+  const testReportResult = normalizeTestReportCollections(
+    testReportCollections,
+    checkResult.value.rows,
+    expectedBinding,
+    guard,
+  );
+  if (!testReportResult.ok) return testReportResult;
   const testReceiptResult = normalizeTestExecutionReceipts(
-    input.testExecutionReceipts ?? [],
+    testReportResult.value.receipts,
     checkResult.value.rows,
     expectedBinding.pullRequest.headSha,
     guard,
@@ -624,7 +786,7 @@ export function createProviderEvidenceBundle(
       : input.collectionState === 'PARTIAL' ? ['PROVIDER_COLLECTION_PARTIAL'] : [];
   const workflowConflictReasons = workflowResult.value.hasConflict ? ['WORKFLOW_ATTEMPT_CONFLICT'] : [];
   const body = deepFreezeCopy({
-    schemaVersion: '1.0' as const,
+    schemaVersion: '1.1' as const,
     collectionId: input.collectionId,
     source: { providerId: input.providerId, collectionState: input.collectionState, sourceUri: input.sourceUri },
     observedBinding,
@@ -632,6 +794,7 @@ export function createProviderEvidenceBundle(
     bindingMatches: bindingReasons.length === 0,
     checkRuns: checkResult.value.rows,
     testExecutionReceipts: testReceiptResult.value,
+    testReportCollections: testReportResult.value.collections,
     workflowRuns: workflowResult.value.rows,
     requiredContextResults,
     completeness: completeness.value,
@@ -645,12 +808,15 @@ export function createProviderEvidenceBundle(
   });
   const digest = digestValue(options, 'WOB2:PROVIDER_EVIDENCE_BUNDLE', body);
   if (!digest.ok) return digest;
-  return ok(deepFreezeCopy({ ...body, bundleDigest: digest.value }));
+  const bundle = deepFreezeCopy({ ...body, bundleDigest: digest.value });
+  VERIFIED_PROVIDER_BUNDLES.add(bundle);
+  return ok(bundle);
 }
 
 /** Checks the tamper-evident bundle digest. The boolean result never grants acceptance authority. */
 export function verifyProviderEvidenceBundle(bundle: unknown, options: OperationOptions): Result<boolean> {
-  if (!isRecord(bundle) || typeof bundle['bundleDigest'] !== 'string' || !SHA256.test(bundle['bundleDigest'])) return ok(false);
+  if (bundle === null || typeof bundle !== 'object' || !VERIFIED_PROVIDER_BUNDLES.has(bundle)
+    || !isRecord(bundle) || typeof bundle['bundleDigest'] !== 'string' || !SHA256.test(bundle['bundleDigest'])) return ok(false);
   const body: Record<string, unknown> = {};
   for (const key of Object.keys(bundle)) {
     if (key !== 'bundleDigest') body[key] = bundle[key];
