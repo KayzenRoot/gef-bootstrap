@@ -1,6 +1,6 @@
 # GBS-MOD-WO-002 — Implementation Evidence Bundle
 
-**State:** `IMPLEMENTATION_PENDING_HOSTED_VALIDATION`; Owner audit has not started.
+**State:** `IMPLEMENTATION_READY_FOR_OWNER_AUDIT`; Owner audit has not started.
 **Work Order:** [GBS-MOD-WO-002](../work-orders/GBS-MOD-WO-002.md), admitted scope A1–A8.
 **Issue:** [#396](https://github.com/KayzenRoot/gef-bootstrap/issues/396).
 **Activation authorization:** [PR #460 Owner authorization](https://github.com/KayzenRoot/gef-bootstrap/pull/460#issuecomment-6168359370).
@@ -74,7 +74,7 @@ npm_config_cache=/tmp/gef-bootstrap-npm-cache npm audit --audit-level=high
 
 ## Hosted provider validation
 
-The PR description's **Exact-head Evidence Bundle** must be completed from the implementation PR's current exact-head provider data: required-context IDs and conclusions, check-run IDs, workflow run/attempt/job IDs, source URLs, and pending/failed states. The live `Checks` page is the primary provider receipt. Each status must be evaluated only for the exact final HEAD shown in that PR description.
+The implementation PR description's **Exact-head Evidence Bundle** records the current exact HEAD and base, changed-file blob SHAs, all required-context conclusions, check-run IDs, workflow run/attempt/job IDs, provider URLs, and final dispositions. These provider receipts are per-HEAD; evaluate them only against the exact final HEAD shown in the PR description. The live `Checks` page is the primary provider receipt. This tracked document does not duplicate per-HEAD run IDs, which belong in the PR description and must be refreshed whenever its HEAD changes.
 
 ## Review boundary
 
