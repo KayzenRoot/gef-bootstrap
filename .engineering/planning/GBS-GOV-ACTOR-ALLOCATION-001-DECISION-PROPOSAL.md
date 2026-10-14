@@ -1,3 +1,13 @@
+## 2026-10-14 post-checkpoint correction: proposal still non-effective
+
+**Current main:** `e71120266c40235089444c9c0122280c5da4e5bd`, after specifically Owner-approved protected merge of checkpoint correction #451; actual checkpoint MD blob `686a2e3f7da1b541f9a4ee10a4d9432358105e0a`, JSON blob `4a653772c31dffee869a9bac17345241cfc6db03`. The earlier baseline, proposed Work Order blob `2054aae91c8ae2cf5097a172aa36a48fdff48e0f` and checkpoint parity warning below are historical preparation notes; current Work Order blob is `f0e4b529f14fd7a13804974007d2b9e18c5d1c35`. Canonical parity condition G0 of the prospective transition was satisfied by *separate* explicit Owner authority for #451. G1 source-rebinding of the planning proposal is being performed now, **but G3 target-specific S4 actor-law change authorization has NOT been granted**, nor has decision supersession/promotion, independent review when applicable, or a new effective Work Order and implementation Context Lock.
+
+**Proposed actor allocation:** keep default `CODEX_LOCAL`; later allow `CHATGPT_GITHUB` only for separately Owner-approved source-bound LOW/STANDARD simple reversible work fully validated in hosted CI, after formally authorized and promoted narrow supersession of ADR-0008-D1/D6 and AGENTS routing. NEVER treat Owner's “Continue”, GitHub repository write scope, green planning CI, earlier narrow ADR-0011, or PR #451 merge approval as that supersession. Security, branch rules, risk escalation, release gates, independent reviewer and S4 remain in force. No actor-law status changed by this file. #439 still 21 UNKNOWN Gitleaks findings and npm 1.1.3 blocked.
+
+**STOP:** `GBS_GOV_ACTOR_001_DECISION_PROPOSAL_POST451_PLANNING_ONLY`.
+
+---
+
 # GBS-GOV-ACTOR-ALLOCATION-001 — PROPOSED actor allocation and authority impact map
 
 Status: **PROPOSAL ONLY / NOT A GOVERNED ADR / NOT EFFECTIVE**.
