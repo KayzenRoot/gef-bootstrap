@@ -10,6 +10,7 @@ import type {
   ProviderWorkflowJob,
   ProviderWorkflowRun,
 } from '@gef-bootstrap/contracts';
+import { isProviderTestExecutionReceipt } from '@gef-bootstrap/contracts';
 import type { EvidenceCompletenessGate, OperationOptions, Result } from './types.js';
 import { createEvidenceCompletenessGate } from './s04-validation.js';
 import { compareCodePoint, deepFreeze, digestValue, fail, Guard, ok, sortedUnique } from './utils.js';
@@ -93,9 +94,6 @@ const BINDING_FIELDS = [
 const CHECK_FIELDS = [
   'recordId', 'runId', 'attempt', 'contextId', 'displayName', 'checkKind', 'headSha', 'status', 'conclusion', 'sourceUri',
 ];
-const TEST_RECEIPT_FIELDS = [
-  'receiptId', 'checkRunRecordId', 'runId', 'attempt', 'headSha', 'testRef', 'outcome', 'reportUri', 'reportDigest',
-];
 const WORKFLOW_FIELDS = ['runId', 'attempt', 'headSha', 'status', 'conclusion', 'sourceUri', 'jobs'];
 const JOB_FIELDS = ['jobId', 'name', 'status', 'conclusion', 'sourceUri'];
 
@@ -161,29 +159,6 @@ function validCheckRecord(value: unknown): value is ProviderCheckRun {
     && validStatus(value['status']) && validConclusion(value['conclusion'])
     && (value['status'] === 'COMPLETED' || value['conclusion'] === null)
     && safeUri(value['sourceUri']);
-}
-
-function validTestRef(value: unknown): value is string {
-  if (!safeText(value, 1024)) return false;
-  const separator = value.indexOf('#');
-  if (separator <= 0 || separator !== value.lastIndexOf('#')) return false;
-  const path = value.slice(0, separator);
-  const title = value.slice(separator + 1);
-  return safePath(path) && path.startsWith('tests/gbs-mod-wo-002-') && path.endsWith('.test.mjs')
-    && safeText(title, 512);
-}
-
-function validTestExecutionReceipt(value: unknown): value is ProviderTestExecutionReceipt {
-  return isRecord(value) && hasOnlyKeys(value, TEST_RECEIPT_FIELDS)
-    && safeText(value['receiptId'], 192) && IDENTIFIER.test(value['receiptId'])
-    && safeText(value['checkRunRecordId'], 192) && IDENTIFIER.test(value['checkRunRecordId'])
-    && safeText(value['runId'], 192) && IDENTIFIER.test(value['runId'])
-    && Number.isSafeInteger(value['attempt']) && (value['attempt'] as number) > 0 && (value['attempt'] as number) <= 1000
-    && typeof value['headSha'] === 'string' && SHA40.test(value['headSha'])
-    && validTestRef(value['testRef'])
-    && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(value['outcome']))
-    && safeUri(value['reportUri'])
-    && typeof value['reportDigest'] === 'string' && SHA256.test(value['reportDigest']);
 }
 
 function validWorkflowJob(value: unknown): value is ProviderWorkflowJob {
@@ -295,7 +270,7 @@ function validateParsedInput(parsed: ProviderEvidenceParseResult | unknown): Res
     || typeof input['collectionState'] !== 'string' || !COLLECTION_STATES.includes(input['collectionState'])
     || !safeUri(input['sourceUri']) || !Array.isArray(input['checkRuns']) || input['checkRuns'].length > 4096
     || !input['checkRuns'].every(validCheckRecord) || !Array.isArray(input['testExecutionReceipts'])
-    || input['testExecutionReceipts'].length > 8192 || !input['testExecutionReceipts'].every(validTestExecutionReceipt)
+    || input['testExecutionReceipts'].length > 8192 || !input['testExecutionReceipts'].every(isProviderTestExecutionReceipt)
     || !Array.isArray(input['workflowRuns'])
     || input['workflowRuns'].length > 1024 || !input['workflowRuns'].every(validWorkflowRun)) {
     return fail('GHE24_INPUT_NOT_VALIDATED', 'Provider input failed M24 defensive validation.');
@@ -440,6 +415,29 @@ function normalizeCheckRuns(
   return ok({ rows, conflictedContexts: sortedUnique([...conflictedContexts]) });
 }
 
+export interface ProviderTestExecutionDecision {
+  readonly verdict: ProviderEvidenceVerdict;
+  readonly reasonCodes: readonly string[];
+}
+
+export function deriveProviderTestExecutionDecision(
+  receipt: Pick<ProviderTestExecutionReceipt, 'headSha' | 'outcome'>,
+  checkRun: Pick<NormalizedProviderCheckRun, 'headSha' | 'selected' | 'verdict' | 'reasonCodes'>,
+  expectedHead: string,
+): ProviderTestExecutionDecision {
+  if (receipt.headSha !== expectedHead || receipt.headSha !== checkRun.headSha) {
+    return { verdict: 'STALE', reasonCodes: ['TEST_RECEIPT_HEAD_MISMATCH'] };
+  }
+  if (!checkRun.selected) return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_RECEIPT_CHECK_NOT_SELECTED'] };
+  if (checkRun.verdict !== 'PASS') {
+    return { verdict: checkRun.verdict, reasonCodes: sortedUnique(['TEST_RECEIPT_CHECK_NOT_PASS', ...checkRun.reasonCodes]) };
+  }
+  if (receipt.outcome === 'PASSED') return { verdict: 'PASS', reasonCodes: [] };
+  if (receipt.outcome === 'FAILED') return { verdict: 'FAILED', reasonCodes: ['TEST_EXECUTION_FAILED'] };
+  if (receipt.outcome === 'NOT_EXECUTED') return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_EXECUTION_NOT_RUN'] };
+  return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_EXECUTION_SKIPPED'] };
+}
+
 function normalizeTestExecutionReceipts(
   receipts: readonly ProviderTestExecutionReceipt[],
   checkRuns: readonly NormalizedProviderCheckRun[],
@@ -455,37 +453,14 @@ function normalizeTestExecutionReceipts(
     if (checkRun === undefined || checkRun.checkKind !== 'TEST' || checkRun.runId !== receipt.runId || checkRun.attempt !== receipt.attempt) {
       return fail('GHE24_TEST_RECEIPT_UNBOUND', 'Test receipt must identify one normalized TEST check attempt.');
     }
-    let verdict: ProviderEvidenceVerdict;
-    let reasonCodes: readonly string[];
-    if (receipt.headSha !== expectedHead || receipt.headSha !== checkRun.headSha) {
-      verdict = 'STALE';
-      reasonCodes = ['TEST_RECEIPT_HEAD_MISMATCH'];
-    } else if (!checkRun.selected) {
-      verdict = 'NOT_VERIFIED';
-      reasonCodes = ['TEST_RECEIPT_CHECK_NOT_SELECTED'];
-    } else if (checkRun.verdict !== 'PASS') {
-      verdict = checkRun.verdict;
-      reasonCodes = sortedUnique(['TEST_RECEIPT_CHECK_NOT_PASS', ...checkRun.reasonCodes]);
-    } else if (receipt.outcome === 'PASSED') {
-      verdict = 'PASS';
-      reasonCodes = [];
-    } else if (receipt.outcome === 'FAILED') {
-      verdict = 'FAILED';
-      reasonCodes = ['TEST_EXECUTION_FAILED'];
-    } else if (receipt.outcome === 'NOT_EXECUTED') {
-      verdict = 'NOT_VERIFIED';
-      reasonCodes = ['TEST_EXECUTION_NOT_RUN'];
-    } else {
-      verdict = 'NOT_VERIFIED';
-      reasonCodes = ['TEST_EXECUTION_SKIPPED'];
-    }
+    const decision = deriveProviderTestExecutionDecision(receipt, checkRun, expectedHead);
     normalized.push(deepFreezeCopy({
       ...receipt,
       contextId: checkRun.contextId,
       checkRunRef: checkRun.evidenceRef,
       selected: checkRun.selected,
-      verdict,
-      reasonCodes,
+      verdict: decision.verdict,
+      reasonCodes: decision.reasonCodes,
       evidenceRef: `test:${receipt.receiptId}:${checkRun.evidenceRef}`,
     }));
   }

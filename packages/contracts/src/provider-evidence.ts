@@ -139,6 +139,7 @@ const CHECK_FIELDS = [
 const TEST_RECEIPT_FIELDS = [
   'receiptId', 'checkRunRecordId', 'runId', 'attempt', 'headSha', 'testRef', 'outcome', 'reportUri', 'reportDigest',
 ] as const;
+const TEST_RECEIPT_FIELD_SET: ReadonlySet<string> = new Set(TEST_RECEIPT_FIELDS);
 const WORKFLOW_FIELDS = ['runId', 'attempt', 'headSha', 'status', 'conclusion', 'sourceUri', 'jobs'] as const;
 const JOB_FIELDS = ['jobId', 'name', 'status', 'conclusion', 'sourceUri'] as const;
 const SHA40 = /^[0-9a-f]{40}$/;
@@ -146,12 +147,12 @@ const SHA256 = /^sha256:[0-9a-f]{64}$/;
 const IDENTIFIER = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,191}$/;
 const OWNER_OR_REPOSITORY = /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/;
 const CREDENTIAL_SHAPE = /\b(?:gh[pousr]_[A-Za-z0-9_]{20,}|github_pat_[A-Za-z0-9_]{20,}|Bearer\s+\S+|(?:token|secret|password|authorization)\s*[:=]\s*\S+)/i;
-const COLLECTION_STATES: readonly string[] = ['COMPLETE', 'PARTIAL', 'UNAVAILABLE', 'DENIED'];
-const CHECK_STATUSES: readonly string[] = ['QUEUED', 'IN_PROGRESS', 'COMPLETED'];
-const CHECK_KINDS: readonly string[] = ['STATUS', 'TEST', 'SECURITY', 'COVERAGE', 'OTHER'];
-const CHECK_CONCLUSIONS: readonly (string | null)[] = [
+const COLLECTION_STATES: ReadonlySet<string> = new Set(['COMPLETE', 'PARTIAL', 'UNAVAILABLE', 'DENIED']);
+const CHECK_STATUSES: ReadonlySet<string> = new Set(['QUEUED', 'IN_PROGRESS', 'COMPLETED']);
+const CHECK_KINDS: ReadonlySet<string> = new Set(['STATUS', 'TEST', 'SECURITY', 'COVERAGE', 'OTHER']);
+const CHECK_CONCLUSIONS: ReadonlySet<string | null> = new Set([
   'SUCCESS', 'FAILURE', 'CANCELLED', 'TIMED_OUT', 'ACTION_REQUIRED', 'NEUTRAL', 'SKIPPED', null,
-];
+]);
 const MAX_DIAGNOSTICS = 64;
 const MAX_CHANGED_PATHS = 1024;
 const MAX_REQUIRED_CONTEXTS = 256;
@@ -195,7 +196,7 @@ function safePath(value: unknown): value is string {
   return segments.every((segment) => segment.length > 0 && segment !== '.' && segment !== '..');
 }
 
-function validTestRef(value: unknown): value is string {
+export function isProviderTestRef(value: unknown): value is string {
   if (!safeText(value, 1024)) return false;
   const separator = value.indexOf('#');
   if (separator <= 0 || separator !== value.lastIndexOf('#')) return false;
@@ -203,6 +204,19 @@ function validTestRef(value: unknown): value is string {
   const title = value.slice(separator + 1);
   return safePath(path) && path.startsWith('tests/gbs-mod-wo-002-') && path.endsWith('.test.mjs')
     && safeText(title, 512);
+}
+
+export function isProviderTestExecutionReceipt(value: unknown): value is ProviderTestExecutionReceipt {
+  return isRecord(value) && Object.keys(value).every((key) => TEST_RECEIPT_FIELD_SET.has(key))
+    && safeText(value['receiptId'], 192) && IDENTIFIER.test(value['receiptId'])
+    && safeText(value['checkRunRecordId'], 192) && IDENTIFIER.test(value['checkRunRecordId'])
+    && safeText(value['runId'], 192) && IDENTIFIER.test(value['runId'])
+    && Number.isSafeInteger(value['attempt']) && (value['attempt'] as number) > 0 && (value['attempt'] as number) <= 1000
+    && typeof value['headSha'] === 'string' && SHA40.test(value['headSha'])
+    && isProviderTestRef(value['testRef'])
+    && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(value['outcome']))
+    && safePublicUri(value['reportUri'])
+    && typeof value['reportDigest'] === 'string' && SHA256.test(value['reportDigest']);
 }
 
 function deepFreeze<T>(value: T): T {
@@ -217,429 +231,499 @@ function compare(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
 }
 
-/**
- * Validates an untrusted provider envelope, copies only allowlisted fields, and returns a
- * deterministic immutable value. Unknown field values are never copied into diagnostics.
- */
-function parseProviderEvidenceInputUnchecked(input: unknown): ProviderEvidenceParseResult {
-  const diagnostics: ProviderEvidenceDiagnostic[] = [];
-  const report = (code: string, message: string, subject?: string) => {
-    if (diagnostics.length < MAX_DIAGNOSTICS) {
-      diagnostics.push(subject === undefined ? { code, message } : { code, message, subject });
+interface ParsedProviderHeader {
+  readonly collectionId: string | null;
+  readonly providerId: string | null;
+  readonly collectionState: unknown;
+  readonly sourceUri: string | null;
+  readonly workOrderId: string | null;
+  readonly contextLockDigest: string | null;
+}
+
+class ProviderEvidenceInputParser {
+  private readonly diagnostics: ProviderEvidenceDiagnostic[] = [];
+
+  private report(code: string, message: string, subject?: string): void {
+    if (this.diagnostics.length < MAX_DIAGNOSTICS) {
+      this.diagnostics.push(subject === undefined ? { code, message } : { code, message, subject });
     }
-  };
-  const checkFields = (record: Record<string, unknown>, known: readonly string[], prefix: string) => {
+  }
+
+  private checkFields(record: Record<string, unknown>, known: readonly string[], prefix: string): void {
     for (const key of Object.keys(record).slice(0, 256)) {
-      if (!known.includes(key)) report('GHE01_FIELD_UNKNOWN', 'Provider evidence contains an unknown field.', prefix);
+      if (!known.includes(key)) this.report('GHE01_FIELD_UNKNOWN', 'Provider evidence contains an unknown field.', prefix);
     }
-    if (Object.keys(record).length > 256) report('GHE01_FIELD_LIMIT', 'Provider evidence contains too many fields.', prefix);
-  };
-  const requireText = (record: Record<string, unknown>, key: string, maxLength: number, prefix: string): string | null => {
+    if (Object.keys(record).length > 256) this.report('GHE01_FIELD_LIMIT', 'Provider evidence contains too many fields.', prefix);
+  }
+
+  private requireText(record: Record<string, unknown>, key: string, maxLength: number, prefix: string): string | null {
     const value = record[key];
     if (!safeText(value, maxLength)) {
-      report('GHE01_FIELD_INVALID', `${prefix}.${key} must be bounded, non-empty text.`, `${prefix}.${key}`);
+      this.report('GHE01_FIELD_INVALID', `${prefix}.${key} must be bounded, non-empty text.`, `${prefix}.${key}`);
       return null;
     }
     return value;
-  };
-  const parseUri = (record: Record<string, unknown>, key: string, prefix: string): string | null => {
+  }
+
+  private parseUri(record: Record<string, unknown>, key: string, prefix: string): string | null {
     const value = record[key];
     if (!safePublicUri(value)) {
-      report('GHE01_URI_INVALID', `${prefix}.${key} must be a credential-free HTTPS evidence link.`, `${prefix}.${key}`);
+      this.report('GHE01_URI_INVALID', `${prefix}.${key} must be a credential-free HTTPS evidence link.`, `${prefix}.${key}`);
       return null;
     }
     return value;
-  };
-  const parseStatus = (record: Record<string, unknown>, key: string, prefix: string): ProviderCheckStatus | null => {
+  }
+
+  private parseStatus(record: Record<string, unknown>, key: string, prefix: string): ProviderCheckStatus | null {
     const value = record[key];
-    if (typeof value !== 'string' || !CHECK_STATUSES.includes(value)) {
-      report('GHE01_STATUS_INVALID', `${prefix}.${key} is not a supported provider status.`, `${prefix}.${key}`);
+    if (typeof value !== 'string' || !CHECK_STATUSES.has(value)) {
+      this.report('GHE01_STATUS_INVALID', `${prefix}.${key} is not a supported provider status.`, `${prefix}.${key}`);
       return null;
     }
     return value as ProviderCheckStatus;
-  };
-  const parseConclusion = (record: Record<string, unknown>, status: ProviderCheckStatus | null, prefix: string): ProviderCheckConclusion | undefined => {
+  }
+
+  private parseConclusion(record: Record<string, unknown>, status: ProviderCheckStatus | null, prefix: string): ProviderCheckConclusion | undefined {
     const value = record['conclusion'];
-    if (!CHECK_CONCLUSIONS.includes(value as string | null)) {
-      report('GHE01_CONCLUSION_INVALID', `${prefix}.conclusion is not a supported provider conclusion.`, `${prefix}.conclusion`);
+    if (!CHECK_CONCLUSIONS.has(value as string | null)) {
+      this.report('GHE01_CONCLUSION_INVALID', `${prefix}.conclusion is not a supported provider conclusion.`, `${prefix}.conclusion`);
       return undefined;
     }
     if (status !== null && status !== 'COMPLETED' && value !== null) {
-      report('GHE01_CONCLUSION_STATUS_MISMATCH', 'Non-completed provider records must not carry a conclusion.', `${prefix}.conclusion`);
+      this.report('GHE01_CONCLUSION_STATUS_MISMATCH', 'Non-completed provider records must not carry a conclusion.', `${prefix}.conclusion`);
       return undefined;
     }
     return value as ProviderCheckConclusion;
-  };
-  const parseAttempt = (record: Record<string, unknown>, prefix: string): number | null => {
+  }
+
+  private parseAttempt(record: Record<string, unknown>, prefix: string): number | null {
     const value = record['attempt'];
     if (!Number.isSafeInteger(value) || (value as number) < 1 || (value as number) > 1000) {
-      report('GHE01_ATTEMPT_INVALID', `${prefix}.attempt must be an integer from 1 through 1000.`, `${prefix}.attempt`);
+      this.report('GHE01_ATTEMPT_INVALID', `${prefix}.attempt must be an integer from 1 through 1000.`, `${prefix}.attempt`);
       return null;
     }
     return value as number;
-  };
-
-  if (!isRecord(input)) {
-    return { ok: false, diagnostics: [{ code: 'GHE01_INPUT_INVALID', message: 'Provider evidence must be an object.' }] };
-  }
-  checkFields(input, TOP_LEVEL_FIELDS, 'input');
-
-  const schemaVersion = input['schemaVersion'];
-  if (schemaVersion !== PROVIDER_EVIDENCE_SCHEMA_VERSION) {
-    report('GHE01_VERSION_UNSUPPORTED', 'Provider evidence schemaVersion is unsupported.', 'schemaVersion');
-  }
-  const collectionId = requireText(input, 'collectionId', 192, 'input');
-  const providerId = requireText(input, 'providerId', 64, 'input');
-  if (providerId !== null && !/^[a-z0-9][a-z0-9._-]{0,63}$/i.test(providerId)) {
-    report('GHE01_PROVIDER_INVALID', 'providerId must be a simple provider identity.', 'providerId');
-  }
-  const collectionState = input['collectionState'];
-  if (typeof collectionState !== 'string' || !COLLECTION_STATES.includes(collectionState)) {
-    report('GHE01_COLLECTION_STATE_INVALID', 'collectionState is not supported.', 'collectionState');
-  }
-  const sourceUri = parseUri(input, 'sourceUri', 'input');
-  const workOrderId = requireText(input, 'workOrderId', 192, 'input');
-  if (workOrderId !== null && !IDENTIFIER.test(workOrderId)) {
-    report('GHE01_WORK_ORDER_INVALID', 'workOrderId must be a simple identity.', 'workOrderId');
-  }
-  const contextLockDigest = requireText(input, 'contextLockDigest', 71, 'input');
-  if (contextLockDigest !== null && !SHA256.test(contextLockDigest)) {
-    report('GHE01_LOCK_DIGEST_INVALID', 'contextLockDigest must be a SHA-256 digest.', 'contextLockDigest');
   }
 
-  const repositoryInput = input['repository'];
-  let repository: ProviderRepositoryIdentity | null = null;
-  if (!isRecord(repositoryInput)) {
-    report('GHE01_REPOSITORY_INVALID', 'repository must contain owner and name.', 'repository');
-  } else {
-    checkFields(repositoryInput, ['owner', 'name'], 'repository');
-    const owner = requireText(repositoryInput, 'owner', 100, 'repository');
-    const name = requireText(repositoryInput, 'name', 100, 'repository');
-    if (owner !== null && !OWNER_OR_REPOSITORY.test(owner)) report('GHE01_OWNER_INVALID', 'repository.owner is invalid.', 'repository.owner');
-    if (name !== null && !OWNER_OR_REPOSITORY.test(name)) report('GHE01_REPOSITORY_NAME_INVALID', 'repository.name is invalid.', 'repository.name');
-    if (owner !== null && name !== null) repository = { owner, name };
-  }
-
-  const pullRequestInput = input['pullRequest'];
-  let pullRequest: ProviderPullRequestIdentity | null = null;
-  if (!isRecord(pullRequestInput)) {
-    report('GHE01_PULL_REQUEST_INVALID', 'pullRequest must contain number, baseSha and headSha.', 'pullRequest');
-  } else {
-    checkFields(pullRequestInput, ['number', 'baseSha', 'headSha'], 'pullRequest');
-    const number = pullRequestInput['number'];
-    if (!Number.isSafeInteger(number) || (number as number) < 1) report('GHE01_PR_NUMBER_INVALID', 'pullRequest.number must be a positive integer.', 'pullRequest.number');
-    const baseSha = pullRequestInput['baseSha'];
-    const headSha = pullRequestInput['headSha'];
-    if (typeof baseSha !== 'string' || !SHA40.test(baseSha)) report('GHE01_BASE_SHA_INVALID', 'pullRequest.baseSha must be a full lowercase commit SHA.', 'pullRequest.baseSha');
-    if (typeof headSha !== 'string' || !SHA40.test(headSha)) report('GHE01_HEAD_SHA_INVALID', 'pullRequest.headSha must be a full lowercase commit SHA.', 'pullRequest.headSha');
-    if (Number.isSafeInteger(number) && (number as number) > 0 && typeof baseSha === 'string' && SHA40.test(baseSha)
-      && typeof headSha === 'string' && SHA40.test(headSha)) {
-      pullRequest = { number: number as number, baseSha, headSha };
+  parse(input: unknown): ProviderEvidenceParseResult {
+    if (!isRecord(input)) {
+      return { ok: false, diagnostics: [{ code: 'GHE01_INPUT_INVALID', message: 'Provider evidence must be an object.' }] };
     }
-  }
+    this.checkFields(input, TOP_LEVEL_FIELDS, 'input');
+    const header = this.parseHeader(input);
+    const repository = this.parseRepository(input['repository']);
+    const pullRequest = this.parsePullRequest(input['pullRequest']);
+    const sourceTrees = this.parseSourceTrees(input['sourceTrees']);
+    const changedPaths = this.parseChangedPaths(input['changedPaths']);
+    const fileBlobs = this.parseFileBlobs(input['fileBlobs'], input['changedPaths'], changedPaths);
+    const requiredContexts = this.parseRequiredContexts(input['requiredContexts']);
+    const ruleset = this.parseRuleset(input['ruleset']);
+    const checkRuns = this.parseCheckRuns(input['checkRuns']);
+    const testReceiptsInput = input['testExecutionReceipts'] === undefined ? [] : input['testExecutionReceipts'];
+    const testExecutionReceipts = this.parseTestReceipts(testReceiptsInput, checkRuns);
+    const workflowRuns = this.parseWorkflowRuns(input['workflowRuns']);
 
-  const sourceTreesInput = input['sourceTrees'];
-  let sourceTrees: ProviderTreeIdentity | null = null;
-  if (!isRecord(sourceTreesInput)) {
-    report('GHE01_TREES_INVALID', 'sourceTrees must bind the base and candidate tree object identities.', 'sourceTrees');
-  } else {
-    checkFields(sourceTreesInput, ['baseTreeSha', 'headTreeSha'], 'sourceTrees');
-    const baseTreeSha = sourceTreesInput['baseTreeSha'];
-    const headTreeSha = sourceTreesInput['headTreeSha'];
-    if (typeof baseTreeSha !== 'string' || !SHA40.test(baseTreeSha)) report('GHE01_BASE_TREE_INVALID', 'sourceTrees.baseTreeSha must be a full lowercase Git tree SHA.', 'sourceTrees.baseTreeSha');
-    if (typeof headTreeSha !== 'string' || !SHA40.test(headTreeSha)) report('GHE01_HEAD_TREE_INVALID', 'sourceTrees.headTreeSha must be a full lowercase Git tree SHA.', 'sourceTrees.headTreeSha');
-    if (typeof baseTreeSha === 'string' && SHA40.test(baseTreeSha) && typeof headTreeSha === 'string' && SHA40.test(headTreeSha)) {
-      sourceTrees = { baseTreeSha, headTreeSha };
+    if (this.diagnostics.length > 0 || header.collectionId === null || header.providerId === null
+      || header.sourceUri === null || repository === null || pullRequest === null || sourceTrees === null
+      || ruleset === null || header.workOrderId === null || header.contextLockDigest === null
+      || typeof header.collectionState !== 'string' || !COLLECTION_STATES.has(header.collectionState)) {
+      return { ok: false, diagnostics: this.diagnostics };
     }
+    return {
+      ok: true,
+      value: deepFreeze({
+        schemaVersion: PROVIDER_EVIDENCE_SCHEMA_VERSION,
+        collectionId: header.collectionId,
+        providerId: header.providerId,
+        collectionState: header.collectionState as ProviderCollectionState,
+        sourceUri: header.sourceUri,
+        repository,
+        pullRequest,
+        sourceTrees,
+        fileBlobs,
+        ruleset,
+        workOrderId: header.workOrderId,
+        contextLockDigest: header.contextLockDigest,
+        changedPaths,
+        requiredContexts,
+        checkRuns,
+        testExecutionReceipts,
+        workflowRuns,
+      }),
+    };
   }
 
-  const changedPathsInput = input['changedPaths'];
-  const changedPaths: string[] = [];
-  if (!Array.isArray(changedPathsInput) || changedPathsInput.length > MAX_CHANGED_PATHS) {
-    report('GHE01_PATHS_INVALID', `changedPaths must be an array of at most ${MAX_CHANGED_PATHS} paths.`, 'changedPaths');
-  } else {
-    if (changedPathsInput.length === 0) report('GHE01_PATHS_EMPTY', 'changedPaths must identify the actual candidate diff.', 'changedPaths');
+  private parseHeader(input: Record<string, unknown>): ParsedProviderHeader {
+    if (input['schemaVersion'] !== PROVIDER_EVIDENCE_SCHEMA_VERSION) {
+      this.report('GHE01_VERSION_UNSUPPORTED', 'Provider evidence schemaVersion is unsupported.', 'schemaVersion');
+    }
+    const collectionId = this.requireText(input, 'collectionId', 192, 'input');
+    const providerId = this.requireText(input, 'providerId', 64, 'input');
+    if (providerId !== null && !/^[a-z0-9][a-z0-9._-]{0,63}$/i.test(providerId)) {
+      this.report('GHE01_PROVIDER_INVALID', 'providerId must be a simple provider identity.', 'providerId');
+    }
+    const collectionState = input['collectionState'];
+    if (typeof collectionState !== 'string' || !COLLECTION_STATES.has(collectionState)) {
+      this.report('GHE01_COLLECTION_STATE_INVALID', 'collectionState is not supported.', 'collectionState');
+    }
+    const sourceUri = this.parseUri(input, 'sourceUri', 'input');
+    const workOrderId = this.requireText(input, 'workOrderId', 192, 'input');
+    if (workOrderId !== null && !IDENTIFIER.test(workOrderId)) {
+      this.report('GHE01_WORK_ORDER_INVALID', 'workOrderId must be a simple identity.', 'workOrderId');
+    }
+    const contextLockDigest = this.requireText(input, 'contextLockDigest', 71, 'input');
+    if (contextLockDigest !== null && !SHA256.test(contextLockDigest)) {
+      this.report('GHE01_LOCK_DIGEST_INVALID', 'contextLockDigest must be a SHA-256 digest.', 'contextLockDigest');
+    }
+    return { collectionId, providerId, collectionState, sourceUri, workOrderId, contextLockDigest };
+  }
+
+  private parseRepository(value: unknown): ProviderRepositoryIdentity | null {
+    if (!isRecord(value)) {
+      this.report('GHE01_REPOSITORY_INVALID', 'repository must contain owner and name.', 'repository');
+      return null;
+    }
+    this.checkFields(value, ['owner', 'name'], 'repository');
+    const owner = this.requireText(value, 'owner', 100, 'repository');
+    const name = this.requireText(value, 'name', 100, 'repository');
+    if (owner !== null && !OWNER_OR_REPOSITORY.test(owner)) this.report('GHE01_OWNER_INVALID', 'repository.owner is invalid.', 'repository.owner');
+    if (name !== null && !OWNER_OR_REPOSITORY.test(name)) this.report('GHE01_REPOSITORY_NAME_INVALID', 'repository.name is invalid.', 'repository.name');
+    return owner !== null && name !== null ? { owner, name } : null;
+  }
+
+  private parsePullRequest(value: unknown): ProviderPullRequestIdentity | null {
+    if (!isRecord(value)) {
+      this.report('GHE01_PULL_REQUEST_INVALID', 'pullRequest must contain number, baseSha and headSha.', 'pullRequest');
+      return null;
+    }
+    this.checkFields(value, ['number', 'baseSha', 'headSha'], 'pullRequest');
+    const number = value['number'];
+    const baseSha = value['baseSha'];
+    const headSha = value['headSha'];
+    if (!Number.isSafeInteger(number) || (number as number) < 1) this.report('GHE01_PR_NUMBER_INVALID', 'pullRequest.number must be a positive integer.', 'pullRequest.number');
+    if (typeof baseSha !== 'string' || !SHA40.test(baseSha)) this.report('GHE01_BASE_SHA_INVALID', 'pullRequest.baseSha must be a full lowercase commit SHA.', 'pullRequest.baseSha');
+    if (typeof headSha !== 'string' || !SHA40.test(headSha)) this.report('GHE01_HEAD_SHA_INVALID', 'pullRequest.headSha must be a full lowercase commit SHA.', 'pullRequest.headSha');
+    if (!Number.isSafeInteger(number) || (number as number) < 1 || typeof baseSha !== 'string' || !SHA40.test(baseSha)
+      || typeof headSha !== 'string' || !SHA40.test(headSha)) return null;
+    return { number: number as number, baseSha, headSha };
+  }
+
+  private parseSourceTrees(value: unknown): ProviderTreeIdentity | null {
+    if (!isRecord(value)) {
+      this.report('GHE01_TREES_INVALID', 'sourceTrees must bind the base and candidate tree object identities.', 'sourceTrees');
+      return null;
+    }
+    this.checkFields(value, ['baseTreeSha', 'headTreeSha'], 'sourceTrees');
+    const baseTreeSha = value['baseTreeSha'];
+    const headTreeSha = value['headTreeSha'];
+    if (typeof baseTreeSha !== 'string' || !SHA40.test(baseTreeSha)) this.report('GHE01_BASE_TREE_INVALID', 'sourceTrees.baseTreeSha must be a full lowercase Git tree SHA.', 'sourceTrees.baseTreeSha');
+    if (typeof headTreeSha !== 'string' || !SHA40.test(headTreeSha)) this.report('GHE01_HEAD_TREE_INVALID', 'sourceTrees.headTreeSha must be a full lowercase Git tree SHA.', 'sourceTrees.headTreeSha');
+    if (typeof baseTreeSha !== 'string' || !SHA40.test(baseTreeSha) || typeof headTreeSha !== 'string' || !SHA40.test(headTreeSha)) return null;
+    return { baseTreeSha, headTreeSha };
+  }
+
+  private parseChangedPaths(value: unknown): string[] {
+    if (!Array.isArray(value) || value.length > MAX_CHANGED_PATHS) {
+      this.report('GHE01_PATHS_INVALID', `changedPaths must be an array of at most ${MAX_CHANGED_PATHS} paths.`, 'changedPaths');
+      return [];
+    }
+    if (value.length === 0) this.report('GHE01_PATHS_EMPTY', 'changedPaths must identify the actual candidate diff.', 'changedPaths');
+    const changedPaths: string[] = [];
     const seen = new Set<string>();
-    for (const path of changedPathsInput) {
+    for (const path of value) {
       if (!safePath(path)) {
-        report('GHE01_PATH_INVALID', 'changedPaths contains an unsafe repository-relative path.', 'changedPaths');
+        this.report('GHE01_PATH_INVALID', 'changedPaths contains an unsafe repository-relative path.', 'changedPaths');
       } else if (seen.has(path)) {
-        report('GHE01_PATH_DUPLICATE', 'changedPaths contains a duplicate path.', 'changedPaths');
+        this.report('GHE01_PATH_DUPLICATE', 'changedPaths contains a duplicate path.', 'changedPaths');
       } else {
         seen.add(path);
         changedPaths.push(path);
       }
     }
-    changedPaths.sort(compare);
+    return changedPaths.sort(compare);
   }
 
-  const fileBlobsInput = input['fileBlobs'];
-  const fileBlobs: ProviderFileBlobIdentity[] = [];
-  if (!Array.isArray(fileBlobsInput) || fileBlobsInput.length > MAX_CHANGED_PATHS) {
-    report('GHE01_BLOBS_INVALID', `fileBlobs must be an array of at most ${MAX_CHANGED_PATHS} exact path/blob identities.`, 'fileBlobs');
-  } else {
+  private parseFileBlobs(value: unknown, changedPathsInput: unknown, changedPaths: readonly string[]): ProviderFileBlobIdentity[] {
+    if (!Array.isArray(value) || value.length > MAX_CHANGED_PATHS) {
+      this.report('GHE01_BLOBS_INVALID', `fileBlobs must be an array of at most ${MAX_CHANGED_PATHS} exact path/blob identities.`, 'fileBlobs');
+      return [];
+    }
+    const fileBlobs: ProviderFileBlobIdentity[] = [];
     const seen = new Set<string>();
-    for (const [index, entry] of fileBlobsInput.entries()) {
+    for (const [index, entry] of value.entries()) {
       const prefix = `fileBlobs.${index}`;
       if (!isRecord(entry)) {
-        report('GHE01_BLOB_INVALID', 'File blob identity must be an object.', prefix);
+        this.report('GHE01_BLOB_INVALID', 'File blob identity must be an object.', prefix);
         continue;
       }
-      checkFields(entry, ['path', 'blobSha'], prefix);
+      this.checkFields(entry, ['path', 'blobSha'], prefix);
       const path = entry['path'];
       const blobSha = entry['blobSha'];
-      if (!safePath(path)) report('GHE01_BLOB_PATH_INVALID', 'fileBlobs path must be a safe repository-relative path.', `${prefix}.path`);
-      if (typeof blobSha !== 'string' || !SHA40.test(blobSha)) report('GHE01_BLOB_SHA_INVALID', 'fileBlobs blobSha must be a full lowercase Git blob SHA.', `${prefix}.blobSha`);
-      if (typeof path === 'string' && seen.has(path)) report('GHE01_BLOB_PATH_DUPLICATE', 'fileBlobs must contain one identity per changed path.', `${prefix}.path`);
+      if (!safePath(path)) this.report('GHE01_BLOB_PATH_INVALID', 'fileBlobs path must be a safe repository-relative path.', `${prefix}.path`);
+      if (typeof blobSha !== 'string' || !SHA40.test(blobSha)) this.report('GHE01_BLOB_SHA_INVALID', 'fileBlobs blobSha must be a full lowercase Git blob SHA.', `${prefix}.blobSha`);
+      if (typeof path === 'string' && seen.has(path)) this.report('GHE01_BLOB_PATH_DUPLICATE', 'fileBlobs must contain one identity per changed path.', `${prefix}.path`);
       if (typeof path === 'string') seen.add(path);
       if (safePath(path) && typeof blobSha === 'string' && SHA40.test(blobSha)) fileBlobs.push({ path, blobSha });
     }
     fileBlobs.sort((left, right) => compare(left.path, right.path));
     if (Array.isArray(changedPathsInput) && JSON.stringify(fileBlobs.map(({ path }) => path)) !== JSON.stringify([...changedPaths].sort(compare))) {
-      report('GHE01_BLOB_PATH_SET_MISMATCH', 'fileBlobs must bind every changed path exactly once.', 'fileBlobs');
+      this.report('GHE01_BLOB_PATH_SET_MISMATCH', 'fileBlobs must bind every changed path exactly once.', 'fileBlobs');
     }
+    return fileBlobs;
   }
 
-  const requiredContextsInput = input['requiredContexts'];
-  const requiredContexts: ProviderRequiredContext[] = [];
-  if (!Array.isArray(requiredContextsInput) || requiredContextsInput.length > MAX_REQUIRED_CONTEXTS) {
-    report('GHE01_CONTEXTS_INVALID', `requiredContexts must be an array of at most ${MAX_REQUIRED_CONTEXTS} contexts.`, 'requiredContexts');
-  } else {
-    if (requiredContextsInput.length === 0) report('GHE01_CONTEXTS_EMPTY', 'requiredContexts must not be empty.', 'requiredContexts');
+  private parseRequiredContexts(value: unknown): ProviderRequiredContext[] {
+    if (!Array.isArray(value) || value.length > MAX_REQUIRED_CONTEXTS) {
+      this.report('GHE01_CONTEXTS_INVALID', `requiredContexts must be an array of at most ${MAX_REQUIRED_CONTEXTS} contexts.`, 'requiredContexts');
+      return [];
+    }
+    if (value.length === 0) this.report('GHE01_CONTEXTS_EMPTY', 'requiredContexts must not be empty.', 'requiredContexts');
+    const contexts: ProviderRequiredContext[] = [];
     const seen = new Set<string>();
-    requiredContextsInput.forEach((entry, index) => {
+    value.forEach((entry, index) => {
       const prefix = `requiredContexts.${index}`;
       if (!isRecord(entry)) {
-        report('GHE01_CONTEXT_INVALID', 'Required context must be an object.', prefix);
+        this.report('GHE01_CONTEXT_INVALID', 'Required context must be an object.', prefix);
         return;
       }
-      checkFields(entry, ['contextId', 'displayName'], prefix);
-      const contextId = requireText(entry, 'contextId', 192, prefix);
-      const displayName = requireText(entry, 'displayName', 512, prefix);
-      if (contextId !== null && !IDENTIFIER.test(contextId)) report('GHE01_CONTEXT_ID_INVALID', 'contextId is invalid.', `${prefix}.contextId`);
-      if (contextId !== null && seen.has(contextId)) report('GHE01_CONTEXT_DUPLICATE', 'requiredContexts contains a duplicate context identity.', `${prefix}.contextId`);
+      this.checkFields(entry, ['contextId', 'displayName'], prefix);
+      const contextId = this.requireText(entry, 'contextId', 192, prefix);
+      const displayName = this.requireText(entry, 'displayName', 512, prefix);
+      if (contextId !== null && !IDENTIFIER.test(contextId)) this.report('GHE01_CONTEXT_ID_INVALID', 'contextId is invalid.', `${prefix}.contextId`);
+      if (contextId !== null && seen.has(contextId)) this.report('GHE01_CONTEXT_DUPLICATE', 'requiredContexts contains a duplicate context identity.', `${prefix}.contextId`);
       if (contextId !== null) seen.add(contextId);
-      if (contextId !== null && displayName !== null && IDENTIFIER.test(contextId)) requiredContexts.push({ contextId, displayName });
+      if (contextId !== null && displayName !== null && IDENTIFIER.test(contextId)) contexts.push({ contextId, displayName });
     });
-    requiredContexts.sort((left, right) => compare(left.contextId, right.contextId));
+    return contexts.sort((left, right) => compare(left.contextId, right.contextId));
   }
 
-  const rulesetInput = input['ruleset'];
-  let ruleset: ProviderRulesetIdentity | null = null;
-  if (!isRecord(rulesetInput)) {
-    report('GHE01_RULESET_INVALID', 'ruleset must bind the current provider ruleset identity and digest.', 'ruleset');
-  } else {
-    checkFields(rulesetInput, ['rulesetId', 'digest'], 'ruleset');
-    const rulesetId = requireText(rulesetInput, 'rulesetId', 192, 'ruleset');
-    const rulesetDigest = requireText(rulesetInput, 'digest', 71, 'ruleset');
-    if (rulesetId !== null && !IDENTIFIER.test(rulesetId)) report('GHE01_RULESET_ID_INVALID', 'ruleset.rulesetId is invalid.', 'ruleset.rulesetId');
-    if (rulesetDigest !== null && !SHA256.test(rulesetDigest)) report('GHE01_RULESET_DIGEST_INVALID', 'ruleset.digest must be a SHA-256 digest.', 'ruleset.digest');
-    if (rulesetId !== null && IDENTIFIER.test(rulesetId) && rulesetDigest !== null && SHA256.test(rulesetDigest)) {
-      ruleset = { rulesetId, digest: rulesetDigest };
+  private parseRuleset(value: unknown): ProviderRulesetIdentity | null {
+    if (!isRecord(value)) {
+      this.report('GHE01_RULESET_INVALID', 'ruleset must bind the current provider ruleset identity and digest.', 'ruleset');
+      return null;
     }
+    this.checkFields(value, ['rulesetId', 'digest'], 'ruleset');
+    const rulesetId = this.requireText(value, 'rulesetId', 192, 'ruleset');
+    const digest = this.requireText(value, 'digest', 71, 'ruleset');
+    if (rulesetId !== null && !IDENTIFIER.test(rulesetId)) this.report('GHE01_RULESET_ID_INVALID', 'ruleset.rulesetId is invalid.', 'ruleset.rulesetId');
+    if (digest !== null && !SHA256.test(digest)) this.report('GHE01_RULESET_DIGEST_INVALID', 'ruleset.digest must be a SHA-256 digest.', 'ruleset.digest');
+    if (rulesetId === null || !IDENTIFIER.test(rulesetId) || digest === null || !SHA256.test(digest)) return null;
+    return { rulesetId, digest };
   }
 
-  const checkRunsInput = input['checkRuns'];
-  const checkRuns: ProviderCheckRun[] = [];
-  const checkRecordIds = new Set<string>();
-  if (!Array.isArray(checkRunsInput) || checkRunsInput.length > MAX_CHECK_RUNS) {
-    report('GHE01_CHECK_RUNS_INVALID', `checkRuns must be an array of at most ${MAX_CHECK_RUNS} records.`, 'checkRuns');
-  } else {
-    checkRunsInput.forEach((entry, index) => {
-      const prefix = `checkRuns.${index}`;
-      if (!isRecord(entry)) {
-        report('GHE01_CHECK_RUN_INVALID', 'Check run must be an object.', prefix);
-        return;
-      }
-      checkFields(entry, CHECK_FIELDS, prefix);
-      const recordId = requireText(entry, 'recordId', 192, prefix);
-      if (recordId !== null && checkRecordIds.has(recordId)) report('GHE01_CHECK_ID_DUPLICATE', 'Provider check record identity is duplicated.', `${prefix}.recordId`);
-      if (recordId !== null) checkRecordIds.add(recordId);
-      const runId = requireText(entry, 'runId', 192, prefix);
-      const attempt = parseAttempt(entry, prefix);
-      const contextId = requireText(entry, 'contextId', 192, prefix);
-      const displayName = requireText(entry, 'displayName', 512, prefix);
-      const checkKind = entry['checkKind'];
-      if (typeof checkKind !== 'string' || !CHECK_KINDS.includes(checkKind)) report('GHE01_CHECK_KIND_INVALID', 'checkKind must classify the provider result without changing its source identity.', `${prefix}.checkKind`);
-      const headSha = entry['headSha'];
-      if (typeof headSha !== 'string' || !SHA40.test(headSha)) report('GHE01_CHECK_SHA_INVALID', 'Check run headSha must be a full lowercase commit SHA.', `${prefix}.headSha`);
-      const status = parseStatus(entry, 'status', prefix);
-      const conclusion = parseConclusion(entry, status, prefix);
-      const uri = parseUri(entry, 'sourceUri', prefix);
-      if (recordId !== null && !IDENTIFIER.test(recordId)) report('GHE01_RECORD_ID_INVALID', 'recordId is invalid.', `${prefix}.recordId`);
-      if (runId !== null && !IDENTIFIER.test(runId)) report('GHE01_RUN_ID_INVALID', 'runId is invalid.', `${prefix}.runId`);
-      if (contextId !== null && !IDENTIFIER.test(contextId)) report('GHE01_CONTEXT_ID_INVALID', 'contextId is invalid.', `${prefix}.contextId`);
-      if (recordId !== null && runId !== null && attempt !== null && contextId !== null && displayName !== null && typeof checkKind === 'string' && CHECK_KINDS.includes(checkKind)
-        && typeof headSha === 'string' && SHA40.test(headSha) && status !== null && conclusion !== undefined && uri !== null
-        && IDENTIFIER.test(recordId) && IDENTIFIER.test(runId) && IDENTIFIER.test(contextId)) {
-        checkRuns.push({ recordId, runId, attempt, contextId, displayName, checkKind: checkKind as ProviderCheckKind, headSha, status, conclusion, sourceUri: uri });
-      }
+  private parseCheckRuns(value: unknown): ProviderCheckRun[] {
+    if (!Array.isArray(value) || value.length > MAX_CHECK_RUNS) {
+      this.report('GHE01_CHECK_RUNS_INVALID', `checkRuns must be an array of at most ${MAX_CHECK_RUNS} records.`, 'checkRuns');
+      return [];
+    }
+    const checkRuns: ProviderCheckRun[] = [];
+    const seen = new Set<string>();
+    value.forEach((entry, index) => {
+      const run = this.parseCheckRun(entry, index, seen);
+      if (run !== null) checkRuns.push(run);
     });
-    checkRuns.sort((left, right) => compare(left.runId, right.runId)
+    return checkRuns.sort((left, right) => compare(left.runId, right.runId)
       || left.attempt - right.attempt || compare(left.recordId, right.recordId)
       || compare(left.contextId, right.contextId) || compare(left.headSha, right.headSha));
   }
 
-  const testExecutionReceiptsInput = input['testExecutionReceipts'] === undefined ? [] : input['testExecutionReceipts'];
-  const testExecutionReceipts: ProviderTestExecutionReceipt[] = [];
-  const receiptIds = new Set<string>();
-  if (!Array.isArray(testExecutionReceiptsInput) || testExecutionReceiptsInput.length > MAX_TEST_EXECUTION_RECEIPTS) {
-    report('GHE01_TEST_RECEIPTS_INVALID', `testExecutionReceipts must be an array of at most ${MAX_TEST_EXECUTION_RECEIPTS} records.`, 'testExecutionReceipts');
-  } else {
-    testExecutionReceiptsInput.forEach((entry, index) => {
-      const prefix = `testExecutionReceipts.${index}`;
-      if (!isRecord(entry)) {
-        report('GHE01_TEST_RECEIPT_INVALID', 'Test execution receipt must be an object.', prefix);
-        return;
-      }
-      checkFields(entry, TEST_RECEIPT_FIELDS, prefix);
-      const receiptId = requireText(entry, 'receiptId', 192, prefix);
-      if (receiptId !== null && receiptIds.has(receiptId)) {
-        report('GHE01_TEST_RECEIPT_ID_DUPLICATE', 'Test execution receipt identity is duplicated.', `${prefix}.receiptId`);
-      }
-      if (receiptId !== null) receiptIds.add(receiptId);
-      const checkRunRecordId = requireText(entry, 'checkRunRecordId', 192, prefix);
-      const runId = requireText(entry, 'runId', 192, prefix);
-      const attempt = parseAttempt(entry, prefix);
-      const headSha = entry['headSha'];
-      if (typeof headSha !== 'string' || !SHA40.test(headSha)) {
-        report('GHE01_TEST_RECEIPT_SHA_INVALID', 'Test receipt headSha must be a full lowercase commit SHA.', `${prefix}.headSha`);
-      }
-      const testRef = entry['testRef'];
-      if (!validTestRef(testRef)) {
-        report('GHE01_TEST_RECEIPT_REF_INVALID', 'testRef must identify a bounded WO-002 test case.', `${prefix}.testRef`);
-      }
-      const outcome = entry['outcome'];
-      if (typeof outcome !== 'string' || !['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(outcome)) {
-        report('GHE01_TEST_RECEIPT_OUTCOME_INVALID', 'Test receipt outcome is not supported.', `${prefix}.outcome`);
-      }
-      const reportUri = parseUri(entry, 'reportUri', prefix);
-      const reportDigest = requireText(entry, 'reportDigest', 71, prefix);
-      if (reportDigest !== null && !SHA256.test(reportDigest)) {
-        report('GHE01_TEST_REPORT_DIGEST_INVALID', 'reportDigest must be a SHA-256 digest.', `${prefix}.reportDigest`);
-      }
-      if (receiptId !== null && !IDENTIFIER.test(receiptId)) report('GHE01_TEST_RECEIPT_ID_INVALID', 'receiptId is invalid.', `${prefix}.receiptId`);
-      if (checkRunRecordId !== null && !IDENTIFIER.test(checkRunRecordId)) report('GHE01_TEST_RECEIPT_CHECK_ID_INVALID', 'checkRunRecordId is invalid.', `${prefix}.checkRunRecordId`);
-      if (runId !== null && !IDENTIFIER.test(runId)) report('GHE01_TEST_RECEIPT_RUN_ID_INVALID', 'runId is invalid.', `${prefix}.runId`);
-      const checkRun = checkRuns.find((run) => run.recordId === checkRunRecordId);
-      if (checkRunRecordId !== null && checkRun === undefined) {
-        report('GHE01_TEST_RECEIPT_CHECK_RUN_MISSING', 'Test receipt does not identify a collected check run.', `${prefix}.checkRunRecordId`);
-      } else if (checkRun !== undefined) {
-        if (checkRun.checkKind !== 'TEST') report('GHE01_TEST_RECEIPT_CHECK_KIND_INVALID', 'Test receipt must bind to a TEST check run.', `${prefix}.checkRunRecordId`);
-        if (checkRun.runId !== runId || checkRun.attempt !== attempt) {
-          report('GHE01_TEST_RECEIPT_RUN_MISMATCH', 'Test receipt run and attempt must match its check run.', prefix);
-        }
-        if (reportUri !== null && new URL(reportUri).origin !== new URL(checkRun.sourceUri).origin) {
-          report('GHE01_TEST_REPORT_SOURCE_MISMATCH', 'Test report must come from the check run provider origin.', `${prefix}.reportUri`);
-        }
-      }
-      if (receiptId !== null && IDENTIFIER.test(receiptId) && checkRunRecordId !== null && IDENTIFIER.test(checkRunRecordId)
-        && runId !== null && IDENTIFIER.test(runId) && attempt !== null && typeof headSha === 'string' && SHA40.test(headSha)
-        && validTestRef(testRef) && typeof outcome === 'string' && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(outcome)
-        && reportUri !== null && reportDigest !== null && SHA256.test(reportDigest) && checkRun !== undefined
-        && checkRun.checkKind === 'TEST' && checkRun.runId === runId && checkRun.attempt === attempt
-        && new URL(reportUri).origin === new URL(checkRun.sourceUri).origin) {
-        testExecutionReceipts.push({
-          receiptId,
-          checkRunRecordId,
-          runId,
-          attempt,
-          headSha,
-          testRef,
-          outcome: outcome as ProviderTestExecutionOutcome,
-          reportUri,
-          reportDigest,
-        });
-      }
+  private parseCheckRun(value: unknown, index: number, seen: Set<string>): ProviderCheckRun | null {
+    const prefix = `checkRuns.${index}`;
+    if (!isRecord(value)) {
+      this.report('GHE01_CHECK_RUN_INVALID', 'Check run must be an object.', prefix);
+      return null;
+    }
+    this.checkFields(value, CHECK_FIELDS, prefix);
+    const recordId = this.requireText(value, 'recordId', 192, prefix);
+    const runId = this.requireText(value, 'runId', 192, prefix);
+    const attempt = this.parseAttempt(value, prefix);
+    const contextId = this.requireText(value, 'contextId', 192, prefix);
+    const displayName = this.requireText(value, 'displayName', 512, prefix);
+    const checkKind = value['checkKind'];
+    const headSha = value['headSha'];
+    if (recordId !== null && seen.has(recordId)) this.report('GHE01_CHECK_ID_DUPLICATE', 'Provider check record identity is duplicated.', `${prefix}.recordId`);
+    if (recordId !== null) seen.add(recordId);
+    if (typeof checkKind !== 'string' || !CHECK_KINDS.has(checkKind)) this.report('GHE01_CHECK_KIND_INVALID', 'checkKind must classify the provider result without changing its source identity.', `${prefix}.checkKind`);
+    if (typeof headSha !== 'string' || !SHA40.test(headSha)) this.report('GHE01_CHECK_SHA_INVALID', 'Check run headSha must be a full lowercase commit SHA.', `${prefix}.headSha`);
+    const status = this.parseStatus(value, 'status', prefix);
+    const conclusion = this.parseConclusion(value, status, prefix);
+    const sourceUri = this.parseUri(value, 'sourceUri', prefix);
+    this.reportCheckRunIdentifiers(recordId, runId, contextId, prefix);
+    if (recordId === null || runId === null || attempt === null || contextId === null || displayName === null
+      || typeof checkKind !== 'string' || !CHECK_KINDS.has(checkKind) || typeof headSha !== 'string' || !SHA40.test(headSha)
+      || status === null || conclusion === undefined || sourceUri === null) return null;
+    return { recordId, runId, attempt, contextId, displayName, checkKind: checkKind as ProviderCheckKind, headSha, status, conclusion, sourceUri };
+  }
+
+  private reportCheckRunIdentifiers(recordId: string | null, runId: string | null, contextId: string | null, prefix: string): void {
+    if (recordId !== null && !IDENTIFIER.test(recordId)) this.report('GHE01_RECORD_ID_INVALID', 'recordId is invalid.', `${prefix}.recordId`);
+    if (runId !== null && !IDENTIFIER.test(runId)) this.report('GHE01_RUN_ID_INVALID', 'runId is invalid.', `${prefix}.runId`);
+    if (contextId !== null && !IDENTIFIER.test(contextId)) this.report('GHE01_CONTEXT_ID_INVALID', 'contextId is invalid.', `${prefix}.contextId`);
+  }
+
+  private parseTestReceipts(value: unknown, checkRuns: readonly ProviderCheckRun[]): ProviderTestExecutionReceipt[] {
+    if (!Array.isArray(value) || value.length > MAX_TEST_EXECUTION_RECEIPTS) {
+      this.report('GHE01_TEST_RECEIPTS_INVALID', `testExecutionReceipts must be an array of at most ${MAX_TEST_EXECUTION_RECEIPTS} records.`, 'testExecutionReceipts');
+      return [];
+    }
+    const receipts: ProviderTestExecutionReceipt[] = [];
+    const seen = new Set<string>();
+    value.forEach((entry, index) => {
+      const receipt = this.parseTestReceipt(entry, index, checkRuns, seen);
+      if (receipt !== null) receipts.push(receipt);
     });
-    testExecutionReceipts.sort((left, right) => compare(left.receiptId, right.receiptId));
+    return receipts.sort((left, right) => compare(left.receiptId, right.receiptId));
   }
 
-  const workflowRunsInput = input['workflowRuns'];
-  const workflowRuns: ProviderWorkflowRun[] = [];
-  if (!Array.isArray(workflowRunsInput) || workflowRunsInput.length > MAX_WORKFLOW_RUNS) {
-    report('GHE01_WORKFLOWS_INVALID', `workflowRuns must be an array of at most ${MAX_WORKFLOW_RUNS} records.`, 'workflowRuns');
-  } else {
-    workflowRunsInput.forEach((entry, index) => {
-      const prefix = `workflowRuns.${index}`;
-      if (!isRecord(entry)) {
-        report('GHE01_WORKFLOW_INVALID', 'Workflow run must be an object.', prefix);
-        return;
-      }
-      checkFields(entry, WORKFLOW_FIELDS, prefix);
-      const runId = requireText(entry, 'runId', 192, prefix);
-      const attempt = parseAttempt(entry, prefix);
-      const headSha = entry['headSha'];
-      if (typeof headSha !== 'string' || !SHA40.test(headSha)) report('GHE01_WORKFLOW_SHA_INVALID', 'Workflow headSha must be a full lowercase commit SHA.', `${prefix}.headSha`);
-      const status = parseStatus(entry, 'status', prefix);
-      const conclusion = parseConclusion(entry, status, prefix);
-      const uri = parseUri(entry, 'sourceUri', prefix);
-      if (runId !== null && !IDENTIFIER.test(runId)) report('GHE01_RUN_ID_INVALID', 'runId is invalid.', `${prefix}.runId`);
-      const jobsInput = entry['jobs'];
-      const jobs: ProviderWorkflowJob[] = [];
-      const jobIds = new Set<string>();
-      if (!Array.isArray(jobsInput) || jobsInput.length > MAX_JOBS_PER_WORKFLOW) {
-        report('GHE01_JOBS_INVALID', `Workflow jobs must be an array of at most ${MAX_JOBS_PER_WORKFLOW} records.`, `${prefix}.jobs`);
-      } else {
-        jobsInput.forEach((job, jobIndex) => {
-          const jobPrefix = `${prefix}.jobs.${jobIndex}`;
-          if (!isRecord(job)) {
-            report('GHE01_JOB_INVALID', 'Workflow job must be an object.', jobPrefix);
-            return;
-          }
-          checkFields(job, JOB_FIELDS, jobPrefix);
-          const jobId = requireText(job, 'jobId', 192, jobPrefix);
-          if (jobId !== null && jobIds.has(jobId)) report('GHE01_JOB_ID_DUPLICATE', 'Workflow attempt contains a duplicate job identity.', `${jobPrefix}.jobId`);
-          if (jobId !== null) jobIds.add(jobId);
-          const name = requireText(job, 'name', 512, jobPrefix);
-          const jobStatus = parseStatus(job, 'status', jobPrefix);
-          const jobConclusion = parseConclusion(job, jobStatus, jobPrefix);
-          const jobUri = parseUri(job, 'sourceUri', jobPrefix);
-          if (jobId !== null && !IDENTIFIER.test(jobId)) report('GHE01_JOB_ID_INVALID', 'jobId is invalid.', `${jobPrefix}.jobId`);
-          if (jobId !== null && name !== null && jobStatus !== null && jobConclusion !== undefined && jobUri !== null && IDENTIFIER.test(jobId)) {
-            jobs.push({ jobId, name, status: jobStatus, conclusion: jobConclusion, sourceUri: jobUri });
-          }
-        });
-        jobs.sort((left, right) => compare(left.jobId, right.jobId));
-      }
-      if (runId !== null && attempt !== null && typeof headSha === 'string' && SHA40.test(headSha)
-        && status !== null && conclusion !== undefined && uri !== null && IDENTIFIER.test(runId)) {
-        workflowRuns.push({ runId, attempt, headSha, status, conclusion, sourceUri: uri, jobs });
-      }
+  private parseTestReceipt(
+    value: unknown,
+    index: number,
+    checkRuns: readonly ProviderCheckRun[],
+    seen: Set<string>,
+  ): ProviderTestExecutionReceipt | null {
+    const prefix = `testExecutionReceipts.${index}`;
+    if (!isRecord(value)) {
+      this.report('GHE01_TEST_RECEIPT_INVALID', 'Test execution receipt must be an object.', prefix);
+      return null;
+    }
+    this.checkFields(value, TEST_RECEIPT_FIELDS, prefix);
+    const receiptId = this.requireText(value, 'receiptId', 192, prefix);
+    const checkRunRecordId = this.requireText(value, 'checkRunRecordId', 192, prefix);
+    const runId = this.requireText(value, 'runId', 192, prefix);
+    const attempt = this.parseAttempt(value, prefix);
+    const headSha = value['headSha'];
+    const testRef = value['testRef'];
+    const outcome = value['outcome'];
+    const reportUri = this.parseUri(value, 'reportUri', prefix);
+    const reportDigest = this.requireText(value, 'reportDigest', 71, prefix);
+    this.reportReceiptIdentity(receiptId, checkRunRecordId, runId, seen, prefix);
+    this.reportReceiptHead(headSha, prefix);
+    this.reportReceiptTestFields(testRef, outcome, reportDigest, prefix);
+    const checkRun = checkRuns.find((run) => run.recordId === checkRunRecordId);
+    if (checkRunRecordId !== null && checkRun === undefined) {
+      this.report('GHE01_TEST_RECEIPT_CHECK_RUN_MISSING', 'Test receipt does not identify a collected check run.', `${prefix}.checkRunRecordId`);
+    }
+    this.reportReceiptCheckBinding(checkRun, runId, attempt, reportUri, prefix);
+    const receipt = { receiptId, checkRunRecordId, runId, attempt, headSha, testRef, outcome, reportUri, reportDigest };
+    if (!isProviderTestExecutionReceipt(receipt) || checkRun === undefined || checkRun.checkKind !== 'TEST'
+      || checkRun.runId !== receipt.runId || checkRun.attempt !== receipt.attempt
+      || new URL(receipt.reportUri).origin !== new URL(checkRun.sourceUri).origin) return null;
+    return receipt;
+  }
+
+  private reportReceiptIdentity(
+    receiptId: string | null,
+    checkRunRecordId: string | null,
+    runId: string | null,
+    seen: Set<string>,
+    prefix: string,
+  ): void {
+    if (receiptId !== null && seen.has(receiptId)) this.report('GHE01_TEST_RECEIPT_ID_DUPLICATE', 'Test execution receipt identity is duplicated.', `${prefix}.receiptId`);
+    if (receiptId !== null) seen.add(receiptId);
+    if (receiptId !== null && !IDENTIFIER.test(receiptId)) this.report('GHE01_TEST_RECEIPT_ID_INVALID', 'receiptId is invalid.', `${prefix}.receiptId`);
+    if (checkRunRecordId !== null && !IDENTIFIER.test(checkRunRecordId)) this.report('GHE01_TEST_RECEIPT_CHECK_ID_INVALID', 'checkRunRecordId is invalid.', `${prefix}.checkRunRecordId`);
+    if (runId !== null && !IDENTIFIER.test(runId)) this.report('GHE01_TEST_RECEIPT_RUN_ID_INVALID', 'runId is invalid.', `${prefix}.runId`);
+  }
+
+  private reportReceiptHead(value: unknown, prefix: string): void {
+    if (typeof value !== 'string' || !SHA40.test(value)) this.report('GHE01_TEST_RECEIPT_SHA_INVALID', 'Test receipt headSha must be a full lowercase commit SHA.', `${prefix}.headSha`);
+  }
+
+  private reportReceiptTestFields(testRef: unknown, outcome: unknown, reportDigest: string | null, prefix: string): void {
+    if (!isProviderTestRef(testRef)) this.report('GHE01_TEST_RECEIPT_REF_INVALID', 'testRef must identify a bounded WO-002 test case.', `${prefix}.testRef`);
+    if (typeof outcome !== 'string' || !['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(outcome)) {
+      this.report('GHE01_TEST_RECEIPT_OUTCOME_INVALID', 'Test receipt outcome is not supported.', `${prefix}.outcome`);
+    }
+    if (reportDigest !== null && !SHA256.test(reportDigest)) this.report('GHE01_TEST_REPORT_DIGEST_INVALID', 'reportDigest must be a SHA-256 digest.', `${prefix}.reportDigest`);
+  }
+
+  private reportReceiptCheckBinding(
+    checkRun: ProviderCheckRun | undefined,
+    runId: string | null,
+    attempt: number | null,
+    reportUri: string | null,
+    prefix: string,
+  ): void {
+    if (checkRun === undefined) return;
+    if (checkRun.checkKind !== 'TEST') this.report('GHE01_TEST_RECEIPT_CHECK_KIND_INVALID', 'Test receipt must bind to a TEST check run.', `${prefix}.checkRunRecordId`);
+    if (checkRun.runId !== runId || checkRun.attempt !== attempt) {
+      this.report('GHE01_TEST_RECEIPT_RUN_MISMATCH', 'Test receipt run and attempt must match its check run.', prefix);
+    }
+    if (reportUri !== null && new URL(reportUri).origin !== new URL(checkRun.sourceUri).origin) {
+      this.report('GHE01_TEST_REPORT_SOURCE_MISMATCH', 'Test report must come from the check run provider origin.', `${prefix}.reportUri`);
+    }
+  }
+
+  private parseWorkflowRuns(value: unknown): ProviderWorkflowRun[] {
+    if (!Array.isArray(value) || value.length > MAX_WORKFLOW_RUNS) {
+      this.report('GHE01_WORKFLOWS_INVALID', `workflowRuns must be an array of at most ${MAX_WORKFLOW_RUNS} records.`, 'workflowRuns');
+      return [];
+    }
+    const runs: ProviderWorkflowRun[] = [];
+    value.forEach((entry, index) => {
+      const run = this.parseWorkflowRun(entry, index);
+      if (run !== null) runs.push(run);
     });
-    workflowRuns.sort((left, right) => compare(left.runId, right.runId) || left.attempt - right.attempt || compare(left.headSha, right.headSha));
+    return runs.sort((left, right) => compare(left.runId, right.runId) || left.attempt - right.attempt || compare(left.headSha, right.headSha));
   }
 
-  if (diagnostics.length > 0 || collectionId === null || providerId === null || sourceUri === null || repository === null
-    || pullRequest === null || sourceTrees === null || ruleset === null || workOrderId === null || contextLockDigest === null || !Array.isArray(changedPathsInput)
-    || !Array.isArray(fileBlobsInput) || !Array.isArray(testExecutionReceiptsInput)
-    || !Array.isArray(requiredContextsInput) || !Array.isArray(checkRunsInput) || !Array.isArray(workflowRunsInput)
-    || typeof collectionState !== 'string' || !COLLECTION_STATES.includes(collectionState)) {
-    return { ok: false, diagnostics };
+  private parseWorkflowRun(value: unknown, index: number): ProviderWorkflowRun | null {
+    const prefix = `workflowRuns.${index}`;
+    if (!isRecord(value)) {
+      this.report('GHE01_WORKFLOW_INVALID', 'Workflow run must be an object.', prefix);
+      return null;
+    }
+    this.checkFields(value, WORKFLOW_FIELDS, prefix);
+    const runId = this.requireText(value, 'runId', 192, prefix);
+    const attempt = this.parseAttempt(value, prefix);
+    const headSha = value['headSha'];
+    if (typeof headSha !== 'string' || !SHA40.test(headSha)) this.report('GHE01_WORKFLOW_SHA_INVALID', 'Workflow headSha must be a full lowercase commit SHA.', `${prefix}.headSha`);
+    const status = this.parseStatus(value, 'status', prefix);
+    const conclusion = this.parseConclusion(value, status, prefix);
+    const sourceUri = this.parseUri(value, 'sourceUri', prefix);
+    if (runId !== null && !IDENTIFIER.test(runId)) this.report('GHE01_RUN_ID_INVALID', 'runId is invalid.', `${prefix}.runId`);
+    const jobs = this.parseWorkflowJobs(value['jobs'], prefix);
+    if (runId === null || !IDENTIFIER.test(runId) || attempt === null || typeof headSha !== 'string' || !SHA40.test(headSha)
+      || status === null || conclusion === undefined || sourceUri === null) return null;
+    return { runId, attempt, headSha, status, conclusion, sourceUri, jobs };
   }
 
-  return {
-    ok: true,
-    value: deepFreeze({
-      schemaVersion: PROVIDER_EVIDENCE_SCHEMA_VERSION,
-      collectionId,
-      providerId,
-      collectionState: collectionState as ProviderCollectionState,
-      sourceUri,
-      repository,
-      pullRequest,
-      sourceTrees,
-      fileBlobs,
-      ruleset,
-      workOrderId,
-      contextLockDigest,
-      changedPaths,
-      requiredContexts,
-      checkRuns,
-      testExecutionReceipts,
-      workflowRuns,
-    }),
-  };
+  private parseWorkflowJobs(value: unknown, prefix: string): ProviderWorkflowJob[] {
+    if (!Array.isArray(value) || value.length > MAX_JOBS_PER_WORKFLOW) {
+      this.report('GHE01_JOBS_INVALID', `Workflow jobs must be an array of at most ${MAX_JOBS_PER_WORKFLOW} records.`, `${prefix}.jobs`);
+      return [];
+    }
+    const jobs: ProviderWorkflowJob[] = [];
+    const seen = new Set<string>();
+    value.forEach((entry, index) => {
+      const job = this.parseWorkflowJob(entry, prefix, index, seen);
+      if (job !== null) jobs.push(job);
+    });
+    return jobs.sort((left, right) => compare(left.jobId, right.jobId));
+  }
+
+  private parseWorkflowJob(value: unknown, runPrefix: string, index: number, seen: Set<string>): ProviderWorkflowJob | null {
+    const prefix = `${runPrefix}.jobs.${index}`;
+    if (!isRecord(value)) {
+      this.report('GHE01_JOB_INVALID', 'Workflow job must be an object.', prefix);
+      return null;
+    }
+    this.checkFields(value, JOB_FIELDS, prefix);
+    const jobId = this.requireText(value, 'jobId', 192, prefix);
+    if (jobId !== null && seen.has(jobId)) this.report('GHE01_JOB_ID_DUPLICATE', 'Workflow attempt contains a duplicate job identity.', `${prefix}.jobId`);
+    if (jobId !== null) seen.add(jobId);
+    const name = this.requireText(value, 'name', 512, prefix);
+    const status = this.parseStatus(value, 'status', prefix);
+    const conclusion = this.parseConclusion(value, status, prefix);
+    const sourceUri = this.parseUri(value, 'sourceUri', prefix);
+    if (jobId !== null && !IDENTIFIER.test(jobId)) this.report('GHE01_JOB_ID_INVALID', 'jobId is invalid.', `${prefix}.jobId`);
+    if (jobId === null || !IDENTIFIER.test(jobId) || name === null || status === null || conclusion === undefined || sourceUri === null) return null;
+    return { jobId, name, status, conclusion, sourceUri };
+  }
+}
+
+function parseProviderEvidenceInputUnchecked(input: unknown): ProviderEvidenceParseResult {
+  return new ProviderEvidenceInputParser().parse(input);
 }
 
 /** Converts hostile objects that throw during inspection into a bounded diagnostic. */

@@ -1,6 +1,7 @@
 import type { NormalizedProviderTestExecutionReceipt, ProviderEvidenceBundle, ProviderEvidenceVerdict } from '@gef-bootstrap/evidence-engine';
-import { verifyProviderEvidenceBundle } from '@gef-bootstrap/evidence-engine';
+import { deriveProviderTestExecutionDecision, verifyProviderEvidenceBundle } from '@gef-bootstrap/evidence-engine';
 import type { ProviderCheckKind, ProviderEvidenceBinding, ProviderTestExecutionOutcome } from '@gef-bootstrap/contracts';
+import { isProviderTestRef } from '@gef-bootstrap/contracts';
 import type { OperationOptions, Result } from './types.js';
 import { deepFreeze, digestValue, fail, ok, sortedUnique } from './utils.js';
 
@@ -130,15 +131,6 @@ function safePath(path: unknown): path is string {
   return safeText(path, 1024) && !path.startsWith('/') && !path.includes('\\')
     && path.split('/').every((part) => part.length > 0 && part !== '.' && part !== '..');
 }
-function safeTestRef(value: unknown): value is string {
-  if (!safeText(value, 1024)) return false;
-  const separator = value.indexOf('#');
-  if (separator <= 0 || separator !== value.lastIndexOf('#')) return false;
-  const path = value.slice(0, separator);
-  const title = value.slice(separator + 1);
-  return safePath(path) && path.startsWith('tests/gbs-mod-wo-002-') && path.endsWith('.test.mjs')
-    && safeText(title, 512);
-}
 function safePublicUri(value: unknown): value is string {
   if (!safeText(value, 2048)) return false;
   try {
@@ -164,7 +156,9 @@ function compareBinding(left: ProviderEvidenceBinding, right: ProviderEvidenceBi
   if (left.ruleset.digest !== right.ruleset.digest) reasons.push('RULESET_DIGEST_MISMATCH');
   if (left.workOrderId !== right.workOrderId) reasons.push('WORK_ORDER_ID_MISMATCH');
   if (left.contextLockDigest !== right.contextLockDigest) reasons.push('CONTEXT_LOCK_DIGEST_MISMATCH');
-  if (JSON.stringify([...left.changedPaths].sort()) !== JSON.stringify([...right.changedPaths].sort())) reasons.push('CHANGED_PATHS_MISMATCH');
+  const comparePaths = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
+  if (JSON.stringify([...left.changedPaths].sort(comparePaths))
+    !== JSON.stringify([...right.changedPaths].sort(comparePaths))) reasons.push('CHANGED_PATHS_MISMATCH');
   if (JSON.stringify(left.requiredContexts.map(({ contextId }) => contextId).sort())
     !== JSON.stringify(right.requiredContexts.map(({ contextId }) => contextId).sort())) reasons.push('REQUIRED_CONTEXTS_MISMATCH');
   return sortedUnique(reasons);
@@ -265,7 +259,7 @@ function validEvidenceBundle(bundle: unknown): bundle is ProviderEvidenceBundle 
         && safeText(receipt['evidenceRef'], 512) && safeText(receipt['checkRunRef'], 512)
         && safeText(receipt['runId'], 192) && Number.isSafeInteger(receipt['attempt']) && (receipt['attempt'] as number) > 0
         && safeText(receipt['contextId'], 192) && typeof receipt['headSha'] === 'string' && SHA40.test(receipt['headSha'])
-        && safeTestRef(receipt['testRef']) && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(receipt['outcome']))
+        && isProviderTestRef(receipt['testRef']) && ['PASSED', 'FAILED', 'SKIPPED', 'NOT_EXECUTED'].includes(String(receipt['outcome']))
         && safePublicUri(receipt['reportUri']) && typeof receipt['reportDigest'] === 'string' && SHA256.test(receipt['reportDigest'])
         && typeof receipt['selected'] === 'boolean'
         && ['PASS', 'FAILED', 'BLOCKED', 'PENDING', 'NOT_VERIFIED', 'UNPROVEN', 'STALE'].includes(String(receipt['verdict']))
@@ -290,7 +284,7 @@ function normalizeMapping(value: unknown): AcceptanceProofMapping | null {
   const testRefs = value['testRefs'];
   const checkRunRefs = value['checkRunRefs'];
   if (typeof criterionId !== 'string' || !CRITERIA.includes(criterionId as typeof CRITERIA[number])
-    || !Array.isArray(testRefs) || testRefs.length > 32 || !testRefs.every(safeTestRef)
+    || !Array.isArray(testRefs) || testRefs.length > 32 || !testRefs.every(isProviderTestRef)
     || !Array.isArray(checkRunRefs) || checkRunRefs.length > 64 || !checkRunRefs.every((ref) => safeText(ref, 512))) return null;
   return { criterionId, testRefs: sortedUnique(testRefs as string[]), checkRunRefs: sortedUnique(checkRunRefs as string[]) };
 }
@@ -316,26 +310,6 @@ function testProofRecord(
   };
 }
 
-function testReceiptDecision(
-  receipt: NormalizedProviderTestExecutionReceipt,
-  checkRun: ProviderEvidenceBundle['checkRuns'][number],
-  expectedHeadSha: string,
-): { readonly verdict: AuditPacketVerdict; readonly reasonCodes: readonly string[] } {
-  if (receipt.headSha !== expectedHeadSha || receipt.headSha !== checkRun.headSha) {
-    return { verdict: 'STALE', reasonCodes: ['TEST_RECEIPT_HEAD_MISMATCH'] };
-  }
-  if (!receipt.selected || !checkRun.selected) {
-    return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_RECEIPT_CHECK_NOT_SELECTED'] };
-  }
-  if (checkRun.verdict !== 'PASS') {
-    return { verdict: checkRun.verdict, reasonCodes: sortedUnique(['TEST_RECEIPT_CHECK_NOT_PASS', ...checkRun.reasonCodes]) };
-  }
-  if (receipt.outcome === 'PASSED') return { verdict: 'PASS', reasonCodes: [] };
-  if (receipt.outcome === 'FAILED') return { verdict: 'FAILED', reasonCodes: ['TEST_EXECUTION_FAILED'] };
-  if (receipt.outcome === 'NOT_EXECUTED') return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_EXECUTION_NOT_RUN'] };
-  return { verdict: 'NOT_VERIFIED', reasonCodes: ['TEST_EXECUTION_SKIPPED'] };
-}
-
 function receiptDecisionMatches(
   receipt: NormalizedProviderTestExecutionReceipt,
   decision: { readonly verdict: AuditPacketVerdict; readonly reasonCodes: readonly string[] },
@@ -344,98 +318,125 @@ function receiptDecisionMatches(
     && JSON.stringify(receipt.reasonCodes) === JSON.stringify(decision.reasonCodes);
 }
 
+interface TestProofResolution {
+  readonly verdict: AuditPacketVerdict;
+  readonly testEvidence: readonly ProviderTestProofRecord[];
+  readonly reasonCodes: readonly string[];
+}
+
+function resolveTestProofForRef(
+  testRef: string,
+  checkRunRefs: readonly string[],
+  bundle: ProviderEvidenceBundle,
+): TestProofResolution {
+  const receipts = bundle.testExecutionReceipts.filter((receipt) => receipt.testRef === testRef
+    && checkRunRefs.includes(receipt.checkRunRef));
+  if (receipts.length === 0) {
+    return { verdict: 'UNPROVEN', testEvidence: [], reasonCodes: ['ACCEPTANCE_TEST_RECEIPT_MISSING'] };
+  }
+  const checkRunsByRef = new Map(bundle.checkRuns.map((run) => [run.evidenceRef, run]));
+  const resolved = receipts.flatMap((receipt) => {
+    const checkRun = checkRunsByRef.get(receipt.checkRunRef);
+    if (checkRun === undefined) return [];
+    const decision = deriveProviderTestExecutionDecision(receipt, checkRun, bundle.expectedBinding.pullRequest.headSha);
+    return [{ receipt, checkRun, decision, matches: receiptDecisionMatches(receipt, decision) }];
+  });
+  const testEvidence = resolved.map(({ receipt, decision, matches }) => testProofRecord(
+    receipt,
+    matches ? decision.verdict : 'NOT_VERIFIED',
+    matches ? decision.reasonCodes : ['TEST_RECEIPT_INTEGRITY_MISMATCH'],
+  ));
+  if (resolved.length !== receipts.length) {
+    return { verdict: 'NOT_VERIFIED', testEvidence, reasonCodes: ['TEST_RECEIPT_CHECK_REF_INVALID'] };
+  }
+  const selected = resolved.filter(({ receipt, checkRun, decision }) => receipt.selected && checkRun.selected
+    && decision.verdict !== 'STALE');
+  if (selected.length > 1) {
+    return { verdict: 'NOT_VERIFIED', testEvidence, reasonCodes: ['ACCEPTANCE_TEST_RECEIPT_AMBIGUOUS'] };
+  }
+  const selectedReceipt = selected[0];
+  if (selectedReceipt !== undefined) {
+    return selectedReceipt.matches
+      ? { verdict: selectedReceipt.decision.verdict, testEvidence, reasonCodes: selectedReceipt.decision.reasonCodes }
+      : { verdict: 'NOT_VERIFIED', testEvidence, reasonCodes: ['TEST_RECEIPT_INTEGRITY_MISMATCH'] };
+  }
+  const stale = resolved.some(({ decision }) => decision.verdict === 'STALE');
+  const reasonCodes = resolved.flatMap(({ decision, matches }) => matches
+    ? decision.reasonCodes : ['TEST_RECEIPT_INTEGRITY_MISMATCH']);
+  return { verdict: stale ? 'STALE' : 'NOT_VERIFIED', testEvidence, reasonCodes };
+}
+
+function resolveAcceptanceTestProofs(
+  testRefs: readonly string[],
+  checkRunRefs: readonly string[],
+  bundle: ProviderEvidenceBundle,
+): readonly TestProofResolution[] {
+  return testRefs.map((testRef) => resolveTestProofForRef(testRef, checkRunRefs, bundle));
+}
+
+function resolveMappedCheckRuns(
+  checkRunRefs: readonly string[],
+  bundle: ProviderEvidenceBundle,
+): readonly ProviderEvidenceBundle['checkRuns'][number][] | null {
+  const checkRunsByRef = new Map(bundle.checkRuns.map((run) => [run.evidenceRef, run]));
+  const resolved: ProviderEvidenceBundle['checkRuns'][number][] = [];
+  for (const ref of checkRunRefs) {
+    const checkRun = checkRunsByRef.get(ref);
+    if (checkRun === undefined) return null;
+    resolved.push(checkRun);
+  }
+  return resolved;
+}
+
+function providerCheckVerdict(
+  run: ProviderEvidenceBundle['checkRuns'][number],
+  bundle: ProviderEvidenceBundle,
+  requiredContextIds: ReadonlySet<string>,
+): AuditPacketVerdict {
+  if (!requiredContextIds.has(run.contextId)) return 'UNPROVEN';
+  if (!run.selected) return 'NOT_VERIFIED';
+  if (run.headSha !== bundle.expectedBinding.pullRequest.headSha) return 'STALE';
+  const result = bundle.requiredContextResults.find((context) => context.contextId === run.contextId);
+  return result?.verdict === 'PASS' ? run.verdict : (result?.verdict ?? 'NOT_VERIFIED');
+}
+
+function validMappedTestRefs(testRefs: readonly string[], changedPaths: readonly string[]): boolean {
+  const changedPathSet = new Set(changedPaths);
+  return testRefs.every((ref) => isProviderTestRef(ref) && changedPathSet.has(ref.slice(0, ref.indexOf('#'))));
+}
+
 function proofResult(
   criterionId: string,
   mapping: AcceptanceProofMapping | undefined,
   bundle: ProviderEvidenceBundle,
   changedPaths: readonly string[],
 ): AcceptanceProofResult {
-  if (mapping === undefined || mapping.testRefs.length === 0 || mapping.checkRunRefs.length === 0) {
-    return deepFreeze({
-      criterionId,
-      testRefs: mapping?.testRefs ?? [],
-      checkRunRefs: mapping?.checkRunRefs ?? [],
-      providerEvidence: [],
-      testEvidence: [],
-      verdict: 'UNPROVEN' as const,
-      reasonCodes: ['ACCEPTANCE_PROOF_MAPPING_MISSING'],
-    });
-  }
-  const unknownTestRefs = mapping.testRefs.filter((ref) => {
-    const path = ref.slice(0, ref.indexOf('#'));
-    return !safeTestRef(ref) || !changedPaths.includes(path);
+  const testRefs = mapping?.testRefs ?? [];
+  const checkRunRefs = mapping?.checkRunRefs ?? [];
+  const failure = (reasonCode: string) => deepFreeze({
+    criterionId,
+    testRefs,
+    checkRunRefs,
+    providerEvidence: [],
+    testEvidence: [],
+    verdict: 'UNPROVEN' as const,
+    reasonCodes: [reasonCode],
   });
-  if (unknownTestRefs.length > 0) {
-    return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence: [], testEvidence: [], verdict: 'UNPROVEN' as const, reasonCodes: ['ACCEPTANCE_TEST_REF_UNBOUND'] });
-  }
-  const rows = mapping.checkRunRefs.map((ref) => bundle.checkRuns.find((run) => run.evidenceRef === ref));
-  if (rows.some((run) => run === undefined)) {
-    return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence: [], testEvidence: [], verdict: 'UNPROVEN' as const, reasonCodes: ['ACCEPTANCE_CHECK_REF_UNBOUND'] });
-  }
-  const resolved = rows.filter((run) => run !== undefined);
-  const requiredContextIds = new Set((bundle.expectedBinding.requiredContexts as readonly { contextId: string }[]).map(({ contextId }) => contextId));
-  const verdicts = resolved.map((run) => {
-    if (!requiredContextIds.has(run.contextId)) return 'UNPROVEN' as const;
-    if (!run.selected) return 'NOT_VERIFIED' as const;
-    if (run.headSha !== bundle.expectedBinding.pullRequest.headSha) return 'STALE' as const;
-    const result = bundle.requiredContextResults.find((context) => context.contextId === run.contextId);
-    return result?.verdict === 'PASS' ? run.verdict : (result?.verdict ?? 'NOT_VERIFIED');
-  });
-  const testVerdicts: AuditPacketVerdict[] = [];
-  const testEvidence: ProviderTestProofRecord[] = [];
-  const testReasonCodes: string[] = [];
-  for (const testRef of mapping.testRefs) {
-    const receipts = bundle.testExecutionReceipts.filter((receipt) => receipt.testRef === testRef
-      && mapping.checkRunRefs.includes(receipt.checkRunRef));
-    if (receipts.length === 0) {
-      testVerdicts.push('UNPROVEN');
-      testReasonCodes.push('ACCEPTANCE_TEST_RECEIPT_MISSING');
-      continue;
-    }
-    const resolvedReceipts = receipts.flatMap((receipt) => {
-      const checkRun = bundle.checkRuns.find((run) => run.evidenceRef === receipt.checkRunRef);
-      if (checkRun === undefined) return [];
-      const decision = testReceiptDecision(receipt, checkRun, bundle.expectedBinding.pullRequest.headSha);
-      return [{ receipt, decision, matches: receiptDecisionMatches(receipt, decision) }];
-    });
-    testEvidence.push(...resolvedReceipts.map(({ receipt, decision, matches }) => testProofRecord(
-      receipt,
-      matches ? decision.verdict : 'NOT_VERIFIED',
-      matches ? decision.reasonCodes : ['TEST_RECEIPT_INTEGRITY_MISMATCH'],
-    )));
-    const selectedReceipts = resolvedReceipts.filter(({ receipt, decision }) => receipt.selected
-      && bundle.checkRuns.some((run) => run.evidenceRef === receipt.checkRunRef && run.selected)
-      && decision.verdict !== 'STALE');
-    if (selectedReceipts.length > 1) {
-      testVerdicts.push('NOT_VERIFIED');
-      testReasonCodes.push('ACCEPTANCE_TEST_RECEIPT_AMBIGUOUS');
-      continue;
-    }
-    if (selectedReceipts.length === 1) {
-      const [selected] = selectedReceipts;
-      if (selected !== undefined) {
-        if (!selected.matches) {
-          testVerdicts.push('NOT_VERIFIED');
-          testReasonCodes.push('TEST_RECEIPT_INTEGRITY_MISMATCH');
-        } else {
-          testVerdicts.push(selected.decision.verdict);
-          testReasonCodes.push(...selected.decision.reasonCodes);
-        }
-      }
-      continue;
-    }
-    const stale = resolvedReceipts.some(({ decision }) => decision.verdict === 'STALE');
-    testVerdicts.push(stale ? 'STALE' : 'NOT_VERIFIED');
-    testReasonCodes.push(...resolvedReceipts.flatMap(({ decision, matches }) => matches
-      ? decision.reasonCodes : ['TEST_RECEIPT_INTEGRITY_MISMATCH']));
-  }
+  if (mapping === undefined || testRefs.length === 0 || checkRunRefs.length === 0) return failure('ACCEPTANCE_PROOF_MAPPING_MISSING');
+  if (!validMappedTestRefs(testRefs, changedPaths)) return failure('ACCEPTANCE_TEST_REF_UNBOUND');
+  const resolved = resolveMappedCheckRuns(checkRunRefs, bundle);
+  if (resolved === null) return failure('ACCEPTANCE_CHECK_REF_UNBOUND');
+
+  const requiredContextIds = new Set(bundle.expectedBinding.requiredContexts.map(({ contextId }) => contextId));
+  const checkVerdicts = resolved.map((run) => providerCheckVerdict(run, bundle, requiredContextIds));
+  const testProofs = resolveAcceptanceTestProofs(testRefs, checkRunRefs, bundle);
+  const testVerdicts = testProofs.map(({ verdict }) => verdict);
+  const verdicts = [...checkVerdicts, ...testVerdicts];
   if (!bundle.bindingMatches) verdicts.push('STALE');
   if (bundle.source.collectionState !== 'COMPLETE') verdicts.push('NOT_VERIFIED');
-  verdicts.push(...testVerdicts);
-  const verdict = combineVerdicts(verdicts);
   const reasonCodes = sortedUnique([
     ...resolved.flatMap((run) => run.reasonCodes),
-    ...testReasonCodes,
+    ...testProofs.flatMap(({ reasonCodes: reasons }) => reasons),
     ...resolved.flatMap((run) => !run.selected ? ['CHECK_RUN_NOT_SELECTED'] : []),
     ...resolved.flatMap((run) => !requiredContextIds.has(run.contextId) ? ['CHECK_RUN_CONTEXT_NOT_REQUIRED'] : []),
     ...resolved.flatMap((run) => run.headSha !== bundle.expectedBinding.pullRequest.headSha ? ['CHECK_RUN_HEAD_MISMATCH'] : []),
@@ -453,7 +454,15 @@ function proofResult(
     conclusion: run.conclusion,
     verdict: run.verdict,
   }));
-  return deepFreeze({ criterionId, testRefs: mapping.testRefs, checkRunRefs: mapping.checkRunRefs, providerEvidence, testEvidence, verdict, reasonCodes });
+  return deepFreeze({
+    criterionId,
+    testRefs,
+    checkRunRefs,
+    providerEvidence,
+    testEvidence: testProofs.flatMap(({ testEvidence }) => testEvidence),
+    verdict: combineVerdicts(verdicts),
+    reasonCodes,
+  });
 }
 
 function validateInput(input: ProviderAuditPacketInput): Result<{
