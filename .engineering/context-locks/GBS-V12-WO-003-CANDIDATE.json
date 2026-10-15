@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "GBS_V12_WO_003_FAST_TRACK_IMPLEMENTATION_CANDIDATE",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "issue": 462,
+  "workOrder": "GBS-V12-WO-003",
+  "state": "PROPOSED_ONLY_NOT_ADMITTED_NOT_EXECUTABLE",
+  "doNotExecute": true,
+  "implementationAuthorized": false,
+  "implementationStarted": false,
+  "risk": "ELEVATED",
+  "source": {
+    "preAdmissionMainSha": "8254918df8eaa7189105236d44c0ff8fdf3ccc6b",
+    "sourceFingerprintCount": 12,
+    "sourceBlobs": {
+      ".engineering/CHECKPOINT.md": "20210b4aba48e43cd2590a91d114fd68877c51a2",
+      ".engineering/CHECKPOINT.json": "2d8a69baa3b4da23f01892981a17d56d5d40795d",
+      ".engineering/REQUIREMENTS.md": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+      ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+      ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+      ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+      ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+      ".engineering/work-orders/GBS-V12-WO-001.md": "1bbd6cff85358a5e37e9c39ef3519bd93d5dd16e",
+      ".engineering/work-orders/GBS-V12-WO-002.md": "8405eef5c8aac221e96112541d3f83c853be2e9c",
+      "AGENTS.md": "492f1d4ae66abe8749a082d68decc81a3b4fd702",
+      ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md": "b734c110d48311e339295fdd834ebff91a8cc461",
+      ".engineering/work-orders/GBS-V12-WO-003.md": "25d15ac018da428bc633c8cc4ba610ab1839cda4"
+    },
+    "workOrderBlob": "25d15ac018da428bc633c8cc4ba610ab1839cda4",
+    "nextImplementationBase": "ACTUAL_VERIFIED_MAIN_AFTER_OWNER_APPROVED_PROTECTED_SQUASH_NOT_PREDETERMINED"
+  },
+  "owner": {
+    "admissionAndProtectedMergeApproval": "NOT_YET_GRANTED_TARGET_SPECIFIC",
+    "codexImplementationApproval": "NOT_YET_GRANTED_TARGET_SPECIFIC",
+    "actor": "CODEX_ONLY_WHEN_EFFECTIVE",
+    "audit": "NOT_INDEPENDENT"
+  },
+  "acceptance": {
+    "ids": [
+      "U12-03",
+      "U12-05"
+    ],
+    "startCredit": 3,
+    "maxCreditAfterDistinctPromotion": 5,
+    "required": [
+      "A1",
+      "A2",
+      "A3"
+    ],
+    "requiredBranches": [
+      "Repository validation",
+      "Pipeline integrity",
+      "Gitleaks secrets",
+      "Trivy filesystem and configuration"
+    ],
+    "positiveAndNegativeCases": true,
+    "scope": "COMPLETE_BOUNDED_SLICES",
+    "implementationProof": "EXACT_CURRENT_HEAD_AND_CURRENT_REQUIRED_CI",
+    "promotionProof": "SEPARATE_OWNER_CREDIT_DECISION_AFTER_VERIFIED_FULL_ACCEPTANCE"
+  },
+  "scope": {
+    "readOnlySources": [
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".engineering/REQUIREMENTS.md",
+      ".engineering/ARCHITECTURE.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/SECURITY.md",
+      ".engineering/DECISIONS-LEDGER.md",
+      ".engineering/work-orders/GBS-V12-WO-001.md",
+      ".engineering/work-orders/GBS-V12-WO-002.md",
+      "AGENTS.md",
+      ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md",
+      ".engineering/work-orders/GBS-V12-WO-003.md"
+    ],
+    "proposedWriteAllowed": [
+      "packages/task-context-compiler/src/**",
+      "packages/execution-pack-compiler/src/**",
+      "packages/checkpoint-engine/src/**",
+      "packages/resume-engine/src/**",
+      "packages/m62-m63-final/src/**",
+      "packages/evidence-engine/src/**",
+      "packages/proof-graph/src/**",
+      "packages/heds-delta-review/src/**",
+      "packages/assurance-pipeline/src/**",
+      "packages/test-impact-engine/src/**",
+      "packages/contracts/src/**",
+      "tests/v12-wo-003-*.test.mjs",
+      ".engineering/evidence/GBS-V12-WO-003-*",
+      ".engineering/checkpoint-deltas/GBS-V12-WO-003-*"
+    ],
+    "writeForbidden": [
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".github/workflows/**",
+      ".engineering/SECURITY.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/DECISIONS-LEDGER.md",
+      "package.json",
+      "package-lock.json",
+      "packages/cli/**",
+      "rulesets,tag,release,deployment,paid services",
+      "all paths outside proposedWriteAllowed"
+    ]
+  },
+  "activationPredicate": "OWNER_SPECIFIC_APPROVAL_FOR_THIS_WO003_SCOPE_AND_PROTECTED_SQUASH_AND_CODEX_IMPLEMENTATION && PR_MERGED && CURRENT_MAIN_VERIFIED && ALL_ACTIVATION_REQUIRED_CHECKS_PASSED && ALL_SOURCE_BLOBS_MATCH_CURRENT_TREE && NO_CONFLICT_AND_CORRECT_ACTOR",
+  "ifPredicateFalse": "BLOCKED_NO_CODE_WRITES_NOT_AUTOMATICALLY_STALE_LOCAL_CACHE",
+  "developerEfficiency": "ONE_COHERENT_CODEX_MISSION_FOCUSED_CHECKS_PER_WAVE_FULL_MANDATORY_FINAL_ASSURANCE",
+  "forbidden": [
+    "SELF_APPROVE",
+    "SELF_MERGE",
+    "SELF_PROMOTE_CHECKPOINT",
+    "SKIP_REQUIRED_SECURITY_CHECKS",
+    "MARK_5_OF_10_BEFORE_PROMOTION",
+    "START_WO004_BEFORE_DEPENDENT_SCOPE_READY"
+  ],
+  "stopCondition": "GBS_V12_WO003_CANDIDATE_WAITING_OWNER_EXACT_TARGET_MERGE_AND_EXECUTOR_AUTHORITY"
+}
