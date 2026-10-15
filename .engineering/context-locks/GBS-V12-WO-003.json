@@ -6,10 +6,8 @@
   "admissionPr": 465,
   "admissionMergeSha": "6d4f79bff1763ce2db124951355ba86053764e8d",
   "kind": "GBS_V12_WO003_FRESH_IMPLEMENTATION_CONTEXT_LOCK",
-  "state": "POSTMERGE_SOURCE_BOUND_ACTIVATION_CANDIDATE_NOT_YET_EFFECTIVE",
+  "state": "IMPLEMENTATION_LOCK_READY_FOR_OWNER_AUDIT_CONDITIONAL",
   "risk": "ELEVATED",
-  "doNotExecute": true,
-  "implementationAuthorized": false,
   "implementationStarted": false,
   "actor": "CODEX_ONLY_AFTER_EFFECTIVITY",
   "owner": {
@@ -20,7 +18,7 @@
     "approvedPr465ProtectedSquash": "YES_ALREADY_MERGED",
     "approvedFreshLockPreparation": "YES",
     "separateLockActivationMerge": "PENDING_EXACT_TARGET_OWNER_AUTHORIZATION",
-    "executorAuthorization": "CONDITIONAL_ON_FINAL_EFFECTIVE_LOCK_AND_PROTECTED_GATES",
+    "executorAuthorization": "CONDITIONAL_AFTER_TARGET_SPECIFIC_OWNER_APPROVAL_AND_POSTMERGE_EFFECTIVITY_PROOF",
     "checkpointPromotion": "NOT_AUTHORIZED",
     "v12Credit": "UNCHANGED_3_OF_10",
     "release": "NOT_AUTHORIZED"
@@ -154,7 +152,7 @@
   "executionPolicy": {
     "codeTask": "ONE_COHERENT_CODEX_MISSION_TWO_COMPLETE_VERTICAL_SLICES",
     "implementationBranch": "codex/v12-wo003-marathon-delta-assurance",
-    "preflight": "Check actual effective main and Source Pack, compare all admitted blob fingerprints, ensure implementation actor/approval, fetch stale local origin/main safely, worktree isolate, inspect exported API contracts before code edits.",
+    "preflight": "Check actual effective main and Source Pack, compare all admitted blob fingerprints, ensure implementation actor/approval, fetch stale local origin/main safely, worktree isolate, inspect exported API contracts before code edits. The on-branch contract remains CONDITIONAL until exact-target Owner approval and the real protected merge; then Codex reads it from the authoritative main and confirms all effectivity predicates (rather than requiring a second separate amendment just to flip a stale static flag).",
     "passes": [
       "Implement U12-03 existing M14-M18/M63 multiwave with dependency ordering, resumable exact-bound receipts and no duplicate promoted side effects.",
       "Implement U12-05 existing M24-M28 first-failure preservation, causal-repair/flake observations, bounded proof reuse and no suppressed required failures.",
@@ -165,7 +163,7 @@
     "failureHandling": "AUTO_REPAIR safe stale local Git cache and inside-scope bugs. Unavailable external dependencies affect only dependent evidence. STOP genuine normative lock drift, HIGH/CRITICAL, unauthorized changed write boundaries, wrong executor, release/merge without explicit owner authorization."
   },
   "effectivity": {
-    "status": "NOT_ACTIVE",
+    "status": "CONDITIONAL_EFFECTIVE_ONLY_AFTER_ALL_EXPLICIT_GATES",
     "prForActivation": "TO_BE_CREATED",
     "mandatory": [
       "Owner exact-target approval for activating THIS lock, not blanket merge allowance",
@@ -174,6 +172,19 @@
       "No CRITICAL/HIGH findings, no unresolved normative conflict"
     ],
     "approvedActionAfterActivation": "Codex implementation within admitted write paths only; no self merge or checkpoint promotion.",
-    "stop": "GBS_V12_WO003_LOCK_ACTIVATION_PR_READY_FOR_OWNER_AUDIT_NOT_YET_EFFECTIVE"
+    "stop": "PRE_EFFECTIVE_DO_NOT_EXECUTE; AFTER_EFFECTIVITY_CODEX_MAY_IMPLEMENT_ONLY_THE_ALLOWED_WORK_ORDER; NEVER_SELF_MERGE_OR_PROMOTE",
+    "noSelfActivation": true,
+    "booleanInputsMustBeEvaluatedAtRuntime": true,
+    "activationDecision": "Owner explicit target-specific PR #466 protected merge authorization and explicit Codex implementation authorization + successful protected merge and exact-main source/check gates; never assume a draft branch is active."
+  },
+  "implementationAllowedOnlyIf": {
+    "ownerSpecificProtectedMergeOfPr466": "MUST_BE_RECORDED",
+    "ownerCodexExecutionAuthorization": "MUST_BE_RECORDED",
+    "protectedMergeAndCurrentMainVerified": true,
+    "headChecksAndSecurityGreen": true,
+    "allCanonicalAndSurfaceFingerprintsMatch": true,
+    "executor": "CODEX_ONLY",
+    "scope": "EXACT_U12_03_AND_U12_05_WITHIN_WRITE_ALLOWED",
+    "anyFailure": "DO_NOT_EXECUTE_THE_AFFECTED_SCOPE"
   }
 }
