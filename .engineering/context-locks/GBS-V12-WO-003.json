@@ -1,0 +1,179 @@
+{
+  "schemaVersion": "1.0",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "workOrder": "GBS-V12-WO-003",
+  "issue": 462,
+  "admissionPr": 465,
+  "admissionMergeSha": "6d4f79bff1763ce2db124951355ba86053764e8d",
+  "kind": "GBS_V12_WO003_FRESH_IMPLEMENTATION_CONTEXT_LOCK",
+  "state": "POSTMERGE_SOURCE_BOUND_ACTIVATION_CANDIDATE_NOT_YET_EFFECTIVE",
+  "risk": "ELEVATED",
+  "doNotExecute": true,
+  "implementationAuthorized": false,
+  "implementationStarted": false,
+  "actor": "CODEX_ONLY_AFTER_EFFECTIVITY",
+  "owner": {
+    "approvedScope": [
+      "U12-03 Marathon",
+      "U12-05 Delta Assurance"
+    ],
+    "approvedPr465ProtectedSquash": "YES_ALREADY_MERGED",
+    "approvedFreshLockPreparation": "YES",
+    "separateLockActivationMerge": "PENDING_EXACT_TARGET_OWNER_AUTHORIZATION",
+    "executorAuthorization": "CONDITIONAL_ON_FINAL_EFFECTIVE_LOCK_AND_PROTECTED_GATES",
+    "checkpointPromotion": "NOT_AUTHORIZED",
+    "v12Credit": "UNCHANGED_3_OF_10",
+    "release": "NOT_AUTHORIZED"
+  },
+  "source": {
+    "implementationBase": {
+      "ref": "main",
+      "sha": "6d4f79bff1763ce2db124951355ba86053764e8d"
+    },
+    "postmergeRequiredChecks": [
+      "Repository validation",
+      "Pipeline integrity",
+      "Gitleaks secrets",
+      "Trivy filesystem and configuration"
+    ],
+    "postmergeCheckState": "MUST_VERIFY_CURRENT_MAIN_NO_SUCCESS_ASSUMED",
+    "canonicalBlobCount": 19,
+    "canonicalBlobs": {
+      "AGENTS.md": "492f1d4ae66abe8749a082d68decc81a3b4fd702",
+      ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+      ".engineering/CHECKPOINT.md": "20210b4aba48e43cd2590a91d114fd68877c51a2",
+      ".engineering/CHECKPOINT.json": "2d8a69baa3b4da23f01892981a17d56d5d40795d",
+      ".engineering/SCOPE.md": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
+      ".engineering/REQUIREMENTS.md": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+      ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+      ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+      ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+      ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+      ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+      ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
+      ".engineering/V1.2-RELEASE-DENOMINATOR.md": "f33db46412110584604bb556e8a62ecbef9c59c1",
+      ".engineering/V1.2-PROFILE-MATRIX.md": "c9446bedd52469caa593ca5278c725b8e8c84d32",
+      ".engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md": "536bd06c01e942c5e090a693591d5cd324585c59",
+      "package.json": "e917d281c9ba60157e82265d949d9958eac83731",
+      ".engineering/work-orders/GBS-V12-WO-003.md": "25d15ac018da428bc633c8cc4ba610ab1839cda4",
+      ".engineering/context-locks/GBS-V12-WO-003-CANDIDATE.json": "879f42eb2312bd2b9171f8f48d810218d54dd3cd",
+      ".github/prompts/fast-resume-current-main.prompt.md": "3713e96c3c7685cd4c83a0b57cfd5d36ba03b162"
+    },
+    "implementationSurfaceBlobCount": 14,
+    "implementationSurfaceBlobs": {
+      "packages/task-context-compiler/src/public.ts": "c9c99ba0e051e93a6f51beadbad05ef58ab70605",
+      "packages/execution-pack-compiler/src/public.ts": "0238b6c9055896a64d37fc52a1b85bb5484ac05f",
+      "packages/checkpoint-engine/src/public.ts": "6f57c6cbcffca8d557a48e4ea23e8a31aedd26e0",
+      "packages/resume-engine/src/public.ts": "03404f48382ad64ba642a7d6a06786f6b396072b",
+      "packages/m62-m63-final/src/index.mjs": "c71b01bda9b25d9c20975e265764263b8399509f",
+      "packages/m62-m63-final/src/v11-performance-telemetry.mjs": "3acbc9b0e3607c2e987dd72787821847ccb05d97",
+      "packages/evidence-engine/src/public.ts": "55554c1741b5f0e92c6fb1da96c8b8b554540036",
+      "packages/proof-graph/src/public.ts": "d92ec11631aba2e5a1a9586653bd3668a2941fb2",
+      "packages/heds-delta-review/src/public.ts": "46196814a0f94a13746da918ecda7f6d7386f9c7",
+      "packages/assurance-pipeline/src/public.ts": "aab2bcaa8033c74e742d805ab259e04e090a34cc",
+      "packages/test-impact-engine/src/public.ts": "b46bc5ab5db4cecc9358e1e93d450f2b41822f79",
+      "packages/contracts/src/index.ts": "58a11e3af0c458fc438b0886555e7b7b16a70af0",
+      "tests/v12-wo-001-guided-discovery.test.mjs": "4f50d00daa873a2fbbe27ca0db366c1b169e6411",
+      "tests/v12-wo-002-bug-proof.test.mjs": "96dcfd28100c36c9a496ff3591991794d8668fde"
+    },
+    "effectiveBaseRule": "This lock binds admission-main SHA as SOURCE proof, not to a stale Codex checkout. At activation compare all fingerprints to actual main, create fresh implementation branch from latest effective postmerge main; safe fetching of stale local refs is automatic. If actual canonical source files or committed surfaces differ, rebind only affected source without silent constitutional edits."
+  },
+  "scope": {
+    "requiredAcceptance": [
+      "A1_MARATHON_U12_03",
+      "A2_DELTA_ASSURANCE_U12_05",
+      "A3_BACKCOMPAT_SECURITY"
+    ],
+    "writeAllowed": [
+      "packages/task-context-compiler/src/**",
+      "packages/execution-pack-compiler/src/**",
+      "packages/checkpoint-engine/src/**",
+      "packages/resume-engine/src/**",
+      "packages/m62-m63-final/src/**",
+      "packages/evidence-engine/src/**",
+      "packages/proof-graph/src/**",
+      "packages/heds-delta-review/src/**",
+      "packages/assurance-pipeline/src/**",
+      "packages/test-impact-engine/src/**",
+      "packages/contracts/src/**",
+      "tests/v12-wo-003-*.test.mjs",
+      ".engineering/evidence/GBS-V12-WO-003-*",
+      ".engineering/checkpoint-deltas/GBS-V12-WO-003-*"
+    ],
+    "writeForbidden": [
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".github/workflows/**",
+      ".engineering/SECURITY.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/DECISIONS-LEDGER.md",
+      "package.json",
+      "package-lock.json",
+      "packages/cli/**",
+      "rulesets,tag,release,deployment,paid services",
+      "all paths outside proposedWriteAllowed"
+    ],
+    "mandatoryRead": [
+      "AGENTS.md",
+      ".engineering/SOURCE-HIERARCHY.md",
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".engineering/SCOPE.md",
+      ".engineering/REQUIREMENTS.md",
+      ".engineering/ARCHITECTURE.md",
+      ".engineering/SECURITY.md",
+      ".engineering/TEST-BENCHMARK-PLAN.md",
+      ".engineering/DEFINITION-OF-DONE.md",
+      ".engineering/DECISIONS-LEDGER.md",
+      ".engineering/BACKLOG.md",
+      ".engineering/V1.2-RELEASE-DENOMINATOR.md",
+      ".engineering/V1.2-PROFILE-MATRIX.md",
+      ".engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md",
+      "package.json",
+      ".engineering/work-orders/GBS-V12-WO-003.md",
+      ".engineering/context-locks/GBS-V12-WO-003-CANDIDATE.json",
+      ".github/prompts/fast-resume-current-main.prompt.md",
+      "packages/task-context-compiler/src/public.ts",
+      "packages/execution-pack-compiler/src/public.ts",
+      "packages/checkpoint-engine/src/public.ts",
+      "packages/resume-engine/src/public.ts",
+      "packages/m62-m63-final/src/index.mjs",
+      "packages/m62-m63-final/src/v11-performance-telemetry.mjs",
+      "packages/evidence-engine/src/public.ts",
+      "packages/proof-graph/src/public.ts",
+      "packages/heds-delta-review/src/public.ts",
+      "packages/assurance-pipeline/src/public.ts",
+      "packages/test-impact-engine/src/public.ts",
+      "packages/contracts/src/index.ts",
+      "tests/v12-wo-001-guided-discovery.test.mjs",
+      "tests/v12-wo-002-bug-proof.test.mjs"
+    ],
+    "affectedInfrastructure": "Local-first existing packages; no second executor, service or paid dependency",
+    "parallelRule": "Only independent read/analysis; serialize overlapping writes, reuse proof when exact fingerprints unchanged."
+  },
+  "executionPolicy": {
+    "codeTask": "ONE_COHERENT_CODEX_MISSION_TWO_COMPLETE_VERTICAL_SLICES",
+    "implementationBranch": "codex/v12-wo003-marathon-delta-assurance",
+    "preflight": "Check actual effective main and Source Pack, compare all admitted blob fingerprints, ensure implementation actor/approval, fetch stale local origin/main safely, worktree isolate, inspect exported API contracts before code edits.",
+    "passes": [
+      "Implement U12-03 existing M14-M18/M63 multiwave with dependency ordering, resumable exact-bound receipts and no duplicate promoted side effects.",
+      "Implement U12-05 existing M24-M28 first-failure preservation, causal-repair/flake observations, bounded proof reuse and no suppressed required failures.",
+      "Add positive/adversarial U12-03+U12-05 tests in admitted tests/v12-wo-003-*.test.mjs; regression U12-01/U12-02/U12-04 and stable CLI 1.1.2."
+    ],
+    "testing": "Use focused unit/adversarial tests during implementation; repair own regressions same task; run full required build/typecheck/validate/security/required exact-head GitHub CI at final HEAD once, and re-run only when source changes invalidate evidence.",
+    "deliverables": "ONE implementation PR, one evidence bundle, one PROPOSED_ONLY checkpoint delta; native actual passing/failing tests with exact-run receipts; owner review for substantive changes, not microsteps.",
+    "failureHandling": "AUTO_REPAIR safe stale local Git cache and inside-scope bugs. Unavailable external dependencies affect only dependent evidence. STOP genuine normative lock drift, HIGH/CRITICAL, unauthorized changed write boundaries, wrong executor, release/merge without explicit owner authorization."
+  },
+  "effectivity": {
+    "status": "NOT_ACTIVE",
+    "prForActivation": "TO_BE_CREATED",
+    "mandatory": [
+      "Owner exact-target approval for activating THIS lock, not blanket merge allowance",
+      "Protected merge of implementation lock PR with successful required checks",
+      "Re-read actual main after squash and verify source fingerprints, scope and actor",
+      "No CRITICAL/HIGH findings, no unresolved normative conflict"
+    ],
+    "approvedActionAfterActivation": "Codex implementation within admitted write paths only; no self merge or checkpoint promotion.",
+    "stop": "GBS_V12_WO003_LOCK_ACTIVATION_PR_READY_FOR_OWNER_AUDIT_NOT_YET_EFFECTIVE"
+  }
+}
