@@ -98,3 +98,7 @@ export type {
   OwnerChangeImpact,
   CanonicalPlanAnalysis,
 } from './s06-canonical-planning-analysis.js';
+
+// U12-03: source-bound Marathon planning and receipt state machine.
+export { compileMarathon, initialMarathonState, readyMarathonNodes, validateMarathonState, advanceMarathon } from './v12-marathon.js';
+export type { MarathonStatus, MarathonDigest, MarathonResult, MarathonNode, MarathonRequest, MarathonPlan, MarathonStepState, MarathonState, MarathonAction } from './v12-marathon.js';
