@@ -152,7 +152,9 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
     const deps = Object.prototype.hasOwnProperty.call(proofDependencies, id) ? proofDependencies[id] : undefined;
     // Undeclared dependencies are UNKNOWN; never reuse proof on an incomplete graph.
     if (deps === undefined) {
-      incomplete = true;
+      // A known changed source cannot justify reuse, but may proceed to final
+      // validation. Only an UNKNOWN, unchanged dependency blocks assessment.
+      if (!changed.has(id)) incomplete = true;
       visiting.delete(id);
       closureMemo.set(id, true);
       return true;
