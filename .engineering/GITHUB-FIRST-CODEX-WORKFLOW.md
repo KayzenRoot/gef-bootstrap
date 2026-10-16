@@ -57,3 +57,8 @@ For a V1.0-accepted product under V1.1 development, display historical V1.0 100%
 Current main V1.0 acceptance remains 1088/1088. The V1.1 release lineage remains `release/1.1`; WO-009 is accepted, Issue #337 is closed/merged through PR #349, and WO-010 remains NOT_ADMITTED. PR #278 is closed without merge; its checks are historical and do not transfer to the cumulative Gate 2 candidate. This workflow does not by itself authorize product release.
 
 STOP CONDITION: GITHUB_FIRST_CODEX_WORKFLOW_ADOPTED_ON_MAIN_AND_RELEASE_WITH_PRODUCT_PROMOTION_STILL_GATED
+
+## Adoção do Fast Delivery em GEF Bootstrap V1.2 — ADR-0012, pendente de merge protegido
+Este documento registra o fluxo histórico de ADR-0008. Com a adoção de ADR-0012/D-0065, prevalece o fluxo operacional simplificado somente para decisões de ator e cadência de documentação:
+`PLAN+SOURCE CHECK (uma vez) → CODE (Codex quando funcional/complexo) → QA+CI+correção focal (ChatGPT/GitHub, Codex quando código complexo/local) → 1 PR funcional → AUDIT+CHECKS → APPROVED → checkpoint por marco → NEXT`.
+Conserve os documentos já aprovados; não abra PR de preparação ou reautorizações rituais sem mudança normativa. Comentários de PR e resultados de CI são suficientes como evidência intermediária. Uma fonte canônica só muda por delta material ou aceitação, jamais por resposta. Faça validação focada durante implementação; gates congelados de integração, segurança e publicação continuam aplicáveis no final. O fluxo se aplica à **V1.2 atual deste próprio repositório** (incluindo WO-003), sem liberar imediatamente npm e sem considerar a PR de governança efetiva antes do merge.

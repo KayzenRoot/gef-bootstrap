@@ -80,3 +80,6 @@ blocking evidence. Never select a successor from chat history or skip an admitte
 
 A green test is evidence, not completion, and a merged PR is not `MODULE_DONE`. Completion needs the
 project DoD, an exact-head owner audit, an evidence bundle and governed checkpoint promotion.
+
+## GBS-GOV-FAST-001 — adoção de ADR-0012 na V1.2 (condicionada à integração)
+A instrução Owner de 2026-10-16 aplica-se **a esta própria V1.2**. Após merge protegido da proposta ADR-0012/D-0065, leia esse ADR como supersessão **limitada** da regra de ator Codex-only acima: Codex prioriza código novo/complexo; ChatGPT pode cuidar de documentação, testes e CI via GitHub, triagem e pequenas correções técnicas com escopo e riscos validados. Não modificar fonte canônica a cada resposta. Atualizar documentação apenas por contrato/decisão/release/aceitação material; evidências menores vivem na PR/CI. Na GBS-V12-WO-003, preservar lock e WOs, revalidar somente drift normativo e avançar para código Marathon + Delta Assurance. **Não** dispensar branch protection, os quatro status checks, obrigação do Test Plan/DoD/release ou review independente quando obrigatório. Enquanto a PR de governança não for integrada, a regra antiga ainda rege `main`.

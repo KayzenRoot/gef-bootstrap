@@ -26,3 +26,6 @@ All tiers still require exact-state evidence, zero unresolved CRITICAL/HIGH find
 GBS-M19 has frozen weight `14`, therefore its default intensity is `STANDARD_PLUS`. Future modules automatically use their frozen Backlog weight, with risk/security overrides applied upward.
 
 STOP CONDITION: `ASSURANCE_INTENSITY_ACTIVE_WEIGHT_SCALED`.
+
+## ADR-0012 — execução incremental enxuta, sem reduzir aceitação
+Na construção da V1.2, testes direcionados e diagnósticos de CI acompanham cada delta relevante, em vez de full regression reiterada a cada comentário/commit. A exigência deste documento de regressão ampla, plataformas e aprovação integral permanece **no gate final aplicável** e em release, segundo Test & Benchmark Plan/Security/DoD. Para mudanças exclusivamente documentais sem alteração de contrato, não inferir que uma bateria de produto deva ser rodada localmente por resposta; os quatro checks obrigatórios do ruleset `main` continuam sempre protegidos. Efetividade vinculada à integração protegida do ADR-0012.

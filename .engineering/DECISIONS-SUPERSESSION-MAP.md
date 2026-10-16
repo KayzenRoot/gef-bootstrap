@@ -89,3 +89,6 @@ When a historical D-* entry conflicts with this map or a later frozen controllin
 
 ## Closure status
 This map resolves historical-model ambiguity for Source Pack closure without rewriting the Decisions Ledger history.
+
+## D-0065 / ADR-0012 — Adoção Fast Delivery (proposta em 2026-10-16)
+O Owner decidiu adotar na **própria linha V1.2 deste repositório** a documentação por marcos e o modelo Codex-feature-code / ChatGPT-GitHub-documentação/QA/testes/CI/correções simples. Após merge protegido da PR `GBS-GOV-FAST-001`, essa decisão supera apenas a exclusividade absoluta de Codex na autoria de testes/CI/pequenas correções e a expectativa de ciclos documentais por resposta em ADR-0008/D-0063. A obrigação substantiva da segurança, Source Hierarchy, S4, DoD, Test Plan, Deployment e CI de release não foi revogada. Até o merge, vigora a regra anterior. A WO-003 deve continuar com o lock específico, mediante verificação de impacto de fingerprints; não se concede progresso por simples processo.
