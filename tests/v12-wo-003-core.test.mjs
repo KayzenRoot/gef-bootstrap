@@ -81,7 +81,7 @@ test('Delta Assurance retains original failure even when passing on retry', () =
   l = unwrap(addDeltaAttempt(l, attempt('a3', 'FAIL'), digest));
   assert.equal(l.records[0].classification, 'FLAKE_CONFIRMED');
   assert.deepEqual(l.records[0].firstFailure, first);
-  const result = unwrap(evaluateDeltaAssurance(l, BASE, { 'tests:unit': ['src:x'], 'tests:security': ['policy:x'] }, [], digest));
+  const result = unwrap(evaluateDeltaAssurance(l, BASE, { 'tests:unit': ['src:x'], 'tests:security': ['policy:x'], 'src:x': [], 'policy:x': [] }, [], digest));
   assert.equal(result.state, 'CORRECTION_REQUIRED');
   assert.deepEqual(result.carriedFirstFailures, ['tests:unit']);
   assert.deepEqual(result.requiredFinalTests, ['tests:security', 'tests:unit']);
@@ -98,7 +98,7 @@ test('Delta Assurance fail-closed on deterministic failure, unknown impact and m
   l = unwrap(addDeltaAttempt(l, attempt('a2', 'FAIL'), digest));
   assert.equal(l.records[0].classification, 'DETERMINISTIC_FAILURE');
   l = unwrap(addDeltaAttempt(l, { ...attempt('s1', 'PASS'), testId: 'tests:security' }, digest));
-  const v = unwrap(evaluateDeltaAssurance(l, BASE, { 'tests:unit': ['src:x'], 'tests:security': ['policy:x'] }, ['src:x'], digest));
+  const v = unwrap(evaluateDeltaAssurance(l, BASE, { 'tests:unit': ['src:x'], 'tests:security': ['policy:x'], 'src:x': [], 'policy:x': [] }, ['src:x'], digest));
   assert.deepEqual(v.evidenceReuseAllowed, ['tests:security']);
   assert.equal(v.state, 'CORRECTION_REQUIRED');
   let clean = unwrap(initializeDeltaLedger('GBS-V12-WO-003', BASE, ['tests:unit', 'tests:security'], digest));
@@ -106,7 +106,7 @@ test('Delta Assurance fail-closed on deterministic failure, unknown impact and m
   assert.equal(unwrap(evaluateDeltaAssurance(clean, BASE, { 'tests:unit': [] }, [], digest)).state, 'BLOCKED');
   clean = unwrap(addDeltaAttempt(clean, { ...attempt('s1', 'PASS'), testId: 'tests:security' }, digest));
   assert.equal(unwrap(evaluateDeltaAssurance(clean, BASE, { 'tests:unit': ['src:x'] }, [], digest)).state, 'BLOCKED');
-  const final = unwrap(evaluateDeltaAssurance(clean, BASE, { 'tests:unit': ['src:x'], 'tests:security': ['policy:x'] }, [], digest));
+  const final = unwrap(evaluateDeltaAssurance(clean, BASE, { 'tests:unit': ['src:x'], 'tests:security': ['policy:x'], 'src:x': [], 'policy:x': [] }, [], digest));
   assert.equal(final.state, 'READY_FOR_FINAL_ASSURANCE');
   assert.equal(final.requiredFinalTests.length, 2); // final tests still mandatory: never declared performed
   assert.equal(final.evidenceReuseAllowed.length, 2);
@@ -157,7 +157,7 @@ test('Delta Assurance invalidates transitive proof closure without dropping fina
   let ledger = unwrap(initializeDeltaLedger('GBS-V12-WO-003', BASE, ['tests:unit', 'tests:security'], digest));
   ledger = unwrap(addDeltaAttempt(ledger, attempt('good-unit', 'PASS'), digest));
   ledger = unwrap(addDeltaAttempt(ledger, { ...attempt('good-security', 'PASS'), testId: 'tests:security' }, digest));
-  const graph = { 'tests:unit': ['proof:a'], 'proof:a': ['source:a'], 'tests:security': ['source:policy'] };
+  const graph = { 'tests:unit': ['proof:a'], 'proof:a': ['source:a'], 'source:a': [], 'tests:security': ['source:policy'], 'source:policy': [] };
   const verdict = unwrap(evaluateDeltaAssurance(ledger, BASE, graph, ['source:a'], digest));
   assert.deepEqual(verdict.evidenceReuseAllowed, ['tests:security']);
   assert.deepEqual(verdict.requiredFinalTests, ['tests:security', 'tests:unit']);
@@ -188,4 +188,34 @@ test('Delta Assurance scans every impact branch even after a changed source matc
   l = unwrap(addDeltaAttempt(l, attempt('pass', 'PASS'), digest));
   const graph = { 'tests:unit': ['source:changed', 'proof:cycle'], 'proof:cycle': ['tests:unit'] };
   reject(evaluateDeltaAssurance(l, BASE, graph, ['source:changed'], digest), 'DEPENDENCY_GRAPH_CYCLE');
+});
+
+test('Delta refuses proof reuse for undeclared transitive leaf', () => {
+  let ledger = unwrap(initializeDeltaLedger('GBS-V12-WO-003', BASE, ['tests:unit'], digest));
+  ledger = unwrap(addDeltaAttempt(ledger, attempt('verified-pass', 'PASS'), digest));
+  const unknown = unwrap(evaluateDeltaAssurance(ledger, BASE,
+    { 'tests:unit': ['proof:middle'], 'proof:middle': ['source:unknown'] }, [], digest));
+  assert.equal(unknown.state, 'BLOCKED');
+  assert.deepEqual(unknown.evidenceReuseAllowed, []);
+  const complete = unwrap(evaluateDeltaAssurance(ledger, BASE,
+    { 'tests:unit': ['proof:middle'], 'proof:middle': ['source:known'], 'source:known': [] }, [], digest));
+  assert.equal(complete.state, 'READY_FOR_FINAL_ASSURANCE');
+  assert.deepEqual(complete.evidenceReuseAllowed, ['tests:unit']);
+});
+
+test('Marathon rejects conflicting ACTIVE nodes in imported snapshots', () => {
+  const p = unwrap(compileMarathon({ workOrderId: 'WO-A', actor: 'OWNER', baseSha: BASE, lockDigest: LOCK,
+    nodes: [{ id: 'first', deps: [], reads: [], writes: ['out/shared'] },
+            { id: 'unrelated', deps: [], reads: [], writes: ['out/separate'] },
+            { id: 'later', deps: ['unrelated'], reads: ['out/shared/file'], writes: ['out/new'] }],
+  }, digest));
+  const binding = { baseSha: BASE, lockDigest: LOCK, actor: 'OWNER' };
+  let state = unwrap(initialMarathonState(p, digest));
+  state = unwrap(advanceMarathon(p, state, { type: 'START', nodeId: 'first', intentId: 'first-intent' }, binding, digest));
+  state = unwrap(advanceMarathon(p, state, { type: 'START', nodeId: 'unrelated', intentId: 'second-intent' }, binding, digest));
+  state = unwrap(advanceMarathon(p, state, { type: 'SETTLE', nodeId: 'unrelated', intentId: 'second-intent',
+    outcome: 'VERIFIED', proofDigest: H('unrelated-proof') }, binding, digest));
+  const incompatible = { ...state, steps: { ...state.steps, later:
+    { status: 'ACTIVE', intentId: 'later-intent', proofDigest: null } } };
+  reject(validateMarathonState(p, incompatible, digest), 'STATE_RESOURCE_CONFLICT');
 });

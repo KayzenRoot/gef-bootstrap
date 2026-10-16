@@ -143,6 +143,13 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
       if (!graph.get(id)?.deps.every(dep => state.steps[dep]?.status === 'VERIFIED')) return BAD('STATE_DEPENDENCY_VIOLATION');
     }
   }
+  // Imported snapshots must uphold the same exclusion rule as live START.
+  const active = ids.filter(id => state.steps[id]?.status === 'ACTIVE');
+  for (let i = 0; i < active.length; i++) for (let j = i + 1; j < active.length; j++) {
+    const a = graph.get(active[i]!)!, b = graph.get(active[j]!)!;
+    if (intersects(a.writes, [...b.writes, ...b.reads]) || intersects(b.writes, a.reads))
+      return BAD('STATE_RESOURCE_CONFLICT');
+  }
   const expected = hash(digest, 'MARATHON_STATE', { planDigest: state.planDigest, paused: state.paused, steps: state.steps });
   if (!safeDigest(expected) || expected !== state.stateDigest) return BAD('STATE_TAMPERED');
   return OK(true);

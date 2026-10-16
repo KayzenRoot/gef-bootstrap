@@ -150,10 +150,16 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
     if (++traversed > 16384) throw new Error('DEPENDENCY_GRAPH_BUDGET');
     visiting.add(id);
     const deps = Object.prototype.hasOwnProperty.call(proofDependencies, id) ? proofDependencies[id] : undefined;
-    // Evaluate EVERY branch. Array.some short-circuits on a dirty source and
-    // could otherwise hide a cycle or malformed sibling proof dependency.
+    // Undeclared dependencies are UNKNOWN; never reuse proof on an incomplete graph.
+    if (deps === undefined) {
+      incomplete = true;
+      visiting.delete(id);
+      closureMemo.set(id, true);
+      return true;
+    }
+    // Traverse every branch so a changed source cannot hide a sibling cycle.
     let dirty = changed.has(id);
-    for (const dep of deps ?? []) if (invalidated(dep)) dirty = true;
+    for (const dep of deps) if (invalidated(dep)) dirty = true;
     visiting.delete(id);
     closureMemo.set(id, dirty);
     return dirty;
