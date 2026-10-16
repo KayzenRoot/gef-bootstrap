@@ -125,7 +125,9 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
   const compiled = compileMarathon(plan, digest);
   if (!compiled.ok || compiled.value.planDigest !== plan.planDigest || state.planDigest !== plan.planDigest) return BAD('PLAN_STALE');
   const ids = sorted(plan.nodes.map(n => n.id));
-  if (!state.steps || canonical(sorted(Object.keys(state.steps))) !== canonical(ids)) return BAD('STATE_NODES_MISMATCH');
+  if (typeof state.paused !== 'boolean' || !state.steps || canonical(sorted(Object.keys(state.steps))) !== canonical(ids)) return BAD('STATE_NODES_MISMATCH');
+  const usedIntents = new Set<string>();
+  const graph = new Map(plan.nodes.map(node => [node.id, node]));
   for (const id of ids) {
     const s = state.steps[id];
     if (!s || !['PENDING', 'ACTIVE', 'VERIFIED', 'FAILED', 'BLOCKED'].includes(s.status) ||
@@ -133,6 +135,13 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
         (s.status === 'ACTIVE' && (!s.intentId || s.proofDigest !== null)) ||
         (['VERIFIED', 'FAILED'].includes(s.status) && (!s.intentId || !s.proofDigest || !safeDigest(s.proofDigest))) ||
         (s.status === 'BLOCKED' && (s.intentId !== null || s.proofDigest !== null))) return BAD('STATE_INVALID');
+    if (s.intentId !== null) {
+      if (!ID.test(s.intentId) || usedIntents.has(s.intentId)) return BAD('STATE_INTENT_REUSED');
+      usedIntents.add(s.intentId);
+    }
+    if (s.status === 'ACTIVE' || s.status === 'VERIFIED' || s.status === 'FAILED') {
+      if (!graph.get(id)?.deps.every(dep => state.steps[dep]?.status === 'VERIFIED')) return BAD('STATE_DEPENDENCY_VIOLATION');
+    }
   }
   const expected = hash(digest, 'MARATHON_STATE', { planDigest: state.planDigest, paused: state.paused, steps: state.steps });
   if (!safeDigest(expected) || expected !== state.stateDigest) return BAD('STATE_TAMPERED');

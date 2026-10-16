@@ -55,15 +55,55 @@ export function initializeDeltaLedger(workOrderId: string, headSha: string, requ
   const ledger = serialize({ workOrderId, headSha, requiredFinalTests: sorted(requiredFinalTests), records: [] }, digest);
   return D.test(ledger.ledgerDigest) ? ok(ledger) : fail('INVALID_DIGEST_PORT');
 }
+/** An imported receipt must prove its complete original attempt sequence, not just a seal. */
 export function validateDeltaLedger(ledger: DeltaLedger, digest: DeltaDigest): DeltaResult<true> {
-  if (!ID.test(ledger.workOrderId) || !S.test(ledger.headSha) || ledger.requiredFinalTests.length === 0 ||
+  if (!ID.test(ledger.workOrderId) || !S.test(ledger.headSha) ||
+      !Array.isArray(ledger.requiredFinalTests) || ledger.requiredFinalTests.length === 0 ||
+      ledger.requiredFinalTests.length > 2048 ||
+      ledger.requiredFinalTests.some(id => !ID.test(id)) ||
       !sameSet(ledger.requiredFinalTests, [...new Set(ledger.requiredFinalTests)]) ||
-      ledger.records.some(r => !ID.test(r.testId) || r.attempts.length > 32 || r.attempts.some(a => a.testId !== r.testId || a.headSha !== ledger.headSha)) ||
-      !sameSet(ledger.records.map(r => r.testId), [...new Set(ledger.records.map(r => r.testId))])) return fail('LEDGER_STRUCTURE_INVALID');
+      !Array.isArray(ledger.records) || ledger.records.length > ledger.requiredFinalTests.length ||
+      !sameSet(ledger.records.map(r => r.testId), [...new Set(ledger.records.map(r => r.testId))]))
+    return fail('LEDGER_STRUCTURE_INVALID');
+  const seenAttempts = new Set<string>();
+  for (const record of ledger.records) {
+    if (!ID.test(record.testId) || !ledger.requiredFinalTests.includes(record.testId) ||
+        !Array.isArray(record.attempts) || record.attempts.length < 1 || record.attempts.length > 8)
+      return fail('LEDGER_STRUCTURE_INVALID');
+    for (const attempt of record.attempts) {
+      if (!ID.test(attempt.attemptId) || seenAttempts.has(attempt.attemptId) ||
+          attempt.testId !== record.testId || attempt.headSha !== ledger.headSha ||
+          !D.test(attempt.toolchainDigest) || !D.test(attempt.inputDigest) ||
+          !D.test(attempt.evidenceDigest) || !['PASS', 'FAIL'].includes(attempt.observation) ||
+          (attempt.observation === 'FAIL' && (!attempt.failureSignature || !ID.test(attempt.failureSignature))) ||
+          (attempt.observation === 'PASS' && attempt.failureSignature !== null))
+        return fail('LEDGER_ATTEMPT_INVALID');
+      seenAttempts.add(attempt.attemptId);
+    }
+    const expectedFirst = record.attempts.find((a: DeltaAttempt) => a.observation === 'FAIL') ?? null;
+    if (JSON.stringify(record.firstFailure) !== JSON.stringify(expectedFirst) ||
+        record.classification !== classifyDeltaAttempts(record.attempts))
+      return fail('LEDGER_FAILURE_HISTORY_INCONSISTENT');
+  }
   const body = { workOrderId: ledger.workOrderId, headSha: ledger.headSha, requiredFinalTests: ledger.requiredFinalTests, records: ledger.records };
   if (hash(digest, body) !== ledger.ledgerDigest || !D.test(ledger.ledgerDigest)) return fail('LEDGER_TAMPERED');
   return ok(true);
 }
+
+/** Observe only matching inputs and toolchains before classifying nondeterminism. */
+function classifyDeltaAttempts(attempts: readonly DeltaAttempt[]): DeltaClassification {
+  const firstFailure = attempts.find(a => a.observation === 'FAIL');
+  if (!firstFailure) return 'NO_FAILURE';
+  const exact = attempts.filter(a => a.inputDigest === firstFailure.inputDigest &&
+    a.toolchainDigest === firstFailure.toolchainDigest);
+  const mixed = exact.some(a => a.observation === 'PASS') && exact.some(a => a.observation === 'FAIL');
+  if (mixed) return exact.length >= 3 ? 'FLAKE_CONFIRMED' : 'FLAKE_CANDIDATE';
+  return attempts.length > 1 && attempts.every(a => a.observation === 'FAIL' &&
+    a.failureSignature === firstFailure.failureSignature &&
+    a.inputDigest === firstFailure.inputDigest && a.toolchainDigest === firstFailure.toolchainDigest)
+    ? 'DETERMINISTIC_FAILURE' : 'UNKNOWN';
+}
+
 export function addDeltaAttempt(ledger: DeltaLedger, attempt: DeltaAttempt, digest: DeltaDigest): DeltaResult<DeltaLedger> {
   const verified = validateDeltaLedger(ledger, digest);
   if (!verified.ok) return verified;
@@ -78,15 +118,8 @@ export function addDeltaAttempt(ledger: DeltaLedger, attempt: DeltaAttempt, dige
   if ((prev?.attempts.length ?? 0) >= 8) return fail('RETRY_BUDGET_EXHAUSTED');
   const attempts = [...(prev?.attempts ?? []), attempt];
   const firstFailure = prev?.firstFailure ?? (attempt.observation === 'FAIL' ? attempt : null);
-  // A passing retry cannot erase the earliest failing proof. Mixed observations
-  // with identical input/toolchain indicate nondeterminism, not an automatic PASS.
-  const exact = attempts.filter(a => a.inputDigest === attempt.inputDigest && a.toolchainDigest === attempt.toolchainDigest);
-  const mixed = exact.some(a => a.observation === 'PASS') && exact.some(a => a.observation === 'FAIL');
-  const classification: DeltaClassification = firstFailure === null ? 'NO_FAILURE' :
-    mixed && exact.length >= 3 ? 'FLAKE_CONFIRMED' : mixed ? 'FLAKE_CANDIDATE' :
-    attempts.length > 1 && attempts.every(a => a.observation === 'FAIL' &&
-      a.failureSignature === firstFailure.failureSignature && a.inputDigest === firstFailure.inputDigest &&
-      a.toolchainDigest === firstFailure.toolchainDigest) ? 'DETERMINISTIC_FAILURE' : 'UNKNOWN';
+  // A passing retry cannot erase the original failing attempt or its identity.
+  const classification = classifyDeltaAttempts(attempts);
   const record: DeltaRecord = { testId: attempt.testId, firstFailure, attempts, classification };
   const records = [...ledger.records.filter(r => r.testId !== attempt.testId), record].sort((a, b) => a.testId.localeCompare(b.testId));
   return ok(serialize({ workOrderId: ledger.workOrderId, headSha: ledger.headSha, requiredFinalTests: ledger.requiredFinalTests, records }, digest));
@@ -112,16 +145,18 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
   const visiting = new Set<string>();
   let traversed = 0;
   function invalidated(id: string): boolean {
-    if (changed.has(id)) return true;
     if (closureMemo.has(id)) return closureMemo.get(id)!;
     if (visiting.has(id)) throw new Error('DEPENDENCY_GRAPH_CYCLE');
     if (++traversed > 16384) throw new Error('DEPENDENCY_GRAPH_BUDGET');
     visiting.add(id);
     const deps = Object.prototype.hasOwnProperty.call(proofDependencies, id) ? proofDependencies[id] : undefined;
-    const result = deps !== undefined && deps.some(d => invalidated(d));
+    // Evaluate EVERY branch. Array.some short-circuits on a dirty source and
+    // could otherwise hide a cycle or malformed sibling proof dependency.
+    let dirty = changed.has(id);
+    for (const dep of deps ?? []) if (invalidated(dep)) dirty = true;
     visiting.delete(id);
-    closureMemo.set(id, result);
-    return result;
+    closureMemo.set(id, dirty);
+    return dirty;
   }
   try {
     for (const id of ledger.requiredFinalTests) {

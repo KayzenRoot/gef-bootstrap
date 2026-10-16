@@ -163,3 +163,29 @@ test('Delta Assurance invalidates transitive proof closure without dropping fina
   assert.deepEqual(verdict.requiredFinalTests, ['tests:security', 'tests:unit']);
   reject(evaluateDeltaAssurance(ledger, BASE, { ...graph, 'proof:a': ['tests:unit'] }, [], digest), 'DEPENDENCY_GRAPH_CYCLE');
 });
+
+test('Marathon rejects recycled intents and fabricated dependency-complete states before seal validation', () => {
+  const p = fixture();
+  let s = unwrap(initialMarathonState(p, digest));
+  s = unwrap(advanceMarathon(p, s, { type: 'START', nodeId: 'source', intentId: 'i-source' }, bindings, digest));
+  const duplicated = { ...s, steps: { ...s.steps, audit: { status: 'ACTIVE', intentId: 'i-source', proofDigest: null } } };
+  reject(validateMarathonState(p, duplicated, digest), 'STATE_INTENT_REUSED');
+  const invented = { ...s, steps: { ...s.steps, build: { status: 'VERIFIED', intentId: 'i-build', proofDigest: H('invented') } } };
+  reject(validateMarathonState(p, invented, digest), 'STATE_DEPENDENCY_VIOLATION');
+});
+
+test('Delta Assurance rejects missing original failures and forged flake classes in history', () => {
+  let l = unwrap(initializeDeltaLedger('GBS-V12-WO-003', BASE, ['tests:unit'], digest));
+  l = unwrap(addDeltaAttempt(l, attempt('original', 'FAIL'), digest));
+  const erased = { ...l, records: [{ ...l.records[0], firstFailure: null }] };
+  reject(validateDeltaLedger(erased, digest), 'LEDGER_FAILURE_HISTORY_INCONSISTENT');
+  const forged = { ...l, records: [{ ...l.records[0], classification: 'NO_FAILURE' }] };
+  reject(validateDeltaLedger(forged, digest), 'LEDGER_FAILURE_HISTORY_INCONSISTENT');
+});
+
+test('Delta Assurance scans every impact branch even after a changed source matches', () => {
+  let l = unwrap(initializeDeltaLedger('GBS-V12-WO-003', BASE, ['tests:unit'], digest));
+  l = unwrap(addDeltaAttempt(l, attempt('pass', 'PASS'), digest));
+  const graph = { 'tests:unit': ['source:changed', 'proof:cycle'], 'proof:cycle': ['tests:unit'] };
+  reject(evaluateDeltaAssurance(l, BASE, graph, ['source:changed'], digest), 'DEPENDENCY_GRAPH_CYCLE');
+});
