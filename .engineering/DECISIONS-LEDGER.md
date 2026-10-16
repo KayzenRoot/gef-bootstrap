@@ -284,3 +284,9 @@ Status: `ACTIVE`
 - OD-06: independent specialist review is mandatory before production for financial value movement, custody/escrow, blockchain transaction signing, real-value smart contracts, privileged authentication/authorization, irreversible migrations, and destructive/irreversible privileged operations.
 
 The owner-operated ChatGPT semantic audit remains NOT_INDEPENDENT. This entry records approved owner decisions; it does not admit implementation, production launch, a release profile, paid services or WO-001.
+
+## D-0065 / ADR-0012 — Fast Delivery e documentação por marco (2026-10-16)
+- **Owner instruction:** acelerar a V1.2 deste próprio repositório já, com Codex concentrado em código, ChatGPT em documentação, QA, testes/CI, revisão e correções pontuais via GitHub, conforme risco.
+- **Decision:** planejamento e documentos canônicos uma vez por marco real; parar de atualizar documentação por resposta/microteste; uma PR funcional por incremento; validação de desenvolvimento proporcional ao impacto, sem afrouxar gates finais e segurança. Adoção expressa em V1.2, incluindo a WO-003, sem reset de progresso.
+- **Supersession:** restrição de autoria Codex-only e loops documentais de ADR-0008/D-0063, no domínio processo/atores; detalhes no ADR-0012. Requisitos, Scope, DoD, Test Plan, Security, Deployment, 4 checks de main, S4 e revisão especializada HIGH_ASSURANCE permanecem.
+- **Status:** `OWNER_DIRECTED / PROPOSED_PENDING_PROTECTED_MERGE`; não efetivo até integração auditada. Não autoriza npm, bypass de scanner nem promoção V1.2.

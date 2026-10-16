@@ -58,3 +58,6 @@ An explicit product-owner decision initiates a governed supersession process; it
 
 ## Consumption rule
 Downstream work should consume the smallest relevant set of `CONST-F*`, amendment and `D-*` references first, expanding to full canonical sources only when validity, ambiguity, conflict or assurance requires it.
+
+## Supersessão dirigida de ator — ADR-0012/D-0065 (proposta 2026-10-16)
+O Owner reabriu expressamente **apenas** a política operacional de autoria/atores do ADR-0008 para a V1.2 deste repositório. Após merge protegido de `GBS-GOV-FAST-001`, Codex passa a ser executor prioritário de código funcional/complexo, mas não exclusivo de testes/CI/pequenas correções: ChatGPT+GitHub podem realizar essas operações de modo limitado e auditável. A documentação deixa de ser atualizada a cada resposta e passa a ser atualizada em marcos materiais. As demais restrições constitucionais, product boundary, segurança, source truth, autorização S4, evidência final e DoD permanecem congeladas. Até a integração, ADR-0008 continua vigente.
