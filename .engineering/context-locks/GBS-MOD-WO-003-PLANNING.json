@@ -1,0 +1,229 @@
+{
+  "schema": "GEF_PLANNING_CONTEXT_LOCK_V1",
+  "kind": "GBS_MOD_WO_003_SCHEDULER_PLANNING_ONLY",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "workOrderId": "GBS-MOD-WO-003",
+  "issue": 397,
+  "programIssue": 393,
+  "status": "PLANNING_CANDIDATE_NOT_ADMITTED",
+  "proposedRisk": "ELEVATED",
+  "planningActor": "CHATGPT_GITHUB_GOVERNANCE_ONLY",
+  "effectiveImplementationActor": "CODEX_ONLY_UNDER_ADR_0008_WHEN_SEPARATELY_ADMITTED",
+  "actualImplementationAuthorized": false,
+  "doNotExecute": true,
+  "doNotDispatch": true,
+  "activeImplementationContextLock": null,
+  "canAllocateWorktrees": false,
+  "canWriteImplementation": false,
+  "canRunCodex": false,
+  "canMerge": false,
+  "canPromoteCheckpoint": false,
+  "canChangeRulesets": false,
+  "canRelease": false,
+  "ownerAuditIndependent": false,
+  "parentBase": {
+    "branch": "main",
+    "sha": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "requiresExactMatchForPlanningReview": true,
+    "actualMainVerifiedAtPlanning": true
+  },
+  "planningArtifacts": [
+    {
+      "path": ".engineering/work-orders/GBS-MOD-WO-003.md",
+      "gitBlobSha": "1f3214a3bdf8de644fd91709e586feadd757be9d"
+    },
+    {
+      "path": ".engineering/planning/GBS-MOD-WO-003-SCHEDULER-DESIGN.md",
+      "gitBlobSha": "a2c08f1611561015b4fc4cf4217eff976620388f"
+    }
+  ],
+  "sourceFingerprints": [
+    {
+      "path": "AGENTS.md",
+      "gitBlobSha": "492f1d4ae66abe8749a082d68decc81a3b4fd702"
+    },
+    {
+      "path": ".engineering/SOURCE-HIERARCHY.md",
+      "gitBlobSha": "bedc10c97d28154efe59ff43fc1d175add37f568"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.md",
+      "gitBlobSha": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a"
+    },
+    {
+      "path": ".engineering/CHECKPOINT.json",
+      "gitBlobSha": "4a653772c31dffee869a9bac17345241cfc6db03"
+    },
+    {
+      "path": ".engineering/SECURITY.md",
+      "gitBlobSha": "799206278e9f5bc02aec07c8e6d4489c530bb320"
+    },
+    {
+      "path": ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md",
+      "gitBlobSha": "f3246fc074b450da986ad3dcda76f3d005dc8c6a"
+    },
+    {
+      "path": ".engineering/ARCHITECTURE.md",
+      "gitBlobSha": "5c2b44db3805dbd5329dc99a8a9b774360c4136a"
+    },
+    {
+      "path": ".engineering/REQUIREMENTS.md",
+      "gitBlobSha": "6220bba3e8d1c8c50d488e00e4ea9661e2647939"
+    },
+    {
+      "path": ".engineering/DEFINITION-OF-DONE.md",
+      "gitBlobSha": "b6faba1b969724401e5ce38ee9db5c5aa120056c"
+    },
+    {
+      "path": ".engineering/DECISIONS-LEDGER.md",
+      "gitBlobSha": "569479a700f1956bdb2d97be30a27aaccf592b7e"
+    },
+    {
+      "path": "packages/contracts/src/work-order.ts",
+      "gitBlobSha": "9a665ae1a4dff817349d48d799dfaa105eb5aff8"
+    },
+    {
+      "path": "packages/preflight/src/change-impact.ts",
+      "gitBlobSha": "5aff784c3f68e295a9b6a98ef4086d324a69fb54"
+    },
+    {
+      "path": "packages/task-context-compiler/src/s07-tiered-context-lock.ts",
+      "gitBlobSha": "2e03843a8bf24582e50f1a58add82598e69f8ab0"
+    },
+    {
+      "path": "packages/assurance-pipeline/src/gef-gate.ts",
+      "gitBlobSha": "aaafa732305f20c4738429a8b6e29879d2156819"
+    },
+    {
+      "path": "packages/AGENTS.md",
+      "gitBlobSha": "fa14a7eb190d722382507402f12d82a72a934237"
+    },
+    {
+      "path": "tests/AGENTS.md",
+      "gitBlobSha": "b08e069681f685c2cd8a567cc0cb5a837583bb78"
+    }
+  ],
+  "currentKnownBlockers": [
+    {
+      "kind": "WO002_INTERFACE_NOT_PROMOTED",
+      "issue": 396,
+      "description": "After Owner-approved PR451 current checkpoint agrees, but WO-002 #396 implementation not started, no effective lock, no promoted interface. PR #450 remains inactive DRAFT."
+    },
+    {
+      "kind": "WO008_WORKSPACE_FACTORY_NOT_ADMITTED",
+      "issue": 402
+    },
+    {
+      "kind": "WO013_DISPATCH_NOT_ADMITTED",
+      "issue": 408
+    },
+    {
+      "kind": "SECURITY_GITLEAKS_HISTORY",
+      "issue": 439,
+      "description": "All-ref scheduled Gitleaks 21 UNKNOWN; npm 1.1.3 release blocked."
+    },
+    {
+      "kind": "ACTOR_DECISION_UNCHANGED",
+      "issue": 452,
+      "description": "Current ADR-0008 CodeX-only implementation; #453 actor policy proposal not effective."
+    }
+  ],
+  "planningWriteAllowed": [
+    ".engineering/work-orders/GBS-MOD-WO-003.md",
+    ".engineering/planning/GBS-MOD-WO-003-SCHEDULER-DESIGN.md",
+    ".engineering/context-locks/GBS-MOD-WO-003-PLANNING.json"
+  ],
+  "implementationWriteAllowed": [],
+  "writeForbiddenForPlanning": [
+    "AGENTS.md",
+    ".engineering/CHECKPOINT.md",
+    ".engineering/CHECKPOINT.json",
+    ".engineering/SECURITY.md",
+    ".engineering/decisions/**",
+    ".github/**",
+    "packages/**",
+    "tests/**",
+    "package.json",
+    "package-lock.json"
+  ],
+  "acceptanceCriteria": [
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "A6",
+    "A7",
+    "A8",
+    "A9",
+    "A10"
+  ],
+  "planEvidence": [
+    "Current main exact SHA equals e71120266c40235089444c9c0122280c5da4e5bd after separately authorized PR451 protected squash",
+    "16/16 current source Git blob fingerprints matched: 14 unchanged + 2 reconciled checkpoints",
+    "Original WO and scheduler design docs prepended explicit current source state, historical passages preserved",
+    "Two planning docs Git blob SHAs match refreshed references in this lock",
+    "Verify exactly three planning files in PR diff and no product/code/CI/checkpoint writes",
+    "JSON parses and doNotExecute/doNotDispatch=true, all executive/safety authority remains denied",
+    "Original Issue #397 acceptance A1-A10 maintained, none considered executed",
+    "Hosted CI at exact refreshed PR HEAD must be rechecked after final sync; old CI cannot transfer",
+    "Owner audit NOT_INDEPENDENT and NO MERGE unless separately targeted",
+    "No Codex, no provider dispatch, no WO002 lock activation; PR451 already merged"
+  ],
+  "stopCondition": "GBS_MOD_WO_003_PLANNING_PACKET_EXACT_HEAD_AUDIT_READY_NOT_ADMITTED",
+  "post451SourceReconciliation": {
+    "status": "PREVIOUS_CHECKPOINT_TEMPORAL_CONFLICT_RESOLVED_ON_CURRENT_MAIN_BUT_NO_WO003_AUTHORITY",
+    "pr": 451,
+    "mergeCommit": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "checkpointMdBlob": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a",
+    "checkpointJsonBlob": "4a653772c31dffee869a9bac17345241cfc6db03",
+    "sourceFingerprintsVerifiedCount": 16,
+    "sourceFingerprintsChangedSinceOriginal": 2,
+    "originalMainPreservedInHistory": true,
+    "predecessorWo002ImplementationStarted": false,
+    "ownerImplementationAuthorized": false,
+    "doNotExecute": true
+  },
+  "historicalPlanningStatePre451": {
+    "oldPlanningMainSha": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "oldCheckpointFingerprints": [
+      {
+        "path": ".engineering/CHECKPOINT.md",
+        "gitBlobSha": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a"
+      },
+      {
+        "path": ".engineering/CHECKPOINT.json",
+        "gitBlobSha": "4a653772c31dffee869a9bac17345241cfc6db03"
+      }
+    ],
+    "oldPlanningArtifacts": [
+      {
+        "path": ".engineering/work-orders/GBS-MOD-WO-003.md",
+        "gitBlobSha": "1d468631157ae3c0a38baf9fb678c44021fa0a61"
+      },
+      {
+        "path": ".engineering/planning/GBS-MOD-WO-003-SCHEDULER-DESIGN.md",
+        "gitBlobSha": "63cbdcbaf5f92931a2d1e85b7f9ba6720936084b"
+      }
+    ],
+    "formerStateConflict": {
+      "kind": "STATE_CONFLICT",
+      "description": "After #449, CHECKPOINT.md vs JSON WO-002 admission temporal effectivity conflict; corrective #451 still DRAFT/unmerged.",
+      "pr": 451,
+      "head": "3e8554ff940f2e9254119cdf8c489ee8946cbbfb",
+      "mergeAuthorized": false
+    },
+    "oldEvidence": [
+      "Live main equals pinned e0356f1de5dae2351d8701a76c736a22832929c2 at preparation",
+      "Verify exactly three planning files added, zero other paths",
+      "Verify two planning artifact Git blob SHAs match this lock",
+      "Verify JSON parses and all doNot flags false for authority, true for doNotExecute/doNotDispatch",
+      "Verify exact original issue #397 acceptance A1-A10 preserved without changed criteria",
+      "Read actual GitHub hosted required tests for exact future PR head, do not infer from old CI",
+      "Mark owner audit NOT_INDEPENDENT and DO NOT MERGE",
+      "No #451 protected merge, no #450 activation, no Codex dispatch"
+    ],
+    "originalJsonGitBlob": "b5db24760e6aec1d1037db74e12d309bb16ecb3a",
+    "originalPrHead": "4dd27dadcc914131532387f16071e37d5e5eb287"
+  }
+}
