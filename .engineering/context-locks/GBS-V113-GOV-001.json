@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V113-GOV-001",
+  "status": "PLANNING_ONLY_PROPOSED_UNAUDITED",
+  "risk": "ELEVATED",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "issue": 434,
+  "sourceImplementationIssue": 432,
+  "sourceImplementationPr": 433,
+  "sourceImplementationAuditedHead": "785b15e9088f16872c59c142f3c86217e4e2d851",
+  "sourceImplementationSquashMerge": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+  "planningBaseBranch": "main",
+  "planningBaseSha": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+  "planningBranch": "docs/v113-gov001-postmerge-plan",
+  "sources": {
+    "checkpointMd": "ea31e6cab8964aca4b0f74296b2953e6da51d6d7",
+    "checkpointJson": "468dec80ad5a48c044e4282d87481a8267f44866",
+    "decisions": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+    "originalWorkOrder": "GBS-V113-PARALLEL-001",
+    "sourceHierarchy": ".engineering/SOURCE-HIERARCHY.md"
+  },
+  "allowedWrites": [
+    ".engineering/work-orders/GBS-V113-GOV-001.md",
+    ".engineering/context-locks/GBS-V113-GOV-001.json",
+    ".engineering/checkpoint-deltas/GBS-V113-GOV-001-PROPOSED.md",
+    ".engineering/evidence/GBS-V113-GOV-001-PREFLIGHT.md"
+  ],
+  "forbiddenWrites": [
+    ".engineering/CHECKPOINT.md",
+    ".engineering/CHECKPOINT.json",
+    ".engineering/DECISIONS-LEDGER.md",
+    ".engineering/decisions/ADR-0011-PARALLEL-PATCH-EXCEPTION.md",
+    ".github/**",
+    "packages/**",
+    "tests/**",
+    "package.json",
+    "package-lock.json"
+  ],
+  "postMergeCi": "PUSH_CHECKS_PASS_RECORDED__SCHEDULED_GITLEAKS_FAILURE_UNRESOLVED",
+  "checkpointPromotion": "NOT_AUTHORIZED",
+  "release": "NOT_ADMITTED",
+  "stopCondition": "GBS_V113_GOV_001_POST_MERGE_EVIDENCE_REQUIRED_BEFORE_CHECKPOINT_PROMOTION",
+  "postMergeCiInitialPlanningSnapshot": "NOT_VERIFIED",
+  "postMergeEvidence20261012": {
+    "recordSource": "https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128164546",
+    "observedCommit": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+    "pushChecks": "PASS_REPORTED_FROM_AUTHENTICATED_GH_API",
+    "pushCheckRunIds": "SEE_ISSUE_434_RECIPT_AND_DIRECT_GH_API",
+    "scheduledScannerRunId": 38253721487,
+    "scheduledScannerJobs": {
+      "gitleaks": {
+        "id": 114826269082,
+        "conclusion": "FAILURE"
+      },
+      "trivy": {
+        "id": 114826268794,
+        "conclusion": "SUCCESS"
+      }
+    },
+    "redactedFindingsSource": "https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128530795",
+    "findingCountReported": 21,
+    "findingDisposition": "STATIC_TRIAGE_ONLY_NOT_SECURITY_ACCEPTANCE",
+    "securityGate": "BLOCKED_PENDING_OWNER_SECURITY_VERDICT_AND_REQUIRED_REVALIDATION",
+    "checkpointPromotion": "NOT_AUTHORIZED",
+    "release": "NOT_ADMITTED",
+    "note": "Original NOT_VERIFIED snapshot retained as historical observation; push pass does not negate later scheduled all-refs scanner failure."
+  }
+}
