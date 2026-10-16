@@ -3,7 +3,7 @@
 - **Work ID:** `GBS-GOV-FAST-001`
 - **Decision ID:** `D-0065`
 - **Owner decision:** 2026-10-16, expressamente extensível ao desenvolvimento da **V1.2 deste próprio repositório**, não somente a projetos novos.
-- **Status:** `PROPOSED_PENDING_PROTECTED_MERGE`. Só passa a `EFFECTIVE_ON_MAIN` após a integração protegida desta PR, revisão objetiva do HEAD e verificações mandatórias.
+- **Status:** `EFFECTIVE_ON_MAIN` para a decisão original D-0065 desde o squash protegido da PR #467 (`f0dcc60622f9f41368443f84caf409ed91b8c0cf`). A exceção adicional WO-003/D-0066 abaixo é **proposta** até merge protegido próprio.
 - **Observed base:** `main@6a81d4db846c4ee7180cea4159d7682296d7c283`.
 - **Supersedes narrowly:** as cláusulas de exclusividade de autor Codex, a obrigação de atualização documental a cada resposta, os ciclos de PR somente de planejamento por microetapa e a interpretação de testes amplos repetidos durante desenvolvimento em ADR-0008/D-0063, nos roteiros AGENTS/workflow e nas orientações de intensidade. Não altera o produto, o escopo congelado, requisitos, proteções ou aceitação histórica.
 
@@ -54,3 +54,11 @@ A V1.2 contabiliza 3/10 U12 aceitos e a implementação funcional da GBS-V12-WO-
 **Evidence/acceptance:** diff restrito e auditável; identificação exata base/head; CI e os quatro checks do ruleset aprovados no HEAD; nenhum HIGH/CRITICAL; owner audit `NOT_INDEPENDENT`; merge protegido. Mudança constitucional de ator explicitada aqui e no Constitution Lock, preservando demais grupos. Após merge, registrar marco de adoção uma única vez no checkpoint governado, sem atualização por resposta.
 
 **STOP:** `GBS_GOV_FAST_001_PROPOSAL_PR_PENDING_EXACT_HEAD_AUDIT_AND_PROTECTED_MERGE`.
+
+
+## Emenda específica D-0066: executor ChatGPT para GBS-V12-WO-003 (pendente de merge)
+
+- **Decisão do Owner em 2026-10-16:** autoriza implementar U12-03 Marathon e U12-05 Delta Assurance diretamente via ChatGPT + GitHub, sem Codex, se demonstravelmente viável. Essa autorização é delimitada à **WO-003**; não abre permissão global para mudanças HIGH_ASSURANCE, produção, pagamentos, migrações privilegiadas ou qualquer superfície fora dos 14 padrões já admitidos.
+- **Efeito técnico:** uma vez auditada e integrada a emenda de ator e o Context Lock revalidado, ChatGPT torna-se executor elegível em paridade com Codex para as duas fatias funcionais completas, sob risco ELEVATED, inspeção dos contratos atuais, testes reais e trilha de evidências. A mera redação deste ADR ou uma branch de proposta não ativa o lock.
+- **Vedações intactas:** nenhum bypass de revisão independente obrigatória, required checks, segurança, DoD, S4, evidência de source/actor, proteção de branch, promoção de checkpoint ou publicação npm. A PR funcional de implementação será separada da mudança de autoridade, sem replanejar o produto.
+- **Estado de admissão desta emenda:** `PENDING_PROTECTED_MERGE_AND_EXACT_HEAD_VALIDATION`. Owner audit é `NOT_INDEPENDENT`; qualquer bloqueio HIGH/CRITICAL interrompe o escopo afetado.

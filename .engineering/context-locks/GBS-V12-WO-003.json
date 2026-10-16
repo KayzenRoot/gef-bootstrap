@@ -6,10 +6,10 @@
   "admissionPr": 465,
   "admissionMergeSha": "6d4f79bff1763ce2db124951355ba86053764e8d",
   "kind": "GBS_V12_WO003_FRESH_IMPLEMENTATION_CONTEXT_LOCK",
-  "state": "IMPLEMENTATION_LOCK_READY_FOR_OWNER_AUDIT_CONDITIONAL",
+  "state": "IMPLEMENTATION_LOCK_CHATGPT_ACTOR_AMENDMENT_PENDING_PROTECTED_MERGE",
   "risk": "ELEVATED",
   "implementationStarted": false,
-  "actor": "CODEX_ONLY_AFTER_EFFECTIVITY",
+  "actor": "CHATGPT_OR_CODEX_ONLY_AFTER_GOVERNED_EFFECTIVITY",
   "owner": {
     "approvedScope": [
       "U12-03 Marathon",
@@ -17,16 +17,17 @@
     ],
     "approvedPr465ProtectedSquash": "YES_ALREADY_MERGED",
     "approvedFreshLockPreparation": "YES",
-    "separateLockActivationMerge": "PENDING_EXACT_TARGET_OWNER_AUTHORIZATION",
-    "executorAuthorization": "CONDITIONAL_AFTER_TARGET_SPECIFIC_OWNER_APPROVAL_AND_POSTMERGE_EFFECTIVITY_PROOF",
+    "separateLockActivationMerge": "PR_466_PROTECTED_MERGE_COMPLETED",
+    "executorAuthorization": "OWNER_DIRECTED_CHATGPT_WO003_SCOPE_ONLY_PENDING_GOVERNED_ACTOR_AMENDMENT_MERGE",
     "checkpointPromotion": "NOT_AUTHORIZED",
     "v12Credit": "UNCHANGED_3_OF_10",
-    "release": "NOT_AUTHORIZED"
+    "release": "NOT_AUTHORIZED",
+    "chatgptImplementationAuthorization": "OWNER_EXPLICIT_2026_10_16_SCOPE_U12_03_U12_05_CONDITIONAL_PROTECTED_MERGE"
   },
   "source": {
     "implementationBase": {
       "ref": "main",
-      "sha": "6d4f79bff1763ce2db124951355ba86053764e8d"
+      "sha": "af9a0746b8542f212fd169ffd11e282c409c8528"
     },
     "postmergeRequiredChecks": [
       "Repository validation",
@@ -37,7 +38,7 @@
     "postmergeCheckState": "MUST_VERIFY_CURRENT_MAIN_NO_SUCCESS_ASSUMED",
     "canonicalBlobCount": 19,
     "canonicalBlobs": {
-      "AGENTS.md": "d790f6c6e2e310c0d49ca5b3eccfcf2eafe4d69e",
+      "AGENTS.md": "232d6a67f3b9c7497c3eb2b445ad7d96370e17a9",
       ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
       ".engineering/CHECKPOINT.md": "20210b4aba48e43cd2590a91d114fd68877c51a2",
       ".engineering/CHECKPOINT.json": "2d8a69baa3b4da23f01892981a17d56d5d40795d",
@@ -47,13 +48,13 @@
       ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
       ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
       ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
-      ".engineering/DECISIONS-LEDGER.md": "17fb5cff2ea02d5c34371550b6c5599b5d49c2f5",
+      ".engineering/DECISIONS-LEDGER.md": "95f0b0c2b1f64a1132e688c81b1fc21b4f39a1d1",
       ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
       ".engineering/V1.2-RELEASE-DENOMINATOR.md": "f33db46412110584604bb556e8a62ecbef9c59c1",
       ".engineering/V1.2-PROFILE-MATRIX.md": "c9446bedd52469caa593ca5278c725b8e8c84d32",
       ".engineering/decisions/ADR-0010-V1.2-PROFILE-AND-HIGH-ASSURANCE-BOUNDARIES.md": "536bd06c01e942c5e090a693591d5cd324585c59",
       "package.json": "e917d281c9ba60157e82265d949d9958eac83731",
-      ".engineering/work-orders/GBS-V12-WO-003.md": "25d15ac018da428bc633c8cc4ba610ab1839cda4",
+      ".engineering/work-orders/GBS-V12-WO-003.md": "8b42378f2dd0e023927ebc3be76e9560746d1b8a",
       ".engineering/context-locks/GBS-V12-WO-003-CANDIDATE.json": "879f42eb2312bd2b9171f8f48d810218d54dd3cd",
       ".github/prompts/fast-resume-current-main.prompt.md": "3713e96c3c7685cd4c83a0b57cfd5d36ba03b162"
     },
@@ -150,9 +151,9 @@
     "parallelRule": "Only independent read/analysis; serialize overlapping writes, reuse proof when exact fingerprints unchanged."
   },
   "executionPolicy": {
-    "codeTask": "ONE_COHERENT_CODEX_MISSION_TWO_COMPLETE_VERTICAL_SLICES",
-    "implementationBranch": "codex/v12-wo003-marathon-delta-assurance",
-    "preflight": "Check actual effective main and Source Pack, compare all admitted blob fingerprints, ensure implementation actor/approval, fetch stale local origin/main safely, worktree isolate, inspect exported API contracts before code edits. The on-branch contract remains CONDITIONAL until exact-target Owner approval and the real protected merge; then Codex reads it from the authoritative main and confirms all effectivity predicates (rather than requiring a second separate amendment just to flip a stale static flag).",
+    "codeTask": "ONE_COHERENT_AUTHORIZED_EXECUTOR_MISSION_TWO_COMPLETE_VERTICAL_SLICES",
+    "implementationBranch": "implementation/v12-wo003-marathon-delta-assurance",
+    "preflight": "Check actual effective main and Source Pack, compare all admitted blob fingerprints, ensure implementation actor/approval, fetch stale local origin/main safely, worktree isolate, inspect exported API contracts before code edits. The on-branch contract remains CONDITIONAL until exact-target Owner approval and the real protected merge; then authorized executor reads it from the authoritative main and confirms all effectivity predicates (rather than requiring a second separate amendment just to flip a stale static flag).",
     "passes": [
       "Implement U12-03 existing M14-M18/M63 multiwave with dependency ordering, resumable exact-bound receipts and no duplicate promoted side effects.",
       "Implement U12-05 existing M24-M28 first-failure preservation, causal-repair/flake observations, bounded proof reuse and no suppressed required failures.",
@@ -163,28 +164,43 @@
     "failureHandling": "AUTO_REPAIR safe stale local Git cache and inside-scope bugs. Unavailable external dependencies affect only dependent evidence. STOP genuine normative lock drift, HIGH/CRITICAL, unauthorized changed write boundaries, wrong executor, release/merge without explicit owner authorization."
   },
   "effectivity": {
-    "status": "CONDITIONAL_EFFECTIVE_ONLY_AFTER_ALL_EXPLICIT_GATES",
-    "prForActivation": "TO_BE_CREATED",
+    "status": "OWNER_DIRECTED_ACTOR_AMENDMENT_NOT_EFFECTIVE_UNTIL_PROTECTED_MERGE_AND_EXACT_MAIN_PROOF",
+    "prForActivation": "GOVERNED_WO003_CHATGPT_ACTOR_AMENDMENT_PENDING_PR",
     "mandatory": [
       "Owner exact-target approval for activating THIS lock, not blanket merge allowance",
       "Protected merge of implementation lock PR with successful required checks",
       "Re-read actual main after squash and verify source fingerprints, scope and actor",
       "No CRITICAL/HIGH findings, no unresolved normative conflict"
     ],
-    "approvedActionAfterActivation": "Codex implementation within admitted write paths only; no self merge or checkpoint promotion.",
-    "stop": "PRE_EFFECTIVE_DO_NOT_EXECUTE; AFTER_EFFECTIVITY_CODEX_MAY_IMPLEMENT_ONLY_THE_ALLOWED_WORK_ORDER; NEVER_SELF_MERGE_OR_PROMOTE",
+    "approvedActionAfterActivation": "Authorized ChatGPT/GitHub or Codex implementation within same admitted 14 write patterns; no self merge, checkpoint promotion, release or npm.",
+    "stop": "PRE_EFFECTIVE_DO_NOT_EXECUTE; AFTER_EFFECTIVITY_OWNER_AUTHORIZED_EXECUTOR_MAY_IMPLEMENT_WITHIN_LOCK_ONLY; NEVER_SELF_MERGE_OR_PROMOTE",
     "noSelfActivation": true,
     "booleanInputsMustBeEvaluatedAtRuntime": true,
-    "activationDecision": "Owner explicit target-specific PR #466 protected merge authorization and explicit Codex implementation authorization + successful protected merge and exact-main source/check gates; never assume a draft branch is active."
+    "activationDecision": "Owner expressly authorized on 2026-10-16 ChatGPT/GitHub as alternative WO-003 executor; actual effectivity requires protected merge of actor amendment, exact-main revalidation, complete checks and no normative/security blocker. Historical PR #466 protected merge completed."
   },
   "implementationAllowedOnlyIf": {
-    "ownerSpecificProtectedMergeOfPr466": "MUST_BE_RECORDED",
-    "ownerCodexExecutionAuthorization": "MUST_BE_RECORDED",
+    "ownerSpecificProtectedMergeOfPr466": "CONFIRMED_ALREADY_MERGED",
+    "ownerCodexExecutionAuthorization": "HISTORICAL_APPROVAL_PRESERVED",
     "protectedMergeAndCurrentMainVerified": true,
     "headChecksAndSecurityGreen": true,
     "allCanonicalAndSurfaceFingerprintsMatch": true,
-    "executor": "CODEX_ONLY",
+    "executor": "OWNER_AUTHORIZED_CHATGPT_OR_CODEX_AFTER_AMENDMENT_EFFECTIVE",
     "scope": "EXACT_U12_03_AND_U12_05_WITHIN_WRITE_ALLOWED",
-    "anyFailure": "DO_NOT_EXECUTE_THE_AFFECTED_SCOPE"
+    "anyFailure": "DO_NOT_EXECUTE_THE_AFFECTED_SCOPE",
+    "ownerChatGPTExecutionAuthorization": "OWNER_DIRECTED_2026_10_16_PENDING_AMENDMENT_PROTECTED_MERGE",
+    "currentActorAmendmentMerge": "MUST_VERIFY_PROTECTED_MERGE_ON_ACTUAL_MAIN"
+  },
+  "actorAmendment": {
+    "decision": "D-0066",
+    "status": "PENDING_PROTECTED_MERGE",
+    "scope": "EXACT_U12_03_AND_U12_05",
+    "ownerDirectiveDate": "2026-10-16",
+    "risk": "ELEVATED",
+    "originalWriteAllowedCount": 14,
+    "immutableWritePatterns": true,
+    "originalCanonicalSourceCount": 19,
+    "originalImplementationFingerprintCount": 14,
+    "adr": ".engineering/decisions/ADR-0012-FAST-DELIVERY-GITHUB-FIRST.md",
+    "sourceOfAuthority": "OWNER_DIRECTED_WITH_PROTECTED_MERGE_GATES"
   }
 }

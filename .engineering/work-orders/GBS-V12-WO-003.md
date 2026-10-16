@@ -1,8 +1,8 @@
 # GBS-V12-WO-003 — Marathon + Delta Assurance: fast-track Wave A
 
 **Tracking:** [Issue #462](https://github.com/KayzenRoot/gef-bootstrap/issues/462) · Fast delivery [#437](https://github.com/KayzenRoot/gef-bootstrap/issues/437).
-**Status:** `PROPOSED_FOR_OWNER_ADMISSION / NO IMPLEMENTATION AUTHORITY ON CANDIDATE BRANCH`.
-**Planning read base:** `main@8254918df8eaa7189105236d44c0ff8fdf3ccc6b`. Actual code execution base must be the verified **future post-admission main SHA**, not this old read base. No self-admission by this Markdown alone.
+**Status:** `ADMITTED_CONDITIONALLY` após PR #465/#466; emenda D-0066 de ator ChatGPT ainda `PENDING_PROTECTED_MERGE` nesta branch candidata. O código do produto não é considerado iniciado na `main`.
+**Historical planning read base:** `main@8254918df8eaa7189105236d44c0ff8fdf3ccc6b`. **Current amendment read base:** `main@af9a0746b8542f212fd169ffd11e282c409c8528`; implementation must use the actual post-amendment `main` and source hashes after protected merge. No self-admission by this Markdown alone.
 **Source:** `.engineering/REQUIREMENTS.md` U12-03/U12-05; V1.2 Source Pack, DoD, Architecture, Security, ADR-0008, AGENTS, effective Context Lock and CHECKPOINT have precedence.
 
 ## Outcome and why now
@@ -31,7 +31,7 @@ Deliver **2/7 still missing universal V1.2 items in ONE coherent Work Order**. E
 ### A3. Compatibility and authority
 
 - Keep stable CLI `1.1.2` behavior and V1.2 U12-01/U12-02/U12-04 exports and regression suites passing.
-- Preserve ADR-0008 Codex implementation actor, exact branch admission, owner audit `NOT_INDEPENDENT`, Security/DoD and protected merge. Do not automate privileged/release operations.
+- Preserve ADR-0008 except the narrow adopted ADR-0012/D-0065 and proposed D-0066 executor supersession: ChatGPT or Codex may implement this WO **only after** the specific governed actor amendment is protected-merged and effectivity proven; owner audit `NOT_INDEPENDENT`, Security/DoD, independent specialist requirements and protected merge remain. Do not automate privileged/release operations.
 - No subscription/paid tools, external persistent service or second agent/orchestration runtime.
 - Implement the **complete vertical slices A1+A2**, not merely types/mock files. If one U12 remains incomplete, report its individual `NOT_IMPLEMENTED` status, never artificially award 5/10.
 
@@ -44,15 +44,15 @@ Deliver **2/7 still missing universal V1.2 items in ONE coherent Work Order**. E
 
 **WRITE_FORBIDDEN:** canonical checkpoints until later separately authorized promotion, `.github/workflows/**`, GitHub branch/security rulesets, `.engineering/SECURITY.md`, Constitution, DoD, ADRs, `package.json`, lockfile, CLI package/release, tags/deployment/npm and all code outside the admitted list. Additional write surfaces must be owner-approved through a scoped correction before use, no inferred permissions.
 
-## One-pass Codex implementation and final evidence
+## One-pass authorized executor implementation and final evidence
 
 Once a **single exact-base Context Lock** and Owner admission are effective:
 1. `PREFLIGHT`: on fresh main, compare canonical source blobs, check author/write boundary and actual APIs. Handle recoverable Git cache drift via automatic fetch/worktree; do not stop for stale cache. Stop true normative lock/source conflict only for affected operation.
-2. `BUILD`: implement A1 (Marathon) and A2 (Delta Assurance) sequentially in one Codex mission, with internal checkpoints *within the task* instead of a new Owner approval per microchange. Focused deterministic and adversarial tests per coherent vertical slice; repair within admitted paths in same run.
+2. `BUILD`: implement A1 (Marathon) and A2 (Delta Assurance) sequentially in one authorized ChatGPT/GitHub or Codex mission, with internal checkpoints *within the task* instead of a new Owner approval per microchange. Focused deterministic and adversarial tests per coherent vertical slice; repair within admitted paths in same run.
 3. `FINAL ASSURANCE`: run required `npm run build`, `npm run typecheck`, targeted U12 and regression `npm run validate`, security audit and all required exact-HEAD GitHub contexts. No "test everything only after code is done": focused checks during work, full proof at final gate.
 4. `DELIVER`: one scoped implementation PR and Evidence Bundle with actual baselines/run attempts/check statuses; `PROPOSED_ONLY` Checkpoint Delta. Owner ChatGPT reviews the actual final HEAD, not every internal attempt. If fails, correct on same PR.
 5. **STOP** before protected implementation merge or checkpoint promotion, no WO-004 start while dependent acceptance remains unresolved.
 
 **Progress:** only after future separately authorized code integration + current native/end-to-end assurance + owner promotion can U12-03 and U12-05 increment the core from 3/10 to a maximum 5/10. Current V1.2 stays 3/10.
 
-**Current candidate STOP:** `GBS_V12_WO_003_PROPOSED_FOR_EXACT_MAIN_ADMISSION_AND_EXECUTION_LOCK_NOT_YET_EFFECTIVE`.
+**Current candidate STOP:** `GBS_V12_WO_003_OWNER_AUTHORIZED_CHATGPT_EXECUTOR_AMENDMENT_PENDING_PROTECTED_MERGE_AND_FINAL_PREFLIGHT`.
