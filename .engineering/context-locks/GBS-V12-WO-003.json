@@ -37,7 +37,7 @@
     "postmergeCheckState": "MUST_VERIFY_CURRENT_MAIN_NO_SUCCESS_ASSUMED",
     "canonicalBlobCount": 19,
     "canonicalBlobs": {
-      "AGENTS.md": "492f1d4ae66abe8749a082d68decc81a3b4fd702",
+      "AGENTS.md": "d790f6c6e2e310c0d49ca5b3eccfcf2eafe4d69e",
       ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
       ".engineering/CHECKPOINT.md": "20210b4aba48e43cd2590a91d114fd68877c51a2",
       ".engineering/CHECKPOINT.json": "2d8a69baa3b4da23f01892981a17d56d5d40795d",
@@ -47,7 +47,7 @@
       ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
       ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
       ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
-      ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+      ".engineering/DECISIONS-LEDGER.md": "17fb5cff2ea02d5c34371550b6c5599b5d49c2f5",
       ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
       ".engineering/V1.2-RELEASE-DENOMINATOR.md": "f33db46412110584604bb556e8a62ecbef9c59c1",
       ".engineering/V1.2-PROFILE-MATRIX.md": "c9446bedd52469caa593ca5278c725b8e8c84d32",
