@@ -289,4 +289,10 @@ The owner-operated ChatGPT semantic audit remains NOT_INDEPENDENT. This entry re
 - **Owner instruction:** acelerar a V1.2 deste próprio repositório já, com Codex concentrado em código, ChatGPT em documentação, QA, testes/CI, revisão e correções pontuais via GitHub, conforme risco.
 - **Decision:** planejamento e documentos canônicos uma vez por marco real; parar de atualizar documentação por resposta/microteste; uma PR funcional por incremento; validação de desenvolvimento proporcional ao impacto, sem afrouxar gates finais e segurança. Adoção expressa em V1.2, incluindo a WO-003, sem reset de progresso.
 - **Supersession:** restrição de autoria Codex-only e loops documentais de ADR-0008/D-0063, no domínio processo/atores; detalhes no ADR-0012. Requisitos, Scope, DoD, Test Plan, Security, Deployment, 4 checks de main, S4 e revisão especializada HIGH_ASSURANCE permanecem.
-- **Status:** `OWNER_DIRECTED / PROPOSED_PENDING_PROTECTED_MERGE`; não efetivo até integração auditada. Não autoriza npm, bypass de scanner nem promoção V1.2.
+- **Status:** `EFFECTIVE_ON_MAIN`, PR #467 squash-merged `f0dcc60622f9f41368443f84caf409ed91b8c0cf`. Não autoriza npm, bypass de scanner nem promoção V1.2.
+
+## D-0066 — Executor ChatGPT na GBS-V12-WO-003 (2026-10-16)
+- **Owner directive:** implementar por ChatGPT/GitHub tudo que for tecnicamente validável, especificamente U12-03 Marathon e U12-05 Delta Assurance na WO-003, sem Codex obrigatório.
+- **Limite:** exceção restrita à WO-003 de risco ELEVATED e aos 14 padrões de escrita admitidos; modifica somente a cláusula de ator da WO e lock. Não admite WO-004/005, escopo ampliado, S4, checkpoint, release ou npm.
+- **Autoridade:** condicionada ao merge protegido da emenda de ator, à ausência de conflito normativo, verificação exata dos fingerprints de source, revisão dos exports reais, audit/CI e segurança aplicável. Um patch local não é execução integrada ou aceitação.
+- **Status:** `OWNER_DIRECTED / PROPOSED_PENDING_PROTECTED_MERGE`; pós-merge deve haver prova e atualização por marco, não por resposta.

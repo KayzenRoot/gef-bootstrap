@@ -59,5 +59,8 @@ An explicit product-owner decision initiates a governed supersession process; it
 ## Consumption rule
 Downstream work should consume the smallest relevant set of `CONST-F*`, amendment and `D-*` references first, expanding to full canonical sources only when validity, ambiguity, conflict or assurance requires it.
 
-## Supersessão dirigida de ator — ADR-0012/D-0065 (proposta 2026-10-16)
-O Owner reabriu expressamente **apenas** a política operacional de autoria/atores do ADR-0008 para a V1.2 deste repositório. Após merge protegido de `GBS-GOV-FAST-001`, Codex passa a ser executor prioritário de código funcional/complexo, mas não exclusivo de testes/CI/pequenas correções: ChatGPT+GitHub podem realizar essas operações de modo limitado e auditável. A documentação deixa de ser atualizada a cada resposta e passa a ser atualizada em marcos materiais. As demais restrições constitucionais, product boundary, segurança, source truth, autorização S4, evidência final e DoD permanecem congeladas. Até a integração, ADR-0008 continua vigente.
+## Supersessão dirigida de ator — ADR-0012/D-0065 (vigente desde PR #467)
+O Owner reabriu apenas a política operacional de autoria/atores do ADR-0008 para a V1.2. Após squash protegido da PR #467 em `f0dcc60622f9f41368443f84caf409ed91b8c0cf`, Codex é prioritário, mas não exclusivo de testes/CI/pequenas correções. ChatGPT+GitHub podem agir com escopo admitido, risco compatível, evidência e auditoria. Documentação por marco material. Product boundary, segurança, source truth, S4, CI final e DoD permanecem congelados.
+
+### Emenda D-0066 — executor ChatGPT na WO-003 (não efetiva antes do merge)
+O Owner autorizou especificamente ChatGPT a implementar U12-03 e U12-05 na GBS-V12-WO-003, após atualização governada do respectivo Work Order e Context Lock, verificações no HEAD e merge protegido desta emenda. Não concede autorização global de autoria para escopos HIGH_ASSURANCE, promoções de checkpoint, tags, releases ou npm. Os 14 padrões de escrita da WO e as salvaguardas originais continuam válidos.
