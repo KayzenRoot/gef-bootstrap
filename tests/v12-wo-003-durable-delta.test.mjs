@@ -1,3 +1,4 @@
+import { persistAuthority } from './v12-wo-003-fixtures.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -24,12 +25,7 @@ const attempt = (id, observation) => ({
   evidenceDigest: H(id), observation,
   failureSignature: observation === 'FAIL' ? 'failureA' : null,
 });
-const authority = { async verify(_ledger, a) {
-  return { verified: true, testId: a.testId, attemptId: a.attemptId,
-    headSha: a.headSha, inputDigest: a.inputDigest,
-    toolchainDigest: a.toolchainDigest, evidenceDigest: a.evidenceDigest,
-    observation: a.observation, failureSignature: a.failureSignature};
-} };
+const authority = persistAuthority;
 
 test('Delta file store preserves first failure after restart and independently verified retry', async t => {
   const dir = await mkdtemp(join(tmpdir(), 'gef-delta-'));
