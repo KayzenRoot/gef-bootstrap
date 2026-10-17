@@ -37,6 +37,7 @@ export interface DeltaAssuranceVerdict {
 const S = /^[0-9a-f]{40}$/;
 const D = /^sha256:[0-9a-f]{64}$/;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
+const validId = (value: unknown): value is string => typeof value === 'string' && ID.test(value);
 const ok = <T>(value: T): DeltaResult<T> => ({ ok: true, value });
 const fail = <T>(code: string): DeltaResult<T> => ({ ok: false, code });
 const sorted = (a: readonly string[]) => [...a].sort();
@@ -52,32 +53,32 @@ const serialize = (ledger: Omit<DeltaLedger, 'ledgerDigest'>, digest: DeltaDiges
   ({ ...ledger, ledgerDigest: hash(digest, ledger) });
 
 export function initializeDeltaLedger(workOrderId: string, headSha: string, requiredFinalTests: readonly string[], digest: DeltaDigest): DeltaResult<DeltaLedger> {
-  if (!ID.test(workOrderId) || !S.test(headSha) || requiredFinalTests.length === 0 || requiredFinalTests.length > 2048 ||
-      requiredFinalTests.some(id => !ID.test(id)) || new Set(requiredFinalTests).size !== requiredFinalTests.length) return fail('INVALID_ASSURANCE_INPUT');
+  if (!Array.isArray(requiredFinalTests) || !validId(workOrderId) || !S.test(headSha) || requiredFinalTests.length === 0 || requiredFinalTests.length > 2048 ||
+      requiredFinalTests.some(id => !validId(id)) || new Set(requiredFinalTests).size !== requiredFinalTests.length) return fail('INVALID_ASSURANCE_INPUT');
   const ledger = serialize({ workOrderId, headSha, requiredFinalTests: sorted(requiredFinalTests), records: [] }, digest);
   return D.test(ledger.ledgerDigest) ? ok(ledger) : fail('INVALID_DIGEST_PORT');
 }
 /** An imported receipt must prove its complete original attempt sequence, not just a seal. */
 export function validateDeltaLedger(ledger: DeltaLedger, digest: DeltaDigest): DeltaResult<true> {
-  if (!ID.test(ledger.workOrderId) || !S.test(ledger.headSha) ||
+  if (!ledger || !validId(ledger.workOrderId) || !S.test(ledger.headSha) ||
       !Array.isArray(ledger.requiredFinalTests) || ledger.requiredFinalTests.length === 0 ||
       ledger.requiredFinalTests.length > 2048 ||
-      ledger.requiredFinalTests.some(id => !ID.test(id)) ||
+      ledger.requiredFinalTests.some(id => !validId(id)) ||
       !sameSet(ledger.requiredFinalTests, [...new Set(ledger.requiredFinalTests)]) ||
       !Array.isArray(ledger.records) || ledger.records.length > ledger.requiredFinalTests.length ||
       !sameSet(ledger.records.map(r => r.testId), [...new Set(ledger.records.map(r => r.testId))]))
     return fail('LEDGER_STRUCTURE_INVALID');
   const seenAttempts = new Set<string>();
   for (const record of ledger.records) {
-    if (!ID.test(record.testId) || !ledger.requiredFinalTests.includes(record.testId) ||
+    if (!record || !validId(record.testId) || !ledger.requiredFinalTests.includes(record.testId) ||
         !Array.isArray(record.attempts) || record.attempts.length < 1 || record.attempts.length > 8)
       return fail('LEDGER_STRUCTURE_INVALID');
     for (const attempt of record.attempts) {
-      if (!ID.test(attempt.attemptId) || seenAttempts.has(attempt.attemptId) ||
+      if (!attempt || !validId(attempt.attemptId) || seenAttempts.has(attempt.attemptId) ||
           attempt.testId !== record.testId || attempt.headSha !== ledger.headSha ||
           !D.test(attempt.toolchainDigest) || !D.test(attempt.inputDigest) ||
           !D.test(attempt.evidenceDigest) || !['PASS', 'FAIL'].includes(attempt.observation) ||
-          (attempt.observation === 'FAIL' && (!attempt.failureSignature || !ID.test(attempt.failureSignature))) ||
+          (attempt.observation === 'FAIL' && (!attempt.failureSignature || !validId(attempt.failureSignature))) ||
           (attempt.observation === 'PASS' && attempt.failureSignature !== null))
         return fail('LEDGER_ATTEMPT_INVALID');
       seenAttempts.add(attempt.attemptId);
@@ -109,10 +110,10 @@ function classifyDeltaAttempts(attempts: readonly DeltaAttempt[]): DeltaClassifi
 export function addDeltaAttempt(ledger: DeltaLedger, attempt: DeltaAttempt, digest: DeltaDigest): DeltaResult<DeltaLedger> {
   const verified = validateDeltaLedger(ledger, digest);
   if (!verified.ok) return verified;
-  if (!ID.test(attempt.testId) || !ID.test(attempt.attemptId) || !D.test(attempt.toolchainDigest) ||
+  if (!attempt || !validId(attempt.testId) || !validId(attempt.attemptId) || !D.test(attempt.toolchainDigest) ||
       !D.test(attempt.inputDigest) || !D.test(attempt.evidenceDigest) || attempt.headSha !== ledger.headSha ||
       !['PASS', 'FAIL'].includes(attempt.observation) ||
-      (attempt.observation === 'FAIL' && (!attempt.failureSignature || !ID.test(attempt.failureSignature))) ||
+      (attempt.observation === 'FAIL' && (!attempt.failureSignature || !validId(attempt.failureSignature))) ||
       (attempt.observation === 'PASS' && attempt.failureSignature !== null)) return fail('ATTEMPT_BINDING_INVALID');
   if (!ledger.requiredFinalTests.includes(attempt.testId)) return fail('TEST_NOT_ADMITTED');
   if (ledger.records.some(r => r.attempts.some(a => a.attemptId === attempt.attemptId))) return fail('DUPLICATE_ATTEMPT');
@@ -134,12 +135,13 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
   const verified = validateDeltaLedger(ledger, digest);
   if (!verified.ok) return verified;
   if (currentHeadSha !== ledger.headSha) return fail('STALE_HEAD');
+  if (!proofDependencies || !Array.isArray(changedDependencies)) return fail('UNKNOWN_DEPENDENCY');
   // The graph is bounded and traversed through all known intermediate proof nodes:
   // direct-only checking can reuse a stale proof when its transitive source changed.
   const entries = Object.entries(proofDependencies);
   if (entries.length > 4096 || changedDependencies.length > 4096 ||
-      changedDependencies.some(s => !ID.test(s)) ||
-      entries.some(([id, xs]) => !ID.test(id) || !Array.isArray(xs) || xs.length > 4096 || xs.some(s => !ID.test(s))))
+      changedDependencies.some(s => !validId(s)) ||
+      entries.some(([id, xs]) => !validId(id) || !Array.isArray(xs) || xs.length > 4096 || xs.some(s => !validId(s))))
     return fail('UNKNOWN_DEPENDENCY');
   const changed = new Set(changedDependencies), carried: string[] = [], reusable: string[] = [];
   let incomplete = false;

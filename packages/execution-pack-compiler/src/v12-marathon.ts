@@ -47,6 +47,7 @@ export type MarathonAction =
 const SHA = /^[0-9a-f]{40}$/;
 const DIGEST = /^sha256:[0-9a-f]{64}$/;
 const ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
+const validId = (value: unknown): value is string => typeof value === 'string' && ID.test(value);
 const OK = <T>(value: T): MarathonResult<T> => ({ ok: true, value });
 const BAD = <T>(code: string): MarathonResult<T> => ({ ok: false, code });
 const sorted = (xs: readonly string[]): string[] => [...xs].sort();
@@ -72,11 +73,11 @@ const intersects = (left: readonly string[], right: readonly string[]): boolean 
 
 /** Reject a non-admitted/malformed graph and concurrent mutation collisions. */
 export function compileMarathon(request: MarathonRequest, digest: MarathonDigest): MarathonResult<MarathonPlan> {
-  if (!ID.test(request.workOrderId) || !ID.test(request.actor) || !SHA.test(request.baseSha) ||
+  if (!request || !Array.isArray(request.nodes) || !validId(request.workOrderId) || !validId(request.actor) || !SHA.test(request.baseSha) ||
       !safeDigest(request.lockDigest) || request.nodes.length === 0 || request.nodes.length > 512) return BAD('INVALID_BINDING');
   const raw = request.nodes;
-  if (raw.some(n => !ID.test(n.id) || !Array.isArray(n.deps) || !Array.isArray(n.reads) || !Array.isArray(n.writes) ||
-      !unique(n.deps) || !unique(n.reads) || !unique(n.writes) || n.deps.some(d => !ID.test(d)) ||
+  if (raw.some(n => !n || !validId(n.id) || !Array.isArray(n.deps) || !Array.isArray(n.reads) || !Array.isArray(n.writes) ||
+      !unique(n.deps) || !unique(n.reads) || !unique(n.writes) || n.deps.some(d => !validId(d)) ||
       [...n.reads, ...n.writes].some(p => !validPath(p))) || !unique(raw.map(n => n.id))) return BAD('INVALID_NODE');
   if (raw.reduce((sum, n) => sum + n.deps.length, 0) > 4096) return BAD('EDGE_BUDGET');
   const byId = new Map(raw.map(n => [n.id, n]));
@@ -124,6 +125,7 @@ export function readyMarathonNodes(plan: MarathonPlan, state: MarathonState, dig
 }
 
 export function validateMarathonState(plan: MarathonPlan, state: MarathonState, digest: MarathonDigest): MarathonResult<true> {
+  if (!state || !state.steps) return BAD('STATE_INVALID');
   const compiled = compileMarathon(plan, digest);
   if (!compiled.ok || compiled.value.planDigest !== plan.planDigest || state.planDigest !== plan.planDigest) return BAD('PLAN_STALE');
   const ids = sorted(plan.nodes.map(n => n.id));
@@ -138,7 +140,7 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
         (['VERIFIED', 'FAILED'].includes(s.status) && (!s.intentId || !s.proofDigest || !safeDigest(s.proofDigest))) ||
         (s.status === 'BLOCKED' && (s.intentId !== null || s.proofDigest !== null))) return BAD('STATE_INVALID');
     if (s.intentId !== null) {
-      if (!ID.test(s.intentId) || usedIntents.has(s.intentId)) return BAD('STATE_INTENT_REUSED');
+      if (!validId(s.intentId) || usedIntents.has(s.intentId)) return BAD('STATE_INTENT_REUSED');
       usedIntents.add(s.intentId);
     }
     if (s.status === 'ACTIVE' || s.status === 'VERIFIED' || s.status === 'FAILED') {
@@ -160,6 +162,7 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
 /** Check exact source/lock/actor before ANY state transition or evidence reuse. */
 export function advanceMarathon(plan: MarathonPlan, state: MarathonState, action: MarathonAction,
   current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string }, digest: MarathonDigest): MarathonResult<MarathonState> {
+  if (!plan || !state || !current || !action) return BAD('INVALID_ACTION');
   if (current.baseSha !== plan.baseSha || current.lockDigest !== plan.lockDigest || current.actor !== plan.actor) return BAD('STALE_OR_WRONG_ACTOR');
   const v = validateMarathonState(plan, state, digest);
   if (!v.ok) return v;
@@ -186,7 +189,7 @@ export function advanceMarathon(plan: MarathonPlan, state: MarathonState, action
     }
     return OK(seal(plan.planDigest, state.paused, next, digest));
   }
-  if (!ID.test(action.intentId)) return BAD('UNKNOWN_STEP_OR_INTENT');
+  if (!validId(action.intentId)) return BAD('UNKNOWN_STEP_OR_INTENT');
   if (action.type === 'SETTLE' && previous.status === action.outcome &&
       previous.intentId === action.intentId && previous.proofDigest === action.proofDigest) return OK(state); // proven replay is a no-op
   const next = { ...state.steps };

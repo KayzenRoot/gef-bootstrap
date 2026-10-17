@@ -264,3 +264,20 @@ test('Delta imports M26 final gates but never imports historical proof as a PASS
   reject(initializeDeltaLedgerFromBugProof({ ...receipt, unresolvedTestIds: ['tests:missing'] },
     'GBS-V12-WO-003', BASE, digest), 'BUG_PROOF_NOT_READY');
 });
+
+test('Marathon rejects undefined identity and null input without implicit coercion', () => {
+  reject(compileMarathon({ workOrderId: 'GBS-V12-WO-003', actor: undefined,
+    baseSha: BASE, lockDigest: LOCK, nodes: [{ id: 'only', deps: [], reads: [], writes: [] }] }, digest), 'INVALID_BINDING');
+  reject(compileMarathon(null, digest), 'INVALID_BINDING');
+  reject(compileMarathon({ workOrderId: 'GBS-V12-WO-003', actor: 'OWNER',
+    baseSha: BASE, lockDigest: LOCK, nodes: [null] }, digest), 'INVALID_NODE');
+});
+
+test('Delta refuses missing IDs and malformed imported input instead of coercing them', () => {
+  reject(initializeDeltaLedger('WO', BASE, undefined, digest), 'INVALID_ASSURANCE_INPUT');
+  reject(initializeDeltaLedger('WO', BASE, [undefined], digest), 'INVALID_ASSURANCE_INPUT');
+  reject(validateDeltaLedger(null, digest), 'LEDGER_STRUCTURE_INVALID');
+  let ledger = unwrap(initializeDeltaLedger('WO', BASE, ['tests:unit'], digest));
+  reject(addDeltaAttempt(ledger, null, digest), 'ATTEMPT_BINDING_INVALID');
+  reject(evaluateDeltaAssurance(ledger, BASE, null, [], digest), 'UNKNOWN_DEPENDENCY');
+});
