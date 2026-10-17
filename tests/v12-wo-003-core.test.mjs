@@ -908,6 +908,29 @@ test('Marathon admits M15-refined waves without widening file conflicts or losin
   assert.notEqual(refined.planDigest, direct.planDigest);
   assert.equal(initialMarathonState(refined, digest).ok, true);
   assert.equal(validateMarathonState(refined, unwrap(initialMarathonState(refined, digest)), digest).ok, true);
+  let waveState = unwrap(initialMarathonState(refined, digest));
+  const waveActor = { baseSha: BASE, lockDigest: LOCK, actor: 'OWNER' };
+  assert.deepEqual(unwrap(readyMarathonNodes(refined, waveState, digest)), ['alpha']);
+  reject(advanceMarathon(refined, waveState,
+    { type: 'START', nodeId: 'beta', intentId: 'early-beta' }, waveActor, digest),
+    'M15_PRIOR_WAVE_UNVERIFIED');
+  const waiting = unwrap(describeMarathonNextActions(refined, waveState, waveActor, digest));
+  assert.equal(waiting.decisions.find(x => x.nodeId === 'beta').reasonCode,
+    'M15_PRIOR_WAVE_UNVERIFIED');
+  assert.deepEqual(waiting.eligibleStarts, ['alpha']);
+  waveState = unwrap(advanceMarathon(refined, waveState,
+    { type: 'START', nodeId: 'alpha', intentId: 'first-wave' }, waveActor, digest));
+  assert.deepEqual(unwrap(readyMarathonNodes(refined, waveState, digest)), []);
+  reject(advanceMarathon(refined, waveState,
+    { type: 'START', nodeId: 'beta', intentId: 'overlap-beta' }, waveActor, digest),
+    'M15_PRIOR_WAVE_UNVERIFIED');
+  waveState = unwrap(advanceMarathon(refined, waveState,
+    { type: 'SETTLE', nodeId: 'alpha', intentId: 'first-wave',
+      outcome: 'VERIFIED', proofDigest: H('first-wave-proof') }, waveActor, digest));
+  assert.deepEqual(unwrap(readyMarathonNodes(refined, waveState, digest)), ['beta']);
+  waveState = unwrap(advanceMarathon(refined, waveState,
+    { type: 'START', nodeId: 'beta', intentId: 'authorized-beta' }, waveActor, digest));
+  assert.equal(waveState.steps.beta.status, 'ACTIVE');
   reject(compileMarathon({ ...req, admittedWaves: [['alpha']] }, digest), 'PACK_WAVE_MISMATCH');
   reject(compileMarathon({ ...req, admittedWaves: [['alpha', 'alpha'], ['beta']] }, digest), 'PACK_WAVE_MISMATCH');
   reject(compileMarathon({ ...req, admittedWaves: [['beta'], ['ghost'], ['alpha']] }, digest), 'PACK_WAVE_MISMATCH');
