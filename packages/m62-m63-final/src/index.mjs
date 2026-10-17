@@ -48,3 +48,5 @@ export function performanceRegression(baseline,candidate,{latencyTolerance=.15,t
 }
 
 export * from './v11-performance-telemetry.mjs';
+
+export { captureMarathonTelemetry } from './v12-marathon-telemetry.mjs';
