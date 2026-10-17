@@ -8,7 +8,7 @@
  * ambiguous and is NEVER retried automatically.
  */
 import {
-  advanceMarathon, readyMarathonNodes, validateMarathonState,
+  advanceMarathon, initialMarathonState, readyMarathonNodes, validateMarathonState,
 } from './v12-marathon.js';
 import type {
   MarathonAction, MarathonDigest, MarathonPlan, MarathonResult, MarathonState,
@@ -19,6 +19,8 @@ export interface MarathonStateStore {
   read(planDigest: string): Promise<MarathonState | null>;
   /** Must atomically compare the prior durable digest and write the new snapshot. */
   compareAndSwap(planDigest: string, expectedStateDigest: string, next: MarathonState): Promise<boolean>;
+  /** Optional durable create-if-absent with atomic, collision-resistant key ownership. */
+  createIfAbsent?(planDigest: string, initial: MarathonState): Promise<boolean>;
 }
 
 /**
@@ -39,6 +41,31 @@ export interface MarathonRecoveryDecision {
   /** PENDING nodes safe to consider next, not permission to execute effects. */
   readonly readyNodeIds: readonly string[];
   readonly stateDigest: string;
+}
+
+/**
+ * Atomically initialize a brand new Marathon. A previous durable record is
+ * NEVER overwritten or treated as permission to replay provider mutations.
+ * The store must provide real durable create-if-absent, not read-then-write.
+ */
+export async function initializePersistedMarathon(
+  plan: MarathonPlan,
+  store: MarathonStateStore,
+  current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string },
+  digest: MarathonDigest,
+): Promise<MarathonResult<MarathonState>> {
+  if (!plan || !store || typeof store.createIfAbsent !== 'function' || !current ||
+      current.baseSha !== plan.baseSha || current.lockDigest !== plan.lockDigest ||
+      current.actor !== plan.actor) return { ok: false, code: 'PERSISTENCE_INITIALIZATION_INVALID' };
+  const created = initialMarathonState(plan, digest);
+  if (!created.ok) return created;
+  try {
+    const saved = await store.createIfAbsent(plan.planDigest, created.value);
+    if (!saved) return { ok: false, code: 'SNAPSHOT_EXISTS_REQUIRES_RECOVERY' };
+    return created;
+  } catch {
+    return { ok: false, code: 'PERSISTENCE_UNAVAILABLE' };
+  }
 }
 
 /**

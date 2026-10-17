@@ -10,7 +10,7 @@ import {
   initializeDeltaLedgerFromBugProof,
 } from '../packages/heds-delta-review/dist/v12-delta-assurance.js';
 
-import { recoverPersistedMarathon, persistMarathonTransition } from '../packages/execution-pack-compiler/dist/v12-marathon-persistence.js';
+import { initializePersistedMarathon, recoverPersistedMarathon, persistMarathonTransition } from '../packages/execution-pack-compiler/dist/v12-marathon-persistence.js';
 
 const digest = input => createHash('sha256').update(input).digest('hex');
 const H = s => `sha256:${digest(s)}`;
@@ -365,4 +365,48 @@ test('Marathon persisted settlement refuses unverified or unavailable proof auth
     { async verify() { throw Error('provider offline'); } }),
     'SETTLEMENT_PROOF_VERIFICATION_UNAVAILABLE');
   assert.equal(writes, 0);
+});
+
+test('Marathon initializes durable snapshot atomically and refuses duplicate starts', async () => {
+  const plan = fixture();
+  let state = null;
+  let creates = 0;
+  const store = {
+    async read() { return state; },
+    async createIfAbsent(key, initial) {
+      assert.equal(key, plan.planDigest);
+      creates++;
+      if (state !== null) return false;
+      state = initial;
+      return true;
+    },
+    async compareAndSwap(_key, previous, next) {
+      if (!state || state.stateDigest !== previous) return false;
+      state = next;
+      return true;
+    },
+  };
+  const initialized = unwrap(await initializePersistedMarathon(plan, store, bindings, digest));
+  assert.equal(initialized.steps.source.status, 'PENDING');
+  assert.equal(creates, 1);
+  reject(await initializePersistedMarathon(plan, store, bindings, digest),
+    'SNAPSHOT_EXISTS_REQUIRES_RECOVERY');
+  assert.equal(creates, 2);
+  const recovered = unwrap(await recoverPersistedMarathon(plan, store, bindings, digest));
+  assert.equal(recovered.status, 'READY');
+  assert.deepEqual(recovered.readyNodeIds, ['audit', 'source']);
+});
+
+test('Marathon refuses non-atomic, wrong-owner or failed initial snapshot storage', async () => {
+  const plan = fixture();
+  const noInit = { async read() { return null; }, async compareAndSwap() { return false; } };
+  reject(await initializePersistedMarathon(plan, noInit, bindings, digest),
+    'PERSISTENCE_INITIALIZATION_INVALID');
+  reject(await initializePersistedMarathon(plan, {
+    ...noInit, async createIfAbsent() { return true; },
+  }, { ...bindings, lockDigest: H('wrong-lock') }, digest),
+  'PERSISTENCE_INITIALIZATION_INVALID');
+  reject(await initializePersistedMarathon(plan, {
+    ...noInit, async createIfAbsent() { throw Error('disk unavailable'); },
+  }, bindings, digest), 'PERSISTENCE_UNAVAILABLE');
 });
