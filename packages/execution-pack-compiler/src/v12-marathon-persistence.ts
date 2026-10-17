@@ -21,6 +21,17 @@ export interface MarathonStateStore {
   compareAndSwap(planDigest: string, expectedStateDigest: string, next: MarathonState): Promise<boolean>;
 }
 
+/**
+ * External verifier MUST check a real provider/evidence receipt bound to this
+ * plan, intent and exact state. A digest format alone is not a proof.
+ */
+export interface MarathonSettlementProofPort {
+  verify(
+    plan: MarathonPlan, prior: MarathonState,
+    action: Extract<MarathonAction, { type: 'SETTLE' }>,
+  ): Promise<boolean>;
+}
+
 export interface MarathonRecoveryDecision {
   readonly status: 'READY' | 'PAUSED' | 'RECONCILIATION_REQUIRED';
   /** ACTIVE receipts must be reconciled with authoritative provider evidence. */
@@ -86,6 +97,7 @@ export async function persistMarathonTransition(
   action: MarathonAction,
   current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string },
   digest: MarathonDigest,
+  proofAuthority?: MarathonSettlementProofPort,
 ): Promise<MarathonResult<MarathonState>> {
   if (!store || typeof store.read !== 'function' ||
       typeof store.compareAndSwap !== 'function' || !plan || !action || !current)
@@ -97,6 +109,17 @@ export async function persistMarathonTransition(
     if (!old) return { ok: false, code: 'SNAPSHOT_MISSING_REQUIRES_RECONCILIATION' };
     const next = advanceMarathon(plan, old, action, current, digest);
     if (!next.ok) return next;
+    if (action.type === 'SETTLE') {
+      if (!proofAuthority || typeof proofAuthority.verify !== 'function')
+        return { ok: false, code: 'SETTLEMENT_PROOF_AUTHORITY_REQUIRED' };
+      let trusted = false;
+      try {
+        trusted = await proofAuthority.verify(plan, old, action);
+      } catch {
+        return { ok: false, code: 'SETTLEMENT_PROOF_VERIFICATION_UNAVAILABLE' };
+      }
+      if (trusted !== true) return { ok: false, code: 'SETTLEMENT_PROOF_NOT_VERIFIED' };
+    }
     if (next.value.stateDigest === old.stateDigest) return next;
     const saved = await store.compareAndSwap(plan.planDigest, old.stateDigest, next.value);
     return saved ? next : { ok: false, code: 'PERSISTENCE_CAS_CONFLICT' };

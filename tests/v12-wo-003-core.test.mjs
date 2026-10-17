@@ -307,9 +307,15 @@ test('Marathon persists intent with CAS before provider activity, replay is a no
   assert.equal(writes, 1);
   const proved = { type: 'SETTLE', nodeId: 'source', intentId: 'persisted-intent',
     outcome: 'VERIFIED', proofDigest: H('trusted-external-evidence') };
-  unwrap(await persistMarathonTransition(plan, store, proved, bindings, digest));
+  const authority = { async verify(_plan, prior, action) {
+    return prior.steps.source?.status === 'ACTIVE' || (prior.steps.source?.status === 'VERIFIED' &&
+      prior.steps.source?.proofDigest === action.proofDigest);
+  } };
+  reject(await persistMarathonTransition(plan, store, proved, bindings, digest),
+    'SETTLEMENT_PROOF_AUTHORITY_REQUIRED');
+  unwrap(await persistMarathonTransition(plan, store, proved, bindings, digest, authority));
   assert.equal(writes, 2);
-  unwrap(await persistMarathonTransition(plan, store, proved, bindings, digest));
+  unwrap(await persistMarathonTransition(plan, store, proved, bindings, digest, authority));
   assert.equal(writes, 2);
 });
 test('Marathon fail-closed on lost snapshots, CAS conflict and store outage', async () => {
@@ -339,4 +345,24 @@ test('Marathon recovery quarantines in-flight conflicts and preserves independen
   assert.equal(recovery.status, 'RECONCILIATION_REQUIRED');
   assert.deepEqual(recovery.readyNodeIds, ['audit']);
   assert.deepEqual(recovery.unresolvedIntentIds, ['inflight']);
+});
+
+test('Marathon persisted settlement refuses unverified or unavailable proof authority', async () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  state = unwrap(advanceMarathon(plan, state,
+    { type: 'START', nodeId: 'source', intentId: 'proof-required' }, bindings, digest));
+  let writes = 0;
+  const store = {
+    async read() { return state; },
+    async compareAndSwap() { writes++; return true; },
+  };
+  const settle = { type: 'SETTLE', nodeId: 'source', intentId: 'proof-required',
+    outcome: 'VERIFIED', proofDigest: H('untrusted') };
+  reject(await persistMarathonTransition(plan, store, settle, bindings, digest,
+    { async verify() { return false; } }), 'SETTLEMENT_PROOF_NOT_VERIFIED');
+  reject(await persistMarathonTransition(plan, store, settle, bindings, digest,
+    { async verify() { throw Error('provider offline'); } }),
+    'SETTLEMENT_PROOF_VERIFICATION_UNAVAILABLE');
+  assert.equal(writes, 0);
 });
