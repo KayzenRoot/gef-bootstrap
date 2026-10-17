@@ -797,3 +797,35 @@ test('Marathon operator reports failed subtree without hiding unrelated work', (
   assert.equal(view.decisions.find(x => x.nodeId === 'release').action, 'STOP_BLOCKED');
   assert.equal(view.decisions.find(x => x.nodeId === 'audit').action, 'START');
 });
+test('Marathon refuses forged action verbs and invalid outcomes before evidence settlement', async () => {
+  const plan = fixture();
+  let snapshot = unwrap(initialMarathonState(plan, digest));
+  snapshot = unwrap(advanceMarathon(plan, snapshot,
+    { type: 'START', nodeId: 'source', intentId: 'immutable-intent' }, bindings, digest));
+  const before = snapshot.stateDigest;
+  let writes = 0, verifications = 0;
+  const store = {
+    async read() { return snapshot; },
+    async compareAndSwap(_key, prior, next) {
+      assert.equal(prior, snapshot.stateDigest);
+      writes++;
+      snapshot = next;
+      return true;
+    },
+  };
+  // Untrusted JavaScript/JSON inputs bypass TypeScript's union at runtime.
+  // In particular, an unknown verb must never reach SETTLE without proof authority.
+  const forged = { type: 'FORGED_SETTLE', nodeId: 'source', intentId: 'immutable-intent',
+    outcome: 'VERIFIED', proofDigest: H('untrusted-evidence') };
+  reject(advanceMarathon(plan, snapshot, forged, bindings, digest), 'INVALID_ACTION');
+  reject(await persistMarathonTransition(plan, store, forged, bindings, digest), 'INVALID_ACTION');
+  const unknownOutcome = { ...forged, type: 'SETTLE', outcome: 'SKIPPED' };
+  reject(advanceMarathon(plan, snapshot, unknownOutcome, bindings, digest),
+    'INVALID_SETTLEMENT_OUTCOME');
+  reject(await persistMarathonTransition(plan, store, unknownOutcome, bindings, digest,
+    { async verify() { verifications++; return true; } }), 'INVALID_SETTLEMENT_OUTCOME');
+  assert.equal(writes, 0);
+  assert.equal(verifications, 0);
+  assert.equal(snapshot.stateDigest, before);
+  assert.equal(snapshot.steps.source.status, 'ACTIVE');
+});
