@@ -1,0 +1,221 @@
+{
+  "schemaVersion": "1.0",
+  "kind": "GBS_MOD_WO_002_IMPLEMENTATION_CONTEXT_LOCK_DRAFT_NON_EXECUTABLE",
+  "repository": "KayzenRoot/gef-bootstrap",
+  "programIssue": 393,
+  "workOrder": "GBS-MOD-WO-002",
+  "issue": 396,
+  "state": "DRAFT_REBOUND_POST451_NOT_EFFECTIVE_OWNER_EXECUTION_NOT_GRANTED",
+  "admissionEffectivity": "PR449_OWNER_GOVERNANCE_ADMISSION_EFFECTIVE_POST_PR451_TEMPORAL_PARITY_REPAIRED",
+  "executionAuthority": "NOT_GRANTED",
+  "effectiveImplementationAuthority": false,
+  "doNotExecute": true,
+  "owner": {
+    "riskDecision": "ELEVATED",
+    "decisionSource": "https://github.com/KayzenRoot/gef-bootstrap/issues/396#issuecomment-6144520913",
+    "writeAllowedDecisionRecorded": true,
+    "implementationAuthorization": false,
+    "lockActivationAuthorization": "NOT_GRANTED",
+    "checkpointCorrectionMergeAuthorization": "PR451_EXACT_TARGET_OWNER_AUTHORIZED_PROTECTED_SQUASH_EXECUTED_ONLY"
+  },
+  "binding": {
+    "sourceMainRef": "refs/heads/main",
+    "sourceMainSha": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "sourceMainAtPreparation": true,
+    "proposedImplementationBaseSha": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "actualEffectiveImplementationBaseSha": null,
+    "planningSourcePr": 449,
+    "planningSourceHead": "170a68d505c92b95049aae653ea87d54821c15b0",
+    "canonicalCheckpointMdBlob": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a",
+    "canonicalCheckpointJsonBlob": "4a653772c31dffee869a9bac17345241cfc6db03",
+    "sourceFingerprints": {
+      "AGENTS.md": "492f1d4ae66abe8749a082d68decc81a3b4fd702",
+      "packages/AGENTS.md": "fa14a7eb190d722382507402f12d82a72a934237",
+      "tests/AGENTS.md": "b08e069681f685c2cd8a567cc0cb5a837583bb78",
+      ".engineering/SOURCE-HIERARCHY.md": "bedc10c97d28154efe59ff43fc1d175add37f568",
+      ".engineering/CHECKPOINT.md": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a",
+      ".engineering/CHECKPOINT.json": "4a653772c31dffee869a9bac17345241cfc6db03",
+      ".engineering/ARCHITECTURE.md": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+      ".engineering/SECURITY.md": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+      ".engineering/REQUIREMENTS.md": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+      ".engineering/SCOPE.md": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
+      ".engineering/DEFINITION-OF-DONE.md": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+      ".engineering/TEST-BENCHMARK-PLAN.md": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+      ".engineering/DECISIONS-LEDGER.md": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+      ".engineering/BACKLOG.md": "33707c62b19aa6e3192ef9afda54364f4a80a03d",
+      ".engineering/decisions/ADR-0008-CODEX-ONLY-GITHUB-FIRST.md": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
+      ".engineering/GITHUB-FIRST-CODEX-WORKFLOW.md": "b734c110d48311e339295fdd834ebff91a8cc461",
+      "packages/evidence-engine/src/public.ts": "af2ab94b97108f2f2acb640acaeac0b8eeae689e",
+      "packages/assurance-pipeline/src/public.ts": "ea77b45f6194888a7337baae7fa494beccb35d47",
+      "packages/assurance-pipeline/src/gef-gate.ts": "aaafa732305f20c4738429a8b6e29879d2156819",
+      "packages/proof-graph/src/public.ts": "d92ec11631aba2e5a1a9586653bd3668a2941fb2",
+      "packages/contracts/src/work-order.ts": "9a665ae1a4dff817349d48d799dfaa105eb5aff8",
+      "packages/preflight/src/change-impact.ts": "5aff784c3f68e295a9b6a98ef4086d324a69fb54",
+      "packages/task-context-compiler/src/s07-tiered-context-lock.ts": "2e03843a8bf24582e50f1a58add82598e69f8ab0",
+      "package.json": "e917d281c9ba60157e82265d949d9958eac83731"
+    },
+    "sourceFingerprintEvidence": "ALL 24/24 SOURCE BLOBS READ VIA AUTHENTICATED GITHUB ON MAIN e71120266c40235089444c9c0122280c5da4e5bd; 22 exact unchanged from previous lock, 2 canonical checkpoints rebound after PR451",
+    "sourceCount": 24,
+    "sourceMainMustBeRevalidatedBeforeEffectivity": true,
+    "currentRulesetId": 23566111,
+    "requiredContexts": [
+      "Repository validation",
+      "Pipeline integrity",
+      "Gitleaks secrets",
+      "Trivy filesystem and configuration"
+    ]
+  },
+  "postmergeEvidence": {
+    "mainSha": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "mergePr": 449,
+    "sourceBlobParity": "2/2_MATCHED",
+    "checkRuns": {
+      "success": 7,
+      "total": 7
+    },
+    "pushWorkflows": {
+      "success": 4,
+      "total": 4,
+      "firstAttempt": true,
+      "runs": [
+        38395480997,
+        38395480975,
+        38395480984,
+        38395480968
+      ]
+    },
+    "jobs": {
+      "success": 5,
+      "total": 5
+    },
+    "requiredRulesetContexts": {
+      "success": 4,
+      "total": 4
+    },
+    "source": "authenticated read-only GitHub REST exact SHA"
+  },
+  "scope": {
+    "mission": "Read-only GitHub-native exact-HEAD provider check/run normalization, deterministic acceptance-to-proof Evidence Bundle and Audit Packet, with frozen Issue #396 A1-A8; no executor self-approval.",
+    "risk": "ELEVATED",
+    "writeAllowedPotentialNotActive": [
+      "packages/evidence-engine/src/**",
+      "packages/assurance-pipeline/src/**",
+      "packages/contracts/src/**",
+      "tests/gbs-mod-wo-002-*.test.mjs",
+      ".engineering/evidence/GBS-MOD-WO-002-*",
+      ".engineering/checkpoint-deltas/GBS-MOD-WO-002-*"
+    ],
+    "writeConditionallyForbidden": [
+      "packages/proof-graph/src/**",
+      "broader tests/**"
+    ],
+    "writeForbidden": [
+      ".engineering/CHECKPOINT.md",
+      ".engineering/CHECKPOINT.json",
+      ".github/workflows/**",
+      "packages/cli/**",
+      "package.json",
+      "package-lock.json",
+      "security/scanner settings",
+      "rulesets/branch protection",
+      "provider writes",
+      "release/tag/deploy/npm",
+      "unrelated product/profile files"
+    ],
+    "acceptanceCriteria": [
+      "A1",
+      "A2",
+      "A3",
+      "A4",
+      "A5",
+      "A6",
+      "A7",
+      "A8"
+    ],
+    "providerOperations": "READ_ONLY_ONLY_NO_WRITE",
+    "newProductImplementationCredit": "NONE"
+  },
+  "canonicalConflict": {
+    "classification": "HISTORICAL_TEMPORAL_CONFLICT_RESOLVED_BY_OWNER_AUTHORIZED_PR451_PROTECTED_SQUASH",
+    "ownerReviewIndependence": "NOT_INDEPENDENT",
+    "sourceMdSection": "GBS-MOD-WO-002 — canonical admission effectivity sync",
+    "historicalConflictUnderOriginalCandidate": {
+      "classification": "STATE_CONFLICT",
+      "ownerReviewIndependence": "NOT_INDEPENDENT",
+      "sourceMdSection": "GBS-MOD-WO-002 — canonical admission effectivity sync",
+      "mdStillClaims": [
+        "PROPOSED; NOT YET EFFECTIVE",
+        "unmerged admission candidate",
+        "STOP BEFORE MERGE",
+        "Proposed post-merge stage (not yet reached)"
+      ],
+      "jsonStatus": "WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+      "jsonEffectivity": "ONLY_AFTER_SEPARATELY_OWNER_AUTHORIZED_PROTECTED_CANONICAL_SYNC_MERGE_TO_MAIN",
+      "reason": "After PR #449 was owner-authorized and merged, CHECKPOINT.md retains present-tense premerge text denying effectivity while CHECKPOINT.json carries the admission status. Under SOURCE-HIERARCHY shared-state mismatch must stop advancement; postmerge push CI alone does not repair semantic parity.",
+      "resolution": "Prepare a narrowly scoped checkpoint MD/JSON postmerge effectivity correction and obtain NEW exact-HEAD Owner merge authorization. Only after its protected merge and fresh push CI, compile a new exact resulting-main implementation lock and seek its separate activation. No automatic correction or merge under this authorization."
+    },
+    "currentMainSha": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "currentCheckpointMdBlob": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a",
+    "currentCheckpointJsonBlob": "4a653772c31dffee869a9bac17345241cfc6db03",
+    "currentJsonStatus": "WO002_ADMITTED_AWAITING_FRESH_IMPLEMENTATION_LOCK",
+    "residualExecutionBlock": "FRESH_LOCK_NOT_EFFECTIVE; OWNER_AUTHORIZATION_FOR_IMPLEMENTATION_NOT_GRANTED; NO_CODEX"
+  },
+  "activationGates": [
+    "POST_PR451_CANDIDATE_ONLY_NOT_EFFECTIVE",
+    "REVALIDATE_EXACT_MAIN_AND_REQUIRED_CHECKS_BEFORE_ANY_FUTURE_ACTIVATION",
+    "SEPARATE_OWNER_AUTHORIZATION_FOR_EFFECTIVE_IMPLEMENTATION_LOCK_AND_CODEX",
+    "REMAIN_WITHIN_ELEVATED_RISK_AND_EXACT_SIX_WRITE_ALLOWED_GLOBS",
+    "ACTUAL_SPECIALIST_AND_GEF_GATE_REQUIREMENTS_IF_TRIGGERED_MUST_BE_MET",
+    "NO_MISSING_CONTEXT_OR_SAFETY_FLOOR_DOWNGRADE"
+  ],
+  "history": {
+    "v1": "1088/1088_PRODUCTION_ACCEPTED",
+    "v12": "3/10_UNCHANGED",
+    "cli": "1.1.2_STABLE",
+    "releaseV113": "BLOCKED_ISSUE_439_HISTORICAL_ALL_REFS_21_UNKNOWN",
+    "gefGatePredecessor": "GBS_MOD_WO_001_PROMOTED",
+    "productActiveWo": "NONE",
+    "priorCandidateSnapshot": {
+      "baseMainSha": "e0356f1de5dae2351d8701a76c736a22832929c2",
+      "state": "DRAFT_BLOCKED_STATE_CONFLICT",
+      "admissionEffectivity": "NOT_VERIFIED_DUE_CANONICAL_TEMPORAL_PARITY_CONFLICT",
+      "canonicalCheckpointMdBlob": "866d0fcef2253560a45a8dbca147d9cd451d0960",
+      "canonicalCheckpointJsonBlob": "af21419f47fc9f106abb49203b5b52c135a66ee1",
+      "classification": "STATE_CONFLICT",
+      "originalPr450Head": "e0020f74eb999b865c7f1835401168545ce59686",
+      "originalPr450FileBlob": "cbd5700a6652d3f08c8ff0576a89fea2e74b2d66"
+    }
+  },
+  "stopCondition": "GBS_MOD_WO_002_POST451_CURRENT_SOURCE_DRAFT_NON_EXECUTABLE_NO_OWNER_CODEX_AUTHORITY",
+  "post451CheckpointParity": {
+    "originalMainBeforeCorrection": "e0356f1de5dae2351d8701a76c736a22832929c2",
+    "newMainAfterCorrection": "e71120266c40235089444c9c0122280c5da4e5bd",
+    "pr": 451,
+    "prSourceHead": "3e8554ff940f2e9254119cdf8c489ee8946cbbfb",
+    "commitMethod": "SQUASH",
+    "ownerAuthorizationReceipt": "https://github.com/KayzenRoot/gef-bootstrap/pull/451#issuecomment-6159442532",
+    "mainGitDiffChangedPaths": [
+      ".engineering/CHECKPOINT.json",
+      ".engineering/CHECKPOINT.md"
+    ],
+    "checkpointMarkdownBlob": "686a2e3f7da1b541f9a4ee10a4d9432358105e0a",
+    "checkpointJsonBlob": "4a653772c31dffee869a9bac17345241cfc6db03",
+    "currentMainMatchedExactAtPlanning": true,
+    "requiredRuleId": 23566111,
+    "requiredMainCheckRunContextsSuccess": 4,
+    "requiredMainCheckRunContextsTotal": 4,
+    "allMainCheckRunsSuccess": 7,
+    "allMainCheckRunsTotal": 7,
+    "allMainPushWorkflowsSuccess": 4,
+    "allMainPushWorkflowsTotal": 4,
+    "ownerImplementationAuthorizationFromCorrection": false,
+    "ownerLockActivationAuthorizationFromCorrection": false,
+    "securityHistoricalGitleaksDispositions": "21_UNKNOWN"
+  },
+  "satisfiedGovernanceGates": [
+    "PR449_OWNER_GOVERNANCE_ADMISSION_MERGED",
+    "PR451_SEPARATELY_OWNER_AUTHORIZED_TEMPORAL_CHECKPOINT_PARITY_CORRECTION_MERGED",
+    "POST_PR451_MAIN_EXACT_SHA_AND_4_REQUIRED_CHECKS_VERIFIED",
+    "ALL_24_SOURCE_BLOBS_RECHECKED_POST_PR451"
+  ]
+}
