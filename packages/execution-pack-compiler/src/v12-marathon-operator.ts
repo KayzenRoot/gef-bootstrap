@@ -3,7 +3,7 @@
  * Does not grant actor privilege, write to stores or execute providers.
  * Exact source/actor binding and sealed state are verified on every call.
  */
-import { marathonNodesConflict, readyMarathonNodes, validateMarathonState } from './v12-marathon.js';
+import { marathonNodesConflict, marathonPriorWavesVerified, readyMarathonNodes, validateMarathonState } from './v12-marathon.js';
 import type { MarathonDigest, MarathonPlan, MarathonResult, MarathonState, MarathonStatus } from './v12-marathon.js';
 
 export type MarathonNextAction =
@@ -61,6 +61,10 @@ function decideNode(
   } else if (s.status === 'PENDING' && eligible.has(nodeId)) {
     action = 'START';
     reasonCode = 'ADMITTED_AND_DEPENDENCIES_VERIFIED';
+  } else if (s.status === 'PENDING' && unresolvedDependencies.length === 0 &&
+             !marathonPriorWavesVerified(plan, state, nodeId)) {
+    action = 'WAIT_DEPENDENCIES';
+    reasonCode = 'M15_PRIOR_WAVE_UNVERIFIED';
   } else if (s.status === 'PENDING' && unresolvedDependencies.length === 0) {
     // A pending node with all dependencies VERIFIED can only be excluded by
     // in-flight read/write conflict. It is not waiting on dependencies.
