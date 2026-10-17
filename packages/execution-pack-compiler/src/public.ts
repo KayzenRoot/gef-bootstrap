@@ -122,3 +122,7 @@ export { createFileBackedMarathonStore } from './v12-marathon-file-store.js';
 // U12-03: sealed, read-only operator continuation decisions.
 export { describeMarathonNextActions } from './v12-marathon-operator.js';
 export type { MarathonNextAction, MarathonNodeDecision, MarathonOperatorView } from './v12-marathon-operator.js';
+
+// U12-03: M17 checkpoint + M18 resume evidence verification before read-only recovery.
+export { recoverMarathonWithCanonicalContinuity } from './v12-marathon-continuity.js';
+export type { MarathonCheckpointWitness, MarathonReadinessWitness, MarathonHandoffWitness, MarathonResumeWitness, MarathonContinuityEvidence, MarathonContinuityVerifier, MarathonContinuityDecision } from './v12-marathon-continuity.js';
