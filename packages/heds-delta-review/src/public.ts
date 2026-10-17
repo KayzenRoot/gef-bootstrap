@@ -21,3 +21,6 @@ export type { DeltaRootCauseHypothesis, DeltaRootCauseAssessment } from './v12-d
 // U12-05: durable verified evidence ledger; provider proof authority remains external.
 export { initializeDurableDeltaLedger, recordVerifiedDeltaAttempt } from './v12-delta-ledger-persistence.js';
 export type { DeltaLedgerStore, DeltaEvidenceAuthority, DeltaVerifiedEvidenceReceipt } from './v12-delta-ledger-persistence.js';
+
+// U12-05: local durable CAS ledger store, no independent proof authority.
+export { createFileBackedDeltaLedgerStore } from './v12-delta-file-store.js';
