@@ -201,15 +201,22 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
       if (record.firstFailure !== null) carried.push(id);
       const deps = proofDependencies[id];
       if (!deps) { incomplete = true; continue; } // Unknown impact blocks reuse
+      // Always traverse the complete graph, including tests that failed first.
+      // A historical failure must never mask a different test's unknown leaf
+      // or a cyclic dependency, even when that first failure was later repaired.
+      const invalidated = impact.invalidated(id);
       const final = record.attempts.at(-1)!;
-      if (record.firstFailure === null && final.observation === 'PASS' && !impact.invalidated(id)) reusable.push(id);
+      if (record.firstFailure === null && final.observation === 'PASS' && !invalidated) reusable.push(id);
     }
   } catch (error) {
     return fail(error instanceof Error && error.message === 'DEPENDENCY_GRAPH_CYCLE' ? 'DEPENDENCY_GRAPH_CYCLE' : 'DEPENDENCY_GRAPH_BUDGET');
   }
   let state: DeltaAssuranceVerdict['state'] = 'READY_FOR_FINAL_ASSURANCE';
-  if (carried.length > 0) state = 'CORRECTION_REQUIRED';
-  else if (incomplete || impact.incomplete()) state = 'BLOCKED';
+  // Incomplete/unknown dependency knowledge outranks a retained failure:
+  // otherwise the final closure caller may mistake CORRECTION_REQUIRED for
+  // an independently repairable state and promote an incomplete proof graph.
+  if (incomplete || impact.incomplete()) state = 'BLOCKED';
+  else if (carried.length > 0) state = 'CORRECTION_REQUIRED';
   return ok({ state,
     requiredFinalTests: ledger.requiredFinalTests, carriedFirstFailures: carried,
     evidenceReuseAllowed: reusable });
