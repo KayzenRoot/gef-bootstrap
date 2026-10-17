@@ -25,6 +25,9 @@ export interface DeltaVerifiedEvidenceReceipt {
   readonly toolchainDigest: string;
   readonly inputDigest: string;
   readonly evidenceDigest: string;
+  /** Independently attested provider outcome; digest alone is insufficient. */
+  readonly observation: DeltaAttempt['observation'];
+  readonly failureSignature: string | null;
 }
 
 export interface DeltaEvidenceAuthority {
@@ -103,7 +106,9 @@ export async function recordVerifiedDeltaAttempt(
       receipt.headSha !== attempt.headSha ||
       receipt.toolchainDigest !== attempt.toolchainDigest ||
       receipt.inputDigest !== attempt.inputDigest ||
-      receipt.evidenceDigest !== attempt.evidenceDigest)
+      receipt.evidenceDigest !== attempt.evidenceDigest ||
+      receipt.observation !== attempt.observation ||
+      receipt.failureSignature !== attempt.failureSignature)
     return { ok: false, code: 'DELTA_EVIDENCE_NOT_VERIFIED' };
   try {
     const stored = await store.compareAndSwap(
