@@ -8,7 +8,7 @@
  * ambiguous and is NEVER retried automatically.
  */
 import {
-  advanceMarathon, initialMarathonState, readyMarathonNodes, validateMarathonState,
+  advanceMarathon, initialMarathonState, marathonNodesConflict, readyMarathonNodes, validateMarathonState,
 } from './v12-marathon.js';
 import type {
   MarathonAction, MarathonDigest, MarathonPlan, MarathonResult, MarathonState,
@@ -49,18 +49,12 @@ function getRecoveryStatus(count: number, paused: boolean): MarathonRecoveryDeci
   return 'READY';
 }
 
-const overlaps = (left: readonly string[], right: readonly string[]): boolean =>
-  left.some(a => right.some(b =>
-    a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`)));
-
 function canRunWithActive(
   plan: MarathonPlan, nodeId: string, active: readonly MarathonPlan['nodes'][number][],
 ): boolean {
   const node = plan.nodes.find(candidate => candidate.id === nodeId);
   if (!node) return false;
-  return active.every(other =>
-    !overlaps(other.writes, [...node.writes, ...node.reads]) &&
-    !overlaps(node.writes, other.reads));
+  return active.every(other => !marathonNodesConflict(node, other));
 }
 
 /**
