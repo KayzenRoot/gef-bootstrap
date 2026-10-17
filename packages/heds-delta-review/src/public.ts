@@ -8,3 +8,24 @@ export*from'./s05-finding.js';
 export*from'./s05-verdict.js';
 export*from'./bug-proof-types.js';
 export*from'./s06-bug-proof.js';
+
+// U12-05: first-failure-preserving Delta Assurance.
+export { initializeDeltaLedgerFromBugProof } from './v12-delta-assurance.js';
+export { initializeDeltaLedger, validateDeltaLedger, addDeltaAttempt, evaluateDeltaAssurance } from './v12-delta-assurance.js';
+export type { DeltaDigest, DeltaResult, DeltaObservation, DeltaClassification, DeltaAttempt, DeltaRecord, DeltaLedger, DeltaAssuranceVerdict } from './v12-delta-assurance.js';
+
+// U12-05: source-bound first-failure root-cause hypothesis, never acceptance.
+export { assessDeltaRootCause } from './v12-delta-root-cause.js';
+export type { DeltaRootCauseHypothesis, DeltaRootCauseAssessment } from './v12-delta-root-cause.js';
+
+// U12-05: durable verified evidence ledger; provider proof authority remains external.
+export { initializeDurableDeltaLedger, recordVerifiedDeltaAttempt } from './v12-delta-ledger-persistence.js';
+export type { DeltaLedgerStore, DeltaEvidenceAuthority, DeltaVerifiedEvidenceReceipt } from './v12-delta-ledger-persistence.js';
+
+// U12-05: local durable CAS ledger store, no independent proof authority.
+export { createFileBackedDeltaLedgerStore } from './v12-delta-file-store.js';
+
+// U12-05: fail-closed M24/M25/M27/M28 final assurance reconciliation;
+// read-only, distinct from external provider and independent reviewer authority.
+export { evaluateDeltaFinalClosure } from './v12-delta-final-closure.js';
+export type { DeltaAssuranceModule, DeltaFinalState, DeltaModuleArtifact, DeltaModuleAttestation, DeltaVerifiedFinalTest, DeltaVerifiedFinalSweep, DeltaRepairClaim, DeltaVerifiedRepair, DeltaFinalClosurePorts, DeltaFinalClosureInput, DeltaFinalClosureDecision } from './v12-delta-final-closure.js';
