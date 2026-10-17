@@ -22,6 +22,8 @@ export interface MarathonRequest {
   readonly baseSha: string;
   readonly lockDigest: string;
   readonly nodes: readonly MarathonNode[];
+  /** Trusted M15 Safe Parallelism Matrix refinement; still validated against the DAG. */
+  readonly admittedWaves?: readonly (readonly string[])[];
 }
 export interface MarathonPlan extends MarathonRequest {
   readonly waves: readonly (readonly string[])[];
@@ -122,6 +124,38 @@ function buildMarathonWaves(
   return OK(waves);
 }
 
+/**
+ * M15 may split an ordinary dependency wave to serialize overlapping mutation
+ * domains even when file targets are distinct. Preserve that safe refinement
+ * without accepting omitted nodes, dependency inversion, duplicate IDs,
+ * out-of-order causality or concurrent conflicting file writes.
+ */
+function verifyAdmittedMarathonWaves(
+  byId: ReadonlyMap<string, MarathonNode>,
+  candidate: readonly (readonly string[])[],
+): MarathonResult<string[][]> {
+  if (!Array.isArray(candidate) || candidate.length === 0 ||
+      candidate.length > byId.size)
+    return BAD('PACK_WAVE_MISMATCH');
+  const done = new Set<string>();
+  const waves: string[][] = [];
+  for (const rawWave of candidate) {
+    if (!Array.isArray(rawWave) || rawWave.length === 0 ||
+        rawWave.length > byId.size || rawWave.some(id => !validId(id) ||
+          !byId.has(id) || done.has(id)) ||
+        new Set(rawWave).size !== rawWave.length)
+      return BAD('PACK_WAVE_MISMATCH');
+    if (rawWave.some(id => !byId.get(id)!.deps.every(dep => done.has(dep))))
+      return BAD('PACK_WAVE_MISMATCH');
+    const wave = sorted(rawWave);
+    if (waveHasWriteConflict(wave, byId)) return BAD('CONCURRENT_WRITE_CONFLICT');
+    waves.push(wave);
+    for (const id of wave) done.add(id);
+  }
+  if (done.size !== byId.size) return BAD('PACK_WAVE_MISMATCH');
+  return OK(waves);
+}
+
 /** Reject a non-admitted/malformed graph and concurrent mutation collisions. */
 export function compileMarathon(request: MarathonRequest, digest: MarathonDigest): MarathonResult<MarathonPlan> {
   if (!request || !Array.isArray(request.nodes) || !validId(request.workOrderId) || !validId(request.actor) || !SHA.test(request.baseSha) ||
@@ -131,14 +165,20 @@ export function compileMarathon(request: MarathonRequest, digest: MarathonDigest
   if (raw.reduce((sum, n) => sum + n.deps.length, 0) > 4096) return BAD('EDGE_BUDGET');
   const byId = new Map(raw.map(n => [n.id, n]));
   if (raw.some(n => n.deps.some(d => !byId.has(d)))) return BAD('UNKNOWN_DEPENDENCY');
-  const waveResult = buildMarathonWaves(byId);
+  const waveResult = request.admittedWaves === undefined
+    ? buildMarathonWaves(byId)
+    : verifyAdmittedMarathonWaves(byId, request.admittedWaves);
   if (!waveResult.ok) return waveResult;
   const waves = waveResult.value;
   const nodes = sorted(raw.map(n => n.id)).map(id => {
     const n = byId.get(id)!;
     return { id, deps: sorted(n.deps), reads: sorted(n.reads), writes: sorted(n.writes) };
   });
-  const body = { workOrderId: request.workOrderId, actor: request.actor, baseSha: request.baseSha, lockDigest: request.lockDigest, nodes, waves };
+  const body = {
+    workOrderId: request.workOrderId, actor: request.actor, baseSha: request.baseSha,
+    lockDigest: request.lockDigest, nodes, waves,
+    ...(request.admittedWaves === undefined ? {} : { admittedWaves: waves }),
+  };
   const planDigest = hash(digest, 'MARATHON_PLAN', body);
   if (!safeDigest(planDigest)) return BAD('INVALID_DIGEST_PORT');
   return OK({ ...body, planDigest });
@@ -419,12 +459,10 @@ export function compileMarathonFromExecutionPack(
     typeof node.mutationSpec !== 'string' || node.mutationSpec.trim() === '' ||
     !Array.isArray(node.targetFiles) || node.targetFiles.length === 0)) return BAD('PACK_NODE_INCOMPLETE');
 
-  const plan = compileMarathon({ ...binding, nodes }, digest);
-  if (!plan.ok) return plan;
-  // The M15 safe-parallelism matrix is authoritative. Do not silently invent
-  // wider waves or bypass a provider's strict serialization constraint.
-  const m15Waves = pack.safeParallelWaves.map(wave => sorted(wave));
-  const expected = plan.value.waves.map(wave => sorted(wave));
-  if (canonical(m15Waves) !== canonical(expected)) return BAD('PACK_WAVE_MISMATCH');
-  return plan;
+  // Preserve the authenticated M15 SPM refinement, rather than recomputing
+  // maximally parallel topological waves from dependencies alone. The compiler
+  // still checks every declared node, dependency and concurrent file conflict.
+  return compileMarathon({
+    ...binding, nodes, admittedWaves: pack.safeParallelWaves,
+  }, digest);
 }
