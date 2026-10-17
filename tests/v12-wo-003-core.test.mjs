@@ -730,10 +730,7 @@ test('Delta verified append blocks untrusted receipts, stale HEAD and concurrenc
   reject(await recordVerifiedDeltaAttempt(store, bogus, workOrder, candidate, OTHER, digest),
     'DELTA_STALE_HEAD');
   assert.equal(writes, 0);
-  const trusted = { async verify(_l, a) { return { verified: true,
-    testId: a.testId, attemptId: a.attemptId, headSha: a.headSha,
-    toolchainDigest: a.toolchainDigest, inputDigest: a.inputDigest,
-    evidenceDigest: a.evidenceDigest, observation: a.observation, failureSignature: a.failureSignature }; } };
+  const trusted = persistAuthority;
   reject(await recordVerifiedDeltaAttempt(store, trusted, workOrder, candidate, BASE, digest),
     'DELTA_PERSISTENCE_CAS_CONFLICT');
   assert.equal(writes, 1);
@@ -752,10 +749,7 @@ test('Delta never erases first failing proof under separately verified retries',
       ledger = next; return true;
     },
   };
-  const authority = { async verify(_l, a) { return {
-    verified: true, testId: a.testId, attemptId: a.attemptId, headSha: a.headSha,
-    toolchainDigest: a.toolchainDigest, inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest, observation: a.observation, failureSignature: a.failureSignature,
-  }; } };
+  const authority = persistAuthority;
   unwrap(await recordVerifiedDeltaAttempt(store, authority, workOrder, attempt('f1','FAIL'), BASE, digest));
   const original = ledger.records[0].firstFailure;
   unwrap(await recordVerifiedDeltaAttempt(store, authority, workOrder, attempt('p2','PASS'), BASE, digest));
