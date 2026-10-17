@@ -884,3 +884,38 @@ test('Marathon SKIPPED never grants dependency proof and preserves terminal stop
     { type: 'SKIP', nodeId: 'source', reasonCode: 'FORGED_NO_EFFECT' }, bindings, digest),
     'EFFECT_UNCERTAIN_RECONCILE');
 });
+
+test('Marathon admits M15-refined waves without widening file conflicts or losing DAG nodes', () => {
+  const req = { workOrderId: 'GBS-V12-WO-003', actor: 'OWNER',
+    baseSha: BASE, lockDigest: LOCK, nodes: [
+      { id: 'alpha', deps: [], reads: ['src/a.ts'], writes: ['src/a.ts'] },
+      { id: 'beta', deps: [], reads: ['src/b.ts'], writes: ['src/b.ts'] },
+    ] };
+  const direct = unwrap(compileMarathon(req, digest));
+  assert.deepEqual(direct.waves, [['alpha', 'beta']]);
+  // The trusted M15 SPM serializes a common mutation domain even if the two
+  // files are distinct. Durable replay must retain the exact safe waves.
+  const refined = unwrap(compileMarathon({
+    ...req, admittedWaves: [['alpha'], ['beta']],
+  }, digest));
+  assert.deepEqual(refined.waves, [['alpha'], ['beta']]);
+  assert.notEqual(refined.planDigest, direct.planDigest);
+  assert.equal(initialMarathonState(refined, digest).ok, true);
+  assert.equal(validateMarathonState(refined, unwrap(initialMarathonState(refined, digest)), digest).ok, true);
+  reject(compileMarathon({ ...req, admittedWaves: [['alpha']] }, digest), 'PACK_WAVE_MISMATCH');
+  reject(compileMarathon({ ...req, admittedWaves: [['alpha', 'alpha'], ['beta']] }, digest), 'PACK_WAVE_MISMATCH');
+  reject(compileMarathon({ ...req, admittedWaves: [['beta'], ['ghost'], ['alpha']] }, digest), 'PACK_WAVE_MISMATCH');
+  const dependent = { ...req, nodes: [
+    req.nodes[0], { ...req.nodes[1], deps: ['alpha'] },
+  ] };
+  reject(compileMarathon({ ...dependent, admittedWaves: [['beta'], ['alpha']] }, digest),
+    'PACK_WAVE_MISMATCH');
+  const overlap = { ...req, nodes: [
+    req.nodes[0], { ...req.nodes[1], writes: ['src/a.ts'] },
+  ] };
+  reject(compileMarathon(overlap, digest), 'CONCURRENT_WRITE_CONFLICT');
+  reject(compileMarathon({ ...overlap, admittedWaves: [['alpha', 'beta']] }, digest),
+    'CONCURRENT_WRITE_CONFLICT');
+  const serial = unwrap(compileMarathon({ ...overlap, admittedWaves: [['alpha'], ['beta']] }, digest));
+  assert.deepEqual(serial.waves, [['alpha'], ['beta']]);
+});
