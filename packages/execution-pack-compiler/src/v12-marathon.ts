@@ -6,7 +6,7 @@
  */
 import type { CompiledExecutionPack } from './types.js';
 
-export type MarathonStatus = 'PENDING' | 'ACTIVE' | 'VERIFIED' | 'FAILED' | 'BLOCKED';
+export type MarathonStatus = 'PENDING' | 'ACTIVE' | 'VERIFIED' | 'FAILED' | 'BLOCKED' | 'SKIPPED';
 export type MarathonDigest = (canonical: string) => string;
 export type MarathonResult<T> = { ok: true; value: T } | { ok: false; code: string };
 export interface MarathonNode {
@@ -30,6 +30,8 @@ export interface MarathonStepState {
   readonly status: MarathonStatus;
   readonly intentId: string | null;
   readonly proofDigest: string | null;
+  /** Persisted terminal stop provenance; SKIPPED never satisfies dependencies. */
+  readonly stopReasonCode?: string | null;
 }
 export interface MarathonState {
   readonly planDigest: string;
@@ -41,6 +43,7 @@ export type MarathonAction =
   | { readonly type: 'START'; readonly nodeId: string; readonly intentId: string }
   | { readonly type: 'SETTLE'; readonly nodeId: string; readonly intentId: string; readonly outcome: 'VERIFIED' | 'FAILED'; readonly proofDigest: string }
   | { readonly type: 'CANCEL'; readonly nodeId: string }
+  | { readonly type: 'SKIP'; readonly nodeId: string; readonly reasonCode: string }
   | { readonly type: 'PAUSE' }
   | { readonly type: 'RESUME' };
 
@@ -161,12 +164,20 @@ export function readyMarathonNodes(plan: MarathonPlan, state: MarathonState, dig
 }
 
 function invalidMarathonStep(s: MarathonStepState | undefined): boolean {
-  if (!s || !['PENDING', 'ACTIVE', 'VERIFIED', 'FAILED', 'BLOCKED'].includes(s.status))
+  if (!s || !['PENDING', 'ACTIVE', 'VERIFIED', 'FAILED', 'BLOCKED', 'SKIPPED'].includes(s.status))
     return true;
-  if (s.status === 'PENDING' || s.status === 'BLOCKED')
-    return s.intentId !== null || s.proofDigest !== null;
-  if (s.status === 'ACTIVE') return !s.intentId || s.proofDigest !== null;
-  return !s.intentId || !s.proofDigest || !safeDigest(s.proofDigest);
+  if (s.status === 'PENDING')
+    return s.intentId !== null || s.proofDigest !== null || s.stopReasonCode != null;
+  if (s.status === 'BLOCKED')
+    return s.intentId !== null || s.proofDigest !== null ||
+      (s.stopReasonCode != null && !validId(s.stopReasonCode));
+  if (s.status === 'SKIPPED')
+    return s.intentId !== null || s.proofDigest !== null || !validId(s.stopReasonCode);
+  if (s.status === 'ACTIVE')
+    return !s.intentId || s.proofDigest !== null || s.stopReasonCode != null;
+  return !s.intentId || !s.proofDigest || !safeDigest(s.proofDigest) ||
+    (s.status === 'VERIFIED' && s.stopReasonCode != null) ||
+    (s.status === 'FAILED' && s.stopReasonCode != null && !validId(s.stopReasonCode));
 }
 
 function invalidActiveResourceOverlap(
@@ -213,7 +224,7 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
 
 function blockPendingDescendants(
   plan: MarathonPlan, steps: Record<string, MarathonStepState>,
-  rootId: string, includeRoot: boolean,
+  rootId: string, includeRoot: boolean, reasonCode: string = 'DEPENDENCY_STOPPED',
 ): void {
   const blocked = new Set([rootId]);
   let changed = true;
@@ -227,7 +238,8 @@ function blockPendingDescendants(
   }
   for (const id of blocked) {
     if ((includeRoot || id !== rootId) && steps[id]?.status === 'PENDING')
-      steps[id] = { status: 'BLOCKED', intentId: null, proofDigest: null };
+      steps[id] = { status: 'BLOCKED', intentId: null, proofDigest: null,
+        stopReasonCode: id === rootId ? 'OPERATOR_CANCELLED' : reasonCode };
   }
 }
 
@@ -239,7 +251,23 @@ function cancelMarathonNode(
   if (previous.status === 'ACTIVE') return BAD('EFFECT_UNCERTAIN_RECONCILE');
   if (previous.status !== 'PENDING') return BAD('NOT_PENDING');
   const next = { ...state.steps };
-  blockPendingDescendants(plan, next, action.nodeId, true);
+  blockPendingDescendants(plan, next, action.nodeId, true, 'DEPENDENCY_CANCELLED');
+  return OK(seal(plan.planDigest, state.paused, next, digest));
+}
+
+function skipMarathonNode(
+  plan: MarathonPlan, state: MarathonState,
+  action: Extract<MarathonAction, { type: 'SKIP' }>,
+  previous: MarathonStepState, digest: MarathonDigest,
+): MarathonResult<MarathonState> {
+  if (previous.status === 'ACTIVE') return BAD('EFFECT_UNCERTAIN_RECONCILE');
+  if (previous.status !== 'PENDING') return BAD('NOT_PENDING');
+  if (!validId(action.reasonCode)) return BAD('INVALID_STOP_REASON');
+  const next = { ...state.steps };
+  next[action.nodeId] = { status: 'SKIPPED', intentId: null, proofDigest: null,
+    stopReasonCode: action.reasonCode };
+  // SKIPPED is NEVER proof that the work happened. Dependents cannot run.
+  blockPendingDescendants(plan, next, action.nodeId, false, 'DEPENDENCY_SKIPPED');
   return OK(seal(plan.planDigest, state.paused, next, digest));
 }
 
@@ -289,9 +317,10 @@ function settleMarathonNode(
   const next = { ...state.steps };
   next[action.nodeId] = {
     status: action.outcome, intentId: action.intentId, proofDigest: action.proofDigest,
+    ...(action.outcome === 'FAILED' ? { stopReasonCode: 'ATTESTED_PROVIDER_FAILURE' } : {}),
   };
   if (action.outcome === 'FAILED')
-    blockPendingDescendants(plan, next, action.nodeId, false);
+    blockPendingDescendants(plan, next, action.nodeId, false, 'DEPENDENCY_FAILED');
   return OK(seal(plan.planDigest, state.paused, next, digest));
 }
 
@@ -302,7 +331,7 @@ export function advanceMarathon(
   digest: MarathonDigest,
 ): MarathonResult<MarathonState> {
   if (!plan || !state || !current || !action ||
-      !['START', 'SETTLE', 'CANCEL', 'PAUSE', 'RESUME'].includes(action.type))
+      !['START', 'SETTLE', 'CANCEL', 'SKIP', 'PAUSE', 'RESUME'].includes(action.type))
     return BAD('INVALID_ACTION');
   if (current.baseSha !== plan.baseSha || current.lockDigest !== plan.lockDigest ||
       current.actor !== plan.actor) return BAD('STALE_OR_WRONG_ACTOR');
@@ -317,6 +346,8 @@ export function advanceMarathon(
   if (!previous) return BAD('UNKNOWN_STEP_OR_INTENT');
   if (action.type === 'CANCEL')
     return cancelMarathonNode(plan, state, action, previous, digest);
+  if (action.type === 'SKIP')
+    return skipMarathonNode(plan, state, action, previous, digest);
   if (!validId(action.intentId)) return BAD('UNKNOWN_STEP_OR_INTENT');
   if (action.type === 'START')
     return startMarathonNode(plan, state, action, previous, digest);
