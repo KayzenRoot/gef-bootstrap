@@ -395,10 +395,15 @@ export function compileMarathonFromExecutionPack(
   // Same M15 verifier used for native pack replay: never accept a set of
   // matching caller-controlled digest strings as an admitted execution pack.
   // M17/M18 separately enforces canonical work-order and actor authority.
-  const replay = evaluatePackReplay(receipt, pack, {
-    digest: { algorithm: 'sha256', digest },
-  });
-  if (!replay.replayable) return BAD('EXECUTION_PACK_NOT_ADMITTED');
+  try {
+    const replay = evaluatePackReplay(receipt, pack, {
+      digest: { algorithm: 'sha256', digest },
+    });
+    if (!replay.replayable) return BAD('EXECUTION_PACK_NOT_ADMITTED');
+  } catch {
+    // Imported provider JSON can violate TypeScript shapes at runtime.
+    return BAD('EXECUTION_PACK_NOT_ADMITTED');
+  }
 
   const nodes: MarathonNode[] = pack.workDag.map(node => ({
     id: node.instructionId,
