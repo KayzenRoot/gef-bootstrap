@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
   compileMarathon, initialMarathonState, readyMarathonNodes, advanceMarathon, validateMarathonState,
+  compileMarathonFromExecutionPack,
 } from '../packages/execution-pack-compiler/dist/v12-marathon.js';
 import {
   initializeDeltaLedger, addDeltaAttempt, evaluateDeltaAssurance, validateDeltaLedger,
@@ -218,4 +219,31 @@ test('Marathon rejects conflicting ACTIVE nodes in imported snapshots', () => {
   const incompatible = { ...state, steps: { ...state.steps, later:
     { status: 'ACTIVE', intentId: 'later-intent', proofDigest: null } } };
   reject(validateMarathonState(p, incompatible, digest), 'STATE_RESOURCE_CONFLICT');
+});
+
+test('Marathon admits only source-bound M15 execution-pack receipts and exact safe waves', () => {
+  const binding = { workOrderId: 'GBS-V12-WO-003', actor: 'CHATGPT_OWNER', baseSha: BASE, lockDigest: LOCK };
+  const node = { instructionId: 'proof', dependsOn: [], targetFiles: ['out/proof'],
+    preconditions: ['admitted'], mutationSpec: 'write with proof',
+    evidenceOutputs: ['proof:sha'] };
+  const pack = { packId: 'pack:1', taskIdentity: 'task:1', contextIdentity: 'context:1',
+    contextDigest: H('context'), policyVersion: 'policy:1', capabilityIdentity: 'cap:1',
+    semanticDigest: H('semantic'), graphDigest: H('graph'), toolPlanDigest: H('tools'),
+    validationPlanDigest: H('validation'), workDag: [node], safeParallelWaves: [['proof']] };
+  const receipt = { status: 'VALID', diagnostics: [], semanticDigest: pack.semanticDigest,
+    contextDigest: pack.contextDigest, taskIdentity: pack.taskIdentity,
+    contextIdentity: pack.contextIdentity, policyVersion: pack.policyVersion,
+    capabilityIdentity: pack.capabilityIdentity, graphDigest: pack.graphDigest,
+    toolPlanDigest: pack.toolPlanDigest, validationPlanDigest: pack.validationPlanDigest };
+  const compiled = { pack, receipt,
+    envelope: { packId: pack.packId, taskIdentity: pack.taskIdentity, contextIdentity: pack.contextIdentity },
+    certificate: { packId: pack.packId, complete: true, missingItems: [] } };
+  const accepted = unwrap(compileMarathonFromExecutionPack(compiled, binding, digest));
+  assert.deepEqual(accepted.waves, [['proof']]);
+  reject(compileMarathonFromExecutionPack({ ...compiled,
+    receipt: { ...receipt, status: 'STALE_CONTEXT' } }, binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
+  reject(compileMarathonFromExecutionPack({ ...compiled,
+    receipt: { ...receipt, semanticDigest: H('forged') } }, binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
+  reject(compileMarathonFromExecutionPack({ ...compiled,
+    pack: { ...pack, safeParallelWaves: [['wrong']] } }, binding, digest), 'PACK_WAVE_MISMATCH');
 });

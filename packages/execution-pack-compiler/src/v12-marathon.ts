@@ -4,6 +4,8 @@
  * must validate admission/actor, persist snapshots atomically, and verify
  * immutable execution evidence before recording a VERIFIED receipt.
  */
+import type { CompiledExecutionPack } from './types.js';
+
 export type MarathonStatus = 'PENDING' | 'ACTIVE' | 'VERIFIED' | 'FAILED' | 'BLOCKED';
 export type MarathonDigest = (canonical: string) => string;
 export type MarathonResult<T> = { ok: true; value: T } | { ok: false; code: string };
@@ -219,4 +221,60 @@ export function advanceMarathon(plan: MarathonPlan, state: MarathonState, action
     }
   }
   return OK(seal(plan.planDigest, state.paused, next, digest));
+}
+
+/**
+ * M15 integration boundary. Consume an already compiled execution pack rather
+ * than accepting an unrelated executor graph. This projection never authorizes
+ * a provider action: callers must validate ownership and receipt provenance.
+ */
+export function compileMarathonFromExecutionPack(
+  compiled: CompiledExecutionPack,
+  binding: Pick<MarathonRequest, 'workOrderId' | 'actor' | 'baseSha' | 'lockDigest'>,
+  digest: MarathonDigest,
+): MarathonResult<MarathonPlan> {
+  const pack = compiled?.pack;
+  const receipt = compiled?.receipt;
+  const envelope = compiled?.envelope;
+  const cert = compiled?.certificate;
+  if (!pack || !receipt || !envelope || !cert ||
+      receipt.status !== 'VALID' || receipt.diagnostics.length !== 0 ||
+      receipt.semanticDigest !== pack.semanticDigest ||
+      receipt.contextDigest !== pack.contextDigest ||
+      receipt.taskIdentity !== pack.taskIdentity ||
+      receipt.contextIdentity !== pack.contextIdentity ||
+      receipt.policyVersion !== pack.policyVersion ||
+      receipt.capabilityIdentity !== pack.capabilityIdentity ||
+      receipt.graphDigest !== pack.graphDigest ||
+      receipt.toolPlanDigest !== pack.toolPlanDigest ||
+      receipt.validationPlanDigest !== pack.validationPlanDigest ||
+      envelope.packId !== pack.packId ||
+      envelope.taskIdentity !== pack.taskIdentity ||
+      envelope.contextIdentity !== pack.contextIdentity ||
+      cert.packId !== pack.packId || cert.complete !== true ||
+      cert.missingItems.length !== 0 ||
+      !Array.isArray(pack.workDag) || !Array.isArray(pack.safeParallelWaves) ||
+      pack.workDag.length === 0) return BAD('EXECUTION_PACK_NOT_ADMITTED');
+
+  const nodes: MarathonNode[] = pack.workDag.map(node => ({
+    id: node.instructionId,
+    deps: node.dependsOn,
+    reads: node.targetFiles,
+    // Conservative: M15 targets may be mutated. Never downgrade to read-only.
+    writes: node.targetFiles,
+  }));
+  if (pack.workDag.some(node =>
+    !Array.isArray(node.preconditions) || node.preconditions.length === 0 ||
+    !Array.isArray(node.evidenceOutputs) || node.evidenceOutputs.length === 0 ||
+    typeof node.mutationSpec !== 'string' || node.mutationSpec.trim() === '' ||
+    !Array.isArray(node.targetFiles) || node.targetFiles.length === 0)) return BAD('PACK_NODE_INCOMPLETE');
+
+  const plan = compileMarathon({ ...binding, nodes }, digest);
+  if (!plan.ok) return plan;
+  // The M15 safe-parallelism matrix is authoritative. Do not silently invent
+  // wider waves or bypass a provider's strict serialization constraint.
+  const m15Waves = pack.safeParallelWaves.map(wave => sorted(wave));
+  const expected = plan.value.waves.map(wave => sorted(wave));
+  if (canonical(m15Waves) !== canonical(expected)) return BAD('PACK_WAVE_MISMATCH');
+  return plan;
 }
