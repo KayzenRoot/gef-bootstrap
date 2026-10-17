@@ -200,13 +200,31 @@ export function initialMarathonState(plan: MarathonPlan, digest: MarathonDigest)
   return OK(seal(plan.planDigest, false, steps, digest));
 }
 
+/**
+ * The authenticated M15 SPM may split independent tasks into strictly ordered
+ * waves because they mutate the same policy domain even when files differ.
+ * Source-level file-conflict checks alone cannot authorize a later wave.
+ * Keep classic DAG behavior for plans without an admitted M15 refinement.
+ */
+export function marathonPriorWavesVerified(
+  plan: MarathonPlan, state: MarathonState, nodeId: string,
+): boolean {
+  if (!plan.admittedWaves) return true;
+  for (const wave of plan.waves) {
+    if (wave.includes(nodeId)) return true;
+    if (wave.some(id => state.steps[id]?.status !== 'VERIFIED')) return false;
+  }
+  return false;
+}
+
 /** Steps eligible for execution, not a command to execute them. */
 export function readyMarathonNodes(plan: MarathonPlan, state: MarathonState, digest: MarathonDigest): MarathonResult<readonly string[]> {
   const valid = validateMarathonState(plan, state, digest);
   if (!valid.ok) return valid;
   if (state.paused) return OK([]);
   return OK(sorted(plan.nodes.filter(n => state.steps[n.id]?.status === 'PENDING' &&
-      n.deps.every(d => state.steps[d]?.status === 'VERIFIED')).map(n => n.id)));
+      n.deps.every(d => state.steps[d]?.status === 'VERIFIED') &&
+      marathonPriorWavesVerified(plan, state, n.id)).map(n => n.id)));
 }
 
 function invalidMarathonStep(s: MarathonStepState | undefined): boolean {
@@ -257,6 +275,7 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
     }
     if (s.status === 'ACTIVE' || s.status === 'VERIFIED' || s.status === 'FAILED') {
       if (!graph.get(id)?.deps.every(dep => state.steps[dep]?.status === 'VERIFIED')) return BAD('STATE_DEPENDENCY_VIOLATION');
+      if (!marathonPriorWavesVerified(plan, state, id)) return BAD('STATE_WAVE_VIOLATION');
     }
   }
   // Imported snapshots must uphold the same exclusion rule as live START.
@@ -339,6 +358,8 @@ function startMarathonNode(
   const node = plan.nodes.find(candidate => candidate.id === action.nodeId)!;
   if (!node.deps.every(dep => state.steps[dep]?.status === 'VERIFIED'))
     return BAD('DEPENDENCY_NOT_VERIFIED');
+  if (!marathonPriorWavesVerified(plan, state, node.id))
+    return BAD('M15_PRIOR_WAVE_UNVERIFIED');
   if (conflictingActiveMarathonNode(plan, state, node))
     return BAD('ACTIVE_RESOURCE_CONFLICT');
   const next = { ...state.steps };
