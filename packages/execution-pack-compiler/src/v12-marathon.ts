@@ -54,7 +54,8 @@ const ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
 const validId = (value: unknown): value is string => typeof value === 'string' && ID.test(value);
 const OK = <T>(value: T): MarathonResult<T> => ({ ok: true, value });
 const BAD = <T>(code: string): MarathonResult<T> => ({ ok: false, code });
-const compareText = (a: string, b: string): number => a.localeCompare(b);
+/** Locale-independent code-unit ordering for cross-platform state fingerprints. */
+const compareText = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 const sorted = (xs: readonly string[]): string[] => [...xs].sort(compareText);
 const unique = (xs: readonly string[]): boolean => xs.length === new Set(xs).size;
 const canonical = (value: unknown): string => {
