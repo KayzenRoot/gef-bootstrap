@@ -94,7 +94,9 @@ test('Delta Assurance retains original failure even when passing on retry', () =
   assert.equal(l.records[0].classification, 'FLAKE_CONFIRMED');
   assert.deepEqual(l.records[0].firstFailure, first);
   const result = unwrap(evaluateDeltaAssurance(l, BASE, { 'tests:unit': ['src:x'], 'tests:security': ['policy:x'], 'src:x': [], 'policy:x': [] }, [], digest));
-  assert.equal(result.state, 'CORRECTION_REQUIRED');
+  // Security is required but has no attempt yet. Incomplete final assurance
+  // outranks the retained historical first failure and MUST remain BLOCKED.
+  assert.equal(result.state, 'BLOCKED');
   assert.deepEqual(result.carriedFirstFailures, ['tests:unit']);
   assert.deepEqual(result.requiredFinalTests, ['tests:security', 'tests:unit']);
   assert.deepEqual(result.evidenceReuseAllowed, []);
