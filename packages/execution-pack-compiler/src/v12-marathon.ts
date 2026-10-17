@@ -279,6 +279,8 @@ function settleMarathonNode(
   action: Extract<MarathonAction, { type: 'SETTLE' }>,
   previous: MarathonStepState, digest: MarathonDigest,
 ): MarathonResult<MarathonState> {
+  if (action.outcome !== 'VERIFIED' && action.outcome !== 'FAILED')
+    return BAD('INVALID_SETTLEMENT_OUTCOME');
   if (previous.status === action.outcome && previous.intentId === action.intentId &&
       previous.proofDigest === action.proofDigest) return OK(state);
   if (previous.status !== 'ACTIVE' || previous.intentId !== action.intentId)
@@ -299,7 +301,9 @@ export function advanceMarathon(
   current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string },
   digest: MarathonDigest,
 ): MarathonResult<MarathonState> {
-  if (!plan || !state || !current || !action) return BAD('INVALID_ACTION');
+  if (!plan || !state || !current || !action ||
+      !['START', 'SETTLE', 'CANCEL', 'PAUSE', 'RESUME'].includes(action.type))
+    return BAD('INVALID_ACTION');
   if (current.baseSha !== plan.baseSha || current.lockDigest !== plan.lockDigest ||
       current.actor !== plan.actor) return BAD('STALE_OR_WRONG_ACTOR');
   const validated = validateMarathonState(plan, state, digest);
