@@ -211,71 +211,112 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
   return OK(true);
 }
 
+function blockPendingDescendants(
+  plan: MarathonPlan, steps: Record<string, MarathonStepState>,
+  rootId: string, includeRoot: boolean,
+): void {
+  const blocked = new Set([rootId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const node of plan.nodes) {
+      if (blocked.has(node.id) || !node.deps.some(dep => blocked.has(dep))) continue;
+      blocked.add(node.id);
+      changed = true;
+    }
+  }
+  for (const id of blocked) {
+    if ((includeRoot || id !== rootId) && steps[id]?.status === 'PENDING')
+      steps[id] = { status: 'BLOCKED', intentId: null, proofDigest: null };
+  }
+}
+
+function cancelMarathonNode(
+  plan: MarathonPlan, state: MarathonState,
+  action: Extract<MarathonAction, { type: 'CANCEL' }>,
+  previous: MarathonStepState, digest: MarathonDigest,
+): MarathonResult<MarathonState> {
+  if (previous.status === 'ACTIVE') return BAD('EFFECT_UNCERTAIN_RECONCILE');
+  if (previous.status !== 'PENDING') return BAD('NOT_PENDING');
+  const next = { ...state.steps };
+  blockPendingDescendants(plan, next, action.nodeId, true);
+  return OK(seal(plan.planDigest, state.paused, next, digest));
+}
+
+function conflictingActiveMarathonNode(
+  plan: MarathonPlan, state: MarathonState, node: MarathonNode,
+): boolean {
+  for (const other of plan.nodes) {
+    if (state.steps[other.id]?.status !== 'ACTIVE') continue;
+    if (intersects(node.writes, [...other.writes, ...other.reads]) ||
+        intersects(other.writes, node.reads)) return true;
+  }
+  return false;
+}
+
+function startMarathonNode(
+  plan: MarathonPlan, state: MarathonState,
+  action: Extract<MarathonAction, { type: 'START' }>,
+  previous: MarathonStepState, digest: MarathonDigest,
+): MarathonResult<MarathonState> {
+  if (state.paused) return BAD('PAUSED');
+  if (previous.status === 'ACTIVE') return BAD('EFFECT_UNCERTAIN_RECONCILE');
+  if (previous.status !== 'PENDING') return BAD('NOT_PENDING');
+  if (Object.values(state.steps).some(step => step.intentId === action.intentId))
+    return BAD('INTENT_REUSED');
+  const node = plan.nodes.find(candidate => candidate.id === action.nodeId)!;
+  if (!node.deps.every(dep => state.steps[dep]?.status === 'VERIFIED'))
+    return BAD('DEPENDENCY_NOT_VERIFIED');
+  if (conflictingActiveMarathonNode(plan, state, node))
+    return BAD('ACTIVE_RESOURCE_CONFLICT');
+  const next = { ...state.steps };
+  next[action.nodeId] = { status: 'ACTIVE', intentId: action.intentId, proofDigest: null };
+  return OK(seal(plan.planDigest, state.paused, next, digest));
+}
+
+function settleMarathonNode(
+  plan: MarathonPlan, state: MarathonState,
+  action: Extract<MarathonAction, { type: 'SETTLE' }>,
+  previous: MarathonStepState, digest: MarathonDigest,
+): MarathonResult<MarathonState> {
+  if (previous.status === action.outcome && previous.intentId === action.intentId &&
+      previous.proofDigest === action.proofDigest) return OK(state);
+  if (previous.status !== 'ACTIVE' || previous.intentId !== action.intentId)
+    return BAD('UNBOUND_PROOF_OR_REPLAY');
+  if (!safeDigest(action.proofDigest)) return BAD('INVALID_PROOF_DIGEST');
+  const next = { ...state.steps };
+  next[action.nodeId] = {
+    status: action.outcome, intentId: action.intentId, proofDigest: action.proofDigest,
+  };
+  if (action.outcome === 'FAILED')
+    blockPendingDescendants(plan, next, action.nodeId, false);
+  return OK(seal(plan.planDigest, state.paused, next, digest));
+}
+
 /** Check exact source/lock/actor before ANY state transition or evidence reuse. */
-export function advanceMarathon(plan: MarathonPlan, state: MarathonState, action: MarathonAction,
-  current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string }, digest: MarathonDigest): MarathonResult<MarathonState> {
+export function advanceMarathon(
+  plan: MarathonPlan, state: MarathonState, action: MarathonAction,
+  current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string },
+  digest: MarathonDigest,
+): MarathonResult<MarathonState> {
   if (!plan || !state || !current || !action) return BAD('INVALID_ACTION');
-  if (current.baseSha !== plan.baseSha || current.lockDigest !== plan.lockDigest || current.actor !== plan.actor) return BAD('STALE_OR_WRONG_ACTOR');
-  const v = validateMarathonState(plan, state, digest);
-  if (!v.ok) return v;
+  if (current.baseSha !== plan.baseSha || current.lockDigest !== plan.lockDigest ||
+      current.actor !== plan.actor) return BAD('STALE_OR_WRONG_ACTOR');
+  const validated = validateMarathonState(plan, state, digest);
+  if (!validated.ok) return validated;
   if (action.type === 'PAUSE' || action.type === 'RESUME') {
     const paused = action.type === 'PAUSE';
-    return OK(paused === state.paused ? state : seal(plan.planDigest, paused, { ...state.steps }, digest));
+    if (paused === state.paused) return OK(state);
+    return OK(seal(plan.planDigest, paused, { ...state.steps }, digest));
   }
   const previous = state.steps[action.nodeId];
   if (!previous) return BAD('UNKNOWN_STEP_OR_INTENT');
-  if (action.type === 'CANCEL') {
-    if (previous.status === 'ACTIVE') return BAD('EFFECT_UNCERTAIN_RECONCILE');
-    if (previous.status !== 'PENDING') return BAD('NOT_PENDING');
-    const next = { ...state.steps };
-    const blocked = new Set([action.nodeId]);
-    let changed = true;
-    while (changed) {
-      changed = false;
-      for (const node of plan.nodes) if (!blocked.has(node.id) && node.deps.some(d => blocked.has(d))) {
-        blocked.add(node.id); changed = true;
-      }
-    }
-    for (const id of blocked) if (next[id]?.status === 'PENDING') {
-      next[id] = { status: 'BLOCKED', intentId: null, proofDigest: null };
-    }
-    return OK(seal(plan.planDigest, state.paused, next, digest));
-  }
+  if (action.type === 'CANCEL')
+    return cancelMarathonNode(plan, state, action, previous, digest);
   if (!validId(action.intentId)) return BAD('UNKNOWN_STEP_OR_INTENT');
-  if (action.type === 'SETTLE' && previous.status === action.outcome &&
-      previous.intentId === action.intentId && previous.proofDigest === action.proofDigest) return OK(state); // proven replay is a no-op
-  const next = { ...state.steps };
-  if (action.type === 'START') {
-    if (state.paused) return BAD('PAUSED');
-    if (previous.status === 'ACTIVE') return BAD('EFFECT_UNCERTAIN_RECONCILE');
-    if (previous.status !== 'PENDING') return BAD('NOT_PENDING');
-    if (Object.values(state.steps).some(s => s.intentId === action.intentId)) return BAD('INTENT_REUSED');
-    const node = plan.nodes.find(n => n.id === action.nodeId)!;
-    if (!node.deps.every(d => state.steps[d]?.status === 'VERIFIED')) return BAD('DEPENDENCY_NOT_VERIFIED');
-    for (const other of plan.nodes) if (state.steps[other.id]?.status === 'ACTIVE') {
-      if (intersects(node.writes, [...other.writes, ...other.reads]) || intersects(other.writes, node.reads))
-        return BAD('ACTIVE_RESOURCE_CONFLICT');
-    }
-    next[action.nodeId] = { status: 'ACTIVE', intentId: action.intentId, proofDigest: null };
-  } else {
-    if (previous.status !== 'ACTIVE' || previous.intentId !== action.intentId) return BAD('UNBOUND_PROOF_OR_REPLAY');
-    if (!safeDigest(action.proofDigest)) return BAD('INVALID_PROOF_DIGEST');
-    next[action.nodeId] = { status: action.outcome, intentId: action.intentId, proofDigest: action.proofDigest };
-    if (action.outcome === 'FAILED') {
-      const blocked = new Set([action.nodeId]);
-      let changed = true;
-      while (changed) {
-        changed = false;
-        for (const node of plan.nodes) if (!blocked.has(node.id) && node.deps.some(d => blocked.has(d))) {
-          blocked.add(node.id); changed = true;
-        }
-      }
-      for (const id of blocked) if (id !== action.nodeId && next[id]?.status === 'PENDING') {
-        next[id] = { status: 'BLOCKED', intentId: null, proofDigest: null };
-      }
-    }
-  }
-  return OK(seal(plan.planDigest, state.paused, next, digest));
+  if (action.type === 'START')
+    return startMarathonNode(plan, state, action, previous, digest);
+  return settleMarathonNode(plan, state, action, previous, digest);
 }
 
 /**
