@@ -829,3 +829,51 @@ test('Marathon refuses forged action verbs and invalid outcomes before evidence 
   assert.equal(snapshot.stateDigest, before);
   assert.equal(snapshot.steps.source.status, 'ACTIVE');
 });
+
+test('Marathon SKIPPED never grants dependency proof and preserves terminal stop receipt', async () => {
+  const plan = fixture();
+  let snapshot = unwrap(initialMarathonState(plan, digest));
+  reject(advanceMarathon(plan, snapshot,
+    { type: 'SKIP', nodeId: 'source', reasonCode: '../invalid' }, bindings, digest),
+    'INVALID_STOP_REASON');
+  snapshot = unwrap(advanceMarathon(plan, snapshot,
+    { type: 'SKIP', nodeId: 'source', reasonCode: 'OWNER_NOT_EXECUTED' }, bindings, digest));
+  assert.equal(snapshot.steps.source.status, 'SKIPPED');
+  assert.equal(snapshot.steps.source.stopReasonCode, 'OWNER_NOT_EXECUTED');
+  assert.equal(snapshot.steps.build.status, 'BLOCKED');
+  assert.equal(snapshot.steps.build.stopReasonCode, 'DEPENDENCY_SKIPPED');
+  assert.equal(snapshot.steps.release.status, 'BLOCKED');
+  assert.equal(snapshot.steps.audit.status, 'PENDING');
+  assert.deepEqual(unwrap(readyMarathonNodes(plan, snapshot, digest)), ['audit']);
+  reject(advanceMarathon(plan, snapshot,
+    { type: 'START', nodeId: 'source', intentId: 'not-allowed' }, bindings, digest), 'NOT_PENDING');
+  reject(advanceMarathon(plan, snapshot,
+    { type: 'START', nodeId: 'build', intentId: 'cannot-bypass' }, bindings, digest), 'NOT_PENDING');
+  const operator = unwrap(describeMarathonNextActions(plan, snapshot, bindings, digest));
+  const skipped = operator.decisions.find(item => item.nodeId === 'source');
+  assert.equal(skipped.action, 'STOP_BLOCKED');
+  assert.equal(skipped.stopReasonCode, 'OWNER_NOT_EXECUTED');
+  assert.deepEqual(operator.eligibleStarts, ['audit']);
+
+  let persisted = unwrap(initialMarathonState(plan, digest));
+  const store = {
+    async read() { return persisted; },
+    async compareAndSwap(_key, old, next) {
+      if (persisted.stateDigest !== old) return false;
+      persisted = next; return true;
+    },
+  };
+  const durable = unwrap(await persistMarathonTransition(plan, store,
+    { type: 'SKIP', nodeId: 'source', reasonCode: 'OWNER_NOT_EXECUTED' }, bindings, digest));
+  assert.equal(durable.steps.source.status, 'SKIPPED');
+  assert.equal(unwrap(await recoverPersistedMarathon(plan, store, bindings, digest)).status, 'READY');
+  assert.deepEqual(unwrap(await recoverPersistedMarathon(plan, store, bindings, digest)).readyNodeIds, ['audit']);
+  reject(await persistMarathonTransition(plan, store,
+    { type: 'SKIP', nodeId: 'source', reasonCode: 'DIFFERENT_REASON' }, bindings, digest), 'NOT_PENDING');
+  assert.equal((await store.read()).steps.source.stopReasonCode, 'OWNER_NOT_EXECUTED');
+  const inflight = unwrap(advanceMarathon(plan, unwrap(initialMarathonState(plan, digest)),
+    { type: 'START', nodeId: 'source', intentId: 'in-flight' }, bindings, digest));
+  reject(advanceMarathon(plan, inflight,
+    { type: 'SKIP', nodeId: 'source', reasonCode: 'FORGED_NO_EFFECT' }, bindings, digest),
+    'EFFECT_UNCERTAIN_RECONCILE');
+});
