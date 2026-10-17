@@ -194,7 +194,7 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
   const graph = new Map(plan.nodes.map(node => [node.id, node]));
   for (const id of ids) {
     const s = state.steps[id];
-    if (invalidMarathonStep(s)) return BAD('STATE_INVALID');
+    if (!s || invalidMarathonStep(s)) return BAD('STATE_INVALID');
     if (s.intentId !== null) {
       if (!validId(s.intentId) || usedIntents.has(s.intentId)) return BAD('STATE_INTENT_REUSED');
       usedIntents.add(s.intentId);
