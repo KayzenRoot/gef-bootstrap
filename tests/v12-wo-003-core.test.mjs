@@ -232,7 +232,7 @@ test('Marathon rejects conflicting ACTIVE nodes in imported snapshots', () => {
   reject(validateMarathonState(p, incompatible, digest), 'STATE_RESOURCE_CONFLICT');
 });
 
-test('Marathon admits only source-bound M15 execution-pack receipts and exact safe waves', () => {
+test('Marathon refuses counterfeit M15 receipts with matching text but no authenticated replay proof', () => {
   const binding = { workOrderId: 'GBS-V12-WO-003', actor: 'CHATGPT_OWNER', baseSha: BASE, lockDigest: LOCK };
   const node = { instructionId: 'proof', dependsOn: [], targetFiles: ['out/proof'],
     preconditions: ['admitted'], mutationSpec: 'write with proof',
@@ -249,14 +249,18 @@ test('Marathon admits only source-bound M15 execution-pack receipts and exact sa
   const compiled = { pack, receipt,
     envelope: { packId: pack.packId, taskIdentity: pack.taskIdentity, contextIdentity: pack.contextIdentity },
     certificate: { packId: pack.packId, complete: true, missingItems: [] } };
-  const accepted = unwrap(compileMarathonFromExecutionPack(compiled, binding, digest));
-  assert.deepEqual(accepted.waves, [['proof']]);
+  // Matching caller-controlled strings are not sufficient for M15 admission.
+  // The separate native-chain test proves a genuinely compiled M14/M15 pack is accepted.
+  reject(compileMarathonFromExecutionPack(compiled, binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
+  reject(compileMarathonFromExecutionPack({
+    ...compiled, receipt: { ...receipt, packId: pack.packId, replayable: true },
+  }, binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
   reject(compileMarathonFromExecutionPack({ ...compiled,
     receipt: { ...receipt, status: 'STALE_CONTEXT' } }, binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
   reject(compileMarathonFromExecutionPack({ ...compiled,
     receipt: { ...receipt, semanticDigest: H('forged') } }, binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
   reject(compileMarathonFromExecutionPack({ ...compiled,
-    pack: { ...pack, safeParallelWaves: [['wrong']] } }, binding, digest), 'PACK_WAVE_MISMATCH');
+    pack: { ...pack, safeParallelWaves: [['wrong']] } }, binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
 });
 
 test('Delta imports M26 final gates but never imports historical proof as a PASS', () => {
