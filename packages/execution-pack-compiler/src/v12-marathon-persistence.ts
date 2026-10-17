@@ -58,10 +58,11 @@ export async function recoverPersistedMarathon(
     const readyNodeIds = next.value.filter(id => {
       const n = plan.nodes.find(node => node.id === id)!;
       return active.every(a => {
-        const aPaths = [...a.writes, ...a.reads];
-        const nPaths = [...n.writes, ...n.reads];
-        return !aPaths.some(left => nPaths.some(right =>
-          left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`)));
+        const overlaps = (xs: readonly string[], ys: readonly string[]) =>
+          xs.some(left => ys.some(right =>
+            left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`)));
+        return !overlaps(a.writes, [...n.writes, ...n.reads]) &&
+          !overlaps(n.writes, a.reads);
       });
     });
     return { ok: true, value: {
