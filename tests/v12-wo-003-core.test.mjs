@@ -12,6 +12,8 @@ import {
 
 import { initializePersistedMarathon, recoverPersistedMarathon, persistMarathonTransition } from '../packages/execution-pack-compiler/dist/v12-marathon-persistence.js';
 
+import { executeMarathonStep } from '../packages/execution-pack-compiler/dist/v12-marathon-runner.js';
+
 const digest = input => createHash('sha256').update(input).digest('hex');
 const H = s => `sha256:${digest(s)}`;
 const BASE = 'a'.repeat(40), OTHER = 'b'.repeat(40), LOCK = H('lock');
@@ -409,4 +411,92 @@ test('Marathon refuses non-atomic, wrong-owner or failed initial snapshot storag
   reject(await initializePersistedMarathon(plan, {
     ...noInit, async createIfAbsent() { throw Error('disk unavailable'); },
   }, bindings, digest), 'PERSISTENCE_UNAVAILABLE');
+});
+
+test('Marathon executes only after durable START and verified external settlement', async () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  const events = [];
+  const store = {
+    async read() { return state; },
+    async compareAndSwap(_key, oldDigest, next) {
+      assert.equal(state.stateDigest, oldDigest);
+      events.push('persist:' + next.steps.source.status);
+      state = next;
+      return true;
+    },
+  };
+  const provider = { async execute(input) {
+    assert.equal(state.steps.source.status, 'ACTIVE');
+    assert.equal(input.persistedStartDigest, state.stateDigest);
+    events.push('provider');
+    return { outcome: 'VERIFIED', proofDigest: H('trusted-proof') };
+  } };
+  const verifier = { async verify(_plan, prior, action) {
+    assert.equal(prior.steps.source.status, 'ACTIVE');
+    assert.equal(action.proofDigest, H('trusted-proof'));
+    events.push('verify');
+    return true;
+  } };
+  const done = unwrap(await executeMarathonStep(
+    plan, store, 'source', 'one-time-intent', bindings, digest, provider, verifier));
+  assert.equal(done.steps.source.status, 'VERIFIED');
+  assert.deepEqual(events, ['persist:ACTIVE', 'provider', 'verify', 'persist:VERIFIED']);
+  reject(await executeMarathonStep(
+    plan, store, 'source', 'second-intent', bindings, digest, provider, verifier),
+    'STEP_NOT_DURABLY_READY');
+  assert.equal(events.filter(event => event === 'provider').length, 1);
+});
+
+test('Marathon never repeats provider on CAS conflict or uncertain outcome', async () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  let called = 0;
+  const provider = { async execute() { called++; throw Error('timeout after mutation'); } };
+  const verifier = { async verify() { return true; } };
+  const conflictStore = {
+    async read() { return state; },
+    async compareAndSwap() { return false; },
+  };
+  reject(await executeMarathonStep(
+    plan, conflictStore, 'source', 'intent-cas', bindings, digest, provider, verifier),
+    'PERSISTENCE_CAS_CONFLICT');
+  assert.equal(called, 0);
+  const store = {
+    async read() { return state; },
+    async compareAndSwap(_key, oldDigest, next) {
+      assert.equal(state.stateDigest, oldDigest);
+      state = next;
+      return true;
+    },
+  };
+  reject(await executeMarathonStep(
+    plan, store, 'source', 'intent-uncertain', bindings, digest, provider, verifier),
+    'PROVIDER_OUTCOME_UNKNOWN_RECONCILE');
+  assert.equal(state.steps.source.status, 'ACTIVE');
+  reject(await executeMarathonStep(
+    plan, store, 'source', 'intent-retry', bindings, digest, provider, verifier),
+    'STEP_NOT_DURABLY_READY');
+  assert.equal(called, 1);
+});
+
+test('Marathon cannot settle an untrusted result even after provider returned', async () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  const store = {
+    async read() { return state; },
+    async compareAndSwap(_key, previous, next) {
+      assert.equal(state.stateDigest, previous);
+      state = next;
+      return true;
+    },
+  };
+  const provider = { async execute() {
+    return { outcome: 'VERIFIED', proofDigest: H('untrusted-result') };
+  } };
+  const verifier = { async verify() { return false; } };
+  reject(await executeMarathonStep(
+    plan, store, 'source', 'untrusted-intent', bindings, digest, provider, verifier),
+    'SETTLEMENT_PROOF_NOT_VERIFIED');
+  assert.equal(state.steps.source.status, 'ACTIVE');
 });

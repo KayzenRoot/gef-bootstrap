@@ -107,3 +107,7 @@ export type { MarathonStatus, MarathonDigest, MarathonResult, MarathonNode, Mara
 // U12-03: durable-state CAS integration boundary (no provider side effects).
 export { initializePersistedMarathon, recoverPersistedMarathon, persistMarathonTransition } from './v12-marathon-persistence.js';
 export type { MarathonStateStore, MarathonRecoveryDecision, MarathonSettlementProofPort } from './v12-marathon-persistence.js';
+
+// U12-03: bounded single-step provider bridge using durable START and verified settlement.
+export { executeMarathonStep } from './v12-marathon-runner.js';
+export type { MarathonStepProvider } from './v12-marathon-runner.js';
