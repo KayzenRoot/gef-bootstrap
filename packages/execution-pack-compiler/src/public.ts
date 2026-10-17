@@ -115,3 +115,6 @@ export type { MarathonStepProvider } from './v12-marathon-runner.js';
 // U12-03: reconcile an ambiguous persisted intent without re-executing provider mutations.
 export { reconcileMarathonStep } from './v12-marathon-runner.js';
 export type { MarathonReconciliationProvider } from './v12-marathon-runner.js';
+
+// U12-03: concrete local crash-safe durable CAS snapshot store, no implicit lock recovery.
+export { createFileBackedMarathonStore } from './v12-marathon-file-store.js';
