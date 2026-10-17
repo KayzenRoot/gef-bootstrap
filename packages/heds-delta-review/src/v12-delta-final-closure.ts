@@ -55,7 +55,29 @@ export interface DeltaVerifiedRepair {
   readonly repairEvidenceDigest: string;
   readonly finalAttemptId: string;
 }
+/**
+ * External M26/M28 canonical test-inventory and final-sweep attestation.
+ * The provider must recompute the complete test obligation set from current
+ * governed inputs, not trust input.requiredFinalTests or the ledger.
+ */
+export interface DeltaVerifiedFinalSweep {
+  readonly verified: true;
+  readonly workOrderId: string;
+  readonly headSha: string;
+  readonly ledgerDigest: string;
+  readonly requiredFinalTests: readonly string[];
+  readonly obligationSourceDigest: string;
+  readonly finalSweepEvidenceDigest: string;
+  readonly materialization: 'COMPLETE';
+}
 export interface DeltaFinalClosurePorts {
+  /** Must independently recompute M26 final requirements and M28 full-suite coverage. */
+  verifyFinalSweep(input: {
+    readonly workOrderId: string;
+    readonly headSha: string;
+    readonly ledgerDigest: string;
+    readonly requiredFinalTests: readonly string[];
+  }): Promise<DeltaVerifiedFinalSweep | null>;
   /** Caller installs independent M24/M25/M27/M28 verifier implementations. */
   verifyModule(artifact: DeltaModuleArtifact): Promise<DeltaModuleAttestation | null>;
   /** Must check authoritative exact-HEAD provider test receipts, not ledger text. */
@@ -85,6 +107,7 @@ export interface DeltaFinalClosureDecision {
   readonly moduleProofDigests: readonly string[];
   readonly repairsIndependentlyVerified: readonly string[];
   readonly finalTestsIndependentlyVerified: readonly string[];
+  readonly canonicalSweepEvidenceDigest: string;
   readonly mayPromoteCheckpoint: false;
   readonly mayMerge: false;
   readonly mayPublish: false;
@@ -112,6 +135,7 @@ export async function evaluateDeltaFinalClosure(
   ports: DeltaFinalClosurePorts, digest: DeltaDigest,
 ): Promise<DeltaResult<DeltaFinalClosureDecision>> {
   if (!store || typeof store.read !== 'function' || !input || !ports ||
+      typeof ports.verifyFinalSweep !== 'function' ||
       typeof ports.verifyModule !== 'function' ||
       typeof ports.verifyFinalTest !== 'function' ||
       typeof ports.verifyRepair !== 'function' ||
@@ -137,6 +161,27 @@ export async function evaluateDeltaFinalClosure(
   );
   if (!prelim.ok) return prelim;
   if (prelim.value.state === 'BLOCKED') return bad('DELTA_FINAL_IMPACT_UNKNOWN');
+
+  // Never accept a caller-populated ledger or fullFinalSweepPerformed=true as
+  // evidence that M26/M28's entire mandatory test inventory was executed.
+  // The trusted verifier must attest the separately compiled governed floor.
+  let sweep: DeltaVerifiedFinalSweep | null;
+  try {
+    sweep = await ports.verifyFinalSweep({
+      workOrderId: input.workOrderId, headSha: input.headSha,
+      ledgerDigest: ledger.ledgerDigest, requiredFinalTests: [...ledger.requiredFinalTests],
+    });
+  } catch { return bad('DELTA_FINAL_SWEEP_PROOF_UNAVAILABLE'); }
+  if (sweep?.verified !== true ||
+      sweep.workOrderId !== input.workOrderId ||
+      sweep.headSha !== input.headSha ||
+      sweep.ledgerDigest !== ledger.ledgerDigest ||
+      sweep.materialization !== 'COMPLETE' ||
+      !Array.isArray(sweep.requiredFinalTests) ||
+      !setEquals(sweep.requiredFinalTests, ledger.requiredFinalTests) ||
+      !DIGEST.test(sweep.obligationSourceDigest) ||
+      !DIGEST.test(sweep.finalSweepEvidenceDigest))
+    return bad('DELTA_FINAL_CANONICAL_SWEEP_NOT_VERIFIED');
 
   // Fail closed on missing/duplicated modules, invalid digests, or forged keys.
   if (input.modules.length !== MODULES.length ||
@@ -227,6 +272,7 @@ export async function evaluateDeltaFinalClosure(
     moduleProofDigests: modules.map(m => m.artifactDigest),
     repairsIndependentlyVerified: repaired.sort(),
     finalTestsIndependentlyVerified: verifiedFinals.sort(),
+    canonicalSweepEvidenceDigest: sweep.finalSweepEvidenceDigest,
     mayPromoteCheckpoint: false, mayMerge: false, mayPublish: false,
     requiresIndependentReview: true,
   } };
