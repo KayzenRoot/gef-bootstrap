@@ -1,13 +1,13 @@
 # GBS-V12-WO-003 — Proposed checkpoint delta
 
 **State:** `PROPOSED_ONLY / NOT_PROMOTED`  
-**Source:** implementation PR #470, code HEAD `8b8ffc661a674481fc0302b3a311d58e14433b7e` preceding evidence-only reconciliation.  
+**Source:** implementation PR #470, code HEAD `45bac2b666676bac8f0556a1d9d336a5611f14a6` preceding evidence-only reconciliation.  
 **Base:** `main@3824cbc0baf3e7b7b6527608c7cc765b23f05a2c`.  
 **Current canonical V1.2:** **3/10**, U12-01/U12-02/U12-04 accepted. No change made here.
 
 ## Conditional proposal for later governed promotion
 
-The current implementation includes a read-only M17/M18 continuity proof integration, terminal SKIPPED provenance and 57 declared WO-003 tests. Full M14–M18/M63 and M24–M28 release-chain acceptance remains **NOT ACCEPTED**. The checkpoint stays unchanged at 3/10.
+The current implementation includes a read-only M17/M18 continuity proof integration, terminal SKIPPED provenance and 62 declared WO-003 tests. A2 now has a conservative, read-only M24/M25/M27/M28 final closure gate with a real M28 impact fixture, but production M24/M25/M27 authoritative verification remains uncorroborated. Full M14–M18/M63 and M24–M28 release-chain acceptance remains **NOT ACCEPTED**. The checkpoint stays unchanged at 3/10.
 
 After A1 Marathon and A2 Delta Assurance *both* satisfy the exact end-to-end acceptance controls, the implementing PR is protected-merged on its audited HEAD, main post-merge CI/security/runtime evidence is current, owner approves the precise promotion, and any independent reviewer required by DoD has actually acted, **propose**:
 
