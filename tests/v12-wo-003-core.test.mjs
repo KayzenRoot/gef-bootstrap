@@ -14,6 +14,8 @@ import { initializePersistedMarathon, recoverPersistedMarathon, persistMarathonT
 
 import { executeMarathonStep, reconcileMarathonStep } from '../packages/execution-pack-compiler/dist/v12-marathon-runner.js';
 
+import { assessDeltaRootCause } from '../packages/heds-delta-review/dist/v12-delta-root-cause.js';
+
 const digest = input => createHash('sha256').update(input).digest('hex');
 const H = s => `sha256:${digest(s)}`;
 const BASE = 'a'.repeat(40), OTHER = 'b'.repeat(40), LOCK = H('lock');
@@ -615,4 +617,47 @@ test('Marathon adapter rejects missing receipt arrays and malformed M15 waves', 
     binding, digest), 'PACK_NODE_INCOMPLETE');
   reject(compileMarathonFromExecutionPack({ ...base, pack: { ...pack, safeParallelWaves: [null] } },
     binding, digest), 'PACK_NODE_INCOMPLETE');
+});
+
+test('Delta links the original failure to a changed source through transitive proof closure', () => {
+  let ledger = unwrap(initializeDeltaLedger('WO-003', BASE, ['tests:unit','tests:security'], digest));
+  ledger = unwrap(addDeltaAttempt(ledger, attempt('original-failure','FAIL'), digest));
+  ledger = unwrap(addDeltaAttempt(ledger, attempt('later-pass','PASS'), digest));
+  const h = { testId: 'tests:unit', firstFailureAttemptId: 'original-failure',
+    firstFailureEvidenceDigest: H('original-failure'), causeDependencyId: 'source:changed',
+    reason: 'Suspected dependency change invalidated the unit proof' };
+  const graph = { 'tests:unit':['proof:middle'], 'proof:middle':['source:changed'],
+    'source:changed': [] };
+  const result = unwrap(assessDeltaRootCause(ledger, h, graph, ['source:changed'], digest));
+  assert.equal(result.status, 'HYPOTHESIS_ONLY');
+  assert.equal(result.independentRepairProofRequired, true);
+  assert.equal(result.firstFailureAttemptId, 'original-failure');
+  assert.deepEqual(result.finalTestsRequired, ['tests:security','tests:unit']);
+});
+test('Delta never promotes hypothesis with wrong first-failure identity or unrelated cause', () => {
+  let ledger = unwrap(initializeDeltaLedger('WO-003', BASE, ['tests:unit'], digest));
+  ledger = unwrap(addDeltaAttempt(ledger, attempt('failed','FAIL'), digest));
+  const h = { testId:'tests:unit', firstFailureAttemptId:'failed',
+    firstFailureEvidenceDigest:H('failed'), causeDependencyId:'source:real',
+    reason:'Repair suspected' };
+  const graph = { 'tests:unit':['source:other'],'source:other':[],'source:real':[] };
+  reject(assessDeltaRootCause(ledger,{...h,firstFailureEvidenceDigest:H('forged')},
+    graph,['source:real'],digest), 'FIRST_FAILURE_BINDING_MISMATCH');
+  reject(assessDeltaRootCause(ledger,h,graph,['source:other'],digest),
+    'CAUSE_NOT_IN_CHANGE_SET');
+  reject(assessDeltaRootCause(ledger,h,graph,['source:real'],digest),
+    'CAUSE_NOT_IN_PROOF_CLOSURE');
+});
+test('Delta hypothesis scans full DAG and rejects cycles and unknown proof leaves', () => {
+  let ledger = unwrap(initializeDeltaLedger('WO-003', BASE, ['tests:unit'], digest));
+  ledger = unwrap(addDeltaAttempt(ledger, attempt('failed','FAIL'), digest));
+  const h = { testId:'tests:unit', firstFailureAttemptId:'failed',
+    firstFailureEvidenceDigest:H('failed'), causeDependencyId:'source:real',
+    reason:'Suspected changed source' };
+  reject(assessDeltaRootCause(ledger,h,
+    { 'tests:unit':['source:real','proof:cycle'], 'source:real':[],
+      'proof:cycle':['tests:unit'] },['source:real'],digest), 'PROOF_GRAPH_CYCLE');
+  reject(assessDeltaRootCause(ledger,h,
+    { 'tests:unit':['source:real','source:unknown'], 'source:real':[] },
+    ['source:real'],digest), 'UNKNOWN_PROOF_DEPENDENCY');
 });

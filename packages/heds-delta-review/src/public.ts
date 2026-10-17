@@ -13,3 +13,7 @@ export*from'./s06-bug-proof.js';
 export { initializeDeltaLedgerFromBugProof } from './v12-delta-assurance.js';
 export { initializeDeltaLedger, validateDeltaLedger, addDeltaAttempt, evaluateDeltaAssurance } from './v12-delta-assurance.js';
 export type { DeltaDigest, DeltaResult, DeltaObservation, DeltaClassification, DeltaAttempt, DeltaRecord, DeltaLedger, DeltaAssuranceVerdict } from './v12-delta-assurance.js';
+
+// U12-05: source-bound first-failure root-cause hypothesis, never acceptance.
+export { assessDeltaRootCause } from './v12-delta-root-cause.js';
+export type { DeltaRootCauseHypothesis, DeltaRootCauseAssessment } from './v12-delta-root-cause.js';
