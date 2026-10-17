@@ -137,6 +137,44 @@ export function addDeltaAttempt(ledger: DeltaLedger, attempt: DeltaAttempt, dige
   return ok(serialize({ workOrderId: ledger.workOrderId, headSha: ledger.headSha, requiredFinalTests: ledger.requiredFinalTests, records }, digest));
 }
 
+interface DeltaImpactChecker {
+  invalidated(id: string): boolean;
+  incomplete(): boolean;
+}
+
+function createDeltaImpactChecker(
+  proofDependencies: Readonly<Record<string, readonly string[]>>,
+  changedDependencies: readonly string[],
+): DeltaImpactChecker {
+  const changed = new Set(changedDependencies);
+  const closureMemo = new Map<string, boolean>();
+  const visiting = new Set<string>();
+  let traversed = 0;
+  let unknown = false;
+
+  function invalidated(id: string): boolean {
+    if (closureMemo.has(id)) return closureMemo.get(id)!;
+    if (visiting.has(id)) throw new Error('DEPENDENCY_GRAPH_CYCLE');
+    if (++traversed > 16384) throw new Error('DEPENDENCY_GRAPH_BUDGET');
+    visiting.add(id);
+    const deps = Object.hasOwn(proofDependencies, id) ? proofDependencies[id] : undefined;
+    if (deps === undefined) {
+      if (!changed.has(id)) unknown = true;
+      visiting.delete(id);
+      closureMemo.set(id, true);
+      return true;
+    }
+    let dirty = changed.has(id);
+    for (const dep of deps) {
+      if (invalidated(dep)) dirty = true;
+    }
+    visiting.delete(id);
+    closureMemo.set(id, dirty);
+    return dirty;
+  }
+  return { invalidated, incomplete: () => unknown };
+}
+
 /** Computes dependency-closure invalidation; never exempts required final tests. */
 export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: string,
   proofDependencies: Readonly<Record<string, readonly string[]>>,
@@ -152,33 +190,10 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
       changedDependencies.some(s => !validId(s)) ||
       entries.some(([id, xs]) => !validId(id) || !Array.isArray(xs) || xs.length > 4096 || xs.some(s => !validId(s))))
     return fail('UNKNOWN_DEPENDENCY');
-  const changed = new Set(changedDependencies), carried: string[] = [], reusable: string[] = [];
+  const impact = createDeltaImpactChecker(proofDependencies, changedDependencies);
+  const carried: string[] = [];
+  const reusable: string[] = [];
   let incomplete = false;
-  const closureMemo = new Map<string, boolean>();
-  const visiting = new Set<string>();
-  let traversed = 0;
-  function invalidated(id: string): boolean {
-    if (closureMemo.has(id)) return closureMemo.get(id)!;
-    if (visiting.has(id)) throw new Error('DEPENDENCY_GRAPH_CYCLE');
-    if (++traversed > 16384) throw new Error('DEPENDENCY_GRAPH_BUDGET');
-    visiting.add(id);
-    const deps = Object.hasOwn(proofDependencies, id) ? proofDependencies[id] : undefined;
-    // Undeclared dependencies are UNKNOWN; never reuse proof on an incomplete graph.
-    if (deps === undefined) {
-      // A known changed source cannot justify reuse, but may proceed to final
-      // validation. Only an UNKNOWN, unchanged dependency blocks assessment.
-      if (!changed.has(id)) incomplete = true;
-      visiting.delete(id);
-      closureMemo.set(id, true);
-      return true;
-    }
-    // Traverse every branch so a changed source cannot hide a sibling cycle.
-    let dirty = changed.has(id);
-    for (const dep of deps) if (invalidated(dep)) dirty = true;
-    visiting.delete(id);
-    closureMemo.set(id, dirty);
-    return dirty;
-  }
   try {
     for (const id of ledger.requiredFinalTests) {
       const record = ledger.records.find(r => r.testId === id);
@@ -187,14 +202,14 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
       const deps = proofDependencies[id];
       if (!deps) { incomplete = true; continue; } // Unknown impact blocks reuse
       const final = record.attempts.at(-1)!;
-      if (record.firstFailure === null && final.observation === 'PASS' && !invalidated(id)) reusable.push(id);
+      if (record.firstFailure === null && final.observation === 'PASS' && !impact.invalidated(id)) reusable.push(id);
     }
   } catch (error) {
     return fail(error instanceof Error && error.message === 'DEPENDENCY_GRAPH_CYCLE' ? 'DEPENDENCY_GRAPH_CYCLE' : 'DEPENDENCY_GRAPH_BUDGET');
   }
   let state: DeltaAssuranceVerdict['state'] = 'READY_FOR_FINAL_ASSURANCE';
   if (carried.length > 0) state = 'CORRECTION_REQUIRED';
-  else if (incomplete) state = 'BLOCKED';
+  else if (incomplete || impact.incomplete()) state = 'BLOCKED';
   return ok({ state,
     requiredFinalTests: ledger.requiredFinalTests, carriedFirstFailures: carried,
     evidenceReuseAllowed: reusable });
