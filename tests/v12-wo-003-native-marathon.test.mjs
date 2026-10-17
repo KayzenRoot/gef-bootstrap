@@ -134,7 +134,7 @@ const reject = (result, code) => {
 };
 
 
-function compileNativeM14M15() {
+function compileNativeM14M15(twoMutations = false) {
 const sha = value => createHash("sha256").update(value).digest("hex");
 const digest = { algorithm: "sha256", digest: sha };
 const opts = { digest };
@@ -271,17 +271,36 @@ function compilePack(context = admittedContext()) {
       mutationSpec: "patch:src/a.ts",
       evidenceOutputs: ["ev:a"],
       rollbackPlan: "restore-src-a",
-    }],
+    }, ...(twoMutations ? [{
+      instructionId: "b",
+      objective: "Patch independent source with the same mutation domain",
+      targetFiles: ["src/b.ts"],
+      dependsOn: [],
+      mutationDomains: ["src"],
+      validationIds: ["val-b"],
+      provenanceRefs: ["auth:b"],
+      preconditions: ["context-valid"],
+      mutationSpec: "patch:src/b.ts",
+      evidenceOutputs: ["ev:b"],
+      rollbackPlan: "restore-src-b",
+    }] : [])],
     validations: [{
       validationId: "val-a",
       command: "node --test tests/a.test.mjs",
       scope: "FOCUSED",
       covers: ["a"],
-    }],
+    }, ...(twoMutations ? [{
+      validationId: "val-b",
+      command: "node --test tests/b.test.mjs",
+      scope: "FOCUSED",
+      covers: ["b"],
+    }] : [])],
     requiredCapability,
     capabilityOffer,
-    guardrailBindings: [{ nodeId: "a", policyIds: ["policy-a"] }],
-    provenanceEntries: [{ instructionId: "a", authorityRefs: ["auth:a"], decisionRefs: [] }],
+    guardrailBindings: [{ nodeId: "a", policyIds: ["policy-a"] },
+      ...(twoMutations ? [{ nodeId: "b", policyIds: ["policy-b"] }] : [])],
+    provenanceEntries: [{ instructionId: "a", authorityRefs: ["auth:a"], decisionRefs: [] },
+      ...(twoMutations ? [{ instructionId: "b", authorityRefs: ["auth:b"], decisionRefs: [] }] : [])],
     reasoningBranches: [{ branchId: "r1", decided: true, canonicalRef: "decision-1" }],
     ambiguities: [],
     cognitionBudget: { maxReads: 8, maxSearches: 2, maxToolCalls: 8, maxAmbiguityBranches: 1 },
@@ -293,7 +312,7 @@ function compilePack(context = admittedContext()) {
       expectedOutputs: ["source-bytes"],
       fallbackPath: "escalate",
     }],
-    readOnceEntries: { source: ["src/a.ts"] },
+    readOnceEntries: { source: twoMutations ? ["src/a.ts", "src/b.ts"] : ["src/a.ts"] },
     negativeSearchLedger: [],
     noDiscoveryBoundary: ["product-intent"],
     promptSections: ["MUST: preserve constraints", "MUST: satisfy proof obligations"],
@@ -431,4 +450,16 @@ test('REAL M14/M15 graph refuses drift in continuity and never duplicates uncert
     'another-native-intent', binding, digest, { provider, proofAuthority: authority }),
     'STEP_NOT_DURABLY_READY');
   assert.equal(effects, 1);
+});
+
+test('real M14/M15 safe parallelism split survives Marathon compilation for two independent same-domain writes', () => {
+  const compiled = compileNativeM14M15(true);
+  assert.equal(compiled.pack.workDag.length, 2);
+  assert.deepEqual(compiled.pack.safeParallelWaves, [['a'], ['b']]);
+  const result = compileMarathonFromExecutionPack(
+    compiled, { workOrderId: 'GBS-V12-WO-003', ...binding }, digest);
+  assert.equal(result.ok, true, JSON.stringify(result));
+  assert.deepEqual(result.value.waves, [['a'], ['b']]);
+  assert.deepEqual(result.value.admittedWaves, [['a'], ['b']]);
+  assert.equal(initialMarathonState(result.value, digest).ok, true);
 });
