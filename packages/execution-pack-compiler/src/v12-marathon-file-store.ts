@@ -61,7 +61,19 @@ async function replaceState(directory: string, file: string, state: MarathonStat
     } finally {
       await handle.close();
     }
-    await rename(temp, file);
+    // Windows readers can transiently lock the destination. A bounded retry
+    // preserves atomic replace semantics; never unlink an existing snapshot.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        await rename(temp, file);
+        break;
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code;
+        if (process.platform !== 'win32' || attempt >= 5 ||
+            !['EPERM', 'EACCES', 'EBUSY'].includes(code ?? '')) throw error;
+        await new Promise<void>(done => setTimeout(done, 10 * (attempt + 1)));
+      }
+    }
     installed = true;
     await flushDirectory(directory);
   } finally {
