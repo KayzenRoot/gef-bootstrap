@@ -27,7 +27,8 @@ const attempt = (id, observation) => ({
 const authority = { async verify(_ledger, a) {
   return { verified: true, testId: a.testId, attemptId: a.attemptId,
     headSha: a.headSha, inputDigest: a.inputDigest,
-    toolchainDigest: a.toolchainDigest, evidenceDigest: a.evidenceDigest };
+    toolchainDigest: a.toolchainDigest, evidenceDigest: a.evidenceDigest,
+    observation: a.observation, failureSignature: a.failureSignature};
 } };
 
 test('Delta file store preserves first failure after restart and independently verified retry', async t => {
