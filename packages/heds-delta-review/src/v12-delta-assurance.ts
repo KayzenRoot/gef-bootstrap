@@ -40,7 +40,8 @@ const ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
 const validId = (value: unknown): value is string => typeof value === 'string' && ID.test(value);
 const ok = <T>(value: T): DeltaResult<T> => ({ ok: true, value });
 const fail = <T>(code: string): DeltaResult<T> => ({ ok: false, code });
-const compareText = (a: string, b: string): number => a.localeCompare(b);
+/** Canonical hashes may not change with LANG or ICU locale. */
+const compareText = (a: string, b: string): number => a < b ? -1 : a > b ? 1 : 0;
 const sorted = (a: readonly string[]) => [...a].sort(compareText);
 const sameSet = (a: readonly string[], b: readonly string[]) => JSON.stringify(sorted(a)) === JSON.stringify(sorted(b));
 const stable = (v: unknown): string => {
@@ -133,7 +134,7 @@ export function addDeltaAttempt(ledger: DeltaLedger, attempt: DeltaAttempt, dige
   // A passing retry cannot erase the original failing attempt or its identity.
   const classification = classifyDeltaAttempts(attempts);
   const record: DeltaRecord = { testId: attempt.testId, firstFailure, attempts, classification };
-  const records = [...ledger.records.filter(r => r.testId !== attempt.testId), record].sort((a, b) => a.testId.localeCompare(b.testId));
+  const records = [...ledger.records.filter(r => r.testId !== attempt.testId), record].sort((a, b) => compareText(a.testId, b.testId));
   return ok(serialize({ workOrderId: ledger.workOrderId, headSha: ledger.headSha, requiredFinalTests: ledger.requiredFinalTests, records }, digest));
 }
 
