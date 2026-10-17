@@ -16,6 +16,8 @@ import { executeMarathonStep, reconcileMarathonStep } from '../packages/executio
 
 import { assessDeltaRootCause } from '../packages/heds-delta-review/dist/v12-delta-root-cause.js';
 
+import { initializeDurableDeltaLedger, recordVerifiedDeltaAttempt } from '../packages/heds-delta-review/dist/v12-delta-ledger-persistence.js';
+
 const digest = input => createHash('sha256').update(input).digest('hex');
 const H = s => `sha256:${digest(s)}`;
 const BASE = 'a'.repeat(40), OTHER = 'b'.repeat(40), LOCK = H('lock');
@@ -660,4 +662,92 @@ test('Delta hypothesis scans full DAG and rejects cycles and unknown proof leave
   reject(assessDeltaRootCause(ledger,h,
     { 'tests:unit':['source:real','source:unknown'], 'source:real':[] },
     ['source:real'],digest), 'UNKNOWN_PROOF_DEPENDENCY');
+});
+
+test('Delta durable ledger accepts only a receipt bound to the exact attempt and HEAD', async () => {
+  const workOrder = 'WO-003';
+  let state = null;
+  let writes = 0;
+  const store = {
+    async createIfAbsent(wo, head, initial) {
+      assert.equal(wo, workOrder);
+      assert.equal(head, BASE);
+      if (state) return false;
+      state = initial;
+      return true;
+    },
+    async read(wo, head) { assert.equal(wo, workOrder); assert.equal(head, BASE); return state; },
+    async compareAndSwap(wo, head, previous, next) {
+      assert.equal(wo, workOrder);
+      assert.equal(head, BASE);
+      if (state.ledgerDigest !== previous) return false;
+      writes++; state = next; return true;
+    },
+  };
+  unwrap(await initializeDurableDeltaLedger(store, workOrder, BASE, ['tests:unit'], digest));
+  reject(await initializeDurableDeltaLedger(store, workOrder, BASE, ['tests:unit'], digest),
+    'DELTA_LEDGER_EXISTS_REQUIRES_RECOVERY');
+  const candidate = attempt('trusted-attempt','PASS');
+  const authority = { async verify(_ledger, a) { return {
+    verified: true, testId: a.testId, attemptId: a.attemptId,
+    headSha: a.headSha, toolchainDigest: a.toolchainDigest,
+    inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest,
+  }; } };
+  const updated = unwrap(await recordVerifiedDeltaAttempt(
+    store, authority, workOrder, candidate, BASE, digest));
+  assert.equal(updated.records[0].attempts[0].attemptId, 'trusted-attempt');
+  assert.equal(writes, 1);
+  reject(await recordVerifiedDeltaAttempt(store, authority, workOrder, candidate, BASE, digest),
+    'DUPLICATE_ATTEMPT');
+  assert.equal(writes, 1);
+});
+
+test('Delta verified append blocks untrusted receipts, stale HEAD and concurrency races', async () => {
+  const workOrder = 'WO-003';
+  let ledger = unwrap(initializeDeltaLedger(workOrder, BASE, ['tests:unit'], digest));
+  let writes = 0;
+  const store = {
+    async read() { return ledger; },
+    async compareAndSwap() { writes++; return false; },
+  };
+  const candidate = attempt('first-fail','FAIL');
+  const bogus = { async verify(_l, a) { return { verified: true, testId: a.testId,
+    attemptId: a.attemptId, headSha: a.headSha, toolchainDigest: a.toolchainDigest,
+    inputDigest: a.inputDigest, evidenceDigest: H('forged') }; } };
+  reject(await recordVerifiedDeltaAttempt(store, bogus, workOrder, candidate, BASE, digest),
+    'DELTA_EVIDENCE_NOT_VERIFIED');
+  reject(await recordVerifiedDeltaAttempt(store, bogus, workOrder, candidate, OTHER, digest),
+    'DELTA_STALE_HEAD');
+  assert.equal(writes, 0);
+  const trusted = { async verify(_l, a) { return { verified: true,
+    testId: a.testId, attemptId: a.attemptId, headSha: a.headSha,
+    toolchainDigest: a.toolchainDigest, inputDigest: a.inputDigest,
+    evidenceDigest: a.evidenceDigest }; } };
+  reject(await recordVerifiedDeltaAttempt(store, trusted, workOrder, candidate, BASE, digest),
+    'DELTA_PERSISTENCE_CAS_CONFLICT');
+  assert.equal(writes, 1);
+  assert.equal(ledger.records.length, 0);
+  reject(await recordVerifiedDeltaAttempt(store, { async verify() { throw Error('offline'); } },
+    workOrder, candidate, BASE, digest), 'DELTA_EVIDENCE_UNAVAILABLE');
+});
+
+test('Delta never erases first failing proof under separately verified retries', async () => {
+  const workOrder = 'WO-003';
+  let ledger = unwrap(initializeDeltaLedger(workOrder, BASE, ['tests:unit'], digest));
+  const store = {
+    async read() { return ledger; },
+    async compareAndSwap(_wo, _head, old, next) {
+      if (ledger.ledgerDigest !== old) return false;
+      ledger = next; return true;
+    },
+  };
+  const authority = { async verify(_l, a) { return {
+    verified: true, testId: a.testId, attemptId: a.attemptId, headSha: a.headSha,
+    toolchainDigest: a.toolchainDigest, inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest,
+  }; } };
+  unwrap(await recordVerifiedDeltaAttempt(store, authority, workOrder, attempt('f1','FAIL'), BASE, digest));
+  const original = ledger.records[0].firstFailure;
+  unwrap(await recordVerifiedDeltaAttempt(store, authority, workOrder, attempt('p2','PASS'), BASE, digest));
+  assert.deepEqual(ledger.records[0].firstFailure, original);
+  assert.equal(ledger.records[0].classification, 'FLAKE_CANDIDATE');
 });

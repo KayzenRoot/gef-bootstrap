@@ -17,3 +17,7 @@ export type { DeltaDigest, DeltaResult, DeltaObservation, DeltaClassification, D
 // U12-05: source-bound first-failure root-cause hypothesis, never acceptance.
 export { assessDeltaRootCause } from './v12-delta-root-cause.js';
 export type { DeltaRootCauseHypothesis, DeltaRootCauseAssessment } from './v12-delta-root-cause.js';
+
+// U12-05: durable verified evidence ledger; provider proof authority remains external.
+export { initializeDurableDeltaLedger, recordVerifiedDeltaAttempt } from './v12-delta-ledger-persistence.js';
+export type { DeltaLedgerStore, DeltaEvidenceAuthority, DeltaVerifiedEvidenceReceipt } from './v12-delta-ledger-persistence.js';
