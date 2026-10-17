@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { captureMarathonTelemetry, verifyPerformanceRecord } from '../packages/m62-m63-final/src/index.mjs';
+import { syntheticMarathonTelemetryPopulation } from './v12-wo-003-telemetry-fixture.test.mjs';
 
 const sha = (v) => v.repeat(64);
 const base = 'a'.repeat(40);
@@ -13,18 +14,12 @@ function input(metrics = {
 }) {
   return { recordId: 'marathon-telemetry-one',
     executionMode: 'CLI',
-    population: {
-      P1: { workloadKind: 'VALIDATION_SELECTION' },
-      P2: { workloadInstanceId: 'wo003-telemetry', fixtureId: 'fixed-input',
+    population: syntheticMarathonTelemetryPopulation(
+      { workloadInstanceId: 'wo003-telemetry', fixtureId: 'fixed-input',
         fixtureDigest: sha('d') },
-      P3: { commitSha: base, treeFingerprint: sha('e') },
-      P4: { node: '22.11.0', npm: '10.9.0', packageManager: 'npm', typescript: '6.0.3' },
-      P5: { os: 'linux', osVersion: 'ubuntu-24.04', architecture: 'x64' },
-      P6: { policyDigest: sha('f'), ladder: 'L5', finalSweepRequired: true },
-      P7: { posture: 'COLD', reuseSetDigest: 'none' },
-      P8: { timedRegion: 'work-order-complete', startEvent: 'executor-start',
-        endEvent: 'accepted-handoff' },
-    },
+      { commitSha: base, treeFingerprint: sha('e') },
+      { policyDigest: sha('f'), ladder: 'L5', finalSweepRequired: true },
+    ),
     requiredMetricIds: ['M-LAT-01', 'M-TOK-03'],
     metrics, qualityGate: { status: 'PASS', digest: sha('a') },
   };
