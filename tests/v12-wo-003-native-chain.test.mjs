@@ -52,7 +52,8 @@ const attempt = (testId, id, observation) => ({
 const persistAuthority = { async verify(_ledger, a) {
   return { verified: true, testId: a.testId, attemptId: a.attemptId,
     headSha: a.headSha, toolchainDigest: a.toolchainDigest,
-    inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest };
+    inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest,
+    observation: a.observation, failureSignature: a.failureSignature};
 } };
 
 async function fixture(t, failure = false) {
