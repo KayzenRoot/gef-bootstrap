@@ -1,4 +1,6 @@
 /** U12-05: immutable first-failure ledger and conservative assurance reuse. */
+import type { BugProofReceipt } from './bug-proof-types.js';
+
 export type DeltaDigest = (canonical: string) => string;
 export type DeltaResult<T> = { ok: true; value: T } | { ok: false; code: string };
 export type DeltaObservation = 'PASS' | 'FAIL';
@@ -182,4 +184,35 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
   return ok({ state: carried.length ? 'CORRECTION_REQUIRED' : incomplete ? 'BLOCKED' : 'READY_FOR_FINAL_ASSURANCE',
     requiredFinalTests: ledger.requiredFinalTests, carriedFirstFailures: carried,
     evidenceReuseAllowed: reusable });
+}
+
+/**
+ * M26 integration boundary: conservatively import REQUIRED test obligations,
+ * never PASS evidence. The caller MUST verify the Bug Proof receipt with M26
+ * before invoking this projection; this function grants no proof authority.
+ */
+export function initializeDeltaLedgerFromBugProof(
+  receipt: BugProofReceipt,
+  workOrderId: string,
+  headSha: string,
+  digest: DeltaDigest,
+): DeltaResult<DeltaLedger> {
+  if (!receipt || !receipt.projectId || !receipt.sourceIdentityDigest ||
+      !receipt.testImpactHandoffDigest || !receipt.receiptDigest ||
+      !['READY', 'WIDENED'].includes(receipt.testImpactState) ||
+      !Array.isArray(receipt.mandatoryTargetIds) ||
+      !Array.isArray(receipt.finalAssuranceTargetIds) ||
+      !Array.isArray(receipt.unresolvedTestIds) ||
+      receipt.unresolvedTestIds.length !== 0 ||
+      !['NONE', 'LOCAL', 'BOUNDARY'].includes(receipt.testImpactUncertainty))
+    return fail('BUG_PROOF_NOT_READY');
+
+  const mandatory = [...new Set([
+    ...receipt.mandatoryTargetIds,
+    ...receipt.finalAssuranceTargetIds,
+  ])].sort();
+  if (mandatory.length === 0) return fail('BUG_PROOF_FINAL_TESTS_MISSING');
+  // No attempts are imported: none can be treated as verified without a
+  // matching exact-HEAD, toolchain and independent provider evidence receipt.
+  return initializeDeltaLedger(workOrderId, headSha, mandatory, digest);
 }

@@ -10,5 +10,6 @@ export*from'./bug-proof-types.js';
 export*from'./s06-bug-proof.js';
 
 // U12-05: first-failure-preserving Delta Assurance.
+export { initializeDeltaLedgerFromBugProof } from './v12-delta-assurance.js';
 export { initializeDeltaLedger, validateDeltaLedger, addDeltaAttempt, evaluateDeltaAssurance } from './v12-delta-assurance.js';
 export type { DeltaDigest, DeltaResult, DeltaObservation, DeltaClassification, DeltaAttempt, DeltaRecord, DeltaLedger, DeltaAssuranceVerdict } from './v12-delta-assurance.js';

@@ -7,6 +7,7 @@ import {
 } from '../packages/execution-pack-compiler/dist/v12-marathon.js';
 import {
   initializeDeltaLedger, addDeltaAttempt, evaluateDeltaAssurance, validateDeltaLedger,
+  initializeDeltaLedgerFromBugProof,
 } from '../packages/heds-delta-review/dist/v12-delta-assurance.js';
 
 const digest = input => createHash('sha256').update(input).digest('hex');
@@ -246,4 +247,20 @@ test('Marathon admits only source-bound M15 execution-pack receipts and exact sa
     receipt: { ...receipt, semanticDigest: H('forged') } }, binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
   reject(compileMarathonFromExecutionPack({ ...compiled,
     pack: { ...pack, safeParallelWaves: [['wrong']] } }, binding, digest), 'PACK_WAVE_MISMATCH');
+});
+
+test('Delta imports M26 final gates but never imports historical proof as a PASS', () => {
+  const receipt = { projectId: 'gef', sourceIdentityDigest: H('source'),
+    testImpactHandoffDigest: H('handoff'), receiptDigest: H('receipt'),
+    testImpactState: 'READY', testImpactUncertainty: 'LOCAL',
+    mandatoryTargetIds: ['tests:security'], finalAssuranceTargetIds: ['tests:security', 'tests:release'],
+    unresolvedTestIds: [] };
+  const ledger = unwrap(initializeDeltaLedgerFromBugProof(receipt, 'GBS-V12-WO-003', BASE, digest));
+  assert.deepEqual(ledger.requiredFinalTests, ['tests:release', 'tests:security']);
+  assert.deepEqual(ledger.records, []);
+  assert.equal(unwrap(evaluateDeltaAssurance(ledger, BASE, {}, [], digest)).state, 'BLOCKED');
+  reject(initializeDeltaLedgerFromBugProof({ ...receipt, testImpactState: 'INDETERMINATE' },
+    'GBS-V12-WO-003', BASE, digest), 'BUG_PROOF_NOT_READY');
+  reject(initializeDeltaLedgerFromBugProof({ ...receipt, unresolvedTestIds: ['tests:missing'] },
+    'GBS-V12-WO-003', BASE, digest), 'BUG_PROOF_NOT_READY');
 });
