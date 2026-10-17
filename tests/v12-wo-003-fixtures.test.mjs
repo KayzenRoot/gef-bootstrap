@@ -2,6 +2,7 @@
  * TEST-ONLY synthetic M24–M28 and durable Delta fixtures for WO-003.
  * Never use these trust roots or verifier callbacks in production.
  */
+import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
