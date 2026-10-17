@@ -1,18 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  createFileBackedDeltaLedgerStore, initializeDurableDeltaLedger,
-  recordVerifiedDeltaAttempt, evaluateDeltaFinalClosure,
-} from '../packages/heds-delta-review/dist/public.js';
-import { buildTestMap, compileGateClosure } from '../packages/test-impact-engine/dist/public.js';
-
-import {
   sha, H, digest, opts, WO, HEAD, tests, graph, unwrap, reject, attempt,
   persistAuthority, fixture, actualM28, evidence, inputs, verifier, repair,
+  createFileBackedDeltaLedgerStore, initializeDurableDeltaLedger,
+  recordVerifiedDeltaAttempt, evaluateDeltaFinalClosure, compileGateClosure,
 } from './v12-wo-003-fixtures.test.mjs';
 
 test('Delta final closure requires complete durable exact-HEAD M24-M28 gate and full test sweep', async t => {
