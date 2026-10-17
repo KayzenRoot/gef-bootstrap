@@ -76,28 +76,59 @@ const validPath = (p: string): boolean =>
 const intersects = (left: readonly string[], right: readonly string[]): boolean =>
   left.some(a => right.some(b => a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`)));
 
+function isInvalidMarathonNode(n: MarathonNode): boolean {
+  return !n || !validId(n.id) || !Array.isArray(n.deps) ||
+    !Array.isArray(n.reads) || !Array.isArray(n.writes) ||
+    !unique(n.deps) || !unique(n.reads) || !unique(n.writes) ||
+    n.deps.some(dep => !validId(dep)) ||
+    [...n.reads, ...n.writes].some(path => !validPath(path));
+}
+
+function waveHasWriteConflict(
+  wave: readonly string[], byId: ReadonlyMap<string, MarathonNode>,
+): boolean {
+  for (let i = 0; i < wave.length; i++) {
+    for (let j = i + 1; j < wave.length; j++) {
+      const a = byId.get(wave[i]!)!;
+      const b = byId.get(wave[j]!)!;
+      if (intersects(a.writes, [...b.writes, ...b.reads]) ||
+          intersects(b.writes, a.reads)) return true;
+    }
+  }
+  return false;
+}
+
+function buildMarathonWaves(
+  byId: ReadonlyMap<string, MarathonNode>,
+): MarathonResult<string[][]> {
+  const left = new Set(byId.keys());
+  const done = new Set<string>();
+  const waves: string[][] = [];
+  while (left.size > 0) {
+    const wave = sorted([...left].filter(id => byId.get(id)!.deps.every(d => done.has(d))));
+    if (wave.length === 0) return BAD('DEPENDENCY_CYCLE');
+    if (waveHasWriteConflict(wave, byId)) return BAD('CONCURRENT_WRITE_CONFLICT');
+    waves.push(wave);
+    for (const id of wave) {
+      left.delete(id);
+      done.add(id);
+    }
+  }
+  return OK(waves);
+}
+
 /** Reject a non-admitted/malformed graph and concurrent mutation collisions. */
 export function compileMarathon(request: MarathonRequest, digest: MarathonDigest): MarathonResult<MarathonPlan> {
   if (!request || !Array.isArray(request.nodes) || !validId(request.workOrderId) || !validId(request.actor) || !SHA.test(request.baseSha) ||
       !safeDigest(request.lockDigest) || request.nodes.length === 0 || request.nodes.length > 512) return BAD('INVALID_BINDING');
   const raw: readonly MarathonNode[] = request.nodes;
-  if (raw.some(n => !n || !validId(n.id) || !Array.isArray(n.deps) || !Array.isArray(n.reads) || !Array.isArray(n.writes) ||
-      !unique(n.deps) || !unique(n.reads) || !unique(n.writes) || n.deps.some(d => !validId(d)) ||
-      [...n.reads, ...n.writes].some(p => !validPath(p))) || !unique(raw.map(n => n.id))) return BAD('INVALID_NODE');
+  if (raw.some(isInvalidMarathonNode) || !unique(raw.map(n => n.id))) return BAD('INVALID_NODE');
   if (raw.reduce((sum, n) => sum + n.deps.length, 0) > 4096) return BAD('EDGE_BUDGET');
   const byId = new Map(raw.map(n => [n.id, n]));
   if (raw.some(n => n.deps.some(d => !byId.has(d)))) return BAD('UNKNOWN_DEPENDENCY');
-  const left = new Set(byId.keys()), done = new Set<string>(), waves: string[][] = [];
-  while (left.size) {
-    const wave = sorted([...left].filter(id => byId.get(id)!.deps.every(d => done.has(d))));
-    if (!wave.length) return BAD('DEPENDENCY_CYCLE');
-    for (let i = 0; i < wave.length; i++) for (let j = i + 1; j < wave.length; j++) {
-      const a = byId.get(wave[i]!)!, b = byId.get(wave[j]!)!;
-      if (intersects(a.writes, [...b.writes, ...b.reads]) || intersects(b.writes, a.reads)) return BAD('CONCURRENT_WRITE_CONFLICT');
-    }
-    waves.push(wave);
-    for (const id of wave) { left.delete(id); done.add(id); }
-  }
+  const waveResult = buildMarathonWaves(byId);
+  if (!waveResult.ok) return waveResult;
+  const waves = waveResult.value;
   const nodes = sorted(raw.map(n => n.id)).map(id => {
     const n = byId.get(id)!;
     return { id, deps: sorted(n.deps), reads: sorted(n.reads), writes: sorted(n.writes) };
@@ -129,6 +160,30 @@ export function readyMarathonNodes(plan: MarathonPlan, state: MarathonState, dig
       n.deps.every(d => state.steps[d]?.status === 'VERIFIED')).map(n => n.id)));
 }
 
+function invalidMarathonStep(s: MarathonStepState | undefined): boolean {
+  if (!s || !['PENDING', 'ACTIVE', 'VERIFIED', 'FAILED', 'BLOCKED'].includes(s.status))
+    return true;
+  if (s.status === 'PENDING' || s.status === 'BLOCKED')
+    return s.intentId !== null || s.proofDigest !== null;
+  if (s.status === 'ACTIVE') return !s.intentId || s.proofDigest !== null;
+  return !s.intentId || !s.proofDigest || !safeDigest(s.proofDigest);
+}
+
+function invalidActiveResourceOverlap(
+  ids: readonly string[],
+  graph: ReadonlyMap<string, MarathonNode>,
+): boolean {
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      const a = graph.get(ids[i]!)!;
+      const b = graph.get(ids[j]!)!;
+      if (intersects(a.writes, [...b.writes, ...b.reads]) ||
+          intersects(b.writes, a.reads)) return true;
+    }
+  }
+  return false;
+}
+
 export function validateMarathonState(plan: MarathonPlan, state: MarathonState, digest: MarathonDigest): MarathonResult<true> {
   if (!state?.steps) return BAD('STATE_INVALID');
   const compiled = compileMarathon(plan, digest);
@@ -139,11 +194,7 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
   const graph = new Map(plan.nodes.map(node => [node.id, node]));
   for (const id of ids) {
     const s = state.steps[id];
-    if (!s || !['PENDING', 'ACTIVE', 'VERIFIED', 'FAILED', 'BLOCKED'].includes(s.status) ||
-        (s.status === 'PENDING' && (s.intentId !== null || s.proofDigest !== null)) ||
-        (s.status === 'ACTIVE' && (!s.intentId || s.proofDigest !== null)) ||
-        (['VERIFIED', 'FAILED'].includes(s.status) && (!s.intentId || !s.proofDigest || !safeDigest(s.proofDigest))) ||
-        (s.status === 'BLOCKED' && (s.intentId !== null || s.proofDigest !== null))) return BAD('STATE_INVALID');
+    if (invalidMarathonStep(s)) return BAD('STATE_INVALID');
     if (s.intentId !== null) {
       if (!validId(s.intentId) || usedIntents.has(s.intentId)) return BAD('STATE_INTENT_REUSED');
       usedIntents.add(s.intentId);
@@ -154,11 +205,7 @@ export function validateMarathonState(plan: MarathonPlan, state: MarathonState, 
   }
   // Imported snapshots must uphold the same exclusion rule as live START.
   const active = ids.filter(id => state.steps[id]?.status === 'ACTIVE');
-  for (let i = 0; i < active.length; i++) for (let j = i + 1; j < active.length; j++) {
-    const a = graph.get(active[i]!)!, b = graph.get(active[j]!)!;
-    if (intersects(a.writes, [...b.writes, ...b.reads]) || intersects(b.writes, a.reads))
-      return BAD('STATE_RESOURCE_CONFLICT');
-  }
+  if (invalidActiveResourceOverlap(active, graph)) return BAD('STATE_RESOURCE_CONFLICT');
   const expected = hash(digest, 'MARATHON_STATE', { planDigest: state.planDigest, paused: state.paused, steps: state.steps });
   if (!safeDigest(expected) || expected !== state.stateDigest) return BAD('STATE_TAMPERED');
   return OK(true);
