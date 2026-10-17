@@ -3,7 +3,7 @@
  * Does not grant actor privilege, write to stores or execute providers.
  * Exact source/actor binding and sealed state are verified on every call.
  */
-import { readyMarathonNodes, validateMarathonState } from './v12-marathon.js';
+import { marathonNodesConflict, readyMarathonNodes, validateMarathonState } from './v12-marathon.js';
 import type { MarathonDigest, MarathonPlan, MarathonResult, MarathonState, MarathonStatus } from './v12-marathon.js';
 
 export type MarathonNextAction =
@@ -96,14 +96,9 @@ export function describeMarathonNextActions(
   // The same read/write conflicts checked at provider START are excluded from
   // operator-recommended starts. A stale client can NEVER gain authority here.
   const active = plan.nodes.filter(node => state.steps[node.id]?.status === 'ACTIVE');
-  const overlaps = (a: readonly string[], b: readonly string[]) =>
-    a.some(left => b.some(right =>
-      left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`)));
   const eligibleStarts = ready.value.filter(id => {
     const node = plan.nodes.find(item => item.id === id)!;
-    return active.every(other =>
-      !overlaps(node.writes, [...other.writes, ...other.reads]) &&
-      !overlaps(other.writes, node.reads));
+    return active.every(other => !marathonNodesConflict(node, other));
   });
   const eligible = new Set(eligibleStarts);
   const ids = plan.nodes.map(node => node.id).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
