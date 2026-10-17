@@ -1,22 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import {
-  compileMarathon, initialMarathonState, advanceMarathon,
-  recoverMarathonWithCanonicalContinuity,
+  initialMarathonState, advanceMarathon, recoverMarathonWithCanonicalContinuity,
 } from '../packages/execution-pack-compiler/dist/public.js';
-import {
-  createCanonicalContinuationCapsule, verifyCanonicalContinuationCapsule,
-  buildCheckpointFreshnessVector, buildCheckpointPortabilityEnvelope,
-  buildResumeReadinessCertificate, buildContinuationHandoffContract,
-} from '../packages/checkpoint-engine/dist/public.js';
-import {
-  createResumeIntentCapsule, proveLineageContinuity, enforceResumeAuthorityBoundary,
-  applyConversationIndependence, buildResumeMinimumSufficientContext, rehydrateHotState,
-  buildContextTemperatureMap, buildResumeReadPlan, buildResumeDriftVector,
-  detectOrphanWork, buildResumeConflictQuarantine, evaluateSafeReentry,
-  buildResumeReceipt, verifyResumeReceipt, verifyContinuationHandoff,
-} from '../packages/resume-engine/dist/public.js';
+import { verifyResumeReceipt } from '../packages/resume-engine/dist/public.js';
 
 import { digest, H, options, binding, policyBinding, unwrap, plan,
   canonicalChain, storeWith, reject } from './v12-wo-003-marathon-fixtures.test.mjs';
