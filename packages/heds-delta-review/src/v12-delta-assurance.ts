@@ -40,15 +40,23 @@ const ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
 const validId = (value: unknown): value is string => typeof value === 'string' && ID.test(value);
 const ok = <T>(value: T): DeltaResult<T> => ({ ok: true, value });
 const fail = <T>(code: string): DeltaResult<T> => ({ ok: false, code });
-const sorted = (a: readonly string[]) => [...a].sort();
+const compareText = (a: string, b: string): number => a.localeCompare(b);
+const sorted = (a: readonly string[]) => [...a].sort(compareText);
 const sameSet = (a: readonly string[], b: readonly string[]) => JSON.stringify(sorted(a)) === JSON.stringify(sorted(b));
 const stable = (v: unknown): string => {
   if (v === null || typeof v !== 'object') return JSON.stringify(v);
   if (Array.isArray(v)) return `[${v.map(stable).join(',')}]`;
   const o = v as Record<string, unknown>;
-  return `{${Object.keys(o).sort().map(k => `${JSON.stringify(k)}:${stable(o[k])}`).join(',')}}`;
+  const entries = Object.keys(o).sort(compareText).map(k => {
+    const field = `${JSON.stringify(k)}:${stable(o[k])}`;
+    return field;
+  });
+  return `{${entries.join(',')}}`;
 };
-const hash = (digest: DeltaDigest, data: unknown) => `sha256:${digest(`GEF:V12:DELTA_ASSURANCE\n${stable(data)}`)}`;
+const hash = (digest: DeltaDigest, data: unknown): string => {
+  const payload = `GEF:V12:DELTA_ASSURANCE\n${stable(data)}`;
+  return `sha256:${digest(payload)}`;
+};
 const serialize = (ledger: Omit<DeltaLedger, 'ledgerDigest'>, digest: DeltaDigest): DeltaLedger =>
   ({ ...ledger, ledgerDigest: hash(digest, ledger) });
 
@@ -213,7 +221,7 @@ export function initializeDeltaLedgerFromBugProof(
   const mandatory = [...new Set([
     ...receipt.mandatoryTargetIds,
     ...receipt.finalAssuranceTargetIds,
-  ])].sort();
+  ])].sort(compareText);
   if (mandatory.length === 0) return fail('BUG_PROOF_FINAL_TESTS_MISSING');
   // No attempts are imported: none can be treated as verified without a
   // matching exact-HEAD, toolchain and independent provider evidence receipt.

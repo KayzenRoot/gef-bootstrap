@@ -50,13 +50,18 @@ const ID = /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}$/;
 const validId = (value: unknown): value is string => typeof value === 'string' && ID.test(value);
 const OK = <T>(value: T): MarathonResult<T> => ({ ok: true, value });
 const BAD = <T>(code: string): MarathonResult<T> => ({ ok: false, code });
-const sorted = (xs: readonly string[]): string[] => [...xs].sort();
+const compareText = (a: string, b: string): number => a.localeCompare(b);
+const sorted = (xs: readonly string[]): string[] => [...xs].sort(compareText);
 const unique = (xs: readonly string[]): boolean => xs.length === new Set(xs).size;
 const canonical = (value: unknown): string => {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   const o = value as Record<string, unknown>;
-  return `{${Object.keys(o).sort().map(k => `${JSON.stringify(k)}:${canonical(o[k])}`).join(',')}}`;
+  const entries = Object.keys(o).sort(compareText).map(k => {
+    const field = `${JSON.stringify(k)}:${canonical(o[k])}`;
+    return field;
+  });
+  return `{${entries.join(',')}}`;
 };
 const hash = (digest: MarathonDigest, kind: string, data: unknown): string => {
   const value = digest(`GEF:V12:${kind}\n${canonical(data)}`);
