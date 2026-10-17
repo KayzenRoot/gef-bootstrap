@@ -75,7 +75,7 @@ const intersects = (left: readonly string[], right: readonly string[]): boolean 
 export function compileMarathon(request: MarathonRequest, digest: MarathonDigest): MarathonResult<MarathonPlan> {
   if (!request || !Array.isArray(request.nodes) || !validId(request.workOrderId) || !validId(request.actor) || !SHA.test(request.baseSha) ||
       !safeDigest(request.lockDigest) || request.nodes.length === 0 || request.nodes.length > 512) return BAD('INVALID_BINDING');
-  const raw = request.nodes;
+  const raw: readonly MarathonNode[] = request.nodes;
   if (raw.some(n => !n || !validId(n.id) || !Array.isArray(n.deps) || !Array.isArray(n.reads) || !Array.isArray(n.writes) ||
       !unique(n.deps) || !unique(n.reads) || !unique(n.writes) || n.deps.some(d => !validId(d)) ||
       [...n.reads, ...n.writes].some(p => !validPath(p))) || !unique(raw.map(n => n.id))) return BAD('INVALID_NODE');
