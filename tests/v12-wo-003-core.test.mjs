@@ -582,3 +582,37 @@ test('Marathon reconciliation refuses stale source binding and concurrent CAS', 
     'PERSISTENCE_CAS_CONFLICT');
   assert.equal(lookups, 1);
 });
+
+test('Delta rejects null imported records without throwing', () => {
+  const empty = unwrap(initializeDeltaLedger('WO-1', BASE, ['tests:unit'], digest));
+  reject(validateDeltaLedger({ ...empty, records: [null] }, digest),
+    'LEDGER_STRUCTURE_INVALID');
+});
+
+test('Marathon adapter rejects missing receipt arrays and malformed M15 waves', () => {
+  const binding = { workOrderId: 'WO-1', actor: 'OWNER', baseSha: BASE, lockDigest: LOCK };
+  const node = { instructionId: 'one', dependsOn: [], targetFiles: ['out/file'],
+    preconditions: ['ok'], mutationSpec: 'write', evidenceOutputs: ['proof'] };
+  const pack = { packId: 'pack-1', taskIdentity: 'task-1',
+    contextIdentity: 'context-1', semanticDigest: H('sem'), contextDigest: H('ctx'),
+    policyVersion: 'v1', capabilityIdentity: 'cap-1', graphDigest: H('graph'),
+    toolPlanDigest: H('tool'), validationPlanDigest: H('validation'),
+    workDag: [node], safeParallelWaves: [['one']] };
+  const receipt = { status: 'VALID', diagnostics: [], semanticDigest: pack.semanticDigest,
+    contextDigest: pack.contextDigest, taskIdentity: pack.taskIdentity,
+    contextIdentity: pack.contextIdentity, policyVersion: pack.policyVersion,
+    capabilityIdentity: pack.capabilityIdentity, graphDigest: pack.graphDigest,
+    toolPlanDigest: pack.toolPlanDigest, validationPlanDigest: pack.validationPlanDigest };
+  const base = { pack, receipt, envelope: { packId: pack.packId,
+    taskIdentity: pack.taskIdentity, contextIdentity: pack.contextIdentity },
+    certificate: { packId: pack.packId, complete: true, missingItems: [] } };
+  reject(compileMarathonFromExecutionPack({ ...base, receipt: { ...receipt, diagnostics: null } },
+    binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
+  reject(compileMarathonFromExecutionPack({ ...base,
+    certificate: { ...base.certificate, missingItems: null } },
+    binding, digest), 'EXECUTION_PACK_NOT_ADMITTED');
+  reject(compileMarathonFromExecutionPack({ ...base, pack: { ...pack, workDag: [null] } },
+    binding, digest), 'PACK_NODE_INCOMPLETE');
+  reject(compileMarathonFromExecutionPack({ ...base, pack: { ...pack, safeParallelWaves: [null] } },
+    binding, digest), 'PACK_NODE_INCOMPLETE');
+});

@@ -66,6 +66,7 @@ export function validateDeltaLedger(ledger: DeltaLedger, digest: DeltaDigest): D
       ledger.requiredFinalTests.some(id => !validId(id)) ||
       !sameSet(ledger.requiredFinalTests, [...new Set(ledger.requiredFinalTests)]) ||
       !Array.isArray(ledger.records) || ledger.records.length > ledger.requiredFinalTests.length ||
+      ledger.records.some(r => !r || typeof r !== 'object') ||
       !sameSet(ledger.records.map(r => r.testId), [...new Set(ledger.records.map(r => r.testId))]))
     return fail('LEDGER_STRUCTURE_INVALID');
   const seenAttempts = new Set<string>();

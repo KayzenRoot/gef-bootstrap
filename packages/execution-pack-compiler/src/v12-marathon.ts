@@ -241,6 +241,7 @@ export function compileMarathonFromExecutionPack(
   const envelope = compiled?.envelope;
   const cert = compiled?.certificate;
   if (!pack || !receipt || !envelope || !cert ||
+      !Array.isArray(receipt.diagnostics) || !Array.isArray(cert.missingItems) ||
       receipt.status !== 'VALID' || receipt.diagnostics.length !== 0 ||
       receipt.semanticDigest !== pack.semanticDigest ||
       receipt.contextDigest !== pack.contextDigest ||
@@ -258,6 +259,9 @@ export function compileMarathonFromExecutionPack(
       cert.missingItems.length !== 0 ||
       !Array.isArray(pack.workDag) || !Array.isArray(pack.safeParallelWaves) ||
       pack.workDag.length === 0) return BAD('EXECUTION_PACK_NOT_ADMITTED');
+  if (pack.workDag.some(node => !node || typeof node !== 'object') ||
+      pack.safeParallelWaves.some(wave => !Array.isArray(wave) ||
+        wave.some(id => !validId(id)))) return BAD('PACK_NODE_INCOMPLETE');
 
   const nodes: MarathonNode[] = pack.workDag.map(node => ({
     id: node.instructionId,
