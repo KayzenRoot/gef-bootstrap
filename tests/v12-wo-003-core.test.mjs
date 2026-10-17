@@ -731,7 +731,7 @@ test('Delta verified append blocks untrusted receipts, stale HEAD and concurrenc
   const trusted = { async verify(_l, a) { return { verified: true,
     testId: a.testId, attemptId: a.attemptId, headSha: a.headSha,
     toolchainDigest: a.toolchainDigest, inputDigest: a.inputDigest,
-    evidenceDigest: a.evidenceDigest }; } };
+    evidenceDigest: a.evidenceDigest, observation: a.observation, failureSignature: a.failureSignature }; } };
   reject(await recordVerifiedDeltaAttempt(store, trusted, workOrder, candidate, BASE, digest),
     'DELTA_PERSISTENCE_CAS_CONFLICT');
   assert.equal(writes, 1);
@@ -752,7 +752,7 @@ test('Delta never erases first failing proof under separately verified retries',
   };
   const authority = { async verify(_l, a) { return {
     verified: true, testId: a.testId, attemptId: a.attemptId, headSha: a.headSha,
-    toolchainDigest: a.toolchainDigest, inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest,
+    toolchainDigest: a.toolchainDigest, inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest, observation: a.observation, failureSignature: a.failureSignature,
   }; } };
   unwrap(await recordVerifiedDeltaAttempt(store, authority, workOrder, attempt('f1','FAIL'), BASE, digest));
   const original = ledger.records[0].firstFailure;
