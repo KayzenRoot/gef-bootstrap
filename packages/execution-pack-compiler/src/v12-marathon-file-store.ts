@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /**
  * U12-03 / durable Node 22 filesystem storage implementation.
  *
