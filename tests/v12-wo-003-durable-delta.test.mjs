@@ -80,3 +80,35 @@ test('Delta stale exclusive lock and invalid storage keys fail closed', async t 
   assert.equal((await store.read(WO, HEAD)).ledgerDigest, old.ledgerDigest);
   await assert.rejects(store.read('../not-allowed', HEAD));
 });
+
+test('Delta independent verifier cannot launder FAIL into PASS or change first-failure signature', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'gef-delta-outcome-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const store = createFileBackedDeltaLedgerStore(dir);
+  const initial = unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, ['tests:unit'], digest));
+  const forgedPass = attempt('claimed-pass', 'PASS');
+  const authenticFailureAuthority = { async verify(_ledger, candidate) {
+    return { ...await authority.verify(_ledger, candidate),
+      observation: 'FAIL', failureSignature: 'actual-provider-failure' };
+  } };
+  reject(await recordVerifiedDeltaAttempt(store, authenticFailureAuthority, WO,
+    forgedPass, HEAD, digest), 'DELTA_EVIDENCE_NOT_VERIFIED');
+  const actualFailure = attempt('original-failure', 'FAIL');
+  const forgedSuccessAuthority = { async verify(_ledger, candidate) {
+    return { ...await authority.verify(_ledger, candidate),
+      observation: 'PASS', failureSignature: null };
+  } };
+  reject(await recordVerifiedDeltaAttempt(store, forgedSuccessAuthority, WO,
+    actualFailure, HEAD, digest), 'DELTA_EVIDENCE_NOT_VERIFIED');
+  const mismatchedSignatureAuthority = { async verify(_ledger, candidate) {
+    return { ...await authority.verify(_ledger, candidate),
+      failureSignature: 'changed-signature' };
+  } };
+  reject(await recordVerifiedDeltaAttempt(store, mismatchedSignatureAuthority, WO,
+    actualFailure, HEAD, digest), 'DELTA_EVIDENCE_NOT_VERIFIED');
+  assert.equal((await store.read(WO, HEAD)).ledgerDigest, initial.ledgerDigest);
+  unwrap(await recordVerifiedDeltaAttempt(store, authority, WO,
+    actualFailure, HEAD, digest));
+  assert.equal((await store.read(WO, HEAD)).records[0].firstFailure.attemptId,
+    'original-failure');
+});
