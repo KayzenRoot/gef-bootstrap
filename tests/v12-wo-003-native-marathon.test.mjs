@@ -17,6 +17,7 @@ import {
 } from '../packages/task-context-compiler/dist/public.js';
 import { compileExecutionPack } from '../packages/execution-pack-compiler/dist/public.js';
 import { captureMarathonTelemetry, verifyPerformanceRecord } from '../packages/m62-m63-final/src/index.mjs';
+import { syntheticMarathonTelemetryPopulation } from './v12-wo-003-telemetry-fixture.test.mjs';
 
 import { digest, H, options, binding, policyBinding, unwrap, plan,
   canonicalChain, storeWith, reject } from './v12-wo-003-marathon-fixtures.test.mjs';
@@ -227,18 +228,12 @@ function telemetryInput(p) {
   return {
     recordId: 'native-marathon-chain',
     executionMode: 'CLI',
-    population: {
-      P1: { workloadKind: 'VALIDATION_SELECTION' },
-      P2: { workloadInstanceId: 'wo003-native-m14-m18', fixtureId: 'exact-graph',
+    population: syntheticMarathonTelemetryPopulation(
+      { workloadInstanceId: 'wo003-native-m14-m18', fixtureId: 'exact-graph',
         fixtureDigest: hex('fixture') },
-      P3: { commitSha: p.baseSha, treeFingerprint: hex('tree') },
-      P4: { node: '22.11.0', npm: '10.9.0', packageManager: 'npm', typescript: '6.0.3' },
-      P5: { os: 'linux', osVersion: 'ubuntu-24.04', architecture: 'x64' },
-      P6: { policyDigest: hex('policy'), ladder: 'L5', finalSweepRequired: true },
-      P7: { posture: 'COLD', reuseSetDigest: 'none' },
-      P8: { timedRegion: 'work-order-complete', startEvent: 'executor-start',
-        endEvent: 'accepted-handoff' },
-    },
+      { commitSha: p.baseSha, treeFingerprint: hex('tree') },
+      { policyDigest: hex('policy'), ladder: 'L5', finalSweepRequired: true },
+    ),
     requiredMetricIds: ['M-LAT-01', 'M-TOK-03'],
     metrics, qualityGate: { status: 'PASS', digest: hex('quality') },
   };
