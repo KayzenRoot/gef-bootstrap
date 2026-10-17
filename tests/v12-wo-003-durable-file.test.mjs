@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, open, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, open, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -122,6 +122,9 @@ test('stale exclusive lock blocks storage mutation instead of unlocking automati
 test('file store rejects invalid digest key without file writes', async t => {
   const root = await mkdtemp(join(tmpdir(), 'gef-marathon-'));
   t.after(() => rm(root, { recursive: true, force: true }));
-  await assert.rejects(createFileBackedMarathonStore(root).read('../secrets'));
-  assert.equal((await rm(join(root, 'does-not-exist'), { force: true })), undefined);
+  const store = createFileBackedMarathonStore(root);
+  await assert.rejects(store.read('../secrets'));
+  await assert.rejects(store.compareAndSwap('../secrets', 'x', { planDigest: '../secrets' }));
+  await assert.rejects(store.createIfAbsent('../secrets', { planDigest: '../secrets' }));
+  assert.deepEqual(await readdir(root), []);
 });
