@@ -5,6 +5,7 @@
  * immutable execution evidence before recording a VERIFIED receipt.
  */
 import type { CompiledExecutionPack } from './types.js';
+import { evaluatePackReplay } from './s05-receipt.js';
 
 export type MarathonStatus = 'PENDING' | 'ACTIVE' | 'VERIFIED' | 'FAILED' | 'BLOCKED' | 'SKIPPED';
 export type MarathonDigest = (canonical: string) => string;
@@ -390,6 +391,14 @@ export function compileMarathonFromExecutionPack(
   if (pack.workDag.some(node => !node || typeof node !== 'object') ||
       pack.safeParallelWaves.some(wave => !Array.isArray(wave) ||
         wave.some(id => !validId(id)))) return BAD('PACK_NODE_INCOMPLETE');
+
+  // Same M15 verifier used for native pack replay: never accept a set of
+  // matching caller-controlled digest strings as an admitted execution pack.
+  // M17/M18 separately enforces canonical work-order and actor authority.
+  const replay = evaluatePackReplay(receipt, pack, {
+    digest: { algorithm: 'sha256', digest },
+  });
+  if (!replay.replayable) return BAD('EXECUTION_PACK_NOT_ADMITTED');
 
   const nodes: MarathonNode[] = pack.workDag.map(node => ({
     id: node.instructionId,
