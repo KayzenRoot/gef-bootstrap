@@ -154,6 +154,12 @@ test('Marathon checks live resource conflicts even between different waves', () 
   s = unwrap(advanceMarathon(p, s, { type: 'START', nodeId: 'unrelated', intentId: 'intent-unrelated' }, binding, digest));
   s = unwrap(advanceMarathon(p, s, { type: 'SETTLE', nodeId: 'unrelated', intentId: 'intent-unrelated', outcome: 'VERIFIED', proofDigest: H('proof-unrelated') }, binding, digest));
   reject(advanceMarathon(p, s, { type: 'START', nodeId: 'later', intentId: 'intent-later' }, binding, digest), 'ACTIVE_RESOURCE_CONFLICT');
+  const view = unwrap(describeMarathonNextActions(p, s, binding, digest));
+  const blocked = view.decisions.find(x => x.nodeId === 'later');
+  assert.deepEqual(blocked.unresolvedDependencies, []);
+  assert.equal(blocked.action, 'RECONCILE');
+  assert.equal(blocked.reasonCode, 'ACTIVE_RESOURCE_CONFLICT');
+  assert.equal(view.eligibleStarts.includes('later'), false);
 });
 
 test('Delta Assurance enforces bounded retries and does not drop required security test', () => {
