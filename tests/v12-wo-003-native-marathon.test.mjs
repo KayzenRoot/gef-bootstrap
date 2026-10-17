@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
   compileMarathonFromExecutionPack, executeMarathonStep, initialMarathonState,
+  readyMarathonNodes, advanceMarathon,
   recoverMarathonWithCanonicalContinuity,
 } from '../packages/execution-pack-compiler/dist/public.js';
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
@@ -343,5 +344,16 @@ test('real M14/M15 safe parallelism split survives Marathon compilation for two 
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.deepEqual(result.value.waves, [['a'], ['b']]);
   assert.deepEqual(result.value.admittedWaves, [['a'], ['b']]);
-  assert.equal(initialMarathonState(result.value, digest).ok, true);
+  const initial = unwrap(initialMarathonState(result.value, digest));
+  assert.deepEqual(unwrap(readyMarathonNodes(result.value, initial, digest)), ['a']);
+  reject(advanceMarathon(result.value, initial,
+    { type: 'START', nodeId: 'b', intentId: 'out-of-order' }, binding, digest),
+    'M15_PRIOR_WAVE_UNVERIFIED');
+  const started = unwrap(advanceMarathon(result.value, initial,
+    { type: 'START', nodeId: 'a', intentId: 'first-intent' }, binding, digest));
+  assert.deepEqual(unwrap(readyMarathonNodes(result.value, started, digest)), []);
+  const settled = unwrap(advanceMarathon(result.value, started,
+    { type: 'SETTLE', nodeId: 'a', intentId: 'first-intent',
+      outcome: 'VERIFIED', proofDigest: H('trusted-first-wave-proof') }, binding, digest));
+  assert.deepEqual(unwrap(readyMarathonNodes(result.value, settled, digest)), ['b']);
 });
