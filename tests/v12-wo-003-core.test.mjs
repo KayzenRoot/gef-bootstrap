@@ -532,12 +532,12 @@ test('Marathon recovers an unknown provider result without replaying the mutatio
       action.intentId === 'recovery-intent' && action.proofDigest === proof;
   } };
   const recovered = unwrap(await reconcileMarathonStep(
-    plan, store, 'source', bindings, digest, { provider, proofAuthority: verifier }));
+    plan, store, 'source', bindings, digest, provider, verifier));
   assert.equal(recovered.steps.source.status, 'VERIFIED');
   assert.equal(lookedUp, 1);
   assert.equal(settled, 1);
   reject(await reconcileMarathonStep(
-    plan, store, 'source', bindings, digest, { provider, proofAuthority: verifier }),
+    plan, store, 'source', bindings, digest, provider, verifier),
     'RECONCILIATION_STEP_NOT_ACTIVE');
   assert.equal(lookedUp, 1);
 });
