@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   createFileBackedDeltaLedgerStore, initializeDurableDeltaLedger,
-  recordVerifiedDeltaAttempt,
+  recordVerifiedDeltaAttempt, evaluateDeltaFinalClosure,
 } from '../packages/heds-delta-review/dist/public.js';
 import { buildTestMap, compileGateClosure } from '../packages/test-impact-engine/dist/public.js';
 
@@ -143,4 +143,6 @@ function repair() {
 export {
   sha, H, digest, opts, WO, HEAD, tests, graph, unwrap, reject, attempt,
   persistAuthority, fixture, actualM28, evidence, inputs, verifier, repair,
+  createFileBackedDeltaLedgerStore, initializeDurableDeltaLedger,
+  recordVerifiedDeltaAttempt, evaluateDeltaFinalClosure, compileGateClosure,
 };
