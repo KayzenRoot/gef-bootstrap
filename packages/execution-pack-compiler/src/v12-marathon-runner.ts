@@ -67,3 +67,68 @@ export async function executeMarathonStep(
     current, digest, proofAuthority,
   );
 }
+
+/** Read-only provider lookup for an intent that was persisted before a crash. */
+export interface MarathonReconciliationProvider {
+  lookup(input: {
+    readonly plan: MarathonPlan;
+    readonly nodeId: string;
+    readonly intentId: string;
+  }): Promise<
+    | { readonly status: 'UNKNOWN' }
+    | { readonly status: 'VERIFIED' | 'FAILED'; readonly proofDigest: string }
+  >;
+}
+
+/**
+ * Recover one ambiguous ACTIVE step by looking up authoritative provider
+ * evidence. Never invokes execute(), never invents success for an unknown
+ * result, and never overwrites a concurrent settlement.
+ */
+export async function reconcileMarathonStep(
+  plan: MarathonPlan,
+  store: MarathonStateStore,
+  nodeId: string,
+  current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string },
+  digest: MarathonDigest,
+  provider: MarathonReconciliationProvider,
+  proofAuthority: MarathonSettlementProofPort,
+): Promise<MarathonResult<MarathonState>> {
+  if (!provider || typeof provider.lookup !== 'function' ||
+      !proofAuthority || typeof proofAuthority.verify !== 'function')
+    return { ok: false, code: 'RECONCILIATION_PORT_MISSING' };
+
+  const recovery = await recoverPersistedMarathon(plan, store, current, digest);
+  if (!recovery.ok) return recovery;
+
+  // Store and plan are validated again at persistMarathonTransition. This
+  // preliminary read only identifies the previously recorded durable intent.
+  let state: MarathonState | null;
+  try {
+    state = await store.read(plan.planDigest);
+  } catch {
+    return { ok: false, code: 'PERSISTENCE_UNAVAILABLE' };
+  }
+  if (!state) return { ok: false, code: 'SNAPSHOT_MISSING_REQUIRES_RECONCILIATION' };
+  const step = state.steps[nodeId];
+  if (!step || step.status !== 'ACTIVE' || !step.intentId)
+    return { ok: false, code: 'RECONCILIATION_STEP_NOT_ACTIVE' };
+
+  let result: Awaited<ReturnType<MarathonReconciliationProvider['lookup']>>;
+  try {
+    result = await provider.lookup({ plan, nodeId, intentId: step.intentId });
+  } catch {
+    return { ok: false, code: 'RECONCILIATION_LOOKUP_UNAVAILABLE' };
+  }
+  if (!result || result.status === 'UNKNOWN')
+    return { ok: false, code: 'RECONCILIATION_PROOF_PENDING' };
+  if (result.status !== 'VERIFIED' && result.status !== 'FAILED')
+    return { ok: false, code: 'RECONCILIATION_PROOF_INVALID' };
+
+  return persistMarathonTransition(
+    plan, store,
+    { type: 'SETTLE', nodeId, intentId: step.intentId,
+      outcome: result.status, proofDigest: result.proofDigest },
+    current, digest, proofAuthority,
+  );
+}

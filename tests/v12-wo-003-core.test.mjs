@@ -12,7 +12,7 @@ import {
 
 import { initializePersistedMarathon, recoverPersistedMarathon, persistMarathonTransition } from '../packages/execution-pack-compiler/dist/v12-marathon-persistence.js';
 
-import { executeMarathonStep } from '../packages/execution-pack-compiler/dist/v12-marathon-runner.js';
+import { executeMarathonStep, reconcileMarathonStep } from '../packages/execution-pack-compiler/dist/v12-marathon-runner.js';
 
 const digest = input => createHash('sha256').update(input).digest('hex');
 const H = s => `sha256:${digest(s)}`;
@@ -499,4 +499,86 @@ test('Marathon cannot settle an untrusted result even after provider returned', 
     plan, store, 'source', 'untrusted-intent', bindings, digest, provider, verifier),
     'SETTLEMENT_PROOF_NOT_VERIFIED');
   assert.equal(state.steps.source.status, 'ACTIVE');
+});
+
+test('Marathon recovers an unknown provider result without replaying the mutation', async () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  state = unwrap(advanceMarathon(plan, state,
+    { type: 'START', nodeId: 'source', intentId: 'recovery-intent' }, bindings, digest));
+  let lookedUp = 0, settled = 0;
+  const store = {
+    async read() { return state; },
+    async compareAndSwap(_key, expected, next) {
+      assert.equal(expected, state.stateDigest);
+      settled++;
+      state = next;
+      return true;
+    },
+  };
+  const proof = H('real-provider-receipt');
+  const provider = { async lookup(input) {
+    lookedUp++;
+    assert.equal(input.nodeId, 'source');
+    assert.equal(input.intentId, 'recovery-intent');
+    return { status: 'VERIFIED', proofDigest: proof };
+  } };
+  const verifier = { async verify(_plan, prior, action) {
+    return prior.steps.source?.status === 'ACTIVE' &&
+      action.intentId === 'recovery-intent' && action.proofDigest === proof;
+  } };
+  const recovered = unwrap(await reconcileMarathonStep(
+    plan, store, 'source', bindings, digest, provider, verifier));
+  assert.equal(recovered.steps.source.status, 'VERIFIED');
+  assert.equal(lookedUp, 1);
+  assert.equal(settled, 1);
+  reject(await reconcileMarathonStep(
+    plan, store, 'source', bindings, digest, provider, verifier),
+    'RECONCILIATION_STEP_NOT_ACTIVE');
+  assert.equal(lookedUp, 1);
+});
+
+test('Marathon reconciliation quarantines missing or unverified provider evidence', async () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  state = unwrap(advanceMarathon(plan, state,
+    { type: 'START', nodeId: 'source', intentId: 'uncertain-intent' }, bindings, digest));
+  let writes = 0;
+  const store = {
+    async read() { return state; },
+    async compareAndSwap() { writes++; return true; },
+  };
+  const verifier = { async verify() { return false; } };
+  reject(await reconcileMarathonStep(plan, store, 'source', bindings, digest,
+    { async lookup() { return { status: 'UNKNOWN' }; } }, verifier),
+    'RECONCILIATION_PROOF_PENDING');
+  reject(await reconcileMarathonStep(plan, store, 'source', bindings, digest,
+    { async lookup() { throw Error('unavailable'); } }, verifier),
+    'RECONCILIATION_LOOKUP_UNAVAILABLE');
+  reject(await reconcileMarathonStep(plan, store, 'source', bindings, digest,
+    { async lookup() { return { status: 'VERIFIED', proofDigest: H('untrusted') }; } }, verifier),
+    'SETTLEMENT_PROOF_NOT_VERIFIED');
+  assert.equal(writes, 0);
+  assert.equal(state.steps.source.status, 'ACTIVE');
+});
+
+test('Marathon reconciliation refuses stale source binding and concurrent CAS', async () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  state = unwrap(advanceMarathon(plan, state,
+    { type: 'START', nodeId: 'source', intentId: 'original-intent' }, bindings, digest));
+  const store = {
+    async read() { return state; },
+    async compareAndSwap() { return false; },
+  };
+  let lookups = 0;
+  const provider = { async lookup() { lookups++; return { status: 'FAILED', proofDigest: H('failure-proof') }; } };
+  const verify = { async verify() { return true; } };
+  reject(await reconcileMarathonStep(plan, store, 'source',
+    { ...bindings, lockDigest: H('drift') }, digest, provider, verify),
+    'RECOVERY_BINDING_INVALID');
+  assert.equal(lookups, 0);
+  reject(await reconcileMarathonStep(plan, store, 'source', bindings, digest, provider, verify),
+    'PERSISTENCE_CAS_CONFLICT');
+  assert.equal(lookups, 1);
 });

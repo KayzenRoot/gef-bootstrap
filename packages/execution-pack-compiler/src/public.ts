@@ -111,3 +111,7 @@ export type { MarathonStateStore, MarathonRecoveryDecision, MarathonSettlementPr
 // U12-03: bounded single-step provider bridge using durable START and verified settlement.
 export { executeMarathonStep } from './v12-marathon-runner.js';
 export type { MarathonStepProvider } from './v12-marathon-runner.js';
+
+// U12-03: reconcile an ambiguous persisted intent without re-executing provider mutations.
+export { reconcileMarathonStep } from './v12-marathon-runner.js';
+export type { MarathonReconciliationProvider } from './v12-marathon-runner.js';
