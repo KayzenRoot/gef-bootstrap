@@ -45,7 +45,6 @@ function canonicalChain(p, state, overrides = {}) {
     bindingId, semanticIdentity, domain: 'MARATHON',
     authorityRef: 'source:' + bindingId, required: true,
   }));
-  const identities = Object.fromEntries(bindings.map(b => [b.bindingId, b.semanticIdentity]));
   const checkpoint = unwrap(createCanonicalContinuationCapsule({
     schemaVersion: 1, projectId: 'gef-bootstrap', moduleId: 'GBS-M17',
     stageId: 'WO003-CONTINUATION', lineageId: 'lineage-wo003',
@@ -55,6 +54,7 @@ function canonicalChain(p, state, overrides = {}) {
     requiredCapabilities: [],
     ...overrides,
   }, options));
+  const identities = Object.fromEntries(checkpoint.authorityBindings.map(b => [b.bindingId, b.semanticIdentity]));
   const freshness = unwrap(buildCheckpointFreshnessVector(checkpoint, identities, options));
   const portability = unwrap(buildCheckpointPortabilityEnvelope(checkpoint, [], options));
   const readiness = unwrap(buildResumeReadinessCertificate(checkpoint, freshness, portability, options));
