@@ -2,23 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import {
-  compileMarathon, compileMarathonFromExecutionPack, executeMarathonStep, initialMarathonState, advanceMarathon,
+  compileMarathonFromExecutionPack, executeMarathonStep, initialMarathonState,
   recoverMarathonWithCanonicalContinuity,
 } from '../packages/execution-pack-compiler/dist/public.js';
-import {
-  createCanonicalContinuationCapsule, verifyCanonicalContinuationCapsule,
-  buildCheckpointFreshnessVector, buildCheckpointPortabilityEnvelope,
-  buildResumeReadinessCertificate, buildContinuationHandoffContract,
-} from '../packages/checkpoint-engine/dist/public.js';
-import {
-  createResumeIntentCapsule, proveLineageContinuity, enforceResumeAuthorityBoundary,
-  applyConversationIndependence, buildResumeMinimumSufficientContext, rehydrateHotState,
-  buildContextTemperatureMap, buildResumeReadPlan, buildResumeDriftVector,
-  detectOrphanWork, buildResumeConflictQuarantine, evaluateSafeReentry,
-  buildResumeReceipt, verifyResumeReceipt, verifyContinuationHandoff,
-} from '../packages/resume-engine/dist/public.js';
-
-
 import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
