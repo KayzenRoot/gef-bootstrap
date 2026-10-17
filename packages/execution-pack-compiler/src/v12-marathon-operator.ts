@@ -17,6 +17,7 @@ export interface MarathonNodeDecision {
   readonly reasonCode: string;
   readonly unresolvedDependencies: readonly string[];
   readonly intentId: string | null;
+  readonly stopReasonCode: string | null;
 }
 
 export interface MarathonOperatorView {
@@ -47,10 +48,13 @@ function decideNode(
     reasonCode = 'IN_FLIGHT_EFFECT_REQUIRES_PROOF';
   } else if (s.status === 'FAILED') {
     action = 'INSPECT_FAILURE';
-    reasonCode = 'FIRST_FAILURE_RETAINED';
+    reasonCode = s.stopReasonCode ?? 'FIRST_FAILURE_RETAINED';
   } else if (s.status === 'BLOCKED') {
     action = 'STOP_BLOCKED';
-    reasonCode = 'DEPENDENCY_OR_CANCELLATION_STOP';
+    reasonCode = s.stopReasonCode ?? 'DEPENDENCY_OR_CANCELLATION_STOP';
+  } else if (s.status === 'SKIPPED') {
+    action = 'STOP_BLOCKED';
+    reasonCode = s.stopReasonCode ?? 'NEVER_EXECUTED';
   } else if (s.status === 'PENDING' && state.paused) {
     action = 'RESUME';
     reasonCode = 'OPERATOR_PAUSED';
@@ -65,6 +69,7 @@ function decideNode(
     nodeId, status: s.status, action, reasonCode,
     unresolvedDependencies: [...unresolvedDependencies].sort((a, b) => a.localeCompare(b)),
     intentId: s.intentId,
+    stopReasonCode: s.stopReasonCode ?? null,
   };
 }
 
