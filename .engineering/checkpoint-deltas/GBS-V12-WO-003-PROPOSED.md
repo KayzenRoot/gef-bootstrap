@@ -1,7 +1,7 @@
 # GBS-V12-WO-003 — Proposed checkpoint delta
 
 **State:** `PROPOSED_ONLY / NOT_PROMOTED`  
-**Source:** implementation PR #470, code HEAD `34bc3d01a937c4af97660e227fb2500910cc8203` preceding evidence-only update.  
+**Source:** implementation PR #470, code HEAD `d099a816f51faceeed2047fa45764568c4188ee3` preceding evidence-only update.  
 **Base:** `main@3824cbc0baf3e7b7b6527608c7cc765b23f05a2c`.  
 **Current canonical V1.2:** **3/10**, U12-01/U12-02/U12-04 accepted. No change made here.
 
