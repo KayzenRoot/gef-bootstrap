@@ -1,3 +1,4 @@
+import { persistAuthority } from './v12-wo-003-fixtures.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -702,12 +703,7 @@ test('Delta durable ledger accepts only a receipt bound to the exact attempt and
   reject(await initializeDurableDeltaLedger(store, workOrder, BASE, ['tests:unit'], digest),
     'DELTA_LEDGER_EXISTS_REQUIRES_RECOVERY');
   const candidate = attempt('trusted-attempt','PASS');
-  const authority = { async verify(_ledger, a) { return {
-    verified: true, testId: a.testId, attemptId: a.attemptId,
-    headSha: a.headSha, toolchainDigest: a.toolchainDigest,
-    inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest,
-    observation: a.observation, failureSignature: a.failureSignature
-  }; } };
+  const authority = persistAuthority;
   const updated = unwrap(await recordVerifiedDeltaAttempt(
     store, authority, workOrder, candidate, BASE, digest));
   assert.equal(updated.records[0].attempts[0].attemptId, 'trusted-attempt');
