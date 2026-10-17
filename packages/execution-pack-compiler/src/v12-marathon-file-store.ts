@@ -75,10 +75,15 @@ export function createFileBackedMarathonStore(root: string): MarathonStateStore 
     throw new Error('MARATHON_STORAGE_ROOT_REQUIRED');
   const directory = resolve(root);
 
-  async function withLock<T>(lock: string, operation: () => Promise<T>): Promise<T> {
+  async function withLock(lock: string, operation: () => Promise<boolean>): Promise<boolean> {
     await mkdir(directory, { recursive: true });
-    // Atomic mkdir is exclusive; an existing lock is not reclaimed silently.
-    await mkdir(lock);
+    // A held lock is a CAS conflict, including after a crash. Never reclaim it.
+    try {
+      await mkdir(lock);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'EEXIST') return false;
+      throw error;
+    }
     try {
       return await operation();
     } finally {

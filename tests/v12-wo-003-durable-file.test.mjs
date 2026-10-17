@@ -115,7 +115,7 @@ test('stale exclusive lock blocks storage mutation instead of unlocking automati
   const original = await store.read(p.planDigest);
   const next = unwrap(advanceMarathon(p, original,
     { type: 'START', nodeId: 'mutate', intentId: 'not-applied' }, binding, digest));
-  await assert.rejects(store.compareAndSwap(p.planDigest, original.stateDigest, next));
+  assert.equal(await store.compareAndSwap(p.planDigest, original.stateDigest, next), false);
   assert.equal((await store.read(p.planDigest)).stateDigest, original.stateDigest);
 });
 
