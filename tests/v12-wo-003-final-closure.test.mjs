@@ -270,3 +270,18 @@ test('final full-suite proof refuses a stale HEAD, missing trust port or an expi
   reject(await evaluateDeltaFinalClosure(store, inputs(), noSweepPort, digest),
     'DELTA_FINAL_PORT_OR_INPUT_MISSING');
 });
+
+test('a repaired first failure cannot conceal unknown dependencies in a separate passing security test', async t => {
+  const store = await fixture(t, true);
+  const repaired = inputs({
+    repairs: [repair()], changedDependencies: ['src:unit'],
+    // The security test PASS is real, but its dependency graph has an
+    // undeclared leaf. This must block the entire review handoff.
+    proofDependencies: {
+      ...graph,
+      'tests:security': ['src:missing-security-policy'],
+    },
+  });
+  reject(await evaluateDeltaFinalClosure(store, repaired, verifier(), digest),
+    'DELTA_FINAL_IMPACT_UNKNOWN');
+});
