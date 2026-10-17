@@ -700,6 +700,7 @@ test('Delta durable ledger accepts only a receipt bound to the exact attempt and
     verified: true, testId: a.testId, attemptId: a.attemptId,
     headSha: a.headSha, toolchainDigest: a.toolchainDigest,
     inputDigest: a.inputDigest, evidenceDigest: a.evidenceDigest,
+    observation: a.observation, failureSignature: a.failureSignature
   }; } };
   const updated = unwrap(await recordVerifiedDeltaAttempt(
     store, authority, workOrder, candidate, BASE, digest));
