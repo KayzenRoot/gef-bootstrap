@@ -103,3 +103,7 @@ export type {
 export { compileMarathonFromExecutionPack } from './v12-marathon.js';
 export { compileMarathon, initialMarathonState, readyMarathonNodes, validateMarathonState, advanceMarathon } from './v12-marathon.js';
 export type { MarathonStatus, MarathonDigest, MarathonResult, MarathonNode, MarathonRequest, MarathonPlan, MarathonStepState, MarathonState, MarathonAction } from './v12-marathon.js';
+
+// U12-03: durable-state CAS integration boundary (no provider side effects).
+export { recoverPersistedMarathon, persistMarathonTransition } from './v12-marathon-persistence.js';
+export type { MarathonStateStore, MarathonRecoveryDecision } from './v12-marathon-persistence.js';

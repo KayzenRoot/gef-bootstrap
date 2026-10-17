@@ -10,6 +10,8 @@ import {
   initializeDeltaLedgerFromBugProof,
 } from '../packages/heds-delta-review/dist/v12-delta-assurance.js';
 
+import { recoverPersistedMarathon, persistMarathonTransition } from '../packages/execution-pack-compiler/dist/v12-marathon-persistence.js';
+
 const digest = input => createHash('sha256').update(input).digest('hex');
 const H = s => `sha256:${digest(s)}`;
 const BASE = 'a'.repeat(40), OTHER = 'b'.repeat(40), LOCK = H('lock');
@@ -280,4 +282,61 @@ test('Delta refuses missing IDs and malformed imported input instead of coercing
   let ledger = unwrap(initializeDeltaLedger('WO', BASE, ['tests:unit'], digest));
   reject(addDeltaAttempt(ledger, null, digest), 'ATTEMPT_BINDING_INVALID');
   reject(evaluateDeltaAssurance(ledger, BASE, null, [], digest), 'UNKNOWN_DEPENDENCY');
+});
+
+test('Marathon persists intent with CAS before provider activity, replay is a no-op', async () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  let writes = 0;
+  const store = {
+    async read() { return state; },
+    async compareAndSwap(key, prior, next) {
+      assert.equal(key, plan.planDigest);
+      if (state.stateDigest !== prior) return false;
+      writes++; state = next; return true;
+    },
+  };
+  const start = { type: 'START', nodeId: 'source', intentId: 'persisted-intent' };
+  const applied = unwrap(await persistMarathonTransition(plan, store, start, bindings, digest));
+  assert.equal(writes, 1);
+  assert.equal(applied.steps.source.status, 'ACTIVE');
+  const recovered = unwrap(await recoverPersistedMarathon(plan, store, bindings, digest));
+  assert.equal(recovered.status, 'RECONCILIATION_REQUIRED');
+  assert.deepEqual(recovered.unresolvedIntentIds, ['persisted-intent']);
+  reject(await persistMarathonTransition(plan, store, start, bindings, digest), 'EFFECT_UNCERTAIN_RECONCILE');
+  assert.equal(writes, 1);
+  const proved = { type: 'SETTLE', nodeId: 'source', intentId: 'persisted-intent',
+    outcome: 'VERIFIED', proofDigest: H('trusted-external-evidence') };
+  unwrap(await persistMarathonTransition(plan, store, proved, bindings, digest));
+  assert.equal(writes, 2);
+  unwrap(await persistMarathonTransition(plan, store, proved, bindings, digest));
+  assert.equal(writes, 2);
+});
+test('Marathon fail-closed on lost snapshots, CAS conflict and store outage', async () => {
+  const plan = fixture();
+  const snapshot = unwrap(initialMarathonState(plan, digest));
+  const start = { type: 'START', nodeId: 'source', intentId: 'safe-intent' };
+  const missing = { async read() { return null; }, async compareAndSwap() { throw Error('not called'); } };
+  reject(await recoverPersistedMarathon(plan, missing, bindings, digest),
+    'SNAPSHOT_MISSING_REQUIRES_RECONCILIATION');
+  reject(await persistMarathonTransition(plan, missing, start, bindings, digest),
+    'SNAPSHOT_MISSING_REQUIRES_RECONCILIATION');
+  const conflict = { async read() { return snapshot; }, async compareAndSwap() { return false; } };
+  reject(await persistMarathonTransition(plan, conflict, start, bindings, digest), 'PERSISTENCE_CAS_CONFLICT');
+  const broken = { async read() { throw Error('read failed'); }, async compareAndSwap() { return true; } };
+  reject(await persistMarathonTransition(plan, broken, start, bindings, digest), 'PERSISTENCE_UNAVAILABLE');
+  reject(await recoverPersistedMarathon(plan, broken, bindings, digest), 'PERSISTENCE_UNAVAILABLE');
+  reject(await recoverPersistedMarathon(plan, conflict,
+    { ...bindings, lockDigest: H('drift') }, digest), 'RECOVERY_BINDING_INVALID');
+});
+test('Marathon recovery quarantines in-flight conflicts and preserves independent work', async () => {
+  const plan = fixture();
+  let snapshot = unwrap(initialMarathonState(plan, digest));
+  snapshot = unwrap(advanceMarathon(plan, snapshot, {
+    type: 'START', nodeId: 'source', intentId: 'inflight' }, bindings, digest));
+  const store = { async read() { return snapshot; } };
+  const recovery = unwrap(await recoverPersistedMarathon(plan, store, bindings, digest));
+  assert.equal(recovery.status, 'RECONCILIATION_REQUIRED');
+  assert.deepEqual(recovery.readyNodeIds, ['audit']);
+  assert.deepEqual(recovery.unresolvedIntentIds, ['inflight']);
 });
