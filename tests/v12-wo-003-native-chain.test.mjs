@@ -103,6 +103,14 @@ const inputs = (over = {}) => ({
 });
 function verifier(over = {}) {
   return {
+    // TEST ONLY: independent fixture of canonical M26/M28 floor.
+    async verifyFinalSweep(req) {
+      return { verified: true, workOrderId: WO, headSha: HEAD,
+        ledgerDigest: req.ledgerDigest, requiredFinalTests: tests,
+        obligationSourceDigest: H('fixture-m26-requirements'),
+        finalSweepEvidenceDigest: H('fixture-m28-exact-head-sweep'),
+        materialization: 'COMPLETE' };
+    },
     async verifyModule(a) {
       if (a.module === 'M28') {
         const recomputed = compileGateClosure(a.payload.input, opts);
