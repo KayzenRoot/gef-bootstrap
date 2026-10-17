@@ -61,13 +61,18 @@ function decideNode(
   } else if (s.status === 'PENDING' && eligible.has(nodeId)) {
     action = 'START';
     reasonCode = 'ADMITTED_AND_DEPENDENCIES_VERIFIED';
+  } else if (s.status === 'PENDING' && unresolvedDependencies.length === 0) {
+    // A pending node with all dependencies VERIFIED can only be excluded by
+    // in-flight read/write conflict. It is not waiting on dependencies.
+    action = 'RECONCILE';
+    reasonCode = 'ACTIVE_RESOURCE_CONFLICT';
   } else if (s.status === 'PENDING') {
     action = 'WAIT_DEPENDENCIES';
     reasonCode = 'DEPENDENCY_NOT_VERIFIED';
   }
   return {
     nodeId, status: s.status, action, reasonCode,
-    unresolvedDependencies: [...unresolvedDependencies].sort((a, b) => a.localeCompare(b)),
+    unresolvedDependencies: [...unresolvedDependencies].sort((a, b) => a < b ? -1 : a > b ? 1 : 0),
     intentId: s.intentId,
     stopReasonCode: s.stopReasonCode ?? null,
   };
@@ -101,7 +106,7 @@ export function describeMarathonNextActions(
       !overlaps(other.writes, node.reads));
   });
   const eligible = new Set(eligibleStarts);
-  const ids = plan.nodes.map(node => node.id).sort((a, b) => a.localeCompare(b));
+  const ids = plan.nodes.map(node => node.id).sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
   const decisions = ids.map(id => decideNode(plan, state, id, eligible));
   const actions = [...new Set(decisions.map(item => item.action))];
   return { ok: true, value: {
