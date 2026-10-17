@@ -18,6 +18,10 @@ export interface MarathonStepProvider {
   }): Promise<{ readonly outcome: 'VERIFIED' | 'FAILED'; readonly proofDigest: string }>;
 }
 
+export interface MarathonExecutionPorts {
+  readonly provider: MarathonStepProvider;
+  readonly proofAuthority: MarathonSettlementProofPort;
+}
 export async function executeMarathonStep(
   plan: MarathonPlan,
   store: MarathonStateStore,
@@ -25,11 +29,12 @@ export async function executeMarathonStep(
   intentId: string,
   current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string },
   digest: MarathonDigest,
-  provider: MarathonStepProvider,
-  proofAuthority: MarathonSettlementProofPort,
+  ports: MarathonExecutionPorts,
 ): Promise<MarathonResult<MarathonState>> {
-  if (!provider || typeof provider.execute !== 'function' ||
-      !proofAuthority || typeof proofAuthority.verify !== 'function')
+  const provider = ports?.provider;
+  const proofAuthority = ports?.proofAuthority;
+  if (typeof provider?.execute !== 'function' ||
+      typeof proofAuthority?.verify !== 'function')
     return { ok: false, code: 'EXECUTION_PORT_MISSING' };
 
   // Rehydrate and check the true durable state before issuing an intent.
@@ -111,7 +116,7 @@ export async function reconcileMarathonStep(
   }
   if (!state) return { ok: false, code: 'SNAPSHOT_MISSING_REQUIRES_RECONCILIATION' };
   const step = state.steps[nodeId];
-  if (!step || step.status !== 'ACTIVE' || !step.intentId)
+  if (!step?.intentId || step.status !== 'ACTIVE')
     return { ok: false, code: 'RECONCILIATION_STEP_NOT_ACTIVE' };
 
   let result: Awaited<ReturnType<MarathonReconciliationProvider['lookup']>>;

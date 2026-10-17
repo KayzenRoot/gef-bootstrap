@@ -75,7 +75,7 @@ export function assessDeltaRootCause(
     if (visiting.has(id)) return 'PROOF_GRAPH_CYCLE';
     if (visited.has(id)) return null;
     if (++traversed > 16384) return 'PROOF_GRAPH_BUDGET';
-    const deps = Object.prototype.hasOwnProperty.call(proofDependencies, id)
+    const deps = Object.hasOwn(proofDependencies, id)
       ? proofDependencies[id] : undefined;
     if (deps === undefined && !changedDependencies.includes(id))
       return 'UNKNOWN_PROOF_DEPENDENCY';

@@ -97,7 +97,7 @@ export async function recordVerifiedDeltaAttempt(
   } catch {
     return { ok: false, code: 'DELTA_EVIDENCE_UNAVAILABLE' };
   }
-  if (!receipt || receipt.verified !== true ||
+  if (receipt?.verified !== true ||
       receipt.testId !== attempt.testId ||
       receipt.attemptId !== attempt.attemptId ||
       receipt.headSha !== attempt.headSha ||

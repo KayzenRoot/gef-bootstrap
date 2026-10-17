@@ -43,6 +43,26 @@ export interface MarathonRecoveryDecision {
   readonly stateDigest: string;
 }
 
+function getRecoveryStatus(count: number, paused: boolean): MarathonRecoveryDecision['status'] {
+  if (count > 0) return 'RECONCILIATION_REQUIRED';
+  if (paused) return 'PAUSED';
+  return 'READY';
+}
+
+const overlaps = (left: readonly string[], right: readonly string[]): boolean =>
+  left.some(a => right.some(b =>
+    a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`)));
+
+function canRunWithActive(
+  plan: MarathonPlan, nodeId: string, active: readonly MarathonPlan['nodes'][number][],
+): boolean {
+  const node = plan.nodes.find(candidate => candidate.id === nodeId);
+  if (!node) return false;
+  return active.every(other =>
+    !overlaps(other.writes, [...node.writes, ...node.reads]) &&
+    !overlaps(node.writes, other.reads));
+}
+
 /**
  * Atomically initialize a brand new Marathon. A previous durable record is
  * NEVER overwritten or treated as permission to replay provider mutations.
@@ -54,7 +74,7 @@ export async function initializePersistedMarathon(
   current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string },
   digest: MarathonDigest,
 ): Promise<MarathonResult<MarathonState>> {
-  if (!plan || !store || typeof store.createIfAbsent !== 'function' || !current ||
+  if (!plan || typeof store?.createIfAbsent !== 'function' || !current ||
       current.baseSha !== plan.baseSha || current.lockDigest !== plan.lockDigest ||
       current.actor !== plan.actor) return { ok: false, code: 'PERSISTENCE_INITIALIZATION_INVALID' };
   const created = initialMarathonState(plan, digest);
@@ -79,7 +99,7 @@ export async function recoverPersistedMarathon(
   current: { readonly baseSha: string; readonly lockDigest: string; readonly actor: string },
   digest: MarathonDigest,
 ): Promise<MarathonResult<MarathonRecoveryDecision>> {
-  if (!store || typeof store.read !== 'function' || !plan || !current ||
+  if (typeof store?.read !== 'function' || !plan || !current ||
       current.baseSha !== plan.baseSha || current.lockDigest !== plan.lockDigest ||
       current.actor !== plan.actor) return { ok: false, code: 'RECOVERY_BINDING_INVALID' };
   try {
@@ -93,18 +113,9 @@ export async function recoverPersistedMarathon(
     if (!next.ok) return { ok: false, code: next.code };
     // An independent pending step can progress only if no in-flight mutation
     // overlaps its read/write closure. This is a candidate list, not a replay.
-    const readyNodeIds = next.value.filter(id => {
-      const n = plan.nodes.find(node => node.id === id)!;
-      return active.every(a => {
-        const overlaps = (xs: readonly string[], ys: readonly string[]) =>
-          xs.some(left => ys.some(right =>
-            left === right || left.startsWith(`${right}/`) || right.startsWith(`${left}/`)));
-        return !overlaps(a.writes, [...n.writes, ...n.reads]) &&
-          !overlaps(n.writes, a.reads);
-      });
-    });
+    const readyNodeIds = next.value.filter(id => canRunWithActive(plan, id, active));
     return { ok: true, value: {
-      status: unresolvedIntentIds.length ? 'RECONCILIATION_REQUIRED' : state.paused ? 'PAUSED' : 'READY',
+      status: getRecoveryStatus(unresolvedIntentIds.length, state.paused),
       unresolvedIntentIds,
       readyNodeIds,
       stateDigest: state.stateDigest,

@@ -162,7 +162,7 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
     if (visiting.has(id)) throw new Error('DEPENDENCY_GRAPH_CYCLE');
     if (++traversed > 16384) throw new Error('DEPENDENCY_GRAPH_BUDGET');
     visiting.add(id);
-    const deps = Object.prototype.hasOwnProperty.call(proofDependencies, id) ? proofDependencies[id] : undefined;
+    const deps = Object.hasOwn(proofDependencies, id) ? proofDependencies[id] : undefined;
     // Undeclared dependencies are UNKNOWN; never reuse proof on an incomplete graph.
     if (deps === undefined) {
       // A known changed source cannot justify reuse, but may proceed to final
@@ -186,13 +186,16 @@ export function evaluateDeltaAssurance(ledger: DeltaLedger, currentHeadSha: stri
       if (record.firstFailure !== null) carried.push(id);
       const deps = proofDependencies[id];
       if (!deps) { incomplete = true; continue; } // Unknown impact blocks reuse
-      const final = record.attempts[record.attempts.length - 1]!;
+      const final = record.attempts.at(-1)!;
       if (record.firstFailure === null && final.observation === 'PASS' && !invalidated(id)) reusable.push(id);
     }
   } catch (error) {
     return fail(error instanceof Error && error.message === 'DEPENDENCY_GRAPH_CYCLE' ? 'DEPENDENCY_GRAPH_CYCLE' : 'DEPENDENCY_GRAPH_BUDGET');
   }
-  return ok({ state: carried.length ? 'CORRECTION_REQUIRED' : incomplete ? 'BLOCKED' : 'READY_FOR_FINAL_ASSURANCE',
+  let state: DeltaAssuranceVerdict['state'] = 'READY_FOR_FINAL_ASSURANCE';
+  if (carried.length > 0) state = 'CORRECTION_REQUIRED';
+  else if (incomplete) state = 'BLOCKED';
+  return ok({ state,
     requiredFinalTests: ledger.requiredFinalTests, carriedFirstFailures: carried,
     evidenceReuseAllowed: reusable });
 }
@@ -208,7 +211,7 @@ export function initializeDeltaLedgerFromBugProof(
   headSha: string,
   digest: DeltaDigest,
 ): DeltaResult<DeltaLedger> {
-  if (!receipt || !receipt.projectId || !receipt.sourceIdentityDigest ||
+  if (!receipt?.projectId || !receipt.sourceIdentityDigest ||
       !receipt.testImpactHandoffDigest || !receipt.receiptDigest ||
       !['READY', 'WIDENED'].includes(receipt.testImpactState) ||
       !Array.isArray(receipt.mandatoryTargetIds) ||

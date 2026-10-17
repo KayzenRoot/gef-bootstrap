@@ -443,11 +443,11 @@ test('Marathon executes only after durable START and verified external settlemen
     return true;
   } };
   const done = unwrap(await executeMarathonStep(
-    plan, store, 'source', 'one-time-intent', bindings, digest, provider, verifier));
+    plan, store, 'source', 'one-time-intent', bindings, digest, { provider, proofAuthority: verifier }));
   assert.equal(done.steps.source.status, 'VERIFIED');
   assert.deepEqual(events, ['persist:ACTIVE', 'provider', 'verify', 'persist:VERIFIED']);
   reject(await executeMarathonStep(
-    plan, store, 'source', 'second-intent', bindings, digest, provider, verifier),
+    plan, store, 'source', 'second-intent', bindings, digest, { provider, proofAuthority: verifier }),
     'STEP_NOT_DURABLY_READY');
   assert.equal(events.filter(event => event === 'provider').length, 1);
 });
@@ -463,7 +463,7 @@ test('Marathon never repeats provider on CAS conflict or uncertain outcome', asy
     async compareAndSwap() { return false; },
   };
   reject(await executeMarathonStep(
-    plan, conflictStore, 'source', 'intent-cas', bindings, digest, provider, verifier),
+    plan, conflictStore, 'source', 'intent-cas', bindings, digest, { provider, proofAuthority: verifier }),
     'PERSISTENCE_CAS_CONFLICT');
   assert.equal(called, 0);
   const store = {
@@ -475,11 +475,11 @@ test('Marathon never repeats provider on CAS conflict or uncertain outcome', asy
     },
   };
   reject(await executeMarathonStep(
-    plan, store, 'source', 'intent-uncertain', bindings, digest, provider, verifier),
+    plan, store, 'source', 'intent-uncertain', bindings, digest, { provider, proofAuthority: verifier }),
     'PROVIDER_OUTCOME_UNKNOWN_RECONCILE');
   assert.equal(state.steps.source.status, 'ACTIVE');
   reject(await executeMarathonStep(
-    plan, store, 'source', 'intent-retry', bindings, digest, provider, verifier),
+    plan, store, 'source', 'intent-retry', bindings, digest, { provider, proofAuthority: verifier }),
     'STEP_NOT_DURABLY_READY');
   assert.equal(called, 1);
 });
@@ -500,7 +500,7 @@ test('Marathon cannot settle an untrusted result even after provider returned', 
   } };
   const verifier = { async verify() { return false; } };
   reject(await executeMarathonStep(
-    plan, store, 'source', 'untrusted-intent', bindings, digest, provider, verifier),
+    plan, store, 'source', 'untrusted-intent', bindings, digest, { provider, proofAuthority: verifier }),
     'SETTLEMENT_PROOF_NOT_VERIFIED');
   assert.equal(state.steps.source.status, 'ACTIVE');
 });
@@ -532,12 +532,12 @@ test('Marathon recovers an unknown provider result without replaying the mutatio
       action.intentId === 'recovery-intent' && action.proofDigest === proof;
   } };
   const recovered = unwrap(await reconcileMarathonStep(
-    plan, store, 'source', bindings, digest, provider, verifier));
+    plan, store, 'source', bindings, digest, { provider, proofAuthority: verifier }));
   assert.equal(recovered.steps.source.status, 'VERIFIED');
   assert.equal(lookedUp, 1);
   assert.equal(settled, 1);
   reject(await reconcileMarathonStep(
-    plan, store, 'source', bindings, digest, provider, verifier),
+    plan, store, 'source', bindings, digest, { provider, proofAuthority: verifier }),
     'RECONCILIATION_STEP_NOT_ACTIVE');
   assert.equal(lookedUp, 1);
 });

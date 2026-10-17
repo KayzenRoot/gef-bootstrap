@@ -130,7 +130,7 @@ export function readyMarathonNodes(plan: MarathonPlan, state: MarathonState, dig
 }
 
 export function validateMarathonState(plan: MarathonPlan, state: MarathonState, digest: MarathonDigest): MarathonResult<true> {
-  if (!state || !state.steps) return BAD('STATE_INVALID');
+  if (!state?.steps) return BAD('STATE_INVALID');
   const compiled = compileMarathon(plan, digest);
   if (!compiled.ok || compiled.value.planDigest !== plan.planDigest || state.planDigest !== plan.planDigest) return BAD('PLAN_STALE');
   const ids = sorted(plan.nodes.map(n => n.id));
