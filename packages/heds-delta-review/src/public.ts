@@ -28,4 +28,4 @@ export { createFileBackedDeltaLedgerStore } from './v12-delta-file-store.js';
 // U12-05: fail-closed M24/M25/M27/M28 final assurance reconciliation;
 // read-only, distinct from external provider and independent reviewer authority.
 export { evaluateDeltaFinalClosure } from './v12-delta-final-closure.js';
-export type { DeltaAssuranceModule, DeltaFinalState, DeltaModuleArtifact, DeltaModuleAttestation, DeltaVerifiedFinalTest, DeltaRepairClaim, DeltaVerifiedRepair, DeltaFinalClosurePorts, DeltaFinalClosureInput, DeltaFinalClosureDecision } from './v12-delta-final-closure.js';
+export type { DeltaAssuranceModule, DeltaFinalState, DeltaModuleArtifact, DeltaModuleAttestation, DeltaVerifiedFinalTest, DeltaVerifiedFinalSweep, DeltaRepairClaim, DeltaVerifiedRepair, DeltaFinalClosurePorts, DeltaFinalClosureInput, DeltaFinalClosureDecision } from './v12-delta-final-closure.js';
