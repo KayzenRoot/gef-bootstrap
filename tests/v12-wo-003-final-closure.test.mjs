@@ -87,6 +87,15 @@ const inputs = (over = {}) => ({
 });
 function verifier(over = {}) {
   return {
+    // TEST ONLY: the canonical set is independently fixed in this fixture,
+    // never copied from the caller-supplied ledger or input.
+    async verifyFinalSweep(request) {
+      return { verified: true, workOrderId: WO, headSha: HEAD,
+        ledgerDigest: request.ledgerDigest, requiredFinalTests: tests,
+        obligationSourceDigest: H('test-only-m26-canonical-obligations'),
+        finalSweepEvidenceDigest: H('test-only-m28-full-final-run'),
+        materialization: 'COMPLETE' };
+    },
     async verifyModule(a) {
       if (a.module === 'M28') {
         const recomputed = compileGateClosure(a.payload.input, opts);
@@ -215,4 +224,49 @@ test('actual M28 unknown attribution is not accepted as complete module assuranc
   reject(await evaluateDeltaFinalClosure(store, inputs({
     modules: evidence(compromised),
   }), verifier(), digest), 'DELTA_FINAL_MODULE_PROOF_NOT_VERIFIED');
+});
+
+test('a caller cannot hide an M26 mandatory test using a shortened ledger and self-declared full sweep', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'gef-v12-shortened-ledger-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const store = createFileBackedDeltaLedgerStore(dir);
+  unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, ['tests:unit'], digest));
+  unwrap(await recordVerifiedDeltaAttempt(store, persistAuthority, WO,
+    attempt('tests:unit', 'unit-only-final', 'PASS'), HEAD, digest));
+  const claimed = inputs({
+    requiredFinalTests: ['tests:unit'], fullFinalSweepPerformed: true,
+  });
+  // The attacker controls BOTH ledger creation and input, not the M26
+  // authority's expected canonical set of unit + security obligations.
+  reject(await evaluateDeltaFinalClosure(store, claimed, verifier(), digest),
+    'DELTA_FINAL_CANONICAL_SWEEP_NOT_VERIFIED');
+});
+
+test('final full-suite proof refuses a stale HEAD, missing trust port or an expired materialization', async t => {
+  const store = await fixture(t);
+  reject(await evaluateDeltaFinalClosure(store, inputs(), verifier({
+    async verifyFinalSweep() { return null; },
+  }), digest), 'DELTA_FINAL_CANONICAL_SWEEP_NOT_VERIFIED');
+  reject(await evaluateDeltaFinalClosure(store, inputs(), verifier({
+    async verifyFinalSweep() { throw new Error('provider unavailable'); },
+  }), digest), 'DELTA_FINAL_SWEEP_PROOF_UNAVAILABLE');
+  reject(await evaluateDeltaFinalClosure(store, inputs(), verifier({
+    async verifyFinalSweep(req) {
+      return { verified: true, workOrderId: WO, headSha: 'f'.repeat(40),
+        ledgerDigest: req.ledgerDigest, requiredFinalTests: tests,
+        obligationSourceDigest: H('m26'), finalSweepEvidenceDigest: H('m28'),
+        materialization: 'COMPLETE' };
+    },
+  }), digest), 'DELTA_FINAL_CANONICAL_SWEEP_NOT_VERIFIED');
+  reject(await evaluateDeltaFinalClosure(store, inputs(), verifier({
+    async verifyFinalSweep(req) {
+      return { verified: true, workOrderId: WO, headSha: HEAD,
+        ledgerDigest: req.ledgerDigest, requiredFinalTests: tests,
+        obligationSourceDigest: H('m26'), finalSweepEvidenceDigest: H('m28'),
+        materialization: 'PARTIAL' };
+    },
+  }), digest), 'DELTA_FINAL_CANONICAL_SWEEP_NOT_VERIFIED');
+  const { verifyFinalSweep: _unused, ...noSweepPort } = verifier();
+  reject(await evaluateDeltaFinalClosure(store, inputs(), noSweepPort, digest),
+    'DELTA_FINAL_PORT_OR_INPUT_MISSING');
 });
