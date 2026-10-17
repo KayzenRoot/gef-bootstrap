@@ -82,6 +82,11 @@ const validPath = (p: string): boolean =>
   !/^[A-Za-z]:/.test(p);
 const intersects = (left: readonly string[], right: readonly string[]): boolean =>
   left.some(a => right.some(b => a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`)));
+/** One conservative path-exclusion rule for waves, live START, recovery and operator. */
+export const marathonNodesConflict = (a: MarathonNode, b: MarathonNode): boolean =>
+  intersects(a.writes, [...b.writes, ...b.reads]) ||
+  intersects(b.writes, a.reads);
+
 
 function isInvalidMarathonNode(n: MarathonNode): boolean {
   return !n || !validId(n.id) || !Array.isArray(n.deps) ||
@@ -98,8 +103,7 @@ function waveHasWriteConflict(
     for (let j = i + 1; j < wave.length; j++) {
       const a = byId.get(wave[i]!)!;
       const b = byId.get(wave[j]!)!;
-      if (intersects(a.writes, [...b.writes, ...b.reads]) ||
-          intersects(b.writes, a.reads)) return true;
+      if (marathonNodesConflict(a, b)) return true;
     }
   }
   return false;
@@ -230,8 +234,7 @@ function invalidActiveResourceOverlap(
     for (let j = i + 1; j < ids.length; j++) {
       const a = graph.get(ids[i]!)!;
       const b = graph.get(ids[j]!)!;
-      if (intersects(a.writes, [...b.writes, ...b.reads]) ||
-          intersects(b.writes, a.reads)) return true;
+      if (marathonNodesConflict(a, b)) return true;
     }
   }
   return false;
@@ -318,8 +321,7 @@ function conflictingActiveMarathonNode(
 ): boolean {
   for (const other of plan.nodes) {
     if (state.steps[other.id]?.status !== 'ACTIVE') continue;
-    if (intersects(node.writes, [...other.writes, ...other.reads]) ||
-        intersects(other.writes, node.reads)) return true;
+    if (marathonNodesConflict(node, other)) return true;
   }
   return false;
 }
