@@ -18,6 +18,8 @@ import { assessDeltaRootCause } from '../packages/heds-delta-review/dist/v12-del
 
 import { initializeDurableDeltaLedger, recordVerifiedDeltaAttempt } from '../packages/heds-delta-review/dist/v12-delta-ledger-persistence.js';
 
+import { describeMarathonNextActions } from '../packages/execution-pack-compiler/dist/v12-marathon-operator.js';
+
 const digest = input => createHash('sha256').update(input).digest('hex');
 const H = s => `sha256:${digest(s)}`;
 const BASE = 'a'.repeat(40), OTHER = 'b'.repeat(40), LOCK = H('lock');
@@ -750,4 +752,48 @@ test('Delta never erases first failing proof under separately verified retries',
   unwrap(await recordVerifiedDeltaAttempt(store, authority, workOrder, attempt('p2','PASS'), BASE, digest));
   assert.deepEqual(ledger.records[0].firstFailure, original);
   assert.equal(ledger.records[0].classification, 'FLAKE_CANDIDATE');
+});
+
+test('Marathon operator projects deterministic next actions with exact source binding', () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  const initial = unwrap(describeMarathonNextActions(plan, state, bindings, digest));
+  assert.deepEqual(initial.eligibleStarts, ['audit', 'source']);
+  assert.deepEqual(initial.decisions.map(x => [x.nodeId, x.action]), [
+    ['audit', 'START'], ['build', 'WAIT_DEPENDENCIES'],
+    ['release', 'WAIT_DEPENDENCIES'], ['source', 'START'],
+  ]);
+  reject(describeMarathonNextActions(plan, state,
+    { ...bindings, baseSha: OTHER }, digest), 'OPERATOR_SOURCE_OR_ACTOR_DRIFT');
+  state = unwrap(advanceMarathon(plan, state, { type: 'PAUSE' }, bindings, digest));
+  const paused = unwrap(describeMarathonNextActions(plan, state, bindings, digest));
+  assert.deepEqual(paused.eligibleStarts, []);
+  assert.equal(paused.decisions[0].action, 'RESUME');
+});
+
+test('Marathon operator quarantines ACTIVE intent without blocking independent work', () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  state = unwrap(advanceMarathon(plan, state,
+    { type: 'START', nodeId: 'source', intentId: 'operator-uncertain' }, bindings, digest));
+  const view = unwrap(describeMarathonNextActions(plan, state, bindings, digest));
+  assert.deepEqual(view.eligibleStarts, ['audit']);
+  assert.equal(view.decisions.find(x => x.nodeId === 'source').action, 'RECONCILE');
+  assert.equal(view.decisions.find(x => x.nodeId === 'build').action, 'WAIT_DEPENDENCIES');
+  assert.equal(view.decisions.find(x => x.nodeId === 'source').intentId, 'operator-uncertain');
+});
+
+test('Marathon operator reports failed subtree without hiding unrelated work', () => {
+  const plan = fixture();
+  let state = unwrap(initialMarathonState(plan, digest));
+  state = unwrap(advanceMarathon(plan, state,
+    { type: 'START', nodeId: 'source', intentId: 'failure-intent' }, bindings, digest));
+  state = unwrap(advanceMarathon(plan, state, { type: 'SETTLE', nodeId: 'source',
+    intentId: 'failure-intent', outcome: 'FAILED', proofDigest: H('original-failure') },
+    bindings, digest));
+  const view = unwrap(describeMarathonNextActions(plan, state, bindings, digest));
+  assert.deepEqual(view.eligibleStarts, ['audit']);
+  assert.equal(view.decisions.find(x => x.nodeId === 'source').action, 'INSPECT_FAILURE');
+  assert.equal(view.decisions.find(x => x.nodeId === 'release').action, 'STOP_BLOCKED');
+  assert.equal(view.decisions.find(x => x.nodeId === 'audit').action, 'START');
 });

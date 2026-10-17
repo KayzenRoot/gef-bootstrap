@@ -118,3 +118,7 @@ export type { MarathonReconciliationProvider } from './v12-marathon-runner.js';
 
 // U12-03: concrete local crash-safe durable CAS snapshot store, no implicit lock recovery.
 export { createFileBackedMarathonStore } from './v12-marathon-file-store.js';
+
+// U12-03: sealed, read-only operator continuation decisions.
+export { describeMarathonNextActions } from './v12-marathon-operator.js';
+export type { MarathonNextAction, MarathonNodeDecision, MarathonOperatorView } from './v12-marathon-operator.js';
