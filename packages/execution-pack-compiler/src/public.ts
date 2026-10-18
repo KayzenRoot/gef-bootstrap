@@ -98,3 +98,31 @@ export type {
   OwnerChangeImpact,
   CanonicalPlanAnalysis,
 } from './s06-canonical-planning-analysis.js';
+
+// U12-03: source-bound Marathon planning and receipt state machine.
+export { compileMarathonFromExecutionPack } from './v12-marathon.js';
+export { compileMarathon, initialMarathonState, readyMarathonNodes, validateMarathonState, advanceMarathon } from './v12-marathon.js';
+export type { MarathonStatus, MarathonDigest, MarathonResult, MarathonNode, MarathonRequest, MarathonPlan, MarathonStepState, MarathonState, MarathonAction } from './v12-marathon.js';
+
+// U12-03: durable-state CAS integration boundary (no provider side effects).
+export { initializePersistedMarathon, recoverPersistedMarathon, persistMarathonTransition } from './v12-marathon-persistence.js';
+export type { MarathonStateStore, MarathonRecoveryDecision, MarathonSettlementProofPort } from './v12-marathon-persistence.js';
+
+// U12-03: bounded single-step provider bridge using durable START and verified settlement.
+export { executeMarathonStep } from './v12-marathon-runner.js';
+export type { MarathonStepProvider } from './v12-marathon-runner.js';
+
+// U12-03: reconcile an ambiguous persisted intent without re-executing provider mutations.
+export { reconcileMarathonStep } from './v12-marathon-runner.js';
+export type { MarathonReconciliationProvider } from './v12-marathon-runner.js';
+
+// U12-03: concrete local crash-safe durable CAS snapshot store, no implicit lock recovery.
+export { createFileBackedMarathonStore } from './v12-marathon-file-store.js';
+
+// U12-03: sealed, read-only operator continuation decisions.
+export { describeMarathonNextActions } from './v12-marathon-operator.js';
+export type { MarathonNextAction, MarathonNodeDecision, MarathonOperatorView } from './v12-marathon-operator.js';
+
+// U12-03: M17 checkpoint + M18 resume evidence verification before read-only recovery.
+export { recoverMarathonWithCanonicalContinuity } from './v12-marathon-continuity.js';
+export type { MarathonCheckpointWitness, MarathonReadinessWitness, MarathonHandoffWitness, MarathonResumeWitness, MarathonContinuityEvidence, MarathonContinuityVerifier, MarathonContinuityDecision } from './v12-marathon-continuity.js';
