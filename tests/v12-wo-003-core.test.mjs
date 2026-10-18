@@ -37,6 +37,18 @@ const fixture = () => unwrap(compileMarathon({
 }, digest));
 const bindings = { baseSha: BASE, lockDigest: LOCK, actor: 'CHATGPT_OWNER' };
 
+// A single reproducible DAG is exercised through live START and forged state
+// recovery. Keep both regressions independent, without cloning the graph.
+const resourceConflictFixture = () => unwrap(compileMarathon({
+  workOrderId: 'WO-A', actor: 'OWNER', baseSha: BASE, lockDigest: LOCK,
+  nodes: [
+    { id: 'first', deps: [], reads: [], writes: ['out/shared'] },
+    { id: 'unrelated', deps: [], reads: [], writes: ['out/separate'] },
+    { id: 'later', deps: ['unrelated'], reads: ['out/shared/file'], writes: ['out/new'] },
+  ],
+}, digest));
+
+
 test('Marathon plans deterministic waves and blocks unknown/cyclic/colliding nodes', () => {
   const p = fixture();
   assert.deepEqual(p.waves, [['audit', 'source'], ['build'], ['release']]);
@@ -141,14 +153,7 @@ test('Marathon cancellation blocks downstream without reissuing active mutations
 });
 
 test('Marathon checks live resource conflicts even between different waves', () => {
-  const p = unwrap(compileMarathon({
-    workOrderId: 'WO-A', actor: 'OWNER', baseSha: BASE, lockDigest: LOCK,
-    nodes: [
-      { id: 'first', deps: [], reads: [], writes: ['out/shared'] },
-      { id: 'unrelated', deps: [], reads: [], writes: ['out/separate'] },
-      { id: 'later', deps: ['unrelated'], reads: ['out/shared/file'], writes: ['out/new'] },
-    ],
-  }, digest));
+  const p = resourceConflictFixture();
   const binding = { baseSha: BASE, lockDigest: LOCK, actor: 'OWNER' };
   let s = unwrap(initialMarathonState(p, digest));
   s = unwrap(advanceMarathon(p, s, { type: 'START', nodeId: 'first', intentId: 'intent-first' }, binding, digest));
@@ -225,11 +230,7 @@ test('Delta refuses proof reuse for undeclared transitive leaf', () => {
 });
 
 test('Marathon rejects conflicting ACTIVE nodes in imported snapshots', () => {
-  const p = unwrap(compileMarathon({ workOrderId: 'WO-A', actor: 'OWNER', baseSha: BASE, lockDigest: LOCK,
-    nodes: [{ id: 'first', deps: [], reads: [], writes: ['out/shared'] },
-            { id: 'unrelated', deps: [], reads: [], writes: ['out/separate'] },
-            { id: 'later', deps: ['unrelated'], reads: ['out/shared/file'], writes: ['out/new'] }],
-  }, digest));
+  const p = resourceConflictFixture();
   const binding = { baseSha: BASE, lockDigest: LOCK, actor: 'OWNER' };
   let state = unwrap(initialMarathonState(p, digest));
   state = unwrap(advanceMarathon(p, state, { type: 'START', nodeId: 'first', intentId: 'first-intent' }, binding, digest));
