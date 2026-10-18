@@ -938,3 +938,40 @@ test('Marathon admits M15-refined waves without widening file conflicts or losin
   const serial = unwrap(compileMarathon({ ...overlap, admittedWaves: [['alpha'], ['beta']] }, digest));
   assert.deepEqual(serial.waves, [['alpha'], ['beta']]);
 });
+
+test('M15 failed or skipped first wave is a terminal stop, not an infinite wait', () => {
+  const admitted = unwrap(compileMarathon({
+    workOrderId: 'GBS-V12-WO-003', ...bindings,
+    nodes: [
+      { id: 'first', deps: [], reads: [], writes: ['src/a.ts'] },
+      { id: 'later', deps: [], reads: [], writes: ['src/b.ts'] },
+    ],
+    admittedWaves: [['first'], ['later']],
+  }, digest));
+  const original = unwrap(initialMarathonState(admitted, digest));
+  const assertTerminal = state => {
+    assert.equal(state.steps.later.status, 'PENDING');
+    assert.deepEqual(unwrap(readyMarathonNodes(admitted, state, digest)), []);
+    const view = unwrap(describeMarathonNextActions(admitted, state, bindings, digest));
+    const decision = view.decisions.find(item => item.nodeId === 'later');
+    assert.equal(decision.action, 'STOP_BLOCKED');
+    assert.equal(decision.reasonCode, 'M15_PRIOR_WAVE_TERMINAL');
+    assert.deepEqual(view.eligibleStarts, []);
+    reject(advanceMarathon(admitted, state,
+      { type: 'START', nodeId: 'later', intentId: 'forbidden-later' },
+      bindings, digest), 'M15_PRIOR_WAVE_UNVERIFIED');
+  };
+  const skipped = unwrap(advanceMarathon(admitted, original,
+    { type: 'SKIP', nodeId: 'first', reasonCode: 'OWNER_NOT_EXECUTED' },
+    bindings, digest));
+  assertTerminal(skipped);
+  const paused = unwrap(advanceMarathon(admitted, skipped,
+    { type: 'PAUSE' }, bindings, digest));
+  assertTerminal(paused); // A pause cannot disguise an irreversible prior-wave stop.
+  let failed = unwrap(advanceMarathon(admitted, original,
+    { type: 'START', nodeId: 'first', intentId: 'provider-first' }, bindings, digest));
+  failed = unwrap(advanceMarathon(admitted, failed,
+    { type: 'SETTLE', nodeId: 'first', intentId: 'provider-first',
+      outcome: 'FAILED', proofDigest: H('attested-provider-failure') }, bindings, digest));
+  assertTerminal(failed);
+});
