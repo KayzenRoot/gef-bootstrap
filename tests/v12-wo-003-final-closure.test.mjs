@@ -1,13 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import {
   sha, H, digest, opts, WO, HEAD, tests, graph, unwrap, reject, attempt,
   persistAuthority, fixture, actualM28, evidence, inputs, verifier, repair,
   createFileBackedDeltaLedgerStore, initializeDurableDeltaLedger,
   recordVerifiedDeltaAttempt, evaluateDeltaFinalClosure, compileGateClosure,
+  emptyDeltaStore,
 } from './v12-wo-003-fixtures.test.mjs';
 
 test('Delta final closure requires complete durable exact-HEAD M24-M28 gate and full test sweep', async t => {
@@ -102,10 +100,9 @@ test('actual M28 unknown attribution is not accepted as complete module assuranc
 });
 
 test('a caller cannot hide an M26 mandatory test using a shortened ledger and self-declared full sweep', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'gef-v12-shortened-ledger-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  const store = createFileBackedDeltaLedgerStore(dir);
-  unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, ['tests:unit'], digest));
+  const { store } = await emptyDeltaStore(t, {
+    testIds: ['tests:unit'], prefix: 'gef-v12-shortened-ledger-',
+  });
   unwrap(await recordVerifiedDeltaAttempt(store, persistAuthority, WO,
     attempt('tests:unit', 'unit-only-final', 'PASS'), HEAD, digest));
   const claimed = inputs({
