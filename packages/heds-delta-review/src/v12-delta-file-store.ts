@@ -56,20 +56,7 @@ async function writeDurable(directory: string, file: string, ledger: DeltaLedger
     } finally {
       await handle.close();
     }
-    // Windows may transiently deny replacement while another process reads
-    // the ledger. Retry only these transient errors, never unlink the
-    // destination, and never treat a failed rename as committed evidence.
-    for (let attempt = 0; ; attempt++) {
-      try {
-        await rename(temp, file);
-        break;
-      } catch (error) {
-        const code = (error as NodeJS.ErrnoException).code;
-        if (process.platform !== 'win32' || attempt >= 5 ||
-            !['EPERM', 'EACCES', 'EBUSY'].includes(code ?? '')) throw error;
-        await new Promise<void>(done => setTimeout(done, 10 * (attempt + 1)));
-      }
-    }
+    await rename(temp, file);
     installed = true;
     await flushDir(directory);
   } finally {
