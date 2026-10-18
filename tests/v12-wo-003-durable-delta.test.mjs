@@ -1,4 +1,4 @@
-import { persistAuthority } from './v12-wo-003-fixtures.test.mjs';
+import { persistAuthority, emptyDeltaStore } from './v12-wo-003-fixtures.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -28,10 +28,10 @@ const attempt = (id, observation) => ({
 const authority = persistAuthority;
 
 test('Delta file store preserves first failure after restart and independently verified retry', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'gef-delta-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  const store = createFileBackedDeltaLedgerStore(dir);
-  unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, ['tests:unit'], digest));
+  const { dir, store } = await emptyDeltaStore(t, {
+    workOrderId: WO, headSha: HEAD, testIds: ['tests:unit'],
+    hash: digest, prefix: 'gef-delta-',
+  });
   reject(await initializeDurableDeltaLedger(
     createFileBackedDeltaLedgerStore(dir), WO, HEAD, ['tests:unit'], digest),
     'DELTA_LEDGER_EXISTS_REQUIRES_RECOVERY');
@@ -47,10 +47,10 @@ test('Delta file store preserves first failure after restart and independently v
 });
 
 test('Delta file store rejects competing CAS writes and stale revisions', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'gef-delta-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  const one = createFileBackedDeltaLedgerStore(dir);
-  const original = unwrap(await initializeDurableDeltaLedger(one, WO, HEAD, ['tests:unit'], digest));
+  const { dir, store: one, initial: original } = await emptyDeltaStore(t, {
+    workOrderId: WO, headSha: HEAD, testIds: ['tests:unit'],
+    hash: digest, prefix: 'gef-delta-',
+  });
   const two = createFileBackedDeltaLedgerStore(dir);
   const candidateA = unwrap(addDeltaAttempt(original, attempt('one','FAIL'), digest));
   const candidateB = unwrap(addDeltaAttempt(original, attempt('two','FAIL'), digest));
@@ -65,10 +65,10 @@ test('Delta file store rejects competing CAS writes and stale revisions', async 
 });
 
 test('Delta stale exclusive lock and invalid storage keys fail closed', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'gef-delta-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  const store = createFileBackedDeltaLedgerStore(dir);
-  const old = unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, ['tests:unit'], digest));
+  const { dir, store, initial: old } = await emptyDeltaStore(t, {
+    workOrderId: WO, headSha: HEAD, testIds: ['tests:unit'],
+    hash: digest, prefix: 'gef-delta-',
+  });
   const key = sha256(WO + '\n' + HEAD);
   await mkdir(join(dir, key + '.lock'));
   const next = unwrap(addDeltaAttempt(old, attempt('candidate','FAIL'), digest));
@@ -78,10 +78,10 @@ test('Delta stale exclusive lock and invalid storage keys fail closed', async t 
 });
 
 test('Delta independent verifier cannot launder FAIL into PASS or change first-failure signature', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'gef-delta-outcome-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  const store = createFileBackedDeltaLedgerStore(dir);
-  const initial = unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, ['tests:unit'], digest));
+  const { store, initial } = await emptyDeltaStore(t, {
+    workOrderId: WO, headSha: HEAD, testIds: ['tests:unit'],
+    hash: digest, prefix: 'gef-delta-outcome-',
+  });
   const forgedPass = attempt('claimed-pass', 'PASS');
   const authenticFailureAuthority = { async verify(_ledger, candidate) {
     return { ...await authority.verify(_ledger, candidate),
@@ -110,10 +110,10 @@ test('Delta independent verifier cannot launder FAIL into PASS or change first-f
 });
 
 test('Delta durable snapshot replacements leave one committed ledger and no temporary leftovers', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'gef-delta-atomic-'));
-  t.after(() => rm(dir, { recursive: true, force: true }));
-  const store = createFileBackedDeltaLedgerStore(dir);
-  unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, ['tests:unit'], digest));
+  const { dir, store } = await emptyDeltaStore(t, {
+    workOrderId: WO, headSha: HEAD, testIds: ['tests:unit'],
+    hash: digest, prefix: 'gef-delta-atomic-',
+  });
   for (let i = 0; i < 4; i++) {
     const id = 'durable-' + i;
     unwrap(await recordVerifiedDeltaAttempt(
