@@ -124,5 +124,5 @@ test('Delta durable snapshot replacements leave one committed ledger and no temp
   }
   const names = await readdir(dir);
   assert.equal(names.length, 1);
-  assert.match(names[0], /^[a-f0-9]{64}\\.json$/);
+  assert.match(names[0], /^[a-f0-9]{64}\.json$/);
 });
