@@ -43,11 +43,21 @@ const persistAuthority = { async verify(_ledger, a) {
     observation: a.observation, failureSignature: a.failureSignature};
 } };
 
+/** TEST ONLY: a fully isolated, initially empty, crash-safe Delta fixture. */
+async function emptyDeltaStore(t, {
+  workOrderId = WO, headSha = HEAD, testIds = tests,
+  hash = digest, prefix = 'gef-v12-empty-',
+} = {}) {
+  const dir = await mkdtemp(join(tmpdir(), prefix));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const store = createFileBackedDeltaLedgerStore(dir);
+  const initial = unwrap(await initializeDurableDeltaLedger(
+    store, workOrderId, headSha, testIds, hash));
+  return { dir, store, initial };
+}
+
 async function fixture(t, failure = false) {
-  const root = await mkdtemp(join(tmpdir(), 'gef-v12-final-'));
-  t.after(() => rm(root, { recursive: true, force: true }));
-  const store = createFileBackedDeltaLedgerStore(root);
-  unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, tests, digest));
+  const { store } = await emptyDeltaStore(t, { prefix: 'gef-v12-final-' });
   if (failure) {
     unwrap(await recordVerifiedDeltaAttempt(store, persistAuthority, WO,
       attempt('tests:unit', 'failure-first', 'FAIL'), HEAD, digest));
@@ -145,4 +155,5 @@ export {
   persistAuthority, fixture, actualM28, evidence, inputs, verifier, repair,
   createFileBackedDeltaLedgerStore, initializeDurableDeltaLedger,
   recordVerifiedDeltaAttempt, evaluateDeltaFinalClosure, compileGateClosure,
+  emptyDeltaStore,
 };
