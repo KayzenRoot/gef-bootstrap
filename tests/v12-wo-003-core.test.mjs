@@ -959,7 +959,7 @@ test('M15 failed or skipped first wave is a terminal stop, not an infinite wait'
     assert.deepEqual(view.eligibleStarts, []);
     reject(advanceMarathon(admitted, state,
       { type: 'START', nodeId: 'later', intentId: 'forbidden-later' },
-      bindings, digest), 'M15_PRIOR_WAVE_UNVERIFIED');
+      bindings, digest), state.paused ? 'PAUSED' : 'M15_PRIOR_WAVE_UNVERIFIED');
   };
   const skipped = unwrap(advanceMarathon(admitted, original,
     { type: 'SKIP', nodeId: 'first', reasonCode: 'OWNER_NOT_EXECUTED' },
