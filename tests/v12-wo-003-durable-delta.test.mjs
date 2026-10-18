@@ -2,7 +2,7 @@ import { persistAuthority } from './v12-wo-003-fixtures.test.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -107,4 +107,22 @@ test('Delta independent verifier cannot launder FAIL into PASS or change first-f
     actualFailure, HEAD, digest));
   assert.equal((await store.read(WO, HEAD)).records[0].firstFailure.attemptId,
     'original-failure');
+});
+
+test('Delta durable snapshot replacements leave one committed ledger and no temporary leftovers', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'gef-delta-atomic-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const store = createFileBackedDeltaLedgerStore(dir);
+  unwrap(await initializeDurableDeltaLedger(store, WO, HEAD, ['tests:unit'], digest));
+  for (let i = 0; i < 4; i++) {
+    const id = 'durable-' + i;
+    unwrap(await recordVerifiedDeltaAttempt(
+      store, authority, WO, attempt(id, 'PASS'), HEAD, digest));
+    const reloaded = await createFileBackedDeltaLedgerStore(dir).read(WO, HEAD);
+    assert.equal(reloaded.records[0].attempts.at(-1).attemptId, id);
+    assert.equal(reloaded.records[0].attempts.length, i + 1);
+  }
+  const names = await readdir(dir);
+  assert.equal(names.length, 1);
+  assert.match(names[0], /^[a-f0-9]{64}\\.json$/);
 });
