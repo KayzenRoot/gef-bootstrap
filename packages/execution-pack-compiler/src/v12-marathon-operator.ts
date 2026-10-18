@@ -34,6 +34,20 @@ export interface MarathonOperatorView {
   readonly nextLegalActions: readonly MarathonNextAction[];
 }
 
+/**
+ * A later M15 wave cannot recover if a preceding task is terminal without a
+ * successful verification. Such a state is a permanent stop, not a wait.
+ */
+function hasTerminalPriorWave(
+  plan: MarathonPlan, state: MarathonState, nodeId: string,
+): boolean {
+  if (!plan.admittedWaves) return false;
+  const index = plan.waves.findIndex(wave => wave.includes(nodeId));
+  if (index <= 0) return false;
+  return plan.waves.slice(0, index).some(wave => wave.some(id =>
+    ['FAILED', 'SKIPPED', 'BLOCKED'].includes(state.steps[id]?.status ?? '')));
+}
+
 function decideNode(
   plan: MarathonPlan, state: MarathonState, nodeId: string,
   eligible: ReadonlySet<string>,
@@ -55,6 +69,9 @@ function decideNode(
   } else if (s.status === 'SKIPPED') {
     action = 'STOP_BLOCKED';
     reasonCode = s.stopReasonCode ?? 'NEVER_EXECUTED';
+  } else if (s.status === 'PENDING' && hasTerminalPriorWave(plan, state, nodeId)) {
+    action = 'STOP_BLOCKED';
+    reasonCode = 'M15_PRIOR_WAVE_TERMINAL';
   } else if (s.status === 'PENDING' && state.paused) {
     action = 'RESUME';
     reasonCode = 'OPERATOR_PAUSED';
