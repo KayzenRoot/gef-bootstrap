@@ -2,8 +2,7 @@ import { persistAuthority, emptyDeltaStore } from './v12-wo-003-fixtures.test.mj
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, readdir, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { mkdir, readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import {
   createFileBackedDeltaLedgerStore, initializeDurableDeltaLedger,
