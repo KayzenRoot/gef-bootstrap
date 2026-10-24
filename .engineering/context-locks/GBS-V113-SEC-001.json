@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "workOrderId": "GBS-V113-SEC-001",
+  "status": "PLANNING_ONLY_NOT_ADMITTED",
+  "issue": 439,
+  "parentIssue": 434,
+  "programIssue": 437,
+  "repository": "KayzenRoot/gef-bootstrap",
+  "baseBranch": "main",
+  "baseSha": "bf9f9bc74f16a02fd4119b6b1e063c3cb51589f1",
+  "targetBranch": "codex/gbs-v113-sec-001-planning",
+  "risk": "ELEVATED",
+  "plannedRiskEscalation": "HIGH_ASSURANCE_IF_REAL_OR_UNCERTAIN_CREDENTIAL_OR_POLICY_REQUIRES",
+  "sources": {
+    "agentsMd": "03a768f9d276d001d02871828fef7b7a12eefca9",
+    "sourceHierarchy": "bedc10c97d28154efe59ff43fc1d175add37f568",
+    "checkpointMd": "ea31e6cab8964aca4b0f74296b2953e6da51d6d7",
+    "checkpointJson": "468dec80ad5a48c044e4282d87481a8267f44866",
+    "decisionsLedger": "569479a700f1956bdb2d97be30a27aaccf592b7e",
+    "requirements": "6220bba3e8d1c8c50d488e00e4ea9661e2647939",
+    "security": "799206278e9f5bc02aec07c8e6d4489c530bb320",
+    "scope": "5071ed88fd793e0a3bddb5e26b2fbf92513fb048",
+    "architecture": "5c2b44db3805dbd5329dc99a8a9b774360c4136a",
+    "definitionOfDone": "b6faba1b969724401e5ce38ee9db5c5aa120056c",
+    "testBenchmarkPlan": "88768b891280e9b1e7ad752fec23f158e856c5ea",
+    "deployment": "5f4a263fcd51b9cdc2d4f85ad1c2569d041b8754",
+    "adr0008": "f3246fc074b450da986ad3dcda76f3d005dc8c6a",
+    "githubFirstWorkflow": "b734c110d48311e339295fdd834ebff91a8cc461",
+    "freeSecurityPilotWorkflow": "38137ef513fcc52d6e14a42c6a5ebcc2f1b05f69",
+    "securityConfigTest": "6a3818b029d3f757f608eae0e424101095a86198",
+    "releaseWorkflowTest": "8633e3e21aa3b115d2399ff0354dfb8ae77ccf8d"
+  },
+  "externalEvidence": {
+    "issue439": "https://github.com/KayzenRoot/gef-bootstrap/issues/439",
+    "issue437MissionComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/437#issuecomment-6128927054",
+    "issue434PostMergeChecksComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128164546",
+    "issue434RunConfirmationComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128317715",
+    "issue434TriageComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128530795",
+    "issue434PlanningPathComment": "https://github.com/KayzenRoot/gef-bootstrap/issues/434#issuecomment-6128883460",
+    "scheduledRun": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38253721487",
+    "gitleaksJob": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38253721487/job/114826269082",
+    "trivyJob": "https://github.com/KayzenRoot/gef-bootstrap/actions/runs/38253721487/job/114826268794",
+    "observedProviderMetadata": {
+      "gitleaks": "FAILURE",
+      "trivy": "SUCCESS",
+      "rawLogsInspected": false,
+      "matchValuesConsulted": false
+    }
+  },
+  "scannerPinsObservedAtBase": {
+    "gitleaksVersion": "8.30.1",
+    "binarySha256": "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb",
+    "upstreamPolicyCommit": "83d9cd684c87d95d656c1458ef04895a7f1cbd8e",
+    "configSha256": "e163e53b9e7e8a8511e77271e2b323ed057759542a6d988258afe3a1fa329caf",
+    "historicalArguments": ["--all", "--diff-merges=separate"],
+    "redactionArgument": "--redact=100"
+  },
+  "planningAllowedWrites": [
+    ".engineering/work-orders/GBS-V113-SEC-001.md",
+    ".engineering/context-locks/GBS-V113-SEC-001.json",
+    ".engineering/evidence/GBS-V113-SEC-001-PLANNING-EVIDENCE.md",
+    ".engineering/checkpoint-deltas/GBS-V113-SEC-001-PROPOSED.md"
+  ],
+  "forbiddenWrites": [
+    ".engineering/CHECKPOINT.md",
+    ".engineering/CHECKPOINT.json",
+    ".gitleaks.toml",
+    ".gitleaksignore",
+    ".github/workflows/**",
+    "tests/**",
+    "packages/**",
+    "src/**",
+    "package.json",
+    "package-lock.json",
+    "tags/**",
+    "release/**"
+  ],
+  "policyGatesBeforeAnySensitiveImplementation": [
+    "Owner admission of a separate implementation Work Order and rebound Context Lock",
+    "Independent Security evidence review and disposition for all 21 coordinates",
+    "Written Owner and Security decision on an allowed solution and exact pinned scanner semantics",
+    "Explicit approval, expiry, owner, review, and non-overmatch controls for any fingerprint-specific exception"
+  ],
+  "ownerSecurityGateRequiredBeforeImplementation": true,
+  "currentDispositionRule": "All 21 coordinates remain UNKNOWN until sufficient objective, redacted, independently reviewed proof; prior labels are unverified claims.",
+  "stopCondition": "GBS_V113_SEC_001_PLANNING_READY_FOR_OWNER_AUDIT"
+}
